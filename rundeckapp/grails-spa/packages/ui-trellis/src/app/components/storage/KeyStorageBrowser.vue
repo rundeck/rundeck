@@ -1,39 +1,33 @@
 <template>
-  <div class="alert alert-warning" data-bind="visible: errorMsg()">
-    <span data-bind="text: errorMsg"></span>
+  <div class="alert alert-warning" v-if="this.errorMsg !== null">
+    <span> {{this.errorMsg}}</span>
   </div>
   <div class="row text-info ">
-    <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
+    <div class="form-group col-sm-12" data-bind="css: {{invalid}}?'has-error':'' ">
       <div class="input-group">
-        <div class="input-group-addon rs-tooltip bottom" data-bind="if: staticRoot()">
-        <span data-bind="text: rootBasePath()"
-              class="text-ellipsis"
-              style="
+        <div class="input-group-addon rs-tooltip bottom" v-if='staticRoot'>
+        <span class="text-ellipsis" style="
           max-width: 300px;
-          display: inline-block;"
-        >
+          display: inline-block;">
+          {{getRootBasePath()}}
         </span>
-          <div class="rs-tooltip--message" data-bind="text: rootBasePath()" ></div>
-
-
+          <div class="rs-tooltip--message">{{getRootBasePath()}}</div>
         </div>
-        <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
+        <input type="text" class="form-control" style="padding-left:18px" v-model="inputPath" v-bind:disabled="loading" v-on:keyup.enter="browseToInputPath()" placeholder="Enter a path" />
 
-        <!-- ko if: jumpLinks().length>0 -->
         <div class="input-group-btn">
           <button type="button" class="btn btn-default dropdown-toggle"
                   data-toggle="dropdown" aria-haspopup="true"
                   aria-expanded="false">
-            <span data-bind="text: linksTitle"></span>
+            <span>{{linksTitle}}</span>
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-right">
-            <li data-bind="foreach: jumpLinks()">
-              <a href="#" data-bind="click: function(){$root.loadDir($data.path)}, text: $data.name"></a>
+            <li v-for="jumpLink in jumpLinks">
+              <a href="#" v-on:click="loadDir(jumpLink.path)" v-text="jumpLink.name"></a>
             </li>
           </ul>
         </div>
-        <!-- /ko -->
 
       </div>
     </div>
@@ -41,14 +35,14 @@
   <div class="row">
     <div class="col-sm-12">
       <div style="margin-bottom:1em;">
-        <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
+        <button type="button" class="btn btn-sm btn-default" v-on:click="loadDir(upPath())" v-bind:class="{disabled: !upPath() || invalid}">
           <i class="glyphicon glyphicon-folder-open"></i>
           <i class="glyphicon glyphicon-arrow-up"></i>
-          <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
+          <span v-text="upPath() ? dirName(upPath()) : ''"></span>
         </button>
-        <div class="btn-group" data-bind="if: browseMode()=='browse'">
-          <button type="button" class="btn btn-sm dropdown-toggle" data-bind="css: { disabled: !selectedPath() }" data-toggle="dropdown">
-            {{ $t('Action')}}
+        <div class="btn-group" v-if="browseMode === 'browse'">
+          <button type="button" class="btn btn-sm dropdown-toggle" :class="{ disabled: !selectedPath }" data-toggle="dropdown">
+            {{ $t('Action') }}
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
@@ -59,156 +53,155 @@
               </a>
             </li>
 
-            <li class="" data-bind=" if: selectedIsDownloadable()">
-              <a href="#" data-bind="click: download">
+            <li v-if="selectedIsDownloadable">
+              <a href="#" @click="download()">
                 <i class="glyphicon glyphicon-download"></i>
                 {{ $t('Download Contents') }}</a>
             </li>
           </ul>
         </div>
 
-        <div class="btn-group" data-bind="if: allowUpload() ">
-          <a href="#storageuploadkey" data-bind="click: actionUpload" class="btn btn-sm btn-primary">
+        <div v-if="allowUpload" class="btn-group">
+          <a href="#storageuploadkey" v-on:click="actionUpload()" class="btn btn-sm btn-primary">
             <i class="glyphicon glyphicon-plus"></i>
             {{ $t('Add or Upload a Key') }}
           </a>
         </div>
-        <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
-          <a href="#storageuploadkey" data-bind="click: actionUploadModify" class="btn btn-sm btn-info ">
+        <div class="btn-group" v-if="allowUpload && selectedPath">
+          <a href="#storageuploadkey" @click="actionUploadModify()" class="btn btn-sm btn-info ">
             <i class="glyphicon glyphicon-pencil"></i>
             {{ $t('Overwrite Key') }}
           </a>
         </div>
       </div>
-      <div class="loading-area text-info " data-bind="visible: loading()" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
+      <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
         <i class="glyphicon glyphicon-time"></i>
         {{ $t('Loading') }}
       </div>
       <table class="table table-hover table-condensed" data-bind="if: !invalid() && !loading()">
-        <tbody data-bind="if: !notFound()">
+        <tbody v-if="!notFound">
         <tr>
           <td colspan="2" class="text-strong">
-            <span data-bind="if: filteredFiles().length < 1">
+            <span v-if="filteredFiles.length < 1">
               {{ $t('No Keys') }}
             </span>
-            <span data-bind="if: filteredFiles().length > 0">
-              <span data-bind="text: filteredFiles().length"></span>
+            <span v-if="filteredFiles.length > 0">
+              <span>{{filteredFiles.length}}</span>
               {{ $t('keys') }}
             </span>
           </td>
         </tr>
         </tbody>
-        <tbody data-bind="foreach: filteredFiles()">
-        <tr data-bind="click: $root.selectFile, css: $root.selectedPath()==path() ? 'success' : '' " class="action">
-          <td >
-            <i class="glyphicon " data-bind="css: $root.selectedPath()==path() ? 'glyphicon-ok' : 'glyphicon-unchecked' "></i>
+        <tbody>
+        <tr v-for="file in filteredFiles" :key="file.path" @click="selectFile(file)" :class="{ 'success': selectedPath === file.path }" class="action">
+          <td>
+            <i :class="{ 'glyphicon-ok': selectedPath === file.path, 'glyphicon-unchecked': selectedPath !== file.path }"></i>
 
-            <span data-bind="if: $data.isPrivateKey()" title="This path contains a private key that can be used for remote node execution.">
-              <i class="glyphicon glyphicon-lock"></i>
-            </span>
-            <span data-bind="if: $data.isPublicKey()">
-              <i class="glyphicon glyphicon-eye-open"></i>
-            </span>
-            <span data-bind="if: $data.isPassword()" title="This path contains a password that can be used for remote node execution.">
-              <i class="glyphicon glyphicon-lock"></i>
-            </span>
+            <span v-if="file.isPrivateKey()" title="This path contains a private key that can be used for remote node execution.">
+          <i class="glyphicon glyphicon-lock"></i>
+        </span>
+            <span v-if="file.isPublicKey()">
+          <i class="glyphicon glyphicon-eye-open"></i>
+        </span>
+            <span v-if="file.isPassword()" title="This path contains a password that can be used for remote node execution.">
+          <i class="glyphicon glyphicon-lock"></i>
+        </span>
 
-            <span data-bind="text: name"></span>
+            <span>{{ file.name }}</span>
           </td>
           <td class="text-strong">
-            <span class="pull-right">
-              <span data-bind="if: $data.isPrivateKey()" title="${g.enc(code: 'storage.private.key.description')}">
-                {{ $t('Private Key') }}
-              </span>
-              <span data-bind="if: $data.isPublicKey()">
-                {{ $t('Public Key') }}
-              </span>
-              <span data-bind="if: $data.isPassword()" title="${g.enc(code: 'storage.password.description')}">
-                {{ $t('Password') }}
-              </span>
-            </span>
+        <span class="pull-right">
+          <span v-if="file.isPrivateKey()" title="${g.enc(code: 'storage.private.key.description')}">
+            {{ $t('Private Key') }}
+          </span>
+          <span v-if="file.isPublicKey()">
+            {{ $t('Public Key') }}
+          </span>
+          <span v-if="file.isPassword()" title="${g.enc(code: 'storage.password.description')}">
+            {{ $t('Password') }}
+          </span>
+        </span>
           </td>
         </tr>
         </tbody>
 
-        <tbody data-bind="if: notFound()">
-        <tr>
-          <td colspan="2">
-            <span class="text-strong">{{ $t('Nothing found at this path') }}
-              <span data-bind="if: allowUpload()">{{ $t('Select "Add or Upload a Key" if you would like to create a new key.') }}</span>
-            </span>
-          </td>
-        </tr>
-        </tbody>
-        <tbody data-bind="foreach: directories()">
-        <tr>
-          <td class="action" data-bind="click: $root.loadDir" colspan="2">
+        <tbody v-if="!notFound">
+        <tr v-for="directory in directories" :key="directory.name">
+          <td class="action" @click="loadDir(directory)" colspan="2">
             <i class="glyphicon glyphicon-arrow-down"></i>
             <i class="glyphicon glyphicon-folder-close"></i>
-            <span data-bind="text: $root.dirName($data)"></span>
+            <span>{{ dirName(directory) }}</span>
           </td>
         </tr>
         </tbody>
+        <tbody v-else>
+        <tr>
+          <td colspan="2">
+      <span class="text-strong">{{ $t('Nothing found at this path') }}
+        <span v-if="allowUpload">{{ $t('Select "Add or Upload a Key" if you would like to create a new key.') }}</span>
+      </span>
+          </td>
+        </tr>
+        </tbody>
+
       </table>
 
     </div>
   </div>
-  <div class="row" data-bind="if: selectedPath()">
+  <div v-if="selectedPath" class="row">
     <div class="col-sm-12">
       <div class="well">
         <div>
           {{ $t('Storage path\:') }}
-          <code class="text-success" data-bind="text: selectedPath()"></code>
-          <a href="#" data-bind="attr: { href: selectedPathUrl() }">
+          <code class="text-success">{{ selectedPath }}</code>
+          <a :href="selectedPathUrl">
             <i class="glyphicon glyphicon-link"></i>
           </a>
         </div>
 
-        <div data-bind="if: selectedResource() && selectedResource().createdTime()">
+        <div v-if="selectedResource && selectedResource.createdTime">
           <div>
             {{ $t('created\:') }}
-            <span class="timeabs text-strong" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
+            <span class="timeabs text-strong" :title="selectedResource.meta['Rundeck-content-creation-time']">{{ selectedResource.createdTime }}</span>
+            <span v-if="selectedResource.createdUsername">
+        {{ $t('by\:') }}
 
-            <span data-bind="if: selectedResource().createdUsername()">
-            {{ $t('by\:') }}
-
-            <span class="text-strong" data-bind="text: selectedResource().createdUsername()"></span>
-          </span>
+        <span class="text-strong">{{ selectedResource.createdUsername }}</span>
+      </span>
 
           </div>
         </div>
-        <div data-bind="if: selectedResource() && selectedResource().wasModified()">
+        <div v-if="selectedResource && selectedResource.wasModified()">
           <div>
             {{ $t('Modified\:') }}
-            <span class="timeago text-strong" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
+            <span class="timeago text-strong" :title="selectedResource.meta['Rundeck-content-modify-time']">{{ selectedResource.modifiedTimeAgo('ago') }}</span>
 
-            <span data-bind="if: selectedResource().modifiedUsername()">
-            {{ $t('by\:') }}
-            <span class="text-strong" data-bind="text: selectedResource().modifiedUsername()"></span>
-          </span>
+            <span v-if="selectedResource.modifiedUsername">
+        {{ $t('by\:') }}
+        <span class="text-strong">{{ selectedResource.modifiedUsername }}</span>
+      </span>
           </div>
         </div>
 
-        <div data-bind="if: selectedResource() && selectedResource().isPublicKey() && selectedIsDownloadable()">
-          <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default">
-          {{ $t('View Public Key Contents') }}
-          (<span data-bind="text: selectedResource().contentSize()"></span>
-            {{ $t('Bytes') }}
+        <div v-if="selectedResource && selectedResource.isPublicKey() && selectedIsDownloadable">
+          <button @click="$root.actionLoadContents('publicKeyContents',$element)" v-if="!selectedResource.wasDownloaded()" class="btn btn-sm btn-default">
+            {{ $t('View Public Key Contents') }}
+            (<span>{{ selectedResource.contentSize }}</span>
+            {{ $t('Bytes') }})
           </button>
 
-          <div class="pre-scrollable" data-bind="visible: selectedResource().downloadError()">
-            <span data-bind="text:selectedResource().downloadError()" class="text-danger"></span>
+          <div class="pre-scrollable" v-if="selectedResource.downloadError">
+            <span class="text-danger">{{ selectedResource.downloadError }}</span>
           </div>
-          <pre id="publicKeyContents"  class="pre-scrollable" data-bind="visible: selectedResource().wasDownloaded()"></pre>
+          <pre id="publicKeyContents" class="pre-scrollable" v-if="selectedResource.wasDownloaded"></pre>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { getRundeckContext, RundeckContext } from "../../../library";
+import {getRundeckContext} from "../../../library";
 import {RundeckBrowser} from "@rundeck/client";
 import Vue from "vue";
 
@@ -251,12 +244,96 @@ export default Vue.extend({
       notFound: false,
       downloadenabled: true
     }
-  },
-
+    },
+    computed: {
+      filteredFiles() {
+        return this.files.filter(res => {
+          if (this.fileFilter) {
+            const filt = this.fileFilter.split("=");
+            if (filt.length > 1) {
+              const key = filt[0];
+              const value = filt[1];
+              return res.metaValue(key) == value;
+            }
+          }
+          return true;
+        });
+      },
+      directories: function() {
+        return this.resources.filter(function(res) {
+          return res.type === 'directory';
+        }).sort(function(a,b){
+          return a.path === b.path ? 0 : (a.path < b.path ? -1 : 1);
+        });
+      },
+      selectedPathUrl() {
+        return this._genUrl("/storage/download/keys" + '/' + this.selectedPath);
+      }
+    },
+    methods: {
+      getRootBasePath(){
+        return this.rootPath + (this.basePath ? '/' + this.basePath : '')
+      },
+      browseToInputPath() {
+        this.path = this.absolutePath(this.inputBasePath);
+      },
+      loadDir(dir) {
+        const path = typeof dir === 'string' ? dir : dir.path;
+        if (dir !== this.path) {
+          this.selectedPath = null;
+        }
+        this.path = path;
+      },
+      upPath() {
+        if (this.path !== this.rootBasePath && this.path !== `${this.rootBasePath}/`) {
+          if (this.path.indexOf('/') >= 0) {
+            return this.path.substring(0, this.path.lastIndexOf('/'));
+          } else {
+            return this.rootBasePath;
+          }
+        }
+        return null;
+      },
+      dirName(elem) {
+        if (typeof elem === 'string') {
+          return this.dirNameString(elem);
+        }
+        if (elem.type === 'directory') {
+          return this.dirNameString(elem.path);
+        } else {
+          return elem.name;
+        }
+      },
+      download() {
+        if (this.selectedPath) {
+          //What to replace w applinks
+          window.location.href = this._genUrl("/storage/download/keys", {relativePath: this.relativePath(this.selectedPath)});
+        }
+      },
+      selectFile(file) {
+        this.selectedPath = file.path;
+      },
+      actionUpload() {
+        this.upload.modifyMode = false;
+        this.upload.fileName = '';
+        // jQuery("#storageuploadkey").modal({backdrop: false});
+        //jQuery("#storageuploadkey").modal('show');
+      },
+      actionUploadModify() {
+        if (this.selectedResource) {
+          this.upload.fileName = this.selectedResource.name;
+          this.upload.keyType = this.selectedResource.isPrivateKey ? 'private' : this.selectedResource.isPublicKey ? 'public' : 'password';
+          this.upload.modifyMode = true;
+          // jQuery("#storageuploadkey").modal({backdrop:false});
+          // jQuery("#storageuploadkey").modal('show');
+        }
+      }
+    },
   async mounted() {
     this.project = window._rundeck.projectName;
     this.storageData = window._rundeck.data.storageData as StorageData
   }
+
 
 });
 </script>
