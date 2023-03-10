@@ -164,20 +164,23 @@
 </template>
 
 <script lang="ts">
-import {InputType} from "../../../library/components/plugins/KeyStorageSelector.vue";
+import {InputType} from "../plugins/KeyStorageSelector.vue";
 import moment from 'moment';
-import {getRundeckContext} from "../../../library";
+import {getRundeckContext} from "../../index";
+import Vue from "vue";
 
-export default {
+export default Vue.extend({
   name: "KeyStorageView",
   props: [
     'readOnly',
     'allowUpload',
-    'value'
+    'value',
+    'storageFilter'
   ],
   data() {
     return {
       errorMsg: '',
+      modalOpen: false,
       invalid: false,
       staticRoot: true,
       inputPath: '',
@@ -191,7 +194,7 @@ export default {
       files: [] as any,
       selectedClass: 'success',
       directories: [] as any,
-
+      uploadErrors: {} as any
     }
   },
   computed: {
@@ -200,6 +203,72 @@ export default {
     }
   },
   methods: {
+    loadKeys() {
+      const rundeckContext = getRundeckContext();
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+        this.directories = [];
+        this.files = [];
+
+        if (result.resources != null) {
+          result.resources.forEach((resource: any) => {
+            if (resource.type === 'directory') {
+              this.directories.push(resource);
+
+              this.directories.sort((obj1: any, obj2: any) => {
+                if (obj1.path > obj2.path) {
+                  return 1;
+                }
+
+                if (obj1.path < obj2.path) {
+                  return -1;
+                }
+                return 0;
+              });
+            }
+
+            if (resource.type === 'file') {
+              if (this.storageFilter != null) {
+                if (this.allowedResource(resource.meta)) {
+                  this.files.push(resource);
+                }
+              } else {
+                this.files.push(resource);
+              }
+
+              this.files.sort((obj1: any, obj2: any) => {
+                if (obj1.path > obj2.path) {
+                  return 1;
+                }
+
+                if (obj1.path < obj2.path) {
+                  return -1;
+                }
+                return 0;
+              });
+            }
+          });
+        }
+      }).catch((err) => {
+        this.errorMsg = err;
+      });
+    },
+    allowedResource(meta: any) {
+      const filterArray = this.storageFilter.split('=');
+      const key = filterArray[0];
+      const value = filterArray[1];
+      if (key == 'Rundeck-key-type') {
+        if (value === meta['rundeckKeyType']) {
+          return true;
+        }
+      } else {
+        if (key == 'Rundeck-data-type') {
+          if (value === meta['Rundeck-data-type']) {
+            return true;
+          }
+        }
+      }
+      return false;
+    },
     handleSelectKey() {
       this.modalOpen = false;
       this.$emit("closeEditor")
@@ -405,6 +474,14 @@ export default {
         this.upPath = upPath;
       }
     },
+    absolutePath(relpath: any) {
+      var root = this.rootPath;
+      var statroot = this.staticRoot;
+      if (statroot === false) {
+        return relpath;
+      }
+      return root + '/' + relpath;
+    },
     setRootPath() {
       if (this.rootPath == null || this.rootPath === '') {
         this.rootPath = 'keys';
@@ -425,6 +502,25 @@ export default {
 
       this.loadUpPath();
       this.loadKeys();
+    },
+    checkParentDir(path: any) {
+      const rundeckContext = getRundeckContext();
+      const fullPath = this.absolutePath(path);
+      rundeckContext.rundeckClient.storageKeyGetMetadata(path).then((result: any) => {
+        if (result.resources != null) {
+          const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
+          if (keys.length == 0) {
+            this.invalid = true
+            this.errorMsg = 'invalid path';
+          }
+        } else {
+          this.invalid = true
+          this.errorMsg = 'invalid path';
+        }
+      }).catch((err) => {
+        this.invalid = true
+        this.errorMsg = 'invalid path';
+      });
     },
     showUpPath() {
       if (this.upPath != this.rootPath) {
@@ -477,7 +573,7 @@ export default {
       };
     },
   }
-}
+})
 </script>
 
 <style scoped>

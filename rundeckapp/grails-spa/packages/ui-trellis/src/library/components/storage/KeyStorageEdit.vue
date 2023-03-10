@@ -125,10 +125,11 @@
 </template>
 
 <script lang="ts">
-import {getRundeckContext} from "../../../library";
-import {InputType, KeyType} from "../../../library/components/plugins/KeyStorageSelector.vue";
+import {getRundeckContext} from "../../index";
+import {InputType, KeyType} from "../plugins/KeyStorageSelector.vue";
+import Vue from "vue";
 
-export default {
+export default Vue.extend({
   name: "KeyStorageEdit",
   props: [
       'storageFilter'
@@ -137,6 +138,10 @@ export default {
     return {
       upload: {} as any,
       modalEdit: false,
+      path: '',
+      errorMsg: '',
+      directories: [] as any,
+      files: [] as any,
       keyTypes: [
         {text: 'Private Key', value: 'private'},
         {text: 'Public Key', value: 'public'},
@@ -149,6 +154,23 @@ export default {
     }
   },
   methods: {
+    allowedResource(meta: any) {
+      const filterArray = this.storageFilter.split('=');
+      const key = filterArray[0];
+      const value = filterArray[1];
+      if (key == 'Rundeck-key-type') {
+        if (value === meta['rundeckKeyType']) {
+          return true;
+        }
+      } else {
+        if (key == 'Rundeck-data-type') {
+          if (value === meta['Rundeck-data-type']) {
+            return true;
+          }
+        }
+      }
+      return false;
+    },
     handleCancel(){
       this.modalEdit=false
       this.$emit("closeEditor")
@@ -159,9 +181,9 @@ export default {
       var textarea = this.upload.textArea;
       var pass = this.upload.password;
       if (intype == 'text') {
-        return !!(textarea || pass);
+        return (textarea || pass) ? true : false;
       } else {
-        return !!file;
+        return file ? true : false;
       }
     },
     async handleUploadKey() {
@@ -347,7 +369,7 @@ export default {
       return 'keys/' + this.getKeyPath();
     },
   }
-}
+})
 </script>
 
 <style scoped>
