@@ -171,7 +171,7 @@
 
           </div>
         </div>
-        <div v-if="selectedResource && selectedResource.wasModified()">
+        <div v-if="selectedResource && selectedResource.modified">
           <div>
             {{ $t('Modified\:') }}
             <span class="timeago text-strong" :title="selectedResource.meta['Rundeck-content-modify-time']">{{ selectedResource.modifiedTimeAgo('ago') }}</span>
@@ -183,8 +183,8 @@
           </div>
         </div>
 
-        <div v-if="selectedResource && selectedResource.isPublicKey() && selectedIsDownloadable">
-          <button @click="$root.actionLoadContents('publicKeyContents',$element)" v-if="!selectedResource.wasDownloaded()" class="btn btn-sm btn-default">
+        <div v-if="selectedResource && selectedResource.isPublicKey && selectedIsDownloadable">
+          <button @click="actionLoadContents('publicKeyContents',$element)" v-if="!selectedResource.wasDownloaded" class="btn btn-sm btn-default">
             {{ $t('View Public Key Contents') }}
             (<span>{{ selectedResource.contentSize }}</span>
             {{ $t('Bytes') }})
@@ -214,6 +214,20 @@ interface StorageData {
   downloadEnabled: boolean;
 }
 
+interface selectedResource {
+  createdTime: string;
+  meta: {};
+  modified: boolean;
+  createdUsername: string;
+  modifiedUsername: string;
+  project: string;
+  wasDownloaded: boolean;
+  downloadError: string;
+  isPublicKey: boolean;
+  contentSize: string;
+
+}
+
 
 export default Vue.extend({
   name: "KeyStorageBrowser.vue",
@@ -230,7 +244,7 @@ export default Vue.extend({
       path: '',
       inputPath: '',
       selectedPath: '',
-      selectedResource: '',
+      selectedResource: {} as selectedResource,
       selectedIsDownloadable: false,
       fileFilter: '',
       fieldTarget: '',
