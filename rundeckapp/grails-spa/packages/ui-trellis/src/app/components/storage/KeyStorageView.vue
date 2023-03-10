@@ -202,14 +202,14 @@ export default {
   methods: {
     handleSelectKey() {
       this.modalOpen = false;
-      this.$emit("handled")
+      this.$emit("closeEditor")
       this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
       this.clean();
     },
     handleCancel() {
       this.clean();
       this.modalOpen = false;
-      this.$emit("cancelled")
+      this.$emit("closeSelector")
     },
     duration(start: any) {
       return moment().diff(moment(start));
@@ -339,6 +339,7 @@ export default {
         errorMsg: null as any,
       };
       this.modalEdit = true;
+      this.$emit("openEditor")
     },
     clean() {
       this.directories = [];
@@ -366,6 +367,7 @@ export default {
           this.defaultSelectKey(this.value);
         }
         this.modalOpen = true;
+        this.$emit("openSelector")
       }
     },
     defaultSelectKey(path: any) {
@@ -456,6 +458,7 @@ export default {
     },
     actionUpload() {
       this.modalEdit = true;
+      this.$emit("openEditor")
       let type = 'private';
       let inputType = InputType.Text;
 

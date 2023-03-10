@@ -151,7 +151,7 @@ export default {
   methods: {
     handleCancel(){
       this.modalEdit=false
-      this.$emit("editCancelled")
+      this.$emit("closeEditor")
     },
     validInput() {
       var intype = this.upload.inputType;
@@ -249,7 +249,7 @@ export default {
       if(saved){
         this.loadKeys();
         this.modalEdit = false;
-        this.$emit("saved")
+        this.$emit("closeEditor")
       }
     },
     loadKeys() {
