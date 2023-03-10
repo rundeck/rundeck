@@ -14,6 +14,9 @@
   - limitations under the License.
   --}%
 <%@ page import="grails.util.Environment; grails.converters.JSON" %>
+<g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+    <asset:javascript src="filterStepPluginsKOTest.js"/>
+</g:if>
 <div class="panel-heading">
     <span class="h3 ">
         <g:message code="${addMessage}"/>

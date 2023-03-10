@@ -3901,7 +3901,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
-        JobOptionConfigRemoteUrl configRemoteUrl = opt.getConfigRemoteUrl()
+        JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionRemoteUrl(opt, authContext)
 
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
@@ -3999,7 +3999,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, configRemoteUrl,authContext, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, configRemoteUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
                 result = remoteResult.json
                 if (remoteResult.stats) {
                     remoteStats.putAll(remoteResult.stats)
@@ -4556,6 +4556,32 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         return model
 
+    }
+
+
+    JobOptionConfigRemoteUrl getJobOptionRemoteUrl(Option option, AuthContext authContext ){
+        JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigMap().getJobOptionEntry(JobOptionConfigRemoteUrl.class)
+
+        if(configRemoteUrl?.getPasswordStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl?.getPasswordStoragePath(), false )){
+                def password = executionService.readStoragePassword(authContext, configRemoteUrl?.getPasswordStoragePath())
+                configRemoteUrl.password = password
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl?.getPasswordStoragePath()
+            }
+
+
+        }
+        if(configRemoteUrl?.getTokenStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl?.getTokenStoragePath(), false )) {
+                def token = executionService.readStoragePassword(authContext, configRemoteUrl?.getTokenStoragePath())
+                configRemoteUrl.token = token
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl?.getTokenStoragePath()
+            }
+        }
+
+        return configRemoteUrl
     }
 
 }

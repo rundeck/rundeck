@@ -44,6 +44,7 @@ class EditOptsController extends ControllerBase{
     def fileUploadService
     def optionValuesService
     def userService
+    def scheduledExecutionService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',

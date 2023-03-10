@@ -1302,6 +1302,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    String readStoragePassword(AuthContext authContext, String storagePath){
+        def keystore = storageService.storageTreeWithContext(authContext)
+        String password = null
+
+        if(keystore.hasPassword(storagePath)){
+            password = keystore.readPassword(storagePath)
+        }
+
+        return password
+    }
+
     /**
      * Load stored password default values for secure options with defaultStoragePath, and no value set.
      *

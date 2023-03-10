@@ -842,7 +842,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    static Object getRemoteJSON(String url, JobOptionConfigRemoteUrl configRemoteUrl, AuthContext authContext , int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+    static Object getRemoteJSON(String url, JobOptionConfigRemoteUrl configRemoteUrl, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
@@ -856,17 +856,18 @@ class ScheduledExecutionController  extends ControllerBase{
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
-                if(configRemoteUrl){
+                if(urlo.userInfo){
                     client.setUri(new URL(cleanUrl).toURI())
-
-                    if(configRemoteUrl.getAuthenticationType()== RemoteUrlAuthenticationType.BASIC){
-
-                        String password =
-                        UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                        client.setBasicAuthCredentials(cred.userName, cred.password)
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    client.setBasicAuthCredentials(cred.userName, cred.password)
+                } else if (configRemoteUrl) {
+                    client.setUri(new URL(cleanUrl).toURI())
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BASIC){
+                        client.setBasicAuthCredentials(configRemoteUrl.getUsername(), configRemoteUrl.getPassword())
                     }
+                    //set token auth
 
-                } else {
+                } else{
                     client.setUri(urlo.toURI())
                 }
             }catch(MalformedURLException e){
