@@ -202,12 +202,14 @@ export default {
   methods: {
     handleSelectKey() {
       this.modalOpen = false;
+      this.$emit("handled")
       this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
       this.clean();
     },
     handleCancel() {
       this.clean();
       this.modalOpen = false;
+      this.$emit("cancelled")
     },
     duration(start: any) {
       return moment().diff(moment(start));

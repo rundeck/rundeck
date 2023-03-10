@@ -23,12 +23,12 @@
 
         <modal v-model="modalOpen" title="Select a Storage File" id="storage-file" disabled="readOnly" ref="modalkeys" auto-focus
                append-to-body>
-          <key-storage-view :read-only="readOnly" :allow-upload="allowUpload" :value="value" ></key-storage-view>
+          <key-storage-view :read-only="readOnly" :allow-upload="allowUpload" :value="value" @cancelled="cancelled" @handled="handled"></key-storage-view>
         </modal>
 
         <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus
                append-to-body cancel-text="Cancel" ok-text="Save">
-          <key-storage-edit :storage-filter="storageFilter"></key-storage-edit>
+          <key-storage-edit :storage-filter="storageFilter" @saved="saved" @editCancelled="editCancelled"></key-storage-edit>
 
         </modal>
     </div>
@@ -97,6 +97,18 @@
             };
         },
         methods: {
+            saved(){
+              this.modalEdit=false
+            },
+            handled(){
+              this.modalEdit=false
+            },
+            cancelled(){
+              this.modalOpen=false
+            },
+            editCancelled(){
+              this.modalEdit=false
+            },
             openSelector() {
                 if(this.readOnly!==true) {
                   this.invalid = false;

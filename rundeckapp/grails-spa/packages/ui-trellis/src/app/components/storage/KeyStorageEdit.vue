@@ -116,7 +116,7 @@
   </div>
 
   <div slot="footer">
-    <button type="button" class="btn btn-sm btn-default" @click="modalEdit=false">Cancel</button>
+    <button type="button" class="btn btn-sm btn-default" @click="">Cancel</button>
     <button type="button" class="btn btn-sm btn-success" :disabled="validInput()===false"
             @click="handleUploadKey">
       Save
@@ -149,6 +149,10 @@ export default {
     }
   },
   methods: {
+    handleCancel(){
+      this.modalEdit=false
+      this.$emit("editCancelled")
+    },
     validInput() {
       var intype = this.upload.inputType;
       var file = this.upload.file;
@@ -245,6 +249,7 @@ export default {
       if(saved){
         this.loadKeys();
         this.modalEdit = false;
+        this.$emit("saved")
       }
     },
     loadKeys() {
