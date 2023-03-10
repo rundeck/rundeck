@@ -2619,7 +2619,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         failed |= validateDefinitionArgStringDatestamp(scheduledExecution)
         //v7
 
-        failed |= validateDefinitionOptions(scheduledExecution,params, userAndRoles)
+        failed |= validateDefinitionOptions(scheduledExecution,params)
         //v8
 
         failed |= validateDefinitionNotifications(scheduledExecution,params, validation, projectProps)
@@ -2718,12 +2718,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     @CompileStatic
-    public boolean validateDefinitionOptions(ScheduledExecution scheduledExecution, Map params, AuthContext authContext) {
+    public boolean validateDefinitionOptions(ScheduledExecution scheduledExecution, Map params) {
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, authContext, null, scheduledExecution.scheduled)
-            fileUploadService.validateFileOptConfig(origopt)
+            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
+            fileUploadService.validateFto-ileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
@@ -4204,7 +4204,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if(jobEventStatus?.isUseNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
-            def result = validateOptions(scheduledExecution, rundeckOptions, authContext)
+            def result = validateOptions(scheduledExecution, rundeckOptions)
             def failed = result.failed
             //try to save workflow
             if(failed){
@@ -4246,11 +4246,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateOptions(scheduledExecution, rundeckOptions, AuthContext authContext){
+    def validateOptions(scheduledExecution, rundeckOptions){
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, userDataProvider, authContext, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
