@@ -2701,7 +2701,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def defaultoptions=[:]
             options.each {Option opt ->
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
-                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         Map selectedOption = remoteOptions.values.find {it instanceof Map && [true, 'true'].contains(it.selected)}
                         if(selectedOption){
@@ -2844,7 +2844,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if(opt.enforced && !(opt.optionValues || opt.optionValuesPluginType)){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution,
-                            [option: opt.name, extra: [option: optparams]], authContext?.username)
+                            [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         opt.optionValues = remoteOptions.values.collect { optValue ->
                             if (optValue instanceof Map) {

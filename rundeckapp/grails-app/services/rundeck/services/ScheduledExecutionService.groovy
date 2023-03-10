@@ -102,6 +102,7 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.validation.validators.AnyDomainEmailValidator
+import rundeck.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -2618,7 +2619,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         failed |= validateDefinitionArgStringDatestamp(scheduledExecution)
         //v7
 
-        failed |= validateDefinitionOptions(scheduledExecution,params)
+        failed |= validateDefinitionOptions(scheduledExecution,params, userAndRoles)
         //v8
 
         failed |= validateDefinitionNotifications(scheduledExecution,params, validation, projectProps)
@@ -2717,11 +2718,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     @CompileStatic
-    public boolean validateDefinitionOptions(ScheduledExecution scheduledExecution, Map params) {
+    public boolean validateDefinitionOptions(ScheduledExecution scheduledExecution, Map params, AuthContext authContext) {
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, authContext, null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -3896,10 +3897,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
+        JobOptionConfigRemoteUrl configRemoteUrl = opt.getConfigRemoteUrl()
+
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
@@ -3996,7 +3999,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, configRemoteUrl,authContext, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
                 result = remoteResult.json
                 if (remoteResult.stats) {
                     remoteStats.putAll(remoteResult.stats)
@@ -4201,7 +4204,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if(jobEventStatus?.isUseNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
-            def result = validateOptions(scheduledExecution, rundeckOptions)
+            def result = validateOptions(scheduledExecution, rundeckOptions, authContext)
             def failed = result.failed
             //try to save workflow
             if(failed){
@@ -4243,11 +4246,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateOptions(scheduledExecution, rundeckOptions){
+    def validateOptions(scheduledExecution, rundeckOptions, AuthContext authContext){
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider, authContext, null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")

@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.jobs.options;
+package rundeck.options;
 
 public enum RemoteUrlAuthenticationType {
 

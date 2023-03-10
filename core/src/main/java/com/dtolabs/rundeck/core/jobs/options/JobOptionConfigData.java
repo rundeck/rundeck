@@ -19,7 +19,7 @@ public class JobOptionConfigData {
     }
 
     public JobOptionConfigEntry getJobOptionEntry(Class classType){
-        return jobOptionConfigEntries.stream().filter(it->classType.isInstance(it)).findFirst().get();
+        return jobOptionConfigEntries.stream().filter(it->classType.isInstance(it)).findFirst().orElse(null);
     }
 
 }

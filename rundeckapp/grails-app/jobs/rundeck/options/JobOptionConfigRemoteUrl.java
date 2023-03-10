@@ -1,4 +1,6 @@
-package com.dtolabs.rundeck.core.jobs.options;
+package rundeck.options;
+
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry;
 
 public class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
 

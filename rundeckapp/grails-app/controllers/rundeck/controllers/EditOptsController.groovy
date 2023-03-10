@@ -18,12 +18,10 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
-import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry
-import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigPluginAttributes
-import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigRemoteUrl
-import com.dtolabs.rundeck.core.jobs.options.RemoteUrlAuthenticationType
+import rundeck.options.JobOptionConfigPluginAttributes
+import rundeck.options.JobOptionConfigRemoteUrl
+import rundeck.options.RemoteUrlAuthenticationType
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.core.auth.AuthConstants
@@ -97,6 +95,9 @@ class EditOptsController extends ControllerBase{
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
+
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
@@ -113,7 +114,7 @@ class EditOptsController extends ControllerBase{
         if(null != params.name && editopts[params.name]){
 
             def opt = editopts[params.name]
-            outparams = _validateOption(opt, userDataProvider, null, params.jobWasScheduled == 'true')
+            outparams = _validateOption(opt, userDataProvider, authContext, null, params.jobWasScheduled == 'true')
             outparams = validateFileOpt(opt, outparams)
         }
 
@@ -201,16 +202,19 @@ class EditOptsController extends ControllerBase{
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
+
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
             return error()
         }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
+
         def editopts = _getSessionOptions()
         def name = params.name
         def origName = params.origName
 
-        def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params])
+        def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params], authContext)
         if (result.error) {
             log.error(result.error)
 
@@ -513,7 +517,7 @@ class EditOptsController extends ControllerBase{
      * error: any error message
      * undo: corresponding undo action map
      */
-    protected Map _applyOptionAction (Map editopts, Map input){
+    protected Map _applyOptionAction (Map editopts, Map input, AuthContext authContext){
         def result = [:]
         if ('remove' == input.action) {
             def name = input.name
@@ -528,7 +532,7 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, userDataProvider, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(option, userDataProvider, authContext, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(option, vres)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
@@ -593,7 +597,7 @@ class EditOptsController extends ControllerBase{
             def clone = option.createClone()
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
-            def vres = _validateOption(moditem, userDataProvider, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(moditem, userDataProvider, authContext, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(moditem, vres)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
@@ -628,7 +632,7 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, UserDataProvider udp, Map params = null, boolean jobWasScheduled=false) {
+    public static _validateOption(Option opt, UserDataProvider udp, AuthContext authContext,  Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
@@ -693,9 +697,10 @@ class EditOptsController extends ControllerBase{
             if(opt.realValuesUrl){
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
+                    JobOptionConfigRemoteUrl configRemoteUrl = opt.getConfigRemoteUrl()
                     ScheduledExecution se = opt.scheduledExecution
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
-                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, 10, 0, 5)
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, configRemoteUrl,authContext, 10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json
                         if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){

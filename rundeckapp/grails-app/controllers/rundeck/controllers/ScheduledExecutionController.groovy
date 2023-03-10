@@ -72,6 +72,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
+import rundeck.options.JobOptionConfigRemoteUrl
+import rundeck.options.RemoteUrlAuthenticationType
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -755,7 +757,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
             if (opt.realValuesUrl) {
-                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user)
+                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user, authContext)
                 def model = [optionSelect : optionRemoteValues.optionSelect,
                              values       : optionRemoteValues.values,
                              srcUrl       : optionRemoteValues.srcUrl,
@@ -840,7 +842,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    static Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+    static Object getRemoteJSON(String url, JobOptionConfigRemoteUrl configRemoteUrl, AuthContext authContext , int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
@@ -854,10 +856,16 @@ class ScheduledExecutionController  extends ControllerBase{
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
-                if(urlo.userInfo){
+                if(configRemoteUrl){
                     client.setUri(new URL(cleanUrl).toURI())
-                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    client.setBasicAuthCredentials(cred.userName, cred.password)
+
+                    if(configRemoteUrl.getAuthenticationType()== RemoteUrlAuthenticationType.BASIC){
+
+                        String password =
+                        UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                        client.setBasicAuthCredentials(cred.userName, cred.password)
+                    }
+
                 } else {
                     client.setUri(urlo.toURI())
                 }

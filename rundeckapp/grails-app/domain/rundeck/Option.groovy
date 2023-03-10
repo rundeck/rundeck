@@ -19,7 +19,7 @@ package rundeck
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigRemoteUrl
+import rundeck.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
