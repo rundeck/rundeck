@@ -39,7 +39,9 @@
 <script lang="ts">
     import Vue from 'vue';
 
-    import { getRundeckContext, RundeckContext } from "../../../library";
+    import {
+      getRundeckContext,
+    } from '../../rundeckService';
 
     import moment from 'moment';
     import KeyStorageView from "../../components/storage/KeyStorageView.vue"
