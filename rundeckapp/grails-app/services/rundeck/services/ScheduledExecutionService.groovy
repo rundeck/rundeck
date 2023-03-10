@@ -2723,7 +2723,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         scheduledExecution.options?.each { Option origopt ->
             EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
-            fileUploadService.validateFto-ileOptConfig(origopt)
+            fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
