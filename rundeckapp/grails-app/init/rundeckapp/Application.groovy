@@ -3,6 +3,7 @@ package rundeckapp
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import groovy.util.logging.Slf4j
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
@@ -13,6 +14,11 @@ import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+import org.springframework.boot.context.event.ApplicationFailedEvent
+import org.springframework.boot.context.event.ApplicationPreparedEvent
+import org.springframework.boot.context.event.ApplicationStartedEvent
+import org.springframework.context.ApplicationEvent
+import org.springframework.context.ApplicationListener
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -54,18 +60,37 @@ import java.nio.file.Paths
 )
 
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
-class Application extends GrailsAutoConfiguration implements EnvironmentAware {
+@Slf4j
+class Application extends GrailsAutoConfiguration implements EnvironmentAware, ApplicationListener<ApplicationEvent> {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPrebootstrap()
-        ctx = GrailsApp.run(Application, args)
+        boolean pbsuccess=runPrebootstrap()
+        if(!pbsuccess){
+            log.error "Prebootstrap failure"
+//            System.exit(1)
+        }
+        try {
+            log.info("GrailsApp.run...")
+            ctx = GrailsApp.run(Application, args)
+        }catch(Exception e){
+            log.error("Caught exception running app",e)
+        }
         if(rundeckConfig.isMigrate()) {
-            println "\nMigrations complete"
-            System.exit(0)
+            log.info "Migrations complete"
+            System.exit(pbsuccess?0:1)
+        }
+    }
+
+    @Override
+    void onApplicationEvent(final ApplicationEvent event) {
+        if(event instanceof ApplicationFailedEvent){
+            if(rundeckConfig.isMigrate()){
+                System.exit(1)
+            }
         }
     }
 
@@ -83,7 +108,11 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     @Override
     void setEnvironment(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
-        if(rundeckConfig == null) Application.runPrebootstrap()
+        if(rundeckConfig == null) {
+            if(!runPrebootstrap()){
+                log.error("Prebootstrap had a failure")
+            }
+        }
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         hardCodedRundeckConfigs.setProperty(
@@ -117,19 +146,22 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void doWithDynamicMethods() {
     }
-    static void runPrebootstrap() {
+    static boolean runPrebootstrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
         preBootstraps.each { pbs -> preboostraplist.add(pbs) }
         preboostraplist.sort { a,b -> a.order <=> b.order }
+        boolean success=true
         preboostraplist.each { pbs ->
             try {
                 pbs.run()
             } catch(Exception ex) {
                 System.err.println("PreBootstrap process "+pbs.class.canonicalName+" failed")
                 ex.printStackTrace()
+                success=false
             }
         }
+        return success
     }
 
 
