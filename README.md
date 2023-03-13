@@ -1,10 +1,10 @@
-Rundeck Step Disabler - PD Hackweek '24 Project
+Rundeck Step Disabler - PD Hackweek '23 Project
 ========
 
 by:
 
 * Rodrigo Navarro ([@ronaveva](https://github.com/ronaveva))
-* Darwis Narvaez ([@darwisnarvaezdev(https://github.com/darwisnarvaezdev)])
+* Darwis Narvaez ([@darwisnarvaezdev](https://github.com/darwisnarvaezdev))
 * Jesús Osuna ([@jesus-osuna-m](https://github.com/jesus-osuna-m))
 * Antony Velásquez ([@avelasquezr](https://github.com/avelasquezr))
 * Reiner Acuña ([@MegaDrive68k](https://github.com/MegaDrive68k))
