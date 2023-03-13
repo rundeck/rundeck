@@ -22,6 +22,7 @@ import grails.gorm.dirty.checking.DirtyCheck
 
 @DirtyCheck
 abstract class WorkflowStep {
+    Boolean enabled
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description
@@ -32,6 +33,7 @@ abstract class WorkflowStep {
         keepgoingOnSuccess(nullable: true)
         description(nullable: true, maxSize: 1024)
         pluginConfigData(nullable: true, blank: true)
+        enabled(defaultValue: true)
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['pluginConfig']
