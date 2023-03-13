@@ -1,3 +1,26 @@
+Rundeck Step Disabler - PD Hackweek '24 Project
+========
+
+by:
+
+* Rodrigo Navarro ([@ronaveva](https://github.com/ronaveva))
+* Darwis Narvaez ([@darwisnarvaezdev(https://github.com/darwisnarvaezdev)])
+* Jesús Osuna ([@jesus-osuna-m](https://github.com/jesus-osuna-m))
+* Antony Velásquez ([@avelasquezr](https://github.com/avelasquezr))
+* Reiner Acuña ([@MegaDrive68k](https://github.com/MegaDrive68k))
+
+Abstract
+========
+
+When creating a Rundeck workflow job, we frequently find ourselves needing to add and test specifics steps. Since you often want to explore multiple approaches to completing the same step, it would be nice to maintain the step that has already been completed without fully losing it.
+
+The ability to enable and disable steps would speed up the process of building jobs on the fly.
+
+Objective
+========
+
+Add the ability to disable steps (without deleting them) in Rundeck OSS.
+
 Rundeck
 ========
 
