@@ -2,13 +2,28 @@ package com.rundeck.plugin
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.rundeck.plugin.api.model.ModeLaterResponse
+import com.rundeck.plugin.api.model.ProjectModeLaterRequest
 import grails.converters.JSON
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.core.auth.AuthConstants
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller("/project")
 class EditProjectController {
 
     static allowedMethods = [
@@ -105,7 +120,62 @@ class EditProjectController {
         )
     }
 
-    def apiProjectEnableLater(String project){
+    @Post(uri = "/{project}/enable/later")
+    @Operation(
+        method = "POST",
+        summary = "Enable Project executions or schedules after a duration of time",
+        description = """Sets project execution mode to Active or enable Schedules at a later time.
+
+Since: v34
+""",
+        requestBody = @RequestBody(
+            required = true,
+            description = """Enable Schedule or Executions.
+Specify the `type` to enable, and a `value` with a time duration expression.
+The request must contain a `value` with a "Time duration expression". (See request schema for syntax.)
+""",
+            content = @Content(
+                mediaType = 'application/json',
+                examples = [
+                    @ExampleObject(name="Enable Schedule",value='{"type":"schedule","value":"2h30m"}'),
+                    @ExampleObject(name="Enable Executions",value='{"type":"executions","value":"1d"}')
+                ],
+                schema = @Schema(implementation = ProjectModeLaterRequest)
+            )
+        ),
+        parameters = @Parameter(
+            name = "project",
+            in = ParameterIn.PATH,
+            description = "project name",
+            required = true,
+            schema = @Schema(type = 'string')
+        )
+    )
+    @ApiResponse(
+        description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
+        responseCode = "200",
+        content = @Content(
+            mediaType = 'application/json',
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":true,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @ApiResponse(
+        description = "Request error response. A description of the error is in the `msg` field.",
+        responseCode = "400",
+        content = @Content(
+            mediaType = 'application/json',
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @Tags(
+        [
+            @Tag(name="project execution mode"),
+            @Tag(name="project schedule mode")
+        ]
+    )
+    def apiProjectEnableLater(String project) {
         if (!requireAuth(project)) {
             return
         }
@@ -114,6 +184,7 @@ class EditProjectController {
             return
         }
 
+        //TODO: use ModeLaterRequest type
         def result = validateApi(request, response)
         def saved = false
         def msg = ""
@@ -185,6 +256,61 @@ class EditProjectController {
     }
 
 
+    @Post(uri = "/{project}/disable/later")
+    @Operation(
+        method = "POST",
+        summary = "Disable Project executions or schedules after a duration of time",
+        description = """Sets project execution mode to Passive or disables Schedules at a later time.
+
+Since: v34
+""",
+        requestBody = @RequestBody(
+            required = true,
+            description = """Disable Schedule or Executions.
+Specify the `type` to enable, and a `value` with a time duration expression.
+The request must contain a `value` with a "Time duration expression". (See request schema for syntax.)
+""",
+            content = @Content(
+                mediaType = 'application/json',
+                examples = [
+                    @ExampleObject(name="Disable Schedule",value='{"type":"schedule","value":"2h30m"}'),
+                    @ExampleObject(name="Disable Executions",value='{"type":"executions","value":"1d"}')
+                ],
+                schema = @Schema(implementation = ProjectModeLaterRequest)
+            )
+        ),
+        parameters = @Parameter(
+            name = "project",
+            in = ParameterIn.PATH,
+            description = "project name",
+            required = true,
+            schema = @Schema(type = 'string')
+        )
+    )
+    @ApiResponse(
+        description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
+        responseCode = "200",
+        content = @Content(
+            mediaType = 'application/json',
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":true,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @ApiResponse(
+        description = "Request error response. A description of the error is in the `msg` field.",
+        responseCode = "400",
+        content = @Content(
+            mediaType = 'application/json',
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @Tags(
+        [
+            @Tag(name="project execution mode"),
+            @Tag(name="project schedule mode")
+        ]
+    )
     def apiProjectDisableLater(String project){
 
         if (!requireAuth(project)) {
