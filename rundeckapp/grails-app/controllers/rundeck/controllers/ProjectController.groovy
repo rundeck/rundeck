@@ -30,6 +30,21 @@ import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Put
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.core.auth.AuthConstants
@@ -37,6 +52,7 @@ import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -55,10 +71,10 @@ import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
 
+@Controller('/project')
 class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
-    def scheduledExecutionService
     ContextACLManager<AppACLContext> aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -606,6 +622,44 @@ class ProjectController extends ControllerBase{
     /**
      * API: /api/11/project/NAME
      */
+    @Get('/{project}')
+    @Operation(
+            method = "GET",
+            summary = "Get a project",
+            description = """Get information about a project.
+The reponse in XML or JSON format is determined by the Accept request header.
+
+Authorization required: `read` access for `project` resource type to get basic project details and `configure` access to get all properties config or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project details")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = @Content(
+                    mediaType = "application/xml",
+                    examples = @ExampleObject('<project url="http://server:4440/api/11/project/PROJECT_NAME"> <name>Project Name</name> <description>...</description> <!-- additional items --></project>')
+            )
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
     def apiProjectGet() {
         if (!apiService.requireApi(request, response)) {
@@ -754,6 +808,42 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    /**
+     * API: /api/11/project/NAME
+     */
+    @Delete('/{project}')
+    @Operation(
+            method = "Delete",
+            summary = "Delete a project",
+            description = """Delete an existing projects on the server.
+
+Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="delete project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Project details",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def apiProjectDelete(){
@@ -840,6 +930,54 @@ class ProjectController extends ControllerBase{
         }
         return frameworkService.getFrameworkProject(project)
     }
+
+    @Get('/{project}/config')
+    @Operation(
+            method = "GET",
+            summary = "Get a project config",
+            description = """Retrieve the project configuration data.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''key=value
+key2=value''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<config>
+    <property key="name" value="value"/>
+    <!-- ... -->
+</config>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}''')
+                    )
+            ]
+    )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigGet(){
@@ -1305,6 +1443,104 @@ class ProjectController extends ControllerBase{
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
+
+    @Put('/{project}/config')
+    @Operation(
+            method = "PUT",
+            summary = "Modify a project config",
+            description = """Replaces all configuration data with the submitted values.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                mediaType = MediaType.APPLICATION_XML,
+                                examples = [
+                                        @ExampleObject(
+                                                name = 'Set project config',
+                                                summary = "Replace all project config settings",
+                                                value = '''<config>
+    <property key="key" value="value"/>
+    <!-- ... -->
+</config>'''
+                                        )
+                                ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'Set project config',
+                                                    summary = "Replace all project config settings",
+                                                    value = '''{
+    "key":"value",
+    "key2":"value2..."
+}'''
+                                            )
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'Set project config',
+                                                    summary = "Replace all project config settings",
+                                                    value = '''key=value
+key2=value'''
+                                            )
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_XML,
+                            examples = [
+                                    @ExampleObject('''<config>
+    <property key="key" value="value"/>
+    <!-- ... -->
+</config>'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                    @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            examples = [
+                                    @ExampleObject('''key=value
+key2=value'''
+                                    )
+                            ]
+                    )
+            ]
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigPut() {
         if(!apiService.requireApi(request,response)){
@@ -1361,6 +1597,72 @@ class ProjectController extends ControllerBase{
         checkScheduleChanges(project, currentProps, configProps)
         respondProjectConfig(respFormat, project)
     }
+
+    @Get('/{project}/config/{keypath}')
+    @Operation(
+            method = "GET",
+            summary = "Get an individual project config by their key",
+            description = """Retrieve an individual configuration properties by their key.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''key=value
+key2=value''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<config>
+    <property key="name" value="value"/>
+    <!-- ... -->
+</config>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyGet() {
         if(!apiService.requireApi(request,response)){
@@ -1426,6 +1728,106 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    @Put('/{project}/config/{keypath}')
+    @Operation(
+            method = "PUT",
+            summary = "Set the value.",
+            description = """Replace an individual configuration data with the submitted value.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_XML,
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'Set project config',
+                                                    summary = "Replace an individual config settings",
+                                                    value = '''<property key="[KEY]" value="key value"/>'''
+                                            )
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'Set project config',
+                                                    summary = "Replace an individual config settings",
+                                                    value = '''{ "[KEY]" : "key value" }'''
+                                            )
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'Set project config',
+                                                    summary = "Replace an individual config settings",
+                                                    value = '''key value'''
+                                            )
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_XML,
+                            examples = [
+                                    @ExampleObject('''<property key="[KEY]" value="key value"/>'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                    @ExampleObject('''{ "[KEY]" : "key value" }'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            examples = [
+                                    @ExampleObject('''key value'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyPut() {
         if(!apiService.requireApi(request,response)){
@@ -1495,6 +1897,42 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+
+    @Delete('/{project}/config/{keypath}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete the key",
+            description = """Delete an individual configuration properties by their key.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyDelete() {
         if (!apiService.requireApi(request, response)) {
