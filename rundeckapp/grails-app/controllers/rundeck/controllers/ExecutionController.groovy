@@ -79,7 +79,7 @@ import java.text.SimpleDateFormat
 /**
 * ExecutionController
 */
-@Controller('/execution')
+@Controller()
 class ExecutionController extends ControllerBase{
     FrameworkService frameworkService
     ExecutionService executionService
@@ -920,7 +920,7 @@ setTimeout(function(){
         ) && !(params.convertContent in ['false', false, 'off'])
     }
 
-    @Get(uri="/{id}/output")
+    @Get(uri= "/execution/{id}/output")
     @Operation(
         method="GET",
         summary="Execution Output",
@@ -1192,7 +1192,7 @@ this Log Entry.""")
         return tailExecutionOutput()
     }
 
-    @Get(uri="/{id}/output/node/{nodename}")
+    @Get(uri="/execution/{id}/output/node/{nodename}")
     @Operation(
         method="GET",
         summary="Execution Output For Node",
@@ -1226,7 +1226,7 @@ this Log Entry.""")
         return apiExecutionOutput()
     }
 
-    @Get(uri="/{id}/output/node/{nodename}/step/{stepctx}")
+    @Get(uri="/execution/{id}/output/node/{nodename}/step/{stepctx}")
     @Operation(
         method="GET",
         summary="Execution Output For Node and Step",
@@ -1267,7 +1267,7 @@ this Log Entry.""")
         return apiExecutionOutput()
     }
 
-    @Get(uri="/{id}/output/step/{stepctx}")
+    @Get(uri="/execution/{id}/output/step/{stepctx}")
     @Operation(
         method="GET",
         summary="Execution Output For Step",
@@ -1483,7 +1483,7 @@ this Log Entry.""")
     }
 
 
-    @Get(uri="/{id}/output/state")
+    @Get(uri="/execution/{id}/output/state")
     @Operation(
         summary="Execution Output with State",
         description = """Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
@@ -2108,7 +2108,7 @@ JSON response requires API v14.
     /**
      * API: /api/execution/{id} , version 1
      */
-    @Get(uri="/{id}")
+    @Get(uri="/execution/{id}")
     @Operation(
         summary="Execution Info",
         description = "Get the status for an execution by ID.",
@@ -2244,7 +2244,7 @@ JSON response requires API v14.
         }
     }
 
-    @Get(uri="/{id}/state")
+    @Get(uri="/execution/{id}/state")
     @Operation(
         summary="Execution State",
         description = """Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
@@ -2742,7 +2742,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
         }
     }
 
-    @Post(uri="/{id}/abort")
+    @Post(uri="/execution/{id}/abort")
     @Operation(
         summary="Aborting Executions",
         description = "Abort a running execution by ID.",
@@ -2887,7 +2887,7 @@ Authorization required:
         }
     }
 
-    @Delete(uri="/{id}")
+    @Delete(uri="/execution/{id}")
     @Operation(
         summary="Delete an Execution",
         description = """Delete an execution by ID.
@@ -3210,7 +3210,7 @@ Since: V12
         }
     }
 
-    @Get(uri="/{id}/input/files")
+    @Get(uri="/execution/{id}/input/files")
     @Operation(
         summary="List Input Files for an Execution",
         description = "List input files used for an execution. Since: V19",
