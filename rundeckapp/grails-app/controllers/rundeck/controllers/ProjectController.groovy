@@ -1823,6 +1823,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @ApiResponse(
             responseCode = "400",
+            description = "Bad request to put project config",
             content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
