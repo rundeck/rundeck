@@ -195,7 +195,8 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 );
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();

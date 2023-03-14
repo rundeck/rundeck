@@ -222,10 +222,11 @@ public class ExecutionItemFactory {
             final String[] command,
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
-            final String label
+            final String label,
+            final boolean enabled
     )
     {
-        return createExecCommand(command, handler, keepgoingOnSuccess, label, null);
+        return createExecCommand(command, handler, keepgoingOnSuccess, label, null, enabled);
 
     }
 
@@ -234,11 +235,12 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String label,
-            final List<PluginConfiguration> filterConfigs
+            final List<PluginConfiguration> filterConfigs,
+            final boolean enabled
     )
     {
 
-        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs);
+        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs, enabled);
     }
 
     /**
@@ -618,13 +620,15 @@ public class ExecutionItemFactory {
         private final StepExecutionItem handler;
         private final boolean keepgoingOnSuccess;
         private final List<PluginConfiguration> filterConfigs;
+        private final boolean enabled;
 
         public CommandItem(
                 final String label,
                 final String[] command,
                 final StepExecutionItem handler,
                 final boolean keepgoingOnSuccess,
-                final List<PluginConfiguration> filterConfigs
+                final List<PluginConfiguration> filterConfigs,
+                final boolean enabled
         )
         {
             this.label = label;
@@ -632,6 +636,7 @@ public class ExecutionItemFactory {
             this.handler = handler;
             this.keepgoingOnSuccess = keepgoingOnSuccess;
             this.filterConfigs = filterConfigs;
+            this.enabled = enabled;
         }
 
         @Override
@@ -656,6 +661,11 @@ public class ExecutionItemFactory {
         @Override
         public List<PluginConfiguration> getFilterConfigurations() {
             return filterConfigs;
+        }
+
+        @Override
+        public Boolean isEnabled() {
+            return this.enabled;
         }
 
         @Override
