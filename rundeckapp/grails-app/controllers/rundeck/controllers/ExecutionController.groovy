@@ -18,6 +18,10 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestXml
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
@@ -52,6 +56,7 @@ import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.quartz.JobExecutionContext
@@ -2940,6 +2945,97 @@ Since: V12
         return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @Post('/executions/delete')
+    @Operation(
+        method="POST",
+        summary="Bulk Delete Executions",
+        description = """Delete a set of Executions by their IDs.
+
+The IDs can be specified in two ways:
+
+1. Using a URL parameter `ids`, as a comma separated list, with no body content
+
+        POST /api/12/executions/delete?ids=1,2,17
+        Content-Length: 0
+
+2. Using a request body of either XML or JSON data.
+
+Note: the JSON schema also supports a basic JSON array 
+""",
+        requestBody = @RequestBody(
+            description = "Delete Bulk IDs request.",
+            content=[
+                @Content(
+                    mediaType = 'application/json',
+                    schema = @Schema(oneOf = [
+                        DeleteBulkRequest, DeleteBulkRequestLong
+                    ]),
+                    examples = [
+                        @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
+                        @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
+                    ]
+                ),
+                @Content(
+                    mediaType = 'application/xml',
+                    schema = @Schema(implementation = DeleteBulkRequestXml),
+                    examples = @ExampleObject("""<executions>
+    <execution id="1"/>
+    <execution id="2"/>
+    <execution id="17"/>
+</executions>""")
+                )
+            ]
+        ),
+        parameters = @Parameter(
+            name = "ids",
+            description = "comma separated list of IDs",
+            in = ParameterIn.QUERY,
+            required = false,
+            schema = @Schema(type = "string", format = "comma-separated")
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description = """""",
+        content=[@Content(
+            mediaType = 'application/json',
+            schema = @Schema(implementation = DeleteBulkResponse),
+            examples = @ExampleObject("""{
+  "failures": [
+    {
+      "id": "82",
+      "message": "Not found: 82"
+    },
+    {
+      "id": "83",
+      "message": "Not found: 83"
+    },
+    {
+      "id": "84",
+      "message": "Not found: 84"
+    }
+  ],
+  "failedCount": 3,
+  "successCount": 2,
+  "allsuccessful": false,
+  "requestCount": 5
+}""")
+        ),@Content(
+            mediaType = 'application/xml',
+            schema = @Schema(implementation = DeleteBulkResponse),
+            examples = @ExampleObject("""<deleteExecutions requestCount='4' allsuccessful='false'>
+  <successful count='0' />
+  <failed count='4'>
+    <execution id='131' message='Unauthorized: Delete execution 131' />
+    <execution id='109' message='Not found: 109' />
+    <execution id='81' message='Not found: 81' />
+    <execution id='74' message='Not found: 74' />
+  </failed>
+</deleteExecutions>""")
+        )]
+
+    )
+    @Tag(name = 'execution')
     /**
      * Delete bulk API action
      * @return
