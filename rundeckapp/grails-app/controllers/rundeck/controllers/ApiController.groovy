@@ -238,8 +238,8 @@ class ApiController extends ControllerBase{
                     name='featureName',
                     in = ParameterIn.PATH,
                     description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
-                    allowEmptyValue = true,
-                    required = false,
+                    allowEmptyValue = false,
+                    required = true,
                     schema = @Schema(
                             type='string'
                     )
