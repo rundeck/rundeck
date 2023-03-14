@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.app.api.jobs.upload
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * @author greg
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 
 @ApiResource
 @ElementName('file')
+@Schema
 class JobFileInfo {
     @XmlAttribute
     String id
@@ -36,7 +38,9 @@ class JobFileInfo {
     String fileName
     String sha
     Long size
+    @Schema(type="string", format="iso")
     Date dateCreated
+    @Schema(type="string", format="iso")
     Date expirationDate
     String user
     String fileState
