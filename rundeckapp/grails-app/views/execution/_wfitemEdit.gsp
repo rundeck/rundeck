@@ -754,6 +754,8 @@
             </div>
         </g:else>
 
+        %{--    Step Disabler    --}%
+        <g:hiddenField name="enabled" value="${item?.enabled !== null ? item?.enabled : true}" />
         <g:hiddenField name="key" value="${key}"/>
         <g:hiddenField name="isErrorHandler" value="${isErrorHandler ? true : false}"/>
         <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>

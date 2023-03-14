@@ -186,6 +186,11 @@ jQuery(function(){
             <g:render template="/common/undoRedoControls" model="[key:'workflow']"/>
         </div>
     </g:if>
+    <g:if test="${true}">
+        <div id="stepsDashboard_container" style="width: 100%; height: 150px;">
+            <g:render template="/execution/stepsDashboard" model="${[workflow: workflow]}" />
+        </div>
+    </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">
         <g:render template="/execution/wflistContent" model="${[workflow:workflow,edit:edit,noimgs:noimgs,project:project]}"/>
     </ol>
