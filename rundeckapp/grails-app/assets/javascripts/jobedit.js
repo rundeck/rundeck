@@ -742,19 +742,12 @@ function _addAceTextarea(textarea, callback, ext) {
 function _wfisavenew(formelem) {
   jobWasEdited();
   var data = jQuery("#" + formelem + " :input").serialize();
-  console.log(`The data of the inputs: ${JSON.stringify(data)}`)
   jQuery.ajax({
     type: 'POST',
     url: _genUrl(appLinks.workflowSave),
     data: data,
     beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
     success: function (resp, status, jqxhr) {
-      // Load the container div with newly generated data.
-      // Select the div
-      let dashboardElement = jQuery('#stepsDashboard_container');
-      if( dashboardElement.length > 0 ){
-        // AJAX call with template data.
-      }
       jQuery(newitemElem).html(resp);
       if (jQuery(newitemElem).find('.wfitemEditForm').length > 0) {
         //was error
