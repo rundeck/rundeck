@@ -66,7 +66,6 @@
                     </a>
                     </li>
                 </g:if>
-
                     <g:if test="${!jobitem}">
                 <li>
                     <a class=""

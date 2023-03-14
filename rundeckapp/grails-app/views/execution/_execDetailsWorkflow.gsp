@@ -187,7 +187,7 @@ jQuery(function(){
         </div>
     </g:if>
     <g:if test="${true}">
-        <div id="stepsDashboard_container" style="width: 100%; height: 150px;">
+        <div id="stepsDashboard_container" style="width: 100%; height: 150px; margin-bottom: 2rem;">
             <g:render template="/execution/stepsDashboard" model="${[workflow: workflow]}" />
         </div>
     </g:if>

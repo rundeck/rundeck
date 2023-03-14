@@ -1,13 +1,5 @@
-%{--
-    TODOS:
-    1) Internationalize
-
-
-    Template to be handled by "jobedit.js"
---}%
-
 <g:set var="steps" value="${[:]}"/>
-<% println params%>
+<% System.out.println(workflow) %>
 <div id="stepDashboard"
      style="width: 100%; height: 150px; border: 1.5px solid lightgray; border-radius: 5px; margin-bottom: 2rem; margin-top: 2rem;">
     <div style="width: 100%;height: 100%;padding: 1rem; display: flex;justify-content: center;font-weight: bold;flex-direction: column;">
