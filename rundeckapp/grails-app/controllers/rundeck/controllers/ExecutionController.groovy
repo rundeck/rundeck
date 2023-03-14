@@ -1191,6 +1191,116 @@ this Log Entry.""")
         }
         return tailExecutionOutput()
     }
+
+    @Get(uri="/{id}/output/node/{nodename}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Node",
+        description="""Get the output for an execution filtered for a specific node.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "nodename",
+                description = "Node Name, all results will be filtered for only this node.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/node/{nodename}, version 5
+     */
+    def apiExecutionOutputNodeFilter() {
+        return apiExecutionOutput()
+    }
+
+    @Get(uri="/{id}/output/node/{nodename}/step/{stepctx}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Node and Step",
+        description="""Get the output for an execution filtered for a specific node and step.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "nodename",
+                description = "Node Name, all results will be filtered for only this node.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "stepctx",
+                description = "Step Context ID. This is a string in the form `1/2/3` indicating the step context.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
+     */
+    def apiExecutionOutputNodeStepFilter() {
+        return apiExecutionOutput()
+    }
+
+    @Get(uri="/{id}/output/step/{stepctx}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Step",
+        description="""Get the output for an execution filtered for a specific step.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "stepctx",
+                description = "Step Context ID. This is a string in the form `1/2/3` indicating the step context.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/step/{stepctx}, version 5
+     */
+    def apiExecutionOutputStepFilter() {
+        return apiExecutionOutput()
+    }
+
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
             "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
