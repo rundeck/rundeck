@@ -1,4 +1,5 @@
 <template>
+<div>
   <div class="alert alert-danger" v-if="upload.errorMsg!==null">
     <span>{{upload.errorMsg}}</span>
   </div>
@@ -116,12 +117,13 @@
   </div>
 
   <div slot="footer">
-    <button type="button" class="btn btn-sm btn-default" @click="">Cancel</button>
+    <button type="button" class="btn btn-sm btn-default" @click="handleCancel">Cancel</button>
     <button type="button" class="btn btn-sm btn-success" :disabled="validInput()===false"
             @click="handleUploadKey">
       Save
     </button>
   </div>
+</div>
 </template>
 
 <script lang="ts">

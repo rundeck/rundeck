@@ -1,4 +1,5 @@
 <template>
+<div>
   <div class="alert alert-warning" v-if="errorMsg!==''">
     <span>{{errorMsg}}</span>
   </div>
@@ -161,6 +162,7 @@
       Choose Selected Key
     </button>
   </div>
+</div>
 </template>
 
 <script lang="ts">

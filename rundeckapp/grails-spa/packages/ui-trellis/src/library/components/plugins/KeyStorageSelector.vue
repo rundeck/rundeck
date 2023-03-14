@@ -29,7 +29,6 @@
         <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus
                append-to-body cancel-text="Cancel" ok-text="Save">
           <key-storage-edit :storage-filter="storageFilter" @closeEditor="closeEditor"></key-storage-edit>
-
         </modal>
     </div>
 
@@ -43,10 +42,8 @@
       getRundeckContext,
     } from '../../rundeckService';
 
-    import moment from 'moment';
     import KeyStorageView from "../../components/storage/KeyStorageView.vue"
     import KeyStorageEdit from "../../components/storage/KeyStorageEdit.vue";
-    import {RundeckBrowser} from "@rundeck/client";
 
     export enum KeyType {
         Public = 'publicKey',
@@ -60,7 +57,7 @@
     }
 
     export default Vue.extend({
-        name: 'KeyStorageSelector',
+      name: 'KeyStorageSelector',
       components: {KeyStorageEdit, KeyStorageView},
       props: [
             'value',
@@ -322,7 +319,7 @@
                 }
                 this.$emit('input', newValue);
             },
-        },
+        }
     });
 </script>
 
