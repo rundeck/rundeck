@@ -641,7 +641,7 @@ Authorization required: `read` access for `project` resource type to get basic p
     )
     @Tags(
             [
-                    @Tag(name="project details")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -829,7 +829,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
     )
     @Tags(
             [
-                    @Tag(name="delete project")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -950,7 +950,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1504,7 +1504,7 @@ key2=value'''
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1627,7 +1627,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1791,7 +1791,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1927,7 +1927,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
