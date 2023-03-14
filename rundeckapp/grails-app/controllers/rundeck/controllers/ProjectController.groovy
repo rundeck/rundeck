@@ -1375,6 +1375,65 @@ key2=value''')
             }
         }
     }
+
+    @Get('/{project}/{filename}')
+    @Operation(
+            method = "GET",
+            summary = "Get `readme.md` and `motd.md`",
+            description = """Retrieve the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` or `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''The readme contents''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<contents>The readme contents</contents>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     def apiProjectFileGet() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
