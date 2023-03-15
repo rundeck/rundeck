@@ -36,9 +36,9 @@ class UrlMappings {
         "/api/$api_version/execution/$id/input/files"(controller: 'execution', action: 'apiExecutionInputFiles')
         "/api/$api_version/execution/$id/output(.$format)?"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
+        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutputNodeFilter')
+        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputNodeStepFilter')
+        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputStepFilter')
 
 
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
