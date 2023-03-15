@@ -26,7 +26,7 @@ implied. - See the License for the specific language governing permissions and -
                 downloadenabled: downloadenabled
 
         ]"/>
-        <asset:javascript src="static/components/storage.js"/>
+        <asset:javascript src="static/pages/storage.js"/>
         <asset:javascript src="static/pages/project-config.js" defer="defer" />
         <asset:stylesheet href="static/css/pages/project-config.css" />
       </head>
@@ -37,8 +37,8 @@ implied. - See the License for the specific language governing permissions and -
             <div class="title">
               <span class="text-h3"><i class="fas fa-key"></i> ${g.message(code:"gui.menu.KeyStorage")}</span>
             </div>
-            <div id="keyStorageView">
-              <key-storage-view :read-only="true" :allow-upload="true"></key-storage-view>
+            <div>
+              <key-storage-view class="keyStorageView" read-only="true" :allow-upload="true"></key-storage-view>
             </div>
           </div>
         </div>
