@@ -190,6 +190,11 @@ jQuery(function(){
         <div id="stepsDashboard_container" style="width: 100%; height: 150px; margin-bottom: 2rem;">
             <g:render template="/execution/stepsDashboard" model="${[workflow: workflow]}" />
         </div>
+        <script>
+            fireWhenReady('stepsDashboard_container', function (){
+                _loadDashboard();
+            })
+        </script>
     </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">
         <g:render template="/execution/wflistContent" model="${[workflow:workflow,edit:edit,noimgs:noimgs,project:project]}"/>

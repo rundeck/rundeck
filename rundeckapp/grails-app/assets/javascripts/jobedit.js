@@ -669,6 +669,7 @@ function _wfisave(key, num, formelem, iseh) {
     data: data,
     beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
     success: function (resp, status, jqxhr) {
+      _loadDashboard();
       var litem = jQuery('#wfli_' + key);
       litem.html(resp);
       if (litem.find('div.wfitemEditForm').length < 1) {
@@ -749,6 +750,7 @@ function _wfisavenew(formelem) {
     beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
     success: function (resp, status, jqxhr) {
       jQuery(newitemElem).html(resp);
+      _loadDashboard();
       if (jQuery(newitemElem).find('.wfitemEditForm').length > 0) {
         //was error
         postLoadItemEdit(newitemElem);
@@ -763,6 +765,18 @@ function _wfisavenew(formelem) {
       _vueEmitJobEdited()
     }
   }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
+}
+
+function _loadDashboard() {
+  jQuery.ajax({
+    type: 'GET',
+    url: _genUrl('/project/edit/dashboard'),
+    success: function (resp, status, jqxhr) {
+      console.log(resp)
+      jQuery('#stepsDashboard_container').html(resp)
+      _vueEmitJobEdited()
+    }
+  });
 }
 
 function _wficancelnew() {
@@ -974,6 +988,7 @@ function _ajaxWFAction(url, params) {
     data: params,
     beforeSend: _createAjaxSendTokensHandler(tokendataid),
     success: function (data, status, jqxhr) {
+      _loadDashboard();
       jQuery('#workflowContent').find('ol').html(data);
       newitemElem = null;
       jQuery('#wfnewbutton').show();

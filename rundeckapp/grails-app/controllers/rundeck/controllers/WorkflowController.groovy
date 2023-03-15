@@ -22,12 +22,13 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import grails.converters.JSON
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -47,6 +48,7 @@ class WorkflowController extends ControllerBase {
             revert:'POST',
             save:'POST',
             undo:'POST',
+            dashboard: 'GET'
     ]
     def index = {
         return redirect(controller: 'menu', action: 'index')
@@ -74,6 +76,16 @@ class WorkflowController extends ControllerBase {
                 actions,
                 scheduledExecution.project
             ), actions[0], 'Job', id
+        )
+    }
+
+    def dashboard(){
+        def Workflow editWf = _getSessionWorkflow()
+        if( !editWf ){
+            editWf = new Workflow();
+        }
+
+        return render(template: "/execution/stepsDashboard", model: [ workflow : editWf ]
         )
     }
 
