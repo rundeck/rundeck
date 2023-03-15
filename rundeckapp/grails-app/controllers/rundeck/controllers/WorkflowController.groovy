@@ -87,25 +87,21 @@ class WorkflowController extends ControllerBase {
         def dbWf = scheduledExecution?.workflow
 
         if (!editWf && dbWf) {
+            session.removeAttribute('editWF');
+            session.removeAttribute('undoWF');
+            session.removeAttribute('redoWF');
             modelWorkflow = dbWf
         } else {
             modelWorkflow = editWf
         }
 
         if (dbWf && editWf) {
-            def List<WorkflowStep> summarizedWorkflows = new ArrayList<>();
-            editWf?.commands?.forEach { step ->
-                {
-                    summarizedWorkflows.push(step);
-                }
-            };
-            dbWf?.commands?.forEach { step ->
-                {
-                    summarizedWorkflows.push(step);
-                }
-            };
             modelWorkflow = new Workflow()
-            modelWorkflow.setCommands(summarizedWorkflows)
+            if( dbWf.commands.size() > editWf.commands.size() ){
+                modelWorkflow.setCommands(dbWf.commands);
+            }else{
+                modelWorkflow.setCommands(editWf.commands);
+            }
         }
 
         return render(template: "/execution/stepsDashboard", model: [workflow: modelWorkflow]
