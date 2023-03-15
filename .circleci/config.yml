@@ -70,7 +70,7 @@ slack-fail-post-step: &slack-fail-post-step
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
   aws-cli: circleci/aws-cli@1.0.0
-  node: circleci/node@5.0.0
+  node: circleci/node@5.1.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
 
