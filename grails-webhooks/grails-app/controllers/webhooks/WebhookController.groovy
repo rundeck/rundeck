@@ -56,7 +56,9 @@ class WebhookController {
     @Operation(
         method = "POST",
         summary = "Update A Webhook",
-        description = '''Updates the specified webhook.''',
+        description = '''Updates the specified webhook.
+
+Since: v33''',
         tags = "webhook",
         parameters = [
             @Parameter(name = "project", in = ParameterIn
@@ -162,6 +164,8 @@ Optional:
 `regenAuth` - if true, use generate header authorization
 
 Do not specify an `authToken` or `creator` field. They will be ignored.
+
+Since: v33
 ''',
         tags = "webhook",
         parameters = [
@@ -225,7 +229,9 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
     @Operation(
         method = "POST",
         summary = "Delete A Webhook",
-        description = '''Deletes the webhook.''',
+        description = '''Deletes the webhook.
+
+Since: v33''',
         tags = "webhook",
         parameters = [
             @Parameter(name = "project", in = ParameterIn
@@ -285,7 +291,9 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
     @Operation(
         method="GET",
         summary = "Get A Webhook",
-        description = "Get the webhook definition.",
+        description = '''Get the webhook definition.
+
+Since: v33''',
         tags = "webhook",
         parameters=[
             @Parameter(name = "project", in = ParameterIn
@@ -344,7 +352,9 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
     @Operation(
         method="GET",
         summary="List Project Webhooks",
-        description="""List the webhooks for the project""",
+        description="""List the webhooks for the project.
+
+Since: v33""",
         tags = "webhook",
         parameters = @Parameter(
             name = "project",
@@ -441,6 +451,8 @@ Please see the documentation for the plugin that is configured for the webhook e
 
 If the webhook is defined to require the authorization secret, then the `Authorization` HTTP header must be included
 with a value that matches the secret.
+
+Since: v33
 ''',
         parameters = @Parameter(name = "authtoken", in = ParameterIn.PATH,
             required = true, description = "Webhook auth token", schema = @Schema(type = "string")),
