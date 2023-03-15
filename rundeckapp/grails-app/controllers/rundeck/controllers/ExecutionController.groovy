@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestXml
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
+import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
@@ -3377,8 +3378,56 @@ if executed in cluster mode.""",
     }
 
 
+    @Get(uri="/system/executions/status")
+    @Operation(
+        method="GET",
+        summary = "Get Current Execution Mode",
+        description = """Gets the current execution mode.
+
+Note:
+Prior to API version 36 if the mode was **passive** a status `HTTP 503 - Service Unavailable` would be returned.
+As of API v36 a `200` status will now be returned when the mode is **passive**.
+To return a 503 when the mode is **passive** add `?passiveAs503=true` to the API call.  
+
+Authorization Required: `read` for `system` resource
+
+Since: V32
+""",
+        tags = "system",
+        parameters = @Parameter(
+            name="passiveAs503",
+            description="if true, return 503 response when execution mode is passive. Since: v36",
+            in=ParameterIn.QUERY,
+            schema=@Schema(type="boolean")
+        ),
+        responses=[
+            @ApiResponse(
+                responseCode="200",
+                description="Execution Mode status result for API v36+, or for active status only for API<v36.",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            ),
+            @ApiResponse(
+                responseCode="503",
+                description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            )
+        ]
+    )
     /**
-     *
+     * /api/V/system/executions/status
      * @return
      */
     @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN)
