@@ -26,7 +26,6 @@
                 <p id="disabledStepDashboard"
                    style="font-size: 25px;">${disabled}</p>
             </div>
-%{--            <button type="button" onclick="_reloadDashboard()">Controller</button>--}%
         </div>
     </div>
 </div>
