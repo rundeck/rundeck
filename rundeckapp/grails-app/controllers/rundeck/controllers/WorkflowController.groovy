@@ -22,16 +22,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
-import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageService
 
 import javax.servlet.http.HttpServletResponse
@@ -40,6 +39,7 @@ class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
     StorageService storageService
+    ScheduledExecutionService scheduledExecutionService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     static allowedMethods = [
             redo:'POST',
@@ -48,7 +48,7 @@ class WorkflowController extends ControllerBase {
             revert:'POST',
             save:'POST',
             undo:'POST',
-            dashboard: 'GET'
+            dashboard: 'POST'
     ]
     def index = {
         return redirect(controller: 'menu', action: 'index')
@@ -79,13 +79,36 @@ class WorkflowController extends ControllerBase {
         )
     }
 
-    def dashboard(){
-        def Workflow editWf = _getSessionWorkflow()
-        if( !editWf ){
-            editWf = new Workflow();
+    def dashboard() {
+        Workflow modelWorkflow = null;
+        Workflow editWf = _getSessionWorkflow()
+
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.scheduledExecutionId)
+        def dbWf = scheduledExecution?.workflow
+
+        if (!editWf && dbWf) {
+            modelWorkflow = dbWf
+        } else {
+            modelWorkflow = editWf
         }
 
-        return render(template: "/execution/stepsDashboard", model: [ workflow : editWf ]
+        if (dbWf && editWf) {
+            def List<WorkflowStep> summarizedWorkflows = new ArrayList<>();
+            editWf?.commands?.forEach { step ->
+                {
+                    summarizedWorkflows.push(step);
+                }
+            };
+            dbWf?.commands?.forEach { step ->
+                {
+                    summarizedWorkflows.push(step);
+                }
+            };
+            modelWorkflow = new Workflow()
+            modelWorkflow.setCommands(summarizedWorkflows)
+        }
+
+        return render(template: "/execution/stepsDashboard", model: [workflow: modelWorkflow]
         )
     }
 
