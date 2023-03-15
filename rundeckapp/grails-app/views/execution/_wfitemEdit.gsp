@@ -754,7 +754,7 @@
             </div>
         </g:else>
 
-        <div id="stepEnabled" style="width: 20%; height: 50px;display: inline-flex;justify-content: space-between;align-items: center;padding-left: 1.5rem;">
+        <div id="stepEnabled" style="width: 150px; height: 50px;display: inline-flex;justify-content: space-between;align-items: center;padding-left: 1.5rem;">
             <span>Step Enabled</span>
             <g:checkBox name="enabled" checked="${item?.enabled !== null ? item?.enabled : true}" value="true" />
         </div>
