@@ -24,6 +24,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:unless test="${isAdhoc}">
 <g:if test="${edit}">
+    <% System.out.println(context.uuid) %>
 <div>
     <div class=""><g:message code="Workflow.property.keepgoing.prompt" /></div>
     <div class="radio radio-inline">
@@ -192,7 +193,7 @@ jQuery(function(){
         </div>
         <script>
             fireWhenReady('stepsDashboard_container', function (){
-                _loadDashboard();
+                _loadDashboard('${context.uuid}');
             })
         </script>
     </g:if>

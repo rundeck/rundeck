@@ -767,9 +767,10 @@ function _wfisavenew(formelem) {
   }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 
-function _loadDashboard() {
+function _loadDashboard(scheduledExecutionId) {
   jQuery.ajax({
-    type: 'GET',
+    type: 'POST',
+    data: { scheduledExecutionId: scheduledExecutionId },
     url: _genUrl('/project/edit/dashboard'),
     success: function (resp, status, jqxhr) {
       console.log(resp)
