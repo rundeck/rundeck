@@ -768,9 +768,18 @@ function _wfisavenew(formelem) {
 }
 
 function _loadDashboard(scheduledExecutionId) {
+  let seUuid = scheduledExecutionId
+  if( !scheduledExecutionId ){
+    let uuid = jQuery('#stepsDashboard_container').data('SeUuid');
+    if( !uuid ){
+      console.error("SE UUID not received in params");
+    }else{
+      seUuid = uuid;
+    }
+  }
   jQuery.ajax({
     type: 'POST',
-    data: { scheduledExecutionId: scheduledExecutionId },
+    data: { scheduledExecutionId: seUuid },
     url: _genUrl('/project/edit/dashboard'),
     success: function (resp, status, jqxhr) {
       console.log(resp)
