@@ -15,12 +15,16 @@ import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
@@ -29,6 +33,13 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @Controller
+@SecurityScheme(
+    name = "webhookTokenHeader",
+    type = SecuritySchemeType.APIKEY,
+    in = SecuritySchemeIn.HEADER,
+    paramName = "Authorization",
+    description = "Webhook Event Authorization Security header requires the `Authorization` to match the secret value."
+)
 class WebhookController {
     static final String AUTH_HEADER = "Authorization"
     static final String FORM_URLENCODED = "application/x-www-form-urlencoded"
@@ -415,6 +426,58 @@ Do not specify an `authToken` or `creator` field. They will be ignored.
         render uidata as JSON
     }
 
+    @Post("/webhook/{authtoken}")
+    @Operation(
+        method = "POST",
+        summary = "Send Webhook Event",
+        tags = "webhook",
+        description = '''You may post whatever data you wish to the webhook endpoint, however the plugin you are 
+using must
+be able to handle the data you post. If the webhook plugin associated with the webhook can't handle
+the content type posted you will get an error response.
+
+The webhook plugin will determine the response received.
+Please see the documentation for the plugin that is configured for the webhook endpoint you are using.
+
+If the webhook is defined to require the authorization secret, then the `Authorization` HTTP header must be included
+with a value that matches the secret.
+''',
+        parameters = @Parameter(name = "authtoken", in = ParameterIn.PATH,
+            required = true, description = "Webhook auth token", schema = @Schema(type = "string")),
+        security = @SecurityRequirement(
+            name = "webhookTokenHeader"
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "Default response",
+                content = @Content(
+                    mediaType = "*/*",
+                    examples = @ExampleObject('ok')
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Error response",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject('''{
+"err":"Error message"
+}''')
+                )
+            ),
+            @ApiResponse(
+                responseCode = "503",
+                description = "Webhook not enabled",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject('''{
+"err":"Webhook not enabled"
+}''')
+                )
+            )
+        ]
+    )
     def post() {
         RdWebhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
 
