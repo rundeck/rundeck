@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-
+<g:set var="workflow" value="${scheduledExecution?.workflow}" />
 <div id="formbuttons" data-ko-bind="runformoptions" class="px-row">
   <div>
     <g:if test="${!hideCancel}">
@@ -119,5 +119,6 @@
         </g:if>
       </ul>
     </div>
+    <g:render template="/execution/stepsMiniDashboard" model="${[workflow: workflow]}" />
   </div>
 </div>
