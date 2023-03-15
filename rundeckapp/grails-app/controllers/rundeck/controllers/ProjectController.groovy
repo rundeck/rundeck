@@ -1282,6 +1282,87 @@ key2=value''')
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
+
+    @Put('/{project}/{filename}')
+    @Operation(
+            method = "PUT",
+            summary = "To create or modify the `readme.md` and `motd.md` contents",
+            description = """Create or modify the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_XML,
+                                    examples = [
+                                            @ExampleObject('''<contents>The readme contents</contents>''')
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    examples = [
+                                            @ExampleObject('''{"contents":"The readme contents"}''')
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    examples = [
+                                            @ExampleObject('''The readme contents''')
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` and `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''The readme contents''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<contents>The readme contents</contents>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     def apiProjectFilePut() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
@@ -1473,6 +1554,50 @@ Authorization required: `configure` access for `project` resource type or `admin
             renderProjectFile(baos.toString(),request,response, respFormat)
         }
     }
+
+    @Delete('/{project}/{filename}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete `readme.md` and `motd.md`",
+            description = """Delete the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` or `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     def apiProjectFileDelete() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
