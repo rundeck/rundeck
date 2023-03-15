@@ -34,6 +34,7 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -1012,9 +1013,396 @@ key2=value''')
                 break
         }
     }
+
     /**
      * /api/14/project/NAME/acl/* endpoint
      */
+    @Get('/{project}/acl/{path}')
+    @Operation(
+            method = "GET",
+            summary = "Get ACL Policy file for a project.",
+            description = """Retrieve the YAML text of the ACL Policy file for a project. 
+If YAML or text content is requested, the contents will be returned directly. Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `read` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the Acl policy file',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/yaml",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    protected def apiProjectAclsGet_docs(){}
+
+    @Post('/{project}/acl/{path}')
+    @Operation(
+            method = "POST",
+            summary = "Update a Project ACL Policy",
+            description = """Use `POST` to create a policy.
+If the Content-Type is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly. 
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `create` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/text",
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/yaml",
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/xml",
+                                    examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>''')
+                            ),
+                            @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                            )
+                    ]
+            ),
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "201",
+            description = "ACL policy created",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/yaml",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "409",
+            description = "Conflict if already exists",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if validation failure",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    protected def apiProjectAclsPost_docs(){}
+
+    @Put('/{project}/acl/{path}')
+    @Operation(
+            method = "PUT",
+            summary = "Update a Project ACL Policy",
+            description = """Use `PUT` to update a policy.
+If the Content-Type is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly. 
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `update` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/text",
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/yaml",
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/xml",
+                                    examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>''')
+                            ),
+                            @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                            )
+                    ]
+            ),
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project config")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "ACL Policy updated",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/yaml",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/xml",
+                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    protected def apiProjectAclsPut_docs(){}
+
+    @Delete('/{project}/acl/{path}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete an ACL policy file.",
+            description = """Delete a project ACL policy file.
+
+Authorization required: `delete` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    protected def apiProjectAclsDelete_docs(){}
+
     def apiProjectAcls() {
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
