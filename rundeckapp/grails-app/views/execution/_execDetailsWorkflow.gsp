@@ -22,6 +22,8 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
+<% System.out.println( " Context ${context} " ) %>
+<g:set var="scheduledExecutionUuid" value="${(context === null) ? (context instanceof rundeck.Workflow ? null: null) : (context instanceof rundeck.ScheduledExecution ? context?.uuid : null) }" />
 <g:unless test="${isAdhoc}">
 <g:if test="${edit}">
 <div>
@@ -192,10 +194,10 @@ jQuery(function(){
         </div>
         <script>
             fireWhenReady('stepsDashboard_container', function (){
-                if( '${context.uuid}'.length > 1 ){
-                    jQuery('#stepsDashboard_container').data('SeUuid', '${context.uuid}')
+                if( '${scheduledExecutionUuid}'.length > 1 ){
+                    jQuery('#stepsDashboard_container').data('SeUuid', '${scheduledExecutionUuid}')
                 }
-                _loadDashboard('${context.uuid}');
+                _loadDashboard('${scheduledExecutionUuid}');
             })
         </script>
     </g:if>
