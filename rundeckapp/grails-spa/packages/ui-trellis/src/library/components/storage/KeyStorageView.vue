@@ -177,7 +177,8 @@ export default Vue.extend({
     'readOnly',
     'allowUpload',
     'value',
-    'storageFilter'
+    'storageFilter',
+    'project'
   ],
   data() {
     return {
