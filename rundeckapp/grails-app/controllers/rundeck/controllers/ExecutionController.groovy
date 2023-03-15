@@ -3459,11 +3459,36 @@ Since: V32
 
     }
 
+
     /**
      *
      * @return
      */
+    @Post(uri = "/system/executions/enable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Active",
+        description = """Enables executions, allowing adhoc and manual and scheduled jobs to be run.
 
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `enable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
     )
@@ -3474,6 +3499,31 @@ Since: V32
      *
      * @return
      */
+    @Post(uri = "/system/executions/disable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Passive",
+        description = """Disables executions, preventing adhoc and manual and scheduled jobs from running.
+
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `disable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
     )
