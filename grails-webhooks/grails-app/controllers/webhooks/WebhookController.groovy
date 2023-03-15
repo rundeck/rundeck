@@ -8,6 +8,14 @@ import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
@@ -15,6 +23,7 @@ import webhooks.authenticator.AuthorizationHeaderAuthenticator
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class WebhookController {
     static final String AUTH_HEADER = "Authorization"
     static final String FORM_URLENCODED = "application/x-www-form-urlencoded"
@@ -97,6 +106,52 @@ class WebhookController {
         render webhook as JSON
     }
 
+    @Get(uri="/project/{project}/webhooks")
+    @Operation(
+        method="GET",
+        summary="List Project Webhooks",
+        description="""List the webhooks for the project""",
+        tags = "webhook",
+        responses=@ApiResponse(
+            responseCode="200",
+            description="List of webhooks",
+            content=@Content(
+                mediaType = 'application/json',
+                array = @ArraySchema(
+                    schema = @Schema(type="object")
+                ),
+                examples = @ExampleObject('''[
+    {
+        "authToken": "Z1vnbhShhQF3B0dQq7UhJTZMnGS92TBl",
+        "config": {
+            "argString": "-payload \${raw}",
+            "jobId": "a54d07a1-033a-499f-9789-19bcacbd6e11"
+        },
+        "creator": "admin",
+        "enabled": true,
+        "eventPlugin": "webhook-run-job",
+        "id": 3,
+        "name": "Webhook Job Runner",
+        "project": "Webhook",
+        "roles": "admin,user",
+        "user": "admin"
+    },
+    {
+        "authToken": "p9ttreh05Zd222g5yBXocEMXmCJ1skOX",
+        "config": {},
+        "creator": "admin",
+        "enabled": true,
+        "eventPlugin": "log-webhook-event",
+        "id": 4,
+        "name": "Log it Hook",
+        "project": "Webhook",
+        "roles": "admin,user",
+        "user": "admin"
+    }
+]''')
+            )
+        )
+    )
     def list() {
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
