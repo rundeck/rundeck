@@ -767,7 +767,21 @@ function _wfisavenew(formelem) {
   }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 
+function isRenderDashboard(){
+  jQuery.ajax({
+    type: 'GET',
+    url: _genUrl('/project/edit/renderdashboard'),
+    success: function (resp, status, jqxhr) {
+      const { render } = resp;
+      if( !render ){
+        jQuery('#stepsDashboard_container').css('display', 'none')
+      }
+    }
+  })
+}
+
 function _loadDashboard(scheduledExecutionId) {
+  isRenderDashboard()
   let seUuid = scheduledExecutionId
   if( !scheduledExecutionId ){
     let uuid = jQuery('#stepsDashboard_container').data('SeUuid');

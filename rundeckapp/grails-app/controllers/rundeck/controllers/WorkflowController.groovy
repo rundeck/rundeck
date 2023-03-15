@@ -22,11 +22,13 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -38,6 +40,7 @@ import javax.servlet.http.HttpServletResponse
 class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
+    ConfigurationService configurationService;
     StorageService storageService
     ScheduledExecutionService scheduledExecutionService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -48,7 +51,8 @@ class WorkflowController extends ControllerBase {
             revert:'POST',
             save:'POST',
             undo:'POST',
-            dashboard: 'POST'
+            dashboard: 'POST',
+            renderDashboard: 'GET'
     ]
     def index = {
         return redirect(controller: 'menu', action: 'index')
@@ -76,6 +80,18 @@ class WorkflowController extends ControllerBase {
                 actions,
                 scheduledExecution.project
             ), actions[0], 'Job', id
+        )
+    }
+
+    def renderDashboard() {
+        def renderDashboardsInGUI = configurationService.getBoolean('gui.stepsDashboard', true);
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                render           : renderDashboardsInGUI,
+                        ]
+                ) as JSON
         )
     }
 
