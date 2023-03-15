@@ -37,6 +37,13 @@ import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
@@ -65,6 +72,7 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
+@Controller
 @Transactional
 class MenuController extends ControllerBase implements ApplicationContextAware{
 
@@ -2478,6 +2486,75 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     * API Actions
      */
 
+    @Get(uri="/system/logstorage")
+    @Operation(
+        method="GET",
+        summary="Log Storage Info",
+        description = '''Get Log Storage information and stats.
+
+Authorization required: `read` for `system` resource
+
+Since: V17
+''',
+        tags=["system","logstorage"],
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = '''Success response, with log storage info and stats.
+
+Fields:
+
+`enabled`
+
+:   True if a plugin is configured
+
+`pluginName`
+
+:   Name of the configured plugin
+
+`succeededCount`
+
+:   Number of successful storage requests
+
+`failedCount`
+
+:   Number of failed storage requests
+
+`queuedCount`
+
+:   Number of queued storage requests
+
+`totalCount`
+
+:   Total number of storage requests (currently queued plus previously processed)
+
+`incompleteCount`
+
+:   Number of storage requests which have not completed successfully
+
+`missingCount`
+
+:   Number of executions for this cluster node which have no associated storage requests
+''',
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject("""{
+  "enabled": true,
+  "pluginName": "NAME",
+  "succeededCount": 369,
+  "failedCount": 0,
+  "queuedCount": 0,
+  "queuedRequestCount": 0,
+  "queuedRetriesCount": 0,
+  "queuedIncompleteCount": 0,
+  "totalCount": 369,
+  "incompleteCount": 0,
+  "retriesCount": 0,
+  "missingCount": 0
+}""")
+            )
+        )
+    )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
     def apiLogstorageInfo() {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
