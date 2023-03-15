@@ -3487,6 +3487,46 @@ So a value of `2w` would return executions that completed within the last two we
     protected def apiExecutionMetrics_docs() {
         apiExecutionMetrics(null)
     }
+
+
+    @Get(uri="/project/{project}/executions/metrics",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query Metrics",
+        description = """Obtain metrics over the result set of an execution query over the executions of a single project.
+
+Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
+""",
+        tags = "execution",
+        parameters = [
+            @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description="Metrics response",
+        content=[
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MetricsQueryResponse)
+            ),
+            @Content(
+                mediaType = "application/xml",
+                schema = @Schema(implementation = MetricsQueryResponse)
+            )
+        ]
+    )
+    @Tag(name = 'execution')
+    /**
+     * Placeholder method to annotate for openapi spec generation.
+     * Note: this method will never be used.
+     * This is used in place of annotating the apiExecutionMetrics method because
+     * the grails binding parameter type ExecutionQuery gets included
+     * as a required parameter in the spec, which is incorrect
+     */
+    protected def apiExecutionMetricsProject_docs() {
+        apiExecutionMetrics(null)
+    }
     /**
      * API: /api/28/executions/metrics
      */
