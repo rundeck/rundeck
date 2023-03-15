@@ -39,7 +39,10 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
@@ -2598,8 +2601,87 @@ Fields:
         }
     }
 
+    @Get(uri="/system/logstorage/incomplete")
+    @Operation(
+        method="GET",
+        summary="List Executions with Incomplete Log Storage",
+        description='''List all executions with incomplete log storage.
+
+Authorization required: `read` for `system` resource
+
+Since: V17''',
+        tags=["system","logstorage"],
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = '''
+`total`, `max`, `offset` (paging information)
+
+:   Total number of executions with incomplete log data storage, maximum returned in the response, offset of first result.
+
+`id`
+
+:   Execution ID
+
+`project`
+
+:   Project Name
+
+`href`
+
+:   API URL for Execution
+
+`permalink`
+
+:   GUI URL for Execution
+
+`incompleteFiletypes`
+
+:   Comma-separated list of filetypes which have not be uploaded, e.g. `rdlog,state.json`. Types are `rdlog` (log output), `state.json` (workflow state data), `execution.xml` (execution definition)
+
+`queued`
+
+:   True if the log data storage is queued to be processed.
+
+`failed`
+
+:   True if the log data storage was processed but failed without completion.
+
+`date`
+
+:   Date when log data storage was first processed. (W3C date format.)
+
+`localFilesPresent`
+
+:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not present on disk.''',
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject("""{
+  "total": 100,
+  "max": 20,
+  "offset": 0,
+  "executions": [
+    {
+      "id": 1,
+      "project": "[PROJECT]",
+      "href": "[API HREF]",
+      "permalink": "[GUI HREF]",
+      "storage": {
+        "localFilesPresent": true,
+        "incompleteFiletypes": "[TYPES]",
+        "queued": true,
+        "failed": false,
+        "date": "[DATE]"
+      },
+      "errors": ["message","message..."]
+    }
+    ]
+}""")
+            )
+        )
+    )
     @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
-    def apiLogstorageListIncompleteExecutions(BaseQuery query) {
+    def apiLogstorageListIncompleteExecutions(@Parameter(required=false) BaseQuery query) {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
@@ -2691,6 +2773,27 @@ Fields:
         }
     }
 
+    @Post(uri="/system/logstorage/incomplete/resume")
+    @Operation(
+        method="POST",
+        summary="Resume Incomplete Log Storage",
+        description='''Resume processing incomplete Log Storage uploads.
+
+Authorization required: `ops_admin` for `system` resource
+
+Since: V17''',
+        tags=["system","logstorage"],
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = '''Resumed response''',
+            content=@Content(
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+  "resumed": true
+}''')
+            )
+        )
+    )
     @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     def apiResumeIncompleteLogstorage() {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
