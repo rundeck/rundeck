@@ -9,12 +9,17 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
@@ -36,6 +41,70 @@ class WebhookController {
 
     def admin() {}
 
+    @Post(uri = "/project/{project}/webhook/{id}")
+    @Operation(
+        method = "POST",
+        summary = "Update A Webhook",
+        description = '''Updates the specified webhook.''',
+        tags = "webhook",
+        parameters = [
+            @Parameter(name = "project", in = ParameterIn
+                .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
+            @Parameter(name = "id", in = ParameterIn
+                .PATH, description = "Webhook ID", required = true, schema = @Schema(type = "string"))
+        ],
+        requestBody = @RequestBody(
+            description = '''Updated webhook data.
+
+Along with the required fields you may send only the fields you want to update.
+
+When updating a webhook you may not change the user associated with a webhook,
+so suppling the `user` field will have no effect. Also, specifying an `authToken` field has no effect.''',
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject('''{
+    "id": 3,
+    "name": "Webhook Job Runner 1",
+    "project": "Webhook",
+    "eventPlugin":"plugin-provider-name",
+    "config": {
+        "argString": "-payload ${raw} -d ${data.one}",
+        "jobId": "a54d07a1-033a-499f-9789-19bcacbd6e11"
+    },
+    "roles": "admin,user,webhook",
+    "enabled": true,
+    "useAuth": true,
+    "regenAuth": true
+}''')
+            )
+        ),
+        responses = [@ApiResponse(
+            responseCode = "200",
+            description = "Successful response",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject('''{
+"msg": "Saved webhook",
+"generatedSecurityString":"generated security string"
+}
+''')
+            )
+        ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Error response",
+                content = @Content(
+                    mediaType = 'application/json',
+                    schema = @Schema(type = "object"),
+                    examples = @ExampleObject('''{
+    "err":"error message"
+}''')
+                )
+            )
+        ]
+    )
     def save() {
         String project = request.JSON.project
         if(!project){
@@ -60,6 +129,124 @@ class WebhookController {
         render msg as JSON
     }
 
+    @Post(uri = "/project/{project}/webhook")
+    @Operation(
+        method = "POST",
+        summary = "Add A Webhook",
+        description = '''
+
+Required Fields:
+```
+project - the project that owns the webhook
+name - the name of the webhook
+user - string the webhook runs as this user
+roles - string containing comma separated list of roles to use for the webhook
+eventPlugin - string must be a valid plugin name
+config - object containing config values for the specified plugin
+enabled - boolean
+```
+Optional:
+
+`useAuth` - if true, use header authorization
+`regenAuth` - if true, use generate header authorization
+
+Do not specify an `authToken` or `creator` field. They will be ignored.
+''',
+        tags = "webhook",
+        parameters = [
+            @Parameter(name = "project", in = ParameterIn
+                .PATH, description = "Project Name", required = true, schema = @Schema(type = "string"))
+        ],
+        requestBody = @RequestBody(
+            description = '''Webhook definition.''',
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject('''{
+    "id": 3,
+    "name": "Webhook Job Runner 1",
+    "project": "Webhook",
+    "eventPlugin":"plugin-provider-name",
+    "config": {
+        "argString": "-payload ${raw} -d ${data.one}",
+        "jobId": "a54d07a1-033a-499f-9789-19bcacbd6e11"
+    },
+    "user": "username",
+    "roles": "admin,user,webhook",
+    "enabled": true,
+    "useAuth": true,
+    "regenAuth": true
+}''')
+            )
+        ),
+        responses = [@ApiResponse(
+            responseCode = "200",
+            description = "Successful response",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject('''{
+"msg": "Saved webhook",
+"generatedSecurityString":"generated security string"
+}
+''')
+            )
+        ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Error response",
+                content = @Content(
+                    mediaType = 'application/json',
+                    schema = @Schema(type = "object"),
+                    examples = @ExampleObject('''{
+    "err":"error message"
+}''')
+                )
+            )
+        ]
+    )
+    /**
+     * nb: dummy method to document create endpoint
+     */
+    protected def createWebhook_docs(){}
+
+    @Delete(uri="/project/{project}/webhook/{id}")
+    @Operation(
+        method = "POST",
+        summary = "Delete A Webhook",
+        description = '''Deletes the webhook.''',
+        tags = "webhook",
+        parameters = [
+            @Parameter(name = "project", in = ParameterIn
+                .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
+            @Parameter(name = "id", in = ParameterIn
+                .PATH, description = "Webhook ID", required = true, schema = @Schema(type = "string"))
+        ],
+        responses = [@ApiResponse(
+            responseCode = "200",
+            description = "Successful response",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(type = "object"),
+                examples = @ExampleObject('''{
+"msg": "deleted webhook"
+}
+''')
+            )
+        ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Error response",
+                content = @Content(
+                    mediaType = 'application/json',
+                    schema = @Schema(type = "object"),
+                    examples = @ExampleObject('''{
+    "err":"error message"
+}''')
+                )
+            )
+        ]
+    )
     def remove() {
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -83,6 +270,42 @@ class WebhookController {
 
     }
 
+    @Get(uri="/project/{project}/webhook/{id}")
+    @Operation(
+        method="GET",
+        summary = "Get A Webhook",
+        description = "Get the webhook definition.",
+        tags = "webhook",
+        parameters=[
+            @Parameter(name = "project", in = ParameterIn
+                .PATH, description = "Project Name", required = true, schema = @Schema(type = "string")),
+            @Parameter(name = "id", in = ParameterIn
+                .PATH, description = "Webhook ID", required = true, schema = @Schema(type = "string"))
+        ],
+        responses=@ApiResponse(
+            responseCode="200",
+            description = "Successful response",
+            content=@Content(
+                mediaType='application/json',
+                schema = @Schema(type="object"),
+                examples = @ExampleObject('''{
+    "authToken": "Z1vnbhShhQF3B0dQq7UhJTZMnGS92TBl",
+    "config": {
+        "argString": "-payload ${raw}",
+        "jobId": "a54d07a1-033a-499f-9789-19bcacbd6e11"
+    },
+    "creator": "admin",
+    "enabled": true,
+    "eventPlugin": "webhook-run-job",
+    "id": 3,
+    "name": "Webhook Job Runner",
+    "project": "Webhook",
+    "roles": "admin,user",
+    "user": "admin"
+}''')
+            )
+        )
+    )
     def get() {
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -112,13 +335,20 @@ class WebhookController {
         summary="List Project Webhooks",
         description="""List the webhooks for the project""",
         tags = "webhook",
-        responses=@ApiResponse(
-            responseCode="200",
-            description="List of webhooks",
-            content=@Content(
+        parameters = @Parameter(
+            name = "project",
+            in = ParameterIn.PATH,
+            description = "Project Name",
+            required = true,
+            schema = @Schema(type = "string")
+        ),
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "List of webhooks",
+            content = @Content(
                 mediaType = 'application/json',
                 array = @ArraySchema(
-                    schema = @Schema(type="object")
+                    schema = @Schema(type = "object")
                 ),
                 examples = @ExampleObject('''[
     {
