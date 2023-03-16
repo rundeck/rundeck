@@ -3471,7 +3471,6 @@ So a value of `2w` would return executions that completed within the last two we
     "total": 1325
 }""")
             )
-            )
         ]
     )
     /**
