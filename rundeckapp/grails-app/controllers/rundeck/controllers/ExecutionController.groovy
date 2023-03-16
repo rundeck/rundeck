@@ -2131,59 +2131,8 @@ JSON response requires API v14.
     )
     @ApiResponse(
         responseCode = '200',
-        description = "XML response contains a single `<execution>` item, see Listing Running Executions. JSON response requires API v14.",
+        description = "See: Listing Running Executions. JSON response requires API v14.",
         content=[
-            @Content(
-                mediaType = 'application/xml',
-                examples=  @ExampleObject(
-                    value="""<?xml version="1.0" encoding="UTF-8"?>
-<execution id="[ID]" href="[url]" permalink="[url]" status="[status]" project="[project]">
-    <user>[user]</user>
-    <date-started unixtime="[unixtime]">[datetime]</date-started>
-    <customStatus>[string]</customStatus>
-
-    <!-- optional job context if the execution is associated with a job -->
-    <job id="jobID" averageDuration="[milliseconds]" href="[API url]" permalink="[GUI url]">
-        <name>..</name>
-        <group>..</group>
-        <description>..</description>
-        <!-- optional if arguments are passed to the job since v10 -->
-        <options>
-            <option name="optname" value="optvalue"/>...
-        </options>
-    </job>
-
-    <!-- description of the execution -->
-    <description>...</description>
-
-    <!-- argString (arguments) of the execution -->
-    <argstring>...</argstring>
-
-    <!-- if Rundeck is in cluster mode -->
-    <serverUUID>...</serverUUID>
-
-    <!-- The following elements included only if the execution has ended -->
-
-    <!-- the completion time of the execution -->
-    <date-ended unixtime="[unixtime]">[datetime]</date-ended>
-
-    <!-- if the execution was aborted, the username who aborted it: -->
-    <abortedby>[username]</abortedby>
-
-    <!-- if the execution was is finished, a list of node names that succeeded -->
-    <successfulNodes>
-        <node name="node1"/>
-        <node name="node2"/>
-    </successfulNodes>
-
-    <!-- if the execution was is finished, a list of node names that failed -->
-    <failedNodes>
-        <node name="node3"/>
-        <node name="node4"/>
-    </failedNodes>
-
-</execution>""")
-            ),
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
@@ -2318,11 +2267,6 @@ Each Workflow Section within the result set will contain these structures
 
 Consists of a sequence of node name entries, identifying each entry by a name.
 
-In XML, a sequence of `node` elements:
-
-      <node name="abc" />
-      <node name="xyz" />
-      <!-- ... more node elements -->
 
 In JSON, an array of node names.
 
@@ -2338,23 +2282,6 @@ State Indicators:
 * `stepctx` Step Context Identifier
 * `executionState` execution state for this step and node
 
-In XML:
-
-``` xml
-<node name="abc">
-  <steps>
-    <step>
-      <stepctx>1</stepctx>
-      <executionState>SUCCEEDED</executionState>
-    </step>
-    <step>
-      <stepctx>2/1</stepctx>
-      <executionState>SUCCEEDED</executionState>
-    </step>
-  </steps>
-</node>
-<!-- more node elements -->
-```
 
 In JSON: an object where each key is a node name, and the value is an array of State indicators.  A state indicator 
 is an object with two keys, `stepctx` and `executionState`
@@ -2379,7 +2306,6 @@ is an object with two keys, `stepctx` and `executionState`
 A list of Step State information.  Each step is identified by its number in the workflow (starting at 1) and its step
  context
 
-* `num` the step number (XML)
 * `id` the step number (JSON)
 * `stepctx` the step context identifier in the workflow
 * general overall state information for the step
@@ -2404,17 +2330,6 @@ A sequence of state details for a set of Nodes for the containing step. Each ent
     - `updateTime` last update time
     - `executionState` overall execution state
 
-In XML:
-
-``` xml
-<nodeState name="abc">
-  <startTime>2014-01-13T20:58:59Z</startTime>
-  <updateTime>2014-01-13T20:59:04Z</updateTime>
-  <endTime>2014-01-13T20:59:04Z</endTime>
-  <executionState>SUCCEEDED</executionState>
-</nodeState>
-<!-- more nodeState elements -->
-```
 
 In JSON: an object with node names as keys.  Values are objects containing the state information entries.
 
@@ -2448,107 +2363,6 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 \\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
 """,
         content=[
-            @Content(
-                mediaType = 'application/xml',
-                schema = @Schema(type='object'),
-                examples=  @ExampleObject(
-                    value="""<result success="true">
-  <executionState id="135">
-    <startTime>2014-01-13T20:58:59Z</startTime>
-    <updateTime>2014-01-13T20:59:10Z</updateTime>
-    <stepCount>2</stepCount>
-    <allNodes>
-      <nodes>
-        <node name="dignan" />
-      </nodes>
-    </allNodes>
-    <targetNodes>
-      <nodes>
-        <node name="dignan" />
-      </nodes>
-    </targetNodes>
-    <executionId>135</executionId>
-    <serverNode>dignan</serverNode>
-    <endTime>2014-01-13T20:59:10Z</endTime>
-    <executionState>SUCCEEDED</executionState>
-    <completed>true</completed>
-    <steps>
-      <step stepctx="1" id="1">
-        <startTime>2014-01-13T20:58:59Z</startTime>
-        <nodeStep>true</nodeStep>
-        <updateTime>2014-01-13T20:58:59Z</updateTime>
-        <endTime>2014-01-13T20:59:04Z</endTime>
-        <executionState>SUCCEEDED</executionState>
-        <nodeStates>
-          <nodeState name="dignan">
-            <startTime>2014-01-13T20:58:59Z</startTime>
-            <updateTime>2014-01-13T20:59:04Z</updateTime>
-            <endTime>2014-01-13T20:59:04Z</endTime>
-            <executionState>SUCCEEDED</executionState>
-          </nodeState>
-        </nodeStates>
-      </step>
-      <step stepctx="2" id="2">
-        <startTime>2014-01-13T20:59:04Z</startTime>
-        <nodeStep>false</nodeStep>
-        <updateTime>2014-01-13T20:59:10Z</updateTime>
-        <hasSubworkflow>true</hasSubworkflow>
-        <endTime>2014-01-13T20:59:10Z</endTime>
-        <executionState>SUCCEEDED</executionState>
-        <workflow>
-          <startTime>2014-01-13T20:59:04Z</startTime>
-          <updateTime>2014-01-13T20:59:10Z</updateTime>
-          <stepCount>1</stepCount>
-          <allNodes>
-            <nodes>
-              <node name="dignan" />
-            </nodes>
-          </allNodes>
-          <targetNodes>
-            <nodes>
-              <node name="dignan" />
-            </nodes>
-          </targetNodes>
-          <endTime>2014-01-13T20:59:10Z</endTime>
-          <executionState>SUCCEEDED</executionState>
-          <completed>true</completed>
-          <steps>
-            <step stepctx="2/1" id="1">
-              <startTime>2014-01-13T20:59:04Z</startTime>
-              <nodeStep>true</nodeStep>
-              <updateTime>2014-01-13T20:59:04Z</updateTime>
-              <endTime>2014-01-13T20:59:10Z</endTime>
-              <executionState>SUCCEEDED</executionState>
-              <nodeStates>
-                <nodeState name="dignan">
-                  <startTime>2014-01-13T20:59:04Z</startTime>
-                  <updateTime>2014-01-13T20:59:10Z</updateTime>
-                  <endTime>2014-01-13T20:59:10Z</endTime>
-                  <executionState>SUCCEEDED</executionState>
-                </nodeState>
-              </nodeStates>
-            </step>
-          </steps>
-        </workflow>
-      </step>
-    </steps>
-    <nodes>
-      <node name="dignan">
-        <steps>
-          <step>
-            <stepctx>1</stepctx>
-            <executionState>SUCCEEDED</executionState>
-          </step>
-          <step>
-            <stepctx>2/1</stepctx>
-            <executionState>SUCCEEDED</executionState>
-          </step>
-        </steps>
-      </node>
-    </nodes>
-  </executionState>
-</result>""")
-            ),
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type='object'),
@@ -2781,7 +2595,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
     )
     @ApiResponse(
         responseCode = '200',
-        description = """XML response will contain a `success/message` element will contain a descriptive message. The status of the abort action will be included as an element.
+        description = """The status of the abort action will be included as an element.
 
 The `[abort-state]` will be one of: "pending", "failed", or "aborted".
 
@@ -2792,13 +2606,6 @@ Authorization required:
 * resource: `execution`
 """,
         content=[
-            @Content(
-                mediaType = 'application/xml',
-                examples=  @ExampleObject(
-                    value="""<abort status="[abort-state]">
-    <execution id="[id]" status="[status]"/>
-</abort>""")
-            ),
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
@@ -2961,7 +2768,7 @@ The IDs can be specified in two ways:
         POST /api/12/executions/delete?ids=1,2,17
         Content-Length: 0
 
-2. Using a request body of either XML or JSON data.
+2. Using a request body of JSON data.
 
 Note: the JSON schema also supports a basic JSON array 
 """,
@@ -2977,15 +2784,6 @@ Note: the JSON schema also supports a basic JSON array
                         @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
                         @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
                     ]
-                ),
-                @Content(
-                    mediaType = 'application/xml',
-                    schema = @Schema(implementation = DeleteBulkRequestXml),
-                    examples = @ExampleObject("""<executions>
-    <execution id="1"/>
-    <execution id="2"/>
-    <execution id="17"/>
-</executions>""")
                 )
             ]
         ),
@@ -3023,18 +2821,6 @@ Note: the JSON schema also supports a basic JSON array
   "allsuccessful": false,
   "requestCount": 5
 }""")
-        ),@Content(
-            mediaType = 'application/xml',
-            schema = @Schema(implementation = DeleteBulkResponse),
-            examples = @ExampleObject("""<deleteExecutions requestCount='4' allsuccessful='false'>
-  <successful count='0' />
-  <failed count='4'>
-    <execution id='131' message='Unauthorized: Delete execution 131' />
-    <execution id='109' message='Not found: 109' />
-    <execution id='81' message='Not found: 81' />
-    <execution id='74' message='Not found: 74' />
-  </failed>
-</deleteExecutions>""")
         )]
 
     )
@@ -3573,32 +3359,6 @@ Since: v14
         description = "",
         content=[
             @Content(
-                mediaType = 'application/xml',
-                schema = @Schema(
-                    implementation = ExecutionFileInfoList
-                ),
-                examples=  @ExampleObject(
-                    value="""<?xml version="1.0" encoding="UTF-8"?>
-<executionFiles>
-  <files>
-    <file id="382c7596-435b-4103-8781-6b32fbd629b2">
-      <user>admin</user>
-      <fileState>deleted</fileState>
-      <sha>
-      9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
-      <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
-      <dateCreated>2017-02-24 15:26:48.197 PST</dateCreated>
-      <serverNodeUUID>
-      3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
-      <fileName />
-      <size>12</size>
-      <expirationDate>2017-02-24 15:27:18.65 PST</expirationDate>
-      <execId>2837</execId>
-    </file>
-  </files>
-</executionFiles>""")
-            ),
-            @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(
                     implementation = ExecutionFileInfoList
@@ -3710,18 +3470,7 @@ So a value of `2w` would return executions that completed within the last two we
     },
     "total": 1325
 }""")
-            ),
-            @Content(
-                mediaType = "application/xml",
-                schema = @Schema(implementation = MetricsQueryResponse),
-                examples = @ExampleObject("""<result>
-  <duration>
-    <average>1s</average>
-    <min>0s</min>
-    <max>3s</max>
-  </duration>
-  <total>1325</total>
-</result>""")
+            )
             )
         ]
     )
@@ -3756,10 +3505,6 @@ Note: This endpoint has the same query parameters and response as the `/executio
         content=[
             @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = MetricsQueryResponse)
-            ),
-            @Content(
-                mediaType = "application/xml",
                 schema = @Schema(implementation = MetricsQueryResponse)
             )
         ]
