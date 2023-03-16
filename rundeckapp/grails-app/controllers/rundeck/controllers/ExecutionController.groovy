@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestXml
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
+import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
@@ -3101,6 +3102,154 @@ Note: the JSON schema also supports a basic JSON array
     }
 
 
+
+    @Get(uri="/project/{project}/executions",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query",
+        description = """Query for Executions based on Job or Execution details.""",
+        tags = ["execution","project"],
+        parameters = [
+            @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true),
+            @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
+            @Parameter(in=ParameterIn.QUERY,name="abortedbyFilter",description="Username who aborted an execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobIdListFilter",description="specify a Job ID to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobIdListFilter",description="specify a Job ID to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobListFilter",description="specify a full Job group/name to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobListFilter",description="specify a full Job group/name to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPath",description="""specify a group or partial group path to include all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPathExact",description="""specify an exact group path to match.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPath",description="""specify a group or partial group path to exclude all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPathExact",description="""specify an exact group path to exclude.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobFilter",description="specify a filter for the job Name. Include any job name that matches this value",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobFilter",description="specify a filter for the job Name. Exclude any job name that matches this value.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobExactFilter",description="specify an exact job name to match.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobExactFilter",description="specify an exact job name to exclude.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="startafterFilter",description="start after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="startbeforeFilter",description="start before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endafterFilter",description="end after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endbeforeFilter",description="end before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="begin",description="Specify exact date for earliest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="end",description="Specify exact date for latest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="adhoc",description="if true, include only Adhoc executions, if false return only Job executions. By default any matching executions are returned, however if you use any of the Job filters below, then only Job executions will be returned.",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="recentFilter",
+                description="""Use a simple text format to filter executions that completed within a period of time.
+The format is \"XY\" where X is an integer, and \"Y\" is one of:
+* `s`: second
+* `n`: minute
+* `h`: hour
+* `d`: day
+* `w`: week
+* `m`: month
+* `y`: year
+
+So a value of `2w` would return executions that completed within the last two weeks.
+""",
+                schema=@Schema(type="string")
+            ),
+            @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
+            @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = """It contains a `paging` entry with paging information, and an `executions` entry with execution information:
+
+The `[status]` value indicates the execution status.  It is one of:
+
+* `running`: execution is running
+* `succeeded`: execution completed successfully
+* `failed`: execution completed with failure
+* `aborted`: execution was aborted
+* `timedout`: execution timed out
+* `failed-with-retry`: execution failed and will retry
+* `scheduled`: execution is scheduled to run in the future
+* `other`: execution had a custom exit status string
+
+If `status` is `other`, then, `customStatus` will contain the exit status.
+
+The `[url]` value for the `href` is a URL the Rundeck API for the execution.
+The `[url]` value for the `permalink` is a URL to the Rundeck server page to view the execution output.
+
+`[user]` is the username of the user who started the execution.
+
+`[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
+
+If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`.
+
+`project="[project]"` is the project name of the execution.
+
+`successfulNodes` and `failedNodes` list the names of nodes which succeeded or failed.
+
+The `job` section contains `options` if an `argstring` value is set.  Inside `options` is a sequence of `<option>` elements with two attributes:
+
+* `name` the parsed option name
+* `value` the parsed option value
+
+**Since API v13**: The `serverUUID` will indicate the server UUID
+if executed in cluster mode.""",
+        content = @Content(
+            mediaType = 'application/json',
+            examples = @ExampleObject("""{
+  "paging": {
+    "count": 2,
+    "total": 2,
+    "offset": 0,
+    "max": 20
+  },
+  "executions":[
+    {
+      "id": 387,
+      "href": "[API url]",
+      "permalink": "[GUI url]",
+      "status": "[status]",
+      "customStatus": "[string]",
+      "project": "test",
+      "user": "[user]",
+      "serverUUID":"[UUID]",
+      "date-started": {
+        "unixtime": 1431536339809,
+        "date": "2015-05-13T16:58:59Z"
+      },
+      "date-ended": {
+        "unixtime": 1431536346423,
+        "date": "2015-05-13T16:59:06Z"
+      },
+      "job": {
+        "id": "7400ff98-31c4-4834-ba3d-aee9646e867f",
+        "averageDuration": 6094,
+        "name": "test job",
+        "group": "api-test/job-run-steps",
+        "project": "test",
+        "description": "",
+        "href": "[API url]",
+        "permalink": "[GUI url]",
+        "options": {
+          "opt2": "a",
+          "opt1": "testvalue"
+        }
+      },
+      "description": "echo hello there [... 5 steps]",
+      "argstring": "-opt1 testvalue -opt2 a",
+      "successfulNodes": [
+        "madmartigan.local"
+      ]
+    }
+    ]
+}""")
+        )
+    )
+    /**
+     * nb: non-functional method annotated for documentation
+     * see implementation {@link #apiExecutionsQueryv14(com.dtolabs.rundeck.app.support.ExecutionQuery)}
+     */
+    protected def apiExecutionsQueryv14_docs(){
+
+    }
+
     /**
      * API: /api/14/project/NAME/executions
      */
@@ -3229,8 +3378,56 @@ Note: the JSON schema also supports a basic JSON array
     }
 
 
+    @Get(uri="/system/executions/status")
+    @Operation(
+        method="GET",
+        summary = "Get Current Execution Mode",
+        description = """Gets the current execution mode.
+
+Note:
+Prior to API version 36 if the mode was **passive** a status `HTTP 503 - Service Unavailable` would be returned.
+As of API v36 a `200` status will now be returned when the mode is **passive**.
+To return a 503 when the mode is **passive** add `?passiveAs503=true` to the API call.  
+
+Authorization Required: `read` for `system` resource
+
+Since: V32
+""",
+        tags = "system",
+        parameters = @Parameter(
+            name="passiveAs503",
+            description="if true, return 503 response when execution mode is passive. Since: v36",
+            in=ParameterIn.QUERY,
+            schema=@Schema(type="boolean")
+        ),
+        responses=[
+            @ApiResponse(
+                responseCode="200",
+                description="Execution Mode status result for API v36+, or for active status only for API<v36.",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            ),
+            @ApiResponse(
+                responseCode="503",
+                description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            )
+        ]
+    )
     /**
-     *
+     * /api/V/system/executions/status
      * @return
      */
     @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN)
@@ -3262,11 +3459,36 @@ Note: the JSON schema also supports a basic JSON array
 
     }
 
+
     /**
      *
      * @return
      */
+    @Post(uri = "/system/executions/enable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Active",
+        description = """Enables executions, allowing adhoc and manual and scheduled jobs to be run.
 
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `enable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
     )
@@ -3277,6 +3499,31 @@ Note: the JSON schema also supports a basic JSON array
      *
      * @return
      */
+    @Post(uri = "/system/executions/disable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Passive",
+        description = """Disables executions, preventing adhoc and manual and scheduled jobs from running.
+
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `disable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
     )
@@ -3485,6 +3732,46 @@ So a value of `2w` would return executions that completed within the last two we
      * as a required parameter in the spec, which is incorrect
      */
     protected def apiExecutionMetrics_docs() {
+        apiExecutionMetrics(null)
+    }
+
+
+    @Get(uri="/project/{project}/executions/metrics",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query Metrics",
+        description = """Obtain metrics over the result set of an execution query over the executions of a single project.
+
+Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
+""",
+        tags = "execution",
+        parameters = [
+            @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description="Metrics response",
+        content=[
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MetricsQueryResponse)
+            ),
+            @Content(
+                mediaType = "application/xml",
+                schema = @Schema(implementation = MetricsQueryResponse)
+            )
+        ]
+    )
+    @Tag(name = 'execution')
+    /**
+     * Placeholder method to annotate for openapi spec generation.
+     * Note: this method will never be used.
+     * This is used in place of annotating the apiExecutionMetrics method because
+     * the grails binding parameter type ExecutionQuery gets included
+     * as a required parameter in the spec, which is incorrect
+     */
+    protected def apiExecutionMetricsProject_docs() {
         apiExecutionMetrics(null)
     }
     /**
