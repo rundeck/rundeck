@@ -797,7 +797,6 @@ function _loadDashboard(scheduledExecutionId) {
     data: { scheduledExecutionId: seUuid },
     url: _genUrl('/project/edit/dashboard'),
     success: function (resp, status, jqxhr) {
-      console.log(resp)
       jQuery('#stepsDashboard_container').html(resp)
       _vueEmitJobEdited()
     }

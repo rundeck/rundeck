@@ -7,24 +7,34 @@
         <div style="width: 100%;height: 90%; display: flex;justify-content: center;align-items: center;">
             <div
                     style="width: 30%; height: 100%;display: flex;flex-direction: column;align-items: center;justify-content: center;font-size: 20px;font-weight: bold;">
-                <h6>Total</h6>
+                <h6 style="font-weight: lighter;">Total</h6>
 
-                <span id="totalStepDashboardData"
-                   style="font-size: 30px;">${enabled + disabled}</span>
+                <span id="totalStepDashboardData" class="label label-secondary has_tooltip"
+                      data-container="#section-content"
+                      data-placement="auto bottom"
+                      title="${enabled+disabled} steps set in job"
+                      style="font-size: 30px;"
+                   >${enabled + disabled}</span>
             </div>
 
             <div style="width: 30%; height: 100%;display: flex;flex-direction: column;align-items: center;justify-content: center;font-size: 20px;font-weight: bold;">
-                <h6>Enabled</h6>
+                <h6 style="font-weight: lighter;">Enabled</h6>
 
-                <span id="enabledStepDashboard"
-                   style="font-size: 30px;">${enabled}</span>
+                <span id="enabledStepDashboard" class="label label-secondary has_tooltip"
+                      data-container="#section-content"
+                      data-placement="auto bottom"
+                      title="${enabled} enabled steps in job"
+                      style="font-size: 30px;">${enabled}</span>
             </div>
 
             <div style="width: 30%; height: 100%;display: flex;flex-direction: column;align-items: center;justify-content: center;font-size: 20px;font-weight: bold;">
-                <h6>Disabled</h6>
+                <h6 style="font-weight: lighter;">Disabled</h6>
 
-                <span id="disabledStepDashboard"
-                   style="font-size: 30px;">${disabled}</span>
+                <span id="disabledStepDashboard" class="label label-secondary has_tooltip"
+                      data-container="#section-content"
+                      data-placement="auto bottom"
+                      title="${disabled} disabled steps in job"
+                      style="font-size: 30px;">${disabled}</span>
             </div>
         </div>
     </div>
