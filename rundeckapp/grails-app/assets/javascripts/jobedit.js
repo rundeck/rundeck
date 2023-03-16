@@ -641,6 +641,7 @@ function _wfiedit(key, num, isErrorHandler) {
 }
 
 function _wficopy(key, num, isErrorHandler) {
+  _loadDashboard();
   _ajaxWFAction(appLinks.workflowCopy, {
     num: num,
     edit: true
