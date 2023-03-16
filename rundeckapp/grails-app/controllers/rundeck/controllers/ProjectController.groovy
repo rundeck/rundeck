@@ -1121,14 +1121,24 @@ by:
                             )
                     ]
             ),
-            parameters = @Parameter(
-                    name = 'project',
-                    in = ParameterIn.PATH,
-                    description = 'Project Name',
-                    allowEmptyValue = false,
-                    required = true,
-                    schema = @Schema(implementation = String.class)
-            )
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL Policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
     )
     @Tags(
             [
@@ -2872,6 +2882,103 @@ Since: v19""",
         projectService.releasePromise(session.user, token)
     }
 
+    @Put('/{project}/import')
+    @Operation(
+            method = "PUT",
+            summary = "Import a zip archive.",
+            description = """Import a zip archive to the project.
+Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
+
+Requires `import` authorization for the project resource.""",
+            requestBody = @RequestBody(content = @Content(mediaType = "application/zip", schema = @Schema(implementation = InputStream))),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'jobUuidOption', required = false, in = ParameterIn.QUERY,
+                            description = '''Option declaring how duplicate Job UUIDs should be handled. 
+If preserve (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. 
+If remove then all job UUIDs will be removed before importing.''', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'importExecutions', required = false, in = ParameterIn.QUERY, description = '''If true, import all executions and logs from the archive (default). 
+If false, do not import executions or logs.''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importConfig ', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
+If false, do not import the project configuration (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importACL ', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
+If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
+If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
+If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'whkRegenAuthTokens', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, always regenerate the auth tokens associated with the webhook. 
+If false, the webhook auth token in the archive will be imported. 
+If no auth token info was included with the webhook, it will be generated (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
+If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+
+For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
+
+* `importComponents.webhooks=true&importOpts.webhooks.regenAuthTokens=true`
+
+Import schedules definitions:
+
+* `importComponents.Schedule%20Definitions=true`''', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'importOpts.NAME.KEY', required = false, in = ParameterIn.QUERY, description = 'Set a component option. See `importComponents.NAME` parameter description', schema = @Schema(implementation = String.class))
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = """Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
+
+Response will indicate whether the imported contents had any errors.
+
+Note: `other_errors` included since API v35""",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                    @ExampleObject(name = 'successful result', description = 'All imported jobs and files were successful' , value = '''{"import_status":"successful"}'''),
+                                    @ExampleObject(name = 'status failed result', description = 'Some imported files failed' , value = '''{
+    "import_status":"failed",
+    "errors": [
+        "Job ABC could not be validated: ...",
+        "Job XYZ could not be validated: ..."
+    ],
+    "execution_errors": [
+        "Execution 123 could not be imported: ...",
+        "Execution 456 could not be imported: ..."
+    ],
+    "acl_errors": [
+        "file.aclpolicy could not be validated: ...",
+        "file2.aclpolicy could not be validated: ..."
+    ],
+    "other_errors": [
+        "webhooks could not be validated: ..."
+    ]
+}''')
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectImport(ProjectArchiveParams archiveParams){
         if(!apiService.requireApi(request,response)){
