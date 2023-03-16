@@ -42,6 +42,7 @@ import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
@@ -3104,43 +3105,57 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, MediaType.TEXT_XML, 'text/yaml'])
+    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method = "GET",
-        summary = "Get Job Definition",
-        description = "Export the Job definition for the job, in one of the supported formats.",
+        summary = "Getting a Job Definition",
+        description = "Export a single job definition, in one of the supported formats.",
         responses = [
             @ApiResponse(
                 responseCode = "200",
-                description = "Job definition (json)",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-                )
-            ),
+                description = '''Job definition, depending on the requested format:
 
-            @ApiResponse(
-                responseCode = "200",
-                description = "Job definition (xml)",
-                content = @Content(
-                    mediaType = MediaType.TEXT_XML
-                )
-            ),
-
-            @ApiResponse(
-                responseCode = "200",
-                description = "Job definition (yaml)",
-                content = @Content(
-                    mediaType = 'text/yaml'
-                )
+* YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
+* JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
+                content = [
+                    @Content(
+                        schema = @Schema(
+                            type = 'object',
+                            externalDocs = @ExternalDocumentation(
+                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                                description = "Job JSON Format"
+                            )
+                        ),
+                        mediaType = MediaType.APPLICATION_JSON
+                    ),
+                    @Content(
+                        schema = @Schema(
+                            type = 'string',
+                            externalDocs = @ExternalDocumentation(
+                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                                description = "Job YAML Format"
+                            )
+                        ),
+                        mediaType = 'text/yaml'
+                    )
+                ]
             )
         ],
-        parameters = @Parameter(
-            name = "id",
-            description = "Job ID",
-            in = ParameterIn.PATH,
-            required = true,
-            content = @Content(schema = @Schema(implementation = String))
-        )
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                content = @Content(schema = @Schema(implementation = String))
+            ),
+            @Parameter(
+                name = "format",
+                description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
+                in = ParameterIn.QUERY,
+                content = @Content(schema = @Schema(implementation = String))
+            )
+        ]
     )
     @Tag(name = "jobs")
 
