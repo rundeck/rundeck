@@ -51,6 +51,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.commons.collections.list.TreeList
@@ -3345,6 +3346,118 @@ Authorization required: `read` for the Job.''',
         }
         flush(response)
     }
+
+    @Post(uri='/job/{id}/run')
+    @Operation(
+        method='POST',
+        summary='Running a Job',
+        description = '''Run a job specified by ID.
+
+Parameters can be specified in the request body, instead of as query parameters
+
+Authorization required: `run` for the Job resource.
+''',
+        tags=['jobs'],
+        requestBody = @RequestBody(
+            description = '''Parameters can be specified in the request body, instead of as query parameters.
+
+(**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"...",
+    "runAtTime":"...",
+    "options": {
+        "myopt1":"value"
+    }
+}'''
+                    )
+                )
+            ]
+        ),
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(name='argString',in = ParameterIn.QUERY,
+                description='argument string to pass to the job, of the form: `-opt value -opt2 value ...`.',
+                schema = @Schema(type='string')),
+            @Parameter(name='loglevel', in = ParameterIn.QUERY,
+                description='argument specifying the loglevel to use',schema=@Schema(type='string',
+                allowableValues = ['DEBUG','VERBOSE','INFO','WARN','ERROR'])),
+            @Parameter(name='asUser', in = ParameterIn.QUERY,
+                description='specifies a username identifying the user who ran the job. Requires `runAs` permission.',
+                schema = @Schema(type='string')),
+            @Parameter(name='filter', in = ParameterIn.QUERY,
+                description='can be a node filter string.',
+                schema = @Schema(type='string')),
+            @Parameter(name='runAtTime', in = ParameterIn.QUERY,
+                description='''Specify a time to run the job (Since: v18).
+
+This is a ISO-8601 date and time stamp with timezone, with optional milliseconds., e.g. `2016-11-23T12:20:55-0800` or `2016-11-23T12:20:55.123-0800`''',
+            schema=@Schema(type='string',format='date-time')),
+            @Parameter(name='option.OPTNAME',in = ParameterIn.QUERY,
+                description='Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified, the `argString` value is ignored (Since: v18).',
+                schema = @Schema(type='string')),
+            @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
+                description='Additional metadata keyd by `KEY`. (Since: v32).',
+                schema = @Schema(type='string'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Created Execution',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}""")
+            )
+        )
+    )
     /**
      * API: Run a job immediately: /job/{id}/run, version 1
      */
@@ -3510,6 +3623,131 @@ Authorization required: `read` for the Job.''',
         }
     }
 
+    @Post(uri='/job/{id}/retry/{executionId}')
+    @Operation(
+        method='POST',
+        summary='Retry a Job based on execution',
+        description = '''Retry a failed execution on failed nodes only or on the same as the execution.
+This is the same functionality as the `Retry Failed Nodes ...` button on the execution page.
+
+Parameters can be specified in the request body, instead of as query parameters
+
+Authorization required: `run` for the Job resource, and `read` or `view` for the Execution resource.
+
+Since: v24
+''',
+        tags=['jobs'],
+        requestBody = @RequestBody(
+            description = '''Parameters can be specified in the request body, instead of as query parameters.
+
+(**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "failedNodes": true,
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"...",
+    "runAtTime":"...",
+    "options": {
+        "myopt1":"value"
+    }
+}'''
+                    )
+                )
+            ]
+        ),
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "executionId",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(name='failedNodes',in = ParameterIn.QUERY,
+                description='`false` to run on the same nodes as the original execution, `true`or empty to run only on failed nodes.',
+                schema = @Schema(type='boolean')),
+            @Parameter(name='argString',in = ParameterIn.QUERY,
+                description='argument string to pass to the job, of the form: `-opt value -opt2 value ...`.',
+                schema = @Schema(type='string')),
+            @Parameter(name='loglevel', in = ParameterIn.QUERY,
+                description='argument specifying the loglevel to use',schema=@Schema(type='string',
+                    allowableValues = ['DEBUG','VERBOSE','INFO','WARN','ERROR'])),
+            @Parameter(name='asUser', in = ParameterIn.QUERY,
+                description='specifies a username identifying the user who ran the job. Requires `runAs` permission.',
+                schema = @Schema(type='string')),
+            @Parameter(name='filter', in = ParameterIn.QUERY,
+                description='can be a node filter string.',
+                schema = @Schema(type='string')),
+            @Parameter(name='runAtTime', in = ParameterIn.QUERY,
+                description='''Specify a time to run the job (Since: v18).
+
+This is a ISO-8601 date and time stamp with timezone, with optional milliseconds., e.g. `2016-11-23T12:20:55-0800` or `2016-11-23T12:20:55.123-0800`''',
+                schema=@Schema(type='string',format='date-time')),
+            @Parameter(name='option.OPTNAME',in = ParameterIn.QUERY,
+                description='Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified, the `argString` value is ignored (Since: v18).',
+                schema = @Schema(type='string')),
+            @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
+                description='Additional metadata keyd by `KEY`. (Since: v32).',
+                schema = @Schema(type='string'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Created Execution',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}""")
+            )
+        )
+    )
     def apiJobRetry() {
         if (!apiService.requireApi(request, response, ApiVersions.V24)) {
             return
@@ -3578,6 +3816,99 @@ Authorization required: `read` for the Job.''',
         apiJobRun()
     }
 
+
+    @Post(uri = '/job/{id}/input/file')
+    @Operation(
+        method='POST',
+        summary='Upload Multiple Files for Job Options',
+        description='''Job Options of type `file` require a file input. You can upload multiple files en-masse.
+
+Each uploaded file is assigned a unique "file key" identifier.
+You can then Run the Job using the "file key" as the option value.
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name. The filename is specified normally within the multi-part request.
+
+Since: v19''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''Upload Multiple Files.
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name. The filename is specified normally within the multi-part request.
+''',
+            content = @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Successful response, with multiple uploaded file tokens',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileUpload)
+            )
+        )
+    )
+    protected def apiJobFileMultiUpload(){}
+
+    @Post(uri = '/job/{id}/input/file/{optionName}')
+    @Operation(
+        method='POST',
+        summary='Upload a File for a Job Option',
+        description='''Job Options of type `file` require a file input. This endpoint uploadds a single file individually.
+
+Each uploaded file is assigned a unique "file key" identifier.
+You can then Run the Job using the "file key" as the option value.
+
+Since: v19''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "optionName",
+                description = "For a single file/option value, specify the option name either as a query parameter or as part of the URL path",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "fileName",
+                description = "Specify the original file name (optional)",
+                in = ParameterIn.QUERY,
+                schema = @Schema(type='string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description="Upload a single file directly",
+            content=@Content(
+                mediaType = MediaType.APPLICATION_OCTET_STREAM
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Successful response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileUpload)
+            )
+        )
+    )
     /**
      * API v19, File upload input for job
      * @return
