@@ -41,6 +41,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
@@ -3720,6 +3721,46 @@ Authorization required: `read` for the Job.''',
                 [formats: ['xml', 'json']]
         )
     }
+
+    @Delete('/job/{id}')
+    @Operation(
+        method = 'DELETE',
+        summary = 'Deleting a Job Definition',
+        description = '''Delete a single job definition.
+
+Authorization required: `delete` for the job.''',
+        tags = ['jobs'],
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                content = @Content(schema = @Schema(implementation = String))
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '204',
+                description = "Successful delete. No Content"
+            ),
+            @ApiResponse(
+                responseCode = '404',
+                description = "Not Found",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '403',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '409',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            )
+        ]
+    )
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */
