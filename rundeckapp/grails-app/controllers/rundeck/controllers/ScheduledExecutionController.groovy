@@ -3865,7 +3865,7 @@ is the option name. The filename is specified normally within the multi-part req
     @Operation(
         method='POST',
         summary='Upload a File for a Job Option',
-        description='''Job Options of type `file` require a file input. This endpoint uploadds a single file individually.
+        description='''Job Options of type `file` require a file input. This endpoint uploads a single file individually.
 
 Each uploaded file is assigned a unique "file key" identifier.
 You can then Run the Job using the "file key" as the option value.
