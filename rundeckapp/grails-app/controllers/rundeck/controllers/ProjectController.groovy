@@ -2765,6 +2765,70 @@ Requires `export` authorization for the project resource.""",
     protected def apiProjectExportAsync_docs() {}
 
 
+    @Get('/{project}/export/status/{token}')
+    @Operation(
+            method = "GET",
+            summary = "Get the status of an async export request",
+            description = """Get the status of an async export request. 
+Retrieve the result once ready with `/api/V/project/[PROJECT]/export/download/[TOKEN]`.
+
+Requires `export` authorization for the project resource.
+Since: v19""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'token',
+                            in = ParameterIn.PATH,
+                            description = 'Token to retrieve export status',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Returns the Token to retrieve export status and download zip achive",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_XML,
+                            examples = [
+                                    @ExampleObject('''<projectExport token="[TOKEN]" ready="true/false" precentage="#"></projectExport>''')
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                    @ExampleObject('''{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     def apiProjectExportAsyncStatus() {
         def token = params.token
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
@@ -2797,6 +2861,51 @@ Requires `export` authorization for the project resource.""",
         )
     }
 
+    @Get('/{project}/export/download/{token}')
+    @Operation(
+            method = "GET",
+            summary = "Download the zip archive file",
+            description = """Download the archive file once the export status is `ready`.
+
+Requires `export` authorization for the project resource.
+Since: v19""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'token',
+                            in = ParameterIn.PATH,
+                            description = 'Token to retrieve export status',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project exported zip archive file",
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     def apiProjectExportAsyncDownload() {
         def token = params.token
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
