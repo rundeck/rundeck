@@ -2526,6 +2526,71 @@ Authorization required: `configure` access for `project` resource type or `admin
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @Get('/{project}/export')
+    @Operation(
+            method = "GET",
+            summary = "Export a zip archive of the project.",
+            description = """Performs the export to a zip archive of the project synchronously. 
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+* optionally use POST method with with application/x-www-form-urlencoded content for large lists of execution IDs
+* optionally, specify executionIds multiple times, with a single ID per entry.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project exported zip archive file",
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     def apiProjectExport(ProjectArchiveParams archiveParams) {
         if(!apiService.requireApi(request,response)){
@@ -2612,6 +2677,92 @@ Authorization required: `configure` access for `project` resource type or `admin
                 authContext
         )
     }
+
+    @Get('/{project}/export/async')
+    @Operation(
+            method = "GET",
+            summary = "Export a zip archive of the project asynchronously.",
+            description = """Performs the export to a zip archive of the project asynchronously.
+Use the Token result to query the export status and to retrieve the result once ready 
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+* optionally use POST method with with application/x-www-form-urlencoded content for large lists of execution IDs
+* optionally, specify executionIds multiple times, with a single ID per entry.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Returns the Token to retrieve export status and download zip achive",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_XML,
+                            examples = [
+                                    @ExampleObject('''<projectExport token="[TOKEN]" ready="true/false" precentage="#"></projectExport>''')
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                    @ExampleObject('''{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+            )
+    )
+    protected def apiProjectExportAsync_docs() {}
 
 
     def apiProjectExportAsyncStatus() {
