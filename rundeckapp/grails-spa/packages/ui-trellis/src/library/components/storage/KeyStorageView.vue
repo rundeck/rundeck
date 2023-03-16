@@ -75,19 +75,19 @@
             <span>{{key.name}}</span>
           </td>
           <td class="text-strong">
-                                <span class="pull-right">
-                                  <span v-if="isPrivateKey(key)"
-                                        title="This path contains a private key that can be used for remote node execution.">
-                                    Private Key
-                                  </span>
-                                  <span v-if="isPublicKey(key)">
-                                    Public Key
-                                  </span>
-                                  <span v-if="isPassword(key)"
-                                        title="This path contains a password that can be used for remote node execution.">
-                                    Password
-                                  </span>
-                                </span>
+            <span class="pull-right">
+              <span v-if="isPrivateKey(key)"
+                    title="This path contains a private key that can be used for remote node execution.">
+                Private Key
+              </span>
+              <span v-if="isPublicKey(key)">
+                Public Key
+              </span>
+              <span v-if="isPassword(key)"
+                    title="This path contains a password that can be used for remote node execution.">
+                Password
+              </span>
+            </span>
           </td>
         </tr>
         </tbody>
@@ -95,8 +95,8 @@
         <tbody v-if="notFound()===true">
         <tr>
           <td colspan="2">
-                                <span class="text-strong">Nothing found at this path.
-                                </span>
+              <span class="text-strong">Nothing found at this path.
+              </span>
           </td>
         </tr>
         </tbody>
@@ -153,15 +153,6 @@
 
     </div>
   </div>
-
-
-  <div slot="footer">
-    <button type="button" class="btn btn-sm btn-default" @click="handleCancel">Cancel</button>
-    <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
-            :disabled="isKeySelected()===false" @click="handleSelectKey">
-      Choose Selected Key
-    </button>
-  </div>
 </div>
 </template>
 
@@ -173,12 +164,12 @@ import Vue from "vue";
 
 export default Vue.extend({
   name: "KeyStorageView",
-  props: [
-    'readOnly',
-    'allowUpload',
-    'value',
-    'storageFilter'
-  ],
+  props: {
+    readOnly: Boolean,
+    allowUpload: Boolean,
+    value: String,
+    storageFilter: String,
+  } ,
   data() {
     return {
       errorMsg: '',
@@ -203,6 +194,10 @@ export default Vue.extend({
     showRootPath: function () {
       return "keys/"
     }
+  },
+  mounted() {
+    console.log("==> load keys from path: ", this.path)
+    this.loadKeys()
   },
   methods: {
     loadKeys() {
@@ -250,8 +245,8 @@ export default Vue.extend({
             }
           });
         }
-      }).catch((err) => {
-        this.errorMsg = err;
+      }).catch((err: Error) => {
+        this.errorMsg = err.message
       });
     },
     allowedResource(meta: any) {
@@ -270,17 +265,6 @@ export default Vue.extend({
         }
       }
       return false;
-    },
-    handleSelectKey() {
-      this.modalOpen = false;
-      this.$emit("closeEditor")
-      this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
-      this.clean();
-    },
-    handleCancel() {
-      this.clean();
-      this.modalOpen = false;
-      this.$emit("closeSelector")
     },
     duration(start: any) {
       return moment().diff(moment(start));
@@ -365,6 +349,8 @@ export default Vue.extend({
         this.selectedKey = key;
         this.isSelectedKey = true;
       }
+
+      this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
     },
     parentDirString(path: any) {
       if (null != path && path.lastIndexOf('/') >= 0) {
@@ -519,9 +505,9 @@ export default Vue.extend({
           this.invalid = true
           this.errorMsg = 'invalid path';
         }
-      }).catch((err) => {
+      }).catch((err: Error) => {
         this.invalid = true
-        this.errorMsg = 'invalid path';
+        this.errorMsg = `Failed to change parent directory. Error: ${err.message}`;
       });
     },
     showUpPath() {
@@ -578,6 +564,23 @@ export default Vue.extend({
 })
 </script>
 
-<style scoped>
+<style>
+  .keySelector span {
+        content: " ";
+        margin: 0 2px;
+    }
 
+    .keySelector i {
+        content: " ";
+        margin: 0 1px;
+    }
+
+    .keySelector-button-group button {
+        content: " ";
+        margin: 0 2px;
+    }
+
+    label-key {
+        vertical-align: middle
+    }
 </style>
