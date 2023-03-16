@@ -1490,7 +1490,144 @@ Since: V14''',
             return renderErrorView([:])
         }
     }
-    def apiFlipExecutionEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+
+    @Post(uri='/jobs/execution/disable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Execution Disabled",
+        description = '''Toggle executions disabled for a set of jobs.
+
+Authorization required: `toggle_execution` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    protected def apiFlipExecutionDisabledBulk(
+        @RequestBody(
+            description = "request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ){}
+
+    @Post(uri='/jobs/execution/enable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Execution Enabled",
+        description = '''Toggle executions enabled for a set of jobs.
+
+Authorization required: `toggle_execution` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    def apiFlipExecutionEnabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ) {
         if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
@@ -1569,7 +1706,144 @@ Since: V14''',
             }
         }
     }
-    def apiFlipScheduleEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+
+    @Post(uri='/jobs/schedule/disable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Schedule Disabled",
+        description = '''Toggle schedule disabled for a set of jobs.
+
+Authorization required: `toggle_schedule` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    protected def apiFlipScheduleDisabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ){}
+
+    @Post(uri='/jobs/schedule/enable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Schedule Enabled",
+        description = '''Toggle schedule enabled for a set of jobs.
+
+Authorization required: `toggle_schedule` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    def apiFlipScheduleEnabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ) {
         if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
@@ -4076,6 +4350,42 @@ Since: v19''',
         respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
     }
 
+    @Get(uri='/jobs/file/{id}')
+    @Operation(
+        method = "GET",
+        summary = 'Get Info About an Uploaded File',
+        description = '''Get info about an uploaded file given its ID.''',
+        tags = ['jobs'],
+        parameters = @Parameter(
+            name = "id",
+            description = "File ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = "File info",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileInfo),
+                examples = @ExampleObject('''
+{
+  "dateCreated": "2017-02-24T19:10:33Z",
+  "execId": 2741,
+  "expirationDate": "2017-02-24T19:11:03Z",
+  "fileName": null,
+  "fileState": "deleted",
+  "id": "f985864b-fa1b-4e09-af7a-4315e9908372",
+  "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+  "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+  "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+  "size": 12,
+  "user": "admin"
+}''')
+            )
+        )
+    )
     /**
      * API v19, File upload input for job
      * @return
