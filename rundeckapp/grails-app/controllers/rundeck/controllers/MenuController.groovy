@@ -37,6 +37,7 @@ import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
@@ -2821,6 +2822,25 @@ Since: V17''',
      * API: /api/jobs, version 1
      */
 
+    @Get(uri='/job/{id}/info')
+    @Operation(
+        method='GET',
+        summary='Get Job Metadata',
+        description='''Get metadata about a specific job.
+
+Authorization required: `read` or `view` for the job.
+
+Since: V18''',
+        tags=['jobs'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Job metadata',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobInfo)
+            )
+        )
+    )
     /**
      * API: get job info: /api/18/job/{id}/info
      */
