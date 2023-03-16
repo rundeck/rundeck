@@ -56,6 +56,7 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -3109,7 +3110,9 @@ class ScheduledExecutionController  extends ControllerBase{
     @Operation(
         method = "GET",
         summary = "Getting a Job Definition",
-        description = "Export a single job definition, in one of the supported formats.",
+        description = '''Export a single job definition, in one of the supported formats.
+
+Authorization required: `read` for the Job.''',
         responses = [
             @ApiResponse(
                 responseCode = "200",
@@ -3139,6 +3142,21 @@ class ScheduledExecutionController  extends ControllerBase{
                         mediaType = 'text/yaml'
                     )
                 ]
+            ),
+            @ApiResponse(
+                responseCode = '404',
+                description = "Not Found",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '403',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '415',
+                description = '''Unsupported Media type.''',
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
             )
         ],
         parameters = [
