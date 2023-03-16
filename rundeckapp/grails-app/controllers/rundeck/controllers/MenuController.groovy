@@ -2832,6 +2832,13 @@ Authorization required: `read` or `view` for the job.
 
 Since: V18''',
         tags=['jobs'],
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
         responses = @ApiResponse(
             responseCode = '200',
             description = 'Job metadata',
