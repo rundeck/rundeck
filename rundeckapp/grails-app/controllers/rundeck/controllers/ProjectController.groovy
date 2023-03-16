@@ -649,14 +649,6 @@ Authorization required: `read` access for `project` resource type to get basic p
             responseCode = "200",
             description = "Project details",
             content = @Content(
-                    mediaType = "application/xml",
-                    examples = @ExampleObject('<project url="http://server:4440/api/11/project/PROJECT_NAME"> <name>Project Name</name> <description>...</description> <!-- additional items --></project>')
-            )
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Project details",
-            content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
             )
@@ -964,13 +956,6 @@ Authorization required: `configure` access for `project` resource type or `admin
 key2=value''')
                     ),
                     @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<config>
-    <property key="name" value="value"/>
-    <!-- ... -->
-</config>''')
-                    ),
-                    @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject('''{
     "key":"value",
@@ -1075,17 +1060,6 @@ for:
     - allow: read
 by:
   group: build''')
-                    ),
-                    @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build]]></contents>''')
                     ),
                     @Content(
                             mediaType = "application/json",
@@ -1199,17 +1173,6 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build]]></contents>''')
-                    ),
-                    @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
@@ -1288,14 +1251,24 @@ by:
                             )
                     ]
             ),
-            parameters = @Parameter(
-                    name = 'project',
-                    in = ParameterIn.PATH,
-                    description = 'Project Name',
-                    allowEmptyValue = false,
-                    required = true,
-                    schema = @Schema(implementation = String.class)
-            )
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL Policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
     )
     @Tags(
             [
@@ -1327,17 +1300,6 @@ for:
     - allow: read
 by:
   group: build''')
-                    ),
-                    @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build]]></contents>''')
                     ),
                     @Content(
                             mediaType = "application/json",
@@ -1734,10 +1696,6 @@ Authorization required: `configure` access for `project` resource type or `admin
                             examples = @ExampleObject('''The readme contents''')
                     ),
                     @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<contents>The readme contents</contents>''')
-                    ),
-                    @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject('''{"contents":"The readme contents"}''')
                     )
@@ -1884,10 +1842,6 @@ Authorization required: `configure` access for `project` resource type or `admin
                     @Content(
                             mediaType = "application/text",
                             examples = @ExampleObject('''The readme contents''')
-                    ),
-                    @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<contents>The readme contents</contents>''')
                     ),
                     @Content(
                             mediaType = "application/json",
@@ -2210,13 +2164,6 @@ Authorization required: `configure` access for `project` resource type or `admin
                             mediaType = "application/text",
                             examples = @ExampleObject('''key=value
 key2=value''')
-                    ),
-                    @Content(
-                            mediaType = "application/xml",
-                            examples = @ExampleObject('''<config>
-    <property key="name" value="value"/>
-    <!-- ... -->
-</config>''')
                     ),
                     @Content(
                             mediaType = "application/json",
