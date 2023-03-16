@@ -1114,17 +1114,6 @@ by:
   group: build''')
                             ),
                             @Content(
-                                    mediaType = "application/xml",
-                                    examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build]]></contents>''')
-                            ),
-                            @Content(
                                     mediaType = "application/json",
                                     examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
@@ -1231,17 +1220,6 @@ for:
     - allow: read
 by:
   group: build''')
-                            ),
-                            @Content(
-                                    mediaType = "application/xml",
-                                    examples = @ExampleObject('''<contents><![CDATA[description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build]]></contents>''')
                             ),
                             @Content(
                                     mediaType = "application/json",
