@@ -8,6 +8,7 @@ import com.rundeck.plugin.api.model.ModeLaterResponse
 import grails.converters.JSON
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
@@ -116,7 +117,7 @@ Since: v34
 Specify a `value` with a time duration expression. (See request schema for syntax.)
 """,
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = [
                     @ExampleObject(value='{"value":"2h30m"}'),
                 ],
@@ -128,7 +129,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
         description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
         responseCode = "200",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":true,"msg":"Execution Mode Later saved"}')
         )
@@ -137,7 +138,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
         description = "Request error response. A description of the error is in the `msg` field.",
         responseCode = "400",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
@@ -205,7 +206,7 @@ Since: v34
 Specify a `value` with a time duration expression. (See request schema for syntax.)
 """,
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = [
                     @ExampleObject(value='{"value":"2h30m"}'),
                 ],
@@ -217,7 +218,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
         description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already disabled.",
         responseCode = "200",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":true,"msg":"Execution Mode Later saved"}')
         )
@@ -226,7 +227,7 @@ Specify a `value` with a time duration expression. (See request schema for synta
         description = "Request error response. A description of the error is in the `msg` field.",
         responseCode = "400",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )

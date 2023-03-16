@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -1116,7 +1117,7 @@ included in a `removed` attribute.""",
         ],
         content = [
             @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples=@ExampleObject(
                     value="""{
@@ -1175,7 +1176,7 @@ this Log Entry.""")
                     description="Compacted form xml output representing the same log entries as the JSON example.")
             ),
             @Content(
-                mediaType = 'text/plain',
+                mediaType = MediaType.TEXT_PLAIN,
                 schema = @Schema(type = "string", description="Textual log output"),
                 examples = @ExampleObject(
                     value = """Log output text..."""
@@ -2184,7 +2185,7 @@ JSON response requires API v14.
 </execution>""")
             ),
             @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
   "id": 1,
   "href": "[url]",
@@ -2549,7 +2550,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 </result>""")
             ),
             @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type='object'),
                 examples = @ExampleObject("""{
   "completed": true,
@@ -2799,7 +2800,7 @@ Authorization required:
 </abort>""")
             ),
             @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = @ExampleObject("""{
   "abort": {
     "status": "[abort-state]",
@@ -2968,7 +2969,7 @@ Note: the JSON schema also supports a basic JSON array
             description = "Delete Bulk IDs request.",
             content=[
                 @Content(
-                    mediaType = 'application/json',
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(oneOf = [
                         DeleteBulkRequest, DeleteBulkRequestLong
                     ]),
@@ -3000,7 +3001,7 @@ Note: the JSON schema also supports a basic JSON array
         responseCode='200',
         description = """""",
         content=[@Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
             examples = @ExampleObject("""{
   "failures": [
@@ -3192,7 +3193,7 @@ The `job` section contains `options` if an `argstring` value is set.  Inside `op
 **Since API v13**: The `serverUUID` will indicate the server UUID
 if executed in cluster mode.""",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             examples = @ExampleObject("""{
   "paging": {
     "count": 2,
@@ -3484,7 +3485,7 @@ Since: v14
             responseCode = "200",
             description = "Execution Mode Status",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ExecutionModeResult)
             )
         )
@@ -3519,7 +3520,7 @@ Since: v14
             responseCode = "200",
             description = "Execution Mode Status",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ExecutionModeResult)
             )
         )
@@ -3598,7 +3599,7 @@ Since: v14
 </executionFiles>""")
             ),
             @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(
                     implementation = ExecutionFileInfoList
                 ),
