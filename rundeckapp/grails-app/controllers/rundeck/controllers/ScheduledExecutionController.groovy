@@ -43,11 +43,13 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -1058,6 +1060,64 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Post(uri = '/job/{id}/execution/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable Executions for a Job',
+        description = '''Disable executions for a job. 
+
+Authorization required: `toggle_execution` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
+    protected def apiFlipExecutionDisabled(){}
+
+    @Post(uri = '/job/{id}/execution/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable Executions for a Job',
+        description = '''Enable executions for a job. 
+
+Authorization required: `toggle_execution` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
     def apiFlipExecutionEnabled() {
         if (!apiService.requireApi(request, response)) {
             return
@@ -1110,6 +1170,64 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Post(uri = '/job/{id}/schedule/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable Schedule for a Job',
+        description = '''Disable schedule for a job. 
+
+Authorization required: `toggle_schedule` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
+    protected def apiFlipScheduleDisabled() {}
+
+    @Post(uri = '/job/{id}/schedule/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable Schedule for a Job',
+        description = '''Enable schedule for a job. 
+
+Authorization required: `toggle_schedule` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
     def apiFlipScheduleEnabled() {
         if (!apiService.requireApi(request, response)) {
             return
