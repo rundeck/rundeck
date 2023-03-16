@@ -22,7 +22,6 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<% System.out.println( " Context ${context} " ) %>
 <g:set var="scheduledExecutionUuid" value="${(context === null) ? (context instanceof rundeck.Workflow ? null: null) : (context instanceof rundeck.ScheduledExecution ? context?.uuid : null) }" />
 <g:unless test="${isAdhoc}">
 <g:if test="${edit}">
