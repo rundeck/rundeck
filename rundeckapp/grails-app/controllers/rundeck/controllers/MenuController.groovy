@@ -2914,6 +2914,64 @@ Since: V18''',
     }
 
 
+    @Get(uri = '/job/{id}/forecast')
+    @Operation(
+        method = "GET",
+        summary = "Get Job Forecast",
+        description = '''Get Metadata for the job including a schedule forecast for a specific amount of time of the job by ID.
+
+Authorization required: `read` or `view` for the Job
+
+Since: V31''',
+        tags = ['jobs'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                description = 'Job ID',
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type = 'string', format = 'uuid')
+            ),
+            @Parameter(
+                name = 'time',
+                description = '''Time range to forecast. 
+
+Format is a string like `2d1h4n5s` using the following characters for time units:
+* `s` second
+* `n` minute
+* `h` hour
+* `d` day
+* `w` week
+* `m` month
+* `y` year
+''',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string',pattern = '(\\d+[snhdwmy])+')
+            ),
+            @Parameter(
+                name = 'past',
+                description = 'Whether to return results in the past. default: false',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'max',
+                description = 'Maximum number of results to return',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = 'Forecast Response',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = JobInfo)
+                )
+            )
+        ]
+    )
     def apiJobForecast() {
         if (!apiService.requireApi(request, response, ApiVersions.V31)) {
             return
