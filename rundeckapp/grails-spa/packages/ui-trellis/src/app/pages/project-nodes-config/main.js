@@ -13,6 +13,7 @@ import VueI18n from 'vue-i18n'
 import international from './i18n'
 import uivLang from '../../../library/utilities/uivi18n'
 import {getRundeckContext} from '../../../library'
+import Chakra from "@chakra-ui/vue";
 
 Vue.config.productionTip = false
 
@@ -20,6 +21,7 @@ Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 Vue.use(uiv)
 Vue.use(VueI18n)
+Vue.use(Chakra);
 
 let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'

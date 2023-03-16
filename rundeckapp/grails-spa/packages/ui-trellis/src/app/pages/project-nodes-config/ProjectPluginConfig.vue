@@ -174,14 +174,12 @@
 <script lang="ts">
 import axios from "axios";
 import Vue from "vue";
-import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "../../../library";
 import Expandable from "../../../library/components/utils/Expandable.vue";
 import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
-
 interface PluginConf {
   readonly type: string;
   config: any;
@@ -245,20 +243,22 @@ export default Vue.extend({
   },
   methods: {
     notifyError(msg: string, args: any[]) {
-      Notification.notify({
-        type: "danger",
+      this.$toast({
         title: "An Error Occurred",
-        content: msg,
-        duration: 0
+        description: msg,
+        status: 'error',
+        duration: 1000,
+        position: 'top-right'
       });
     },
 
     notifySuccess(title: string, msg: string) {
-      Notification.notify({
-        type: "success",
+      this.$toast({
         title: title,
-        content: msg,
-        duration: 5000
+        description: msg,
+        status: 'success',
+        duration: 5000,
+        position: 'top-right'
       });
     },
     createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
