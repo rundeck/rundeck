@@ -76,8 +76,8 @@ dependencies {
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
 
-    compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
-    implementation "io.swagger.core.v3:swagger-annotations:2.2.8"
+    compileOnly "io.micronaut.openapi:micronaut-openapi:${micronautOpenapiVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
     implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
