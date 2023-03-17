@@ -637,6 +637,75 @@ class ScheduledExecutionController  extends ControllerBase{
         dataMap
     }
 
+    @Get(uri="/job/{id}/workflow")
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job Workflow',
+        description = '''Get the workflow tree for a job. It will traverse referenced jobs to a depth of 3.
+
+Authorization required: `read` or `view` for the Job.
+
+The authorization level affects the response data.
+
+* `read` - full workflow details are included for each step
+* `view` - basic information and description is included for each step
+
+Since: v34''',
+        tags = ['jobs'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Workflow response.
+
+**Workflow Step Fields**
+* `description`: Present and set to workflow step description if configured
+* `exec`: If command step field is present and set to command string; otherwise
+* `script`: Present and set to `"true"` if script step
+* `scriptfile`: Present and set to file path if `scriptfile` step
+* `scripturl`: If `scripturl` step field is present and set to URL if step
+* `jobRef`: Present if step is a job reference
+* `jobId`: If step is a job reference field is present and contains the referenced
+jobs ID
+* `type`: For plugin steps present and set to step plugin type
+* `nodeStep`: Present if `type` is present and set to `"true"` or `"false"` to indicate
+if the step is a node step. Implicitly `"true"` if not present and not a job step.
+* `workflow`: If step is a job reference contains the sub-workflow''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+    "workflow": [
+        {
+            "description": "[description]",
+            "exec": "[exec]",
+            "script": "[script]",
+            "scriptfile": "[scriptfile]",
+            "scripturl": "[scripturl]",
+            "jobRef": {
+                "name": "[name]",
+                "group": "[group]",
+                "uuid": "[uuid]",
+                "nodeStep": "[nodeStep]",
+                "importOptions": "[importOptions]"
+            },
+            "jobId": "[jobId]",
+            "type": "[type]",
+            "nodeStep": true,
+            "workflow": []
+        }
+    ]
+}''')
+            )
+        )
+    )
     public def apiJobWorkflow (){
         if (!apiService.requireApi(request, response)) {
             return
