@@ -20,6 +20,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
@@ -3622,7 +3623,7 @@ Authorization required: `read` for the Job.''',
         flush(response)
     }
 
-    @Post(uri='/job/{id}/run')
+    @Post(uris = ['/job/{id}/run','/job/{id}/executions'])
     @Operation(
         method='POST',
         summary='Running a Job',
@@ -4565,6 +4566,25 @@ Authorization required: `delete` for the job.''',
         }
     }
 
+    @Delete(uri='/job/{id}/executions')
+    @Operation(
+        method = 'DELETE',
+        summary = 'Delete all Executions for a Job',
+        description = '''Delete all executions for a Job.''',
+        tags = ['jobs', 'execution'],
+        parameters = [
+            @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
+                .PATH, required = true, schema = @Schema(type = 'string'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = """Summary of bulk delete results""",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = DeleteBulkResponse)
+            )
+        )
+    )
     /**
      * API: DELETE /job/{id}/executions, version 12
      * delete all executions for a job
@@ -4814,6 +4834,78 @@ Authorization required: `delete` for the job.''',
         def results = runAdhoc(runAdhocRequest)
         return apiResponseAdhoc(results)
     }
+
+    @Get(uris = ['/job/{id}/executions'])
+    @Operation(
+        method = 'GET',
+        summary = 'Getting Executions for a Job',
+        description = '''Get the list of executions for a Job.
+
+Authorizations required: `read` or `view` for the Job, and `read` for the project resource type `execution`.
+''',
+        tags = ['jobs', 'execution'],
+        parameters = [
+            @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
+                .PATH, required = true, schema = @Schema(type = 'string')),
+            @Parameter(name = 'status', description = '''the status of executions you want to be returned.  Must be 
+one of "succeeded", "failed", "aborted", or "running".  If this parameter is blank or unset, include all executions.''',
+                in = ParameterIn
+                    .QUERY, schema = @Schema(type = 'string', allowableValues = ["succeeded", "failed", "aborted",
+                    "running"])),
+            @Parameter(name = 'max', description = '''indicate the maximum number of results to return. If 
+unspecified, all results will be returned''',
+                in = ParameterIn.QUERY, schema = @Schema(type = 'integer')),
+            @Parameter(name = 'offset', description = '''indicate the 0-indexed offset for the first result to 
+return.''',
+                in = ParameterIn.QUERY, schema = @Schema(type = 'integer'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = "Executions results",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(type = 'object')),
+                examples = @ExampleObject('''[{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}]''')
+            )
+        )
+    )
     /**
      * API: /api/job/{id}/executions , version 1
      */
