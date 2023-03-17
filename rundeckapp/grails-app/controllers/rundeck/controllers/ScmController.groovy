@@ -31,12 +31,14 @@ import groovy.transform.PackageScope
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
@@ -1849,6 +1851,96 @@ Input fields have a number of properties:
         respondApiActionInput(view, scheduledExecution.project, jobActInputActRequest, jobActInputActRequest.id)
     }
 
+    @Post(uri='/job/{id}/scm/{integration}/action/{actionId}')
+    @Operation(
+        method = 'POST',
+        summary = 'Perform Job SCM Action',
+        description = '''Perform the action for the SCM integration plugin, with a set of input parameters,
+for the Job.
+
+Depending on the available Input Fields for the action. (See `/job/{id}/scm/{integration}/action/inputs`), the action will
+expect a set of `input` values.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action Name/ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='''SCM Action Input Request.''',
+            required=true,
+            content=@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+"input":{
+   "field1":"value1",
+   "field2":"value2"
+}}''')
+            )
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''SCM Action success response.
+    
+If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
+    ''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult),
+                    examples = @ExampleObject('''{
+                      "message": "Some message.",
+                      "nextAction": "next-action",
+                      "success": true,
+                      "validationErrors": null
+                    }''')
+                )
+            ),
+            @ApiResponse(
+                responseCode = '400',
+                description = '''SCM Action invalid response.
+   
+The response will include information about the result.
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult),
+                    examples = @ExampleObject('''{
+                      "message": "Some input was invalid.",
+                      "nextAction": null,
+                      "success": false,
+                      "validationErrors": {
+                        "dir": "required",
+                        "url": "required"
+                      }
+                    }''')
+                )
+            )
+        ]
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId
      */
