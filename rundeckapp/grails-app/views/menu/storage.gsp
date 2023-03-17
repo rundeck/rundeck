@@ -26,12 +26,9 @@ implied. - See the License for the specific language governing permissions and -
                 downloadenabled: downloadenabled
 
         ]"/>
-        <g:javascript>
-        window._rundeck = Object.assign(window._rundeck || {}, {
-            data: { }
-        });
-        </g:javascript>
-        <asset:javascript src="static/pages/storage.js" defer="defer"/>
+        <asset:javascript src="static/pages/storage.js"/>
+        <asset:javascript src="static/pages/project-config.js" defer="defer" />
+        <asset:stylesheet href="static/css/pages/project-config.css" />
       </head>
 
       <body>
@@ -41,7 +38,7 @@ implied. - See the License for the specific language governing permissions and -
               <span class="text-h3"><i class="fas fa-key"></i> ${g.message(code:"gui.menu.KeyStorage")}</span>
             </div>
             <div>
-              <key-storage-page id="keyStoragePage" :read-only="false" :allow-upload="true"></key-storage-page>
+              <key-storage-page class="keyStoragePage" read-only="false" :allow-upload="true"></key-storage-page>
             </div>
           </div>
         </div>
