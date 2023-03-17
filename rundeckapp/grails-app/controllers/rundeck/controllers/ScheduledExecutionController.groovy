@@ -1932,6 +1932,7 @@ However, to send a body with the request,
 then the POST method must be used, 
 since the DELETE method does not allow for request bodies.
  
+Authorization required: `delete` on project resource type `job`, and `delete` on each Job resource.
 """
 
     @Delete('/jobs/delete')
