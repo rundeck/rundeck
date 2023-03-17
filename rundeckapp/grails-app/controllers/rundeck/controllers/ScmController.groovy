@@ -1730,13 +1730,99 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
         }
         true
     }
+    @Get(uri='/job/{id}/scm/{integration}/action/{actionId}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Action Input Fields',
+        description = '''Get the input fields and selectable items for a specific action.
 
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `exportItems`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `importItems`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action Name/ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Action Input response.
+
+`exportItems` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information
+    * `groupPath` group path, or empty/null
+    * `jobId` job ID
+    * `jobName` job name
+* `deleted` - boolean, whether the job was deleted and requires deleting the associated repo item
+* `renamed` - boolean if the job was renamed
+* `originalId` - ID of a repo item if the job was renamed and now is stored at a different repo path, or empty/null
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
+
+`importItems` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information, may be empty/null
+    * `groupPath` group path, or empty
+    * `jobId` job ID
+    * `jobName` job name
+* `tracked` - boolean, true if there is an associated `job`
+* `deleted` - boolean, whether the job was deleted on remote and requires to be deleted
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
+
+Input fields have a number of properties:
+
+* `name` identifier for the field, used when submitting the input values.
+* `defaultValue` a default value if the input does not specify one
+* `description` textual description
+* `renderOptions` a key/value map of options, such as declaring that GUI display the input as a password field.
+* `required` true/false whether the input is required
+* `scope`
+* `title` display title for the field
+* `type` data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)
+* `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
+
+''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionInput)
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId/input
      * @param jobActInputActRequest
      * @return
      */
-    def apiJobActionInput(ScmJobActionRequest jobActInputActRequest) {
+    def apiJobActionInput(@Parameter(hidden = true) ScmJobActionRequest jobActInputActRequest) {
 
         if (!validateCommandInput(jobActInputActRequest)) {
             return
