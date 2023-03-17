@@ -1,19 +1,20 @@
 <template>
+<div>
   <div v-if="viewMode">
     <key-storage-view :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @closeEditor="closeEditor" @openEditor="openEditor"></key-storage-view>
   </div>
   <div v-if="editMode">
     <key-storage-edit :storage-filter="storageFilter" @closeEditor="closeEditor"></key-storage-edit>
   </div>
-
+</div>
 </template>
 
 <script>
-import KeyStorageView from "../../../../build/pack/src/library/components/storage/KeyStorageView";
-import KeyStorageEdit from "../../../../build/pack/src/library/components/storage/KeyStorageEdit";
+import KeyStorageView from "./KeyStorageView";
+import KeyStorageEdit from "./KeyStorageEdit";
 export default {
   name: "KeyStoragePage",
-  components: {KeyStorageEdit, KeyStorageView},
+  components: { KeyStorageEdit, KeyStorageView },
   props: [
     'readOnly',
     'allowUpload',
