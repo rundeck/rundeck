@@ -1397,7 +1397,12 @@ class ScmController extends ControllerBase {
     @Operation(
         method = 'GET',
         summary = 'Get Job SCM Status',
-        description = '''Get SCM status for a Job.''',
+        description = '''Get SCM status for a Job.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15
+''',
         tags = ['jobs', 'scm'],
         parameters = [
             @Parameter(
