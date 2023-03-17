@@ -28,12 +28,23 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
@@ -1382,10 +1393,77 @@ class ScmController extends ControllerBase {
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 
+    @Get(uri='/job/{id}/scm/{integration}/status')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Status',
+        description = '''Get SCM status for a Job.''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Status response.
+
+Note: `import` status will not include any actions for the job, refer to the Project status to list import actions.
+
+Import plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `UNKNOWN` - status unknown, e.g. the job was not imported via SCM
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `IMPORT_NEEDED` - Job changes need to be imported
+* `DELETE_NEEDED` - Job need to be deleted
+
+Export plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `EXPORT_NEEDED` - job changes need to be exported
+* `CREATE_NEEDED` - Job needs to be added to the repo''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmJobStatus),
+                examples = @ExampleObject('''{
+  "actions": [
+    "$action"
+  ],
+  "commit": {
+    "author": "$commitAuthor",
+    "commitId": "$commitId",
+    "date": "$commitDate",
+    "info": {
+      "key": "value.."
+    },
+    "message": "$commitMessage"
+  },
+  "id": "$jobId",
+  "integration": "$integration",
+  "message": "$statusMessage",
+  "project": "$project",
+  "synchState": "$synchState"
+}''')
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/status
      */
-    def apiJobStatus(ScmJobRequest jobStatJobReq) {
+    def apiJobStatus(@Parameter(hidden = true) ScmJobRequest jobStatJobReq) {
         if (!validateCommandInput(jobStatJobReq)) {
             return
         }
