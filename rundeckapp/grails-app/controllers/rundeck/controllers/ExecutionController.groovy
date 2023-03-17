@@ -2797,7 +2797,7 @@ Note: the JSON schema also supports a basic JSON array
     )
     @ApiResponse(
         responseCode='200',
-        description = """""",
+        description = """Summary of bulk delete results""",
         content=[@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
