@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
@@ -834,7 +835,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
             description = "Project details",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @GrailsCompileStatic
@@ -1074,7 +1075,7 @@ by:
             description = "Bad request",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectAclsGet_docs(){}
@@ -1092,7 +1093,8 @@ Since: v14""",
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/text",
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema = @Schema(implementation = String.class),
                                     examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1142,7 +1144,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1150,7 +1152,8 @@ by:
             description = "ACL policy created",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema = @Schema(type = 'string'),
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1161,7 +1164,8 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/yaml",
+                            mediaType = MediaType.APPLICATION_YAML,
+                            schema = @Schema(type = 'object'),
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1172,7 +1176,8 @@ by:
   group: build''')
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = 'object'),
                             examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -1184,7 +1189,7 @@ by:
             description = "Conflict if already exists",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @ApiResponse(
@@ -1192,7 +1197,7 @@ by:
             description = "Bad request if validation failure",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectAclsPost_docs(){}
@@ -1210,7 +1215,8 @@ Since: v14""",
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/text",
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema = @Schema(type = 'string'),
                                     examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1221,7 +1227,8 @@ by:
   group: build''')
                             ),
                             @Content(
-                                    mediaType = "application/yaml",
+                                    mediaType = MediaType.APPLICATION_YAML,
+                                    schema = @Schema(type = 'object'),
                                     examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1232,7 +1239,8 @@ by:
   group: build''')
                             ),
                             @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(type = 'object'),
                                     examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -1260,7 +1268,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project config")
+                    @Tag(name="project")
             ]
     )
     @ApiResponse(
@@ -1302,7 +1310,7 @@ by:
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectAclsPut_docs(){}
@@ -1348,7 +1356,7 @@ Since: v14""",
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectAclsDelete_docs(){}
@@ -1694,7 +1702,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     def apiProjectFilePut() {
@@ -1842,7 +1850,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     def apiProjectFileGet() {
@@ -1925,7 +1933,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     def apiProjectFileDelete() {
@@ -2167,7 +2175,7 @@ key2=value''')
             description = "Not found",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -2333,7 +2341,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Bad request to put project config",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -2523,7 +2531,7 @@ Requires `export` authorization for the project resource.""",
             description = "Bad request if it has error in the parameters",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
@@ -2694,7 +2702,7 @@ Requires `export` authorization for the project resource.""",
             description = "Bad request if it has error in the parameters",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectExportAsync_docs() {}
@@ -2761,7 +2769,7 @@ Since: v19""",
             description = "Bad request if it has error in the parameters",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     def apiProjectExportAsyncStatus() {
@@ -2838,7 +2846,7 @@ Since: v19""",
             description = "Bad request",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     def apiProjectExportAsyncDownload() {
@@ -2976,7 +2984,7 @@ Note: `other_errors` included since API v35""",
             description = "Bad request if it has error in the parameters",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = WebUtil.ResponseErrorHandler)
+                    schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
