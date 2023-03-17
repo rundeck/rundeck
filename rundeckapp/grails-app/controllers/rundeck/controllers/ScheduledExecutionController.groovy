@@ -41,12 +41,18 @@ import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.commons.collections.list.TreeList
@@ -55,6 +61,7 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -1055,6 +1062,64 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Post(uri = '/job/{id}/execution/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable Executions for a Job',
+        description = '''Disable executions for a job. 
+
+Authorization required: `toggle_execution` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
+    protected def apiFlipExecutionDisabled(){}
+
+    @Post(uri = '/job/{id}/execution/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable Executions for a Job',
+        description = '''Enable executions for a job. 
+
+Authorization required: `toggle_execution` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
     def apiFlipExecutionEnabled() {
         if (!apiService.requireApi(request, response)) {
             return
@@ -1107,6 +1172,64 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Post(uri = '/job/{id}/schedule/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable Schedule for a Job',
+        description = '''Disable schedule for a job. 
+
+Authorization required: `toggle_schedule` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
+    protected def apiFlipScheduleDisabled() {}
+
+    @Post(uri = '/job/{id}/schedule/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable Schedule for a Job',
+        description = '''Enable schedule for a job. 
+
+Authorization required: `toggle_schedule` action for a job.
+
+Since: V14''',
+        tags = ['jobs'],
+
+        parameters = @Parameter(
+            name = "id",
+            description = "Job ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Success Response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{"success": true}''')
+            )
+        )
+    )
     def apiFlipScheduleEnabled() {
         if (!apiService.requireApi(request, response)) {
             return
@@ -1367,7 +1490,144 @@ class ScheduledExecutionController  extends ControllerBase{
             return renderErrorView([:])
         }
     }
-    def apiFlipExecutionEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+
+    @Post(uri='/jobs/execution/disable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Execution Disabled",
+        description = '''Toggle executions disabled for a set of jobs.
+
+Authorization required: `toggle_execution` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    protected def apiFlipExecutionDisabledBulk(
+        @RequestBody(
+            description = "request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ){}
+
+    @Post(uri='/jobs/execution/enable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Execution Enabled",
+        description = '''Toggle executions enabled for a set of jobs.
+
+Authorization required: `toggle_execution` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    def apiFlipExecutionEnabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ) {
         if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
@@ -1446,7 +1706,144 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    def apiFlipScheduleEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+
+    @Post(uri='/jobs/schedule/disable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Schedule Disabled",
+        description = '''Toggle schedule disabled for a set of jobs.
+
+Authorization required: `toggle_schedule` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    protected def apiFlipScheduleDisabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ){}
+
+    @Post(uri='/jobs/schedule/enable')
+    @Operation(
+        method = "POST",
+        summary = "Bulk Toggle Job Schedule Enabled",
+        description = '''Toggle schedule enabled for a set of jobs.
+
+Authorization required: `toggle_schedule` action for each job.
+
+Since: v16''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='ids',
+                in=ParameterIn.QUERY,
+                description="The Job IDs to delete, can be specified multiple times",
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name='idlist',
+                in=ParameterIn.QUERY,
+                description='The Job IDs to delete as a single comma-separated string.',
+                schema=@Schema(type='string',format='comma-separated')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Bulk toggle result.
+
+Failed results will contain:
+
+* `id` - the Job ID
+* `error` - result error message for the request
+* `errorCode` - a code indicating the type of failure, currently one of `failed`, `unauthorized` or 
+`notfound`.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''
+{
+  "requestCount": 2,
+  "enabled": true,
+  "allsuccessful": false,
+  "succeeded": [
+      {
+      "id": "[UUID]",
+      "message": "success message"
+    }
+  ],
+  "failed":[
+      {
+      "id": "[UUID]",
+      "errorCode": "(error code, see above)",
+      "message": "(success or failure message)"
+    }]
+}''')
+            )
+        )
+    )
+    def apiFlipScheduleEnabledBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+            ApiBulkJobDeleteRequest deleteRequest
+    ) {
         if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
@@ -3104,43 +3501,74 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, MediaType.TEXT_XML, 'text/yaml'])
+    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method = "GET",
-        summary = "Get Job Definition",
-        description = "Export the Job definition for the job, in one of the supported formats.",
+        summary = "Getting a Job Definition",
+        description = '''Export a single job definition, in one of the supported formats.
+
+Authorization required: `read` for the Job.''',
         responses = [
             @ApiResponse(
                 responseCode = "200",
-                description = "Job definition (json)",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-                )
-            ),
+                description = '''Job definition, depending on the requested format:
 
-            @ApiResponse(
-                responseCode = "200",
-                description = "Job definition (xml)",
-                content = @Content(
-                    mediaType = MediaType.TEXT_XML
-                )
+* YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
+* JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
+                content = [
+                    @Content(
+                        schema = @Schema(
+                            type = 'object',
+                            externalDocs = @ExternalDocumentation(
+                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                                description = "Job JSON Format"
+                            )
+                        ),
+                        mediaType = MediaType.APPLICATION_JSON
+                    ),
+                    @Content(
+                        schema = @Schema(
+                            type = 'string',
+                            externalDocs = @ExternalDocumentation(
+                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                                description = "Job YAML Format"
+                            )
+                        ),
+                        mediaType = 'text/yaml'
+                    )
+                ]
             ),
-
             @ApiResponse(
-                responseCode = "200",
-                description = "Job definition (yaml)",
-                content = @Content(
-                    mediaType = 'text/yaml'
-                )
+                responseCode = '404',
+                description = "Not Found",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '403',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '415',
+                description = '''Unsupported Media type.''',
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
             )
         ],
-        parameters = @Parameter(
-            name = "id",
-            description = "Job ID",
-            in = ParameterIn.PATH,
-            required = true,
-            content = @Content(schema = @Schema(implementation = String))
-        )
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                content = @Content(schema = @Schema(implementation = String))
+            ),
+            @Parameter(
+                name = "format",
+                description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
+                in = ParameterIn.QUERY,
+                content = @Content(schema = @Schema(implementation = String))
+            )
+        ]
     )
     @Tag(name = "jobs")
 
@@ -3193,6 +3621,118 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         flush(response)
     }
+
+    @Post(uri='/job/{id}/run')
+    @Operation(
+        method='POST',
+        summary='Running a Job',
+        description = '''Run a job specified by ID.
+
+Parameters can be specified in the request body, instead of as query parameters
+
+Authorization required: `run` for the Job resource.
+''',
+        tags=['jobs'],
+        requestBody = @RequestBody(
+            description = '''Parameters can be specified in the request body, instead of as query parameters.
+
+(**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"...",
+    "runAtTime":"...",
+    "options": {
+        "myopt1":"value"
+    }
+}'''
+                    )
+                )
+            ]
+        ),
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(name='argString',in = ParameterIn.QUERY,
+                description='argument string to pass to the job, of the form: `-opt value -opt2 value ...`.',
+                schema = @Schema(type='string')),
+            @Parameter(name='loglevel', in = ParameterIn.QUERY,
+                description='argument specifying the loglevel to use',schema=@Schema(type='string',
+                allowableValues = ['DEBUG','VERBOSE','INFO','WARN','ERROR'])),
+            @Parameter(name='asUser', in = ParameterIn.QUERY,
+                description='specifies a username identifying the user who ran the job. Requires `runAs` permission.',
+                schema = @Schema(type='string')),
+            @Parameter(name='filter', in = ParameterIn.QUERY,
+                description='can be a node filter string.',
+                schema = @Schema(type='string')),
+            @Parameter(name='runAtTime', in = ParameterIn.QUERY,
+                description='''Specify a time to run the job (Since: v18).
+
+This is a ISO-8601 date and time stamp with timezone, with optional milliseconds., e.g. `2016-11-23T12:20:55-0800` or `2016-11-23T12:20:55.123-0800`''',
+            schema=@Schema(type='string',format='date-time')),
+            @Parameter(name='option.OPTNAME',in = ParameterIn.QUERY,
+                description='Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified, the `argString` value is ignored (Since: v18).',
+                schema = @Schema(type='string')),
+            @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
+                description='Additional metadata keyd by `KEY`. (Since: v32).',
+                schema = @Schema(type='string'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Created Execution',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}""")
+            )
+        )
+    )
     /**
      * API: Run a job immediately: /job/{id}/run, version 1
      */
@@ -3358,6 +3898,131 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Post(uri='/job/{id}/retry/{executionId}')
+    @Operation(
+        method='POST',
+        summary='Retry a Job based on execution',
+        description = '''Retry a failed execution on failed nodes only or on the same as the execution.
+This is the same functionality as the `Retry Failed Nodes ...` button on the execution page.
+
+Parameters can be specified in the request body, instead of as query parameters
+
+Authorization required: `run` for the Job resource, and `read` or `view` for the Execution resource.
+
+Since: v24
+''',
+        tags=['jobs'],
+        requestBody = @RequestBody(
+            description = '''Parameters can be specified in the request body, instead of as query parameters.
+
+(**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "failedNodes": true,
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"...",
+    "runAtTime":"...",
+    "options": {
+        "myopt1":"value"
+    }
+}'''
+                    )
+                )
+            ]
+        ),
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "executionId",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(name='failedNodes',in = ParameterIn.QUERY,
+                description='`false` to run on the same nodes as the original execution, `true`or empty to run only on failed nodes.',
+                schema = @Schema(type='boolean')),
+            @Parameter(name='argString',in = ParameterIn.QUERY,
+                description='argument string to pass to the job, of the form: `-opt value -opt2 value ...`.',
+                schema = @Schema(type='string')),
+            @Parameter(name='loglevel', in = ParameterIn.QUERY,
+                description='argument specifying the loglevel to use',schema=@Schema(type='string',
+                    allowableValues = ['DEBUG','VERBOSE','INFO','WARN','ERROR'])),
+            @Parameter(name='asUser', in = ParameterIn.QUERY,
+                description='specifies a username identifying the user who ran the job. Requires `runAs` permission.',
+                schema = @Schema(type='string')),
+            @Parameter(name='filter', in = ParameterIn.QUERY,
+                description='can be a node filter string.',
+                schema = @Schema(type='string')),
+            @Parameter(name='runAtTime', in = ParameterIn.QUERY,
+                description='''Specify a time to run the job (Since: v18).
+
+This is a ISO-8601 date and time stamp with timezone, with optional milliseconds., e.g. `2016-11-23T12:20:55-0800` or `2016-11-23T12:20:55.123-0800`''',
+                schema=@Schema(type='string',format='date-time')),
+            @Parameter(name='option.OPTNAME',in = ParameterIn.QUERY,
+                description='Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified, the `argString` value is ignored (Since: v18).',
+                schema = @Schema(type='string')),
+            @Parameter(name='meta.KEY',in = ParameterIn.QUERY,
+                description='Additional metadata keyd by `KEY`. (Since: v32).',
+                schema = @Schema(type='string'))
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Created Execution',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}""")
+            )
+        )
+    )
     def apiJobRetry() {
         if (!apiService.requireApi(request, response, ApiVersions.V24)) {
             return
@@ -3426,6 +4091,99 @@ class ScheduledExecutionController  extends ControllerBase{
         apiJobRun()
     }
 
+
+    @Post(uri = '/job/{id}/input/file')
+    @Operation(
+        method='POST',
+        summary='Upload Multiple Files for Job Options',
+        description='''Job Options of type `file` require a file input. You can upload multiple files en-masse.
+
+Each uploaded file is assigned a unique "file key" identifier.
+You can then Run the Job using the "file key" as the option value.
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name. The filename is specified normally within the multi-part request.
+
+Since: v19''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''Upload Multiple Files.
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name. The filename is specified normally within the multi-part request.
+''',
+            content = @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Successful response, with multiple uploaded file tokens',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileUpload)
+            )
+        )
+    )
+    protected def apiJobFileMultiUpload(){}
+
+    @Post(uri = '/job/{id}/input/file/{optionName}')
+    @Operation(
+        method='POST',
+        summary='Upload a File for a Job Option',
+        description='''Job Options of type `file` require a file input. This endpoint uploads a single file individually.
+
+Each uploaded file is assigned a unique "file key" identifier.
+You can then Run the Job using the "file key" as the option value.
+
+Since: v19''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "optionName",
+                description = "For a single file/option value, specify the option name either as a query parameter or as part of the URL path",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type='string')
+            ),
+            @Parameter(
+                name = "fileName",
+                description = "Specify the original file name (optional)",
+                in = ParameterIn.QUERY,
+                schema = @Schema(type='string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description="Upload a single file directly",
+            content=@Content(
+                mediaType = MediaType.APPLICATION_OCTET_STREAM
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Successful response',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileUpload)
+            )
+        )
+    )
     /**
      * API v19, File upload input for job
      * @return
@@ -3592,6 +4350,42 @@ class ScheduledExecutionController  extends ControllerBase{
         respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
     }
 
+    @Get(uri='/jobs/file/{id}')
+    @Operation(
+        method = "GET",
+        summary = 'Get Info About an Uploaded File',
+        description = '''Get info about an uploaded file given its ID.''',
+        tags = ['jobs'],
+        parameters = @Parameter(
+            name = "id",
+            description = "File ID",
+            in = ParameterIn.PATH,
+            required = true,
+            content = @Content(schema = @Schema(implementation = String))
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = "File info",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = JobFileInfo),
+                examples = @ExampleObject('''
+{
+  "dateCreated": "2017-02-24T19:10:33Z",
+  "execId": 2741,
+  "expirationDate": "2017-02-24T19:11:03Z",
+  "fileName": null,
+  "fileState": "deleted",
+  "id": "f985864b-fa1b-4e09-af7a-4315e9908372",
+  "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+  "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+  "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+  "size": 12,
+  "user": "admin"
+}''')
+            )
+        )
+    )
     /**
      * API v19, File upload input for job
      * @return
@@ -3687,6 +4481,46 @@ class ScheduledExecutionController  extends ControllerBase{
                 [formats: ['xml', 'json']]
         )
     }
+
+    @Delete('/job/{id}')
+    @Operation(
+        method = 'DELETE',
+        summary = 'Deleting a Job Definition',
+        description = '''Delete a single job definition.
+
+Authorization required: `delete` for the job.''',
+        tags = ['jobs'],
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Job ID",
+                in = ParameterIn.PATH,
+                required = true,
+                content = @Content(schema = @Schema(implementation = String))
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '204',
+                description = "Successful delete. No Content"
+            ),
+            @ApiResponse(
+                responseCode = '404',
+                description = "Not Found",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '403',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            ),
+            @ApiResponse(
+                responseCode = '409',
+                description = "Unauthorized",
+                content = @Content(schema = @Schema(implementation = ApiErrorResponse))
+            )
+        ]
+    )
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */

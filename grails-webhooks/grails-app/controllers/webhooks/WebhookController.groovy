@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -74,7 +75,7 @@ Along with the required fields you may send only the fields you want to update.
 When updating a webhook you may not change the user associated with a webhook,
 so suppling the `user` field will have no effect. Also, specifying an `authToken` field has no effect.''',
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject('''{
     "id": 3,
@@ -96,7 +97,7 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
             responseCode = "200",
             description = "Successful response",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject('''{
 "msg": "Saved webhook",
@@ -109,7 +110,7 @@ so suppling the `user` field will have no effect. Also, specifying an `authToken
                 responseCode = "400",
                 description = "Error response",
                 content = @Content(
-                    mediaType = 'application/json',
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = "object"),
                     examples = @ExampleObject('''{
     "err":"error message"
@@ -175,7 +176,7 @@ Since: v33
         requestBody = @RequestBody(
             description = '''Webhook definition.''',
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject('''{
     "id": 3,
@@ -198,7 +199,7 @@ Since: v33
             responseCode = "200",
             description = "Successful response",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject('''{
 "msg": "Saved webhook",
@@ -211,7 +212,7 @@ Since: v33
                 responseCode = "400",
                 description = "Error response",
                 content = @Content(
-                    mediaType = 'application/json',
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = "object"),
                     examples = @ExampleObject('''{
     "err":"error message"
@@ -243,7 +244,7 @@ Since: v33''',
             responseCode = "200",
             description = "Successful response",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
                 examples = @ExampleObject('''{
 "msg": "deleted webhook"
@@ -255,7 +256,7 @@ Since: v33''',
                 responseCode = "400",
                 description = "Error response",
                 content = @Content(
-                    mediaType = 'application/json',
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = "object"),
                     examples = @ExampleObject('''{
     "err":"error message"
@@ -367,7 +368,7 @@ Since: v33""",
             responseCode = "200",
             description = "List of webhooks",
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 array = @ArraySchema(
                     schema = @Schema(type = "object")
                 ),

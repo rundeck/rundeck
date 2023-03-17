@@ -7,6 +7,7 @@ import com.rundeck.plugin.api.model.ProjectModeLaterRequest
 import grails.converters.JSON
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
@@ -135,7 +136,7 @@ Specify the `type` to enable, and a `value` with a time duration expression.
 The request must contain a `value` with a "Time duration expression". (See request schema for syntax.)
 """,
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = [
                     @ExampleObject(name="Enable Schedule",value='{"type":"schedule","value":"2h30m"}'),
                     @ExampleObject(name="Enable Executions",value='{"type":"executions","value":"1d"}')
@@ -155,7 +156,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
         description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
         responseCode = "200",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":true,"msg":"Project Execution Mode Later saved"}')
         )
@@ -164,7 +165,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
         description = "Request error response. A description of the error is in the `msg` field.",
         responseCode = "400",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
@@ -271,7 +272,7 @@ Specify the `type` to enable, and a `value` with a time duration expression.
 The request must contain a `value` with a "Time duration expression". (See request schema for syntax.)
 """,
             content = @Content(
-                mediaType = 'application/json',
+                mediaType = MediaType.APPLICATION_JSON,
                 examples = [
                     @ExampleObject(name="Disable Schedule",value='{"type":"schedule","value":"2h30m"}'),
                     @ExampleObject(name="Disable Executions",value='{"type":"executions","value":"1d"}')
@@ -291,7 +292,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
         description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
         responseCode = "200",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":true,"msg":"Project Execution Mode Later saved"}')
         )
@@ -300,7 +301,7 @@ The request must contain a `value` with a "Time duration expression". (See reque
         description = "Request error response. A description of the error is in the `msg` field.",
         responseCode = "400",
         content = @Content(
-            mediaType = 'application/json',
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = ModeLaterResponse),
             examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
         )
