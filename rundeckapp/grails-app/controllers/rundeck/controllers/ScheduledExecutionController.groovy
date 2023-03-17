@@ -1924,12 +1924,94 @@ Failed results will contain:
         }
     }
 
+    static final String API_DOC_JOB_DELETE_TITLE ='Bulk Job Delete'
+    static final String API_DOC_JOB_DELETE_DESC ="""Delete multiple job definitions at once.
+
+Both `DELETE` and `POST` are allowed for doing a bulk delete of jobs. 
+However, to send a body with the request, 
+then the POST method must be used, 
+since the DELETE method does not allow for request bodies.
+ 
+"""
+
+    @Delete('/jobs/delete')
+    @Operation(
+        method="DELETE",
+        summary=API_DOC_JOB_DELETE_TITLE,
+        description = API_DOC_JOB_DELETE_DESC,
+        tags=['jobs'],
+        parameters = [
+            @Parameter(
+                name = "ids",
+                description = "The Job IDs to delete, can be specified multiple times",
+                in = ParameterIn.QUERY,
+                required = false,
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name = "idlist",
+                description = "The Job IDs to delete as a single comma-separated string.",
+                in = ParameterIn.QUERY,
+                required = false,
+                schema = @Schema(type = 'string', format = 'comma-separated')
+            )
+        ]
+    )
+    @ApiResponse(
+        ref = '#/paths/~1jobs~1delete/post/responses/200'
+    )
+    protected def apiJobDeleteBulk_docs2(){}
+
+    @Post('/jobs/delete')
+    @Operation(
+        method = "POST",
+        summary = API_DOC_JOB_DELETE_TITLE,
+        description = API_DOC_JOB_DELETE_DESC,
+        tags = ['jobs']
+    )
+    @ApiResponse(
+        responseCode='200',
+        description = """Summary of bulk delete results""",
+        content=[@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = DeleteBulkResponse),
+            examples = @ExampleObject("""{
+  "failures": [
+    {
+      "id": "82",
+      "message": "Not found: 82"
+    },
+    {
+      "id": "83",
+      "message": "Not found: 83"
+    },
+    {
+      "id": "84",
+      "message": "Not found: 84"
+    }
+  ],
+  "failedCount": 3,
+  "successCount": 2,
+  "allsuccessful": false,
+  "requestCount": 5
+}""")
+        )]
+
+    )
     /**
-     * Delete a set of jobs as specified in the idlist parameter.
-     * Only allowed via DELETE http method
-     * API: DELETE job definitions: /api/5/jobs/delete, version 5
+     * Delete a set of jobs as specified in the ids, idlist params, or request body
+     * API: /api/5/jobs/delete, version 5
     */
-    def apiJobDeleteBulk(ApiBulkJobDeleteRequest deleteRequest) {
+    def apiJobDeleteBulk(
+        @RequestBody(
+            description = "Bulk ID request",
+            content = @Content(
+                mediaType = 'application/json',
+                schema = @Schema(implementation = ApiBulkJobDeleteRequest)
+            )
+        )
+        ApiBulkJobDeleteRequest deleteRequest
+    ) {
         if (!apiService.requireApi(request, response)) {
             return
         }
