@@ -1573,6 +1573,59 @@ Export plugin values for `$synchState`:
         )
     }
 
+    @Get(uri='/job/{id}/scm/{integration}/diff')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Diff',
+        description = '''Retrieve the file diff for the Job, if there are changes for the integration.
+
+The format of the diff content depends on the specific plugin. For the Git plugins,
+a unified diff format is used.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Diff response.
+
+The `commit` info will be the same structure as in `/job/{id}/scm/{integration}/status` response.
+
+For `import` only, `incomingCommit` will indicate the to-be-imported change.
+''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmJobDiff),
+                examples = @ExampleObject('''{
+  "commit": {
+  },
+  "diffContent": "...",
+  "id": "$jobId",
+  "incomingCommit": {
+  },
+  "integration": "$integration",
+  "project": "$project"
+}''')
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/diff
      */
