@@ -1634,7 +1634,7 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
     /**
      * /api/$api_version/job/$id/scm/$integration/diff
      */
-    def apiJobDiff(ScmJobRequest jobDiffJobReq) {
+    def apiJobDiff(@Parameter(hidden = true) ScmJobRequest jobDiffJobReq) {
         if (!validateCommandInput(jobDiffJobReq)) {
             return
         }
