@@ -1,11 +1,9 @@
 <template>
 <div>
-  <div v-if="viewMode">
-    <key-storage-view :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @closeEditor="closeEditor" @openEditor="openEditor"></key-storage-view>
-  </div>
-  <div v-if="editMode">
+  <key-storage-view :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @closeEditor="closeEditor" @openEditor="openEditor"></key-storage-view>
+  <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
     <key-storage-edit :storage-filter="storageFilter" @closeEditor="closeEditor"></key-storage-edit>
-  </div>
+  </modal>
 </div>
 </template>
 
@@ -24,19 +22,16 @@ export default {
   ],
   data() {
     return {
-      viewMode: true,
-      editMode: false,
+      modalEdit: false,
       path: ''
     }
   },
   methods: {
     closeEditor(){
-      this.editMode=false
-      this.viewMode=true
+      this.modalEdit=true
     },
     openEditor(){
-      this.viewMode=false
-      this.editMode=true
+      this.modalEdit=true
     }
   },
   async mounted() {
@@ -44,7 +39,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

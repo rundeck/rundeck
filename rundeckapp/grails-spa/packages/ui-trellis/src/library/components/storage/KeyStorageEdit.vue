@@ -1,6 +1,6 @@
 <template>
 <div>
-  <div class="alert alert-danger" v-if="upload.errorMsg!==null">
+  <div class="alert alert-danger" v-if="!!upload.errorMsg">
     <span>{{upload.errorMsg}}</span>
   </div>
 
@@ -12,7 +12,7 @@
         </label>
         <div class="col-sm-9">
           <select name="uploadKeyType" class="form-control" v-model="upload.keyType">
-            <option v-for="option in keyTypes" v-bind:value="option.value">
+            <option v-for="option in keyTypes" v-bind:key="option.value" v-bind:value="option.value">
               {{ option.text }}
             </option>
           </select>
@@ -26,7 +26,7 @@
       <div class="form-group row text-right" :class="[validInput()===true?'has-success':'has-warning']">
         <div class="col-sm-3 label-key" v-if="upload.keyType!=='password'">
           <select class="form-control" name="inputType" v-model="upload.inputType">
-            <option v-for="option in inputTypes" v-bind:value="option.value">
+            <option v-for="option in inputTypes" v-bind:key="option.value" v-bind:value="option.value">
               {{ option.text }}
             </option>
           </select>
