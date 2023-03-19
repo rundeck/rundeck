@@ -19,12 +19,12 @@
         <btn class="btn btn-sm btn-default" @click="openSelector()">
             <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
         </btn>
-        <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" ref="modalkeys" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
-          <key-storage-view @input="onSelectedKeyChange" :read-only="readOnly" :allow-upload="allowUpload" :value="value" @closeSelector="closeSelector" @closeEditor="closeEditor" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
+        <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
+          <key-storage-view ref="keyStorageViewRef" @input="onSelectedKeyChange" :read-only="readOnly" :allow-upload="allowUpload" :value="value" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
         </modal>
 
-        <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
-          <key-storage-edit :storage-filter="storageFilter" @closeEditor="closeEditor"></key-storage-edit>
+        <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" :footer="false" auto-focus append-to-body>
+          <key-storage-edit :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing" ></key-storage-edit>
         </modal>
     </div>
 </template>
@@ -34,18 +34,7 @@
     import Vue from 'vue';
 
     import KeyStorageView from "../../components/storage/KeyStorageView.vue"
-    import KeyStorageEdit from "../../components/storage/KeyStorageEdit.vue";
-
-    export enum KeyType {
-        Public = 'publicKey',
-        Private = 'privateKey',
-        Password = 'password',
-    }
-
-    export enum InputType {
-        Text = 'text',
-        File = 'file',
-    }
+    import KeyStorageEdit from "../../components/storage/KeyStorageEdit.vue"
 
     export default Vue.extend({
       name: 'KeyStorageSelector',
@@ -65,7 +54,7 @@
               inputPath: '',
               invalid: false,
               errorMsg: '',
-              uploadErrors: {} as any
+              uploadSetting: {}
           };
       },
       methods: {
@@ -97,7 +86,6 @@
           return false;
         },
         beforeModalClose(args: string | Array<any>) {
-          
           if(args === "ok") {
             // Save the selected value - Emit a key changd event with the selected value
             this.$emit("selectedKeyChanged", this.selectedKey)
@@ -109,10 +97,14 @@
           this.inputPath = '';
           this.invalid = false;
           this.errorMsg = '';
-          this.uploadErrors = {} as any;
         },
-        closeEditor(){
-          this.modalEdit=false
+        handleFinishEditing(){
+          // @ts-ignore
+          this.$refs.keyStorageViewRef.loadKeys();
+          this.modalEdit = false
+        },
+        handleCancelEditing() {
+          this.modalEdit = false
         },
         closeSelector(){
           this.modalOpen=false
@@ -120,11 +112,11 @@
         openSelector() {
           this.modalOpen = true;
         },
-        openEditor() {
+        openEditor(uploadSetting: {}) {
+          this.uploadSetting = uploadSetting
           this.modalEdit = true
         },
         onSelectedKeyChange(selectedKey: String) {
-          console.log("==> Selected Key: ", selectedKey)
           this.selectedKey = selectedKey
         }
       }
