@@ -44,13 +44,11 @@
         <tbody>
         <tr>
           <td colspan="2" class="text-strong">
-                                <span v-if="files.length<1">
-                                  No keys
-                                </span>
+            <span v-if="files.length<1">No keys</span>
             <span v-if="files.length>0">
-                                  <span>{{files.length}}</span>
-                                  keys
-                                </span>
+              <span>{{files.length}}</span>
+              keys
+            </span>
           </td>
         </tr>
         </tbody>
@@ -157,10 +155,11 @@
 </template>
 
 <script lang="ts">
-import {InputType} from "../plugins/KeyStorageSelector.vue";
-import moment from 'moment';
-import {getRundeckContext} from "../../index";
-import Vue from "vue";
+import InputType from "./InputType"
+import KeyType from "./KeyType";
+import moment from 'moment'
+import {getRundeckContext} from "../../index"
+import Vue from "vue"
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -364,15 +363,13 @@ export default Vue.extend({
       const isPrivateKey = this.isPrivateKey(this.selectedKey);
       const isPublicKey = this.isPublicKey(this.selectedKey);
 
-      let type = '';
-      if (isPassword) {
-        type = 'password';
-      }
+      // Default to KeyType.Password
+      let type = KeyType.Password;
       if (isPrivateKey) {
-        type = 'private';
+        type = KeyType.Private;
       }
       if (isPublicKey) {
-        type = 'public';
+        type = KeyType.Public;
       }
 
       const inputPath = this.relativePath(this.parentDirString(this.selectedKey.path));
@@ -382,7 +379,7 @@ export default Vue.extend({
         inputType = InputType.Text;
       }
 
-      this.upload = {
+      const upload = {
         modifyMode: true,
         keyType: type,
         inputPath: inputPath,
@@ -395,8 +392,8 @@ export default Vue.extend({
         status: 'update',
         errorMsg: null as any,
       };
-      this.modalEdit = true;
-      this.$emit("openEditor")
+      
+      this.$emit("openEditor", upload)
     },
     clean() {
       this.directories = [];
@@ -412,21 +409,21 @@ export default Vue.extend({
       this.clean()
       this.loadDir(this.inputPath)
     },
-    openSelector() {
-      if(this.readOnly!==true) {
-        this.invalid = false;
-        this.setRootPath();
-        this.clean();
-        if (this.value != null) {
-          const parentDir = this.parentDirString(this.value)
-          this.loadDir(parentDir);
-          this.loadUpPath();
-          this.defaultSelectKey(this.value);
-        }
-        this.modalOpen = true;
-        this.$emit("openSelector")
-      }
-    },
+    // openSelector() {
+    //   if(this.readOnly!==true) {
+    //     this.invalid = false;
+    //     this.setRootPath();
+    //     this.clean();
+    //     if (this.value != null) {
+    //       const parentDir = this.parentDirString(this.value)
+    //       this.loadDir(parentDir);
+    //       this.loadUpPath();
+    //       this.defaultSelectKey(this.value);
+    //     }
+    //     this.modalOpen = true;
+    //     this.$emit("openSelector")
+    //   }
+    // },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
 
@@ -541,16 +538,11 @@ export default Vue.extend({
       return path;
     },
     actionUpload() {
-      this.modalEdit = true;
-      this.$emit("openEditor")
-      let type = 'private';
-      let inputType = InputType.Text;
-
-      this.upload = {
+      const upload = {
         modifyMode: false,
-        keyType: type,
+        keyType: KeyType.Private,
         inputPath: this.inputPath,
-        inputType: inputType,
+        inputType: InputType.Text,
         fileName: null,
         file: '',
         fileContent: '',
@@ -559,6 +551,8 @@ export default Vue.extend({
         status: 'new',
         errorMsg: null as any,
       };
+      
+      this.$emit("openEditor", upload)
     },
   }
 })

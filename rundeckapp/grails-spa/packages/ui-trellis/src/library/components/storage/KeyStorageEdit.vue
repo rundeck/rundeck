@@ -1,7 +1,7 @@
 <template>
 <div>
-  <div class="alert alert-danger" v-if="!!upload.errorMsg">
-    <span>{{upload.errorMsg}}</span>
+  <div class="alert alert-danger" v-if="!!uploadSetting.errorMsg">
+    <span>{{uploadSetting.errorMsg}}</span>
   </div>
 
   <div class="row">
@@ -11,7 +11,7 @@
           Key Type:
         </label>
         <div class="col-sm-9">
-          <select name="uploadKeyType" class="form-control" v-model="upload.keyType">
+          <select name="uploadKeyType" class="form-control" v-model="uploadSetting.keyType">
             <option v-for="option in keyTypes" v-bind:key="option.value" v-bind:value="option.value">
               {{ option.text }}
             </option>
@@ -24,32 +24,32 @@
       </div>
 
       <div class="form-group row text-right" :class="[validInput()===true?'has-success':'has-warning']">
-        <div class="col-sm-3 label-key" v-if="upload.keyType!=='password'">
-          <select class="form-control" name="inputType" v-model="upload.inputType">
+        <div class="col-sm-3 label-key" v-if="uploadSetting.keyType!=='password'">
+          <select class="form-control" name="inputType" v-model="uploadSetting.inputType">
             <option v-for="option in inputTypes" v-bind:key="option.value" v-bind:value="option.value">
               {{ option.text }}
             </option>
           </select>
         </div>
         <label for="uploadpasswordfield" class="col-sm-3 control-label label-key"
-               v-if="upload.keyType==='password'">
+               v-if="uploadSetting.keyType==='password'">
           Enter text
         </label>
         <div class="col-sm-9">
 
-          <div v-if="upload.inputType==='text' && upload.keyType!=='password'">
-                                <textarea class="form-control" rows="5" id="storageuploadtext" v-model="upload.textArea"
-                                          name="uploadText"></textarea>
+          <div v-if="uploadSetting.inputType === 'text' && uploadSetting.keyType !== 'password'">
+            <textarea class="form-control" rows="5" id="storageuploadtext" v-model="uploadSetting.textArea"
+                      name="uploadText"></textarea>
           </div>
 
-          <div v-if="upload.inputType==='file' ">
+          <div v-if="uploadSetting.inputType === 'file'">
             <input type="file" id="file" ref="file" @change="handleFileUpload"/>
 
           </div>
 
-          <div v-if="upload.inputType==='text' && upload.keyType==='password' ">
+          <div v-if="uploadSetting.inputType === 'text' && uploadSetting.keyType === 'password' ">
             <input name="uploadPassword" type="password" placeholder="Enter a password"
-                   autocomplete="new-password" v-model="upload.password" id="uploadpasswordfield"
+                   autocomplete="new-password" v-model="uploadSetting.password" id="uploadpasswordfield"
                    class="form-control"/>
           </div>
         </div>
@@ -65,36 +65,36 @@
             <div class="input-group-addon">
               <span>{{showRootPath}}</span>
             </div>
-            <input v-model="upload.inputPath" :disabled="upload.modifyMode===true"
+            <input v-model="uploadSetting.inputPath" :disabled="uploadSetting.modifyMode===true"
                    id="uploadResourcePath2" name="relativePath" class="form-control"
                    placeholder="Enter the directory name"/>
-            <input v-model="upload.inputPath" :disabled="upload.modifyMode===false"
+            <input v-model="uploadSetting.inputPath" :disabled="uploadSetting.modifyMode===false"
                    id="uploadResourcePath3" type="hidden" name="relativePath"/>
           </div>
         </div>
       </div>
 
-      <div :class="['form-group','row',upload.fileName==null&&upload.inputType!=='file'?'has-warning':'', upload.fileName!=null&&upload.inputType!=='file'?'has-success':'']">
+      <div :class="['form-group','row',uploadSetting.fileName==null&&uploadSetting.inputType!=='file'?'has-warning':'', uploadSetting.fileName!=null&&uploadSetting.inputType !== 'file' ? 'has-success' : '']">
         <label for="uploadResourceName2" class="col-sm-3 control-label label-key text-right">
           Name:
         </label>
 
         <div class="col-sm-9">
-          <input id="uploadResourceName2" v-model="upload.fileName"
-                 :disabled="upload.modifyMode===true" name="fileName" class="form-control"
+          <input id="uploadResourceName2" v-model="uploadSetting.fileName"
+                 :disabled="uploadSetting.modifyMode===true" name="fileName" class="form-control"
                  placeholder="Specify a name."/>
-          <div class="help-block" v-if="upload.inputType === 'file'">
+          <div class="help-block" v-if="uploadSetting.inputType === 'file'">
             If not set, the name of the uploaded file is used.
           </div>
-          <input id="uploadResourceName3" type="hidden" v-model="upload.fileName"
-                 :disabled="upload.modifyMode===false" name="fileName"/>
+          <input id="uploadResourceName3" type="hidden" v-model="uploadSetting.fileName"
+                 :disabled="uploadSetting.modifyMode===false" name="fileName"/>
         </div>
       </div>
       <div class="form-group row">
         <div class=" col-sm-offset-3 col-sm-9">
           <div class="checkbox">
             <input type="checkbox" value="true" name="dontOverwrite"
-                   v-model="upload.dontOverwrite"/>
+                   v-model="uploadSetting.dontOverwrite"/>
             <label>
               Do not overwrite a file with the same name.
             </label>
@@ -108,7 +108,7 @@
             <p>You can reference this stored Key using the storage path:</p>
 
             <p>
-              <strong class="text-info">{{uploadFullPath}}</strong>
+              <strong class="text-info">{{ uploadFullPath }}</strong>
             </p>
           </div>
         </div>
@@ -117,8 +117,8 @@
   </div>
 
   <div slot="footer">
-    <button type="button" class="btn btn-sm btn-default" @click="handleCancel">Cancel</button>
-    <button type="button" class="btn btn-sm btn-success" :disabled="validInput()===false"
+    <button type="button" class="btn btn-default" @click="handleCancel">Cancel</button>
+    <button type="button" class="btn btn-success" :disabled="validInput()===false"
             @click="handleUploadKey">
       Save
     </button>
@@ -127,26 +127,43 @@
 </template>
 
 <script lang="ts">
-import {getRundeckContext} from "../../index";
-import {InputType, KeyType} from "../plugins/KeyStorageSelector.vue";
-import Vue from "vue";
+import {getRundeckContext} from "../../index"
+import KeyType from "./KeyType"
+import InputType from "./InputType"
+import Vue from "vue"
+import type { PropType } from 'vue'
+
+interface UploadSetting {
+  modifyMode: boolean,
+  keyType: KeyType,
+  inputPath: String,
+  inputType: InputType,
+  fileName?: null | String,
+  file?: null | String,
+  fileContent: '',
+  textArea: '',
+  password: '',
+  status: 'new' | String,
+  errorMsg: null | String,
+  dontOverwrite: boolean,
+}
 
 export default Vue.extend({
   name: "KeyStorageEdit",
-  props: [
-      'storageFilter'
-  ],
+  props: {
+    storageFilter: String,
+    uploadSetting: {} as PropType<UploadSetting>, 
+  },
   data() {
     return {
-      upload: {} as any,
       modalEdit: false,
       path: '',
       errorMsg: '',
       directories: [] as any,
       files: [] as any,
       keyTypes: [
-        {text: 'Private Key', value: 'private'},
-        {text: 'Public Key', value: 'public'},
+        {text: 'Private Key', value: 'privateKey'},
+        {text: 'Public Key', value: 'publicKey'},
         {text: 'Password', value: 'password'},
       ],
       inputTypes: [
@@ -174,14 +191,13 @@ export default Vue.extend({
       return false;
     },
     handleCancel(){
-      this.modalEdit=false
-      this.$emit("closeEditor")
+      this.$emit("cancelEditing")
     },
     validInput() {
-      var intype = this.upload.inputType;
-      var file = this.upload.file;
-      var textarea = this.upload.textArea;
-      var pass = this.upload.password;
+      var intype = this.uploadSetting.inputType;
+      var file = this.uploadSetting.file;
+      var textarea = this.uploadSetting.textArea;
+      var pass = this.uploadSetting.password;
       if (intype == 'text') {
         return (textarea || pass) ? true : false;
       } else {
@@ -193,41 +209,38 @@ export default Vue.extend({
 
       let fullPath = this.getKeyPath();
 
-      let type = KeyType.Public;
       let contentType = 'application/pgp-keys';
 
       let value = null as any;
 
-      switch (this.upload.keyType) {
-        case 'password':
-          type = KeyType.Password;
+      switch (this.uploadSetting.keyType) {
+        case KeyType.Password:
           contentType = 'application/x-rundeck-data-password';
-          value = this.upload.password;
+          value = this.uploadSetting.password;
           break;
-        case 'private':
-          type = KeyType.Private;
+        case KeyType.Private:
           contentType = 'application/octet-stream';
 
-          if (this.upload.inputType === InputType.Text) {
-            value = this.upload.textArea;
+          if (this.uploadSetting.inputType === InputType.Text) {
+            value = this.uploadSetting.textArea;
           } else {
-            if(this.upload.fileContent ==''){
-              this.upload.errorMsg = 'File content was not read';
-              this.upload.file = null;
+            if(this.uploadSetting.fileContent ==''){
+              this.uploadSetting.errorMsg = 'File content was not read';
+              this.uploadSetting.file = null;
             }else{
-              value = this.upload.fileContent;
+              value = this.uploadSetting.fileContent;
             }
           }
           break;
-        case 'public':
-          if (this.upload.inputType === InputType.Text) {
-            value = this.upload.textArea;
+        case KeyType.Public:
+          if (this.uploadSetting.inputType === InputType.Text) {
+            value = this.uploadSetting.textArea;
           } else {
-            if(this.upload.fileContent ==''){
-              this.upload.errorMsg = 'File content was not read';
-              this.upload.file = null;
+            if(this.uploadSetting.fileContent ==''){
+              this.uploadSetting.errorMsg = 'File content was not read';
+              this.uploadSetting.file = null;
             }else{
-              value = this.upload.fileContent;
+              value = this.uploadSetting.fileContent;
             }
           }
           break;
@@ -235,45 +248,37 @@ export default Vue.extend({
 
       let saved = true;
 
-      if (this.upload.status == 'new') {
+      if (this.uploadSetting.status == 'new') {
 
         const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath);
-        let exists = true;
-        if(checkKey._response.status==404){
-          exists = false;
-        }
+        
+        let exists = checkKey._response.status !== 404;
 
-        if(exists && this.upload.dontOverwrite ) {
-          this.upload.errorMsg = 'key aready exists';
-          saved = false;
-        }else{
-          if(!exists) {
-            const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, {contentType});
-            if(resp._response.status!=201){
+        if(exists) {
+          if(this.uploadSetting.dontOverwrite) {
+            this.uploadSetting.errorMsg = 'key aready exists';
+            saved = false;
+          } else {
+            const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType });
+
+            if(resp._response.status !== 201){
               saved = false;
-              this.upload.errorMsg = resp.error;
-            }
-          }else {
-            this.upload.status = 'update';
+              this.uploadSetting.errorMsg = resp.error;
+            } 
           }
+        } else {
+          const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, {contentType});
+
+          console.log("create key: ", resp)
+          if(resp._response.status!=201){
+            saved = false;
+            this.uploadSetting.errorMsg = resp.error;
+          } 
         }
-      }
-
-      if (this.upload.status === 'update') {
-        const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, {contentType});
-
-        if(resp._response.status!=201){
-          saved = false;
-          this.upload.errorMsg = resp.error;
-        }
-
-        saved = true;
       }
 
       if(saved){
-        this.loadKeys();
-        this.modalEdit = false;
-        this.$emit("closeEditor")
+        this.$emit("finishEditing")
       }
     },
     loadKeys() {
@@ -321,8 +326,8 @@ export default Vue.extend({
             }
           });
         }
-      }).catch((err) => {
-        this.errorMsg = err;
+      }).catch((err: Error) => {
+        this.errorMsg = err.message;
       });
     },
     handleFileUpload(e: any){
@@ -331,31 +336,31 @@ export default Vue.extend({
         return;
 
       const file = files[0];
-      this.upload.file = file.name;
+      this.uploadSetting.file = file.name;
 
       let reader = new FileReader();
       reader.onload = (event:any) => {
         let text = event.target.result;
-        this.upload.fileContent = text;
-        if(this.upload.errorMsg!=null){
-          this.upload.errorMsg = null;
+        this.uploadSetting.fileContent = text;
+        if(this.uploadSetting.errorMsg!=null){
+          this.uploadSetting.errorMsg = null;
         }
       };
       reader.onerror = (event:any) => {
-        this.upload.errorMsg = "file cannot be read";
-        this.upload.file = null;
+        this.uploadSetting.errorMsg = "file cannot be read";
+        this.uploadSetting.file = null;
       };
       reader.readAsText(file);
 
     },
     getKeyPath(){
-      let fullPath = this.upload.inputPath!=null && this.upload.inputPath!=''? this.upload.inputPath + '/':'';
+      let fullPath = this.uploadSetting.inputPath!=null && this.uploadSetting.inputPath!=''? this.uploadSetting.inputPath + '/':'';
 
-      if(this.upload.fileName != null) {
-        fullPath = fullPath + this.upload.fileName;
+      if(this.uploadSetting.fileName != null) {
+        fullPath = fullPath + this.uploadSetting.fileName;
       }else{
-        if(this.upload.file!=null){
-          fullPath = fullPath + this.upload.file;
+        if(this.uploadSetting.file!=null){
+          fullPath = fullPath + this.uploadSetting.file;
         }
       }
 
