@@ -61,17 +61,29 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPrebootstrap()
+        boolean error = runPrebootstrap()
+        if(error) {
+            System.err.println("Rundeck initialization failed")
+            exitWithCode(1)
+        }
         boolean startupException = false
         try {
-            ctx = GrailsApp.run(Application, args)
+            execRunApp()
         } catch(Exception ex) {
             startupException = true
         }
         if(rundeckConfig.isMigrate()) {
             println startupException ? "\nError encountered when running migrations" : "\nMigrations complete"
-            System.exit(startupException ? 1 : 0)
+            exitWithCode(startupException ? 1 : 0)
         }
+    }
+
+    static void execRunApp(String[] args) {
+        ctx = GrailsApp.run(Application, args)
+    }
+
+    static void exitWithCode(Integer code) {
+        System.exit(code)
     }
 
     static void restartServer() {
@@ -122,19 +134,27 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void doWithDynamicMethods() {
     }
-    static void runPrebootstrap() {
-        ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
-        List<PreBootstrap> preboostraplist = []
-        preBootstraps.each { pbs -> preboostraplist.add(pbs) }
+    static boolean runPrebootstrap() {
+        List<PreBootstrap> preboostraplist = getPrebootstrapFunctions()
         preboostraplist.sort { a,b -> a.order <=> b.order }
+        boolean error = false;
         preboostraplist.each { pbs ->
             try {
                 pbs.run()
             } catch(Exception ex) {
                 System.err.println("PreBootstrap process "+pbs.class.canonicalName+" failed")
                 ex.printStackTrace()
+                error = true;
             }
         }
+        return error;
+    }
+
+    static List<PreBootstrap> getPrebootstrapFunctions() {
+        ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
+        List<PreBootstrap> preboostraplist = []
+        preBootstraps.each { pbs -> preboostraplist.add(pbs) }
+        return preboostraplist
     }
 
 
