@@ -254,11 +254,11 @@ class UserController extends ControllerBase{
         }
     }
 
-    @Post(uris=['/user/info/{username}','/user/info'])
+    @Post(uris=['/user/info/{username}'])
     @Operation(
         method='POST',
         summary='Modify user profile',
-        description='''Modify the user profile data for current user or another user.
+        description='''Modify the user profile data for another user.
 
 Authorization required: `app_admin` for `system` resource, if not the current user.
 
@@ -268,7 +268,7 @@ Since: v21''',
             @Parameter(
                 name = 'username',
                 in = ParameterIn.PATH,
-                required = false,
+                required = true,
                 description = 'Username, for a different user',
                 schema = @Schema(type = 'string')
             )
@@ -286,43 +286,63 @@ Since: v21''',
             )
         ),
         responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                content=@Content(
-                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
-  "login": "username",
-  "firstName": "first name",
-  "lastName": "last name",
-  "email": "email@domain"
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+
+    )
+    protected def apiOtherUserDataPost_docs(){}
+
+    @Post(uris=['/user/info'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for current user.
+
+Since: v21''',
+        tags = ['user'],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
 }''')
-                )
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
             )
         ]
 
     )
     protected def apiUserDataPost_docs(){}
 
-    @Get(uris=['/user/info/{username}','/user/info'])
+    @Get(uris=['/user/info'])
     @Operation(
         method='GET',
         summary='Get User Profile',
-        description='''Get the user profile data for current user or another user.
-
-Authorization required: `app_admin` for `system` resource, if not the current user.
+        description='''Get the user profile data for current user.
 
 Since: v21''',
         tags=['user'],
-        parameters=[
-            @Parameter(
-                name = 'username',
-                in = ParameterIn.PATH,
-                required = false,
-                description = 'Username, for a different user',
-                schema = @Schema(type = 'string')
-            )
-        ],
         responses=[
             @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
             @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
@@ -339,6 +359,39 @@ Since: v21''',
             )
         ]
 
+    )
+    protected def apiUserData_docs(){}
+
+    @Get(uris=['/user/info/{username}'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags=['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = true,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
     )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
