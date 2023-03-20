@@ -14,7 +14,7 @@ import Vue from "vue";
 
 export default Vue.extend({
   name: "KeyStoragePage",
-  components: {KeyStorageEdit, KeyStorageView},
+  components: { KeyStorageEdit, KeyStorageView },
   props: [
     'readOnly',
     'allowUpload',
