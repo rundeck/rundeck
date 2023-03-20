@@ -84,6 +84,28 @@ class ApiController extends ControllerBase{
             featureQuery         : ['GET'],
             featureQueryAll      : ['GET']
     ]
+
+    @Get('/')
+    @Operation(
+        method = 'GET',
+        summary = 'Get API Information',
+        description = '''Return basic information about the Rundeck API.
+
+Includes current latest API Version, and base API URL.''',
+        tags = ['general'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'API Information',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "apiversion": 44,
+  "href": "http://localhost:4441/api/44"
+}''')
+            )
+        )
+    )
     def info () {
         respond((Object) [
                 apiversion: ApiVersions.API_CURRENT_VERSION,
