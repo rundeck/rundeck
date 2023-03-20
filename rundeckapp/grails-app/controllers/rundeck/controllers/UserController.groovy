@@ -351,6 +351,28 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/roles')
+    @Operation(
+        method = 'GET',
+        summary = 'List Authorized Roles',
+        description = '''Get a list of the authenticated user's roles.
+
+Since: v30''',
+        tags = ['user', 'authorization'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success response, with a list of roles.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "roles":["admin","user"]
+}''')
+                )
+            )
+        ]
+    )
     def apiListRoles() {
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
             return
