@@ -26,17 +26,19 @@
           <i class="glyphicon glyphicon-arrow-up"></i>
           <span>{{showUpPath()}}</span>
         </button>
-
         <button @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
           <i class="glyphicon glyphicon-plus"></i>
           Add or Upload a Keys
         </button>
 
-        <button @click="actionUploadModify()" class="btn btn-sm btn-info "
+        <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
                 v-if="this.allowUpload===true && this.isSelectedKey===true">
           <i class="glyphicon glyphicon-pencil"></i>
           Overwrite Key
         </button>
+        <button class="btn btn-sm btn-danger">
+                <i class="glyphicon glyphicon-trash"></i>
+                {{"Delete"}}</button>
       </div>
 
 
@@ -69,7 +71,6 @@
                   title="This path contains a password that can be used for remote node execution.">
                                   <i class="glyphicon glyphicon-lock"></i>
                                 </span>
-
             <span>{{key.name}}</span>
           </td>
           <td class="text-strong">
@@ -147,6 +148,11 @@
                               </span>
           </div>
         </div>
+        <div v-if="selectedIsDownloadable" class="pull-right">
+          <a href="#" data-bind="click: download">
+                <i class="glyphicon glyphicon-download"></i>
+                {{"Download"}}</a>
+        </div>
       </div>
 
     </div>
@@ -186,7 +192,8 @@ export default Vue.extend({
       files: [] as any,
       selectedClass: 'success',
       directories: [] as any,
-      uploadErrors: {} as any
+      uploadErrors: {} as any,
+      selectedIsDownloadable: true,
     }
   },
   computed: {
