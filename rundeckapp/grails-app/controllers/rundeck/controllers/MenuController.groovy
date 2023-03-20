@@ -3346,6 +3346,150 @@ Format is a string like `2d1h4n5s` using the following characters for time units
         flush(response)
     }
 
+    @Get(uri='/project/{project}/executions/running')
+    @Operation(
+        method = 'GET',
+        summary = 'Listing Running Executions',
+        description = '''List the currently running executions for a project or all projects.
+
+Authorization required: `read` for project resource type `event`
+''',
+        tags = ['project', 'execution'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                required = true,
+                in = ParameterIn.PATH,
+                description = 'Project Name, or * for all projects',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'max',
+                required = false,
+                in = ParameterIn.QUERY,
+                description = 'Paging maximum results, default: 20',
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'offset',
+                required = false,
+                in = ParameterIn.QUERY,
+                description = 'Paging Offset',
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'jobIdFilter',
+                required = false,
+                in = ParameterIn.QUERY,
+                description = '''Specifies a Job ID, the results will only contain running executions for the given job. Since: v32''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'includePostponed',
+                required = false,
+                in = ParameterIn.QUERY,
+                description = 'If true, include scheduled and queued executions. Since: v32',
+                schema = @Schema(type = 'boolean')
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Running Executions list.
+
+Paging info: 
+* `max`: maximum number of results per page
+* `offset`: offset from first of all results
+* `total`: total number of results
+* `count`: number of results in the response
+
+The `[status]` value indicates the execution status.  It is one of:
+
+* `running`: execution is running
+* `succeeded`: execution completed successfully
+* `failed`: execution completed with failure
+* `aborted`: execution was aborted
+* `timedout`: execution timed out
+* `failed-with-retry`: execution failed and will retry
+* `scheduled`: execution is scheduled to run in the future
+* `other`: execution had a custom exit status string
+
+If `status` is `other`, then, `customStatus` will contain the exit status.
+
+The `[url]` value for the `href` is a URL the Rundeck API for the execution.
+The `[url]` value for the `permalink` is a URL to the Rundeck server page to view the execution output.
+
+`[user]` is the username of the user who started the execution.
+
+`[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
+
+If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`. (Since API v5)
+
+**API v9 and above**: `project="[project]"` is the project name of the execution.
+
+`successfulNodes` and `failedNodes` list the names of nodes which succeeded or failed. **API v10 and above**.
+
+The `job` section contains `options` if an `argstring` value is set (**API v10 and above**).  Inside `options` is a sequence of `<option>` elements with two attributes:
+
+* `name` the parsed option name
+* `value` the parsed option value
+
+**Since API v13**: The `serverUUID` will indicate the server UUID
+if executed in cluster mode.
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject("""{
+"paging":{
+    "count": 1,
+    "total": 1,
+    "offset": 0,
+    "max": 20
+},
+"executions": [{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "running/scheduled/queued",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}]
+}""")
+                )
+            )
+        ]
+    )
     /**
      * API: /project/PROJECT/executions/running, version 14
      */
