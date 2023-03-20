@@ -61,6 +61,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
 import org.grails.web.json.JSONElement
+import org.hibernate.criterion.Example
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -3531,31 +3532,135 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
     }
 
-    @Get(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML])
+    @Post(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON])
     @Operation(
         method = "POST",
         summary = "Import Job definitions",
-        description = "Import a set of job definitions in a supported format",
-        parameters = @Parameter(
-            name = 'project',
-            description = 'Project Name',
-            in = ParameterIn.PATH,
-            schema = @Schema(type = 'string')
+        description = '''Import a set of job definitions in a supported format.
+
+
+Since: v14''',
+        tags=['jobs'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'fileformat',
+                description = 'Input file format, to specify the input format, if multipart of form input is sent.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string',allowableValues = ['json','yaml'])
+            ),
+            @Parameter(
+                name = 'dupeOption',
+                description = 'A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string',allowableValues = ['skip','create','update'])
+            ),
+            @Parameter(
+                name = 'uuidOption',
+                description = '''Whether to preserve or remove UUIDs from the imported jobs:
+
+*  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
+*  `remove`: Remove the UUIDs from imported jobs. Allows update/create to succeed without conflict on UUID.
+''',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string',allowableValues = ['preserve','remove'])
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''Input Request supports multiple types:
+
+* `Content-Type: x-www-form-urlencoded`, with a `xmlBatch` request parameter containing the input content
+* `Content-Type: multipart/form-data` multipart MIME request part named `xmlBatch` containing the content.
+* `Content-Type: application/yaml`, request body is the Jobs YAML formatted job definition
+* `Content-Type: application/json`, request body is the Jobs JSON formatted job definition (API v44+)
+''',
+            content=[
+                @Content(
+                    mediaType = MediaType.APPLICATION_FORM_URLENCODED
+                ),
+                @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA
+                ),
+                @Content(
+                    schema = @Schema(
+                        type = 'object',
+                        externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                            description = "Job JSON Format"
+                        )
+                    ),
+                    mediaType = MediaType.APPLICATION_JSON
+                ),
+                @Content(
+                    schema = @Schema(
+                        type = 'string',
+                        externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                            description = "Job YAML Format"
+                        )
+                    ),
+                    mediaType = 'text/yaml'
+                )
+            ]
         ),
         responses = [
             @ApiResponse(
                 responseCode = "200",
-                description = "Job definition import result (json)",
+                description = '''Job definition import result.
+
+A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".
+Within each one there will be 0 or more objects representing the imported job.
+
+Each job entry contains:
+
+* `index`: index in the input content of the job definition.
+* `id`: If the job exists, or was successfully created, its UUID
+* `href`: If the job exists, or was successfully created, its API href
+* `permalink`: If the job exists, or was successfully created, its GUI URL.
+* `project`: The project
+* `name`: The job name
+* `group`: The job Group
+* `error`: (if failed) the error message
+
+''',
                 content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = @ExampleObject('''{
+  "succeeded": [{
+  "index": 1,
+  "href": "http://madmartigan.local:4440/api/14/job/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "id": "3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "name": "restart",
+  "group": "app2/dev",
+  "project": "test",
+  "permalink": "http://madmartigan.local:4440/job/show/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a"
+}],
+  "failed": [{
+  "index": 2,
+  "href": "http://madmartigan.local:4440/api/14/job/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "id": "3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "name": "restart",
+  "group": "app2/dev",
+  "project": "test",
+  "permalink": "http://madmartigan.local:4440/job/show/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "error": "error message"
+}],
+  "skipped": []
+}''')
                 )
             ),
-
             @ApiResponse(
-                responseCode = "200",
-                description = "Job definition import result (xml)",
+                responseCode = "415",
+                description = "Unsupported media type",
                 content = @Content(
-                    mediaType = MediaType.TEXT_XML
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation = ApiErrorResponse)
                 )
             )
         ]
