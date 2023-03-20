@@ -1,16 +1,18 @@
 <template>
 <div>
-  <key-storage-view :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @closeEditor="closeEditor" @openEditor="openEditor"></key-storage-view>
-  <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
-    <key-storage-edit :storage-filter="storageFilter" @closeEditor="closeEditor"></key-storage-edit>
+  <key-storage-view ref="keyStorageViewRef" :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
+  <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
+    <key-storage-edit :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
   </modal>
 </div>
 </template>
 
-<script>
-import KeyStorageView from "./KeyStorageView";
-import KeyStorageEdit from "./KeyStorageEdit";
-export default {
+<script lang="ts">
+import KeyStorageView from "./KeyStorageView.vue";
+import KeyStorageEdit from "./KeyStorageEdit.vue";
+import Vue from "vue";
+
+export default Vue.extend({
   name: "KeyStoragePage",
   components: { KeyStorageEdit, KeyStorageView },
   props: [
@@ -23,19 +25,26 @@ export default {
   data() {
     return {
       modalEdit: false,
-      path: ''
+      path: '',
+      uploadSetting: {}
     }
   },
   methods: {
-    closeEditor(){
-      this.modalEdit=true
+    handleFinishEditing(){
+      // @ts-ignore
+      this.$refs.keyStorageViewRef.loadKeys();
+      this.modalEdit = false
     },
-    openEditor(){
-      this.modalEdit=true
-    }
+    handleCancelEditing() {
+      this.modalEdit = false
+    },
+    openEditor(uploadSetting: {}) {
+      this.uploadSetting = uploadSetting
+      this.modalEdit = true
+    },
   },
   async mounted() {
     this.path=this.value ? this.value : ""
   }
-}
+})
 </script>

@@ -248,38 +248,32 @@ export default Vue.extend({
 
       let saved = true;
 
-      if (this.uploadSetting.status == 'new') {
+      const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath);
+      
+      let exists = checkKey._response.status !== 404;
 
-        const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath);
-        
-        let exists = checkKey._response.status !== 404;
-
-        if(exists) {
-          if(this.uploadSetting.dontOverwrite) {
-            this.uploadSetting.errorMsg = 'key aready exists';
-            saved = false;
-          } else {
-            const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType });
-
-            if(resp._response.status !== 201){
-              saved = false;
-              this.uploadSetting.errorMsg = resp.error;
-            } 
-          }
+      if(exists) {
+        if(this.uploadSetting.dontOverwrite) {
+          this.uploadSetting.errorMsg = 'key aready exists';
+          return
         } else {
-          const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, {contentType});
-
-          console.log("create key: ", resp)
-          if(resp._response.status!=201){
-            saved = false;
-            this.uploadSetting.errorMsg = resp.error;
+          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType });
+          if(resp._response.status >= 400){
+            this.uploadSetting.errorMsg = resp.error
+            return
           } 
         }
+      } else {
+        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, {contentType});
+
+        console.log("create key: ", resp)
+        if(resp._response.status!=201){
+          this.uploadSetting.errorMsg = resp.error;
+          return
+        } 
       }
 
-      if(saved){
-        this.$emit("finishEditing")
-      }
+      this.$emit("finishEditing")
     },
     loadKeys() {
       const rundeckContext = getRundeckContext();
