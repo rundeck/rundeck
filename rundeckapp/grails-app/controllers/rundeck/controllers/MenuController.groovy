@@ -41,8 +41,10 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.Explode
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
@@ -3294,10 +3296,87 @@ Format is a string like `2d1h4n5s` using the following characters for time units
         respondApiJobsList(results.nextScheduled)
     }
 
+    @Get(uri='/project/{project}/jobs/export')
+    @Operation(
+        method='GET',
+        summary='Export Jobs',
+        description='''Export the job definitions in a Project in JSON or YAML formats.
+
+Authorization required: `read` for each job resource.
+
+Since: v14
+''',
+        tags = ['jobs'],
+        parameters=[
+            @Parameter(
+                name = 'project',
+                required = true,
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'idlist',
+                in = ParameterIn.QUERY,
+                description = 'A comma-separated list of Job IDs to export',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'groupPath',
+                in = ParameterIn.QUERY,
+                description = 'specify a group or partial group path to include all jobs within that group path.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'jobFilter',
+                in = ParameterIn.QUERY,
+                description = 'specify a filter for the job Name',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = "format",
+                description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
+                in = ParameterIn.QUERY,
+                content = @Content(schema = @Schema(implementation = String,allowableValues = ['json','yaml']))
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = '''Job definition list, depending on the requested format:
+
+* YAML: [job-yaml](https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html) format
+* JSON: [job-json](https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html) format (API v44+)''',
+            content = [
+                @Content(
+                    schema = @Schema(
+                        type = 'object',
+                        externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-json-v44.html',
+                            description = "Job JSON Format"
+                        )
+                    ),
+                    mediaType = MediaType.APPLICATION_JSON
+                ),
+                @Content(
+                    schema = @Schema(
+                        type = 'string',
+                        externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html',
+                            description = "Job YAML Format"
+                        )
+                    ),
+                    mediaType = 'text/yaml'
+                )
+            ]
+        )
+    )
     /**
      * API: /api/14/project/NAME/jobs/export
      */
-    def apiJobsExportv14 (ScheduledExecutionQuery query){
+    def apiJobsExportv14 (
+        @Parameter(in = ParameterIn.QUERY, explode = Explode.TRUE)
+        ScheduledExecutionQuery query
+    ){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
