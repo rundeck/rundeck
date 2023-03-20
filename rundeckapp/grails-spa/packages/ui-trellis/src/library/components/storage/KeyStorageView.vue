@@ -149,9 +149,11 @@
           </div>
         </div>
         <div v-if="selectedIsDownloadable" class="pull-right">
-          <a href="#" data-bind="click: download">
-                <i class="glyphicon glyphicon-download"></i>
-                {{"Download"}}</a>
+          <span>
+            <a href="#" data-bind="click: download">
+                  <i class="glyphicon glyphicon-download"></i>
+                  {{"Download"}}</a>
+          </span>
         </div>
       </div>
 
