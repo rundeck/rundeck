@@ -24,12 +24,17 @@ import grails.core.GrailsApplication
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.RdPageable
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
@@ -249,6 +254,92 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Post(uris=['/user/info/{username}','/user/info'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for current user or another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags = ['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = false,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}''')
+            )
+        ),
+        responses=[
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "login": "username",
+  "firstName": "first name",
+  "lastName": "last name",
+  "email": "email@domain"
+}''')
+                )
+            )
+        ]
+
+    )
+    protected def apiUserDataPost_docs(){}
+
+    @Get(uris=['/user/info/{username}','/user/info'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for current user or another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags=['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = false,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses=[
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "login": "username",
+  "firstName": "first name",
+  "lastName": "last name",
+  "email": "email@domain"
+}''')
+                )
+            )
+        ]
+
+    )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return
