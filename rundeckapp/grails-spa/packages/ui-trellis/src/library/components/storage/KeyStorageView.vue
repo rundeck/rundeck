@@ -191,7 +191,6 @@ import KeyStorageDelete from "./KeyStorageDelete.vue";
 
 export default Vue.extend({
   name: "KeyStorageView",
-  components: {KeyStorageDelete},
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
