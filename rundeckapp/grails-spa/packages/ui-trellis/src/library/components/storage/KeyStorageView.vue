@@ -36,7 +36,7 @@
           <i class="glyphicon glyphicon-pencil"></i>
           Overwrite Key
         </button>
-        <button class="btn btn-sm btn-danger">
+        <button class="btn btn-sm btn-danger" @click="deleteKey()" v-if="this.selectedKey.path !== null && this.selectedKey.path !== ''">
                 <i class="glyphicon glyphicon-trash"></i>
                 {{"Delete"}}</button>
       </div>
@@ -111,6 +111,28 @@
       </table>
     </div>
   </div>
+  <modal v-model="isConfirmingDeletion" title="Confirm Delete" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body>
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="storageconfirmdeletetitle">{{"Delete Selected Key"}}</h4>
+      </div>
+
+      <div class="modal-body">
+        <p>{{"Really delete the selected key at this path?"}} </p>
+
+        <p>
+          <strong class="text-info"> {{this.selectedKey.path}}</strong>
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" @click="this.isConfirmingDeletion=false" class="btn btn-sm btn-default">{{"Cancel"}}</button>
+
+        <button type="button" @click="confirmDeleteKey()" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
+      </div>
+    </div>
+  </modal>
   <div class="row" v-if="isKeySelected()===true">
     <div class="col-sm-12">
       <div class="well">
@@ -154,7 +176,6 @@
                 {{"Download"}}</a>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -166,9 +187,11 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
+import KeyStorageDelete from "./KeyStorageDelete.vue";
 
 export default Vue.extend({
   name: "KeyStorageView",
+  components: {KeyStorageDelete},
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
@@ -185,6 +208,7 @@ export default Vue.extend({
       upPath: '',
       rootPath: 'keys',
       path: '',
+      isConfirmingDeletion: false,
       modalEdit: false,
       upload: {} as any,
       selectedKey: {} as any,
@@ -206,6 +230,15 @@ export default Vue.extend({
     this.loadKeys()
   },
   methods: {
+    deleteKey(){
+      this.isConfirmingDeletion=true
+    },
+    confirmDeleteKey(){
+      const rundeckContext = getRundeckContext();
+      rundeckContext.rundeckClient.storageKeyDelete(this.selectedKey.path)
+      this.loadKeys()
+      this.isConfirmingDeletion=false
+    },
     loadKeys() {
       const rundeckContext = getRundeckContext();
       rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
