@@ -21,6 +21,15 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.data.RdPageable
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
@@ -37,6 +46,7 @@ import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class UserController extends ControllerBase{
 
     private static final int DEFAULT_USER_PAGE_SIZE = 100
@@ -368,6 +378,54 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/list')
+    @Operation(
+        method = 'GET',
+        summary = 'List users',
+        description = '''Get a list of all the users.
+
+Authorization required: `app_admin` for `system` resource
+
+Since: v21''',
+        tags = ['user'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success Response, with a list of users.
+
+For APIv27+, the results will contain additional fields:
+* `created` creation date
+* `updated` updated date
+* `lastJob` last job execution
+* `tokens` number of API tokens
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema = @Schema(type = 'object')),
+                    examples = @ExampleObject('''[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com",
+    "created": "2017-10-01T09:00:20Z",
+    "updated": "2018-08-24T13:53:02Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 1
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com",
+    "created": "2016-07-17T18:42:00Z",
+    "updated": "2018-08-24T13:53:00Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 6
+}]''')
+                )
+            )
+        ]
+    )
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return
