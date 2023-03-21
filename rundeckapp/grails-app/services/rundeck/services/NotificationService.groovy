@@ -304,6 +304,8 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                             (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
                             (ExecutionService.EXECUTION_MISSED):'MISSED',
+                            (ExecutionService.EXECUTION_FAILED_WITH_RETRY):'FAILED WITH RETRY',
+                            (ExecutionService.AVERAGE_DURATION_EXCEEDED):'AVERAGE DURATION EXCEEDED',
                     ]
 
                     def execMap = null
