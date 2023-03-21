@@ -3899,7 +3899,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
-        JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionRemoteUrl(opt, authContext)
+        JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
 
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
@@ -4557,8 +4557,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
-    JobOptionConfigRemoteUrl getJobOptionRemoteUrl(Option option, AuthContext authContext ){
-        JobOptionConfigRemoteUrl configRemoteUrl = option.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
+    JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
+        JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
 
         if(configRemoteUrl?.getPasswordStoragePath()){
             if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){

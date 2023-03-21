@@ -125,7 +125,6 @@ public class Option implements Comparable, OptionData {
 
     public JobOptionConfigData getOptionConfigData() {
         //de-serialize the json
-    public JobOptionConfigData getConfigMap() {
         if (null != configData) {
             final ObjectMapper mapper = new ObjectMapper()
             try {
@@ -449,6 +448,10 @@ public class Option implements Comparable, OptionData {
 
     JobOptionConfigRemoteUrl getConfigRemoteUrl(){
         return this.getConfigMap()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
+    }
+
+    JobOptionConfigRemoteUrl getConfigRemoteUrl(){
+        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
     }
 
     public String toString ( ) {
