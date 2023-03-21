@@ -25,7 +25,7 @@ class ExecReport extends BaseReport implements RdExecReport{
     String ctxCommand
     String ctxController
     Long executionId
-    String jcJobId
+    String jobId
     Boolean adhocExecution
     String adhocScript
     String abortedByUser
@@ -38,6 +38,7 @@ class ExecReport extends BaseReport implements RdExecReport{
         filterApplied type: 'text'
         succeededNodeList type: 'text'
         failedNodeList type: 'text'
+        jobId column: 'jcJobId'
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'executionId', 'jcJobId']
             index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']
@@ -49,7 +50,7 @@ class ExecReport extends BaseReport implements RdExecReport{
         adhocExecution(nullable:true)
         ctxCommand(nullable:true,blank:true)
         ctxController(nullable:true,blank:true)
-        jcJobId(nullable:true,blank:true)
+        jobId(nullable:true,blank:true)
         executionId(nullable:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
@@ -61,7 +62,7 @@ class ExecReport extends BaseReport implements RdExecReport{
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
             'executionId',
-            'jcJobId',
+            'jobId',
             'adhocExecution',
             'adhocScript',
             'abortedByUser',
@@ -112,14 +113,14 @@ class ExecReport extends BaseReport implements RdExecReport{
             "timedout" : ismissed ? "missed" : "fail"
         return fromMap([
                 executionId: exec.id,
-                jcJobId: exec.scheduledExecution?.id,
+                jobId: exec.scheduledExecution?.id,
                 adhocExecution: null==exec.scheduledExecution,
                 adhocScript: adhocScript,
                 abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
                 node:"${successCount}/${failedCount}/${totalCount}",
                 title: adhocScript?adhocScript:summary,
                 status: status,
-                ctxProject: exec.project,
+                project: exec.project,
                 reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
                 author: exec.user,
                 message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : ismissed ? "Job missed execution at: ${exec.dateStarted}" : 'Job failed'),
@@ -146,17 +147,10 @@ class ExecReport extends BaseReport implements RdExecReport{
         ret
     }
 
-    static void deleteByCtxProject(String project) {
+    static void deleteByProject(String project) {
         ExecReport.where {
-            ctxProject == project
+            project == project
         }.deleteAll()
     }
 
-    String getJobId() {
-        jcJobId
-    }
-
-    void setJobId(String id) {
-        jcJobId = id
-    }
 }

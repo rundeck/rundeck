@@ -6,7 +6,6 @@ public interface RdExecReport{
     String getNode();
     String getTitle();
     String getStatus();
-    String getCtxProject();
     String getProject();
     String getReportId();
     String getTags();
@@ -15,7 +14,6 @@ public interface RdExecReport{
     Date getDateCompleted();
     String getMessage();
     Long getExecutionId();
-    String getJcJobId();
     String getJobId();
     Boolean getAdhocExecution();
     String getAdhocScript();

@@ -40,6 +40,8 @@ public class SaveReportRequestImpl implements SaveReportRequest {
                     obj.project = (String)data.get("ctxProject");
                 }else if(key == "jcJobId") {
                     obj.jobId = data.get("jcJobId").toString();
+                }else if(key == "jobId"){
+                    obj.jobId = data.get("jobId").toString();
                 }else{
                     field = obj.getClass().getDeclaredField(key);
                     if(field != null){

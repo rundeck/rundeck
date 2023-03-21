@@ -192,8 +192,8 @@ class ReportService  {
         def eqfilters = [
             stat: 'status',
             reportId: 'reportId',
-            jobId:'jcJobId',
-            proj: 'ctxProject',
+            jobId:'jobId',
+            proj: 'project',
         ]
         return eqfilters
     }
@@ -214,8 +214,8 @@ class ReportService  {
                 reportId: 'reportId',
         ]
         def jobfilters = [
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',
@@ -282,11 +282,11 @@ class ReportService  {
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
                                 for(def partition : execProjectsPartitioned){
-                                    'in'('this.ctxProject', partition)
+                                    'in'('this.project', partition)
                                 }
                             }
                         })
-                        eq('jcJobId', String.valueOf(se.id))
+                        eq('jobId', String.valueOf(se.id))
                         and{
                             jobfilters.each { key, val ->
                                 if (query["${key}Filter"] == 'null') {
@@ -327,8 +327,8 @@ class ReportService  {
 
                 if (query.titleFilter) {
                     or {
-                        eq('jcJobId', '')
-                        isNull('jcJobId')
+                        eq('jobId', '')
+                        isNull('jobId')
                     }
                 }
                 if (query.jobListFilter || query.excludeJobListFilter) {
@@ -373,11 +373,11 @@ class ReportService  {
 
             if (isJobs) {
                 or {
-                    isNotNull("jcJobId")
+                    isNotNull("jobId")
                     isNotNull("executionId")
                 }
             } else {
-                isNull("jcJobId")
+                isNull("jobId")
                 isNull("executionId")
             }
 
@@ -403,8 +403,8 @@ class ReportService  {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',

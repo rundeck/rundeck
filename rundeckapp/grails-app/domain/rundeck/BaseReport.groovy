@@ -24,7 +24,7 @@ class BaseReport {
     String title
     String status
     String actionType
-    String ctxProject
+    String project
     String ctxType
     String ctxName
     String maprefUri
@@ -38,6 +38,7 @@ class BaseReport {
     static mapping = {
         message type: 'text'
         title type: 'text'
+        project column: 'ctxProject'
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class',*/ 'ctxProject', 'dateCompleted', /*'jcExecId', 'jcJobId'*/]
@@ -60,7 +61,7 @@ class BaseReport {
             'title',
             'status',
             'actionType',
-            'ctxProject',
+            'project',
             'reportId',
             'tags',
             'author',
@@ -103,17 +104,9 @@ class BaseReport {
         report
     }
 
-    static void deleteByCtxProject(String project) {
+    static void deleteByProject(String project) {
         BaseReport.where {
-            ctxProject == project
+            project == project
         }.deleteAll()
-    }
-
-    String getProject() {
-        ctxProject
-    }
-
-    void setProject(String projectName) {
-        ctxProject = projectName
     }
 }

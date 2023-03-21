@@ -128,13 +128,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-        if (report.jcJobId) {
+        if (report.jobId) {
             //convert internal job ID to extid
             def se
             try {
-                se = ScheduledExecution.get(Long.parseLong(report.jcJobId))
+                se = ScheduledExecution.get(Long.parseLong(report.jobId))
                 if (se) {
-                    report.jcJobId = se.extid
+                    report.jobId = se.extid
                 }
             } catch (NumberFormatException e) {
 
@@ -230,8 +230,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             SaveReportRequest saveReportRequest = SaveReportRequestImpl.fromMap(object)
 
             //remap job id if necessary
+            if (object.jobId && jobsByOldIdMap && jobsByOldIdMap[object.jobId]) {
+                saveReportRequest.jobId = jobsByOldIdMap[object.jobId].id
+            }
             if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobId].id
+                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobIddfelrbrbkfglgggdduthvljhglgcrrjillthldfddjni
+                ].id
             }
             //remap exec id if necessary
             //nb: support old "jcExecId" name
@@ -1531,7 +1535,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.debug("[${reportxmlnames[rxml]}] Report skipped: no matching execution imported.")
                 return
             }
-            report.ctxProject = projectName
+            report.project = projectName
             def response = execReportDataProvider.saveReport(report)
             if (!response.isSaved) {
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${response.errors}")

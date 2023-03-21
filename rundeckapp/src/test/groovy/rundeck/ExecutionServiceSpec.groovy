@@ -5982,7 +5982,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
-        ExecReport execReport = ExecReport.findByJcJobId(job.id.toString())
+        ExecReport execReport = ExecReport.findByJobId(job.id.toString())
 
         then:
         triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)

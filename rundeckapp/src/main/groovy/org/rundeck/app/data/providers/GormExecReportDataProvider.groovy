@@ -73,7 +73,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
 
     @Override
     List<RdExecReport> findAllByProject(String projectName) {
-        return BaseReport.findAllByCtxProject(projectName)
+        return BaseReport.findAllByProject(projectName)
     }
 
     @Override
@@ -86,12 +86,12 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
     @Override
     List<RdExecReport> findAllByProjectAndExecutionIdInList(String projectName, List<Long> execIds) {
-        return ExecReport.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
+        return ExecReport.findAllByProjectAndExecutionIdInList(projectName, execIds)
     }
 
     @Override
     int countByProject(String projectName) {
-        return ExecReport.countByCtxProject(projectName)
+        return ExecReport.countByProject(projectName)
     }
 
     @Override
@@ -134,8 +134,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',
@@ -175,15 +175,15 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
 
     @Override
     void deleteByProject(String projectName) {
-        ExecReport.deleteByCtxProject(projectName)
+        ExecReport.deleteByProject(projectName)
     }
 
     @Override
     void deleteWithTransaction(String projectName) {
         BaseReport.withTransaction { TransactionStatus status ->
             try {
-                BaseReport.deleteByCtxProject(projectName)
-                ExecReport.deleteByCtxProject(projectName)
+                BaseReport.deleteByProject(projectName)
+                ExecReport.deleteByProject(projectName)
             } catch (Exception e){
                 status.setRollbackOnly()
                 throw e

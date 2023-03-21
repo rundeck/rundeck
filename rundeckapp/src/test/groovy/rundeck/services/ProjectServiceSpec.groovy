@@ -2313,7 +2313,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <title>blah</title>
   <status>succeed</status>
   <actionType>succeed</actionType>
-  <ctxProject>testproj1</ctxProject>
+  <project>testproj1</project>
   <reportId>test/job</reportId>
   <tags>a,b,c</tags>
   <author>admin</author>
@@ -2321,7 +2321,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <executionId>123</executionId>
-  <jcJobId>test-job-uuid</jcJobId>
+  <jobId>test-job-uuid</jobId>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
@@ -2376,12 +2376,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
             executionId:123L,
-            jcJobId: oldJobId.toString(),
+            jobId: oldJobId.toString(),
             node:'1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
@@ -2472,7 +2472,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
             executionId: 123,
-            jobId:'321',
+            jobId: '321',
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
@@ -2497,12 +2497,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull result
         def keys = [
             executionId: 456,
-            jobId: '321',
+            jcJobId: 321,
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            project: 'testproj1',
+            ctxProject: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
