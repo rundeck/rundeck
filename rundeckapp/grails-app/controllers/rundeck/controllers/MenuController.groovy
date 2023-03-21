@@ -3236,10 +3236,74 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 
         respondApiJobsList(authorized)
     }
+    @Get(uri='/project/{project}/jobs')
+    @Operation(
+        method='GET',
+        summary='Listing Jobs',
+        description='''List the jobs that exist for a project.
+
+* `idlist`: specify a comma-separated list of Job IDs to include
+* `groupPath`: specify a group or partial group path to include all jobs within that group path. (Default value: "*", all groups). Set to the special value "-" to match the top level jobs only
+* `jobFilter`: specify a filter for the job Name. Matches any job name that contains this value.
+* `jobExactFilter`: specify an exact job name to match.
+* `groupPathExact`: specify an exact group path to match.  Set to the special value "-" to match the top level jobs only
+* `scheduledFilter`: `true/false` specify whether to return only scheduled or only not scheduled jobs.
+* `serverNodeUUIDFilter`: Value: a UUID. In cluster mode, use to select scheduled jobs assigned to the server with given UUID.
+
+**Note:** It is possible to disable result set pagination by setting the property `rundeck.api.paginatejobs.enabled=false` which is assumed to be true if not set.
+
+**Note:** If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
+
+Authorization required: `view` or `read` for each Job resource.
+''',
+        tags=['jobs'],
+        parameters=[
+            @Parameter(
+                name='max',
+                in=ParameterIn.QUERY,
+                description='limit the maximum amount of results to be received.',
+                schema=@Schema(type='integer')
+            ),
+            @Parameter(
+                name='offset',
+                in=ParameterIn.QUERY,
+                description='use in conjunction with `max` to paginate the result set.',
+                schema=@Schema(type='integer')
+            ),
+            @Parameter(
+                name='tags',
+                in=ParameterIn.QUERY,
+                description='specify a tag or comma separated list of tags to list Jobs that have matching tags. (e.g. `tags=tag1,tag2`)',
+                schema=@Schema(type='integer')
+            )
+        ],
+        responses=@ApiResponse(
+            responseCode='200',
+            description='Job List',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples=@ExampleObject('''[
+  {
+    "id": "[UUID]",
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "...",
+    "href": "[API url]",
+    "permalink": "[GUI url]",
+    "scheduled": true,
+    "scheduleEnabled": true,
+    "enabled": true
+  }
+]''')
+            )
+        )
+    )
     /**
      * API: /api/2/project/NAME/jobs, version 2
      */
-    def apiJobsListv2 (ScheduledExecutionQuery query) {
+    def apiJobsListv2 (@Parameter(explode = Explode.TRUE) ScheduledExecutionQuery query) {
 
         if (!configurationService.getBoolean('api.paginatejobs.enabled',true)){
             query.max = null
