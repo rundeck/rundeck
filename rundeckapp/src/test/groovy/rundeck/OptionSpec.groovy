@@ -74,8 +74,9 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         def opt = new Option(
                 name: 'bob',
                 optionType: 'atype',
-                configData: '{"key":"val","key2":"val2"}'
+                configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigPluginAttributes","pluginAttributes":{"key":"val","key2":"val2"}}]}'
         )
+
         when:
         def result = opt.toMap()
         then:

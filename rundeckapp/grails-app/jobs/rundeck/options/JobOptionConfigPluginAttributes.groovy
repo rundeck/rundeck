@@ -3,15 +3,19 @@ package rundeck.options;
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry;
 
-import java.util.Map;
-
 class JobOptionConfigPluginAttributes implements JobOptionConfigEntry {
 
-    private Map<String, String> pluginAttributes;
+    Map<String, String> pluginAttributes;
+
+    JobOptionConfigPluginAttributes() {
+        pluginAttributes = new HashMap<>()
+    }
+
     JobOptionConfigPluginAttributes(Map<String, String> pluginAttributes) {
         this.pluginAttributes = pluginAttributes;
     }
 
+    void addAttribute(String key, String value){
+        pluginAttributes.put(key, value)
+    }
 }
-
-

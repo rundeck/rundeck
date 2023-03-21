@@ -3896,7 +3896,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.frameworkService = Mock(FrameworkService)
 
         when:
-        controller.getRemoteJSON(url, 100, 100, 5,false)
+        controller.getRemoteJSON(url, null, 100, 100, 5,false)
 
         then:
         def e = thrown(UnknownHostException)

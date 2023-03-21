@@ -2,10 +2,6 @@ package rundeck.codecs
 
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import groovy.xml.MarkupBuilder
-import org.rundeck.app.components.JobYAMLFormat
-import rundeck.codecs.JobsXMLCodec
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Notification
@@ -1252,7 +1248,7 @@ inside]]></aproperty>
                                         required: false,
                                         enforced: false,
                                         optionType: 'file',
-                                        configData: '{"test":"value","test2":"data2"}'
+                                        configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigPluginAttributes","pluginAttributes": {"test":"value","test2":"data2"}}]}'
                                 )
                         ]
                 )

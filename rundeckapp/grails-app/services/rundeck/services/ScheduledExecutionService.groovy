@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
@@ -65,7 +64,6 @@ import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
@@ -4560,24 +4558,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
     JobOptionConfigRemoteUrl getJobOptionRemoteUrl(Option option, AuthContext authContext ){
-        JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigMap().getJobOptionEntry(JobOptionConfigRemoteUrl.class)
+        JobOptionConfigRemoteUrl configRemoteUrl = option.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
 
         if(configRemoteUrl?.getPasswordStoragePath()){
-            if(executionService.canReadStoragePassword(authContext,configRemoteUrl?.getPasswordStoragePath(), false )){
-                def password = executionService.readStoragePassword(authContext, configRemoteUrl?.getPasswordStoragePath())
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){
+                def password = executionService.readStoragePassword(authContext, configRemoteUrl.getPasswordStoragePath())
                 configRemoteUrl.password = password
             }else{
-                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl?.getPasswordStoragePath()
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getPasswordStoragePath()
             }
-
-
         }
         if(configRemoteUrl?.getTokenStoragePath()){
-            if(executionService.canReadStoragePassword(authContext,configRemoteUrl?.getTokenStoragePath(), false )) {
-                def token = executionService.readStoragePassword(authContext, configRemoteUrl?.getTokenStoragePath())
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getTokenStoragePath(), false )) {
+                def token = executionService.readStoragePassword(authContext, configRemoteUrl.getTokenStoragePath())
                 configRemoteUrl.token = token
             }else{
-                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl?.getTokenStoragePath()
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getTokenStoragePath()
             }
         }
 

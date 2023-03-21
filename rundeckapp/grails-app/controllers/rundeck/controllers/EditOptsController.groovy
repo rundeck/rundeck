@@ -754,7 +754,7 @@ class EditOptsController extends ControllerBase{
 
                 JobOptionConfigData jobOptionConfigData = new JobOptionConfigData()
                 jobOptionConfigData.addConfig(jobOptionConfigRemoteUrl)
-                opt.setConfigMap(jobOptionConfigData)
+                opt.setOptionConfigData(jobOptionConfigData)
             }
         }
 
@@ -803,12 +803,7 @@ class EditOptsController extends ControllerBase{
         }
         opt.properties = params
         if (params.optionType && params.configMap) {
-            //params.configMap
-            JobOptionConfigPluginAttributes attributes = new  JobOptionConfigPluginAttributes(params.configMap)
-            if(!opt.configMap){
-                opt.configMap = new JobOptionConfigData()
-            }
-            opt.configMap.addConfig(attributes)
+            pt.configMap = params.configMap
         }
 
         opt.valuesList = params.valuesList?:null
