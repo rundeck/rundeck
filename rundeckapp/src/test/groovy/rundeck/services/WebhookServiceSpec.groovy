@@ -575,6 +575,37 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
     }
 
+    def "Cannot import a webhook with existing token"() {
+        given:"webhook exists with token in project A"
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook", "test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook", "test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_, _, _) >> { return new ValidatedPlugin(report: new Validator.Report(), valid: true) }
+            getPlugin(_, _) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event": new TestWebhookEventPlugin()] }
+        }
+        Webhook existing = new Webhook(existingMap)
+        existing.save()
+
+        when:"import data with same token into project B"
+        def result = service.importWebhook(mockUserAuth, imported, false)
+
+        then:"should fail"
+        result == [err:'Unable to import webhoook test. Error:Cannot import webhook: imported auth token does not exist or was changed']
+        where:
+            existingMap = [uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"]
+            imported=     [uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test2", authToken: "12345", eventPlugin: "log-webhook-event"]
+    }
+
     def "getWebhookWithAuth"() {
         setup:
         Webhook hook = new Webhook()
