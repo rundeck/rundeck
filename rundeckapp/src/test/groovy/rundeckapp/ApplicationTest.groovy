@@ -15,6 +15,7 @@
  */
 package rundeckapp
 
+import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MutablePropertySources
 import org.springframework.core.env.StandardEnvironment
@@ -138,10 +139,51 @@ class ApplicationTest extends Specification {
 
     def "RunPreboostrap"() {
         when:
-        Application.runPrebootstrap()
+        def error = Application.runPrebootstrap()
         then:
         System.getProperty("TestPreboostrap") == "ran successfully"
+        !error
     }
+
+    def "Detect Prebootstrap Error"() {
+        when:
+        Application.metaClass.'static'.getPrebootstrapFunctions = { -> [new FailingPrebootrapFunction()]}
+        def error = Application.runPrebootstrap()
+        then:
+        error
+    }
+
+    def "report startup failure in migration mode"() {
+        given:
+        int actual = -404
+        Application.metaClass.'static'.exitWithCode = { Integer code ->
+            actual = code
+        }
+        Application.metaClass.'static'.execRunApp = { String[] args ->
+            throw new RuntimeException("something failed in the startup")
+        }
+
+        when:
+        Application.main(["-m"] as String[])
+
+        then:
+        actual == 1
+    }
+
+
+    static class FailingPrebootrapFunction implements PreBootstrap {
+
+        @Override
+        void run() {
+            throw new RuntimeException("fail")
+        }
+
+        @Override
+        float getOrder() {
+            return 0
+        }
+    }
+
 
     class TestEnvironment extends StandardEnvironment {
         MutablePropertySources propertySources = new MutablePropertySources()
