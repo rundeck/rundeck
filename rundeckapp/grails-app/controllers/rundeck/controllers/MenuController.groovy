@@ -42,6 +42,7 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.Explode
@@ -3188,13 +3189,54 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             '*' xmlresponse
         }
     }
+    @Get(uri='/scheduler/jobs')
+    @Operation(
+        method='GET',
+        summary='List Scheduled Jobs For this Cluster Server',
+        description='''List the scheduled Jobs with their schedule owned by the target cluster server.
+
+Authorization required: `read` or `view` for each job resource
+
+Since: v17''',
+        tags = ['jobs', 'scheduler'],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1jobs/get/responses/200'
+        )
+    )
+    /**
+     * Documented placeholder for api endpoint
+     */
+    protected def apiSchedulerListJobsCurrent_docs(){}
+
+    @Get(uri='/scheduler/server/{uuid}/jobs')
+    @Operation(
+        method='GET',
+        summary='List Scheduled Jobs For a Cluster Server',
+        description='''List the scheduled Jobs with their schedule owned by the cluster server with the specified UUID.
+
+Authorization required: `read` or `view` for each job resource
+
+Since: v17''',
+        tags = ['jobs', 'scheduler'],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1jobs/get/responses/200'
+        )
+    )
     /**
      * Require server UUID and list all owned jobs
      * /api/$api_version/scheduler/server/$uuid/jobs and
      * /api/$api_version/scheduler/jobs
      * @return
      */
-    def apiSchedulerListJobs(String uuid, boolean currentServer) {
+    def apiSchedulerListJobs(
+        @Parameter(
+            description='Server UUID',
+            required=true,
+            in=ParameterIn.PATH,
+            schema = @Schema(type = 'string', format = 'uuid')
+        ) String uuid,
+        @Parameter(hidden = true) boolean currentServer
+    ) {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
