@@ -241,14 +241,15 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
             (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
-                    null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
-                        (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
-                            cancelled ? ExecutionService.EXECUTION_ABORTED :
-                                willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
-                                    timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
-                                        (status == 'missed') ? ExecutionService.EXECUTION_MISSED :
-                                            (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
-                                                isCustomStatusString(status) ? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
+                    (null == dateCompleted && status!=ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.EXECUTION_RUNNING :
+                        (status == ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.AVERAGE_DURATION_EXCEEDED:
+                            (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
+                                cancelled ? ExecutionService.EXECUTION_ABORTED :
+                                    willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
+                                        timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
+                                            (status == 'missed') ? ExecutionService.EXECUTION_MISSED :
+                                                (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
+                                                    isCustomStatusString(status) ? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
 
     }
 
@@ -267,7 +268,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                                                  ExecutionService.EXECUTION_SUCCEEDED,
                                                  ExecutionService.EXECUTION_FAILED,
                                                  ExecutionService.EXECUTION_QUEUED,
-                                                 ExecutionService.EXECUTION_SCHEDULED])
+                                                 ExecutionService.EXECUTION_SCHEDULED,
+                                                 ExecutionService.AVERAGE_DURATION_EXCEEDED])
     }
 
     // various utility methods helpful to the presentation layer

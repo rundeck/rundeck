@@ -737,12 +737,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def result=executionJob.executeCommand(runContext)
 
         then:
-
         1 * es.avgDurationExceeded(_, content) >> {
             latch.countDown()
         }
         result != null
-
+        se.executions.status.get(0) == ExecutionService.AVERAGE_DURATION_EXCEEDED
     }
 
     def "scheduled job quartz checking the same format of dates"() {
