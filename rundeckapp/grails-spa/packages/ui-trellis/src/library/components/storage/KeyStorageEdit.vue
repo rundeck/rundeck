@@ -154,7 +154,8 @@ export default Vue.extend({
   name: "KeyStorageEdit",
   props: {
     storageFilter: String,
-    uploadSetting: {} as PropType<UploadSetting>, 
+    uploadSetting: {} as PropType<UploadSetting>,
+    project: String
   },
   data() {
     return {
@@ -364,7 +365,7 @@ export default Vue.extend({
   },
   computed: {
     showRootPath: function () {
-      return "keys/"
+      return this.project ? "keys/project/" + this.project + "/" : "keys/"
     },
     uploadFullPath(): string {
       return 'keys/' + this.getKeyPath();

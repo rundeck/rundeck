@@ -188,6 +188,7 @@ export default Vue.extend({
     allowUpload: Boolean,
     value: String,
     storageFilter: String,
+    project: String,
   } ,
   data() {
     return {
@@ -197,7 +198,7 @@ export default Vue.extend({
       staticRoot: true,
       inputPath: '',
       upPath: '',
-      rootPath: 'keys',
+      rootPath: '',
       path: '',
       isConfirmingDeletion: false,
       modalEdit: false,
@@ -213,10 +214,11 @@ export default Vue.extend({
   },
   computed: {
     showRootPath: function () {
-      return "keys/"
+      return this.project ? "keys/project/" + this.project + "/" : "keys/"
     }
   },
   mounted() {
+    this.rootPath = this.project ? "keys/project/" + this.project : "keys"
     this.loadKeys()
   },
   methods: {
