@@ -1420,6 +1420,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SCHEDULED = "scheduled"
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
+    public static String AVERAGE_DURATION_EXCEEDED = "average-duration-exceeded"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
