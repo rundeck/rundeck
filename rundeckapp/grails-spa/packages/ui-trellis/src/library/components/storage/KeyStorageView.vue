@@ -405,8 +405,6 @@ export default Vue.extend({
       }
     },
     actionUploadModify() {
-      console.log("==> selectedKey: ", this.selectedKey)
-
       const isPassword = this.isPassword(this.selectedKey);
       const isPrivateKey = this.isPrivateKey(this.selectedKey);
       const isPublicKey = this.isPublicKey(this.selectedKey);
