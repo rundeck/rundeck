@@ -11,6 +11,7 @@
 import KeyStorageView from "./KeyStorageView.vue";
 import KeyStorageEdit from "./KeyStorageEdit.vue";
 import Vue from "vue";
+import { getRundeckContext } from "../../index"
 
 export default Vue.extend({
   name: "KeyStoragePage",
@@ -44,7 +45,7 @@ export default Vue.extend({
     },
   },
   async mounted() {
-    this.project = window._rundeck.projectName;
+    this.project = getRundeckContext().projectName;
     this.path=this.value ? this.value : ""
   }
 })

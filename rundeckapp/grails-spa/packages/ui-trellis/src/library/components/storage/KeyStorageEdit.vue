@@ -63,7 +63,7 @@
         <div class="col-sm-9">
           <div class="input-group">
             <div class="input-group-addon">
-              <span>{{showRootPath}}</span>
+              <span>{{rootPath}}</span>
             </div>
             <input v-model="uploadSetting.inputPath" :disabled="uploadSetting.modifyMode===true"
                    id="uploadResourcePath2" name="relativePath" class="form-control"
@@ -164,6 +164,7 @@ export default Vue.extend({
       errorMsg: '',
       directories: [] as any,
       files: [] as any,
+      rootPath: '',
       keyTypes: [
         {text: 'Private Key', value: 'privateKey'},
         {text: 'Public Key', value: 'publicKey'},
@@ -174,6 +175,9 @@ export default Vue.extend({
         {text: 'Upload File', value: 'file'},
       ],
     }
+  },
+  async mounted(){
+    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
   },
   methods: {
     allowedResource(meta: any) {
@@ -266,8 +270,7 @@ export default Vue.extend({
         }
       } else {
         const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType });
-
-        console.log("create key: ", resp)
+        
         if(resp._response.status!=201){
           this.uploadSetting.errorMsg = resp.error;
           return
@@ -364,9 +367,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    showRootPath: function () {
-      return this.project ? "keys/project/" + this.project + "/" : "keys/"
-    },
     uploadFullPath(): string {
       return 'keys/' + this.getKeyPath();
     },

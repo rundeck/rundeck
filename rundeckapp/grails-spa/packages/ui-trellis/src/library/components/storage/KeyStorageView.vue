@@ -212,13 +212,8 @@ export default Vue.extend({
       selectedIsDownloadable: true,
     }
   },
-  computed: {
-    showRootPath: function () {
-      return this.project ? "keys/project/" + this.project + "/" : "keys/"
-    }
-  },
   mounted() {
-    this.rootPath = this.project ? "keys/project/" + this.project : "keys"
+    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
     this.loadKeys()
   },
   methods: {
@@ -233,7 +228,6 @@ export default Vue.extend({
     },
     async confirmDeleteKey(){
       const rundeckContext = getRundeckContext();
-      console.log(this.selectedKey)
       this.isConfirmingDeletion=false
 
       const resp = await rundeckContext.rundeckClient.storageKeyDelete(this.selectedKey.path.slice(5))
