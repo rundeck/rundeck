@@ -45,6 +45,7 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -5260,6 +5261,163 @@ return.''',
         }
 
     }
+
+    @Put(uri='/scheduler/takeover')
+    @Operation(
+        method='PUT',
+        summary='Takeover Schedule in Cluster Mode',
+        description='''Tell a Rundeck server in cluster mode to claim all scheduled jobs from another
+cluster server.
+
+This endpoint can take over the schedule of certain jobs based on the input:
+
+* specify a server `uuid`: take over all jobs from that server
+* specify server `all` value of `true`: take over all jobs regardless of server UUID
+
+Additionally, you can specify a `project` name to take over only jobs matching
+the given project name, in combination with the server options.
+
+Alternately, specify one or more job IDs to takeover certain Jobs' schedules.
+
+Authorization required: `ops_admin` for resource type `job`
+
+Since: v14''',
+        tags=['cluster','scheduler'],
+        requestBody = @RequestBody(
+            description='''Takeover Request.
+
+* optional `server` entry, with one of these required entries:
+    * `uuid` server UUID to take over from
+    * `all` value of `true` to take over from all servers
+* optional `project` entry, specifying a project name
+* optional `job` entry, with required entry:
+    * `id` Job UUID
+* optional `jobs` array, each object has:
+    * `id` Job UUID
+    * (Since: v32)
+''',
+            required=true,
+            content=@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = [
+                    @ExampleObject(value='''{
+  "server": {
+    "all": true
+  },
+  "project": "[PROJECT]"
+}''',name='all-servers-project',description='Takeover all jobs for a project'),
+                    @ExampleObject(value='''
+{
+  "job": {
+    "id": "[UUID]"
+  }
+}''',name='job',description='Takeover specific job'),
+                    @ExampleObject(value='''{
+    "server": {
+    "all": true
+  },
+  "jobs":[
+    {
+    "id": "[UUID]"
+    },
+    {
+    "id": "[UUID]"
+    }
+  ]
+}''',name='multiple-jobs',description='Takeover multiple jobs. Since: v32')
+                ]
+            )
+        ),
+        responses=@ApiResponse(
+            responseCode='200',
+            description='Successful Response',
+            content=[
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples=[
+                        @ExampleObject(value='''
+{
+  "takeoverSchedule": {
+    "jobs": {
+      "failed": [],
+      "successful": [
+        {
+          "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
+        },
+        {
+          "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
+        }
+      ],
+      "total": 2
+    },
+    "server": {
+      "uuid": "8F3D5976-2232-4529-847B-8E45764608E3"
+    }
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}''',
+                        description='response for `uuid` specified',name='uuid-specified'),
+                        @ExampleObject(value='''
+{
+  "takeoverSchedule": {
+    "jobs": {
+      "failed": [],
+      "successful": [{"job":"data"}],
+      "total": 2
+    },
+    "server": {
+      "all": true
+    }
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}''',
+                        description='response for `all` specified',name='all-specified'),
+                        @ExampleObject(value='''{
+  "takeoverSchedule": {
+    "jobs": {
+      "failed": [],
+      "successful": [{"job":"data"}],
+      "total": 2
+    },
+    "project": "My Project"
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}''',
+                        description='response for `project` specified',name='project-specified')
+                    ]
+                )
+            ]
+        )
+    )
     /**
      * API: /api/14/scheduler/takeover
      */
