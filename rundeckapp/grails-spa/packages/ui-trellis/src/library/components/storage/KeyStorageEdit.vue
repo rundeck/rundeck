@@ -117,11 +117,13 @@
   </div>
 
   <div slot="footer">
-    <button type="button" class="btn btn-default" @click="handleCancel">Cancel</button>
-    <button type="button" class="btn btn-success" :disabled="validInput()===false"
-            @click="handleUploadKey">
-      Save
-    </button>
+    <div class="text-right">
+      <button type="button" class="btn btn-default" @click="handleCancel">Cancel</button>
+      <button type="button" class="btn btn-cta" :disabled="validInput()===false"
+              @click="handleUploadKey">
+        Save
+      </button>
+    </div>
   </div>
 </div>
 </template>
@@ -245,8 +247,6 @@ export default Vue.extend({
           }
           break;
       }
-
-      let saved = true;
 
       const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath);
       

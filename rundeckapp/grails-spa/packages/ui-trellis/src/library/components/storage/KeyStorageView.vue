@@ -36,7 +36,7 @@
           <i class="glyphicon glyphicon-pencil"></i>
           Overwrite Key
         </button>
-        <button class="btn btn-sm btn-danger" @click="deleteKey()" v-if="this.selectedKey.path !== null && this.selectedKey.path !== ''">
+        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="!!this.selectedKey.path">
                 <i class="glyphicon glyphicon-trash"></i>
                 {{"Delete"}}</button>
       </div>
@@ -111,26 +111,17 @@
       </table>
     </div>
   </div>
-  <modal v-model="isConfirmingDeletion" title="Confirm Delete" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body>
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="storageconfirmdeletetitle">{{"Delete Selected Key"}}</h4>
-      </div>
+  <modal v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
+    <div class="modal-body">
+      <p>{{"Really delete the selected key at this path?"}} </p>
 
-      <div class="modal-body">
-        <p>{{"Really delete the selected key at this path?"}} </p>
-
-        <p>
-          <strong class="text-info"> {{this.selectedKey.path}}</strong>
-        </p>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" @click="this.isConfirmingDeletion=false" class="btn btn-sm btn-default">{{"Cancel"}}</button>
-
-        <button type="button" @click="confirmDeleteKey()" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
-      </div>
+      <p>
+        <strong class="text-info"> {{this.selectedKey.path}}</strong>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" @click="confirmDeleteKey" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
+      <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
     </div>
   </modal>
   <div class="row" v-if="isKeySelected()===true">
@@ -189,7 +180,6 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
-import KeyStorageDelete from "./KeyStorageDelete.vue";
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -227,17 +217,26 @@ export default Vue.extend({
     }
   },
   mounted() {
-    console.log("==> load keys from path: ", this.path)
     this.loadKeys()
   },
   methods: {
     deleteKey(){
       this.isConfirmingDeletion=true
     },
-    confirmDeleteKey(){
+    async confirmDeleteKey(){
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyDelete(this.selectedKey.path)
+      console.log(this.selectedKey)
+      this.isConfirmingDeletion=false
+
+      const resp = await rundeckContext.rundeckClient.storageKeyDelete(this.selectedKey.path.slice(5))
+      if(resp._response.status >= 400){
+        this.errorMsg = resp.error
+        return
+      } 
       this.loadKeys()
+      
+    },
+    cancelDeleteKey() {
       this.isConfirmingDeletion=false
     },
     loadKeys() {
@@ -450,21 +449,6 @@ export default Vue.extend({
       this.clean()
       this.loadDir(this.inputPath)
     },
-    // openSelector() {
-    //   if(this.readOnly!==true) {
-    //     this.invalid = false;
-    //     this.setRootPath();
-    //     this.clean();
-    //     if (this.value != null) {
-    //       const parentDir = this.parentDirString(this.value)
-    //       this.loadDir(parentDir);
-    //       this.loadUpPath();
-    //       this.defaultSelectKey(this.value);
-    //     }
-    //     this.modalOpen = true;
-    //     this.$emit("openSelector")
-    //   }
-    // },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
 
