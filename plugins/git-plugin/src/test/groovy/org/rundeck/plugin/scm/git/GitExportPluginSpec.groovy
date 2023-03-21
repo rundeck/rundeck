@@ -1701,8 +1701,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Could not clone the remote branch: dev2, because it does not exist. " +
-                "To create it, you need to set the Create Branch option to true."
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
     }
 
     def "initialize plugin with unknown branch with create config"() {
@@ -1745,9 +1744,8 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(context)
 
         then:
-        gitdir.isDirectory()
-        new File(gitdir, '.git').isDirectory()
-        openGit(gitdir).repository.getFullBranch()=='refs/heads/dev2'
+        ScmPluginException e = thrown()
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
 
     }
 
@@ -1791,7 +1789,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Non existent remote branch: wrong"
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
     }
 
     def "refresh status should re-serialize job if stored commit is different than local commit"() {
