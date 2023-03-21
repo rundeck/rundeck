@@ -25,12 +25,10 @@ import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.query.RdExecQuery
-import org.rundeck.app.data.model.v1.report.dto.ReportFilter
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponseImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.core.auth.AuthConstants
-import org.springframework.transaction.TransactionDefinition
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 
@@ -47,42 +45,17 @@ class ReportService  {
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
-    public Map reportExecutionResult(SaveReportRequest saveReportRequest) {
+    public Map reportExecutionResult(SaveReportRequestImpl saveReportRequest) {
         /**
          * allowed fields are specified
          */
-
-        if (saveReportRequest.rundeckEpochDateStarted) {
-            def long dstart = Long.parseLong(saveReportRequest.rundeckEpochDateStarted)
-            if (dstart > 0) {
-                saveReportRequest['dateStarted'] = new Date(dstart)
-            }
-        } else if (saveReportRequest.epochDateStarted) {
-            def long dstart = Long.parseLong(saveReportRequest.epochDateStarted)
-            if (dstart > 0) {
-                saveReportRequest['dateStarted'] = new Date(dstart)
-            }
-        }
-        if (saveReportRequest.rundeckEpochDateEnded) {
-            def long dstart = Long.parseLong(saveReportRequest.rundeckEpochDateEnded)
-            if (dstart > 0) {
-                saveReportRequest['dateCompleted'] = new Date(dstart)
-            }
-        } else if (saveReportRequest.epochDateEnded) {
-            def long dstart = Long.parseLong(saveReportRequest.epochDateEnded)
-            if (dstart > 0) {
-                saveReportRequest.dateCompleted = new Date(dstart)
-            }
-        }
-
         if (!saveReportRequest.dateStarted) {
             saveReportRequest.dateStarted= saveReportRequest.dateCompleted
         }
         if(!saveReportRequest.message){
             saveReportRequest.message="[no message]"
         }
-        saveReportRequest.actionType= saveReportRequest.status
-        SaveReportResponse saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
+        SaveReportResponseImpl saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
 
         //TODO: authorize event creation?
 
@@ -427,17 +400,6 @@ class ReportService  {
         }
     }
     def getExecutionReports(RdExecQuery query, boolean isJobs) {
-        ReportFilter reportFilter = new ReportFilter(
-                stat: 'status',
-                reportId: 'reportId',
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
-                user: 'author',
-                node: 'node',
-                message: 'message',
-                job: 'reportId',
-                title: 'title',
-                tags: 'tags')
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -472,7 +434,7 @@ class ReportService  {
         filters.putAll(eqfilters)
 
         def seId = se?.id?: null
-        def runlist = execReportDataProvider.getRunList(query, reportFilter, isJobs, seId)
+        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seId)
 
         def executions=[]
         def lastDate = -1
@@ -482,9 +444,7 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def minLevel = configurationService.getString("min.isolation.level","")
-        def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
-        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seId, isolationLevel)
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seId)
 
         filters.putAll(specialfilters)
 
@@ -496,15 +456,6 @@ class ReportService  {
             _filters:filters
             ]
 	}
-    /**
-     * Find any report status strings that are incorrect and fix them
-     */
-    def fixReportStatusStrings(){
-        int count = execReportDataProvider.countAndSaveByStatus()
-        if(count){
-            log.info("Corrected ${count} report status strings")
-        }
-    }
 
     /**
      * Sorts jobs according to user permission

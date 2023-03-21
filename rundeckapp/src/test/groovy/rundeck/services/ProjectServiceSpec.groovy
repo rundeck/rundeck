@@ -42,13 +42,12 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.data.ExecReportDataService
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -86,8 +85,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
 
         def providerExec = new GormExecReportDataProvider()
-        mockDataService(ExecReportDataService)
-        providerExec.execReportDataService = applicationContext.getBean(ExecReportDataService)
         service.execReportDataProvider = providerExec
 
     }
@@ -1185,6 +1182,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 Map<String, ProjectComponent> beans=[:]
             }
 
+            ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'testproj', uuid: 'new-job-uuid')
+            assertNotNull se.save()
             Execution exec = new Execution(
                 argString: "-test args",
                 user: "testuser",
@@ -1197,6 +1196,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 nodeExcludeTags: 'monkey',
                 status: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+                scheduledExecution: se
 
             )
             assertNotNull exec.save()
@@ -2411,17 +2411,17 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def SaveReportRequest result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
+        def SaveReportRequestImpl result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
         then:
         result!=null
         def expected = [
             executionId: 456L,
-            jcJobId: newJobId.toString(),
+            jobId: newJobId.toString(),
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
@@ -2472,12 +2472,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
             executionId: 123,
-            jcJobId: '321',
+            jobId:'321',
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
@@ -2492,17 +2492,17 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def str = outwriter.toString()
 
         when:
-        def SaveReportRequest result = service.loadHistoryReport(str,[(123):123],null,'test')
+        def SaveReportRequestImpl result = service.loadHistoryReport(str,[(123):123],null,'test')
         then:
         assertNotNull result
         def keys = [
             executionId: 456,
-            jcJobId: '321',
+            jobId: '321',
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',

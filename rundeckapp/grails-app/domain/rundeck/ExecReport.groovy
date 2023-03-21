@@ -151,4 +151,12 @@ class ExecReport extends BaseReport implements RdExecReport{
             ctxProject == project
         }.deleteAll()
     }
+
+    String getJobId() {
+        jcJobId
+    }
+
+    void setJobId(String id) {
+        jcJobId = id
+    }
 }

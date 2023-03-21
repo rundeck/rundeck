@@ -108,4 +108,12 @@ class BaseReport {
             ctxProject == project
         }.deleteAll()
     }
+
+    String getProject() {
+        ctxProject
+    }
+
+    void setProject(String projectName) {
+        ctxProject = projectName
+    }
 }

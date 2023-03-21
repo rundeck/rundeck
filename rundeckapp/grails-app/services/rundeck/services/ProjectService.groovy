@@ -56,6 +56,7 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -127,7 +128,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-//        def map = execReportDataProvider.toMap(report.jcJobId)
         if (report.jcJobId) {
             //convert internal job ID to extid
             def se
@@ -226,27 +226,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //load doc as report
         def object = XmlParserUtil.toObject(doc)
         if (object instanceof Map) {
-            SaveReportRequest saveReportRequest = new SaveReportRequest()
-            if (object.executionId) { saveReportRequest.executionId = object.executionId }
-            if (object.jcJobId) { saveReportRequest.jcJobId = object.jcJobId }
-            if (object.reportId) { saveReportRequest.reportId = object.reportId }
-            if (object.adhocExecution) { saveReportRequest.adhocExecution = object.adhocExecution }
-            if (object.succeededNodeList) { saveReportRequest.succeededNodeList = object.succeededNodeList }
-            if (object.failedNodeList) { saveReportRequest.failedNodeList = object.failedNodeList }
-            if (object.filterApplied) { saveReportRequest.filterApplied = object.filterApplied }
-            if (object.ctxProject) { saveReportRequest.ctxProject = object.ctxProject }
-            if (object.abortedByUser) { saveReportRequest.abortedByUser = object.abortedByUser }
-            if (object.author) { saveReportRequest.author = object.author }
-            if (object.title) { saveReportRequest.title = object.title }
-            if (object.status) { saveReportRequest.status = object.status }
-            if (object.node) { saveReportRequest.node = object.node }
-            if (object.message) { saveReportRequest.message = object.message }
-            if (object.actionType) { saveReportRequest.actionType = object.actionType }
-            if (object.adhocScript) { saveReportRequest.adhocScript = object.adhocScript }
-            if (object.tags) { saveReportRequest.tags = object.tags }
+            convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Report ${identity}")
+            SaveReportRequest saveReportRequest = SaveReportRequestImpl.fromMap(object)
+
             //remap job id if necessary
             if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                saveReportRequest.jcJobId = jobsByOldIdMap[object.jcJobId].id
+                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
             //nb: support old "jcExecId" name
@@ -259,7 +244,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 return null
             }
             //convert dates
-            convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Report ${identity}")
+
             if (!(object.dateCompleted instanceof Date)) {
                 saveReportRequest.dateCompleted = new Date()
             } else {
@@ -768,7 +753,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByCtxProject(projectName)
+                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -817,10 +802,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                         execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = execReportDataProvider.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
+                        reports = execReportDataProvider.findAllByProjectAndExecutionIdInList(projectName, execIds)
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
-                        reports = execReportDataProvider.findAllByCtxProject(projectName)
+                        reports = execReportDataProvider.findAllByProject(projectName)
                     }
                     List<JobFileRecord> jobfilerecords = []
 
@@ -1533,7 +1518,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def loadedreports = []
         def execids = new ArrayList<Long>(execidmap.values())
         reportxml.each { rxml ->
-            SaveReportRequest report
+            SaveReportRequestImpl report
             try {
                 report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
             } catch (ProjectServiceException e) {
@@ -1557,7 +1542,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //generate reports for executions without matching reports
         execids.each { eid ->
-            def saveReportResponse = execReportDataProvider.fromExecWithId(eid)
+            def saveReportResponse = execReportDataProvider.createReportFromExecution(eid)
             if (!saveReportResponse.isSaved) {
                 log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return

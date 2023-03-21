@@ -73,7 +73,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.access.NotFound
@@ -899,7 +899,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
-        SaveReportRequest saveReportRequest = new SaveReportRequest()
+        SaveReportRequestImpl saveReportRequest = new SaveReportRequestImpl()
         def internalLog = LoggerFactory.getLogger("ExecutionService")
         if(null==project || null==user  ){
             //invalid
@@ -914,7 +914,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             saveReportRequest.dateStarted=startDate
         }
         if(jobExecId){
-            saveReportRequest.jcJobId=jobExecId
+            saveReportRequest.jobId=jobExecId
         }
         if(jobName){
             saveReportRequest.reportId=jobName
@@ -933,7 +933,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(filter){
             saveReportRequest.filterApplied = filter
         }
-        saveReportRequest.ctxProject=project
+        saveReportRequest.project=project
 
         if(iscancelled && abortedby){
             saveReportRequest.abortedByUser=abortedby
@@ -4310,7 +4310,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.fromExecWithScheduledAndSave(missed.id)
+        execReportDataProvider.createReportFromExecution(missed.id)
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

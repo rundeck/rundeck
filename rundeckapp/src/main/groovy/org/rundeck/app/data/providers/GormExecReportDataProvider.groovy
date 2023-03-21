@@ -2,11 +2,12 @@ package org.rundeck.app.data.providers
 
 import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
+import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.RdExecReport
-import org.rundeck.app.data.model.v1.report.dto.ReportFilter
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse;
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponseImpl;
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -18,13 +19,10 @@ import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.services.ConfigurationService
-import rundeck.services.data.ExecReportDataService
 
 import javax.sql.DataSource;
 
 class GormExecReportDataProvider implements ExecReportDataProvider {
-    @Autowired
-    ExecReportDataService execReportDataService
     @Autowired
     ConfigurationService configurationService
     @Autowired
@@ -38,27 +36,19 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    RdExecReport fromExecWithScheduledAndSave(Long executionId) {
-        Execution execution = Execution.findById(executionId)
-        ExecReport execReport = ExecReport.fromExec(execution)
-        execReport.save()
-        return execReport
-    }
-
-    @Override
-    SaveReportResponse fromExecWithId(Long id) {
+    SaveReportResponse createReportFromExecution(Long id) {
         Execution execution = Execution.get(id)
         ExecReport execReport = ExecReport.fromExec(execution)
         boolean isUpdated = execReport.save(flush: true)
         Errors errors = execReport.errors
-        return new SaveReportResponse(report: execReport, isSaved: isUpdated, errors: errors)
+        return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
     @Override
     SaveReportResponse saveReport(SaveReportRequest saveReportRequest) {
         ExecReport execReport = new ExecReport()
         execReport.executionId = saveReportRequest.executionId
-        execReport.jcJobId = saveReportRequest.jcJobId
+        execReport.jobId = saveReportRequest.jobId
         execReport.adhocExecution = saveReportRequest.adhocExecution
         execReport.adhocScript = saveReportRequest.adhocScript
         execReport.abortedByUser = saveReportRequest.abortedByUser
@@ -69,7 +59,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.title = saveReportRequest.title
         execReport.status = saveReportRequest.status
         execReport.actionType = saveReportRequest.actionType
-        execReport.ctxProject = saveReportRequest.ctxProject
+        execReport.project = saveReportRequest.project
         execReport.reportId = saveReportRequest.reportId
         execReport.tags = saveReportRequest.tags
         execReport.author = saveReportRequest.author
@@ -78,11 +68,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.dateCompleted = saveReportRequest.dateCompleted
         boolean isUpdated = execReport.save(flush: true)
         String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
-        return new SaveReportResponse(report: execReport, isSaved: isUpdated, errors: errors)
+        return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
     @Override
-    List<RdExecReport> findAllByCtxProject(String projectName) {
+    List<RdExecReport> findAllByProject(String projectName) {
         return BaseReport.findAllByCtxProject(projectName)
     }
 
@@ -95,12 +85,12 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         return ExecReport.findAllByExecutionId(id)
     }
     @Override
-    List<RdExecReport> findAllByCtxProjectAndExecutionIdInList(String projectName, List<Long> execIds) {
+    List<RdExecReport> findAllByProjectAndExecutionIdInList(String projectName, List<Long> execIds) {
         return ExecReport.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
     }
 
     @Override
-    int countByCtxProject(String projectName) {
+    int countByProject(String projectName) {
         return ExecReport.countByCtxProject(projectName)
     }
 
@@ -112,8 +102,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, Long scheduledExecutionId, Integer isolationLevel) {
-        return ExecReport.withTransaction([isolationLevel: isolationLevel]) {
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, Long scheduledExecutionId) {
+        return ExecReport.withTransaction {
             ExecReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs, scheduledExecutionId)
             }
@@ -140,7 +130,29 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    Collection<String> getRunList(RdExecQuery query, ReportFilter filters, boolean isJobs, Long scheduledExecutionId) {
+    Collection<String> getExecutionReports(RdExecQuery query, boolean isJobs, Long scheduledExecutionId) {
+        def eqfilters = [
+                stat: 'status',
+                reportId: 'reportId',
+                jobId: 'jcJobId',
+                proj: 'ctxProject',
+        ]
+        def txtfilters = [
+                user: 'author',
+                node: 'node',
+                message: 'message',
+                job: 'reportId',
+                title: 'title',
+                tags: 'tags',
+        ]
+        def filters = [:]
+        filters.putAll(txtfilters)
+        filters.putAll(eqfilters)
+
+        BuildableCriteria a = ExecReport.createCriteria()
+        a.list {
+
+        }
          return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -153,7 +165,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
             }
             applyExecutionCriteria(query, delegate,isJobs, scheduledExecutionId)
 
-            if (query && query.sortBy && filters.hasProperty(query.sortBy) && filters[query.sortBy]) {
+            if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
@@ -162,7 +174,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    void deleteByCtxProject(String projectName) {
+    void deleteByProject(String projectName) {
         ExecReport.deleteByCtxProject(projectName)
     }
 
