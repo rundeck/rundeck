@@ -264,7 +264,7 @@ export default Vue.extend({
           } 
         }
       } else {
-        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, {contentType});
+        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType });
 
         console.log("create key: ", resp)
         if(resp._response.status!=201){

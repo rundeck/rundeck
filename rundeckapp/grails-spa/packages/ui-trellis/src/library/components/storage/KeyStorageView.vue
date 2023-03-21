@@ -161,9 +161,9 @@
                               </span>
           </div>
         </div>
-        <div v-if="selectedIsDownloadable" class="pull-right">
+        <div v-if="this.selectedKey && isPublicKey(this.selectedKey)" class="pull-right">
           <span>
-            <a href="#" data-bind="click: download">
+            <a :href="downloadUrl()">
                   <i class="glyphicon glyphicon-download"></i>
                   {{"Download"}}</a>
           </span>
@@ -220,6 +220,12 @@ export default Vue.extend({
     this.loadKeys()
   },
   methods: {
+    downloadUrl() {
+      const downloadBaseUrl = 'storage/download/keys'
+      const rundeckContext = getRundeckContext()
+
+      return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`
+    },
     deleteKey(){
       this.isConfirmingDeletion=true
     },
@@ -399,6 +405,8 @@ export default Vue.extend({
       }
     },
     actionUploadModify() {
+      console.log("==> selectedKey: ", this.selectedKey)
+
       const isPassword = this.isPassword(this.selectedKey);
       const isPrivateKey = this.isPrivateKey(this.selectedKey);
       const isPublicKey = this.isPublicKey(this.selectedKey);
