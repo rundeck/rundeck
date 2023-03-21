@@ -3301,6 +3301,13 @@ Authorization required: `view` or `read` for each Job resource.
         tags=['jobs'],
         parameters=[
             @Parameter(
+                name='project',
+                in=ParameterIn.PATH,
+                description='Project Name',
+                schema=@Schema(type='string'),
+                required=true
+            ),
+            @Parameter(
                 name='max',
                 in=ParameterIn.QUERY,
                 description='limit the maximum amount of results to be received.',
