@@ -18,6 +18,8 @@ package rundeck
 
 
 import grails.testing.gorm.DomainUnitTest
+import rundeck.options.JobOptionConfigRemoteUrl
+import rundeck.options.RemoteUrlAuthenticationType
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -161,5 +163,38 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         assertEquals(false, option.validate())
         assertEquals(true, option.errors.hasErrors())
         assertEquals(true, option.errors.hasFieldErrors('name'))
+    }
+
+    def "to map remote URL config"() {
+        given:
+        def opt = new Option(
+                name: 'bob',
+                optionType: 'text',
+                valuesUrl: 'http://test.com',
+                configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigRemoteUrl","authenticationType":"BASIC","username":"admin","passwordStoragePath":"keys/test"}]}'
+        )
+
+        when:
+        def result = opt.toMap()
+        then:
+        result.type == 'text'
+        result.configRemoteUrl.authenticationType == "BASIC"
+        result.configRemoteUrl.username == "admin"
+        result.configRemoteUrl.passwordStoragePath == "keys/test"
+
+    }
+
+    def "from map to remote URL config"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [authenticationType: 'API_KEY', tokenStoragePath: 'keys/test', keyName: 'api-key']])
+        expect:
+        opt.optionType == 'text'
+        opt.configData == '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigRemoteUrl","authenticationType":"API_KEY","keyName":"api-key","tokenStoragePath":"keys/test"}]}'
+        opt.configRemoteUrl !=null
+        opt.configRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY
+        opt.configRemoteUrl.tokenStoragePath == 'keys/test'
+        opt.configRemoteUrl.keyName == 'api-key'
+
+
     }
 }

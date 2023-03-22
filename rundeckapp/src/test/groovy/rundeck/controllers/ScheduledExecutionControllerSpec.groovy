@@ -40,9 +40,13 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.slf4j.Logger
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
+import rundeck.options.ApiTokenReporter
+import rundeck.options.JobOptionConfigRemoteUrl
+import rundeck.options.RemoteUrlAuthenticationType
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -3908,5 +3912,114 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         'https://admin:m^^y^^$!pass1@web.server/option.json'        |_
         'https://web.server/geto'                                   |_
         'http://web.server/geto'                                    |_
+    }
+
+    def "test remote url basic auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BASIC
+        configRemoteUrl.username = "test"
+        configRemoteUrl.password ="test"
+
+        when:
+        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * controller.logger.debug("getRemoteJSON using authentication")
+        1 * controller.logger.debug("Basic authentication with user test")
+
+        def e = thrown(UnknownHostException)
+        e.message.contains("web.server")
+
+    }
+
+    def "test remote url api-token auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+        configRemoteUrl.token = "123"
+        configRemoteUrl.keyName = "apiKey"
+        configRemoteUrl.apiTokenReporter = ApiTokenReporter.HEADER
+
+        when:
+        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * controller.logger.debug("getRemoteJSON using authentication")
+        1 * controller.logger.debug("API key authentication with Header apiKey")
+
+        def e = thrown(UnknownHostException)
+        e.message.contains("web.server")
+
+    }
+
+    def "test remote url api-token auth query param"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+        configRemoteUrl.token = "123"
+        configRemoteUrl.keyName = "apiKey"
+        configRemoteUrl.apiTokenReporter = ApiTokenReporter.QUERY_PARAM
+
+        when:
+        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * controller.logger.debug("getRemoteJSON using authentication")
+        1 * controller.logger.debug("API key authentication with query parameter apiKey")
+
+        def e = thrown(UnknownHostException)
+        e.message.contains("web.server")
+
+    }
+
+    def "test remote url bearer token auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BEARER_TOKEN
+        configRemoteUrl.token = "123"
+
+        when:
+        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * controller.logger.debug("getRemoteJSON using authentication")
+        1 * controller.logger.debug("Bearer Token Authentication")
+
+        def e = thrown(UnknownHostException)
+        e.message.contains("web.server")
+
     }
 }

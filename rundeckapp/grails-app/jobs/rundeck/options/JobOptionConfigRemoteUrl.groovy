@@ -1,15 +1,26 @@
 package rundeck.options;
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
 
     RemoteUrlAuthenticationType authenticationType
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     String username
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     String passwordStoragePath
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     String keyName
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     String tokenStoragePath
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     ApiTokenReporter apiTokenReporter
 
     @JsonIgnore

@@ -862,23 +862,30 @@ class ScheduledExecutionController  extends ControllerBase{
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
                 } else if (configRemoteUrl) {
+                    logger.debug("getRemoteJSON using authentication")
                     URIBuilder uriBuilder = new URIBuilder(cleanUrl)
 
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BASIC){
+                        client.setUri(uriBuilder.build())
+                        logger.debug("Basic authentication with user ${configRemoteUrl.getUsername()}")
                         client.setBasicAuthCredentials(configRemoteUrl.getUsername(), configRemoteUrl.getPassword())
                     }
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.API_KEY){
                         if(configRemoteUrl.getApiTokenReporter()== ApiTokenReporter.HEADER){
+                            logger.debug("API key authentication with Header ${configRemoteUrl.getKeyName()}" )
                             client.addHeader(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
                         }else{
+                            logger.debug("API key authentication with query parameter ${configRemoteUrl.getKeyName()}" )
                             //add as a query Param
                             uriBuilder.addParameter(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
                         }
+                        client.setUri(uriBuilder.build())
                     }
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BEARER_TOKEN){
+                        logger.debug("Bearer Token Authentication" )
                         client.addHeader("Authorization", "Bearer ${configRemoteUrl.getToken()}")
+                        client.setUri(uriBuilder.build())
                     }
-                    client.setUri(uriBuilder.build())
                 } else{
                     client.setUri(urlo.toURI())
                 }
