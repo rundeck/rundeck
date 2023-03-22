@@ -636,7 +636,7 @@
                                            class="form-control"
                                            id="vurl_auth_bearer_token_${rkey}"
                                            name="remoteUrlBearerToken"
-                                           value=""
+                                           value="${option?.configRemoteUrl?.tokenStoragePath}"
                                            size="20"
                                            placeholder=""
                                     />
