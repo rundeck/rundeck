@@ -234,8 +234,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 saveReportRequest.jobId = jobsByOldIdMap[object.jobId].id
             }
             if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobIddfelrbrbkfglgggdduthvljhglgcrrjillthldfddjni
-                ].id
+                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
             //nb: support old "jcExecId" name
