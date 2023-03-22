@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
+import rundeck.options.ApiTokenReporter
 import rundeck.options.JobOptionConfigPluginAttributes
 import rundeck.options.JobOptionConfigRemoteUrl
 import rundeck.options.RemoteUrlAuthenticationType
@@ -755,6 +756,7 @@ class EditOptsController extends ControllerBase{
                 if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
                     jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
                     jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
+                    jobOptionConfigRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(params.remoteUrlApiTokenReporter)
                 }
 
                 if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
@@ -812,7 +814,7 @@ class EditOptsController extends ControllerBase{
         }
         opt.properties = params
         if (params.optionType && params.configMap) {
-            pt.configMap = params.configMap
+            opt.configMap = params.configMap
         }
 
         opt.valuesList = params.valuesList?:null

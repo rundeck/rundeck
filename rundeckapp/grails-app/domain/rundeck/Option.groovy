@@ -199,25 +199,9 @@ public class Option implements Comparable, OptionData {
             map.valuesUrl=getRealValuesUrl().toExternalForm()
 
             if(configData){
-                JobOptionConfigData jobOptionConfigData = getOptionConfigData()
-                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = jobOptionConfigData.getJobOptionEntry(JobOptionConfigRemoteUrl)
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl)
                 if(jobOptionConfigRemoteUrl){
-                    map.configRemoteUrl = [:]
-                    if(jobOptionConfigRemoteUrl.getAuthenticationType()){
-                        map.configRemoteUrl.authenticationType=jobOptionConfigRemoteUrl.getAuthenticationType().name()
-                    }
-                    if(jobOptionConfigRemoteUrl.getUsername()){
-                        map.configRemoteUrl.username=jobOptionConfigRemoteUrl.getUsername()
-                    }
-                    if(jobOptionConfigRemoteUrl.getPasswordStoragePath()){
-                        map.configRemoteUrl.passwordStoragePath=jobOptionConfigRemoteUrl.getPasswordStoragePath()
-                    }
-                    if(jobOptionConfigRemoteUrl.getKeyName()){
-                        map.configRemoteUrl.keyName=jobOptionConfigRemoteUrl.getKeyName()
-                    }
-                    if(jobOptionConfigRemoteUrl.getTokenStoragePath()){
-                        map.configRemoteUrl.tokenStoragePath=jobOptionConfigRemoteUrl.getTokenStoragePath()
-                    }
+                    map.configRemoteUrl = jobOptionConfigRemoteUrl.toMap()
                 }
             }
         }

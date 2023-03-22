@@ -10,6 +10,7 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
     String passwordStoragePath
     String keyName
     String tokenStoragePath
+    ApiTokenReporter apiTokenReporter
 
     @JsonIgnore
     String password
@@ -38,8 +39,35 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         if(map.tokenStoragePath){
             configRemoteUrl.tokenStoragePath = map.tokenStoragePath
         }
+        if(map.apiTokenReporter){
+            configRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(map.apiTokenReporter)
+        }
 
         return configRemoteUrl
+    }
+
+    Map toMap(){
+        Map map = [:]
+        if(authenticationType){
+            map.authenticationType=authenticationType.name()
+        }
+        if(username){
+            map.username=username
+        }
+        if(passwordStoragePath){
+            map.passwordStoragePath=passwordStoragePath
+        }
+        if(keyName){
+            map.keyName=keyName
+        }
+        if(tokenStoragePath){
+            map.tokenStoragePath=tokenStoragePath
+        }
+        if(apiTokenReporter){
+            map.apiTokenReporter=apiTokenReporter.name()
+        }
+
+        return map
     }
 
 }

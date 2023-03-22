@@ -2,9 +2,9 @@ package rundeck.options;
 
 enum RemoteUrlAuthenticationType {
 
-    BASIC("basic"),
-    API_KEY("apiKey"),
-    BEARER_TOKEN("bearerToken");
+    BASIC("BASIC"),
+    API_KEY("API_KEY"),
+    BEARER_TOKEN("BEARER_TOKEN");
 
     private final String name;
 

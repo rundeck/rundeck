@@ -51,6 +51,7 @@ import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
+import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -71,6 +72,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
+import rundeck.options.ApiTokenReporter
 import rundeck.options.JobOptionConfigRemoteUrl
 import rundeck.options.RemoteUrlAuthenticationType
 import rundeck.services.*
@@ -860,20 +862,23 @@ class ScheduledExecutionController  extends ControllerBase{
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
                 } else if (configRemoteUrl) {
-                    client.setUri(new URL(cleanUrl).toURI())
+                    URIBuilder uriBuilder = new URIBuilder(cleanUrl)
+
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BASIC){
                         client.setBasicAuthCredentials(configRemoteUrl.getUsername(), configRemoteUrl.getPassword())
                     }
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.API_KEY){
-                        client.addHeader(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                        if(configRemoteUrl.getApiTokenReporter()== ApiTokenReporter.HEADER){
+                            client.addHeader(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                        }else{
+                            //add as a query Param
+                            uriBuilder.addParameter(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                        }
                     }
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BEARER_TOKEN){
                         client.addHeader("Authorization", "Bearer ${configRemoteUrl.getToken()}")
                     }
-
-
-                    //set token auth
-
+                    client.setUri(uriBuilder.build())
                 } else{
                     client.setUri(urlo.toURI())
                 }

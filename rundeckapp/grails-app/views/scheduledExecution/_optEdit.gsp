@@ -597,6 +597,28 @@
 
                                     </div>
                                 </div>
+                            <div>
+                                <div class="col-md-3">
+                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.tokenInformer.label" /></label>
+                                </div>
+                                <div class="col-md-8 input-group">
+                                    <g:select
+                                            name="remoteUrlApiTokenReporter"
+                                            class="form-control"
+                                            value="${option?.configRemoteUrl?.apiTokenReporter}"
+                                            optionKey="key"
+                                            optionValue="value"
+                                            from="${[
+                                                    [key:'HEADER',value:message(code:'form.option.valuesType.url.authentication.tokenInformer.header.label')],
+                                                    [key:'QUERY_PARAM',value:message(code:'form.option.valuesType.url.authentication.tokenInformer.query.label')],
+                                            ]
+                                            }"
+                                            id="vurl_auth_type_${rkey}">
+                                    </g:select                                         >
+
+
+                                </div>
+                            </div>
                             </div>
                             <!--TOKEN AUTH-->
 
