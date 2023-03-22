@@ -56,7 +56,7 @@ public class SaveReportRequestImpl implements SaveReportRequest {
                         }else if(key == "executionId"){
                             field.set(obj, new Long((Integer)data.get(key)));
                         }else if(key == "adhocExecution"){
-                            field.set(obj, Boolean.parseBoolean((String)data.get(key)));
+                            field.set(obj, Boolean.parseBoolean(String.valueOf(data.get(key))));
                         }else{
                             field.set(obj, data.get(key));
                         }
