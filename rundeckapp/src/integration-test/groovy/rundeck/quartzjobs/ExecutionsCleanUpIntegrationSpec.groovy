@@ -68,7 +68,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
 
         when:
@@ -80,7 +80,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         then:
         execIdsToExclude.size() == 0
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
     }
 
     def testExecuteJobCleanerWithExecutionsToDelete(){
@@ -120,7 +120,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         then:
         execIds.size() == sucessTotal
         0 == Execution.countByProject(projName)
-        0 == ExecReport.countByCtxProject(projName)
+        0 == ExecReport.countByProject(projName)
     }
 
     private FrameworkService initNonClusterFrameworkService() {
@@ -158,7 +158,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
 
 
@@ -169,7 +169,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIdsToExclude.size() ==1
         execIdsToExclude.contains(execution.id)
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
     }
 

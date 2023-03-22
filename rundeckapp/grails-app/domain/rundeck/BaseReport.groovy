@@ -38,7 +38,7 @@ class BaseReport {
     static mapping = {
         message type: 'text'
         title type: 'text'
-        project column: 'ctxProject'
+        project column: 'ctx_project'
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class',*/ 'ctxProject', 'dateCompleted', /*'jcExecId', 'jcJobId'*/]

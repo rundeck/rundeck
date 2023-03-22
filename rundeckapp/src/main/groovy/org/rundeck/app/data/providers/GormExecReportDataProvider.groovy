@@ -204,8 +204,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                 reportId: 'reportId',
         ]
         def jobfilters = [
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',
@@ -272,11 +272,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
                                 for(def partition : execProjectsPartitioned){
-                                    'in'('this.ctxProject', partition)
+                                    'in'('this.project', partition)
                                 }
                             }
                         })
-                        eq('jcJobId', String.valueOf(seId))
+                        eq('jobId', String.valueOf(seId))
                         and{
                             jobfilters.each { key, val ->
                                 if (query["${key}Filter"] == 'null') {
@@ -317,8 +317,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
 
                 if (query.titleFilter) {
                     or {
-                        eq('jcJobId', '')
-                        isNull('jcJobId')
+                        eq('jobId', '')
+                        isNull('jobId')
                     }
                 }
                 if (query.jobListFilter || query.excludeJobListFilter) {
@@ -363,11 +363,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
 
             if (isJobs) {
                 or {
-                    isNotNull("jcJobId")
+                    isNotNull("jobId")
                     isNotNull("executionId")
                 }
             } else {
-                isNull("jcJobId")
+                isNull("jobId")
                 isNull("executionId")
             }
 

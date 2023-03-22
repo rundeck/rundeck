@@ -38,7 +38,7 @@ class ExecReport extends BaseReport implements RdExecReport{
         filterApplied type: 'text'
         succeededNodeList type: 'text'
         failedNodeList type: 'text'
-        jobId column: 'jcJobId'
+        jobId column: 'jc_job_id'
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'executionId', 'jcJobId']
             index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']

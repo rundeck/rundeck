@@ -39,7 +39,7 @@ class ReportServiceTests extends GroovyTestCase {
     def sessionFactory
 
     private BaseReport proto(props=[:]){
-        def repprops=[author: 'bob', ctxProject: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
+        def repprops=[author: 'bob', project: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
