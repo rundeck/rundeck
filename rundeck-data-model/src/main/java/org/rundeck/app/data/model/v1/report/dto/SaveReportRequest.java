@@ -19,7 +19,6 @@ public interface SaveReportRequest {
     String getNode();
     String getMessage();
     Date getDateCompleted();
-    String getActionType();
     String getAdhocScript();
     String getTags();
 }

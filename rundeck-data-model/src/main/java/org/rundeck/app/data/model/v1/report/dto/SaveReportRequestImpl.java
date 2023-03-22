@@ -28,7 +28,6 @@ public class SaveReportRequestImpl implements SaveReportRequest {
     String node;
     String message;
     Date dateCompleted;
-    String actionType;
     String adhocScript;
     String tags;
 

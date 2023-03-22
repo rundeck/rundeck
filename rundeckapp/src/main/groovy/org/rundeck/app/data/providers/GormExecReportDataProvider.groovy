@@ -58,7 +58,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.node = saveReportRequest.node
         execReport.title = saveReportRequest.title
         execReport.status = saveReportRequest.status
-        execReport.actionType = saveReportRequest.actionType
+        execReport.actionType = saveReportRequest.status
         execReport.project = saveReportRequest.project
         execReport.reportId = saveReportRequest.reportId
         execReport.tags = saveReportRequest.tags
