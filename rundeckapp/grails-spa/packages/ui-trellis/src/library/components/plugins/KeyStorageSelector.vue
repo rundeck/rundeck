@@ -118,6 +118,7 @@
         },
         onSelectedKeyChange(selectedKey: String) {
           this.selectedKey = selectedKey
+          this.$emit("input", this.selectedKey)
         }
       }
     });
