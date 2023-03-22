@@ -253,7 +253,7 @@ export default Vue.extend({
           break;
       }
 
-      const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath);
+      const checkKey = await rundeckContext.rundeckClient.storageKeyGetMaterial(fullPath, {});
       
       let exists = checkKey._response.status !== 404;
 
@@ -262,22 +262,25 @@ export default Vue.extend({
           this.uploadSetting.errorMsg = 'key aready exists';
           return
         } else {
-          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType });
+          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType });
+
           if(resp._response.status >= 400){
             this.uploadSetting.errorMsg = resp.error
             return
           } 
+
+          this.$emit("finishEditing", resp)
         }
       } else {
-        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType });
+        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType });
         
         if(resp._response.status!=201){
           this.uploadSetting.errorMsg = resp.error;
           return
         } 
-      }
 
-      this.$emit("finishEditing")
+        this.$emit("finishEditing", resp)
+      }
     },
     loadKeys() {
       const rundeckContext = getRundeckContext();

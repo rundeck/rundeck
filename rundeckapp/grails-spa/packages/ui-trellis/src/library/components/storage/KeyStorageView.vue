@@ -8,7 +8,7 @@
     <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
       <div class="input-group">
         <div class="input-group-addon" v-if="staticRoot">
-          <span>{{showRootPath}}</span>
+          <span>{{rootPath}}</span>
         </div>
         <input type="text" class="form-control" style="padding-left:18px"
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
@@ -36,7 +36,7 @@
           <i class="glyphicon glyphicon-pencil"></i>
           Overwrite Key
         </button>
-        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="!!this.selectedKey.path">
+        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path">
                 <i class="glyphicon glyphicon-trash"></i>
                 {{"Delete"}}</button>
       </div>
@@ -55,7 +55,7 @@
         </tr>
         </tbody>
         <tbody>
-        <tr v-for="key in files" :class="[key.path=== selectedKey.path ? selectedClass : '','action']"
+        <tr v-for="key in files" :class="[selectedKey && key.path=== selectedKey.path ? selectedClass : '','action']"
             :key="key.name" @click="selectKey(key)">
           <td>
             <i :class="[key.path=== selectedKey.path ? 'glyphicon glyphicon-ok' :'glyphicon glyphicon-unchecked']"></i>
@@ -124,7 +124,7 @@
       <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
     </div>
   </modal>
-  <div class="row" v-if="isKeySelected()===true">
+  <div class="row" v-if="isSelectedKey">
     <div class="col-sm-12">
       <div class="well">
         <div>
@@ -221,6 +221,8 @@ export default Vue.extend({
       const downloadBaseUrl = 'storage/download/keys'
       const rundeckContext = getRundeckContext()
 
+      if(!this.selectedKey || !this.selectedKey.path) return '#'
+
       return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`
     },
     deleteKey(){
@@ -235,13 +237,19 @@ export default Vue.extend({
         this.errorMsg = resp.error
         return
       } 
+      this.isSelectedKey = false
+
       this.loadKeys()
       
     },
     cancelDeleteKey() {
       this.isConfirmingDeletion=false
     },
-    loadKeys() {
+    loadKeys(selectedKey?: any) {
+      if(selectedKey) {
+        this.selectedKey = selectedKey
+      }
+
       const rundeckContext = getRundeckContext();
       rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
         this.directories = [];
@@ -356,10 +364,6 @@ export default Vue.extend({
       }
       return value;
     },
-    isKeySelected() {
-      return this.selectedKey.path != null;
-
-    },
     dirNameString(path: any) {
       if (path.lastIndexOf('/') >= 0) {
         return path.substring(path.lastIndexOf('/') + 1);
@@ -377,7 +381,6 @@ export default Vue.extend({
     },
     isPassword(key: any) {
       return key.meta["Rundeck-data-type"] === 'password';
-
     },
     notFound() {
       return false;
@@ -401,23 +404,19 @@ export default Vue.extend({
       }
     },
     actionUploadModify() {
-      const isPassword = this.isPassword(this.selectedKey);
-      const isPrivateKey = this.isPrivateKey(this.selectedKey);
-      const isPublicKey = this.isPublicKey(this.selectedKey);
-
       // Default to KeyType.Password
       let type = KeyType.Password;
-      if (isPrivateKey) {
+      if (this.isPrivateKey(this.selectedKey)) {
         type = KeyType.Private;
       }
-      if (isPublicKey) {
+      if (this.isPublicKey(this.selectedKey)) {
         type = KeyType.Public;
       }
 
       const inputPath = this.relativePath(this.parentDirString(this.selectedKey.path));
 
       let inputType = InputType.File;
-      if (isPassword) {
+      if (this.isPassword(this.selectedKey)) {
         inputType = InputType.Text;
       }
 
@@ -487,12 +486,10 @@ export default Vue.extend({
       }
     },
     absolutePath(relpath: any) {
-      var root = this.rootPath;
-      var statroot = this.staticRoot;
-      if (statroot === false) {
+      if (this.staticRoot === false) {
         return relpath;
       }
-      return root + '/' + relpath;
+      return this.rootPath + relpath;
     },
     setRootPath() {
       if (this.rootPath == null || this.rootPath === '') {
@@ -518,6 +515,7 @@ export default Vue.extend({
     checkParentDir(path: any) {
       const rundeckContext = getRundeckContext();
       const fullPath = this.absolutePath(path);
+
       rundeckContext.rundeckClient.storageKeyGetMetadata(path).then((result: any) => {
         if (result.resources != null) {
           const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);

@@ -31,9 +31,9 @@ export default Vue.extend({
     }
   },
   methods: {
-    handleFinishEditing(){
+    handleFinishEditing(selectedKey: any){
       // @ts-ignore
-      this.$refs.keyStorageViewRef.loadKeys();
+      this.$refs.keyStorageViewRef.loadKeys(selectedKey);
       this.modalEdit = false
     },
     handleCancelEditing() {
