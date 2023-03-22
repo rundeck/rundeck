@@ -31,6 +31,19 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.data.model.v1.user.RdUser
@@ -92,6 +105,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import com.dtolabs.rundeck.app.api.ApiVersions
 
+@Controller
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     public static final Integer MAX_DAYS_TO_KEEP = 60
     public static final Integer MINIMUM_EXECUTION_TO_KEEP = 50
@@ -2705,6 +2719,58 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return result
     }
 
+    @Get(uri='/project/{project}/sources')
+    @Operation(
+        method='GET',
+        summary='List Resource Model Sources for a Project',
+        description='''The response contains a set of `source` objects, each describes the `index`, the `type`, and 
+details about the `resources`. If the
+source had any error, that is included as `errors`.
+
+Resources data includes any `description` provided by the source, whether it is `empty`, and
+whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
+
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = @Parameter(
+            name = 'project',
+            description = 'Project Name',
+            required = true,
+            in = ParameterIn.PATH,
+            schema = @Schema(type = 'string')
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''Sources List.''',
+            content=@Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = Source)),
+                examples=@ExampleObject('''[
+    {
+        "index": 1,
+        "resources": {
+            "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
+            "empty": false,
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/1/resources",
+            "writeable": true
+        },
+        "type": "file"
+    },
+    {
+        "errors": "File does not exist: /Users/greg/rundeck2.11/projects/atest/etc/resources2.xml",
+        "index": 2,
+        "resources": {
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/2/resources",
+            "writeable": false
+        },
+        "type": "stub"
+    }
+]''')
+            )
+        )
+    )
     def apiSourcesList() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2781,6 +2847,75 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Post(uri = '/project/{project}/source/{index}/resources')
+    @Operation(
+        method = 'POST',
+        summary = 'Update Resources of a Resource Model Source',
+        description = '''
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags = ['project', 'nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        requestBody = @RequestBody(
+            required = true,
+            description = 'Resource model data in the supported format',
+            content = [
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                        description = "Resources JSON Format"
+                    )),
+                    examples = @ExampleObject('''{
+  "node1": {
+    "nodename": "node1",
+    "hostname": "node1",
+    "osVersion": "5.15.49-linuxkit",
+    "osFamily": "unix",
+    "osArch": "amd64",
+    "description": "Rundeck server node",
+    "osName": "Linux"
+  }
+}''')
+                ),
+                @Content(
+                    mediaType = 'text/yaml',
+                    schema = @Schema(type = 'string', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                        description = "Resources YAML Format"
+                    )),
+                    examples = @ExampleObject('''node1:
+  nodename: node1
+  hostname: node1
+  osVersion: 5.15.49-linuxkit
+  osFamily: unix
+  osArch: amd64
+  description: Rundeck server node
+  osName: Linux
+  tags: \'\'''')
+                )
+            ]
+        ),
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/responses/get/200'
+        )
+    )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2895,6 +3030,58 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return apiRenderNodeResult(readsource.source.nodes, framework, params.project)
     }
 
+
+    @Get(uri='/project/{project}/source/{index}')
+    @Operation(
+        method='GET',
+        summary='Get a Resource Model Source for a Project',
+        description='''The response contains the `index`, the `type`, and 
+details about the `resources`. If the
+source had any error, that is included as `errors`.
+
+Resources data includes any `description` provided by the source, whether it is `empty`, and
+whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
+
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''Source definition.''',
+            content=@Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = Source),
+                examples=@ExampleObject('''
+    {
+        "index": 1,
+        "resources": {
+            "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
+            "empty": false,
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/1/resources",
+            "writeable": true
+        },
+        "type": "file"
+    }''')
+            )
+        )
+    )
     def apiSourceGet() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2942,7 +3129,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         respondProjectSource(config.type, writeableSource, project, index, errors?.message)
     }
 
-    public void respondProjectSource(
+    protected void respondProjectSource(
         String type,
         IProjectNodes.WriteableProjectNodes writeableSource,
         project,
@@ -2988,6 +3175,35 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Get(uri='/project/{project}/source/{index}/resources')
+    @Operation(
+        method='GET',
+        summary='List Resources of a Resource Model Source',
+        description='''
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/responses/get/200'
+        )
+    )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -3078,10 +3294,104 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
+
+    @Get(uri='/project/{project}/resources')
+    @Operation(
+        method='GET',
+        summary='List Project Nodes',
+        description='''List or query the nodes (resources) for a project.
+
+Node Filter parameters: You can select nodes to include and exclude in the result set, see below.
+
+**Note:** If no query parameters are included, the result set will include all Node resources for the project.
+
+Refer to the [User Guide - Node Filters](https://docs.rundeck.com/docs/manual/11-node-filters.html) Documentation for information on
+the node filter syntax and usage.
+
+A basic node filter looks like:
+
+    attribute: value attribute2: value2
+
+To specify a Node Filter string as a URL parameter for an API request, use a parameter named `filter`.
+Your HTTP client will have to correctly escape the value of the `filter` parameter.  For example you can
+use `curl` like this;
+
+    curl --data-urlencode "filter=attribute: value"
+
+Common attributes:
+
+* `name` - node name
+* `tags` - tags
+* `hostname`
+* `username`
+* `osFamily`, `osName`, `osVersion`, `osArch`
+
+Custom attributes can also be used.
+
+Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
+
+Since: v14''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                        description = "Resources JSON Format"
+                    )),
+                    examples=@ExampleObject('''{
+  "node1": {
+    "nodename": "node1",
+    "hostname": "node1",
+    "osVersion": "5.15.49-linuxkit",
+    "osFamily": "unix",
+    "osArch": "amd64",
+    "description": "Rundeck server node",
+    "osName": "Linux"
+  }
+}''')
+                ),
+                @Content(
+                    mediaType = 'text/yaml',
+                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                        description = "Resources YAML Format"
+                    )),
+                    examples=@ExampleObject('''node1:
+  nodename: node1
+  hostname: node1
+  osVersion: 5.15.49-linuxkit
+  osFamily: unix
+  osArch: amd64
+  description: Rundeck server node
+  osName: Linux
+  tags: \'\'''')
+                )
+            ]
+        )
+    )
     /**
      * API: /api/2/project/NAME/resources, version 2
      */
-    def apiResourcesv2(ExtNodeFilters query) {
+    def apiResourcesv2(@Parameter(hidden = true) ExtNodeFilters query) {
         if (!apiService.requireApi(request, response)) {
             return
         }
