@@ -113,9 +113,9 @@ class EditOptsController extends ControllerBase{
         }
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
-
             def opt = editopts[params.name]
             outparams = _validateOption(opt, userDataProvider, authContext, null, params.jobWasScheduled == 'true')
+            outparams = _validateOption(opt, userDataProvider, null,null, params.jobWasScheduled == 'true')
             outparams = validateFileOpt(opt, outparams)
         }
 
@@ -214,6 +214,9 @@ class EditOptsController extends ControllerBase{
         def editopts = _getSessionOptions()
         def name = params.name
         def origName = params.origName
+
+        def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params], authContext)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
 
         def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params], authContext)
         if (result.error) {
@@ -518,7 +521,7 @@ class EditOptsController extends ControllerBase{
      * error: any error message
      * undo: corresponding undo action map
      */
-    protected Map _applyOptionAction (Map editopts, Map input, AuthContext authContext){
+    protected Map _applyOptionAction (Map editopts, Map input, AuthContext authContext=null){
         def result = [:]
         if ('remove' == input.action) {
             def name = input.name
@@ -533,7 +536,7 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, userDataProvider, authContext, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(option, userDataProvider, null, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(option, vres)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
@@ -598,7 +601,8 @@ class EditOptsController extends ControllerBase{
             def clone = option.createClone()
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
-            def vres = _validateOption(moditem, userDataProvider, authContext, input.params,input.params.jobWasScheduled=='true')
+            JobOptionConfigRemoteUrl configRemoteUrl = scheduledExecutionService.getJobOptionConfigRemoteUrl(option, authContext)
+            def vres = _validateOption(moditem, userDataProvider, configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(moditem, vres)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
@@ -634,6 +638,7 @@ class EditOptsController extends ControllerBase{
      * @param params input params if any
      */
     public static _validateOption(Option opt, UserDataProvider udp, AuthContext authContext,  Map params = null, boolean jobWasScheduled=false) {
+    public static _validateOption(Option opt, UserDataProvider udp, JobOptionConfigRemoteUrl configRemoteUrl= null, Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
@@ -700,8 +705,12 @@ class EditOptsController extends ControllerBase{
                     def realUrl = opt.realValuesUrl.toExternalForm()
                     JobOptionConfigRemoteUrl configRemoteUrl = opt.getConfigRemoteUrl()
                     ScheduledExecution se = opt.scheduledExecution
+                    if(!se && params?.scheduledExecutionId){
+                        se = ScheduledExecution.findByUuid(params.scheduledExecutionId)
+                    }
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, configRemoteUrl,authContext, 10, 0, 5)
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded,configRemoteUrl,  10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json
                         if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){

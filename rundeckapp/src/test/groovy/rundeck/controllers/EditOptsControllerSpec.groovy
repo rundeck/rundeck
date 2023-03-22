@@ -27,6 +27,7 @@ import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -174,7 +175,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, params, true)
+        EditOptsController._validateOption(opt, provider, null, params, true)
         then:
         iserr == opt.errors.hasFieldErrors('defaultValue')
 
@@ -191,7 +192,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, optionType: 'file', name: 'abc',enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, params, isched)
+        EditOptsController._validateOption(opt, provider, null, params, isched)
         then:
         iserr == opt.errors.hasFieldErrors('required')
 
@@ -355,6 +356,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -383,6 +385,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -487,6 +490,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1, optname2: test2]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -584,6 +588,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'modify', name: 'optname', params: [name                          : 'optname', description:
@@ -629,6 +634,8 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'modify', name: 'optname', params: [name                          : 'optname2', description:

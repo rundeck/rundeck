@@ -864,6 +864,14 @@ class ScheduledExecutionController  extends ControllerBase{
                     if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BASIC){
                         client.setBasicAuthCredentials(configRemoteUrl.getUsername(), configRemoteUrl.getPassword())
                     }
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.API_KEY){
+                        client.addHeader(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                    }
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BEARER_TOKEN){
+                        client.addHeader("Authorization", "Bearer ${configRemoteUrl.getToken()}")
+                    }
+
+
                     //set token auth
 
                 } else{

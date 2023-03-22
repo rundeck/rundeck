@@ -2720,7 +2720,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -4248,7 +4248,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider, null,null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")

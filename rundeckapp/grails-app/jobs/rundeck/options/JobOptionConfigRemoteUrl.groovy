@@ -19,4 +19,27 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
 
     @JsonIgnore
     String errors
+
+    static JobOptionConfigRemoteUrl fromMap(Map map){
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(map.authenticationType)
+        if(map.username){
+            configRemoteUrl.username = map.username
+        }
+
+        if(map.passwordStoragePath){
+            configRemoteUrl.passwordStoragePath = map.passwordStoragePath
+        }
+
+        if(map.keyName){
+            configRemoteUrl.keyName = map.keyName
+        }
+
+        if(map.tokenStoragePath){
+            configRemoteUrl.tokenStoragePath = map.tokenStoragePath
+        }
+
+        return configRemoteUrl
+    }
+
 }

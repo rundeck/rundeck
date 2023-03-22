@@ -201,8 +201,23 @@ public class Option implements Comparable, OptionData {
             if(configData){
                 JobOptionConfigData jobOptionConfigData = getOptionConfigData()
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = jobOptionConfigData.getJobOptionEntry(JobOptionConfigRemoteUrl)
-                if(jobOptionConfigRemoteUrl.getAuthenticationType()){
-                    map.configRemoteUrlAuth=jobOptionConfigRemoteUrl.getAuthenticationType().name()
+                if(jobOptionConfigRemoteUrl){
+                    map.configRemoteUrl = [:]
+                    if(jobOptionConfigRemoteUrl.getAuthenticationType()){
+                        map.configRemoteUrl.authenticationType=jobOptionConfigRemoteUrl.getAuthenticationType().name()
+                    }
+                    if(jobOptionConfigRemoteUrl.getUsername()){
+                        map.configRemoteUrl.username=jobOptionConfigRemoteUrl.getUsername()
+                    }
+                    if(jobOptionConfigRemoteUrl.getPasswordStoragePath()){
+                        map.configRemoteUrl.passwordStoragePath=jobOptionConfigRemoteUrl.getPasswordStoragePath()
+                    }
+                    if(jobOptionConfigRemoteUrl.getKeyName()){
+                        map.configRemoteUrl.keyName=jobOptionConfigRemoteUrl.getKeyName()
+                    }
+                    if(jobOptionConfigRemoteUrl.getTokenStoragePath()){
+                        map.configRemoteUrl.tokenStoragePath=jobOptionConfigRemoteUrl.getTokenStoragePath()
+                    }
                 }
             }
         }
@@ -310,6 +325,12 @@ public class Option implements Comparable, OptionData {
         }
         if(data.hidden){
             opt.hidden = data.hidden
+        }
+        if(data.configRemoteUrl){
+            def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(data.configRemoteUrl)
+            def configData = new JobOptionConfigData()
+            configData.addConfig(configRemoteUrl)
+            opt.setOptionConfigData(configData)
         }
         return opt
     }

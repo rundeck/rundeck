@@ -50,6 +50,7 @@ import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -1303,11 +1304,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     String readStoragePassword(AuthContext authContext, String storagePath){
-        def keystore = storageService.storageTreeWithContext(authContext)
+        KeyStorageTree keystore = storageService.storageTreeWithContext(authContext)
         String password = null
 
         if(keystore.hasPassword(storagePath)){
-            password = keystore.readPassword(storagePath)
+            password = new String(keystore.readPassword(storagePath))
         }
 
         return password
