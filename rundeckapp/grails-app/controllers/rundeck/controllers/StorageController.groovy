@@ -651,7 +651,6 @@ class StorageController extends ControllerBase{
             ])
         }catch(Exception e){
             log.error("Error reading resource ${resourcePath}: ${e.message}")
-            log.debug("Error reading resource ${resourcePath}",e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: "Error: ${e.getMessage()}",
