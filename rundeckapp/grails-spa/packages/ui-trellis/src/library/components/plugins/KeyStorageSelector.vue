@@ -22,7 +22,6 @@
         <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
           <key-storage-view ref="keyStorageViewRef" @input="onSelectedKeyChange" :read-only="readOnly" :allow-upload="allowUpload" :value="value" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
         </modal>
-
         <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" :footer="false" auto-focus append-to-body>
           <key-storage-edit :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing" ></key-storage-edit>
         </modal>
@@ -57,6 +56,9 @@
               uploadSetting: {}
           };
       },
+      mounted() {
+        console.log("==> initial value: ", this.value)
+      },
       methods: {
         cleanPath(path: any) {
           if (path != null) {
@@ -88,7 +90,9 @@
         beforeModalClose(args: string | Array<any>) {
           if(args === "ok") {
             // Save the selected value - Emit a key changd event with the selected value
-            this.$emit("selectedKeyChanged", this.selectedKey)
+            if(this.selectedKey !== this.value) {
+              this.$emit("input", this.selectedKey)
+            }
           } 
           return true
         },
@@ -118,7 +122,6 @@
         },
         onSelectedKeyChange(selectedKey: String) {
           this.selectedKey = selectedKey
-          this.$emit("input", this.selectedKey)
         }
       }
     });
