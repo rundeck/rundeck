@@ -75,7 +75,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         def opt = new Option(
                 name: 'bob',
                 optionType: 'atype',
-                configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigPluginAttributes","pluginAttributes":{"key":"val","key2":"val2"}}]}'
+                configData: '{"jobOptionConfigEntries":[{"@class":"org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes","pluginAttributes":{"key":"val","key2":"val2"}}]}'
         )
 
         when:
@@ -170,7 +170,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
                 name: 'bob',
                 optionType: 'text',
                 valuesUrl: 'http://test.com',
-                configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigRemoteUrl","authenticationType":"BASIC","username":"admin","passwordStoragePath":"keys/test"}]}'
+                configData: '{"jobOptionConfigEntries":[{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","authenticationType":"BASIC","username":"admin","passwordStoragePath":"keys/test"}]}'
         )
 
         when:
@@ -188,7 +188,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [authenticationType: 'API_KEY', tokenStoragePath: 'keys/test', keyName: 'api-key']])
         expect:
         opt.optionType == 'text'
-        opt.configData == '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigRemoteUrl","authenticationType":"API_KEY","keyName":"api-key","tokenStoragePath":"keys/test"}]}'
+        opt.configData == '{"jobOptionConfigEntries":[{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","authenticationType":"API_KEY","keyName":"api-key","tokenStoragePath":"keys/test"}]}'
         opt.configRemoteUrl !=null
         opt.configRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY
         opt.configRemoteUrl.tokenStoragePath == 'keys/test'

@@ -1248,7 +1248,7 @@ inside]]></aproperty>
                                         required: false,
                                         enforced: false,
                                         optionType: 'file',
-                                        configData: '{"jobOptionConfigEntries":[{"@class":"rundeck.options.JobOptionConfigPluginAttributes","pluginAttributes": {"test":"value","test2":"data2"}}]}'
+                                        configData: '{"jobOptionConfigEntries":[{"@class":"org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes","pluginAttributes": {"test":"value","test2":"data2"}}]}'
                                 )
                         ]
                 )
