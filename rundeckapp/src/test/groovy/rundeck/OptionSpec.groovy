@@ -18,8 +18,7 @@ package rundeck
 
 
 import grails.testing.gorm.DomainUnitTest
-import rundeck.options.JobOptionConfigRemoteUrl
-import rundeck.options.RemoteUrlAuthenticationType
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import spock.lang.Specification
 import spock.lang.Unroll
 

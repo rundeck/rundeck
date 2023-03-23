@@ -47,13 +47,13 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import org.rundeck.util.HttpClientCreator
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
-import rundeck.options.JobOptionConfigRemoteUrl
-import rundeck.services.data.UserDataService
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -5607,7 +5607,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
 
             def input=[:]
-            ScheduledExecutionController.metaClass.static.getRemoteJSON={ String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
                 input.url=url
                 input.timeout=vtimeout
                 input.contimeout=vcontimeout
@@ -5653,7 +5653,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ))
         se.save()
         def input=[:]
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url,JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             input.url=url
             input.timeout=vtimeout
             input.contimeout=vcontimeout
@@ -5719,7 +5719,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         when:"getRemoteJSON trow an exception"
         Exception e = new Exception("some exception")
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             throw new Exception(e)
         }
         def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)

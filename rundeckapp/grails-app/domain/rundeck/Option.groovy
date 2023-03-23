@@ -19,8 +19,8 @@ package rundeck
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
-import rundeck.options.JobOptionConfigPluginAttributes
-import rundeck.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
@@ -106,7 +106,7 @@ public class Option implements Comparable, OptionData {
         if (null != optionConfigData) {
             JobOptionConfigPluginAttributes pluginAttributes = optionConfigData.getJobOptionEntry(JobOptionConfigPluginAttributes)
             if(pluginAttributes){
-                return  pluginAttributes.pluginAttributes
+                return  pluginAttributes.toMap()
             }
         } else {
             return null

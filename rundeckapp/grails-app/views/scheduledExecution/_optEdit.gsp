@@ -16,6 +16,12 @@
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description; com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
 
+<g:jsMessages code="form.option.valuesType.url.authType.empty.label
+form.option.valuesType.url.authType.basic.label
+form.option.valuesType.url.authType.apiKey.label
+form.option.valuesType.url.authType.bearerToken.label
+"/>
+
 <%--
    _optEdit.gsp
 
@@ -467,22 +473,17 @@
 
                         <div class="col-md-4">
                             <div class="">
-                                <g:select
-                                        data-bind="value: remoteUrlAuthenticationType"
+                                <select
+                                        data-bind="value: remoteUrlAuthenticationType,
+                                                   options: remoteUrlAuthenticationList,
+                                                   optionsText: 'label',
+                                                   optionsValue : 'value',
+                                                   optionsCaption: '${message(code:'form.option.valuesType.url.authType.empty.label')}'"
                                         name="remoteUrlAuthenticationType"
                                         class="form-control"
                                         value="${option?.configRemoteUrl?.authenticationType}"
-                                        optionKey="key"
-                                        optionValue="value"
-                                        from="${[
-                                                [key:'',value:message(code:'form.option.valuesType.url.authType.empty.label')],
-                                                [key:'BASIC',value:message(code:'form.option.valuesType.url.authType.basic.label')],
-                                                [key:'API_KEY',value:message(code:'form.option.valuesType.url.authType.apiKey.label')],
-                                                [key:'BEARER_TOKEN',value:message(code:'form.option.valuesType.url.authType.bearerToken.label')],
-                                        ]
-                                        }"
                                         id="vurl_auth_type_${rkey}">
-                                </g:select>
+                                </select>
                             </div>
 
                         </div>

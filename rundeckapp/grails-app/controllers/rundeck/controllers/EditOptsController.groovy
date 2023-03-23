@@ -17,11 +17,14 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
-import rundeck.options.ApiTokenReporter
-import rundeck.options.JobOptionConfigPluginAttributes
-import rundeck.options.JobOptionConfigRemoteUrl
-import rundeck.options.RemoteUrlAuthenticationType
+import org.apache.http.HttpResponse
+import org.rundeck.util.HttpClientCreator
+import org.rundeck.app.jobs.options.ApiTokenReporter
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import groovy.transform.PackageScope
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.option.OptionData
@@ -712,6 +715,12 @@ class EditOptsController extends ControllerBase{
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, configRemoteUrl,authContext, 10, 0, 5)
                     def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded,configRemoteUrl,  10, 0, 5)
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON(
+                            new HttpClientCreator(){
+                                HttpClient<HttpResponse> createClient(){
+                                    new ApacheHttpClient()
+                                }
+                            }, urlExpanded,configRemoteUrl,  10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json
                         if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){

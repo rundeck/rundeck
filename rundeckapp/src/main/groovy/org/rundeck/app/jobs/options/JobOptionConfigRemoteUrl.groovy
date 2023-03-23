@@ -1,4 +1,4 @@
-package rundeck.options;
+package org.rundeck.app.jobs.options;
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -57,6 +57,7 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         return configRemoteUrl
     }
 
+    @Override
     Map toMap(){
         Map map = [:]
         if(authenticationType){

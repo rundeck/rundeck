@@ -23,12 +23,19 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
+import com.dtolabs.rundeck.core.http.RequestProcessor
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
+import org.apache.http.Header
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.StatusLine
+import org.apache.http.Header
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -40,13 +47,14 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
-import rundeck.options.ApiTokenReporter
-import rundeck.options.JobOptionConfigRemoteUrl
-import rundeck.options.RemoteUrlAuthenticationType
+import org.rundeck.app.jobs.options.ApiTokenReporter
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -3900,7 +3908,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.frameworkService = Mock(FrameworkService)
 
         when:
-        controller.getRemoteJSON(url, null, 100, 100, 5,false)
+        controller.getRemoteJSON(new HttpClientCreator(){
+            HttpClient<HttpResponse> createClient(){
+                new ApacheHttpClient()
+            }
+        },url, null, 100, 100, 5,false)
 
         then:
         def e = thrown(UnknownHostException)
@@ -3920,6 +3932,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.frameworkService = Mock(FrameworkService)
 
         def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
 
         def jobChangeLogger = Mock(Logger)
         controller.logger = jobChangeLogger
@@ -3930,14 +3946,27 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.password ="test"
 
         when:
-        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
-        1 * controller.logger.debug("getRemoteJSON using authentication")
-        1 * controller.logger.debug("Basic authentication with user test")
+        1 * client.setUri(_)
+        1 * client.setBasicAuthCredentials("test","test")
+        1 * client.execute({ RequestProcessor processor->
+            HttpResponse rsp = Mock(HttpResponse){
+                getStatusLine()>>Mock(StatusLine){
+                    getStatusCode()>>200
+                }
+                getEntity()>>Mock(HttpEntity){
+                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
+                }
+                getFirstHeader("Content-Type")>>Mock(Header){
+                    getValue()>>"application/json"
+                }
+            }
+            processor.accept(rsp)
+        })
 
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        result != null
 
     }
 
@@ -3947,6 +3976,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.frameworkService = Mock(FrameworkService)
 
         def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
 
         def jobChangeLogger = Mock(Logger)
         controller.logger = jobChangeLogger
@@ -3958,14 +3991,27 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.apiTokenReporter = ApiTokenReporter.HEADER
 
         when:
-        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
-        1 * controller.logger.debug("getRemoteJSON using authentication")
-        1 * controller.logger.debug("API key authentication with Header apiKey")
+        1 * client.addHeader("apiKey","123")
+        1 * client.setUri(_)
+        1 * client.execute({ RequestProcessor processor->
+            HttpResponse rsp = Mock(HttpResponse){
+                getStatusLine()>>Mock(StatusLine){
+                    getStatusCode()>>200
+                }
+                getEntity()>>Mock(HttpEntity){
+                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
+                }
+                getFirstHeader("Content-Type")>>Mock(Header){
+                    getValue()>>"application/json"
+                }
+            }
+            processor.accept(rsp)
+        })
 
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        result != null
 
     }
 
@@ -3975,6 +4021,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.frameworkService = Mock(FrameworkService)
 
         def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
 
         def jobChangeLogger = Mock(Logger)
         controller.logger = jobChangeLogger
@@ -3986,14 +4036,29 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.apiTokenReporter = ApiTokenReporter.QUERY_PARAM
 
         when:
-        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
-        1 * controller.logger.debug("getRemoteJSON using authentication")
-        1 * controller.logger.debug("API key authentication with query parameter apiKey")
+        1 * client.setUri({URI uri->
+            uri.getQuery()!=null
+            uri.getQuery()=="apiKey=134"
+        })
+        1 * client.execute({ RequestProcessor processor->
+            HttpResponse rsp = Mock(HttpResponse){
+                getStatusLine()>>Mock(StatusLine){
+                    getStatusCode()>>200
+                }
+                getEntity()>>Mock(HttpEntity){
+                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
+                }
+                getFirstHeader("Content-Type")>>Mock(Header){
+                    getValue()>>"application/json"
+                }
+            }
+            processor.accept(rsp)
+        })
 
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        result != null
 
     }
 
@@ -4001,6 +4066,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
 
         def url = 'http://web.server/geto'
 
@@ -4012,14 +4082,31 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.token = "123"
 
         when:
-        controller.getRemoteJSON(url, configRemoteUrl, 100, 100, 5,false)
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
-        1 * controller.logger.debug("getRemoteJSON using authentication")
-        1 * controller.logger.debug("Bearer Token Authentication")
+        1 * client.addHeader("Authorization","Bearer 123")
+        1 * client.setUri(_)
+        1 * client.execute({ RequestProcessor processor->
+            HttpResponse rsp = Mock(HttpResponse){
+                getStatusLine()>>Mock(StatusLine){
+                    getStatusCode()>>200
+                }
+                getEntity()>>Mock(HttpEntity){
+                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
+                }
+                getFirstHeader("Content-Type")>>Mock(Header){
+                    getValue()>>"application/json"
+                }
+            }
+            processor.accept(rsp)
+        })
 
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        result != null
 
     }
+
+
+
+
 }

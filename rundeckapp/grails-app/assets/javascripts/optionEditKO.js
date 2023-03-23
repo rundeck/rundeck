@@ -29,6 +29,13 @@ function OptionEditor(data) {
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
     self.originalIsNonSecure = data.showDefaultValue;
+
+    self.remoteUrlAuthenticationList  = ko.observableArray([
+        new RemoteOptionValues("BASIC", message('form.option.valuesType.url.authType.basic.label')),
+        new RemoteOptionValues("API_KEY", message('form.option.valuesType.url.authType.apiKey.label')),
+        new RemoteOptionValues("BEARER_TOKEN", message('form.option.valuesType.url.authType.bearerToken.label'))
+    ]);
+
     self.remoteUrlAuthenticationType = ko.observable(data.remoteUrlAuthenticationType);
 
     self.tofilebashvar = function (str) {
@@ -92,3 +99,9 @@ function OptionEditor(data) {
         return "BEARER_TOKEN" === self.remoteUrlAuthenticationType();
     });
 }
+
+
+var RemoteOptionValues = function(value, label) {
+    this.value = value;
+    this.label = label;
+};

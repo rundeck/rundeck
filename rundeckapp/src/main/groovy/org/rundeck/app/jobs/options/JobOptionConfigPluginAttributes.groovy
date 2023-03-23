@@ -1,11 +1,11 @@
-package rundeck.options;
+package org.rundeck.app.jobs.options;
 
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry;
 
 class JobOptionConfigPluginAttributes implements JobOptionConfigEntry {
 
-    Map<String, String> pluginAttributes;
+    Map<String, String> pluginAttributes
 
     JobOptionConfigPluginAttributes() {
         pluginAttributes = new HashMap<>()
@@ -17,5 +17,10 @@ class JobOptionConfigPluginAttributes implements JobOptionConfigEntry {
 
     void addAttribute(String key, String value){
         pluginAttributes.put(key, value)
+    }
+
+    @Override
+    Map toMap() {
+        return pluginAttributes
     }
 }

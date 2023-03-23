@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -31,6 +33,7 @@ import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
+import org.apache.http.HttpResponse
 import org.grails.web.json.JSONArray
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -84,6 +87,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -101,6 +105,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import rundeck.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -3997,7 +4002,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, configRemoteUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                remoteResult = ScheduledExecutionController.getRemoteJSON(new HttpClientCreator(){
+                    HttpClient<HttpResponse> createClient(){
+                        new ApacheHttpClient()
+                    }
+                }, srcUrl, configRemoteUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
                 result = remoteResult.json
                 if (remoteResult.stats) {
                     remoteStats.putAll(remoteResult.stats)

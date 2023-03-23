@@ -1,4 +1,4 @@
-package rundeck.options
+package org.rundeck.app.jobs.options
 
 enum ApiTokenReporter {
     HEADER,
