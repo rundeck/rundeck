@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -38,8 +39,6 @@ import rundeck.controllers.JobXMLException
 */
 @Deprecated
 class JobsXMLCodec {
-
-    public static String DEFAULT_OPTION_LIST_DELIMITER = ","
 
     /**
      * @deprecated do not use this directly, instead use the injected JobDefinitionManager.exportAsXml
@@ -213,9 +212,9 @@ class JobsXMLCodec {
                 //if preserveOrder is true, include sortIndex information
                 if (opts && opts instanceof Collection) {
                     opts.each { optm ->
-                        String listDelimiter = DEFAULT_OPTION_LIST_DELIMITER
+                        String listDelimiter = Option.DEFAULT_DELIMITER
                         if(optm.valuesListDelimiter){
-                            listDelimiter=optm.valuesListDelimiter[0]
+                            listDelimiter=optm.valuesListDelimiter
                         }
                         map.options[optm.name.toString()] = optm
                         if (optm.values instanceof String) {
@@ -544,9 +543,9 @@ class JobsXMLCodec {
             def optslist=[]
             //options are sorted by (sortIndex, name)
             opts.each{x->
-                String listDelimiter = DEFAULT_OPTION_LIST_DELIMITER
+                String listDelimiter = Option.DEFAULT_DELIMITER
                 if(x.valuesListDelimiter){
-                    listDelimiter = x.valuesListDelimiter[0]
+                    listDelimiter = x.valuesListDelimiter
                 }
                 x.remove('sortIndex')
                 //add 'name' attribute
