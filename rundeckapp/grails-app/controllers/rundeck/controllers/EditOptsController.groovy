@@ -721,6 +721,7 @@ class EditOptsController extends ControllerBase{
                                     new ApacheHttpClient()
                                 }
                             }, urlExpanded,configRemoteUrl,  10, 0, 5)
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, urlExpanded,configRemoteUrl,  10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json
                         if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){
