@@ -4041,7 +4041,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         then:
         1 * client.setUri({URI uri->
             uri.getQuery()!=null
-            uri.getQuery()=="apiKey=134"
+            uri.getQuery()=="apiKey=123"
         })
         1 * client.execute({ RequestProcessor processor->
             HttpResponse rsp = Mock(HttpResponse){
