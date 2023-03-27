@@ -36,7 +36,7 @@ public interface JobOption {
         return false;
     }
 
-    default Boolean getDate() {
+    default Boolean getIsDate() {
         return null;
     }
 
@@ -48,15 +48,11 @@ public interface JobOption {
         return null;
     }
 
-    default URL getValuesUrl() {
+    default URL getRealValuesUrl() {
         return null;
     }
 
     default String getLabel() {
-        return null;
-    }
-
-    default URL getValuesUrlLong() {
         return null;
     }
 

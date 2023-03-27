@@ -154,6 +154,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executorService
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecycleComponentService
+
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
 
@@ -4265,7 +4266,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.extraMetadataMap)
 
         try {
-            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch(JobLifecycleComponentException e) {
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
             def jobEventStatus = new JobEventStatusImpl(

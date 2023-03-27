@@ -43,6 +43,11 @@ class UrlMappings {
 
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
 
+        "/api/$api_version/incubator/job/$id?"(controller: 'rdJob') {
+            action = [GET: 'get', POST: 'save', DELETE: 'delete']
+        }
+
+        "/api/$api_version/incubator/jobs"(controller: 'rdJob', action: "list")
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
