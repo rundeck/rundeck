@@ -724,15 +724,15 @@ class ReportsController extends ControllerBase{
                                 summary(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                                 user(rpt.author)
-                                project(rpt.ctxProject)
+                                project(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
-                                    def jparms=[id:foundjob?foundjob.extid:rpt.jcJobId]
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
+                                    def jparms=[id:foundjob?foundjob.extid:rpt.jobId]
                                     if(foundjob){
                                         jparms.href=apiService.apiHrefForJob(foundjob)
                                         jparms.permalink=apiService.guiHrefForJob(foundjob)
@@ -782,14 +782,14 @@ class ReportsController extends ControllerBase{
                                 summary=(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'=[succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]]
                                 user=(rpt.author)
-                                project=(rpt.ctxProject)
+                                project=(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby=(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'=(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'=(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
                                     if(foundjob){
                                         job = [
                                                 id       : foundjob.extid,
