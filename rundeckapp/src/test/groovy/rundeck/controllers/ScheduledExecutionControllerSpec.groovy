@@ -3907,16 +3907,35 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
 
-        when:
-        controller.getRemoteJSON(new HttpClientCreator(){
-            HttpClient<HttpResponse> createClient(){
-                new ApacheHttpClient()
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
             }
-        },url, null, 100, 100, 5,false)
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator,url, null, 100, 100, 5,false)
 
         then:
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.stats.httpStatusCode == 200
+        result.stats.url.contains("web.server")
 
         where:
         url                                                         |_
@@ -3937,6 +3956,18 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             createClient()>>client
         }
 
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
         def jobChangeLogger = Mock(Logger)
         controller.logger = jobChangeLogger
 
@@ -3951,20 +3982,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         then:
         1 * client.setUri(_)
         1 * client.setBasicAuthCredentials("test","test")
-        1 * client.execute({ RequestProcessor processor->
-            HttpResponse rsp = Mock(HttpResponse){
-                getStatusLine()>>Mock(StatusLine){
-                    getStatusCode()>>200
-                }
-                getEntity()>>Mock(HttpEntity){
-                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
-                }
-                getFirstHeader("Content-Type")>>Mock(Header){
-                    getValue()>>"application/json"
-                }
-            }
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
             processor.accept(rsp)
-        })
+        }
 
         result != null
 
@@ -3990,27 +4011,28 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.keyName = "apiKey"
         configRemoteUrl.apiTokenReporter = ApiTokenReporter.HEADER
 
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
         when:
         def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
         1 * client.addHeader("apiKey","123")
         1 * client.setUri(_)
-        1 * client.execute({ RequestProcessor processor->
-            HttpResponse rsp = Mock(HttpResponse){
-                getStatusLine()>>Mock(StatusLine){
-                    getStatusCode()>>200
-                }
-                getEntity()>>Mock(HttpEntity){
-                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
-                }
-                getFirstHeader("Content-Type")>>Mock(Header){
-                    getValue()>>"application/json"
-                }
-            }
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
             processor.accept(rsp)
-        })
-
+        }
         result != null
 
     }
@@ -4035,6 +4057,18 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.keyName = "apiKey"
         configRemoteUrl.apiTokenReporter = ApiTokenReporter.QUERY_PARAM
 
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
         when:
         def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
@@ -4043,20 +4077,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             uri.getQuery()!=null
             uri.getQuery()=="apiKey=123"
         })
-        1 * client.execute({ RequestProcessor processor->
-            HttpResponse rsp = Mock(HttpResponse){
-                getStatusLine()>>Mock(StatusLine){
-                    getStatusCode()>>200
-                }
-                getEntity()>>Mock(HttpEntity){
-                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
-                }
-                getFirstHeader("Content-Type")>>Mock(Header){
-                    getValue()>>"application/json"
-                }
-            }
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
             processor.accept(rsp)
-        })
+        }
 
         result != null
 
@@ -4081,26 +4105,28 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BEARER_TOKEN
         configRemoteUrl.token = "123"
 
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
         when:
         def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
         1 * client.addHeader("Authorization","Bearer 123")
         1 * client.setUri(_)
-        1 * client.execute({ RequestProcessor processor->
-            HttpResponse rsp = Mock(HttpResponse){
-                getStatusLine()>>Mock(StatusLine){
-                    getStatusCode()>>200
-                }
-                getEntity()>>Mock(HttpEntity){
-                    getContent()>>new ByteArrayInputStream('{}'.getBytes());
-                }
-                getFirstHeader("Content-Type")>>Mock(Header){
-                    getValue()>>"application/json"
-                }
-            }
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
             processor.accept(rsp)
-        })
+        }
 
         result != null
 
