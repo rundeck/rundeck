@@ -37,11 +37,11 @@ repositories {
 
 dependencies {
     implementation project(":core")
-    pluginLibs( "org.eclipse.jgit:org.eclipse.jgit:${jGitVersion}") {
+    pluginLibs( "org.eclipse.jgit:org.eclipse.jgit:5.13.1.202206130422-r") {
         exclude module: 'slf4j-api'
         exclude group: 'org.bouncycastle'
     }
-    pluginLibs ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:${jGitVersion}"){
+    pluginLibs ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:5.13.1.202206130422-r"){
         exclude module: 'slf4j-api'
         exclude group: 'org.bouncycastle'
     }
