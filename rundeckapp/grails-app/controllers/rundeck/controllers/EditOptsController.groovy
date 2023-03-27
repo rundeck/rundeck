@@ -213,15 +213,11 @@ class EditOptsController extends ControllerBase{
             flash.error = "name parameter is required"
             return error()
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
-
         def editopts = _getSessionOptions()
         def name = params.name
         def origName = params.origName
 
-        def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params], authContext)
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
-
         def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params], authContext)
         if (result.error) {
             log.error(result.error)
@@ -641,7 +637,6 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, UserDataProvider udp, AuthContext authContext,  Map params = null, boolean jobWasScheduled=false) {
     public static _validateOption(Option opt, UserDataProvider udp, JobOptionConfigRemoteUrl configRemoteUrl= null, Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
@@ -707,20 +702,11 @@ class EditOptsController extends ControllerBase{
             if(opt.realValuesUrl){
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
-                    JobOptionConfigRemoteUrl configRemoteUrl = opt.getConfigRemoteUrl()
                     ScheduledExecution se = opt.scheduledExecution
                     if(!se && params?.scheduledExecutionId){
                         se = ScheduledExecution.findByUuid(params.scheduledExecutionId)
                     }
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
-                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, configRemoteUrl,authContext, 10, 0, 5)
-                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded,configRemoteUrl,  10, 0, 5)
-                    def remoteResult=ScheduledExecutionController.getRemoteJSON(
-                            new HttpClientCreator(){
-                                HttpClient<HttpResponse> createClient(){
-                                    new ApacheHttpClient()
-                                }
-                            }, urlExpanded,configRemoteUrl,  10, 0, 5)
                     def remoteResult=ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, urlExpanded,configRemoteUrl,  10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json

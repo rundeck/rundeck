@@ -455,10 +455,6 @@ public class Option implements Comparable, OptionData {
         return this.getConfigMap()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
     }
 
-    JobOptionConfigRemoteUrl getConfigRemoteUrl(){
-        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
-    }
-
     public String toString ( ) {
         return "Option{" +
         "name='" + name + '\'' +
