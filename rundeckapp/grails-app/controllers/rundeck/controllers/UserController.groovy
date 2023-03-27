@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import org.rundeck.app.data.RdPageable
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
@@ -33,6 +32,7 @@ import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.commandObjects.RdUserCommandObject
+import rundeck.data.paging.RdPageable
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse

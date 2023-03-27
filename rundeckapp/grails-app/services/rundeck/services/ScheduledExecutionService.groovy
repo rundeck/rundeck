@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
@@ -45,7 +46,10 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -97,6 +101,7 @@ import rundeck.*
 import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
+import rundeck.data.validation.validators.AnyDomainEmailValidator
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -187,6 +192,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
     UserDataProvider userDataProvider
+    JobDataProvider jobDataProvider
+    UserService userService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -206,6 +213,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
+    JobData saveJob(JobData job) {
+        jobDataProvider.save(job)
+    }
     /**
      * Return project config for node cache delay
      * @param project
@@ -948,7 +958,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    static class DeleteJobResult{
+    static class DeleteJobResult implements DeletionResult {
+        String dataType = "Job"
+        String id
         boolean success
         String error
     }
@@ -1036,7 +1048,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        return new DeleteJobResult(success:success,error:errmsg)
+        return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
     }
     /**
      * Attempt to delete a job given an id
@@ -2940,7 +2952,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def notifications = parseParamNotifications(params)
             notificationSet=notifications.collect {Map notif ->
                 String trigger = notif.eventTrigger
-                def Notification n
                 if ( notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                     defineEmailNotification(scheduledExecution,trigger,notif)
                 } else if ( notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
@@ -4182,7 +4193,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
         def jobEventStatus
         try {
-            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution, jobPersistEvent)
+            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution.project, jobPersistEvent)
         } catch (JobLifecycleComponentException exception) {
             log.debug("JobLifecycle error: " + exception.message, exception)
             log.warn("JobLifecycle error: " + exception.message)
@@ -4274,19 +4285,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return INodeSet
      */
-    def getNodes(scheduledExecution, filter, authContext = null, Set<String> actions = null){
+    INodeSet getNodes(JobData job, filter, authContext = null, Set<String> actions = null){
 
         NodesSelector nodeselector
-        if (scheduledExecution.doNodedispatch) {
+        if (job.nodeConfig.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            filter = filter? filter : scheduledExecution.asFilter()
-            def filterExclude = scheduledExecution.asExcludeFilter()
+            filter = filter? filter : BaseNodeFilters.asFilter(job)
             NodeSet nodeset = ExecutionService.filtersAsNodeSet([
                     filter:filter,
-                    filterExclude: filterExclude,
-                    nodeExcludePrecedence:scheduledExecution.nodeExcludePrecedence,
-                    nodeThreadcount: scheduledExecution.nodeThreadcount,
-                    nodeKeepgoing: scheduledExecution.nodeKeepgoing
+                    filterExclude: job.nodeConfig.filterExclude,
+                    nodeExcludePrecedence:job.nodeConfig.nodeExcludePrecedence,
+                    nodeThreadcount: job.nodeConfig.nodeThreadcount,
+                    nodeKeepgoing: job.nodeConfig.nodeKeepgoing
             ])
             nodeselector=nodeset
         } else if(frameworkService != null){
@@ -4298,12 +4308,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if(authContext){
             return rundeckAuthContextProcessor.filterAuthorizedNodes(
-                    scheduledExecution.project,
+                    job.project,
                     actions,
-                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                    frameworkService.filterNodeSet(nodeselector, job.project),
                     authContext)
         }else{
-            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project)
+            return frameworkService.filterNodeSet(nodeselector,job.project)
         }
     }
 

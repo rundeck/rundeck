@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
@@ -4235,6 +4236,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
 }
 
 class JobXMLException extends Exception{
