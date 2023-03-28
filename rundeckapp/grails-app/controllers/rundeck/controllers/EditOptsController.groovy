@@ -101,8 +101,6 @@ class EditOptsController extends ControllerBase{
             return
         }
 
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
-
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
