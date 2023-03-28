@@ -175,7 +175,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, null, params, true)
+        EditOptsController._validateOption(opt, provider, null, null, params, true)
         then:
         iserr == opt.errors.hasFieldErrors('defaultValue')
 
@@ -192,7 +192,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, optionType: 'file', name: 'abc',enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, null, params, isched)
+        EditOptsController._validateOption(opt, provider, null, null, params, isched)
         then:
         iserr == opt.errors.hasFieldErrors('required')
 
@@ -675,7 +675,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         opt.name = "opt1"
         opt.optionValuesPluginType = "optionValues"
         opt.enforced = true
-        def result = controller._validateOption(opt, provider)
+        def result = controller._validateOption(opt, provider, null)
 
         then:
         result.isEmpty()

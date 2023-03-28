@@ -116,7 +116,7 @@ class EditOptsController extends ControllerBase{
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
             def opt = editopts[params.name]
-            outparams = _validateOption(opt, userDataProvider, null,null, params.jobWasScheduled == 'true')
+            outparams = _validateOption(opt, userDataProvider, null,null, null, params.jobWasScheduled == 'true')
             outparams = validateFileOpt(opt, outparams)
         }
 
@@ -520,6 +520,11 @@ class EditOptsController extends ControllerBase{
      */
     protected Map _applyOptionAction (Map editopts, Map input, AuthContext authContext=null){
         def result = [:]
+
+        def scheduledExecution = null
+        if(input.params?.scheduledExecutionId  && allowedJobAuthorization(input.params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            scheduledExecution = ScheduledExecution.getByIdOrUUID( input.params.scheduledExecutionId )
+        }
         if ('remove' == input.action) {
             def name = input.name
             if(null==editopts[name]){
@@ -533,7 +538,7 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, userDataProvider, null, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(option, userDataProvider, scheduledExecution, null, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(option, vres)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
@@ -599,7 +604,7 @@ class EditOptsController extends ControllerBase{
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
             JobOptionConfigRemoteUrl configRemoteUrl = scheduledExecutionService.getJobOptionConfigRemoteUrl(option, authContext)
-            def vres = _validateOption(moditem, userDataProvider, configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(moditem, userDataProvider,scheduledExecution,  configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(moditem, vres)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
@@ -634,7 +639,7 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, UserDataProvider udp, JobOptionConfigRemoteUrl configRemoteUrl= null, Map params = null, boolean jobWasScheduled=false) {
+    public static _validateOption(Option opt, UserDataProvider udp, ScheduledExecution scheduledExecution, JobOptionConfigRemoteUrl configRemoteUrl= null, Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
@@ -700,8 +705,8 @@ class EditOptsController extends ControllerBase{
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
                     ScheduledExecution se = opt.scheduledExecution
-                    if(!se && params?.scheduledExecutionId){
-                        se = ScheduledExecution.findByUuid(params.scheduledExecutionId)
+                    if(!se){
+                        se = scheduledExecution
                     }
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, urlExpanded,configRemoteUrl,  10, 0, 5)
