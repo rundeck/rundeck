@@ -797,6 +797,21 @@ beans={
                 [concurrentSessionControlAuthenticationStrategy, sessionFixationProtectionStrategy, registerSessionAuthenticationStrategy]
         )
     }
+    else {
+        sessionRegistry(SessionRegistryImpl)
+        concurrentSessionFilter(ConcurrentSessionFilter, sessionRegistry)
+        registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
+        sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
+            migrateSessionAttributes = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.migrate", String.class,'')
+            // true
+            alwaysCreateSession = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession", String.class, '')
+            // false
+        }
+        sessionAuthenticationStrategy(
+                CompositeSessionAuthenticationStrategy,
+                [sessionFixationProtectionStrategy, registerSessionAuthenticationStrategy]
+        )
+    }
 
     //spring security preauth filter configuration
     if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)) {
