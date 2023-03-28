@@ -63,10 +63,6 @@
       <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
-      <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-          <asset:javascript src="workflow.test.js"/>
-          <asset:javascript src="util/compactMapList.test.js"/>
-      </g:if>
       <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
