@@ -243,10 +243,12 @@ twistlock_scan() {
       done
     fi
 
+    mkdir -p test-results/junit
+    bash scripts/convert_tl_junit.sh twistlock_scan_result.json > test-results/junit/twistlock-junit.xml
 
     local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
 
-    if [[ $incidents > 0 ]] ; then
+    if [[ $incidents -gt 0 ]] ; then
       echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
       exit $incidents
     fi
