@@ -16,7 +16,11 @@
 
 package rundeck
 
+
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
+import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
@@ -83,7 +87,7 @@ public class Option implements Comparable, OptionData {
 
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin','optionValues']
+    static transients = ['realValuesUrl', 'configMap','optionConfigData', 'typeFile', 'valuesFromPlugin', 'optionValues']
 
     static constraints={
         importFrom SharedJobOptionConstraints
@@ -97,11 +101,34 @@ public class Option implements Comparable, OptionData {
     }
 
     public Map getConfigMap() {
+        JobOptionConfigData optionConfigData = getOptionConfigData()
+        //de-serialize the json
+        if (null != optionConfigData) {
+            JobOptionConfigPluginAttributes pluginAttributes = optionConfigData.getJobOptionEntry(JobOptionConfigPluginAttributes.TYPE)
+            if(pluginAttributes){
+                return  pluginAttributes.toMap()
+            }
+        } else {
+            return null
+        }
+    }
+
+    public void setConfigMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            JobOptionConfigPluginAttributes configPluginAttributes= new JobOptionConfigPluginAttributes(obj)
+            JobOptionConfigData configData = new JobOptionConfigData()
+            configData.addConfig(configPluginAttributes)
+            setOptionConfigData(configData)
+        }
+    }
+
+    public JobOptionConfigData getOptionConfigData() {
         //de-serialize the json
         if (null != configData) {
             final ObjectMapper mapper = new ObjectMapper()
             try {
-                return mapper.readValue(configData, Map.class)
+                return mapper.readValue(configData, JobOptionConfigData.class)
             } catch (JsonParseException e) {
                 return null
             }
@@ -110,7 +137,7 @@ public class Option implements Comparable, OptionData {
         }
     }
 
-    public void setConfigMap(Map obj) {
+    public void setOptionConfigData(JobOptionConfigData obj) {
         //serialize json and store into field
         if (null != obj) {
             final ObjectMapper mapper = new ObjectMapper()
@@ -170,6 +197,13 @@ public class Option implements Comparable, OptionData {
         }
         if(getRealValuesUrl()){
             map.valuesUrl=getRealValuesUrl().toExternalForm()
+
+            if(configData){
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
+                if(jobOptionConfigRemoteUrl){
+                    map.configRemoteUrl = jobOptionConfigRemoteUrl.toMap()
+                }
+            }
         }
         if(regex){
             map.regex=regex
@@ -275,6 +309,12 @@ public class Option implements Comparable, OptionData {
         }
         if(data.hidden){
             opt.hidden = data.hidden
+        }
+        if(data.configRemoteUrl){
+            def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(data.configRemoteUrl)
+            def configData = new JobOptionConfigData()
+            configData.addConfig(configRemoteUrl)
+            opt.setOptionConfigData(configData)
         }
         return opt
     }
@@ -409,6 +449,10 @@ public class Option implements Comparable, OptionData {
             return valuesFromPlugin.collect{[name:it.name,value:it.value]}
         }
         return null
+    }
+
+    JobOptionConfigRemoteUrl getConfigRemoteUrl(){
+        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
     }
 
     public String toString ( ) {

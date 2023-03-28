@@ -23,15 +23,17 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
+import org.apache.http.HttpResponse
 import org.grails.web.json.JSONArray
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -65,7 +67,6 @@ import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
@@ -86,6 +87,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -102,6 +104,7 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.validation.validators.AnyDomainEmailValidator
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -2721,7 +2724,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -3896,10 +3899,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
+        JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
+
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
@@ -3996,7 +4001,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                remoteResult = ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, srcUrl, configRemoteUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
                 result = remoteResult.json
                 if (remoteResult.stats) {
                     remoteStats.putAll(remoteResult.stats)
@@ -4247,7 +4252,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider,scheduledExecution, null,null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
@@ -4553,6 +4558,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         return model
 
+    }
+
+
+    JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
+        JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
+
+        if(configRemoteUrl?.getPasswordStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){
+                def password = executionService.readStoragePassword(authContext, configRemoteUrl.getPasswordStoragePath())
+                configRemoteUrl.password = password
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getPasswordStoragePath()
+            }
+        }
+        if(configRemoteUrl?.getTokenStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getTokenStoragePath(), false )) {
+                def token = executionService.readStoragePassword(authContext, configRemoteUrl.getTokenStoragePath())
+                configRemoteUrl.token = token
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getTokenStoragePath()
+            }
+        }
+
+        return configRemoteUrl
     }
 
 }
