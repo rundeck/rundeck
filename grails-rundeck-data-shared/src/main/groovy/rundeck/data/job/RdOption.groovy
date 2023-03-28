@@ -89,6 +89,9 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
 
     @Override
     Map<String, String> getConfigMap() {
+        if(!configData){
+            return null
+        }
         configData.getJobOptionConfigEntries().stream().findFirst().orElse(null).toMap()
     }
 }
