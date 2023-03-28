@@ -104,7 +104,7 @@ public class Option implements Comparable, OptionData {
         JobOptionConfigData optionConfigData = getOptionConfigData()
         //de-serialize the json
         if (null != optionConfigData) {
-            JobOptionConfigPluginAttributes pluginAttributes = optionConfigData.getJobOptionEntry(JobOptionConfigPluginAttributes)
+            JobOptionConfigPluginAttributes pluginAttributes = optionConfigData.getJobOptionEntry(JobOptionConfigPluginAttributes.TYPE)
             if(pluginAttributes){
                 return  pluginAttributes.toMap()
             }
@@ -199,7 +199,7 @@ public class Option implements Comparable, OptionData {
             map.valuesUrl=getRealValuesUrl().toExternalForm()
 
             if(configData){
-                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl)
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
                 if(jobOptionConfigRemoteUrl){
                     map.configRemoteUrl = jobOptionConfigRemoteUrl.toMap()
                 }
@@ -452,7 +452,7 @@ public class Option implements Comparable, OptionData {
     }
 
     JobOptionConfigRemoteUrl getConfigRemoteUrl(){
-        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
+        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
     }
 
     public String toString ( ) {

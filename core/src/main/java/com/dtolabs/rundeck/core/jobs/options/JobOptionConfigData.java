@@ -2,24 +2,30 @@ package com.dtolabs.rundeck.core.jobs.options;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class JobOptionConfigData {
-    private List<JobOptionConfigEntry> jobOptionConfigEntries;
+    private final Map<String,JobOptionConfigEntry> jobOptionConfigEntries;
 
     public JobOptionConfigData() {
-        this.jobOptionConfigEntries = new ArrayList<>();
+        this.jobOptionConfigEntries = new TreeMap<>();
     }
 
     public void addConfig(JobOptionConfigEntry jobOptionConfigEntry){
-        this.jobOptionConfigEntries.add(jobOptionConfigEntry);
+        this.jobOptionConfigEntries.put(jobOptionConfigEntry.configType(),jobOptionConfigEntry);
     }
 
-    public List<JobOptionConfigEntry> getJobOptionConfigEntries() {
+    public Map<String, JobOptionConfigEntry> getJobOptionConfigEntries() {
         return jobOptionConfigEntries;
     }
 
     public JobOptionConfigEntry getJobOptionEntry(Class classType){
-        return jobOptionConfigEntries.stream().filter(it->classType.isInstance(it)).findFirst().orElse(null);
+        return jobOptionConfigEntries.values().stream().filter(it->classType.isInstance(it)).findFirst().orElse(null);
+    }
+
+    public JobOptionConfigEntry getJobOptionEntry(String configType) {
+        return jobOptionConfigEntries.get(configType);
     }
 
 }

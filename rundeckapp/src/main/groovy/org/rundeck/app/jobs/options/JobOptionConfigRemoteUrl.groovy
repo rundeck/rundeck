@@ -5,6 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
+    public static final String TYPE = "remote-url";
+
+    @Override
+    String configType() {
+        return TYPE
+    }
 
     RemoteUrlAuthenticationType authenticationType
 
