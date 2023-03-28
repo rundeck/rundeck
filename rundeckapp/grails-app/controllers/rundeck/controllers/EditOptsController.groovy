@@ -118,7 +118,6 @@ class EditOptsController extends ControllerBase{
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
             def opt = editopts[params.name]
-            outparams = _validateOption(opt, userDataProvider, authContext, null, params.jobWasScheduled == 'true')
             outparams = _validateOption(opt, userDataProvider, null,null, params.jobWasScheduled == 'true')
             outparams = validateFileOpt(opt, outparams)
         }

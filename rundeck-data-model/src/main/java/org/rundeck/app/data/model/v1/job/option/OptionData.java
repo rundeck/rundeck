@@ -25,7 +25,7 @@ public interface OptionData {
     Boolean getSecureInput();
     Boolean getSecureExposed();
     String getOptionType();
-    Map<String,Object> getConfigMap();
+    Map<String,String> getConfigMap();
     Boolean getMultivalueAllSelected();
     String getOptionValuesPluginType();
     List<OptionValueData> getValuesFromPlugin();

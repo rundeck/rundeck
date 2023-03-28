@@ -42,6 +42,7 @@ public class JobOptionImpl implements JobOption, Comparable {
     @Builder.Default
     private Boolean secureExposed = false;
     private String optionType;
+    @Builder.Default
     private JobOptionConfigData configData;
     @Builder.Default
     private Boolean multivalueAllSelected = false;

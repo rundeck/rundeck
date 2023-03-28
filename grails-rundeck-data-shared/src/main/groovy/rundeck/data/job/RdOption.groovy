@@ -1,6 +1,7 @@
 package rundeck.data.job
 
 import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.validation.Validateable
@@ -29,7 +30,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     Boolean secureInput = false
     Boolean secureExposed = false
     String optionType
-    Map<String,Object> configMap
+    JobOptionConfigData configData
     Boolean multivalueAllSelected = false
     String optionValuesPluginType
     List<RdOptionValue> valuesFromPlugin
@@ -63,7 +64,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
         o.secureInput = jobOption.secureInput
         o.secureExposed = jobOption.secureExposed
         o.optionType = jobOption.optionType
-        o.configMap = jobOption.configData ? mapper.readValue(jobOption.configData, HashMap<String,Object>) : null
+        o.configData = jobOption.configData
         o.multivalueAllSelected = jobOption.multivalueAllSelected
         o.optionValuesPluginType = jobOption.optionValuesPluginType
         o.valuesFromPlugin = orig?.valuesFromPlugin
@@ -85,4 +86,9 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     }
 
     static ObjectMapper mapper = new ObjectMapper()
+
+    @Override
+    Map<String, String> getConfigMap() {
+        configData.getJobOptionConfigEntries().stream().findFirst().orElse(null).toMap()
+    }
 }
