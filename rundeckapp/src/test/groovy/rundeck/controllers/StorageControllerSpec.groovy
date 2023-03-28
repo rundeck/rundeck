@@ -110,6 +110,41 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.storageService.listDir(_, '/keys/donuts/forgood') >> ([] as Set)
     }
 
+    def "key storage access with exception"(){
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.storageService = Mock(StorageService){
+            it.hasPath(_, '/keys') >> true
+            it.hasPath(_, '/keys/donuts/forgood') >> true
+            it.getResource(_,'/keys/donuts/forgood') >> { throw new Exception(expectedException) }
+        }
+
+        response.format='JSON'
+
+        when:
+        params.relativePath = 'donuts/forgood'
+        def result = controller.keyStorageAccess()
+
+        then:
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.apiService.renderErrorFormat(
+                _,
+                { arg -> arg.status == 500 && arg.message == expectedGuiOutput }
+        ) >> { args ->
+            args[0].status = 500
+        }
+
+        where:
+        expectedException | expectedGuiOutput
+        "I"               | "Error: ${expectedException}"
+        "Believe"         | "Error: ${expectedException}"
+        "Them Bones"      | "Error: ${expectedException}"
+        "Are Me"          | "Error: ${expectedException}"
+    }
+
     def "key storage download with params"() {
         given:
 
