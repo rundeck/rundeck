@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
+    "dompurify": "^2.3.4",
     "@iconfu/svg-inject": "^1.2.3",
     "@popperjs/core": "^2.8.4",
     "@rundeck/client": "^0.2.5",

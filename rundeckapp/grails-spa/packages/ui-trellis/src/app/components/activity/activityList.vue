@@ -215,7 +215,7 @@
                     {{exec.user}}
                 </td>
 
-                <td class=" eventtitle job" v-if="exec.job" v-tooltip="(exec.job.group ? exec.job.group + '/' +exec.job.name : '')">
+                <td class=" eventtitle job" v-if="exec.job" v-tooltip="purify((exec.job.group ? exec.job.group + '/' +exec.job.name : ''))">
                     {{exec.job.name}}
                 </td>
 
@@ -295,7 +295,7 @@
                 {{rpt.user}}
             </td>
             <td class="eventtitle " :class="{job:rpt.jobId,adhoc:!rpt.jobId}" >
-                  <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="(rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: '')">
+                  <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="purify((rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: ''))">
                     {{rpt.jobName}}
                   </span>
                   <span v-else>
@@ -375,6 +375,7 @@ import ActivityFilter from './activityFilter.vue'
 import {getRundeckContext} from "../../../library"
 import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
 import {clearTimeout, setTimeout} from 'timers';
+import * as DOMPurify from 'dompurify';
 
 /**
  * Generate a URL
@@ -484,6 +485,9 @@ export default Vue.extend({
     }
   },
   methods: {
+    purify(text:string) {
+      return DOMPurify.sanitize(text);
+    },
     jobDurationPercentage(exec:Execution){
       if(exec.job && exec.job.averageDuration && exec.dateStarted && exec.dateStarted.date){
         const diff=moment().diff(moment(exec.dateStarted.date))
