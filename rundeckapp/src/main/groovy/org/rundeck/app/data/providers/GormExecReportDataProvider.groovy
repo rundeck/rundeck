@@ -2,6 +2,8 @@ package org.rundeck.app.data.providers
 
 import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.RdExecReport
@@ -22,6 +24,7 @@ import rundeck.services.ConfigurationService
 
 import javax.sql.DataSource;
 
+@CompileStatic(TypeCheckingMode.SKIP)
 class GormExecReportDataProvider implements ExecReportDataProvider {
     @Autowired
     ConfigurationService configurationService
