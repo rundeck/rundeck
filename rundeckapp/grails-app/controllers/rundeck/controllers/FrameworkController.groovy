@@ -1222,6 +1222,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
 
+            //TODO: validate other plugin property values
+            //iterate over properties "plugin.X.Y" X is a service name, Y is a provider name
+            //
 
             if (!errors) {
                 // Password Field Substitution
@@ -1433,6 +1436,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
 
+            //TODO: validate props for other plugins
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)

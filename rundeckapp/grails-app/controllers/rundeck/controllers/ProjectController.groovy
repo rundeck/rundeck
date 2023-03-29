@@ -1349,6 +1349,8 @@ class ProjectController extends ControllerBase{
         }
         Properties currentProps = project.getProjectProperties() as Properties
 
+        //TODO: validate plugin property values
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
 
         if(!result.success){
@@ -1464,6 +1466,8 @@ class ProjectController extends ControllerBase{
         }else{
             propValueBefore = new Properties([(key_): ''])
         }
+
+        //TODO: validate plugin property values
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
 
