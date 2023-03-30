@@ -2913,7 +2913,7 @@ Since: v23''',
             ]
         ),
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/responses/get/200'
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
         )
     )
     def apiSourceWriteContent() {
@@ -3201,7 +3201,7 @@ Since: v23''',
             )
         ],
         responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/responses/get/200'
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
         )
     )
     def apiSourceGetContent() {
