@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.data.RdPageable
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
