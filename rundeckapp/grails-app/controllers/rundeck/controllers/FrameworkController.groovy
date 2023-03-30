@@ -3250,6 +3250,30 @@ Since: v23''',
 
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
+
+    @Get(uri='/project/{project}/resource/{name}')
+    @Operation(
+        method='GET',
+        summary='Get Node Info',
+        description='''Get a specific resource within a project.
+
+Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
+
+Since: v14''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+        )
+    )
     /**
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
@@ -3283,7 +3307,7 @@ Since: v23''',
         def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
 
-        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(params.project, [AuthConstants.ACTION_READ] as Set, nodes, authContext)
 
         if (!readnodes || readnodes.nodes.size() < 1) {
             return apiService.renderErrorFormat(response, [
