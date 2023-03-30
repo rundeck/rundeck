@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import grails.gorm.dirty.checking.DirtyCheck
 import grails.validation.Validateable
+import org.rundeck.app.data.model.v1.job.JobData
 
 /*
 * NodesQuery.java
@@ -119,6 +120,9 @@ public class BaseNodeFilters implements Validateable{
      */
     public String asExcludeFilter(){
         return filterExclude
+    }
+    static String asFilter(JobData job) {
+        job.nodeConfig.filter ?: asFilter([include:asIncludeMap(job.nodeConfig),exclude:asExcludeMap(job.nodeConfig)])
     }
     public static String asFilter(Map<String,Map<String, String>> filtermap){
         Map<String,String> include= filtermap.include

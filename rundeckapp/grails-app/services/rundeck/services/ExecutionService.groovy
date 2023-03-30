@@ -50,6 +50,7 @@ import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -154,6 +155,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executorService
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecycleComponentService
+
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
 
@@ -1299,6 +1301,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             return false;
         }
+    }
+
+    String readStoragePassword(AuthContext authContext, String storagePath){
+        KeyStorageTree keystore = storageService.storageTreeWithContext(authContext)
+        String password = null
+
+        if(keystore.hasPassword(storagePath)){
+            password = new String(keystore.readPassword(storagePath))
+        }
+
+        return password
     }
 
     /**
@@ -2700,7 +2713,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def defaultoptions=[:]
             options.each {Option opt ->
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
-                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         Map selectedOption = remoteOptions.values.find {it instanceof Map && [true, 'true'].contains(it.selected)}
                         if(selectedOption){
@@ -2843,7 +2856,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if(opt.enforced && !(opt.optionValues || opt.optionValuesPluginType)){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution,
-                            [option: opt.name, extra: [option: optparams]], authContext?.username)
+                            [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         opt.optionValues = remoteOptions.values.collect { optValue ->
                             if (optValue instanceof Map) {
@@ -4265,7 +4278,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.extraMetadataMap)
 
         try {
-            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch(JobLifecycleComponentException e) {
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
             def jobEventStatus = new JobEventStatusImpl(

@@ -141,7 +141,9 @@
                  data-toggle="tooltip"
                  data-placement="bottom"
               >
-                <i class="fas fa-pause-circle fa-lg"></i>
+                <g:link controller="menu" action="executionMode">
+                  <i class="fas fa-pause-circle fa-lg"></i>
+                </g:link>
               </span>
             </li>
 

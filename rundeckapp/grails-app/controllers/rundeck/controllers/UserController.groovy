@@ -47,6 +47,7 @@ import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.commandObjects.RdUserCommandObject
+import rundeck.data.paging.RdPageable
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
