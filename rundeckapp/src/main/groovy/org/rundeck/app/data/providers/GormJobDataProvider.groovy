@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -22,6 +23,7 @@ import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
 import org.rundeck.app.events.LogJobChangeEvent
 import org.rundeck.app.job.component.JobComponentDataImportExport
+import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.data.job.RdJob
@@ -292,7 +294,11 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     SortedSet<JobOption> convertToJobOptions(SortedSet<RdOption> rdOptions) {
         def opts = new TreeSet<JobOption>()
         if(!rdOptions) return opts
+
         opts.addAll(rdOptions.collect {opt ->
+            JobOptionConfigData jobOptionConfigData= new JobOptionConfigData()
+            jobOptionConfigData.addConfig(new JobOptionConfigPluginAttributes(opt.configMap))
+
             JobOptionImpl.builder()
             .name(opt.name)
             .description(opt.description)
@@ -313,7 +319,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
             .optionValuesPluginType(opt.optionValuesPluginType)
             .secureExposed(opt.secureExposed)
             .secureInput(opt.secureInput)
-            .configData(mapper.writeValueAsString(opt.configMap))
+            .configData(jobOptionConfigData)
             .multivalueAllSelected(opt.multivalueAllSelected)
             .multivalued(opt.multivalued)
             .sortValues(opt.sortValues)
