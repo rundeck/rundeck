@@ -39,6 +39,7 @@ import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
@@ -588,6 +589,35 @@ class ProjectController extends ControllerBase{
         g.createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/${projectName}")
     }
 
+    @Get(uri = '/projects')
+    @Operation(
+        method = 'GET',
+        summary = 'List Projects',
+        description = '''List the existing projects on the server.
+
+Authorization required: `read` for project resource
+''',
+        tags = ['project'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''
+*Since API version 26*: add the project `label` to the response
+
+*Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
+`project.properties` file in the file system or in the DB storage.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(type = 'object')),
+                examples = @ExampleObject('''[
+    {
+        "name":"...",
+        "description":"...",
+        "url":"..."
+    }
+]''')
+            )
+        )
+    )
     /**
      * API: /api/11/projects
      */
@@ -674,7 +704,42 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
     }
 
+    @Post(uri = '/projects')
+    @Operation(
+        method = 'POST',
+        summary = 'Create a Project',
+        description = '''Create a new project.
 
+Authorization required: `create` for resource type `project`
+''',
+        tags = ['project'],
+        requestBody = @RequestBody(
+            description='Project Create contains a name, and configuration values',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples=@ExampleObject('''{ "name": "myproject", "config": { "propname":"propvalue" } }''')
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''
+*Since API version 26*: add the project `label` to the response
+
+*Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
+`project.properties` file in the file system or in the DB storage.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "description": "",
+  "name": "NAME",
+  "url": "http://server:4440/api/11/project/NAME",
+  "config": {  }
+}''')
+            )
+        )
+    )
     @RdAuthorizeApplicationType(
         type = AuthConstants.TYPE_PROJECT,
         access = RundeckAccess.General.AUTH_APP_CREATE
