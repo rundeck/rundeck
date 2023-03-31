@@ -354,9 +354,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectConfigure(*_)>>true
         }
-        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
-            1 * featurePresent(Features.PLUGIN_GROUPS) >> pgFeatureEnabled
-        }
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:
         def model = controller.editProject()
 

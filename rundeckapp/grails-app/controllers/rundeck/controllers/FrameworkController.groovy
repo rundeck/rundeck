@@ -1396,16 +1396,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
-            if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-                List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
                 //specific props for typed pluginValues
-                removePrefixes.add("project.plugin.PluginGroup.".toString())
-                removePrefixes.add("project.PluginGroup.".toString())
-                if (params.pluginValues?.PluginGroup?.json) {
-                    def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
-                    if (groupData instanceof Collection) {
-                        for (Object data : groupData) {
-                            if (data instanceof Map
+            removePrefixes.add("project.plugin.PluginGroup.".toString())
+            removePrefixes.add("project.PluginGroup.".toString())
+            if (params.pluginValues?.PluginGroup?.json) {
+                def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                if (groupData instanceof Collection) {
+                    for (Object data : groupData) {
+                        if (data instanceof Map
                                 && data.type instanceof String
                                 && data.config instanceof Map) {
                                 String type = data.get('type')
@@ -1431,7 +1430,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         }
                     }
                 }
-            }
 
             if (!errors) {
 

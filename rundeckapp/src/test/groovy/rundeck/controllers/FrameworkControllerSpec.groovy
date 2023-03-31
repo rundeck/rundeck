@@ -738,7 +738,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService){
-                (pgEnabled ? 1 : 0) * featurePresent(Features.PLUGIN_GROUPS) >> pgEnabled
                 _ * featurePresent(Features.CLEAN_EXECUTIONS_HISTORY,_) >> false
             }
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
