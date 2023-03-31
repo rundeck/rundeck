@@ -329,7 +329,6 @@
     </div>
 
 </g:each>
-<feature:enabled name="pluginGroups">
 <div class="tab-pane form-horizontal" id="tab_pluginGroups">
 
     <div class="form-group">
@@ -353,4 +352,3 @@
         </div>
     </div>
 </div>
-</feature:enabled>

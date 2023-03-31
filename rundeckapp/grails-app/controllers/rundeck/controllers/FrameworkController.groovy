@@ -2159,17 +2159,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         List<Map<String, Object>> pluginGroupConfig = []
-        if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-          final fproject = frameworkService.getFrameworkProject(project)
-          def projectProps = fproject.getProjectProperties()
-            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-            pluginGroupDescs.each {
-                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
-                    Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
-                    pluginGroupPasswordFieldsService
+        final fproject = frameworkService.getFrameworkProject(project)
+        def projectProps = fproject.getProjectProperties()
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+        pluginGroupDescs.each {
+            if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+                pluginGroupPasswordFieldsService
                         .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
-                    pluginGroupConfig.add([type: it.name, config: providerConfig])
-                }
+                pluginGroupConfig.add([type: it.name, config: providerConfig])
             }
         }
         // resourceConfig CRUD rely on this session mapping
