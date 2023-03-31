@@ -161,4 +161,50 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         assertEquals(true, option.errors.hasErrors())
         assertEquals(true, option.errors.hasFieldErrors('name'))
     }
+
+    def "toMap should order valueList if sortValues is true "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                optionType: 'atype',
+                configData: '{"key":"val","key2":"val2"}',
+                enforcedValues:'',
+                sortValues:'true',
+                valuesListDelimiter:'-',
+                valuesList:'3-2-1'
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should be in order"
+        result.sortValues==true
+        result.values[0]=="1"
+        result.values[1]=="2"
+        result.values[2]=="3"
+    }
+
+    def "toMap should keep order in valueList if sortValues is false "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                optionType: 'atype',
+                configData: '{"key":"val","key2":"val2"}',
+                enforcedValues:'',
+                sortValues:'false',
+                valuesListDelimiter:'-',
+                valuesList:'3-2-1'
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should be in order"
+        result.values[0]=="3"
+        result.values[1]=="2"
+        result.values[2]=="1"
+    }
+
 }
