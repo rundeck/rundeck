@@ -1,12 +1,14 @@
 package org.rundeck.app.data.options
 
 import com.dtolabs.rundeck.core.user.BaseUserProfile
+import groovy.util.logging.Log4j2
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.job.option.JobOptionUrlExpander
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
+@Log4j2
 class DefaultJobOptionUrlExpander implements JobOptionUrlExpander {
 
     FrameworkService frameworkService
@@ -42,9 +44,7 @@ class DefaultJobOptionUrlExpander implements JobOptionUrlExpander {
                 'nodename':frameworkService.getFrameworkNodeName(),
                 'serverUUID':frameworkService.serverUUID?:''
         ]
-        def realUrl = opt.realValuesUrl.toExternalForm()
         if(!urlToExpand.matches(/(?i)^https?:.*$/)) {
-        if(!isHttp) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
 
@@ -76,7 +76,7 @@ class DefaultJobOptionUrlExpander implements JobOptionUrlExpander {
                 def optname = group[3].substring(0, group[3].length() - '.value'.length())
                 def value = selectedoptsmap && selectedoptsmap instanceof Map ? selectedoptsmap[optname] : null
                 //find option with name
-                OptionData expopt = job.options.find { it.name == optname }
+                OptionData expopt = job.optionSet.find { it.name == optname }
                 if (value && expopt?.multivalued && (value instanceof Collection || value instanceof String[])) {
                     value = value.join(expopt.delimiter)
                 }
