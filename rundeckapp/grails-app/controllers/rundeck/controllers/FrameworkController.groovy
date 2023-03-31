@@ -32,8 +32,10 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -46,6 +48,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
@@ -3573,6 +3576,303 @@ Since: v14''',
 
     }
 
+    /**
+     * Documentation method for DELETE system acls
+     */
+    @Delete('/system/acl/{path}')
+    @Operation(
+        method = "DELETE",
+        summary = "Delete an ACL Policy.",
+        description = """
+Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = "204",
+                description = "No Content"
+            ),
+
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            )
+
+        ]
+    )
+    protected def apiSystemAcls_DELETE_docs(){}
+
+    /**
+     * Documentation method for PUT system acls
+     */
+    @Put('/system/acl/{path}')
+    @Operation(
+        method = "PUT",
+        summary = "Update an ACL Policy.",
+        description = """
+Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        requestBody = @RequestBody(
+            ref = '#/paths/~1system~1acl~1%7Bpath%7D/post/requestBody'
+        ),
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1system~1acl~1%7Bpath%7D/get/responses/200'
+            ),
+
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "400",
+                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "valid": false,
+  "policies": [
+    {
+      "policy": "file1.aclpolicy[1]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    },
+
+    {
+      "policy": "file1.aclpolicy[2]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    }
+  ]
+}''')
+                )
+            )
+        ]
+    )
+    protected def apiSystemAcls_PUT_docs(){}
+
+
+    /**
+     * Documentation method for POST system acls
+     */
+    @Post('/system/acl/{path}')
+    @Operation(
+        method = "POST",
+        summary = "Create an ACL Policy.",
+        description = """
+Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''If the `Content-Type` is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly.
+
+Otherwise, you can use JSON to wrap the yaml content inside `contents`
+''',
+            content = [
+                @Content(
+                    mediaType = 'application/yaml',
+                    schema=@Schema(type='string'),
+                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                ),
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                )
+            ]
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = "201",
+                description = "Created",
+                content = [
+                    @Content(
+                        mediaType = 'text/plain',
+                        examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                        mediaType = "application/yaml",
+                        examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                        mediaType = "application/json",
+                        examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+                ]
+            ),
+
+            @ApiResponse(
+                responseCode = "409",
+                description = "Conflict. Already exists",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "400",
+                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "valid": false,
+  "policies": [
+    {
+      "policy": "file1.aclpolicy[1]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    },
+
+    {
+      "policy": "file1.aclpolicy[2]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    }
+  ]
+}''')
+                )
+            )
+        ]
+    )
+    protected def apiSystemAcls_POST_docs(){}
+
+    @Get('/system/acl/{path}')
+    @Operation(
+        method = "GET",
+        summary = "Get an ACL Policy.",
+        description = """Retrieve the YAML text of the ACL Policy file.  If YAML or text content is requested, the contents will be returned directly.
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "ACL Policy Document",
+        content = [
+            @Content(
+                mediaType = 'text/plain',
+                examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+            ),
+            @Content(
+                mediaType = "application/yaml",
+                examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+            ),
+            @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+            )
+        ]
+    )
     /**
      * /api/14/system/acl/* endpoint
      */
