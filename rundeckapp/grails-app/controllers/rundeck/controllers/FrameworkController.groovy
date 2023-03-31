@@ -3268,6 +3268,13 @@ Since: v14''',
                 required = true,
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'name',
+                description = 'Node Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
             )
         ],
         responses = @ApiResponse(
