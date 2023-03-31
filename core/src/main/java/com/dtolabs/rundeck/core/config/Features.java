@@ -35,8 +35,7 @@ public enum Features implements FeaturesDefinition{
     EVENT_STORE("eventStore"),
     PLUGIN_SECURITY("pluginSecurity"),
     PROJECT_KEY_STORAGE("projectKeyStorage"),
-    FILE_UPLOAD_PLUGIN("fileUploadPlugin"),
-    PLUGIN_GROUPS("pluginGroups");
+    FILE_UPLOAD_PLUGIN("fileUploadPlugin");
 
     private final String propertyName;
 
