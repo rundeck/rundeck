@@ -4900,10 +4900,94 @@ Authorization required: `delete` for the job.''',
         def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
+    @Post(uri='/project/{project}/run/command')
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Command',
+        description='''Run a command string.
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v14''',
+        tags = ['adhoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exec',
+                description = 'The shell command string to run, e.g. "echo hello".',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'asUser',
+                description = 'specifies a username identifying the user who ran the command. Requires `runAs` permission.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='Request body',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = ApiRunAdhocRequest),
+                examples=@ExampleObject('''
+{
+    "project":"[project]",
+    "exec":"[exec]",
+    "nodeThreadcount": 2,
+    "nodeKeepgoing": true,
+    "asUser": "[asUser]",
+    "filter": "[node filter string]"
+}''')
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''item identifying the new execution by ID.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples=@ExampleObject('''{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": 1,
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
+  }
+}''')
+                )
+            ]
+        )
+    )
     /**
      * API: run simple exec: /api/14/project/PROJECT/run/command
      */
-    def apiRunCommandv14(ApiRunAdhocRequest runAdhocRequest){
+    def apiRunCommandv14(@Parameter(hidden = true) ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
@@ -4952,6 +5036,131 @@ Authorization required: `delete` for the job.''',
     }
 
 
+    @Post(uri='/project/{project}/run/script')
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Script',
+        description='''Run a script.
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v14''',
+        tags = ['adhoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'argString',
+                description = 'Arguments to pass to the script when executed',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'asUser',
+                description = 'specifies a username identifying the user who ran the command. Requires `runAs` permission.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'scriptInterpreter',
+                description = 'a command to use to run the script',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'fileExtension',
+                description = 'extension of the script file on the remote node (since v14)',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'interpreterArgsQuoted',
+                description = 'if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter`',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''The script file content can be submitted either as a form request
+ or multipart attachment with request parameters, or can be a json document.
+
+For Content-Type: `application/x-www-form-urlencoded`
+
+* `scriptFile`: A `x-www-form-urlencoded` request parameter containing the script file content.
+
+For Content-Type: `multipart/form-data`
+
+* `scriptFile`: the script file contents (`scriptFile` being the `name` attribute of the `Content-Disposition` header)''',
+            content=[
+                @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA,
+                    schema=@Schema(type='string')
+                ),
+                @Content(
+                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
+                    schema=@Schema(type='string')
+                ),
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ApiRunAdhocRequest),
+                    examples = @ExampleObject('''
+{
+    "project":"[project]",
+    "script":"[script]",
+    "nodeThreadcount": 1,
+    "nodeKeepgoing": true,
+    "asUser": "[asUser]",
+    "argString": "[argString]",
+    "scriptInterpreter": "[scriptInterpreter]",
+    "interpreterArgsQuoted": true,
+    "fileExtension": "[fileExtension]",
+    "filter": "[node filter string]"
+}''')
+                )
+            ]
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''item identifying the new execution by ID.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples=@ExampleObject('''{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": 1,
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
+  }
+}''')
+                )
+            ]
+        )
+    )
     /**
      * API: run script: /api/14/project/PROJECT/run/script
      */
@@ -5078,6 +5287,120 @@ Authorization required: `delete` for the job.''',
         }
     }
 
+    @Post(uri='/project/{project}/run/url')
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Script URL',
+        description='''Run a script downloaded from a URL.
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v14''',
+        tags = ['adhoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'argString',
+                description = 'Arguments to pass to the script when executed',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'scriptURL',
+                description = 'A URL pointing to a script file',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'asUser',
+                description = 'specifies a username identifying the user who ran the command. Requires `runAs` permission.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'scriptInterpreter',
+                description = 'a command to use to run the script',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'fileExtension',
+                description = 'extension of the script file on the remote node (since v14)',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'interpreterArgsQuoted',
+                description = 'if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter`',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''Adhoc Script URL Request''',
+            content=[
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ApiRunAdhocRequest),
+                    examples = @ExampleObject('''
+{
+    "project":"[project]",
+    "url":"[scriptURL]",
+    "nodeThreadcount": 1,
+    "nodeKeepgoing": true,
+    "asUser": "[asUser]",
+    "argString": "[argString]",
+    "scriptInterpreter": "[scriptInterpreter]",
+    "interpreterArgsQuoted": true,
+    "fileExtension": "[fileExtension]",
+    "filter": "[node filter string]"
+}''')
+                )
+            ]
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''item identifying the new execution by ID.''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples=@ExampleObject('''{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": 1,
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
+  }
+}''')
+                )
+            ]
+        )
+    )
     /**
      * API: run script: /api/14/project/PROJECT/run/url
      */
