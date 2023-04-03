@@ -170,7 +170,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
                 optionType: 'atype',
                 configData: '{"key":"val","key2":"val2"}',
                 enforcedValues:'',
-                sortValues:'true',
+                sortValues:true,
                 valuesListDelimiter:'-',
                 valuesList:'3-2-1'
         )
@@ -193,7 +193,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
                 optionType: 'atype',
                 configData: '{"key":"val","key2":"val2"}',
                 enforcedValues:'',
-                sortValues:'false',
+                sortValues:false,
                 valuesListDelimiter:'-',
                 valuesList:'3-2-1'
         )
@@ -205,6 +205,21 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         result.values[0]=="3"
         result.values[1]=="2"
         result.values[2]=="1"
+    }
+
+    def "option fromMap should have sortValues value"() {
+
+        given:
+        Map map = [enforcedvalues:'true', name:'option1', sortValues:value, required:'true', values:'4,3,1,9,7', valuesListDelimiter:',']
+        String name = "test"
+
+        def opt = Option.fromMap(name,map )
+        opt.sortValues == res
+
+        where:
+        value  | res
+        true   | true
+        false  | null
     }
 
 }
