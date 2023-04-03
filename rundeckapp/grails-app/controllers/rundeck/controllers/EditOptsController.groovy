@@ -742,23 +742,30 @@ class EditOptsController extends ControllerBase{
             params.valuesList = null
             valuesUrl = params.valuesUrl
 
-            if(params.remoteUrlAuthenticationType){
+            if(params.remoteUrlAuthenticationType || params.remoteUrlJsonFilter){
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = new JobOptionConfigRemoteUrl()
-                jobOptionConfigRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(params.remoteUrlAuthenticationType)
 
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC){
-                    jobOptionConfigRemoteUrl.username = params.remoteUrlUsername
-                    jobOptionConfigRemoteUrl.passwordStoragePath = params.remoteUrlPassword
+                if(params.remoteUrlAuthenticationType){
+                    jobOptionConfigRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(params.remoteUrlAuthenticationType)
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC){
+                        jobOptionConfigRemoteUrl.username = params.remoteUrlUsername
+                        jobOptionConfigRemoteUrl.passwordStoragePath = params.remoteUrlPassword
+                    }
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
+                        jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
+                        jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
+                        jobOptionConfigRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(params.remoteUrlApiTokenReporter)
+                    }
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
+                        jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlBearerToken
+                    }
                 }
 
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
-                    jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
-                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
-                    jobOptionConfigRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(params.remoteUrlApiTokenReporter)
-                }
-
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
-                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlBearerToken
+                if(params.remoteUrlJsonFilter){
+                    jobOptionConfigRemoteUrl.jsonFilter = params.remoteUrlJsonFilter
                 }
 
                 JobOptionConfigData jobOptionConfigData = new JobOptionConfigData()

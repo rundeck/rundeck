@@ -4060,6 +4060,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 jobject.keys().each { k ->
                     result << [name: k, value: jobject.get(k)]
                 }
+            } else if (result instanceof Map) {
+                Map map = result
+                result = []
+                map.forEach { key, value ->
+                    result << [name: key, value: value]
+                }
             } else {
                 validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
                 valid = false
