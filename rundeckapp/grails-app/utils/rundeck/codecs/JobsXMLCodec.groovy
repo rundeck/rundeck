@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -211,9 +212,13 @@ class JobsXMLCodec {
                 //if preserveOrder is true, include sortIndex information
                 if (opts && opts instanceof Collection) {
                     opts.each { optm ->
+                        String listDelimiter = Option.DEFAULT_DELIMITER
+                        if(optm.valuesListDelimiter){
+                            listDelimiter=optm.valuesListDelimiter
+                        }
                         map.options[optm.name.toString()] = optm
                         if (optm.values instanceof String) {
-                            optm.values = optm.values.split(",") as List
+                            optm.values = optm.values.split(listDelimiter) as List
                         } else if (optm.values) {
                             optm.values = [optm.values.toString()]
                         }
@@ -541,6 +546,10 @@ class JobsXMLCodec {
             def optslist=[]
             //options are sorted by (sortIndex, name)
             opts.each{x->
+                String listDelimiter = Option.DEFAULT_DELIMITER
+                if(x.valuesListDelimiter){
+                    listDelimiter = x.valuesListDelimiter
+                }
                 x.remove('sortIndex')
                 //add 'name' attribute
                 BuilderUtil.addAttribute(x,'name',x.remove('name'))
@@ -553,7 +562,7 @@ class JobsXMLCodec {
                 }
                 //convert 'values' list to comma-separated attribute value @values
                 if(x.values){
-                    BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))
+                    BuilderUtil.addAttribute(x,'values',x.remove('values').join(listDelimiter))
                 }
                 if(x.sortValues){
                     BuilderUtil.addAttribute(x,'sortValues',x.remove('sortValues'))

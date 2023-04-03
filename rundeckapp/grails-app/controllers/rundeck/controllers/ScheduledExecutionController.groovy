@@ -31,12 +31,12 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
@@ -44,13 +44,13 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
+import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -62,6 +62,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -71,6 +72,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
+import org.rundeck.app.jobs.options.ApiTokenReporter
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -754,7 +758,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
             if (opt.realValuesUrl) {
-                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user)
+                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user, authContext)
                 def model = [optionSelect : optionRemoteValues.optionSelect,
                              values       : optionRemoteValues.values,
                              srcUrl       : optionRemoteValues.srcUrl,
@@ -839,12 +843,12 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    static Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+    static Object getRemoteJSON(HttpClientCreator clientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
-            HttpClient<HttpResponse> client = new ApacheHttpClient()
+            HttpClient<HttpResponse> client = clientCreator.createClient()
             client.setFollowRedirects(true)
             client.setTimeout(timeout*1000)
 
@@ -857,7 +861,32 @@ class ScheduledExecutionController  extends ControllerBase{
                     client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
-                } else {
+                } else if (configRemoteUrl) {
+                    logger.debug("getRemoteJSON using authentication")
+                    URIBuilder uriBuilder = new URIBuilder(cleanUrl)
+
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BASIC){
+                        client.setUri(uriBuilder.build())
+                        logger.debug("Basic authentication with user ${configRemoteUrl.getUsername()}")
+                        client.setBasicAuthCredentials(configRemoteUrl.getUsername(), configRemoteUrl.getPassword())
+                    }
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.API_KEY){
+                        if(configRemoteUrl.getApiTokenReporter()== ApiTokenReporter.HEADER){
+                            logger.debug("API key authentication with Header ${configRemoteUrl.getKeyName()}" )
+                            client.addHeader(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                        }else{
+                            logger.debug("API key authentication with query parameter ${configRemoteUrl.getKeyName()}" )
+                            //add as a query Param
+                            uriBuilder.addParameter(configRemoteUrl.getKeyName(), configRemoteUrl.getToken())
+                        }
+                        client.setUri(uriBuilder.build())
+                    }
+                    if(configRemoteUrl.getAuthenticationType()==RemoteUrlAuthenticationType.BEARER_TOKEN){
+                        logger.debug("Bearer Token Authentication" )
+                        client.addHeader("Authorization", "Bearer ${configRemoteUrl.getToken()}")
+                        client.setUri(uriBuilder.build())
+                    }
+                } else{
                     client.setUri(urlo.toURI())
                 }
             }catch(MalformedURLException e){
@@ -4235,6 +4264,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
 }
 
 class JobXMLException extends Exception{

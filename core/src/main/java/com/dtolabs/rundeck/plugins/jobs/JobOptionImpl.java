@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData;
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 import lombok.Builder;
@@ -41,7 +42,8 @@ public class JobOptionImpl implements JobOption, Comparable {
     @Builder.Default
     private Boolean secureExposed = false;
     private String optionType;
-    private String configData;
+    @Builder.Default
+    private JobOptionConfigData configData;
     @Builder.Default
     private Boolean multivalueAllSelected = false;
     private String optionValuesPluginType;

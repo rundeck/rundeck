@@ -13,4 +13,5 @@ public interface IExecutionLifecycleComponentService {
      * @return handler to process events for the execution, or null
      */
     ExecutionLifecycleComponentHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference);
+
 }

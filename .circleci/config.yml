@@ -402,6 +402,8 @@ jobs:
             twistlock_scan
       - store_artifacts:
           path: ~/repo/twistlock_scan_result.json
+      - store_test_results:
+          path: test-results
 
   test-gradle:
     <<: *defaults

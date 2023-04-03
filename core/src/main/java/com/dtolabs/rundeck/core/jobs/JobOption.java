@@ -1,8 +1,9 @@
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData;
+
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedSet;
 
 /**
@@ -36,7 +37,7 @@ public interface JobOption {
         return false;
     }
 
-    default Boolean getDate() {
+    default Boolean getIsDate() {
         return null;
     }
 
@@ -48,15 +49,11 @@ public interface JobOption {
         return null;
     }
 
-    default URL getValuesUrl() {
+    default URL getRealValuesUrl() {
         return null;
     }
 
     default String getLabel() {
-        return null;
-    }
-
-    default URL getValuesUrlLong() {
         return null;
     }
 
@@ -92,7 +89,7 @@ public interface JobOption {
         return null;
     }
 
-    default String getConfigData() {
+    default JobOptionConfigData getConfigData() {
         return null;
     }
 

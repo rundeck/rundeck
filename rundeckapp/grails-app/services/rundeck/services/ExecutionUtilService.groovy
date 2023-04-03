@@ -36,6 +36,7 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec

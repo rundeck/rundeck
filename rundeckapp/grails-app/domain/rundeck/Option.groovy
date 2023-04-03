@@ -16,13 +16,19 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.app.api.marshall.CollectionElement
+
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
+import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.model.v1.job.option.OptionValueData
+import rundeck.data.validation.shared.SharedJobOptionConstraints
 
 import java.util.regex.Pattern
 
@@ -43,7 +49,7 @@ import java.util.regex.Pattern
  * $Id$
  */
 
-public class Option implements Comparable{
+public class Option implements Comparable, OptionData {
 
     static final String DEFAULT_DELIMITER =','
 
@@ -81,44 +87,48 @@ public class Option implements Comparable{
 
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin','optionValues']
+    static transients = ['realValuesUrl', 'configMap','optionConfigData', 'typeFile', 'valuesFromPlugin', 'optionValues']
 
     static constraints={
-        name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
-        description(nullable:true)
-        defaultValue(nullable:true)
-        defaultStoragePath(nullable:true,matches: '^(/?)keys/.+')
-        enforced(nullable:false)
-        required(nullable:true)
-        isDate(nullable:true)
-        dateFormat(nullable: true, maxSize: 30)
+        importFrom SharedJobOptionConstraints
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
-        regex(nullable:true)
         scheduledExecution(nullable:true)
-        delimiter(nullable:true)
-        multivalued(nullable:true)
-        secureInput(nullable:true)
-        secureExposed(nullable:true)
-        sortIndex(nullable:true)
-        optionType(nullable: true, maxSize: 255)
-        configData(nullable: true)
-        multivalueAllSelected(nullable: true)
-        label(nullable: true)
-        optionValuesPluginType(nullable: true)
-        hidden(nullable: true)
-        valuesList(nullable: true)
-        valuesListDelimiter(nullable: true)
-        sortValues(nullable: true)
     }
 
+    List<OptionValueData> getValuesFromPlugin() {
+        return valuesFromPlugin
+    }
 
     public Map getConfigMap() {
+        JobOptionConfigData optionConfigData = getOptionConfigData()
+        //de-serialize the json
+        if (null != optionConfigData) {
+            JobOptionConfigPluginAttributes pluginAttributes = optionConfigData.getJobOptionEntry(JobOptionConfigPluginAttributes.TYPE)
+            if(pluginAttributes){
+                return  pluginAttributes.toMap()
+            }
+        } else {
+            return null
+        }
+    }
+
+    public void setConfigMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            JobOptionConfigPluginAttributes configPluginAttributes= new JobOptionConfigPluginAttributes(obj)
+            JobOptionConfigData configData = new JobOptionConfigData()
+            configData.addConfig(configPluginAttributes)
+            setOptionConfigData(configData)
+        }
+    }
+
+    public JobOptionConfigData getOptionConfigData() {
         //de-serialize the json
         if (null != configData) {
             final ObjectMapper mapper = new ObjectMapper()
             try {
-                return mapper.readValue(configData, Map.class)
+                return mapper.readValue(configData, JobOptionConfigData.class)
             } catch (JsonParseException e) {
                 return null
             }
@@ -127,7 +137,7 @@ public class Option implements Comparable{
         }
     }
 
-    public void setConfigMap(Map obj) {
+    public void setOptionConfigData(JobOptionConfigData obj) {
         //serialize json and store into field
         if (null != obj) {
             final ObjectMapper mapper = new ObjectMapper()
@@ -190,6 +200,13 @@ public class Option implements Comparable{
         }
         if(getRealValuesUrl()){
             map.valuesUrl=getRealValuesUrl().toExternalForm()
+
+            if(configData){
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
+                if(jobOptionConfigRemoteUrl){
+                    map.configRemoteUrl = jobOptionConfigRemoteUrl.toMap()
+                }
+            }
         }
         if(regex){
             map.regex=regex
@@ -298,6 +315,12 @@ public class Option implements Comparable{
         }
         if(data.hidden){
             opt.hidden = data.hidden
+        }
+        if(data.configRemoteUrl){
+            def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(data.configRemoteUrl)
+            def configData = new JobOptionConfigData()
+            configData.addConfig(configRemoteUrl)
+            opt.setOptionConfigData(configData)
         }
         return opt
     }
@@ -432,6 +455,10 @@ public class Option implements Comparable{
             return valuesFromPlugin.collect{[name:it.name,value:it.value]}
         }
         return null
+    }
+
+    JobOptionConfigRemoteUrl getConfigRemoteUrl(){
+        return this.getOptionConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
     }
 
     public String toString ( ) {
