@@ -49,6 +49,7 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
+    static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
     static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
     WebhookDataProvider webhookDataProvider;\
@@ -96,23 +97,30 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
-    def handleWebhookEventsData(EventQueryType queryType, String project, RdWebhook webhook){
+    def handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
         if( queryType ){
             log.info("Handling webhook events data with action: ${queryType}")
             if( queryType.equals(EventQueryType.DELETE) ){
                 log.info("Query type: ${EventQueryType.DELETE}, deleting all debug data stored in DB")
-                EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
-                        queryType: EventQueryType.DELETE,
-                        projectName: project,
-                        subsystem: "webhooks",
-                        topic: "${TOPIC_DEBUG_EVENTS}:${webhook.uuid}"
-                ))
-                log.info("Returning the number of rows affected in the query: ${queryResult.totalCount}")
-                return queryResult.totalCount
+                Long queryResultForDebug = deleteEvents( TOPIC_DEBUG_EVENTS, webhook)
+                Long queryResultForRecentEvents = deleteEvents( TOPIC_RECENT_EVENTS, webhook)
+                def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
+                log.info("Returning the number of rows affected in the query: ${totalAmountOfRowsAffected}")
+                return totalAmountOfRowsAffected
             }
         }else{
             throw new MissingParameter("Query type is not present or valid.")
         }
+    }
+
+    private def deleteEvents(String eventTopic, RdWebhook webhook) {
+        EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
+                queryType: EventQueryType.DELETE,
+                projectName: webhook.project,
+                subsystem: "webhooks",
+                topic: "${eventTopic}:${webhook.uuid}"
+        ))
+        return queryResult.totalCount;
     }
 
     @PackageScope
@@ -323,7 +331,7 @@ class WebhookService {
         String name = hook.name
         try {
             // Deleting all stored debug data for this particular hook from the DB
-            handleWebhookEventsData(EventQueryType.DELETE, hook.project, hook)
+            handleWebhookEventsData(EventQueryType.DELETE, hook)
             webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]

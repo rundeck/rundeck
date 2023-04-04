@@ -165,7 +165,7 @@ class WebhookController {
         // Cleaning data stored in db
         def model = [:]
         try{
-            def result = webhookService.handleWebhookEventsData(EventQueryType.DELETE, project, clientWebhook)
+            def result = webhookService.handleWebhookEventsData(EventQueryType.DELETE, clientWebhook)
             model = [rowsAffected: result]
         }catch(Exception e){
             log.error("Error while trying to query stored events in DB: ${e.message}")
