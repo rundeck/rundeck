@@ -4,22 +4,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.event.EventQuery
-import com.dtolabs.rundeck.core.event.EventQueryImpl
-import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventQueryType
-import com.dtolabs.rundeck.core.event.EventStoreService
-import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
-import grails.gorm.transactions.Transactional
-import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Propagation
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
