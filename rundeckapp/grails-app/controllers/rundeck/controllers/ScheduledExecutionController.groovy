@@ -945,8 +945,8 @@ class ScheduledExecutionController  extends ControllerBase{
                         if(parseResult.error){
                             results = [error:parseResult.error]
                         }else{
-                            if(parseResult.jsonElement){
-                                stats.contentSHA1=parseResult.jsonElement.encodeAsSHA1()
+                            if(parseResult.string){
+                                stats.contentSHA1=parseResult.string.encodeAsSHA1()
                                 if(stats.contentLength<0){
                                     stats.contentLength= len
                                 }
@@ -997,7 +997,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         String jsonFilter = jobOptionConfigRemoteUrl?.getJsonFilter()
         if(!jsonFilter){
-            return [jsonElement: grails.converters.JSON.parse(payload)]
+            return [jsonElement: grails.converters.JSON.parse(payload), string: payload]
         }
 
         def jpath = JsonPath.using(Configuration.defaultConfiguration())
@@ -1006,7 +1006,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(jsonFilterResult instanceof ArrayList){
                 return [error: "the filter ${jobOptionConfigRemoteUrl.getJsonFilter()} return a list, please use another filter"]
             }
-            return [jsonElement: jsonFilterResult]
+            return [jsonElement: jsonFilterResult, string: jsonFilterResult.toString()]
 
         }catch (Exception e){
             return [error: e.getMessage()]
