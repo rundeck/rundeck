@@ -482,6 +482,13 @@ form.option.valuesType.url.authType.bearerToken.label
                                 />
                             </div>
                         </div>
+                        <div class="col-md-12">
+                            <div class="">
+                                <div class="help-block">
+                                    <g:message code="form.option.valuesType.url.filter.description" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
