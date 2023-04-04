@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.event.EventQuery
+import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
@@ -12,13 +13,18 @@ import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
+import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.annotation.Propagation
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.util.concurrent.TimeUnit
 
 class WebhookController {
     static final String AUTH_HEADER = "Authorization"
@@ -28,7 +34,6 @@ class WebhookController {
     def webhookService
     AuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
-    EventStoreService eventStoreService
     def apiService
 
     def admin() {}
@@ -147,22 +152,24 @@ class WebhookController {
             return
         }
         def project = params.project as String
-        def hookId = params.uuid as String
-        def clientWebhook = webhookService.getWebhookByUuid(hookId)
+        def hookUuid = params.uuid as String
+        def clientWebhook = webhookService.getWebhookByUuid(hookUuid)
         if(!clientWebhook) {
             sendJsonError("Webhook not found")
             return
         }
         if(!clientWebhook.enabled) {
-            sendJsonError("Webhook not enabled",503)
+            sendJsonError("Webhook not enabled", 503)
             return
         }
-        EventQueryResult res = eventStoreService.query(new EvtQuery(
-                queryType: EventQueryType.DELETE,
-                projectName: project,
-                topic: "webhook:events:debug:${hookId}".toString()
-        ))
-        def model = [project: project, hookUuid: hookId]
+        // Cleaning data stored in db
+        def model = [:]
+        try{
+            def result = webhookService.handleWebhookEventsData(EventQueryType.DELETE, project, clientWebhook)
+            model = [rowsAffected: result]
+        }catch(Exception e){
+            log.error("Error while trying to query stored events in DB: ${e.message}")
+        }
         render model as JSON
     }
 

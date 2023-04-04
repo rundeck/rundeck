@@ -5,7 +5,10 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
+import com.dtolabs.rundeck.core.event.EventQueryResult
+import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
+import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
@@ -31,11 +34,14 @@ import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
+import org.rundeck.core.auth.access.MissingParameter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
+import java.util.concurrent.TimeUnit
 
 @Transactional
 class WebhookService {
@@ -43,9 +49,12 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
+    static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
-    WebhookDataProvider webhookDataProvider;
+    WebhookDataProvider webhookDataProvider;\
 
+    @Autowired
+    EventStoreService eventStoreService
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
@@ -85,6 +94,25 @@ class WebhookService {
         WebhookEventContext context = new WebhookEventContextImpl(contextServices)
 
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
+    }
+
+    def handleWebhookEventsData(EventQueryType queryType, String project, RdWebhook webhook){
+        if( queryType ){
+            log.info("Handling webhook events data with action: ${queryType}")
+            if( queryType.equals(EventQueryType.DELETE) ){
+                log.info("Query type: ${EventQueryType.DELETE}, deleting all debug data stored in DB")
+                EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
+                        queryType: EventQueryType.DELETE,
+                        projectName: project,
+                        subsystem: "webhooks",
+                        topic: "${TOPIC_DEBUG_EVENTS}:${webhook.uuid}"
+                ))
+                log.info("Returning the number of rows affected in the query: ${queryResult.totalCount}")
+                return queryResult.totalCount
+            }
+        }else{
+            throw new MissingParameter("Query type is not present or valid.")
+        }
     }
 
     @PackageScope
