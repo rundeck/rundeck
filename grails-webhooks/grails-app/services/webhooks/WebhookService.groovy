@@ -322,6 +322,8 @@ class WebhookService {
         String authToken = hook.authToken
         String name = hook.name
         try {
+            // Deleting all stored debug data for this particular hook from the DB
+            handleWebhookEventsData(EventQueryType.DELETE, hook.project, hook)
             webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
