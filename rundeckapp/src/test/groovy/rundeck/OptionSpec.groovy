@@ -236,16 +236,14 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
 
     def "option fromMap should have sortValues value"() {
 
-        given:
-        Map map = [enforcedvalues:'true', name:'option1', sortValues:value, required:'true', values:'A,C,B,D,E', valuesListDelimiter:',']
+        given: "a map with option data"
+        Map map = [enforcedvalues:'true', name:'option1', sortValues:true, required:'true', values:'A,C,B,D,E', valuesListDelimiter:',']
         String name = "test"
 
+        when:"creating the option"
         def opt = Option.fromMap(name,map )
-        opt.sortValues == res
 
-        where:
-        value  | res
-        true   | true
-        false  | null
+        then:"the option shoul have the value of sortValues"
+        opt.sortValues == true
     }
 }
