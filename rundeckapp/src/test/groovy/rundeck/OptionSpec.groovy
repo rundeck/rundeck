@@ -202,12 +202,8 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         given:"an option"
         def opt = new Option(
                 name: 'bob',
-                optionType: 'atype',
-                configData: '{"key":"val","key2":"val2"}',
-                enforcedValues:'',
-                sortValues:true,
-                valuesListDelimiter:'-',
-                valuesList:'3-2-1'
+                valuesList:'A,C,B',
+                sortValues: true
         )
 
         when:"the options is being converted into a map"
@@ -215,9 +211,9 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
 
         then:"values should be in order"
         result.sortValues==true
-        result.values[0]=="1"
-        result.values[1]=="2"
-        result.values[2]=="3"
+        result.values[0]=="A"
+        result.values[1]=="B"
+        result.values[2]=="C"
     }
 
     def "toMap should keep order in valueList if sortValues is false "() {
@@ -225,27 +221,23 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         given:"an option"
         def opt = new Option(
                 name: 'bob',
-                optionType: 'atype',
-                configData: '{"key":"val","key2":"val2"}',
-                enforcedValues:'',
                 sortValues:false,
-                valuesListDelimiter:'-',
-                valuesList:'3-2-1'
+                valuesList:'A,C,B'
         )
 
         when:"the options is being converted into a map"
         def result = opt.toMap()
 
         then:"values should be in order"
-        result.values[0]=="3"
-        result.values[1]=="2"
-        result.values[2]=="1"
+        result.values[0]=="A"
+        result.values[1]=="C"
+        result.values[2]=="B"
     }
 
     def "option fromMap should have sortValues value"() {
 
         given:
-        Map map = [enforcedvalues:'true', name:'option1', sortValues:value, required:'true', values:'4,3,1,9,7', valuesListDelimiter:',']
+        Map map = [enforcedvalues:'true', name:'option1', sortValues:value, required:'true', values:'A,C,B,D,E', valuesListDelimiter:',']
         String name = "test"
 
         def opt = Option.fromMap(name,map )
