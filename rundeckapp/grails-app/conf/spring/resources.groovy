@@ -418,6 +418,7 @@ beans={
         scheduledExecutionService = ref('scheduledExecutionService')
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
+        rdJobService = ref("rdJobService")
     }
 
     executionValidatorService(ExecutionValidatorService)
