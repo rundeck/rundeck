@@ -15,7 +15,6 @@ import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import java.util.concurrent.TimeUnit
 
 class WebhookController {
     static final String AUTH_HEADER = "Authorization"
