@@ -7,10 +7,10 @@
   <div class="row text-info ">
     <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
       <div class="input-group">
-        <div class="input-group-addon" v-if="staticRoot">
+        <div class="input-group-addon bg-3" v-if="staticRoot">
           <span>{{rootPath}}</span>
         </div>
-        <input type="text" class="form-control" style="padding-left:18px"
+        <input type="text" class="form-control bg-2" style="padding-left:18px;"
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
                :disabled="readOnly"
                placeholder="Enter a path"/>

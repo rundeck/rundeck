@@ -118,7 +118,7 @@
 
   <div slot="footer">
     <div class="text-right">
-      <button type="button" class="btn btn-default" @click="handleCancel">Cancel</button>
+      <button type="button" class="btn btn-default mr-3" @click="handleCancel">Cancel</button>
       <button type="button" class="btn btn-cta" :disabled="validInput()===false"
               @click="handleUploadKey">
         Save
