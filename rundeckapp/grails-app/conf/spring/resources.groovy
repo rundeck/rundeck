@@ -53,7 +53,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
@@ -107,11 +106,16 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
+import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
 import org.rundeck.app.data.providers.GormProjectDataProvider
+import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -770,31 +774,32 @@ beans={
         SpringSecurityUtils.registerLogoutHandler("cookieClearingLogoutHandler")
 
     }
-
+    sessionRegistry(SessionRegistryImpl)
+    concurrentSessionFilter(ConcurrentSessionFilter, sessionRegistry)
+    registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
+    sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
+        migrateSessionAttributes = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.migrate", String.class,'')
+        // true
+        alwaysCreateSession = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession", String.class, '')
+        // false
+    }
+    var authenticationStrategies = [sessionFixationProtectionStrategy, registerSessionAuthenticationStrategy]
     if(grailsApplication.config.getProperty("rundeck.security.enforceMaxSessions", Boolean.class,false)) {
-        sessionRegistry(SessionRegistryImpl)
-        concurrentSessionFilter(ConcurrentSessionFilter, sessionRegistry)
-        registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
-        concurrentSessionControlAuthenticationStrategy(
-                ConcurrentSessionControlAuthenticationStrategy,
-                ref('sessionRegistry')
-        ) {
-            exceptionIfMaximumExceeded = false
-            maximumSessions = grailsApplication.config.getProperty("rundeck.security.maxSessions",Integer.class, 1)
-        }
-        sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
-            migrateSessionAttributes = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.migrate", String.class,'')
-            // true
-            alwaysCreateSession = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession", String.class, '')
-            // false
-        }
-        sessionAuthenticationStrategy(
-                CompositeSessionAuthenticationStrategy,
-                [concurrentSessionControlAuthenticationStrategy, sessionFixationProtectionStrategy, registerSessionAuthenticationStrategy]
-        )
+            concurrentSessionControlAuthenticationStrategy(
+                    ConcurrentSessionControlAuthenticationStrategy,
+                    ref('sessionRegistry')
+            ) {
+                exceptionIfMaximumExceeded = false
+                maximumSessions = grailsApplication.config.getProperty("rundeck.security.maxSessions", Integer.class, 1)
+            }
+            authenticationStrategies.add(0, concurrentSessionControlAuthenticationStrategy)
     }
 
-    //spring security preauth filter configuration
+    sessionAuthenticationStrategy(
+            CompositeSessionAuthenticationStrategy,
+            authenticationStrategies
+    )
+            //spring security preauth filter configuration
     if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)) {
         rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
             configurationService = ref('configurationService')
@@ -880,11 +885,19 @@ beans={
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
 
+    jobOptionUrlExpander(DefaultJobOptionUrlExpander) {
+        frameworkService = ref("frameworkService")
+        userService = ref("userService")
+    }
+    remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
+    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
     projectDataProvider(GormProjectDataProvider)
     storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
+    jobDataProvider(GormJobDataProvider)
 
 }

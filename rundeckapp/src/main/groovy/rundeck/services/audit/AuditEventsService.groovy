@@ -72,6 +72,14 @@ class AuditEventsService
             .addListenerMap(buildACLFileListeners())
     }
 
+    @Subscriber('audit.job.update')
+    void publishJobUpdateEvent(JobUpdateAuditEvent event) {
+        eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setActionType(event.isnew ? ActionTypes.CREATE : ActionTypes.UPDATE)
+                .setResourceName("${event.project}:${event.jobUuid}:${event.fullName}")
+                .publish()
+    }
     /**
      * Returns the cache of listener plugins.
      * Cache is implemented lazily, so if the cache is not initialized, the plugins

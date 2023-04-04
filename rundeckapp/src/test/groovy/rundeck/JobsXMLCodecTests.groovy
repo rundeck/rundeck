@@ -6778,5 +6778,92 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong timeout value","10",doc.job[0].dispatch[0].threadcount.text()
     }
 
+    @Test
+    void "export job to XML respecting value list delimiter"() {
+
+       given:"a job to be exported"
+       def values = "'a;b,c;d'"
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(enforcedvalues:'true', name:'option1', required:'true', valuesList:values, valuesListDelimiter:';')
+                        ] as TreeSet,
+                )
+        ]
+        when:"the job is exported"
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:"job should keep options and delimiter"
+        xmlstr.contains("<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='option1' required='true' values="+values+" valuesListDelimiter=';' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <description>test descrip</description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>test job 1</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <sequence keepgoing='true' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <jobref group='/some/path' name='a Job' />\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "  </job>\n" +
+                "</joblist>")
+    }
+
+    @Test
+    public void "import job from XML respecting value list delimiter "(){
+
+        given:"a job to be imported"
+        def values = "'a;b,c;d'"
+
+        def xml = "<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='option1' required='true' values="+values+" valuesListDelimiter=';' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <description>test descrip</description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>test job 1</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <sequence keepgoing='true' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <jobref group='/some/path' name='a Job' />\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "  </job>\n" +
+                "</joblist>"
+
+        when:"the job is imported"
+        def jobs = JobsXMLCodec.decode(xml)
+
+        then:"job should keep options and delimiter"
+        jobs[0].options[0].valuesList==values
+
+    }
+
+
+
 
 }

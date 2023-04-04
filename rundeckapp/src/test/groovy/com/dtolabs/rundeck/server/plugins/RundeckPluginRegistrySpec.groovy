@@ -6,11 +6,13 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.plugins.*
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
@@ -18,6 +20,7 @@ import com.dtolabs.rundeck.plugins.config.ConfiguredBy
 import com.dtolabs.rundeck.plugins.config.Group
 import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -917,6 +920,103 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             'a:b'   || 'a'
             'asdf'  || null
             'a:b:c' || 'a'
+    }
+
+    def "StreamingLogReader with empty iterator should not fail to return a plugin"() {
+        when:
+        var pdir = File.createTempDir()
+        pdir.deleteOnExit()
+        RundeckPluginRegistry registry = new RundeckPluginRegistry()
+        registry.pluginDirectory = pdir
+        registry.metaClass.findBean = { String beanName -> return new TestStreamingLogReaderPlugin() }
+        registry.pluginRegistryMap = ["StreamingLogReader:mystreamingreader": "mystreamingreader"]
+        def actual = registry.loadBeanDescriptor("mystreamingreader","StreamingLogReader")
+        then:
+        actual
+
+    }
+
+    static class TestStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable {
+
+        @Override
+        boolean isComplete() {
+            return false
+        }
+
+        @Override
+        long getOffset() {
+            return 0
+        }
+
+        @Override
+        void openStream(Long offset) throws IOException {
+
+        }
+
+        @Override
+        long getTotalSize() {
+            return 0
+        }
+
+        @Override
+        Date getLastModified() {
+            return null
+        }
+
+        @Override
+        boolean initialize(Map<String, ?> context) {
+            return false
+        }
+
+        @Override
+        void close() throws IOException {
+
+        }
+
+        @Override
+        boolean hasNext() {
+            return false
+        }
+
+        @Override
+        LogEvent next() {
+            return null
+        }
+
+        @Override
+        Description getDescription() {
+            return new Description() {
+                @Override
+                String getName() {
+                    return null
+                }
+
+                @Override
+                String getTitle() {
+                    return null
+                }
+
+                @Override
+                String getDescription() {
+                    return null
+                }
+
+                @Override
+                List<Property> getProperties() {
+                    return null
+                }
+
+                @Override
+                Map<String, String> getPropertiesMapping() {
+                    return null
+                }
+
+                @Override
+                Map<String, String> getFwkPropertiesMapping() {
+                    return null
+                }
+            }
+        }
     }
 
 

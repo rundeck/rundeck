@@ -484,10 +484,20 @@ function StorageBrowser(baseUrl, rootPath) {
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);
-                if (jqXHR.status == 404) {
-                    self.pathNotFound(val);
-                } else {
-                    self.errorMsg(textStatus + ": " + errorThrown);
+                switch (jqXHR.status){
+                    case 404:
+                        self.pathNotFound(val);
+                        break;
+                    case 500:
+                        if( null !== jqXHR.responseText ){
+                            const responseString = JSON.parse(jqXHR.responseText);
+                            self.errorMsg(responseString.message);
+                        }else{
+                            self.errorMsg(textStatus + ": " + errorThrown);
+                        }
+                        break;
+                    default:
+                        self.errorMsg(textStatus + ": " + errorThrown);
                 }
             }
         });

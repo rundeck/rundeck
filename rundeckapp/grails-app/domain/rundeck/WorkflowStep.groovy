@@ -19,18 +19,19 @@ package rundeck
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.dirty.checking.DirtyCheck
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import rundeck.data.validation.shared.SharedWorkflowStepConstraints
 
 @DirtyCheck
-abstract class WorkflowStep {
+abstract class WorkflowStep implements WorkflowStepData {
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description
     String pluginConfigData
     static belongsTo = [Workflow, WorkflowStep]
     static constraints = {
+        importFrom SharedWorkflowStepConstraints
         errorHandler(nullable: true)
-        keepgoingOnSuccess(nullable: true)
-        description(nullable: true, maxSize: 1024)
         pluginConfigData(nullable: true, blank: true)
     }
     //ignore fake property 'configuration' and do not store it

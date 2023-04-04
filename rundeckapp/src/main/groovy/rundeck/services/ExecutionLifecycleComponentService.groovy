@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecycleComponentService
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
@@ -25,6 +26,8 @@ import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
@@ -36,7 +39,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ApplicationContextAware  {
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware  {
 
     @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
@@ -290,7 +293,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
     @CompileDynamic
-    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
+    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
@@ -349,6 +352,14 @@ class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
     String name
     boolean isPlugin() {
         return component instanceof ExecutionLifecyclePlugin
+    }
+
+    ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+        component.beforeJobStarts(event)
+    }
+
+    ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+        component.afterJobEnds(event)
     }
 
 }
