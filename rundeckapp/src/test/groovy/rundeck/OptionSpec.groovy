@@ -228,7 +228,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         when:"the options is being converted into a map"
         def result = opt.toMap()
 
-        then:"values should be in order"
+        then:"values should keep original order"
         result.values[0]=="A"
         result.values[1]=="C"
         result.values[2]=="B"
@@ -243,7 +243,7 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         when:"creating the option"
         def opt = Option.fromMap(name,map )
 
-        then:"the option shoul have the value of sortValues"
+        then:"the option should have the value of sortValues"
         opt.sortValues == true
     }
 }
