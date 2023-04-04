@@ -92,7 +92,7 @@ dependencies {
     implementation 'org.grails.plugins:quartz:2.0.13'
     implementation 'org.grails.plugins:mail:3.0.0'
 
-    implementation 'org.springframework.cloud:spring-cloud-context:3.1.5'
+    implementation 'org.springframework.cloud:spring-cloud-context:3.1.6'
 
     //enable greenmail plugin below for testing email behavior
     // https://github.com/gpc/greenmail
