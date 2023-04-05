@@ -5619,8 +5619,7 @@ return.''',
      * API: /api/job/{id}/executions , version 1
      */
     private def apiJobExecutionsResult(boolean apiRequest) {
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-
+        JobData scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
