@@ -466,7 +466,7 @@ form.option.valuesType.url.authType.bearerToken.label
                         </a>
                     </div>
 
-                    <div class="row">
+                    <div class="row" class="${hasErrors(bean: option, field: 'configRemoteUrl', 'has-error')}">
                         <div class="col-md-12">
                             <label class="control-label"><g:message code="form.option.valuesType.url.filter.label" /></label>
                         </div>

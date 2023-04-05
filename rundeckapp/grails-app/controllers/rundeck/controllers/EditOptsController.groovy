@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
+import com.jayway.jsonpath.JsonPath
 import org.apache.http.HttpResponse
 import org.rundeck.util.HttpClientCreator
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -722,6 +723,13 @@ class EditOptsController extends ControllerBase{
                 }
             }
             if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
+        }
+        if(opt.realValuesUrl && opt.getConfigRemoteUrl()?.getJsonFilter()){
+            try{
+                JsonPath.compile(opt.getConfigRemoteUrl()?.getJsonFilter())
+            } catch (Exception e){
+                opt.errors.rejectValue('configRemoteUrl', 'form.option.valuesType.url.filter.error.label')
+            }
         }
         return result
     }
