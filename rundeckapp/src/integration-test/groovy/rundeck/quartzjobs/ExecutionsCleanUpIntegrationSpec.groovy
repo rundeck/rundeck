@@ -174,7 +174,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
     private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
         Execution e
-        Execution.withNewTransaction {
+        Execution.withTransaction {
             e = new Execution(
                     project: projName,
                     user: 'bob',
@@ -202,7 +202,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
 
     private ScheduledExecution setupJob(String projName, Closure extra=null) {
-        ScheduledExecution.withNewTransaction {
+        ScheduledExecution.withTransaction {
             ScheduledExecution se = new ScheduledExecution(
                     jobName: 'blue',
                     project: projName,
