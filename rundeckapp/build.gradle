@@ -181,6 +181,8 @@ dependencies {
         exclude group:"org.slf4j",module:"slf4j-api"
         exclude group:'org.ow2.asm', module: 'asm'
     }
+
+    implementation ("net.minidev:json-smart:2.4.10")
     
     // OpenApi Dependencies
     compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
