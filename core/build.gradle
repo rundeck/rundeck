@@ -76,7 +76,7 @@ dependencies {
         'commons-lang:commons-lang:2.6',
         'jaxen:jaxen:1.2.0',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.10.13',
+        'org.apache.ant:ant-jsch:1.9.16',
         'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
