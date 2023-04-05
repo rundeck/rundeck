@@ -34,10 +34,6 @@
     <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.js"/>
-    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-        <asset:javascript src="menu/joboptionsTest.js"/>
-        <asset:javascript src="menu/job-remote-optionsTest.js"/>
-    </g:if>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
     <g:embedJSON data="${jobListIds ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
