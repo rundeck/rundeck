@@ -68,7 +68,7 @@ dependencies {
         exclude group: 'pull-parser'
     }
 
-    api 'org.apache.ant:ant:1.10.12',
+    api 'org.apache.ant:ant:1.10.13',
         'org.slf4j:slf4j-api:1.7.32',
         'commons-codec:commons-codec:1.15',
         'commons-beanutils:commons-beanutils:1.9.4',
@@ -76,7 +76,7 @@ dependencies {
         'commons-lang:commons-lang:2.6',
         'jaxen:jaxen:1.2.0',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.9.15',
+        'org.apache.ant:ant-jsch:1.10.13',
         'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
@@ -96,7 +96,7 @@ dependencies {
       exclude group:'org.apache.httpcomponents', module: 'httpcore'
     }
 
-    implementation ("org.apache.httpcomponents:httpcore:4.4.15")
+    implementation ("org.apache.httpcomponents:httpcore:4.4.16")
 
     compileOnly "org.projectlombok:lombok:1.18.20"
     annotationProcessor "org.projectlombok:lombok:1.18.20"
