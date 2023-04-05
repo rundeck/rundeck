@@ -176,6 +176,11 @@ dependencies {
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
     }
+
+    implementation ("com.jayway.jsonpath:json-path:2.8.0"){
+        exclude group:"org.slf4j",module:"slf4j-api"
+        exclude group:'org.ow2.asm', module: 'asm'
+    }
     
     // OpenApi Dependencies
     compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
