@@ -466,6 +466,31 @@ form.option.valuesType.url.authType.bearerToken.label
                         </a>
                     </div>
 
+                    <div class="row" class="${hasErrors(bean: option, field: 'configRemoteUrl', 'has-error')}">
+                        <div class="col-md-12">
+                            <label class="control-label"><g:message code="form.option.valuesType.url.filter.label" /></label>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="">
+                                <g:textField type="text"
+                                             class=" form-control"
+                                             name="remoteUrlJsonFilter"
+                                             value="${option?.configRemoteUrl?.jsonFilter}"
+                                             size="30"
+                                             id="vurl_json_filter_${rkey}"
+                                />
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="">
+                                <div class="help-block">
+                                    <g:message code="form.option.valuesType.url.filter.description" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-12">
                             <label class="control-label"><g:message code="form.option.valuesType.url.authType.label" /></label>

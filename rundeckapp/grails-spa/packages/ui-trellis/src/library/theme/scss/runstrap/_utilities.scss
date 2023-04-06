@@ -131,6 +131,9 @@
 .mr-2{
   margin-right: 0.5rem;
 }
+.mr-3 {
+  margin-right: 0.8rem;
+}
 .pr-2{
   padding-right: 0.5rem;
 }
@@ -239,4 +242,14 @@
 }
 .items-center{
     align-items: center;
+}
+
+.bg-1{
+  background-color: var(--background-color);
+}
+.bg-2{
+  background-color: var(--background-color-lvl2);
+}
+.bg-3 {
+  background-color: var(--background-color-lvl3);
 }

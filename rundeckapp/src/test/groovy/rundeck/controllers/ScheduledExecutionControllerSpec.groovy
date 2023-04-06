@@ -4133,6 +4133,179 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     }
 
 
+    def "test remote url filter"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.key2"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.json == ["sub-key3":"value3", "sub-key4":"value4"]
+
+    }
+
+    def "test remote url filter, filter not found"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.test"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.error != null
+        result.error == "No results for path: \$['test']"
+
+    }
+
+    def "test remote url filter, filter is empty"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, null, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.json == [key1:"value1", key2:["sub-key4":"value4", "sub-key3":"value3"]]
+
+    }
+
+    def "test remote url filter, filter return a list"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$..*"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.error == "the filter \$..* return a list, please use another filter"
+
+    }
 
 
 }

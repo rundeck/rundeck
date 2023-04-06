@@ -38,6 +38,8 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
@@ -927,6 +929,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
      */
     static Object getRemoteJSON(HttpClientCreator clientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
@@ -1019,16 +1022,21 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                         stream.close()
                         writer.flush()
                         final string = writer.toString()
-                        def json=grails.converters.JSON.parse(string)
-                        if(string){
-                            stats.contentSHA1=string.encodeAsSHA1()
-                            if(stats.contentLength<0){
-                                stats.contentLength= len
-                            }
+                        def parseResult=remoteUrlParse(string, configRemoteUrl)
+
+                        if(parseResult.error){
+                            results = [error:parseResult.error]
                         }else{
-                            stats.contentSHA1=""
+                            if(parseResult.string){
+                                stats.contentSHA1=parseResult.string.encodeAsSHA1()
+                                if(stats.contentLength<0){
+                                    stats.contentLength= len
+                                }
+                            }else{
+                                stats.contentSHA1=""
+                            }
+                            results = [json:parseResult.jsonElement,stats:stats]
                         }
-                        results = [json:json,stats:stats]
                     }else{
                         results = [error:"Unexpected content type received: "+resultType,stats:stats]
                     }
@@ -1064,6 +1072,28 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
+    }
+
+
+    static Map<String, Object> remoteUrlParse(String payload, JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl){
+
+        String jsonFilter = jobOptionConfigRemoteUrl?.getJsonFilter()
+        if(!jsonFilter){
+            return [jsonElement: grails.converters.JSON.parse(payload), string: payload]
+        }
+
+        def jpath = JsonPath.using(Configuration.defaultConfiguration())
+        try {
+            def jsonFilterResult = jpath.parse(payload).read(jobOptionConfigRemoteUrl.getJsonFilter())
+            if(jsonFilterResult instanceof ArrayList){
+                return [error: "the filter ${jobOptionConfigRemoteUrl.getJsonFilter()} return a list, please use another filter"]
+            }
+            return [jsonElement: jsonFilterResult, string: jsonFilterResult.toString()]
+
+        }catch (Exception e){
+            return [error: e.getMessage()]
+        }
+
     }
 
     static int copyToWriter(Reader read, Writer writer){
