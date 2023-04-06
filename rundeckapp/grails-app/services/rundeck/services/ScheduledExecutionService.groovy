@@ -48,6 +48,7 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
@@ -1955,7 +1956,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def _doUpdateExecutionFlags(params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to updateExecutionFlags: " + params.id + ". params: " + params)
 
-        JobData scheduledExecution = getByIDorUUID(params.id)
+        def scheduledExecution = getByIDorUUID(params.id)
         if (!scheduledExecution) {
             return [success: false]
         }
@@ -2036,14 +2037,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.properties.executionEnabled = params.executionEnabled
         }
 
-        if (!scheduledExecution.validate()) {
-            return [success: false]
-        }
-
-        if (rdJobService.saveJob(scheduledExecution)) {
-            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup, true)
+        try {
+            rdJobService.saveJob(ScheduledExecutionToJobConverter.convert(scheduledExecution))
             return [success: true, scheduledExecution: scheduledExecution]
-        } else {
+        } catch(Exception ex) {
             if(scheduledExecution instanceof ScheduledExecution) scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }

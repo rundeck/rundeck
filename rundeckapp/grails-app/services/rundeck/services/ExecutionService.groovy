@@ -2562,6 +2562,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.nodeThreadcount = props.nodeThreadcountDynamic.toInteger()
         }
 
+        if(props.loglevel) execution.loglevel = props.loglevel
         execution.doNodedispatch=props.doNodedispatch?"true" == props.doNodedispatch.toString():false
         execution.filter= props.filter
         if(props.filterExclude&&!props.filterExclude.isEmpty()) execution.filterExclude= props.filterExclude
@@ -3701,7 +3702,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             childNodes = jitem.childNodes
         }
 
-        //ScheduledExecution.withTransaction {
+        Execution.withTransaction {
             if(!useName && uuid){
                 //schedlist = ScheduledExecution.findAllScheduledExecutions(uuid)
                 se = rdJobService.getJobByUuid(uuid)
@@ -3809,13 +3810,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 timeout = Sizes.parseTimeDuration(timeouttmp)
             }
-        //}
+        }
 
-//        if (null != result) {
-//            return result
-//        }
+        if (null != result) {
+            return result
+        }
 
-        //ScheduledExecution.withTransaction {
+        Execution.withTransaction {
             exec = Execution.get(execid as Long)
             executionReference = exec.asReference()
             refId = saveRefExecution(EXECUTION_RUNNING, null, se.uuid, exec.id)
@@ -3827,7 +3828,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
             }
-        //}
+        }
 
         long startTime = System.currentTimeMillis()
         def wresult = metricService.withTimer(this.class.name, 'runJobReference') {
@@ -3852,12 +3853,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!exec.abortedby){
                 thread.start()
                 if (!jitem.ignoreNotifications) {
-                    //ScheduledExecution.withTransaction {
+                    Execution.withTransaction {
                         // Get a new object attached to the new session
-                        //def scheduledExecution = ScheduledExecution.get(id)
                         notificationService.asyncTriggerJobNotification('start', se.uuid,
                                 [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
-                    //}
+                    }
 
                 }
             }
@@ -3872,7 +3872,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = createSuccess()
         }
 
-        //ScheduledExecution.withTransaction {
+        Execution.withTransaction {
             def duration = System.currentTimeMillis() - startTime
 
             if (wresult.result) {
@@ -3916,7 +3916,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ])
                 }
 
-                //def scheduledExecution = ScheduledExecution.get(id)
                 notificationService.asyncTriggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
                         uuid,
@@ -3932,7 +3931,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             result.sourceResult = wresult.result
 
-        //}
+        }
 
         return result
     }

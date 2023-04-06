@@ -11,7 +11,7 @@ class WorkflowStepDataUtil {
         if(!step.configuration.jobref.useName && step.configuration.jobref.uuid){
             return step.configuration.jobref.uuid
         }
-        return (null==step.configuration.jobref.jobGroup?'':step.configuration.jobref.jobGroup+"/")+step.configuration.jobref.jobName;
+        return (null==step.configuration.jobref.group?'':step.configuration.jobref.group+"/")+step.configuration.jobref.name;
     }
 
     static List<Map<String,Object>> getPluginConfigListForType(WorkflowStepData step, String pluginType) {
