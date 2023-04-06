@@ -1,10 +1,10 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.sql.JoinType
+import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
 
-class ReferencedExecution {
+class ReferencedExecution implements RdReferencedExecution{
     ScheduledExecution scheduledExecution
     String status
     Execution execution

@@ -22,6 +22,7 @@ import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
@@ -91,7 +92,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 getJobDataMap() >> datamap
             }
         }
-
+        job.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         when:
         job.execute(context)
 

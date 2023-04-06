@@ -21,18 +21,20 @@
    $Id$
 --%>
 
-<%@ page import="rundeck.Execution" contentType="text/html" %>
+<%@ page import="org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider; rundeck.Execution" %>
 <%@ page import="rundeck.ReferencedExecution" %>
+<%@ page import="rundeck." %>
 
 <%
     request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
 %>
 
+<g:set var="referencedExecutionDataProvider" bean="${org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider}"/>
 <g:set var="execCount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="successcount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
-<g:set var="refsuccesscount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
+<g:set var="refsuccesscount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByScheduledExecutionAndStatus(scheduledExecution.id, 'succeeded') : 0}"/>
 
-<g:set var="refexecCount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
+<g:set var="refexecCount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByScheduledExecution(scheduledExecution.id) : 0}"/>
 
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 

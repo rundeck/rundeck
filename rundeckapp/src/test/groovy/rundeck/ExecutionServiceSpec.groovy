@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -92,7 +93,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
+        GormReferencedExecutionDataProvider referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         service.userDataProvider = provider
+        service.referencedExecutionDataProvider = referencedExecutionDataProvider
     }
 
     private Map createJobParams(Map overrides = [:]) {

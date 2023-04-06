@@ -6,17 +6,18 @@ import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.ExecReport
 import rundeck.Execution
-import rundeck.ReferencedExecution
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
 class ExecutionsCleanUp implements InterruptableJob {
     static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
     boolean wasInterrupted
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     void interrupt() throws UnableToInterruptJobException {
         wasInterrupted = true
@@ -87,9 +88,8 @@ class ExecutionsCleanUp implements InterruptableJob {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
 
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
+
             //delete all reports
             ExecReport.findAllByExecutionId(e.id).each { rpt ->
                 rpt.delete()

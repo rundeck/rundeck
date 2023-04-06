@@ -75,6 +75,7 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -158,6 +159,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1918,9 +1920,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
                 //delete all reports
             ExecReport.findAllByExecutionId(e.id).each { rpt ->
                 rpt.delete()
@@ -3954,17 +3954,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
-            if(refId){
-                ReferencedExecution refExec = ReferencedExecution.findById(refId)
-                refExec.status = status
-                refExec.save(flush:true)
-            }else{
-                ScheduledExecution se = ScheduledExecution.findById(seId)
-                Execution exec = Execution.findById(execId)
-                ReferencedExecution refExec = new ReferencedExecution(
-                        scheduledExecution: se, execution: exec, status: status).save(flush:true)
-                return refExec.id
-            }
+        return referencedExecutionDataProvider.updateOrCreateReference(refId, seId, execId, status)
     }
     /**
      * Query for executions for the specified job

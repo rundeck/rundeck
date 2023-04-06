@@ -32,6 +32,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
@@ -1936,6 +1937,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 1 * authorizeProjectJobAny(_,se,['read', 'view'],'project1')>>true
                 0 * _(*_)
             }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
