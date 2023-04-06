@@ -2452,6 +2452,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution.workflow = ScheduledExecutionFromRdJobUpdater.updateWorkflow(workflow, job.workflow)
         } else if(job instanceof ScheduledExecution) {
             execution.workflow = new Workflow(job.workflow)
+            execution.scheduledExecution = job
         }
 
         if(job.orchestrator) execution.orchestrator = ScheduledExecutionFromRdJobUpdater.updateOrchestrator(new Orchestrator(), job.orchestrator)
