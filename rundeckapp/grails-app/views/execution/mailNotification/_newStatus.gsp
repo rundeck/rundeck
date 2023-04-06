@@ -23,7 +23,6 @@
 
 <%@ page import="org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider; rundeck.Execution" %>
 <%@ page import="rundeck.ReferencedExecution" %>
-<%@ page import="rundeck." %>
 
 <%
     request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
