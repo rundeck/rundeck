@@ -115,6 +115,7 @@ import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
+import org.rundeck.app.data.options.DefaultRemoteOptionValueLoader
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
@@ -909,7 +910,19 @@ beans={
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
     workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
     jobFileRecordValidator(AdaptingJobFileRecordValidator)
-    executionOptionProcessor(ExecutionOptionProcessor)
+    remoteOptionValueLoader(DefaultRemoteOptionValueLoader) {
+        remoteJsonOptionRetriever = ref('remoteJsonOptionRetriever')
+        jobOptionUrlExpander = ref('jobOptionUrlExpander')
+        configurationService = ref('configurationService')
+        frameworkService = ref('frameworkService')
+    }
+    executionOptionProcessor(ExecutionOptionProcessor) {
+        messageSource = ref('messageSource')
+        remoteOptionValueLoader = ref('remoteOptionValueLoader')
+        jobFileRecordValidator = ref('jobFileRecordValidator')
+        storageAccessChecks = ref('executionService')
+        storageService = ref('storageService')
+    }
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
