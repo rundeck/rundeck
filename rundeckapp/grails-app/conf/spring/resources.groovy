@@ -108,6 +108,7 @@ import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
+import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
@@ -899,5 +900,6 @@ beans={
     userDataProvider(GormUserDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
+    pluginMetaDataProvider(GormPluginMetaDataProvider)
 
 }
