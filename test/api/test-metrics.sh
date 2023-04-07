@@ -43,6 +43,9 @@ test_metrics_metrics(){
     assert_json_value '8' '.meters | length'  "${file}"
     assert_json_value '26' '.timers | length'  "${file}"
 
+    echo "metrics file"
+    cat "${file}"
+
     test_succeed
 
     rm "${file}"

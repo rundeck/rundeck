@@ -3909,7 +3909,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def scheduledExecution = ScheduledExecution.get(id)
 
                 if (averageDuration > 0 && duration > averageDuration) {
-                    avgDurationExceeded(scheduledExecution.uuid, [
+                    avgDurationExceeded(uuid, [
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
