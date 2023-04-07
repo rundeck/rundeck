@@ -813,10 +813,51 @@ Since: v15''',
 
         redirect(action: 'index', params: [project: project])
     }
+
+    @Get(uri='/project/{project}/scm/{integration}/status')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Status',
+        description = ''' Get the SCM plugin status and available actions for the project.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Status''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmProjectStatus)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '404', description = 'Not Found, plugin is not configured'
+            )
+        ]
+    )
     /**
      * /api/15/project/$project/scm/$integration/status
      */
-    def apiProjectStatus(ScmIntegrationRequest apiProjStatusIntRequest) {
+    def apiProjectStatus(@Parameter(hidden=true) ScmIntegrationRequest apiProjStatusIntRequest) {
         if (!validateCommandInput(apiProjStatusIntRequest)) {
             return
         }
