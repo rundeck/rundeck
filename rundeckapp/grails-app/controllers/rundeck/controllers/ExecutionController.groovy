@@ -2760,7 +2760,7 @@ Note: the JSON schema also supports a basic JSON array
                 @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(oneOf = [
-                        DeleteBulkRequest, DeleteBulkRequestLong
+                        DeleteBulkRequest, DeleteBulkRequestLong, List
                     ]),
                     examples = [
                         @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
