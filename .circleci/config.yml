@@ -417,6 +417,31 @@ jobs:
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
+  test-openapi:
+    <<: *defaults
+    executor: gradle-docker
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - attach_workspace:
+          at: artifacts
+      - run:
+          name: Extract OpenAPI spec
+          command: |
+            mkdir -p openapi
+            find artifacts -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
+            mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
+      - run:
+          name: Redocly OpenAPI Linting
+          command: |
+            docker run --rm \
+              -v $PWD/openapi:/spec \
+              redocly/cli lint \
+              rundeck-api.yml \
+              --skip-rule=operation-4xx-response \
+              --skip-rule=no-invalid-media-type-examples
+
   test-docker:
     <<: *defaults
     executor: gradle-docker
@@ -673,6 +698,13 @@ workflows:
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-openapi:
+          <<: *filter-no-tags
+          name: OpenAPI Spec Validation
           requires: *stage-build
           context:
             - slack-secrets
