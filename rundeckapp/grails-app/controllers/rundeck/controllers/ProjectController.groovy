@@ -1705,12 +1705,6 @@ Authorization required: `configure` access for `project` resource type or `admin
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = MediaType.APPLICATION_XML,
-                                    examples = [
-                                            @ExampleObject('''<contents>The readme contents</contents>''')
-                                    ]
-                            ),
-                            @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     examples = [
                                             @ExampleObject('''{"contents":"The readme contents"}''')
@@ -2042,19 +2036,6 @@ Authorization required: `configure` access for `project` resource type or `admin
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                mediaType = MediaType.APPLICATION_XML,
-                                examples = [
-                                        @ExampleObject(
-                                                name = 'Set project config',
-                                                summary = "Replace all project config settings",
-                                                value = '''<config>
-    <property key="key" value="value"/>
-    <!-- ... -->
-</config>'''
-                                        )
-                                ]
-                            ),
-                            @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     examples = [
                                             @ExampleObject(
@@ -2098,16 +2079,6 @@ key2=value'''
             responseCode = "200",
             description = "Project details",
             content = [
-                    @Content(
-                            mediaType = MediaType.APPLICATION_XML,
-                            examples = [
-                                    @ExampleObject('''<config>
-    <property key="key" value="value"/>
-    <!-- ... -->
-</config>'''
-                                    )
-                            ]
-                    ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             examples = [
@@ -2319,16 +2290,6 @@ Authorization required: `configure` access for `project` resource type or `admin
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = MediaType.APPLICATION_XML,
-                                    examples = [
-                                            @ExampleObject(
-                                                    name = 'Set project config',
-                                                    summary = "Replace an individual config settings",
-                                                    value = '''<property key="[KEY]" value="key value"/>'''
-                                            )
-                                    ]
-                            ),
-                            @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     examples = [
                                             @ExampleObject(
@@ -2378,13 +2339,6 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "200",
             description = "Project details",
             content = [
-                    @Content(
-                            mediaType = MediaType.APPLICATION_XML,
-                            examples = [
-                                    @ExampleObject('''<property key="[KEY]" value="key value"/>'''
-                                    )
-                            ]
-                    ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             examples = [
@@ -2744,12 +2698,6 @@ Requires `export` authorization for the project resource.""",
             description = "Returns the Token to retrieve export status and download zip achive",
             content = [
                     @Content(
-                            mediaType = MediaType.APPLICATION_XML,
-                            examples = [
-                                    @ExampleObject('''<projectExport token="[TOKEN]" ready="true/false" precentage="#"></projectExport>''')
-                            ]
-                    ),
-                    @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             examples = [
                                     @ExampleObject('''{
@@ -2810,12 +2758,6 @@ Since: v19""",
             responseCode = "200",
             description = "Returns the Token to retrieve export status and download zip achive",
             content = [
-                    @Content(
-                            mediaType = MediaType.APPLICATION_XML,
-                            examples = [
-                                    @ExampleObject('''<projectExport token="[TOKEN]" ready="true/false" precentage="#"></projectExport>''')
-                            ]
-                    ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             examples = [

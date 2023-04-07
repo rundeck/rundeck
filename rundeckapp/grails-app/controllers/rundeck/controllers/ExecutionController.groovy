@@ -1158,24 +1158,6 @@ The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and 
 this Log Entry.""")
             ),
             @Content(
-                mediaType = 'application/xml',
-                schema = @Schema(type = "object"),
-                examples = @ExampleObject(
-                    value="""<output>
-  <id>1</id>
-  <!-- ... snip ... -->
-  <compacted>true</compacted>
-  <entries>
-    <entry time='17:00:00' absolute_time='1970-01-02T01:00:00Z' log='This is the first log message' level='NORMAL' user="bob" node="anode1" stepctx="1"/>
-    <entry log='This is the second log message' />
-    <entry />
-    <entry log='This is the fourth log message' level='DEBUG' stepctx='2' />
-    <entry log='This is the fifth log message' removed='node,stepctx' />
-  </entries>
-</output>""",
-                    description="Compacted form xml output representing the same log entries as the JSON example.")
-            ),
-            @Content(
                 mediaType = MediaType.TEXT_PLAIN,
                 schema = @Schema(type = "string", description="Textual log output"),
                 examples = @ExampleObject(
