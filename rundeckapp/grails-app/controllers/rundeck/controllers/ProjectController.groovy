@@ -2058,7 +2058,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                     mediaType = MediaType.APPLICATION_JSON,
                                     examples = [
                                             @ExampleObject(
-                                                    name = 'Set project config',
+                                                    name = 'set-project-config',
                                                     summary = "Replace all project config settings",
                                                     value = '''{
     "key":"value",
@@ -2071,7 +2071,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                     mediaType = MediaType.TEXT_PLAIN,
                                     examples = [
                                             @ExampleObject(
-                                                    name = 'Set project config',
+                                                    name = 'set-project-config',
                                                     summary = "Replace all project config settings",
                                                     value = '''key=value
 key2=value'''
@@ -2332,7 +2332,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                     mediaType = MediaType.APPLICATION_JSON,
                                     examples = [
                                             @ExampleObject(
-                                                    name = 'Set project config',
+                                                    name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
                                                     value = '''{ "[KEY]" : "key value" }'''
                                             )
@@ -2342,7 +2342,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                     mediaType = MediaType.TEXT_PLAIN,
                                     examples = [
                                             @ExampleObject(
-                                                    name = 'Set project config',
+                                                    name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
                                                     value = '''key value'''
                                             )
@@ -3021,8 +3021,8 @@ Note: `other_errors` included since API v35""",
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             examples = [
-                                    @ExampleObject(name = 'successful result', description = 'All imported jobs and files were successful' , value = '''{"import_status":"successful"}'''),
-                                    @ExampleObject(name = 'status failed result', description = 'Some imported files failed' , value = '''{
+                                    @ExampleObject(name = 'successful-result', description = 'All imported jobs and files were successful' , value = '''{"import_status":"successful"}'''),
+                                    @ExampleObject(name = 'status-failed-result', description = 'Some imported files failed' , value = '''{
     "import_status":"failed",
     "errors": [
         "Job ABC could not be validated: ...",

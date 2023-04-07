@@ -138,8 +138,8 @@ The request must contain a `value` with a "Time duration expression". (See reque
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 examples = [
-                    @ExampleObject(name="Enable Schedule",value='{"type":"schedule","value":"2h30m"}'),
-                    @ExampleObject(name="Enable Executions",value='{"type":"executions","value":"1d"}')
+                    @ExampleObject(name="Enable-Schedule",value='{"type":"schedule","value":"2h30m"}'),
+                    @ExampleObject(name="Enable-Executions",value='{"type":"executions","value":"1d"}')
                 ],
                 schema = @Schema(implementation = ProjectModeLaterRequest)
             )
@@ -274,8 +274,8 @@ The request must contain a `value` with a "Time duration expression". (See reque
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 examples = [
-                    @ExampleObject(name="Disable Schedule",value='{"type":"schedule","value":"2h30m"}'),
-                    @ExampleObject(name="Disable Executions",value='{"type":"executions","value":"1d"}')
+                    @ExampleObject(name="Disable-Schedule",value='{"type":"schedule","value":"2h30m"}'),
+                    @ExampleObject(name="Disable-Executions",value='{"type":"executions","value":"1d"}')
                 ],
                 schema = @Schema(implementation = ProjectModeLaterRequest)
             )

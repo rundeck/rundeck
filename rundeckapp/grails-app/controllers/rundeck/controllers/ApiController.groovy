@@ -576,7 +576,7 @@ Since: v11
                 schema = @Schema(oneOf = [CreateToken, CreateTokenStringRoles]),
                 examples = [
                     @ExampleObject(
-                        name='list of roles',
+                        name='list-of-roles',
                         summary = "Using a list of roles",
                         value = '''{
                                   "user": "alice",
@@ -589,7 +589,7 @@ Since: v11
                                 }'''
                     ),
                     @ExampleObject(
-                        name = 'string roles',
+                        name = 'string-roles',
                         summary = "Using a comma-separated string for roles",
                         value = '''{
                               "user": "alice",
