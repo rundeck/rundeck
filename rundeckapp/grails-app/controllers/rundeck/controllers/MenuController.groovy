@@ -47,6 +47,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.Explode
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
@@ -3331,7 +3332,7 @@ Authorization required: `view` or `read` for each Job resource.
             description='Job List',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object'),
+                array = @ArraySchema(schema=@Schema(implementation = JobInfo)),
                 examples=@ExampleObject('''[
   {
     "id": "[UUID]",
