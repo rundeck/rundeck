@@ -952,13 +952,6 @@ Since: v15''',
                 description = 'Integration Name',
                 required = true,
                 schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
-            ),
-            @Parameter(
-                name = 'type',
-                in = ParameterIn.PATH,
-                description = 'Plugin Name',
-                required = true,
-                schema = @Schema(type = 'string')
             )
         ],
         responses = [
