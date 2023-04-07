@@ -928,12 +928,60 @@ Since: v15''',
         respond scmProjectStatus, [formats: ['xml', 'json']]
     }
 
+    @Get(uri='/project/{project}/scm/{integration}/config')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Config',
+        description = ''' Get the configuration properties for the current plugin.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = [
+
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Status''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmProjectPluginConfig)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '404', description = 'Not Found, plugin is not configured'
+            )
+        ]
+    )
     /**
      * /api/$api_version/project/$project/scm/$integration/config
      * @param apiProjConfigIntRequest
      * @return
      */
-    def apiProjectConfig(ScmIntegrationRequest apiProjConfigIntRequest) {
+    def apiProjectConfig(@Parameter(hidden=true) ScmIntegrationRequest apiProjConfigIntRequest) {
         if (!validateCommandInput(apiProjConfigIntRequest)) {
             return
         }
@@ -969,11 +1017,62 @@ Since: v15''',
 
     }
 
+
+    @Get(uri='/project/{project}/scm/{integration}/action/{actionId}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Action Input Fields',
+        description = ''' Get the input fields and selectable items for a specific action.
+
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `exportItems`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `importItems`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Action Input fields response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionInput)
+            )
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/action/$actionId/input
      * list inputs for action
      */
-    def apiProjectActionInput(ScmActionRequest projActInputActReq) {
+    def apiProjectActionInput(@Parameter(hidden=true) ScmActionRequest projActInputActReq) {
         if (!validateCommandInput(projActInputActReq)) {
             return
         }
@@ -1193,6 +1292,73 @@ Since: v15''',
         }
         return view
     }
+
+    @Post(uri='/project/{project}/scm/{integration}/action/{actionId}')
+    @Operation(
+        method = 'POST',
+        summary = 'Perform Project SCM Action',
+        description = '''Perform the action for the SCM integration plugin, with a set of input parameters,
+selected Jobs, or Items, or Items to delete.
+
+Depending on the available Input Fields for the action (see `/project/{project}/scm/{integration}/action/{actionId}/input`), the action will
+expect a set of `input` values.
+
+The set of `jobs` and `items` to choose from will be included in the Input Fields response,
+however where an Item has an associated Job, you can supply either the Job ID, or the Item ID.
+
+When there are items to be deleted on `export` integration, you can specify the Item IDs in the `deleted`
+section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
+
+When there are items to be deleted on `import` integration, you must specify the Job IDs in the `deletedJobs`
+section.
+
+Note: including the Item ID of an associated job, instead of the Job ID,
+will not automatically delete a renamed item.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Perform Action Request',
+            required=true,
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmAction)
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Action response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionResult)
+            )
+        )
+    )
     /**
      * /api/$api_version/project/$project/scm/$integration/action/$actionId
      * @return
