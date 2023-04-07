@@ -1293,7 +1293,7 @@ by:
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_YAML,
-                                    schema = @Schema(type = 'object'),
+                                    schema = @Schema(type = 'string'),
                                     examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
