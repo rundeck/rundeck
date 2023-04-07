@@ -16,12 +16,19 @@
 
 package com.dtolabs.rundeck.app.api.scm
 
+import io.swagger.v3.oas.annotations.media.Schema
+
 /**
  * Created by greg on 10/28/15.
  */
+@Schema
 class ScmActionResult {
+    @Schema(description='Status message')
     String message
+    @Schema(description = 'true if successful, false otherwise')
     boolean success
+    @Schema(description = 'Name of the next `action` that should be invoked.')
     String nextAction
+    @Schema(description = 'Validation errors, keyed by input field name.')
     Map<String,String> validationErrors
 }

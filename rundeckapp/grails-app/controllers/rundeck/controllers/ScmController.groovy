@@ -134,7 +134,44 @@ class ScmController extends ControllerBase {
         return authContext
     }
 
-    def apiPlugins(ScmIntegrationRequest apiPluginsRequest) {
+    @Get(uri='/project/{project}/scm/{integration}/plugins')
+    @Operation(
+        method = 'GET',
+        summary = 'List SCM Plugins',
+        description = '''Lists the available plugins for the specified integration.  Each plugin is identified by a 
+`type` name.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15
+''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Result',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmPluginList)
+            )
+        )
+    )
+    def apiPlugins(@Parameter(hidden=true) ScmIntegrationRequest apiPluginsRequest) {
         if (!validateCommandInput(apiPluginsRequest)) {
             return
         }
@@ -156,12 +193,56 @@ class ScmController extends ControllerBase {
         respond list, [formats: ['xml', 'json']]
     }
 
+    @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get SCM Plugin Input Fields',
+        description = ''' List the input fields for a specific plugin.
+
+The response will list each input field.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Input fields response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmPluginSetupInput)
+            )
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/input
      * @param pluginInputTypeReq
      * @return
      */
-    def apiPluginInput(ScmPluginTypeRequest pluginInputTypeReq) {
+    def apiPluginInput(@Parameter(hidden=true) ScmPluginTypeRequest pluginInputTypeReq) {
         if (!validateCommandInput(pluginInputTypeReq)) {
             return
         }
@@ -331,6 +412,77 @@ class ScmController extends ControllerBase {
         }
         respond(actionResult, map)
     }
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/setup')
+    @Operation(
+        method = 'POST',
+        summary = 'Setup SCM Plugin for a Project',
+        description = '''Configure and enable a plugin for a project.
+
+The request body is expected to contain entries for all of the `required` input fields for the plugin.
+
+See the `/project/{project}/scm/{integration}/plugin/{type}/input` endpoint.
+
+If a validation error occurs with the configuration, then the response will include detail about the errors.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Configuration values for the plugin.',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples=@ExampleObject('''{
+    "config":{
+        "key":"value",
+        "key2":"value2..."
+    }
+}''')
+            )
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success result.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '400',
+                description = '''Validation or input error occurred.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult)
+                )
+            )
+        ]
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/setup
      * @param scm
@@ -389,12 +541,50 @@ class ScmController extends ControllerBase {
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
         respondActionResult(scm, result)
     }
+
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable SCM Plugin for a Project',
+        description = ''' Disable a plugin. (Idempotent).
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/disable
      * @param projDisableTypeReq
      * @return
      */
-    def apiProjectDisable(ScmPluginTypeRequest projDisableTypeReq) {
+    def apiProjectDisable(@Parameter(hidden = true) ScmPluginTypeRequest projDisableTypeReq) {
         if (!projDisableTypeReq.project) {
             bindData(projDisableTypeReq, params)
         }
@@ -433,12 +623,49 @@ class ScmController extends ControllerBase {
         )
     }
 
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable SCM Plugin for a Project',
+        description = ''' Enable a plugin that was previously configured. (Idempotent).
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/enable
      * @param projEnableTypeReq
      * @return
      */
-    def apiProjectEnable(ScmPluginTypeRequest projEnableTypeReq) {
+    def apiProjectEnable(@Parameter(hidden=true) ScmPluginTypeRequest projEnableTypeReq) {
 
         if (!projEnableTypeReq.project) {
             bindData(projEnableTypeReq, params)
