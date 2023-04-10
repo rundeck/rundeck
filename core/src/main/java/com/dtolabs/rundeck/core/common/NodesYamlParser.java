@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.common;
 
 
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -70,7 +71,7 @@ public class NodesYamlParser implements NodeFileParser {
             throw new NullPointerException("file or inputStream was not set");
         }
         final Reader reader;
-        final Yaml yaml = new Yaml(new SafeConstructor());
+        final Yaml yaml = new Yaml(new LoaderOptions());
         try {
             if (null != file) {
                 reader = new FileReader(file);
