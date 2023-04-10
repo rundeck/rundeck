@@ -28,7 +28,7 @@
         </button>
         <button @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
           <i class="glyphicon glyphicon-plus"></i>
-          Add or Upload a Keys
+          Add or Upload a Key
         </button>
 
         <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
