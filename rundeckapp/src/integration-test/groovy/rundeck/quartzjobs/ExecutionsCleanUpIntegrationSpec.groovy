@@ -23,6 +23,7 @@ import groovy.mock.interceptor.MockFor
 import org.grails.config.NavigableMap
 import org.junit.Assert
 import org.junit.Test
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -99,6 +100,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        job.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         def executionFile = Mock(ExecutionFile)
 
