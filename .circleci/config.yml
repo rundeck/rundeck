@@ -432,15 +432,14 @@ jobs:
             mkdir -p openapi
             find artifacts -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
             mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
+      - run: npm install @redocly/cli -g
       - run:
           name: Redocly OpenAPI Linting
           command: |
-            docker run --rm \
-              -v $PWD/openapi:/spec \
-              redocly/cli lint \
-              rundeck-api.yml \
-              --skip-rule=operation-4xx-response \
-              --skip-rule=no-invalid-media-type-examples
+            redocly lint \
+            openapi/rundeck-api.yml \
+            --skip-rule=operation-4xx-response \
+            --skip-rule=no-invalid-media-type-examples
 
   test-docker:
     <<: *defaults
