@@ -188,7 +188,7 @@ assert_job_execution_count(){
 echo "TEST: when schedule is on, job does execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
-get_job_def $jobName
+get_job_def $jobId
 echo "jobName $jobName projectName $projectName"
 assert_job_execution_count $jobId "0"
 sleep 12
@@ -201,7 +201,7 @@ delete_proj $projectName
 echo "TEST: when schedule is off, job doesn't execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
-get_job_def $jobName
+get_job_def $jobId
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
 sleep 12
@@ -214,7 +214,7 @@ delete_proj $projectName
 echo "TEST: when schedule is off, job doesn't execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
-get_job_def $jobName
+get_job_def $jobId
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
 sleep 2
