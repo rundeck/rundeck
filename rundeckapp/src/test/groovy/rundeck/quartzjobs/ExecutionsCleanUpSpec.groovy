@@ -22,7 +22,6 @@ import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
-import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
