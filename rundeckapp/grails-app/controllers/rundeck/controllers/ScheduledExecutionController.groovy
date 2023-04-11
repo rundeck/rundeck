@@ -864,7 +864,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
-                } else if (configRemoteUrl) {
+                } else if (configRemoteUrl && configRemoteUrl.authenticationType) {
                     logger.debug("getRemoteJSON using authentication")
                     URIBuilder uriBuilder = new URIBuilder(cleanUrl)
 
