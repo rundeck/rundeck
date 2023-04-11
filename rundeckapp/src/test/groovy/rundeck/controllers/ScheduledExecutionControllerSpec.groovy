@@ -4297,6 +4297,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
+        1 * client.setUri(_)
         1 * client.execute(_) >> {
             RequestProcessor processor = it[0]
             processor.accept(rsp)
