@@ -104,6 +104,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
+    Closure doWithSpring() {
+        { ->
+            rundeckJobDefinitionManager(InstanceFactoryBean, Mock(RundeckJobDefinitionManager))
+        }
+    }
+
     def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
                                       WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
 

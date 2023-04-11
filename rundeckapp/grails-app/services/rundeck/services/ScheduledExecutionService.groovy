@@ -1960,6 +1960,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution) {
             return [success: false]
         }
+        def rdJob = scheduledExecution instanceof ScheduledExecution ? ScheduledExecutionToJobConverter.convert(scheduledExecution) : scheduledExecution
         if(changeinfo){
             def extraInfo = " flags:"
             if(params.executionEnabled){
@@ -1979,66 +1980,66 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errorCode         : 'api.error.project.disabled']
         }
 
-        def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
-        def oldJobName = scheduledExecution.generateJobScheduledName()
-        def oldJobGroup = scheduledExecution.generateJobGroupName()
+//        def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
+//        def oldJobName = scheduledExecution.generateJobScheduledName()
+//        def oldJobGroup = scheduledExecution.generateJobGroupName()
 
         if (null != params.scheduleEnabled) {
-            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE], scheduledExecution.project)) {
+            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, rdJob, [AuthConstants.ACTION_TOGGLE_SCHEDULE], rdJob.project)) {
                 return [success     : false, scheduledExecution: scheduledExecution,
                         message     : lookupMessage(
                                 'api.error.item.unauthorized',
-                                [AuthConstants.ACTION_TOGGLE_SCHEDULE, 'Job ID', scheduledExecution.uuid]
+                                [AuthConstants.ACTION_TOGGLE_SCHEDULE, 'Job ID', rdJob.uuid]
                         ),
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
-            if(!isScheduled(scheduledExecution.uuid)){
+            if(!isScheduled(rdJob.uuid)){
 
                 return [success: false, scheduledExecution: scheduledExecution,
                          message  : lookupMessage(
                                 'api.error.job.toggleSchedule.notScheduled',
-                                ['Job ID', scheduledExecution.uuid]
+                                ['Job ID', rdJob.uuid]
                         ),
                         status: 409,
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
             if(frameworkService.isClusterModeEnabled()) {
-                def modify = jobSchedulerService.updateScheduleOwner(JobDataUtil.asJobReference(scheduledExecution))
+                def modify = jobSchedulerService.updateScheduleOwner(JobDataUtil.asJobReference(rdJob))
 
                 if (modify) {
-                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                    rdJob.serverNodeUUID = frameworkService.serverUUID
                 }
             }else {
-                scheduledExecution.serverNodeUUID = null
+                rdJob.serverNodeUUID = null
             }
-            scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
+            rdJob.scheduleEnabled = params.scheduleEnabled
         }
 
         if (null != params.executionEnabled) {
-            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION], scheduledExecution.project)) {
+            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, rdJob, [AuthConstants.ACTION_TOGGLE_EXECUTION], rdJob.project)) {
                 return [success          : false, scheduledExecution: scheduledExecution,
                         message          : lookupMessage(
                                 'api.error.item.unauthorized',
-                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.uuid]
+                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', rdJob.uuid]
                         ),
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
             if(frameworkService.isClusterModeEnabled()) {
-                def modify = jobSchedulerService.updateScheduleOwner(JobDataUtil.asJobReference(scheduledExecution))
+                def modify = jobSchedulerService.updateScheduleOwner(JobDataUtil.asJobReference(rdJob))
 
                 if (modify) {
-                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                    rdJob.serverNodeUUID = frameworkService.serverUUID
                 }
             } else {
-                scheduledExecution.serverNodeUUID = null
+                rdJob.serverNodeUUID = null
             }
-            scheduledExecution.properties.executionEnabled = params.executionEnabled
+            rdJob.executionEnabled = params.executionEnabled
         }
 
         try {
-            rdJobService.saveJob(ScheduledExecutionToJobConverter.convert(scheduledExecution))
+            rdJobService.saveJob(rdJob)
             return [success: true, scheduledExecution: scheduledExecution]
         } catch(Exception ex) {
             if(scheduledExecution instanceof ScheduledExecution) scheduledExecution.discard()
