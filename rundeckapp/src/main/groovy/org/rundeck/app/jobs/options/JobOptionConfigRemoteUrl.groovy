@@ -12,6 +12,7 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         return TYPE
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     RemoteUrlAuthenticationType authenticationType
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -43,7 +44,11 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
 
     static JobOptionConfigRemoteUrl fromMap(Map map){
         JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
-        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(map.authenticationType)
+
+        if(map.authenticationType){
+            configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(map.authenticationType)
+        }
+
         if(map.username){
             configRemoteUrl.username = map.username
         }
