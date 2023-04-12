@@ -208,6 +208,7 @@
       </div>
     </template>
     </div>
+    <ui-socket section="job-edit-schedules-editor" location="scheduledExecutionEditTZ:after" :event-bus="eventBus"/>
     <div class="form-group">
         <div class="col-sm-2 control-label text-form-label">
           {{ $t('scheduledExecution.property.scheduleEnabled.label') }}
@@ -279,6 +280,7 @@
 <script lang="ts">
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
+import UiSocket from '../../../../library/components/utils/UiSocket.vue'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop, Watch} from 'vue-property-decorator'
@@ -290,7 +292,7 @@ import {
 } from "./services/scheduleDefinition"
 
 
-@Component({components: {InlineValidationErrors}})
+@Component({components: {InlineValidationErrors, UiSocket}})
 export default class ScheduleEditor extends Vue {
   @Prop({required: true})
   value: any
