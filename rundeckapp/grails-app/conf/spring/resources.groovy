@@ -111,6 +111,7 @@ import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
+import org.rundeck.app.data.providers.GormScheduledExecutionStats
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
@@ -901,5 +902,6 @@ beans={
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
     pluginMetaDataProvider(GormPluginMetaDataProvider)
+    scheduledExecutionStatsDataProvider(GormScheduledExecutionStats)
 
 }

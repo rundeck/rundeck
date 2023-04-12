@@ -75,6 +75,7 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ScheduledExecutionStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -158,6 +159,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
+    ScheduledExecutionStatsDataProvider scheduledExecutionStatsDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -3143,44 +3145,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @NotTransactional
     def updateScheduledExecStatistics(Long schedId, eId, long time) {
-        def success = false
-        try {
-            ScheduledExecutionStats.withTransaction {
-                def scheduledExecution = ScheduledExecution.get(schedId)
-                def seStats = scheduledExecution.getStats(true)
-
-                def statsMap = seStats.getContentMap()
-                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                    statsMap.execCount = 1
-                    statsMap.totalTime = time
-                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                    statsMap.execCount++
-                    statsMap.totalTime += time
-                } else if (statsMap.execCount >= 10) {
-                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                    statsMap.totalTime -= popTime
-                    statsMap.totalTime += time
-                }
-                seStats.setContentMap(statsMap)
-
-                if (seStats.validate()) {
-                    if (seStats.save(flush: true)) {
-                        log.info("updated scheduled Execution Stats")
-                    } else {
-                        seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                        log.warn("failed saving execution to history")
-                    }
-                    success = true
-                }
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (DuplicateKeyException ve) {
-            log.warn("Caught DuplicateKeyException for migrated stats, will retry updateScheduledExecStatistics for ${eId}")
-        }
-        return success
+        return scheduledExecutionStatsDataProvider.updateScheduledExecutionStats(schedId, eId, time)
     }
 
     /**

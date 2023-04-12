@@ -38,6 +38,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.providers.GormScheduledExecutionStats
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
@@ -1418,6 +1419,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
             validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
         }
+        service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
         uuid
     }
 
@@ -1478,6 +1480,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
             validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
         }
+        service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
         uuid
     }
 
@@ -2129,6 +2132,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true,validations:[:])
 
         }
+        service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
 
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
@@ -4485,6 +4489,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
+
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:
@@ -4557,6 +4563,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:
@@ -4604,6 +4611,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.scheduledExecutionStatsDataProvider = new GormScheduledExecutionStats()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:

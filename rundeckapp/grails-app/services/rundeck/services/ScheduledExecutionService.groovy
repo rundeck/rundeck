@@ -51,6 +51,7 @@ import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.execution.ScheduledExecutionStatsDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -132,6 +133,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuditEventsService auditEventsService
+    ScheduledExecutionStatsDataProvider scheduledExecutionStatsDataProvider
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -995,12 +997,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return new DeleteJobResult(success:false,error:errmsg)
             }
-            def stats= ScheduledExecutionStats.findAllBySe(scheduledExecution)
-            if(stats){
-                stats.each { st ->
-                    st.delete()
-                }
-            }
+
+            scheduledExecutionStatsDataProvider.deleteByScheduledExecutionId(scheduledExecution.id)
+
             def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
             if(refExec){
                 refExec.each { re ->
@@ -3441,11 +3440,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
-        if (!stats) {
-            stats = new ScheduledExecutionStats(se: scheduledExecution)
-                    .save(flush: true)
-        }
+        scheduledExecutionStatsDataProvider.createScheduledExecutionStats(scheduledExecution.id)
 
         def scheduleResult = rescheduleJob(
             scheduledExecution,
@@ -3549,11 +3544,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
-        if (!stats) {
-            stats = new ScheduledExecutionStats(se: scheduledExecution)
-                    .save(flush: true)
-        }
+        scheduledExecutionStatsDataProvider.createScheduledExecutionStats(scheduledExecution.id)
+
         rescheduleJob(scheduledExecution)
 
         // publish audit event
