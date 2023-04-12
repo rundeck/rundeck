@@ -134,6 +134,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     void deleteJobSchedule(final String quartzJobName, final String quartzJobGroup) {
+        log.debug("delete job schedule: {} {}", quartzJobName, quartzJobGroup)
         quartzScheduler.deleteJob(new JobKey(quartzJobName, quartzJobGroup))
     }
 

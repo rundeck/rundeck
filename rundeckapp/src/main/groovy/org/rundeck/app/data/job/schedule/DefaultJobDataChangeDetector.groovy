@@ -19,11 +19,15 @@ class DefaultJobDataChangeDetector implements JobDataChangeDetector {
 
     @Override
     boolean schedulingWasChanged(JobData newJob) {
-        return originalCron != DefaultCrontabExpressionGenerator.generateCrontab(newJob) ||
-                originalSchedule != newJob.scheduleEnabled ||
+        return  originalSchedule != newJob.scheduleEnabled ||
                 originalExecution != newJob.executionEnabled ||
                 originalTz != newJob.timeZone ||
                 localScheduled != newJob.scheduled ||
+                crontabIsDifferent(newJob) ||
                 wasRenamed(newJob)
+    }
+
+    boolean crontabIsDifferent(JobData newJob) {
+        return originalCron != DefaultCrontabExpressionGenerator.generateCrontab(newJob)
     }
 }

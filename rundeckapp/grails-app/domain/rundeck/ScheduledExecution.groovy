@@ -666,7 +666,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     // various utility methods to the process crontab entry data
     def String generateCrontabExression() {
-        return [seconds?seconds:'0',minute,hour,dayOfMonth?.toUpperCase(),month?.toUpperCase(),dayOfMonth=='?'?dayOfWeek?.toUpperCase():'?',year?year:'*'].join(" ")
         return JobDataUtil.generateCrontabExpression(this)
     }
 

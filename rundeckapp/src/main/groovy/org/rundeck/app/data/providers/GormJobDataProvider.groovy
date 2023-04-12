@@ -264,21 +264,19 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
         }
 
         jobChangeData.schedulingWasChanged = detector.schedulingWasChanged(rdJob)
-        if(frameworkService.isClusterModeEnabled()){
-            if (jobChangeData.schedulingWasChanged) {
-                JobReferenceImpl jobReference = se.asReference() as JobReferenceImpl
-                jobReference.setOriginalQuartzJobName(oldjobname)
-                jobReference.setOriginalQuartzGroupName(oldjobgroup)
-                jobChangeData.scheduleOwnerModified = jobSchedulerService.updateScheduleOwner(jobReference)
-                jobChangeData.scheduledJobName = oldjobname
-                jobChangeData.scheduledGroupPath = oldjobgroup
-                if (jobChangeData.scheduleOwnerModified) {
-                    rdJob.serverNodeUUID = frameworkService.serverUUID
-                }
-            }
-            if (!rdJob.serverNodeUUID) {
+        if (jobChangeData.schedulingWasChanged) {
+            JobReferenceImpl jobReference = se.asReference() as JobReferenceImpl
+            jobReference.setOriginalQuartzJobName(oldjobname)
+            jobReference.setOriginalQuartzGroupName(oldjobgroup)
+            jobChangeData.scheduleOwnerModified = jobSchedulerService.updateScheduleOwner(jobReference)
+            jobChangeData.scheduledJobName = oldjobname
+            jobChangeData.scheduledGroupPath = oldjobgroup
+            if (jobChangeData.scheduleOwnerModified && frameworkService.isClusterModeEnabled()) {
                 rdJob.serverNodeUUID = frameworkService.serverUUID
             }
+        }
+        if (!rdJob.serverNodeUUID) {
+            rdJob.serverNodeUUID = frameworkService.serverUUID
         }
 
         jobChangeData

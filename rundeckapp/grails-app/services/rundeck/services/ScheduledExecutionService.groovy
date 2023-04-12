@@ -709,6 +709,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def rescheduleJob(JobData scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
+        log.debug("rescheduleJob ${wasScheduled} ${oldJobName} ${oldJobGroup}")
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
             try {
                 return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
@@ -716,6 +717,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 log.error("Unable to schedule job: ${scheduledExecution.uuid}: ${e.message}")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
+            log.debug("rescheduleJob after save will delete job from quartz")
             return deleteJob(oldJobName, oldJobGroup)
         }
 

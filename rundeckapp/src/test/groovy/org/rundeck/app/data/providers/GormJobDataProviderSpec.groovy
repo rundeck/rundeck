@@ -22,10 +22,12 @@ import rundeck.WorkflowStep
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
+import rundeck.data.job.RdSchedule
 import rundeck.data.job.RdWorkflow
 import rundeck.data.job.RdWorkflowStep
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
+import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.data.ScheduledExecutionDataService
@@ -178,7 +180,7 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
 
     }
 
-    def "DetectJobChanges"() {
+    def "DetectJobChanges - rename"() {
         given:
         String uuid = "uuid"
         RdJob job = new RdJob(uuid: uuid, jobName: newjob, project:"one")
@@ -187,6 +189,9 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
         LogJobChangeEvent event = new LogJobChangeEvent()
         provider.jobSchedulesService = Mock(JobSchedulesService) {
             isScheduled(_) >> true
+        }
+        provider.jobSchedulerService = Mock(JobSchedulerService) {
+            updateScheduleOwner(_) >> false
         }
         provider.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> false
@@ -203,8 +208,83 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
 
         where:
         expectedJobName | renamed  | oldjob      | newjob
-        "uuid:oldjob"      | true     | "oldjob"    | "newjob"
+        "uuid:oldjob"   | true     | "oldjob"    | "newjob"
         null            | false    | "job1"      | "job1"
+
+    }
+
+    def "DetectJobChanges - schedule and execution flags"() {
+        given:
+        String uuid = "uuid"
+        RdJob job = new RdJob(uuid: uuid, jobName: "job", groupPath: "group", project:"one", scheduleEnabled: schedEnabledFlag, executionEnabled: executionEnabledFlag)
+        ScheduledExecution se = new ScheduledExecution( uuid: uuid, jobName: "job", groupPath: "group", project:"one", scheduleEnabled: true, executionEnabled: true)
+        se.id = 1L
+        LogJobChangeEvent event = new LogJobChangeEvent()
+        provider.jobSchedulesService = Mock(JobSchedulesService) {
+            isScheduled(_) >> true
+        }
+        provider.jobSchedulerService = Mock(JobSchedulerService) {
+            updateScheduleOwner(_) >> false
+        }
+        provider.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+
+        when:
+        def actual = provider.detectJobChanges(se, job, event)
+
+        then:
+        actual.schedulingWasChanged == expectedSchedulingChanged
+        actual.scheduledJobName == scheduledJobName
+        actual.scheduledGroupPath == scheduledGroupPath
+
+        where:
+        expectedSchedulingChanged   | schedEnabledFlag | executionEnabledFlag  | scheduledJobName      | scheduledGroupPath
+        true                        | false            | true                  | "uuid:job"            | "one:job:group"
+        true                        | true             | false                 | "uuid:job"            | "one:job:group"
+        false                       | true             | true                  | null                  | null
+
+    }
+
+    def "DetectJobChanges - schedule change"() {
+        given:
+        String uuid = "uuid"
+        RdJob job = new RdJob(uuid: uuid, jobName: "job", project:"one", schedule: newSchedule, timeZone: newTz)
+        ScheduledExecution se = new ScheduledExecution( uuid: uuid, jobName: "job", project:"one", timeZone: oldTz)
+        if(oldSchedule) {
+            se.year = oldSchedule.year
+            se.month = oldSchedule.month
+            se.dayOfWeek = oldSchedule.dayOfWeek
+            se.dayOfMonth = oldSchedule.dayOfMonth
+            se.hour = oldSchedule.hour
+            se.minute = oldSchedule.minute
+            se.seconds = oldSchedule.seconds
+        }
+        se.id = 1L
+        LogJobChangeEvent event = new LogJobChangeEvent()
+        provider.jobSchedulesService = Mock(JobSchedulesService) {
+            isScheduled(_) >> true
+        }
+        provider.jobSchedulerService = Mock(JobSchedulerService) {
+            updateScheduleOwner(_) >> false
+        }
+        provider.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+
+        when:
+        def actual = provider.detectJobChanges(se, job, event)
+
+        then:
+        actual.schedulingWasChanged == expectedSchedulingChanged
+
+
+        where:
+        expectedSchedulingChanged   | oldTz | newTz     | oldSchedule                   | newSchedule
+        false                       | "GMT" | "GMT"     | null                          | null
+        false                       | "GMT" | "GMT"     | new RdSchedule(minute:"25")   | new RdSchedule(minute: "25")
+        true                        | "GMT" | "CST"     | new RdSchedule(minute:"25")   | new RdSchedule(minute: "25")
+        true                        | "GMT" | "GMT"     | null                          | new RdSchedule(minute: "25")
 
     }
 
