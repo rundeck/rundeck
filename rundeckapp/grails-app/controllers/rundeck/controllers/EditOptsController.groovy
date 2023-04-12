@@ -772,13 +772,15 @@ class EditOptsController extends ControllerBase{
                     }
                 }
 
-                if(params.remoteUrlJsonFilter){
-                    jobOptionConfigRemoteUrl.jsonFilter = params.remoteUrlJsonFilter
-                }
+                jobOptionConfigRemoteUrl.jsonFilter = params.remoteUrlJsonFilter?:null
 
                 JobOptionConfigData jobOptionConfigData = new JobOptionConfigData()
                 jobOptionConfigData.addConfig(jobOptionConfigRemoteUrl)
                 opt.setOptionConfigData(jobOptionConfigData)
+            }else{
+                if(opt.getConfigRemoteUrl()!=null){
+                    opt.setOptionConfigData(null)
+                }
             }
         }
 
