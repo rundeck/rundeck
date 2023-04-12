@@ -9,7 +9,7 @@ import java.util.List;
 public interface ReferencedExecutionDataProvider extends DataProvider {
     Long updateOrCreateReference(Long refId, Long seId, Long execId, String status);
     RdReferencedExecution findByScheduledExecutionId(Long seId);
-    List<JobData> parentList(Long seId, int max);
+    List<Long> parentList(Long seId, int max);
     List executionProjectList(Long seId, int max);
     int countByScheduledExecution(Long seId);
     int countByScheduledExecutionAndStatus(Long seId, String status);

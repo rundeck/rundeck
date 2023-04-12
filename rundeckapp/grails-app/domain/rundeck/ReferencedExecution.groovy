@@ -45,4 +45,23 @@ class ReferencedExecution implements RdReferencedExecution{
             }
         }
     }
+
+    static List<Long> parentListScheduledExecutionId(ScheduledExecution se, int max = 0){
+        return createCriteria().list(max: (max!=0)?max:null) {
+            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
+            isNotNull( 'e.scheduledExecution')
+            eq("scheduledExecution", se)
+            projections {
+                distinct('e.scheduledExecution.id')
+            }
+        } as List<Long>
+    }
+
+    Long getExecutionId(){
+        execution.id
+    }
+
+    Long getScheduledExecutionJobId(){
+        scheduledExecution.id
+    }
 }

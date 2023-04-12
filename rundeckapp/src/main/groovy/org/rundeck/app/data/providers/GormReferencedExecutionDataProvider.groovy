@@ -1,7 +1,6 @@
 package org.rundeck.app.data.providers
 
 import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
-import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.Execution
 import rundeck.ReferencedExecution
@@ -31,9 +30,9 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    List<JobData> parentList(Long seId, int max) {
+    List<Long> parentList(Long seId, int max) {
         def se = ScheduledExecution.findById(seId)
-        return ReferencedExecution.parentList(se, max)
+        return ReferencedExecution.parentListScheduledExecutionId(se, max)
     }
 
     @Override
