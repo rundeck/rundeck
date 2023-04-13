@@ -36,7 +36,7 @@
           <i class="glyphicon glyphicon-pencil"></i>
           Overwrite Key
         </button>
-        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path">
+        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey">
                 <i class="glyphicon glyphicon-trash"></i>
                 {{"Delete"}}</button>
       </div>
@@ -236,7 +236,8 @@ export default Vue.extend({
       if(resp._response.status >= 400){
         this.errorMsg = resp.error
         return
-      } 
+      }
+      this.selectedKey = {}
       this.isSelectedKey = false
 
       this.loadKeys()
