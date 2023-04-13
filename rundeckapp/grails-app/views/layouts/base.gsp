@@ -189,7 +189,7 @@
                         controller: 'plugin',
                         action: 'pluginFile',
                         params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}" defer="defer" type="text/javascript"></script>
+                )}" type="text/javascript"></script>
             </g:each>
             <!-- END UI Plugin scripts for ${pluginname} -->
         </g:each>
