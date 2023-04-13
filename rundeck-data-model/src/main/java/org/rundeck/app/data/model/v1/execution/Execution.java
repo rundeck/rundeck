@@ -1,7 +1,7 @@
 package org.rundeck.app.data.model.v1.execution;
 
 import org.rundeck.app.data.model.v1.job.JobData;
-import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequest;
+import org.rundeck.app.data.model.v1.logstorage.RdLogFileStorageRequest;
 
 import java.io.Serializable;
 
