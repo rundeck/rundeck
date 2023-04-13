@@ -69,6 +69,7 @@ import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
 import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
@@ -2433,12 +2434,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.project = job.project
         execution.user = runAsUser ? runAsUser : authContext.username
         execution.loglevel = job.logConfig?.loglevel
-        execution.doNodedispatch = job.nodeConfig?.doNodedispatch
-        execution.nodeExcludePrecedence = job.nodeConfig?.nodeExcludePrecedence
         execution.nodeKeepgoing = job.nodeConfig?.nodeKeepgoing
         execution.nodeRankOrderAscending = job.nodeConfig?.nodeRankOrderAscending
         execution.nodeRankAttribute = job.nodeConfig?.nodeRankAttribute
         execution.excludeFilterUncheck = job.nodeConfig?.excludeFilterUncheck
+        props.doNodedispatch = job.nodeConfig?.doNodedispatch
+        props.nodeExcludePrecedence = job.nodeConfig?.nodeExcludePrecedence
         props.filter=job.nodeConfig?.filter
         props.filterExclude=job.nodeConfig?.filterExclude
         props.nodeThreadcount = job.nodeConfig?.nodeThreadcount
@@ -2572,7 +2573,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.timeout=props.timeout?:null
         execution.executionType= props.executionType ?: 'scheduled'
         execution.retryDelay= props.retryDelay?:null
-        execution.argString=props.argString
+        execution.argString= StringUtils.isBlank(props.argString)?null:props.argString
         execution.retryAttempt=props.retryAttempt?:0
         execution.retryOriginalId=props.retryOriginalId?:null
         execution.retryPrevId=props.retryPrevId?:null

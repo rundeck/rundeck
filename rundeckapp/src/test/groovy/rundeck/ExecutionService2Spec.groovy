@@ -515,6 +515,41 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
     }
 
+    void testCreateExecutionNodefilter(){
+
+        ScheduledExecution se = createScheduledExecution([doNodedispatch: true,
+                                                          filter: ".*"])
+        se.save()
+
+        ExecutionService svc = service
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
+        svc.frameworkService=fsvc
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
+        when:
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
+
+        then:
+        assertNotNull(e2)
+        assertTrue(e2.doNodedispatch)
+        assertEquals('.*', e2.filter)
+
+    }
+
     void testCreateExecutionOverrideNodefilter(){
 
         ScheduledExecution se = createScheduledExecution([doNodedispatch: true,
@@ -541,6 +576,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
         then:
         assertNotNull(e2)
+        assertTrue(e2.doNodedispatch)
         assertEquals('name: monkey', e2.filter)
 
     }
