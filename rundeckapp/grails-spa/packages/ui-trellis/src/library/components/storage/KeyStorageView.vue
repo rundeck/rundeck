@@ -42,7 +42,11 @@
       </div>
 
 
-      <table class="table table-hover table-condensed">
+      <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
+        <i class="glyphicon glyphicon-time"></i>
+        {{$t('loading.text')}}
+      </div>
+      <table class="table table-hover table-condensed" v-else>
         <tbody>
         <tr>
           <td colspan="2" class="text-strong">
@@ -210,6 +214,7 @@ export default Vue.extend({
       directories: [] as any,
       uploadErrors: {} as any,
       selectedIsDownloadable: true,
+      loading: true
     }
   },
   mounted() {
@@ -250,6 +255,7 @@ export default Vue.extend({
       if(selectedKey) {
         this.selectedKey = selectedKey
       }
+      this.loading=true
 
       const rundeckContext = getRundeckContext();
       rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
@@ -295,8 +301,10 @@ export default Vue.extend({
             }
           });
         }
+        this.loading=false
       }).catch((err: Error) => {
         this.errorMsg = err.message
+        this.loading=false
       });
     },
     allowedResource(meta: any) {
