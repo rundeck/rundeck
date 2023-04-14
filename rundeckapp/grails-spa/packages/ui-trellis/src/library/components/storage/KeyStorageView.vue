@@ -251,6 +251,14 @@ export default Vue.extend({
     cancelDeleteKey() {
       this.isConfirmingDeletion=false
     },
+    calcBrowsePath(path: string){
+      let browse=path
+      if (this.rootPath != 'keys/') {
+        browse = (this.rootPath) + path
+        browse = browse.substring(5)
+      }
+      return browse
+    },
     loadKeys(selectedKey?: any) {
       if(selectedKey) {
         this.selectedKey = selectedKey
@@ -258,7 +266,7 @@ export default Vue.extend({
       this.loading=true
 
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(this.path)).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -462,7 +470,7 @@ export default Vue.extend({
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
@@ -525,7 +533,7 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
       const fullPath = this.absolutePath(path);
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
         if (result.resources != null) {
           const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
           if (keys.length == 0) {

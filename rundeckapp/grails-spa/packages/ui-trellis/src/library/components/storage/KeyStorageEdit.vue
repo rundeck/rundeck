@@ -164,7 +164,6 @@ export default Vue.extend({
       errorMsg: '',
       directories: [] as any,
       files: [] as any,
-      rootPath: '',
       keyTypes: [
         {text: 'Private Key', value: 'privateKey'},
         {text: 'Public Key', value: 'publicKey'},
@@ -177,7 +176,6 @@ export default Vue.extend({
     }
   },
   async mounted(){
-    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
   },
   methods: {
     allowedResource(meta: any) {
@@ -214,7 +212,7 @@ export default Vue.extend({
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
 
-      let fullPath = this.getKeyPath();
+      let fullPath = this.calcBrowsePath(this.getKeyPath())
 
       let contentType = 'application/pgp-keys';
 
@@ -284,7 +282,7 @@ export default Vue.extend({
     },
     loadKeys() {
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.browsePath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -368,11 +366,25 @@ export default Vue.extend({
       return fullPath;
 
     }
+    calcBrowsePath(path: string){
+      let browse=path
+      if (this.rootPath != 'keys/') {
+        browse = (this.rootPath) + path
+        browse = browse.substring(5)
+      }
+      return browse
+    }
   },
   computed: {
     uploadFullPath(): string {
-      return 'keys/' + this.getKeyPath();
+      return this.rootPath + this.getKeyPath();
     },
+    rootPath(): string {
+      return this.project ? "keys/project/" + this.project + "/" : "keys/"
+    },
+    browsePath(): string{
+      return this.calcBrowsePath(this.path)
+    }
   }
 })
 </script>

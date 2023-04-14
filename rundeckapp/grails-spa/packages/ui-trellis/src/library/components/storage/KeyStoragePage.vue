@@ -1,6 +1,6 @@
 <template>
 <div>
-  <key-storage-view ref="keyStorageViewRef" :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
+  <key-storage-view v-if="ready" ref="keyStorageViewRef" :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
   <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
     <key-storage-edit :project="this.project" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
   </modal>
@@ -27,7 +27,8 @@ export default Vue.extend({
       modalEdit: false,
       path: '',
       uploadSetting: {},
-      project: ''
+      project: '',
+      ready:false
     }
   },
   methods: {
@@ -47,6 +48,7 @@ export default Vue.extend({
   async mounted() {
     this.project = getRundeckContext().projectName;
     this.path=this.value ? this.value : ""
+    this.ready=true
   }
 })
 </script>
