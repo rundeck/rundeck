@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
-import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -33,7 +32,6 @@ import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
-import org.apache.http.HttpResponse
 import org.grails.web.json.JSONArray
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -51,7 +49,7 @@ import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
-import org.rundeck.app.data.providers.v1.execution.ScheduledExecutionStatsDataProvider
+import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -88,7 +86,6 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
-import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -133,7 +130,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuditEventsService auditEventsService
-    ScheduledExecutionStatsDataProvider scheduledExecutionStatsDataProvider
+    JobStatsDataProvider jobStatsDataProvider
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -998,7 +995,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return new DeleteJobResult(success:false,error:errmsg)
             }
 
-            scheduledExecutionStatsDataProvider.deleteByScheduledExecutionId(scheduledExecution.id)
+            jobStatsDataProvider.deleteByJobId(scheduledExecution.id)
 
             def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
             if(refExec){
@@ -3440,7 +3437,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        scheduledExecutionStatsDataProvider.createScheduledExecutionStats(scheduledExecution.id)
+        jobStatsDataProvider.createJobStats(scheduledExecution.id)
 
         def scheduleResult = rescheduleJob(
             scheduledExecution,
@@ -3544,7 +3541,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        scheduledExecutionStatsDataProvider.createScheduledExecutionStats(scheduledExecution.id)
+        jobStatsDataProvider.createJobStats(scheduledExecution.id)
 
         rescheduleJob(scheduledExecution)
 

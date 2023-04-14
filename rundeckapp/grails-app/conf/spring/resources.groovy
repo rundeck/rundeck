@@ -108,15 +108,14 @@ import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
-import org.rundeck.app.data.providers.GormScheduledExecutionStats
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
-import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
@@ -902,6 +901,6 @@ beans={
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
     pluginMetaDataProvider(GormPluginMetaDataProvider)
-    scheduledExecutionStatsDataProvider(GormScheduledExecutionStats)
+    jobStatsDataProvider(GormJobStatsDataProvider)
 
 }

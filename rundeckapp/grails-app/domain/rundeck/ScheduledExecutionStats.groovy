@@ -2,9 +2,9 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.app.data.model.v1.execution.RdScheduledExecutionStats
+import org.rundeck.app.data.model.v1.execution.RdJobStats
 
-class ScheduledExecutionStats implements RdScheduledExecutionStats {
+class ScheduledExecutionStats implements RdJobStats {
     String content
 
     long _version = 0
@@ -40,6 +40,17 @@ class ScheduledExecutionStats implements RdScheduledExecutionStats {
         } else {
             content = null
         }
+    }
+
+    Serializable getJobId(){
+        if(se.id){
+            return se.id
+        }
+        return null
+    }
+
+    Long getVersion(){
+        _version
     }
 
 }
