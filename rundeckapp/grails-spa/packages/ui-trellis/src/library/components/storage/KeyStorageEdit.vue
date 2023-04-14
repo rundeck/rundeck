@@ -365,7 +365,7 @@ export default Vue.extend({
 
       return fullPath;
 
-    }
+    },
     calcBrowsePath(path: string){
       let browse=path
       if (this.rootPath != 'keys/') {
