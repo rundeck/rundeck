@@ -57,11 +57,14 @@ class ReferencedExecution implements RdReferencedExecution{
         } as List<Long>
     }
 
-    Long getExecutionId(){
+    Serializable getExecutionId(){
         execution.id
     }
 
-    Long getScheduledExecutionJobId(){
-        scheduledExecution.id
+    Serializable getJobId(){
+        if(scheduledExecution.id){
+           return scheduledExecution.id
+        }
+        return null
     }
 }

@@ -31,9 +31,9 @@
 <g:set var="referencedExecutionDataProvider" bean="${org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider}"/>
 <g:set var="execCount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="successcount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
-<g:set var="refsuccesscount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByScheduledExecutionAndStatus(scheduledExecution.id, 'succeeded') : 0}"/>
+<g:set var="refsuccesscount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobIdAndStatus(scheduledExecution.id, 'succeeded') : 0}"/>
 
-<g:set var="refexecCount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByScheduledExecution(scheduledExecution.id) : 0}"/>
+<g:set var="refexecCount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobId(scheduledExecution.id) : 0}"/>
 
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 

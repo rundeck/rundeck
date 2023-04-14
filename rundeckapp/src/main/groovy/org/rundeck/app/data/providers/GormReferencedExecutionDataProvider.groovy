@@ -8,14 +8,14 @@ import rundeck.ScheduledExecution
 
 class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProvider{
     @Override
-    Long updateOrCreateReference(Long refId, Long seId, Long execId, String status) {
+    Long updateOrCreateReference(Long refId, Long jobId, Long execId, String status) {
         if(refId){
             ReferencedExecution refExec = ReferencedExecution.findById(refId)
             refExec.status = status
             refExec.save(flush:true)
             return refId
         }else{
-            ScheduledExecution se = ScheduledExecution.findById(seId)
+            ScheduledExecution se = ScheduledExecution.findById(jobId)
             Execution exec = Execution.findById(execId)
             ReferencedExecution refExec = new ReferencedExecution(
                     scheduledExecution: se, execution: exec, status: status).save(flush:true)
@@ -24,20 +24,20 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    RdReferencedExecution findByScheduledExecutionId(Long seId) {
-        def se = ScheduledExecution.findById(seId)
+    RdReferencedExecution findByJobId(Long jobId) {
+        def se = ScheduledExecution.findById(jobId)
         return ReferencedExecution.findByScheduledExecution(se, [max: 1])
     }
 
     @Override
-    List<Long> parentList(Long seId, int max) {
-        def se = ScheduledExecution.findById(seId)
+    List<Long> parentList(Long jobId, int max) {
+        def se = ScheduledExecution.findById(jobId)
         return ReferencedExecution.parentListScheduledExecutionId(se, max)
     }
 
     @Override
-    List executionProjectList(Long seId, int max = 0) {
-        def se = ScheduledExecution.findById(seId)
+    List executionProjectList(Long jobId, int max = 0) {
+        def se = ScheduledExecution.findById(jobId)
         return ReferencedExecution.executionProjectList(se, max)
     }
 
@@ -51,7 +51,7 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    void deleteByScheduledExecutionId(Long id) {
+    void deleteByJobId(Long id) {
         def se = ScheduledExecution.findById(id)
         ReferencedExecution.findAllByScheduledExecution(se).each {re ->
             re.delete()
@@ -59,14 +59,14 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    int countByScheduledExecution(Long seId) {
-        def se = ScheduledExecution.findById(seId)
+    int countByJobId(Long jobId) {
+        def se = ScheduledExecution.findById(jobId)
         return ReferencedExecution.countByScheduledExecution(se)
     }
 
     @Override
-    int countByScheduledExecutionAndStatus(Long seId, String status) {
-        def se = ScheduledExecution.findById(seId)
+    int countByJobIdAndStatus(Long jobId, String status) {
+        def se = ScheduledExecution.findById(jobId)
         return ReferencedExecution.countByScheduledExecutionAndStatus(se, status)
     }
 }

@@ -7,12 +7,12 @@ import org.rundeck.app.data.providers.v1.DataProvider;
 import java.util.List;
 
 public interface ReferencedExecutionDataProvider extends DataProvider {
-    Long updateOrCreateReference(Long refId, Long seId, Long execId, String status);
-    RdReferencedExecution findByScheduledExecutionId(Long seId);
-    List<Long> parentList(Long seId, int max);
-    List executionProjectList(Long seId, int max);
-    int countByScheduledExecution(Long seId);
-    int countByScheduledExecutionAndStatus(Long seId, String status);
+    Long updateOrCreateReference(Long refId, Long jobId, Long execId, String status);
+    RdReferencedExecution findByJobId(Long jobId);
+    List<Long> parentList(Long jobId, int max);
+    List executionProjectList(Long jobId, int max);
+    int countByJobId(Long jobId);
+    int countByJobIdAndStatus(Long jobId, String status);
     void deleteByExecutionId(Long id);
-    void deleteByScheduledExecutionId(Long id);
+    void deleteByJobId(Long id);
 }
