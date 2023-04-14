@@ -75,7 +75,7 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.providers.v1.UserDataProvider
-import org.rundeck.app.data.providers.v1.execution.ScheduledExecutionStatsDataProvider
+import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -159,7 +159,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
-    ScheduledExecutionStatsDataProvider scheduledExecutionStatsDataProvider
+    JobStatsDataProvider jobStatsDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -3145,7 +3145,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @NotTransactional
     def updateScheduledExecStatistics(Long schedId, eId, long time) {
-        return scheduledExecutionStatsDataProvider.updateScheduledExecutionStats(schedId, eId, time)
+        return jobStatsDataProvider.updateJobStats(schedId, eId, time)
     }
 
     /**

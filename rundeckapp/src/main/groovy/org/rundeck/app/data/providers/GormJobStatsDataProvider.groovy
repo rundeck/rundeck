@@ -2,16 +2,16 @@ package org.rundeck.app.data.providers
 
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleObjectStateException
-import org.rundeck.app.data.providers.v1.execution.ScheduledExecutionStatsDataProvider
+import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.springframework.dao.DuplicateKeyException
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 
 @Slf4j
-class GormScheduledExecutionStats implements ScheduledExecutionStatsDataProvider{
+class GormJobStatsDataProvider implements JobStatsDataProvider{
     @Override
-    void createScheduledExecutionStats(Long seId) {
-        def se = ScheduledExecution.findById(seId)
+    void createJobStats(Long jobId) {
+        def se = ScheduledExecution.findById(jobId)
         def stats = ScheduledExecutionStats.findAllBySe(se)
         if(!stats) {
             new ScheduledExecutionStats(se: se)
@@ -20,19 +20,19 @@ class GormScheduledExecutionStats implements ScheduledExecutionStatsDataProvider
     }
 
     @Override
-    void deleteByScheduledExecutionId(Long seId) {
-        def se = ScheduledExecution.findById(seId)
-        ScheduledExecutionStats.findAllBySe(se).each {stats->
+    void deleteByJobId(Long jobId) {
+        def se = ScheduledExecution.findById(jobId)
+        ScheduledExecutionStats.findAllBySe(se).each { stats->
             stats.delete()
         }
     }
 
     @Override
-    Boolean updateScheduledExecutionStats(Long seId, Long eId, long time) {
+    Boolean updateJobStats(Long jobId, Long eId, long time) {
         def success = false
         try {
             ScheduledExecutionStats.withTransaction {
-                def scheduledExecution = ScheduledExecution.get(seId)
+                def scheduledExecution = ScheduledExecution.get(jobId)
                 def seStats = scheduledExecution.getStats(true)
 
                 def statsMap = seStats.getContentMap()
