@@ -136,7 +136,7 @@
               <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
                   <div class="row action" data-bind="click: $root.toggleOutputForNodeStep,
                                  event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
-                      <div class="col-sm-3 " >
+                      <div class="col-sm-2 " >
                           <div class="stepident action col-inset"
                                 data-bind="
                                 attr: { 'data-execstate': executionState },
@@ -164,7 +164,16 @@
                           </div>
                       </div>
 
-                      <div class=" col-sm-2">
+                      <div class="col-sm-2 col-sm-offset-1">
+                          <div id="vue-ui-socket-element" class="vue-ui-socket" vue-socket-on="loadedNodeSteps">
+                              <div>
+                                  <ui-socket section="job-runner-execution-steps" location="top" :event-bus="EventBus" data-bind="attr: { ':socket-data': '{stepctx:\'' + $data.stepctx + '\'}', 'elma': 'chips' }" />
+                              </div>
+                          </div>
+                      </div>
+
+
+                      <div class=" col-sm-2 col-sm-offset-1">
                           <span class="execstate execstatedisplay " data-bind="attr: {
                                'data-execstate': executionState,
                                'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' )
@@ -172,7 +181,7 @@
                       </div>
 
 
-                      <div class="col-sm-2 col-sm-offset-3">
+                      <div class="col-sm-2">
                           <span class="execstart info time" data-bind="text: startTimeFormat('h:mm:ss a')"></span>
                       </div>
 

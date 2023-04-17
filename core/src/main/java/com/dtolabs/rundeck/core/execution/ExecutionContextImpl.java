@@ -82,6 +82,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
     @Getter private List<ContextComponent<?>> componentList;
+
+    private Map<String, Object> extraMetadata;
     
     private ExecutionReference execution;
 
@@ -93,6 +95,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         sharedDataContext = new WFSharedContext();
         outputContext = SharedDataContextUtils.outputContext(ContextView.global());
         componentList = new ArrayList<>();
+        extraMetadata = new LinkedHashMap<>();
     }
 
     public static Builder builder() {
@@ -257,6 +260,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 if (null != original.getComponentList()) {
                     ctx.componentList.addAll(original.getComponentList());
                 }
+                if(null!=original.getExtraMetadata()){
+                    ctx.extraMetadata.putAll(original.getExtraMetadata());
+                }
             }
         }
 
@@ -363,6 +369,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             newList.addAll(ctx.componentList.stream().filter(otherContainsNotMatch).collect(Collectors.toList()));
             newList.addAll(other.ctx.componentList);
             ctx.componentList = newList;
+
+            if(null != other.ctx.extraMetadata){
+                ctx.extraMetadata.putAll(other.ctx.extraMetadata);
+            }
 
             return this;
         }
@@ -650,6 +660,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
+        public Builder putExtraMetadata(Map<String, Object> extraMetadata) {
+            ctx.extraMetadata.putAll(extraMetadata);
+            return this;
+        }
+
         public Builder addComponents(Collection<ContextComponent<?>> components) {
             ctx.componentList.addAll(components);
             return this;
@@ -780,4 +795,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     
     @Override
     public ExecutionReference getExecution() { return execution; }
+
+    @Override
+    public Map<String, Object> getExtraMetadata() {
+        return extraMetadata;
+    }
 }

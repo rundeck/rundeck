@@ -686,6 +686,7 @@ function RDNode(name, steps,flow){
     self.toggleExpand=function(){
         self.expanded(!self.expanded());
         if(self.expanded()){
+            window.dispatchEvent(new Event('toggleExpandNodes'))
             flow.selectedNodes.push(self.name);
             flow.loadStateForNode(self);
         }else {
@@ -865,6 +866,7 @@ function RDNode(name, steps,flow){
         self.dedupeSteps(data.steps);
         self.updateSummary(data.summary);
         self.updateSteps(data.steps);
+        window.dispatchEvent(new Event('nodeStepDataLoaded'))
     };
     self.dedupeSteps=function(steps) {
         var seen = []
@@ -1351,6 +1353,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
                     obj.errorMessage( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
                 }else{
                     node.loadData(data);
+                    window.dispatchEvent(new Event('loadedNodeSteps'))
                 }
             },
             error: function (jqxhr,status,err) {

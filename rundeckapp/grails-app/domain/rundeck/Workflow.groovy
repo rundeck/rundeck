@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.fasterxml.jackson.core.JsonParseException
@@ -32,18 +33,20 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
  * $Id$
  */
 
-public class Workflow implements WorkflowData {
+public class Workflow implements WorkflowData, EmbeddedJsonData {
 
     Integer threadcount=1
     Boolean keepgoing=false
     List<WorkflowStep> commands
     String strategy="node-first"
     String pluginConfig
+    String workflowStepMetadata
     static belongsTo = [Execution, ScheduledExecution]
     static hasMany=[commands:WorkflowStep]
     static constraints = {
         strategy(nullable:false, maxSize: 256)
         pluginConfig(nullable: true, blank:true)
+        workflowStepMetadata(nullable: true, blank: true)
     }
 
     static mapping = {
@@ -52,9 +55,10 @@ public class Workflow implements WorkflowData {
         DomainIndexHelper.generate(delegate){
             index 'WORKFLOW_COMMANDS_IDX_0',['commands']
         }
+        workflowStepMetadata type: 'text'
     }
     //ignore fake property 'configuration' and do not store it
-    static transients = ['pluginConfigMap']
+    static transients = ['pluginConfigMap', 'workflowStepMetadataMap']
 
     List<WorkflowStepData> getSteps() {
         return commands
@@ -144,6 +148,14 @@ public class Workflow implements WorkflowData {
         }
     }
 
+    Map getWorkflowStepMetadataMap() {
+        workflowStepMetadata ? asJsonMap(workflowStepMetadata) : [:]
+    }
+
+    void setWorkflowStepMetadataMap(Map config) {
+        workflowStepMetadata = config ? serializeJsonMap(config) : null
+    }
+
     public boolean validatePluginConfigMap(){
         Map configMap = getPluginConfigMap()
         Map workflowStrategyConfig = configMap ? configMap[ServiceNameConstants.WorkflowStrategy] : null
@@ -215,7 +227,7 @@ public class Workflow implements WorkflowData {
         if (plugins.pluginConfig?.get('WorkflowStrategy')) {
             plugins.pluginConfig['WorkflowStrategy'] = [(strategy): plugins.pluginConfig['WorkflowStrategy'][strategy]]
         }
-        return [/*threadcount:threadcount,*/ keepgoing:keepgoing, strategy:strategy, commands:commands.collect{it.toMap()}] + plugins
+        return [/*threadcount:threadcount,*/ keepgoing:keepgoing, strategy:strategy, commands:commands.collect{it.toMap()}, workflowStepMetadata: getWorkflowStepMetadataMap()] + plugins
     }
 
     static Workflow fromMap(Map data){
