@@ -30,4 +30,14 @@ databaseChangeLog = {
             column(name: "description", type: '${varchar255.type}')
         }
     }
+    changeSet(author: "Alberto Hormazabal", id: "4.13.0-add-project-state") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "project", columnName: 'state')
+            }
+        }
+        addColumn(tableName: "project") {
+            column(name: 'state', type: '${text.type}')
+        }
+    }    
 }

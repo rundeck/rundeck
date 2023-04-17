@@ -83,6 +83,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> getFrameworkProjectNames() {
         def c = Project.createCriteria().list {
+            ne('state', 'DELETED')
             projections {
                 property "name"
             }
@@ -105,6 +106,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
         def c = Project.createCriteria()
         c.get {
             eq('name', name)
+            ne('state', 'DELETED')
             projections {
                 property "description"
             }
