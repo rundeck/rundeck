@@ -152,8 +152,11 @@ public class Workflow implements WorkflowData, EmbeddedJsonData {
         workflowStepMetadata ? asJsonMap(workflowStepMetadata) : [:]
     }
 
-    void setWorkflowStepMetadataMap(Map config) {
-        workflowStepMetadata = config ? serializeJsonMap(config) : null
+    void setWorkflowStepMetadataMap(List<Integer> stepContext, int stepNumber, Map config) {
+        Map metadata = getWorkflowStepMetadataMap() ?: [:]
+        String key = "${stepContext.join('/')}/${stepNumber()}"
+        metadata.put(key, config)
+        workflowStepMetadata = metadata ? serializeJsonMap(metadata) : null
     }
 
     public boolean validatePluginConfigMap(){
