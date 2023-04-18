@@ -27,11 +27,12 @@ class Project implements RdProject {
     String description
     Date dateCreated
     Date lastUpdated
-    String state
+    State state = State.ENABLED
 
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
         description(nullable:true, maxSize: 255)
+        state(nullable:true)
     }
 
     static mapping = {
@@ -39,5 +40,10 @@ class Project implements RdProject {
         DomainIndexHelper.generate(delegate) {
             index 'PROJECT_IDX_NAME', ['name']
         }
+    }
+    
+    public static enum State {
+        ENABLED,
+        DISABLED
     }
 }
