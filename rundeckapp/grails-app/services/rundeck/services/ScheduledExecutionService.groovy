@@ -995,7 +995,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return new DeleteJobResult(success:false,error:errmsg)
             }
 
-            jobStatsDataProvider.deleteByJobId(scheduledExecution.id)
+            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
 
             def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
             if(refExec){
@@ -1479,7 +1479,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @NotTransactional
     Map createJobDetailMap(ScheduledExecution se) {
         Map data = [:]
-        data.put("scheduledExecutionId", se.id.toString())
+        data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
         if(se.scheduled){
@@ -3437,7 +3437,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        jobStatsDataProvider.createJobStats(scheduledExecution.id)
+        jobStatsDataProvider.createJobStats(scheduledExecution.uuid)
 
         def scheduleResult = rescheduleJob(
             scheduledExecution,
@@ -3541,7 +3541,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
-        jobStatsDataProvider.createJobStats(scheduledExecution.id)
+        jobStatsDataProvider.createJobStats(scheduledExecution.uuid)
 
         rescheduleJob(scheduledExecution)
 

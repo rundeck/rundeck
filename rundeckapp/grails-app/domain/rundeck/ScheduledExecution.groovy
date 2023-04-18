@@ -1154,13 +1154,13 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if(this.id) {
             def queryArgs = lock ? [lock: true]  : [:]
 
-            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
+            stats = ScheduledExecutionStats.findByJobUuid(this.uuid)
             if (!stats) {
                 def content = [execCount   : this.execCount,
                                totalTime   : this.totalTime,
                                refExecCount: this.refExecCount]
 
-                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
+                stats = new ScheduledExecutionStats(jobUuid: this.uuid, contentMap: content).save()
             }
         }
         stats

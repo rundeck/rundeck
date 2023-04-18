@@ -6,16 +6,26 @@ import org.rundeck.app.data.model.v1.execution.RdJobStats
 
 class ScheduledExecutionStats implements RdJobStats {
     String content
+    String jobUuid
 
     long _version = 0
 
-    static belongsTo=[se:ScheduledExecution]
+//    static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {
         version false
         _version column: 'version'
         content type: 'text'
+    }
+
+    static ScheduledExecutionStats getOrCreate(String jobUuid) {
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        if(!stats) {
+            stats = new ScheduledExecutionStats(jobUuid: jobUuid, contentMap: [execCount: 0, totalTime: -1, refExecCount: 0])
+            stats.save()
+        }
+        return stats
     }
 
     public Map getContentMap() {
@@ -40,13 +50,6 @@ class ScheduledExecutionStats implements RdJobStats {
         } else {
             content = null
         }
-    }
-
-    Serializable getJobId(){
-        if(se.id){
-            return se.id
-        }
-        return null
     }
 
     Long getVersion(){

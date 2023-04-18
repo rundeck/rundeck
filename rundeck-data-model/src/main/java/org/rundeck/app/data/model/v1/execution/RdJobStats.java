@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public interface RdJobStats {
 
-    Serializable getJobId();
+    Serializable getJobUuid();
     String getContent();
     Long getVersion();
 }

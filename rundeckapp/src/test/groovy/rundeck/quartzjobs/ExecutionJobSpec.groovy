@@ -73,7 +73,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
                 executionId: e.id.toString(),
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 executionService:es,
                 executionUtilService: eus,
                 frameworkService: fwk,
@@ -108,7 +108,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
                 executionId: e.id.toString(),
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 executionService:es,
                 executionUtilService: eus,
                 frameworkService: fwk,
@@ -133,7 +133,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         then:
             1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * jobSchedulerService.afterExecution(_, _, _)
-            1 * es.saveExecutionState(se.id, e.id, { it.status == 'failed' }, null, !null)
+            1 * es.saveExecutionState(se.uuid, e.id, { it.status == 'failed' }, null, !null)
             job.executionId == e.id
     }
 
@@ -201,7 +201,8 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         Execution e = new Execution(
@@ -218,7 +219,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -277,13 +278,14 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: false,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -341,13 +343,14 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: isScheduled,
                 executionEnabled: isExecEnabled,
-                scheduleEnabled: isScheduleEnabled
+                scheduleEnabled: isScheduleEnabled,
+                uuid: jobUUID
         )
         se.save(flush:true)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -418,7 +421,8 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                    uuid: jobUUID
             )
             se.save(flush:true)
             Execution e = new Execution(
@@ -434,7 +438,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             ).save(flush: true)
             def datamap = new JobDataMap(
                 [
-                    scheduledExecutionId: se.id.toString(),
+                    scheduledExecutionId: se.uuid,
                     executionService    : es,
                     executionUtilService: eus,
                     frameworkService    : fs,
@@ -474,6 +478,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "average notification threshold from options"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -511,6 +516,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "average notification threshold add time to avg"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -577,6 +583,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "average notification threshold perc time"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -610,6 +617,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "average notification threshold bad value"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -643,6 +651,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "average notification context"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -775,7 +784,8 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         Execution e = new Execution(
@@ -791,7 +801,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         ).save(flush: true)
         def dataMap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,

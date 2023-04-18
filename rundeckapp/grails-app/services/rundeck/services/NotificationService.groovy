@@ -173,7 +173,7 @@ public class NotificationService implements ApplicationContextAware{
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
                 def notificationTask = Promises.task {
                     ScheduledExecution.withNewTransaction {
-                        ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                        ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedId)
                         if(null != scheduledExecution) {
                             triggerJobNotification(trigger, scheduledExecution, content)
                         }
@@ -187,7 +187,7 @@ public class NotificationService implements ApplicationContextAware{
                 }
             }else{
                 ScheduledExecution.withNewTransaction {
-                    ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                    ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedId)
                     if(null != scheduledExecution){
                         triggerJobNotification(trigger, scheduledExecution, content)
                     }

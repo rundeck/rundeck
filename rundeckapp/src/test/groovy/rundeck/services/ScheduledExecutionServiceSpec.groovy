@@ -4590,8 +4590,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     @Unroll
     def "delete scheduled execution also deletes job stats and job refs"() {
         given:
-            def job = new ScheduledExecution(createJobParams()).save()
-            def stats = new ScheduledExecutionStats(se: job, content: '{}').save()
+            def job = new ScheduledExecution(createJobParams() + [uuid: UUID.randomUUID().toString()]).save()
+            def stats = new ScheduledExecutionStats(jobUuid: job.uuid, content: '{}').save()
             def exec1 = new Execution(
                     status: 'running',
                     dateStarted: new Date(100),

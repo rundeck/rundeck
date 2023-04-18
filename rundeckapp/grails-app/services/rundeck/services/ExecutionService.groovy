@@ -2990,7 +2990,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
+            scheduledExecution = ScheduledExecution.findByUuid(schedId)
         }
 
         //check the final status of succeeded nodes
@@ -3144,8 +3144,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(Long schedId, eId, long time) {
-        return jobStatsDataProvider.updateJobStats(schedId, eId, time)
+    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
     }
 
     /**
@@ -3155,7 +3155,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def updateJobRefScheduledExecStatistics(Long schedId, long time) {
+    def updateJobRefScheduledExecStatistics(String jobUuid, long time) {
+        return jobStatsDataProvider.updateJobRefStats(jobUuid, time)
         def success = false
         try {
             def scheduledExecution = ScheduledExecution.get(schedId)
@@ -3860,7 +3861,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (wresult.result) {
                 def savedJobState = false
                 if (!disableRefStats) {
-                    updateJobRefScheduledExecStatistics(id, duration)
+                    updateJobRefScheduledExecStatistics(se.uuid, duration)
                 }
                 saveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
             }
