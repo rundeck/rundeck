@@ -51,7 +51,7 @@ class WorkflowTests extends Specification implements DataTest {
             def cmds = map.remove('commands')
         then:
             2== cmds.size()
-            [keepgoing: true, strategy: 'node-first']== map
+            [keepgoing: true, strategy: 'node-first', workflowStepMetadata:[:]]== map
 
     }
 

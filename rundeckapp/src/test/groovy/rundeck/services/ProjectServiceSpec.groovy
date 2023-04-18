@@ -1682,6 +1682,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <project>testproj</project>
     <user>testuser</user>
     <workflow keepgoing='false' strategy='node-first'>
+      <workflowStepMetadata />
       <command>
         <exec>exec command</exec>
       </command>
@@ -1805,6 +1806,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <project>testproj</project>
     <user>testuser</user>
     <workflow keepgoing='false' strategy='node-first'>
+      <workflowStepMetadata />
       <command>
         <exec>exec command</exec>
       </command>
@@ -1838,6 +1840,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <project>testproj</project>
     <user>testuser</user>
     <workflow keepgoing='false' strategy='node-first'>
+      <workflowStepMetadata />
       <command>
         <exec>exec command</exec>
       </command>
@@ -1846,6 +1849,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
       <scheduleEnabled>true</scheduleEnabled>
       <executionEnabled>true</executionEnabled>
       <sequence keepgoing='true' strategy='node-first'>
+        <workflowStepMetadata />
         <command>
           <exec>exec command</exec>
         </command>

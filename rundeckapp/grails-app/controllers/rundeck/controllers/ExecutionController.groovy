@@ -346,7 +346,7 @@ class ExecutionController extends ControllerBase{
                 retryAttempt         : e.retryAttempt,
                 retry                : e.retry,
                 serverNodeUUID       : e.serverNodeUUID,
-                workflowStepMetadata : e.getWorkflow().getWorkflowStepMetadataMap(),
+                workflowStepMetadata : e.getWorkflow()?.getWorkflowStepMetadataMap(),
                 clusterExec          : isClusterExec
         ]
         if(e.retryExecution){

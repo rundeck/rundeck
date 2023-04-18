@@ -87,6 +87,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         <scriptargs />
         <scriptfile>path/to/file.sh</scriptfile>
       </command>
+      <workflowStepMetadata />
     </sequence>
   </job>
 </joblist>"""
@@ -116,6 +117,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
       scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
     keepgoing: true
     strategy: node-first
+    workflowStepMetadata: {}
 """
     }
 }
