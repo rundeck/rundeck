@@ -18,6 +18,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -45,7 +46,9 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.util.spi.AuthTokenManager
 import org.springframework.context.MessageSource
+import rundeck.StoredEvent
 import rundeck.services.data.WebhookDataService
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.Webhook
@@ -54,17 +57,28 @@ import webhooks.WebhookService
 import javax.servlet.http.HttpServletRequest
 
 class WebhookServiceSpec extends Specification implements ServiceUnitTest<WebhookService>, DataTest {
+    @Shared GormEventStoreService eventStoreService
+    @Shared FrameworkService framework
     WebhookService service
     GormWebhookDataProvider webhookProvider = new GormWebhookDataProvider()
+    private static class Events {
+        String event
+    }
     void setupSpec() {
         mockDomain Webhook
     }
     void setup(){
+        mockDomain StoredEvent
         mockDataService(WebhookDataService)
         webhookProvider.webhookDataService = applicationContext.getBean(WebhookDataService)
         webhookProvider.messageSource = Mock(MessageSource)
         service = new WebhookService()
         service.webhookDataProvider = webhookProvider
+        framework = Mock(FrameworkService) {
+            it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
+        }
+        eventStoreService = new GormEventStoreService()
+        eventStoreService.frameworkService = framework
     }
     def "process webhook"() {
         given:
@@ -678,6 +692,56 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         beforeCount == 4
         afterCount == 2
         Webhook.countByProject(project) == 0
+    }
+
+    def "delete a webhook with its stored events in DB"(){
+        setup:
+        service.eventStoreService = eventStoreService
+        service.rundeckAuthTokenManagerService = Mock(RundeckAuthTokenManagerService)
+//        def event = new Events(event: 'webhook')
+        String project = "prj1"
+        String dbSubsystem = 'webhooks'
+        String hookName1 = "hook1"
+        String hookUuid1 = "7903a5ae-f30a-42b2-99e1-e0e17f00ba0c"
+        String eventTopicDebug = "${WebhookService.TOPIC_DEBUG_EVENTS}:${hookUuid1}"
+        String eventTopicRecentEvents = "${WebhookService.TOPIC_RECENT_EVENTS}:${hookUuid1}"
+        String authToken = "123"
+        String eventPlugin = "advanced-run-job"
+        // We create 2 webhooks with advanced job run as a plugin provider
+        def hook1 = new Webhook(name:hookName1,
+                project:project,
+                authToken: authToken,
+                eventPlugin: eventPlugin,
+                uuid: hookUuid1
+        ).save()
+        // We create two events attached to the webhook in DB
+        service.eventStoreService.storeEvent(new Evt(
+                projectName: project,
+                subsystem: dbSubsystem,
+                topic: eventTopicDebug,
+//                meta: event
+        ))
+        service.eventStoreService.storeEvent(new Evt(
+                projectName: project,
+                subsystem: dbSubsystem,
+                topic: eventTopicRecentEvents,
+//                meta: event
+        ))
+
+        when:
+//        def eventQueryResultBefore = service.eventStoreService.query(new EvtQuery(
+//                subsystem: dbSubsystem
+//        ))
+        service.delete(hook1)
+
+        then:
+        service.eventStoreService.query(new EvtQuery(
+                topic: eventTopicRecentEvents
+        )).totalCount == 0
+//        eventQueryResultBefore.events.size() == 2
+//        eventQueryResultAfter.events.size() == 1
+//        Webhook.findByUuid(hookUuid1) == null
+
     }
 
     interface MockUserService {
