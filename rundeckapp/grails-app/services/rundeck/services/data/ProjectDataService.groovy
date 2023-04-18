@@ -2,25 +2,26 @@ package rundeck.services.data
 
 import grails.gorm.services.Service
 import grails.gorm.services.Where
+import org.rundeck.app.data.model.v1.project.RdProject
 import rundeck.Project
 
 @Service(Project)
 interface ProjectDataService {
 
-    @Where({ state == null || state != Project.State.DISABLED})
-    Project get(Serializable id)
+    @Where({ id == pid && (state == null || state != RdProject.State.DISABLED) })
+    Project get(Serializable pid)
 
-    @Where({ state == null || state != Project.State.DISABLED})
-    Project getByName(String name)
+    @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
+    Project getByName(String projectName)
 
     Project save(Project project)
 
     void delete(Serializable id)
 
-    @Where({ state == null || state != Project.State.DISABLED})
+    @Where({ state == null || state != RdProject.State.DISABLED})
     int count()
     
-    @Where({ state == null || state != Project.State.DISABLED})
-    int countByName(String name)
+    @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
+    int countByName(String projectName)
 
 }

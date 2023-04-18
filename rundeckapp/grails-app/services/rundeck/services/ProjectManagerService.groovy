@@ -16,10 +16,8 @@
 
 package rundeck.services
 
-
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -57,7 +55,6 @@ import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
-import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
 import org.springframework.beans.factory.InitializingBean
@@ -583,6 +580,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             SimpleProjectBuilder project = new SimpleProjectBuilder()
                                         .setDescription(description)
                                         .setName(projectName)
+                                        .setState(RdProject.State.ENABLED)
             projectDataProvider.create(project)
             generateInitProps = true
         }

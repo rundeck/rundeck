@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.util.ZipReader
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
+import grails.async.Promise
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
@@ -58,6 +59,7 @@ import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
@@ -1721,6 +1723,38 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     @GrailsCompileStatic
     DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
+        // Defer project delete
+        log.info("Deferring deletion of project ${project.name}")
+        
+        def fwk = framework
+        def mgr = framework.getFrameworkProjectMgr()
+        
+        // TODO this should be done in ProjectManagerService.
+        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(project.name))
+        projectData.setState(RdProject.State.DISABLED)
+        projectDataProvider.update(projectData.id, projectData)
+
+        Promises.task {
+            log.info("!!!  NOOO WE WONT DO IT YET !!!")
+//            return deleteProjectInternal(project, framework, authContext, username)
+            return new DeleteResponse(success: true) 
+        }
+        .onComplete { DeleteResponse it ->
+            log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+        }
+        return new DeleteResponse(success: true)
+    }
+
+
+    /**
+     * Delete a project completely
+     * @param project framework project
+     * @param framework frameowkr
+     * @return map [success:true/false, error: (String errorMessage)]
+     */
+    @GrailsCompileStatic
+    private DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
+        log.info("Starting deletion of project ${project.name} by username $username")
         def result = new DeleteResponse(success: false)
         notify('projectWillBeDeleted', project.name)
 

@@ -33,7 +33,10 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     Long create(RdProject data) throws DataAccessException {
-        Project project = new Project(description: data.getDescription(), name: data.getName())
+        Project project = new Project(
+                name: data.getName(),
+                description: data.getDescription(), 
+                state: data.getState())
         try {
             if (projectDataService.save(project)) {
                 return project.getId()
@@ -53,6 +56,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
             throw new DataAccessException("Not found: project with ID: ${id}")
         }
         project.description = data.getDescription()
+        project.state = data.getState()
         try {
             projectDataService.save(project)
         } catch (Exception e) {
@@ -85,7 +89,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
         def c = Project.createCriteria().list {
             or {
                 isNull('state')
-                ne('state', Project.State.DISABLED)
+                ne('state', RdProject.State.DISABLED)
             }
             projections {
                 property "name"
@@ -110,7 +114,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
         def c = Project.createCriteria()
         c.get {
             eq('name', name)
-            ne('state', Project.State.DISABLED)
+            ne('state', RdProject.State.DISABLED)
             projections {
                 property "description"
             }

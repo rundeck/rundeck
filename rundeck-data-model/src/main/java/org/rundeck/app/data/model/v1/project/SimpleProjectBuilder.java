@@ -13,6 +13,7 @@ public class SimpleProjectBuilder implements RdProject {
   private String description;
   private Date dateCreated;
   private Date lastUpdated;
+  private State state;
 
   @Override
   public Serializable getId() {
@@ -39,6 +40,11 @@ public class SimpleProjectBuilder implements RdProject {
         return lastUpdated;
     }
 
+  @Override
+  public State getState() {
+    return state;
+  }
+
 
   public SimpleProjectBuilder setName(String name) {
     this.name = name;
@@ -56,7 +62,10 @@ public class SimpleProjectBuilder implements RdProject {
     return this;
   }
 
-
+  public SimpleProjectBuilder setState(State state) {
+    this.state = state;
+    return this;
+  }
 
   public static SimpleProjectBuilder with(RdProject input) {
     SimpleProjectBuilder project1 = new SimpleProjectBuilder();
@@ -64,6 +73,7 @@ public class SimpleProjectBuilder implements RdProject {
     project1.name = input.getName();
     project1.description = input.getDescription();
     project1.lastUpdated = input.getLastUpdated();
+    project1.state = input.getState();
 
     return project1;
   }
