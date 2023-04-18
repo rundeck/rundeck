@@ -12,6 +12,7 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         return TYPE
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     RemoteUrlAuthenticationType authenticationType
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -38,9 +39,16 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
     @JsonIgnore
     String errors
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String jsonFilter
+
     static JobOptionConfigRemoteUrl fromMap(Map map){
         JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
-        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(map.authenticationType)
+
+        if(map.authenticationType){
+            configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(map.authenticationType)
+        }
+
         if(map.username){
             configRemoteUrl.username = map.username
         }
@@ -58,6 +66,10 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         }
         if(map.apiTokenReporter){
             configRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(map.apiTokenReporter)
+        }
+
+        if(map.jsonFilter){
+            configRemoteUrl.jsonFilter = map.jsonFilter
         }
 
         return configRemoteUrl
@@ -83,6 +95,9 @@ class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
         }
         if(apiTokenReporter){
             map.apiTokenReporter=apiTokenReporter.name()
+        }
+        if(jsonFilter){
+            map.jsonFilter=jsonFilter
         }
 
         return map

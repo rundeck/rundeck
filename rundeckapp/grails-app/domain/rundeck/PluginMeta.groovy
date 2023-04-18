@@ -17,8 +17,9 @@
 package rundeck
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.pluginMeta.RdPluginMeta
 
-class PluginMeta {
+class PluginMeta implements RdPluginMeta{
 
     static constraints = {
         jsonData(nullable: true, blank: true)

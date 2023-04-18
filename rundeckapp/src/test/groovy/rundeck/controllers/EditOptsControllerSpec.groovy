@@ -16,11 +16,13 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -791,4 +793,48 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         map1==map2
 
     }
+
+
+    def "validate opt configRemoteUrl json path filter"() {
+        given:
+        Option opt = new Option(name: "test",
+                                defaultValue: "123",
+                                required: true,
+                                enforced: false,
+                                valuesUrl: "http://test.com",
+                                configData: "{\"jobOptionConfigEntries\":{\"remote-url\":{\"@class\":\"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl\",\"jsonFilter\":\"${jsonFilter}\"}}}")
+
+        when:
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = jsonFilter
+        def result = EditOptsController._validateOption(opt, provider, null, configRemoteUrl, params, true)
+        then:
+        opt.errors.hasErrors()==hasError
+        opt.errors.hasFieldErrors('configRemoteUrl') == hasError
+
+        where:
+        jsonFilter | hasError
+        "dsdasd." | true
+        "\$\$" | true
+        "\$" | false
+        "\$.test" | false
+
+    }
+
+    def "cleaning remoteUrlConfig json filter"() {
+        given:
+        def option = new Option(name:"test",enforced:false, valuesType:'url', valuesUrl:'http://test.com', "configData":"{\"jobOptionConfigEntries\":{\"remote-url\":{\"@class\":\"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl\",\"jsonFilter\":\"\$.test\"}}}")
+        params.name='test'
+        params.newoption = 'modify'
+        params.valuesType = 'url'
+        params.valuesUrl = 'http://test.com'
+
+        when:
+        def result = controller._setOptionFromParams(option, params)
+
+        then:
+        result!=null
+        result.configRemoteUrl == null
+    }
+
 }

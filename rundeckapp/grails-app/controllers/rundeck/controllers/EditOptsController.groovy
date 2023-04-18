@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
+import com.jayway.jsonpath.JsonPath
 import org.apache.http.HttpResponse
 import org.rundeck.util.HttpClientCreator
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -723,6 +724,13 @@ class EditOptsController extends ControllerBase{
             }
             if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
+        if(opt.realValuesUrl && opt.getConfigRemoteUrl()?.getJsonFilter()){
+            try{
+                JsonPath.compile(opt.getConfigRemoteUrl()?.getJsonFilter())
+            } catch (Exception e){
+                opt.errors.rejectValue('configRemoteUrl', 'form.option.valuesType.url.filter.error.label')
+            }
+        }
         return result
     }
 
@@ -742,28 +750,37 @@ class EditOptsController extends ControllerBase{
             params.valuesList = null
             valuesUrl = params.valuesUrl
 
-            if(params.remoteUrlAuthenticationType){
+            if(params.remoteUrlAuthenticationType || params.remoteUrlJsonFilter){
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = new JobOptionConfigRemoteUrl()
-                jobOptionConfigRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(params.remoteUrlAuthenticationType)
 
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC){
-                    jobOptionConfigRemoteUrl.username = params.remoteUrlUsername
-                    jobOptionConfigRemoteUrl.passwordStoragePath = params.remoteUrlPassword
+                if(params.remoteUrlAuthenticationType){
+                    jobOptionConfigRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(params.remoteUrlAuthenticationType)
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC){
+                        jobOptionConfigRemoteUrl.username = params.remoteUrlUsername
+                        jobOptionConfigRemoteUrl.passwordStoragePath = params.remoteUrlPassword
+                    }
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
+                        jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
+                        jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
+                        jobOptionConfigRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(params.remoteUrlApiTokenReporter)
+                    }
+
+                    if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
+                        jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlBearerToken
+                    }
                 }
 
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
-                    jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
-                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
-                    jobOptionConfigRemoteUrl.apiTokenReporter = ApiTokenReporter.valueOf(params.remoteUrlApiTokenReporter)
-                }
-
-                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
-                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlBearerToken
-                }
+                jobOptionConfigRemoteUrl.jsonFilter = params.remoteUrlJsonFilter?:null
 
                 JobOptionConfigData jobOptionConfigData = new JobOptionConfigData()
                 jobOptionConfigData.addConfig(jobOptionConfigRemoteUrl)
                 opt.setOptionConfigData(jobOptionConfigData)
+            }else{
+                if(opt.getConfigRemoteUrl()!=null){
+                    opt.setOptionConfigData(null)
+                }
             }
         }
 
