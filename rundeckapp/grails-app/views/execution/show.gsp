@@ -1100,32 +1100,37 @@ search
         "execution": loadJsonData('execDataJSON')
     })
 
-    const observer = new MutationObserver(function(mutations_list) {
-        mutations_list.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(added_node) {
-                if(added_node.className == 'wfnodestate' && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
+    var node_added = []
+    var watchVueSocket= (evt) => {
+        var vueSocketFound = false
+        var nodename = evt.detail?.rdnode?.name
+        window._rundeck.data.execution = Object.assign(window._rundeck.data || {}, {
+            workflow: {workflowStepMetadata: nodeflowvm.workflowStepMetadata}
+        })
+        if(node_added.indexOf(nodename) < 0){
+            node_added.push(nodename)
+            const observer2 = new MutationObserver(function(mutations_list) {
+                mutations_list.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(added_node) {
+                        if(added_node.getElementsByClassName && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
+                            vueSocketFound = true
+                        }
+                    });
+                });
+                if(vueSocketFound){
                     var eventKOProcessed = new Event('vue-ui-socket-node-added');
                     window.dispatchEvent(eventKOProcessed)
-                    observer.disconnect();
+                    observer2.disconnect();
                 }
-            });
-            });
-    })
-    observer.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
+            })
+            observer2.observe(document.querySelector("[data-node='" + nodename + "']"), { subtree: true, childList: true });
+        } else {
+            var eventKOProcessed = new Event('vue-ui-socket-node-added');
+            window.dispatchEvent(eventKOProcessed)
+        }
+    }
 
-    // const observer2 = new MutationObserver(function(mutations_list) {
-    //     mutations_list.forEach(function(mutation) {
-    //         mutation.addedNodes.forEach(function(added_node) {
-    //             console.log('added_node', added_node.className)
-    //             if(added_node.className == 'nodestepinfo' && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
-    //                 var eventKOProcessed = new Event('vue-ui-socket-node-added-2');
-    //                 window.dispatchEvent(eventKOProcessed)
-    //                 observer2.disconnect();
-    //             }
-    //         });
-    //     });
-    // })
-    // observer2.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
+    window.addEventListener('toggleExpandNodes', watchVueSocket)
 
     function init() {
         var execInfo=loadJsonData('execInfoJSON');

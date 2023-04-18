@@ -686,7 +686,7 @@ function RDNode(name, steps,flow){
     self.toggleExpand=function(){
         self.expanded(!self.expanded());
         if(self.expanded()){
-            window.dispatchEvent(new Event('toggleExpandNodes'))
+            window.dispatchEvent(new CustomEvent('toggleExpandNodes', {detail:{rdnode: self}}))
             flow.selectedNodes.push(self.name);
             flow.loadStateForNode(self);
         }else {
@@ -924,6 +924,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeView = ko.observable("nodes");
+    self.workflowStepMetadata=null;
     /**
      * synonym with activeView, to maintain compatibility
      */
@@ -1443,7 +1444,8 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
                     execDuration: data.execDuration,
                     jobAverageDuration: data.jobAverageDuration,
                     startTime: data.startTime ? data.startTime : data.state ? data.state.startTime : null,
-                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null,
+                    workflowStepMetadata:ko.pureComputed(function(){return data.workflowStepMetadata})
                 }, {}, self);
                 if(followNodes) {
                     self.updateNodes(data.state);

@@ -78,20 +78,12 @@
   <div data-bind="foreach: activeNodes()">
     <div class="wfnodestate" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
       <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
-          <div class="col-sm-3  nodectx"
+          <div class="col-sm-6  nodectx"
                data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
               <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                   <i class="auto-caret text-muted"></i>
                   <i class="fas fa-hdd"></i>
                   <span data-bind="text: name"></span>
-              </div>
-          </div>
-
-          <div class="col-sm-3">
-              <div class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
-                  <div>
-                      <ui-socket section="job-runner-execution" location="top" :event-bus="EventBus" />
-                  </div>
               </div>
           </div>
 
@@ -129,14 +121,14 @@
       </div>
       %{--step specific info for node--}%
       <div data-bind="if: expanded">
-      <div  data-bind="visible: expanded" >
+      <div  class="workflowstepitem" data-bind="visible: expanded" >
           <div data-bind="foreach: steps">
               <div data-bind="if: !$data.parameterizedStep()">
               <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
               <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
                   <div class="row action" data-bind="click: $root.toggleOutputForNodeStep,
                                  event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
-                      <div class="col-sm-2 " >
+                      <div class="col-sm-3 " >
                           <div class="stepident action col-inset"
                                 data-bind="
                                 attr: { 'data-execstate': executionState },
@@ -164,8 +156,8 @@
                           </div>
                       </div>
 
-                      <div class="col-sm-2 col-sm-offset-1">
-                          <div id="vue-ui-socket-element" class="vue-ui-socket" vue-socket-on="loadedNodeSteps">
+                      <div class="col-sm-2">
+                          <div id="vue-ui-socket-element" class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
                               <div>
                                   <ui-socket section="job-runner-execution-steps" location="top" :event-bus="EventBus" data-bind="attr: { ':socket-data': '{stepctx:\'' + $data.stepctx + '\'}', 'elma': 'chips' }" />
                               </div>
