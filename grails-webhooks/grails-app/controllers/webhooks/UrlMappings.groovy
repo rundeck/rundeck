@@ -12,8 +12,6 @@ class UrlMappings {
             "/api/$api_version/project/${project}/webhook/$id?"(controller: 'webhook') {
                 action=[GET:"get",POST:"save",DELETE:"remove"]
             }
-            "/api/$api_version/project/${project}/webhook/$uuid/cleanDebugData"(controller: 'webhook', action: 'cleanDebugData')
-
             "/webhook/admin"(controller:"webhook",action:"admin")
             "/webhook/admin/editorData/$project"(controller: 'webhook', action: 'editorData')
             "/webhook/admin/save"(controller: 'webhook') {

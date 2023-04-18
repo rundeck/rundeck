@@ -8,7 +8,6 @@ import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
-import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
@@ -97,7 +96,7 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
-    def handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
+    Long handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
         if( queryType ){
             log.info("Handling webhook events data with action: ${queryType}")
             if( queryType.equals(EventQueryType.DELETE) ){
@@ -111,6 +110,7 @@ class WebhookService {
         }else{
             throw new MissingParameter("Query type is not present or valid.")
         }
+        return 0L;
     }
 
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
@@ -331,7 +331,8 @@ class WebhookService {
         String name = hook.name
         try {
             // Deleting all stored debug data for this particular hook from the DB
-            handleWebhookEventsData(EventQueryType.DELETE, hook)
+            def rowsAffected = handleWebhookEventsData(EventQueryType.DELETE, hook)
+            log.info("Deleted ${rowsAffected} stored events in DB for webhook: ${name}")
             webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]

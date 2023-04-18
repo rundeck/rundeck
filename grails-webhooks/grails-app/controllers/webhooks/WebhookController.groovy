@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
@@ -129,38 +128,6 @@ class WebhookController {
         uidata.username = authContext.username
         uidata.roles = authContext.roles.join(",")
         render uidata as JSON
-    }
-
-    def cleanDebugData() {
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-        }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, params.project, AuthConstants.ACTION_READ)) {
-            sendJsonError("You do not have access to this resource")
-            return
-        }
-        def project = params.project as String
-        def hookUuid = params.uuid as String
-        def clientWebhook = webhookService.getWebhookByUuid(hookUuid)
-        if(!clientWebhook) {
-            sendJsonError("Webhook not found")
-            return
-        }
-        if(!clientWebhook.enabled) {
-            sendJsonError("Webhook not enabled", 503)
-            return
-        }
-        // Cleaning data stored in db
-        def model = [:]
-        try{
-            def result = webhookService.handleWebhookEventsData(EventQueryType.DELETE, clientWebhook)
-            model = [rowsAffected: result]
-        }catch(Exception e){
-            log.error("Error while trying to query stored events in DB: ${e.message}")
-        }
-        render model as JSON
     }
 
     def post() {
