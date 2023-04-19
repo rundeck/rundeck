@@ -749,7 +749,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         when:
         // First we delete the stored events for one particular webhook (2 rows affected)
-        def rowsAffected = service.handleWebhookEventsData(EventQueryType.DELETE, hook1)
+        service.handleWebhookEventsData(EventQueryType.DELETE, hook1)
         // Then we check if the other webhook still have its events stored (2 rows count)
         def eventStillInDb = service.eventStoreService.query([
                 projectName: project,
@@ -757,7 +757,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         ] as EvtQuery)
 
         then:
-        rowsAffected == 2
         eventStillInDb.totalCount == 2
     }
 

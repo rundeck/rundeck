@@ -96,7 +96,7 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
-    Long handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
+    def handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
         if( queryType ){
             log.info("Handling webhook events data with action: ${queryType}")
             if( queryType.equals(EventQueryType.DELETE) ){
@@ -104,13 +104,11 @@ class WebhookService {
                 Long queryResultForDebug = deleteEvents( TOPIC_DEBUG_EVENTS, webhook)
                 Long queryResultForRecentEvents = deleteEvents( TOPIC_RECENT_EVENTS, webhook)
                 def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
-                log.info("Returning the number of rows affected in the query: ${totalAmountOfRowsAffected}")
-                return totalAmountOfRowsAffected
+                log.info("Rows affected in the query: ${totalAmountOfRowsAffected}")
             }
         }else{
             throw new MissingParameter("Query type is not present or valid.")
         }
-        return 0L;
     }
 
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
