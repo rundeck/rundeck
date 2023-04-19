@@ -5,10 +5,7 @@ import org.gradle.plugins.signing.Sign
 apply plugin: 'java';
 apply plugin: 'eclipse';
 apply plugin: 'idea';
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
+apply plugin: 'idea';
 
 repositories {
     mavenLocal()

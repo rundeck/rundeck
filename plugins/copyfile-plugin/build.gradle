@@ -23,6 +23,8 @@ ext.pluginName = 'Copy File Step'
 ext.pluginDescription = 'Copy a file to a destination on a remote node.'
 apply plugin: "groovy"
 
+apply from: "../../gradle/java-version.gradle"
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

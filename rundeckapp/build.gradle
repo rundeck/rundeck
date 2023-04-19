@@ -602,6 +602,7 @@ publishing {
 }
 
 apply from: "${rootDir}/gradle/java.gradle"
+apply from: "../gradle/java-version.gradle"
 
 
 if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {
