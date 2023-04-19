@@ -109,7 +109,7 @@ class WebhookService {
     /**
      * Perform the delete querie for webhook events data in DB
      * @param eventTopic : The string with data for the specific event (see webhook's records in stored_events table in DB)
-     * @param webhook : webhook
+     * @param webhook
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
         EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
