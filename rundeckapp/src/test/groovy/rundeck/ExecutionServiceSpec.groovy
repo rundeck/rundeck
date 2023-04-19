@@ -3015,6 +3015,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -3948,7 +3949,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        def refexec = ReferencedExecution.findByScheduledExecution(job)
+        def refexec = ReferencedExecution.findByJobUuid(job.uuid)
         def seStats = ScheduledExecutionStats.findBySe(job)
         if(expectedRef){
             seStats.getContentMap().refExecCount==0

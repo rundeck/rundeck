@@ -1003,7 +1003,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     st.delete()
                 }
             }
-            referencedExecutionDataProvider.deleteByJobId(scheduledExecution.id)
+            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){

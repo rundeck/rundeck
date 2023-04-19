@@ -1910,7 +1910,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: jobuuid,execution: exec).save()
         }
 
 
@@ -2015,7 +2015,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: "uuid",execution: exec).save()
         }
 
 

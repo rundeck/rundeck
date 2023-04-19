@@ -3835,7 +3835,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
             executionReference = exec.asReference()
-            refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
+            refId = saveRefExecution(EXECUTION_RUNNING, null, se.uuid, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
                 String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3953,8 +3953,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
-        return referencedExecutionDataProvider.updateOrCreateReference(refId, seId, execId, status)
+    def saveRefExecution(String status, Long refId, String jobUuid = null, Long execId=null){
+        return referencedExecutionDataProvider.updateOrCreateReference(refId, jobUuid, execId, status)
     }
     /**
      * Query for executions for the specified job

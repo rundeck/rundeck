@@ -5,8 +5,8 @@ import java.io.Serializable;
 
 public interface RdReferencedExecution {
 
+    String getJobUuid();
     String getStatus();
     Serializable getExecutionId();
-    Serializable getJobId();
 
 }

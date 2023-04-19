@@ -475,7 +475,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-        def parentList = referencedExecutionDataProvider.parentList(scheduledExecution.id,10)
+        def parentList = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,10)
         def isReferenced = parentList?.size()>0
 
         def pluginDescriptions=[:]
@@ -1252,7 +1252,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if(request.method=='POST') {
-            def isReferenced = referencedExecutionDataProvider.parentList(scheduledExecution,1)?.size()>0
+            def isReferenced = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,1)?.size()>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,

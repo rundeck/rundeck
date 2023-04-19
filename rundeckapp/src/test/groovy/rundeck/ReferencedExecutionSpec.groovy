@@ -57,7 +57,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
 
         when:
         List l = ReferencedExecution.executionProjectList(se)
@@ -89,6 +89,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -131,8 +132,8 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
-        def re2 = new ReferencedExecution(scheduledExecution: se,execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
 
         def executionIdList = [[executionId: exec.id, project: exec.project], [executionId: exec2.id, project: exec2.project]]
 
@@ -201,7 +202,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
 
         when:
         List l = ReferencedExecution.parentList(se)
@@ -293,8 +294,8 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb2
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
-        def re2 = new ReferencedExecution(scheduledExecution: se,execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
 
         when:
         List l = ReferencedExecution.parentList(se, max)

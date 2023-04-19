@@ -157,7 +157,7 @@ class ReportsController extends ControllerBase{
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
                 def list = []
                 if(sched!= null) {
-                    list = referencedExecutionDataProvider.executionProjectList(sched.id)
+                    list = referencedExecutionDataProvider.executionProjectList(sched.uuid)
                 }
                 def allowedProjects = []
                 list.each { project ->

@@ -130,6 +130,7 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -154,7 +155,7 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
         )
         e1.save()
 
-        ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
+        ReferencedExecution refexec = new ReferencedExecution(status: 'running',jobUuid: job.uuid, execution: e1)
         refexec.save()
 
 
