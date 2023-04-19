@@ -33,7 +33,6 @@ import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
-import org.rundeck.core.auth.access.MissingParameter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -96,6 +95,10 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
+    /**
+     * Receives a webhook and delete all the stored event data in DB related to it
+     * @param webhook
+     */
     def deleteWebhookEventsData(RdWebhook webhook) {
         Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
         Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
@@ -103,6 +106,11 @@ class WebhookService {
         log.info("Rows affected in the query: ${totalAmountOfRowsAffected}")
     }
 
+    /**
+     * Perform the delete querie for webhook events data in DB
+     * @param eventTopic : The string with data for the specific event (see webhook's records in stored_events table in DB)
+     * @param webhook : webhook
+     */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
         EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
                 queryType: EventQueryType.DELETE,
