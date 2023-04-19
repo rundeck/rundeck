@@ -158,7 +158,8 @@ public class Workflow implements WorkflowData, EmbeddedJsonData {
 
     void setWorkflowStepMetadataMap(List<Integer> stepContext, int stepNumber, Map config) {
         Map metadata = getWorkflowStepMetadataMap() ?: [:]
-        String key = "${stepContext.join('/')}/${stepNumber}"
+        List contextKey = stepContext + stepNumber
+        String key = "${contextKey.join('/')}"
         metadata.put(key, config)
         setWorkflowStepMetadataMap(metadata)
     }
