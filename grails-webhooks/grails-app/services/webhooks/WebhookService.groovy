@@ -96,19 +96,11 @@ class WebhookService {
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
-    def handleWebhookEventsData(EventQueryType queryType, RdWebhook webhook){
-        if( queryType ){
-            log.info("Handling webhook events data with action: ${queryType}")
-            if( queryType.equals(EventQueryType.DELETE) ){
-                log.info("Query type: ${EventQueryType.DELETE}, deleting all debug data stored in DB")
-                Long queryResultForDebug = deleteEvents( TOPIC_DEBUG_EVENTS, webhook)
-                Long queryResultForRecentEvents = deleteEvents( TOPIC_RECENT_EVENTS, webhook)
-                def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
-                log.info("Rows affected in the query: ${totalAmountOfRowsAffected}")
-            }
-        }else{
-            throw new MissingParameter("Query type is not present or valid.")
-        }
+    def deleteWebhookEventsData(RdWebhook webhook) {
+        Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
+        Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
+        def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
+        log.info("Rows affected in the query: ${totalAmountOfRowsAffected}")
     }
 
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
@@ -329,8 +321,7 @@ class WebhookService {
         String name = hook.name
         try {
             // Deleting all stored debug data for this particular hook from the DB
-            def rowsAffected = handleWebhookEventsData(EventQueryType.DELETE, hook)
-            log.info("Deleted ${rowsAffected} stored events in DB for webhook: ${name}")
+            deleteWebhookEventsData(hook)
             webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
