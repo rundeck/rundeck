@@ -156,7 +156,7 @@
                           </div>
                       </div>
 
-                      <div class="col-sm-2">
+                      <div data-bind="if: executionState() != 'WAITING'" class="col-sm-2">
                           <div id="vue-ui-socket-element" class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
                               <div>
                                   <ui-socket section="job-runner-execution-steps" location="top" :event-bus="EventBus" data-bind="attr: { ':socket-data': '{stepctx:\'' + $data.stepctx + '\'}', 'elma': 'chips' }" />

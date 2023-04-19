@@ -1431,6 +1431,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
                 }, {}, self);
             },
             updateState: function (data) {
+                window.dispatchEvent(new Event('updateStateStep'))
                 ko.mapping.fromJS({
                     executionState: data.executionState,
                     executionStatusString: data.executionStatusString,

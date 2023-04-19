@@ -1131,6 +1131,7 @@ search
     }
 
     window.addEventListener('toggleExpandNodes', watchVueSocket)
+    window.addEventListener('updateStateStep', watchVueSocket)
 
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
