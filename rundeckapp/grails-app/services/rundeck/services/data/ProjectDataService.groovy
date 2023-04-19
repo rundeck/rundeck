@@ -8,24 +8,44 @@ import rundeck.Project
 @Service(Project)
 interface ProjectDataService {
 
+    /**
+     * Get an enabled project by id.
+     */
     @Where({ id == pid && (state == null || state != RdProject.State.DISABLED) })
-    Project getProject(Serializable pid)
+    Project getEnabledProject(Serializable pid)
 
+    /**
+     * Get an enabled project by name
+     */
     @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
-    Project getByName(String projectName)
+    Project getEnabledProject(String projectName)
 
-    // TODO refactor for a better naming/alternative
+    /**
+     * Get a project by name regardless of its state. 
+     */
     @Where({ name == projectName })
-    Project getProjectForDelete(String projectName)
+    Project getAnyProject(String projectName)
 
+    /**
+     * Saves a project 
+     */
     Project save(Project project)
 
+    /**
+     * Deletes a project by id. 
+     */
     void delete(Serializable id)
 
+    /**
+     * Counts the number of enabled projects. 
+     */
     @Where({ state == null || state != RdProject.State.DISABLED })
-    int count()
+    int countEnabled()
 
+    /**
+     * Counts the number of enabled projects by name. 
+     */
     @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
-    int countByName(String projectName)
+    int countEnabledByName(String projectName)
 
 }

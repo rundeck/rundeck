@@ -28,7 +28,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     RdProject getData (final Serializable id) {
-        RdProject project = projectDataService.getProject(id)
+        RdProject project = projectDataService.getEnabledProject(id)
         return project ?: null
     }
 
@@ -51,7 +51,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     void update(final Serializable id, final RdProject data) throws DataAccessException {
-        def project = projectDataService.getProject(id)
+        def project = projectDataService.getEnabledProject(id)
         if (!project) {
             throw new DataAccessException("Not found: project with ID: ${id}")
         }
@@ -66,7 +66,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     void delete(final String projectName) throws DataAccessException {
-        def project = projectDataService.getProjectForDelete(projectName)
+        def project = projectDataService.getAnyProject(projectName)
         if (!project) {
             throw new DataAccessException("Project does not exist: ${projectName}")
         }
@@ -79,14 +79,24 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     RdProject findByName (final String name) {
-        RdProject project = projectDataService.getByName(name)
+        RdProject project = projectDataService.getEnabledProject(name)
         return project ?: null
+    }
+
+    @Override
+    int countFrameworkProjects() {
+        return projectDataService.countEnabled()
+    }
+
+    @Override
+    boolean projectExists(String project) {
+        projectDataService.countEnabledByName(project) > 0
     }
 
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> getFrameworkProjectNames() {
-        def c = Project.createCriteria().list {
+        return Project.createCriteria().list {
             or {
                 isNull('state')
                 ne('state', RdProject.State.DISABLED)
@@ -95,31 +105,20 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
                 property "name"
             }
         }
-        return c
-    }
-
-    @Override
-    int countFrameworkProjects() {
-        return projectDataService.count()
-    }
-
-    @Override
-    boolean projectExists(String project) {
-        projectDataService.countByName(project) > 0
     }
 
     @Override
     @CompileDynamic
     String getProjectDescription(String name){
-        def c = Project.createCriteria()
-        c.get {
-            eq('name', name)
-            ne('state', RdProject.State.DISABLED)
+        return Project.createCriteria().get {
+            or {
+                isNull('state')
+                ne('state', RdProject.State.DISABLED)
+            }
             projections {
                 property "description"
             }
         }
-
     }
 
 }
