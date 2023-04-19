@@ -51,7 +51,7 @@ class WebhookService {
     static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
     static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
-    WebhookDataProvider webhookDataProvider;\
+    WebhookDataProvider webhookDataProvider;
 
     @Autowired
     EventStoreService eventStoreService
