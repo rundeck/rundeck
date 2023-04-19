@@ -121,28 +121,11 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
 
     }
 
-    def "shouldShowLogin show local after first login"() {
-        when:
-        File firstLoginFile = File.createTempFile("first","login")
-        tagLib.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.localLogin.enabled",true) >> { false }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
-        }
-        tagLib.frameworkService = Mock(FrameworkService) {
-            getFirstLoginFile() >> { return firstLoginFile }
-        }
-        def result = tagLib.showLocalLogin(null,"loginform").toString()
-
-        then:
-        result == "loginform"
-    }
-
     def "shouldShowLogin suppress local if no first login"() {
         when:
         File firstLoginFile = new File("/tmp/doesnotexist")
         tagLib.configurationService = Mock(ConfigurationService) {
             getBoolean("login.localLogin.enabled",true) >> { false }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
         }
         tagLib.frameworkService = Mock(FrameworkService) {
             getFirstLoginFile() >> { return firstLoginFile }
@@ -157,7 +140,6 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         when:
         tagLib.configurationService = Mock(ConfigurationService) {
             getBoolean("login.localLogin.enabled",true) >> { toggle }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { false }
         }
         def result = tagLib.showLocalLogin(null,"loginform").toString()
 
