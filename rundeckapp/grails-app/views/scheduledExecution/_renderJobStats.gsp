@@ -23,11 +23,11 @@
 <g:set var="successcount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
 <g:set var="refsuccesscount"
-       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.id, 'succeeded') : 0}"/>
+       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded') : 0}"/>
 <g:set var="execCount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="refexecCount"
-       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuid(scheduledExecution.id) : 0}"/>
+       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid) : 0}"/>
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 <g:render template="/scheduledExecution/showStats"
           model="[scheduledExecution: scheduledExecution, lastrun: lastrun ? lastrun : null, successrate: successrate,reflastrun: reflastrun ? reflastrun : null]"/>
