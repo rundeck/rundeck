@@ -28,7 +28,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     RdProject getData (final Serializable id) {
-        RdProject project = projectDataService.get(id)
+        RdProject project = projectDataService.getProject(id)
         return project ?: null
     }
 
@@ -51,7 +51,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     void update(final Serializable id, final RdProject data) throws DataAccessException {
-        def project = projectDataService.get(id)
+        def project = projectDataService.getProject(id)
         if (!project) {
             throw new DataAccessException("Not found: project with ID: ${id}")
         }
@@ -66,7 +66,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     void delete(final String projectName) throws DataAccessException {
-        def project = projectDataService.getByName(projectName)
+        def project = projectDataService.getProjectForDelete(projectName)
         if (!project) {
             throw new DataAccessException("Project does not exist: ${projectName}")
         }

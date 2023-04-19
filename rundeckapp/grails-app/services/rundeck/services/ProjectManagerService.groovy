@@ -619,6 +619,21 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    void disableFrameworkProject(String projectName) {
+        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
+        projectData.setState(RdProject.State.DISABLED)
+        projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
+    void enableFrameworkProject(String projectName) {
+        // TODO this won't work as findByName won't return disabled projects
+        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
+        projectData.setState(RdProject.State.ENABLED)
+        projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
     IRundeckProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
         RdProject found = projectDataProvider.findByName(projectName)
         if (found) {

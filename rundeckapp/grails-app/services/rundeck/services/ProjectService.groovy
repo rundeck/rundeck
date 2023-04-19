@@ -36,7 +36,6 @@ import com.dtolabs.rundeck.util.ZipReader
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
-import grails.async.Promise
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
@@ -65,7 +64,6 @@ import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.spi.data.DataAccessException
-
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -76,6 +74,7 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
@@ -111,6 +110,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ConfigurationService configurationService
     RundeckProjectDataProvider projectDataProvider
     ExecReportDataProvider execReportDataProvider
+    AuditEventsService auditEventsService
 
     static transactional = false
 
@@ -1723,24 +1723,25 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     @GrailsCompileStatic
     DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
-        // Defer project delete
-        log.info("Deferring deletion of project ${project.name}")
-        
-        def fwk = framework
-        def mgr = framework.getFrameworkProjectMgr()
-        
-        // TODO this should be done in ProjectManagerService.
-        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(project.name))
-        projectData.setState(RdProject.State.DISABLED)
-        projectDataProvider.update(projectData.id, projectData)
+        log.info("Requested deletion of project ${project.name}")
 
-        Promises.task {
-            log.info("!!!  NOOO WE WONT DO IT YET !!!")
-//            return deleteProjectInternal(project, framework, authContext, username)
-            return new DeleteResponse(success: true) 
+        try {
+            framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
+        } catch (UnsupportedOperationException e) {
+            // Disabling not supported by underlying framework. So we revert to old behavior and skip the deferral.
+            log.warn("Could not disable project. Will try to delete it directly: ${e.getMessage()}", e)
+            return deleteProjectInternal(project, framework, authContext, username)
         }
-        .onComplete { DeleteResponse it ->
+
+        log.info("Deferring deletion of project ${project.name} to background task.")
+        def promise = Promises.task {
+            return deleteProjectInternal(project, framework, authContext, username)
+        }
+        promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+        }
+        promise.onError { Throwable t ->
+            log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
         }
         return new DeleteResponse(success: true)
     }

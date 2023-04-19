@@ -79,7 +79,6 @@ import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
-import rundeck.services.data.ProjectDataService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData

@@ -9,18 +9,22 @@ import rundeck.Project
 interface ProjectDataService {
 
     @Where({ id == pid && (state == null || state != RdProject.State.DISABLED) })
-    Project get(Serializable pid)
+    Project getProject(Serializable pid)
 
     @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
     Project getByName(String projectName)
+
+    // TODO refactor for a better naming/alternative
+    @Where({ name == projectName })
+    Project getProjectForDelete(String projectName)
 
     Project save(Project project)
 
     void delete(Serializable id)
 
-    @Where({ state == null || state != RdProject.State.DISABLED})
+    @Where({ state == null || state != RdProject.State.DISABLED })
     int count()
-    
+
     @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
     int countByName(String projectName)
 

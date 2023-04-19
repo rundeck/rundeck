@@ -90,4 +90,16 @@ public interface ProjectManager {
      * @throws IllegalArgumentException if the project already exists
      */
     IRundeckProject createFrameworkProjectStrict(String projectName, Properties properties);
+
+    /**
+     * Disables a project so it becomes unavailable without deleting it.
+     * @param projectName name of the project.
+     */
+    void disableFrameworkProject(String projectName);
+
+    /**
+     * Enables a previously disabled project.
+     * @param projectName name of the project.
+     */
+    void enableFrameworkProject(String projectName);
 }
