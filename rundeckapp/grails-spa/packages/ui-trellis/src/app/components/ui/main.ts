@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import UiSocket from './UiSocket.vue'
+import UiSocket from '../../../library/components/utils/UiSocket.vue'
 import {getRundeckContext} from '../../../library'
 import { UiMessage } from '../../../library/stores/UIStore'
 
