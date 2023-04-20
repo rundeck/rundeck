@@ -103,7 +103,7 @@ class WebhookService {
         Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
         Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
         def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
-        log.info("Rows affected in the query: ${totalAmountOfRowsAffected}")
+        log.info("${totalAmountOfRowsAffected} events deleted related to the webhook: ${webhook.name}")
     }
 
     /**
