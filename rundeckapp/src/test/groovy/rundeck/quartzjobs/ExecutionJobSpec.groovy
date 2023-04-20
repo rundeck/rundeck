@@ -508,7 +508,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                                                              se.averageDuration,dataContext)
+                                                              es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
