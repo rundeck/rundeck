@@ -115,6 +115,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
                 isNull('state')
                 ne('state', RdProject.State.DISABLED)
             }
+            eq('name', name)
             projections {
                 property "description"
             }

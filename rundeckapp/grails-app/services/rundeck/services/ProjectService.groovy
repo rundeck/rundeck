@@ -1734,6 +1734,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         log.info("Deferring deletion of project ${project.name} to background task.")
+
         def promise = Promises.task {
             return deleteProjectInternal(project, framework, authContext, username)
         }
@@ -1743,6 +1744,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         promise.onError { Throwable t ->
             log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
         }
+
         return new DeleteResponse(success: true)
     }
 
