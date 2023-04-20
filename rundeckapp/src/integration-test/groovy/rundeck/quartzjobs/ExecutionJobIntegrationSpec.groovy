@@ -267,6 +267,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 testExecmap
             }
             _ * es.isApplicationShutdown()
+            1 * es.getAverageDuration(_) >> 1
 
 
             1 * eus.finishExecution(testExecmap)
