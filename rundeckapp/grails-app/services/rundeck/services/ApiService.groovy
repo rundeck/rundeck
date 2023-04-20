@@ -51,6 +51,7 @@ class ApiService implements WebUtilService{
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     def configurationService
     def userService
+    def executionService
     @Delegate
     WebUtilService rundeckWebUtil
     TokenDataProvider tokenDataProvider
@@ -694,9 +695,8 @@ class ApiService implements WebUtilService{
                     }
                     if (e.scheduledExecution) {
                         def jobparams = [id: e.scheduledExecution.extid]
-                        def seStats = e.scheduledExecution.getStats()
-                        if(e.scheduledExecution.getAverageDuration() > 0) {
-                            def long avg = e.scheduledExecution.getAverageDuration()
+                        def avg = executionService.getAverageDuration(e.scheduledExecution.uuid)
+                        if(avg > 0) {
                             jobparams.averageDuration = avg
                         }
                         jobparams.'href'=(apiHrefForJob(e.scheduledExecution))
@@ -785,9 +785,8 @@ class ApiService implements WebUtilService{
                 }
                 if (e.scheduledExecution) {
                     def jobparams = [id: e.scheduledExecution.extid]
-                    def seStats = e.scheduledExecution.getStats()
-                    if (e.scheduledExecution.getAverageDuration() > 0) {
-                        def long avg = e.scheduledExecution.getAverageDuration()
+                    def avg = executionService.getAverageDuration(e.scheduledExecution.uuid)
+                    if (avg > 0) {
                         jobparams.averageDuration = avg
                     }
                     execMap.job=jobparams

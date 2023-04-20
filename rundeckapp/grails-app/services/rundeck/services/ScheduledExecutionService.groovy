@@ -4579,6 +4579,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return configRemoteUrl
     }
 
+    Long getRefExecCountStats(String jobUuid){
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent?.refExecCount) {
+            return statsContent.refExecCount
+        }
+        return 0;
+    }
+
+    Long getTotalTimeStats(String jobUuid){
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent?.totalTime) {
+            return statsContent.totalTime
+        }
+        return 0;
+    }
+
+    Long getExecCountStats(String jobUuid){
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent?.execCount) {
+            return statsContent.execCount
+        }
+        return 0;
+    }
+
+
 }
 @CompileStatic
 class OldJob{

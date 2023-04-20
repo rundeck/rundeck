@@ -1831,6 +1831,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            getRefExecCountStats(_)>>refTotal
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)

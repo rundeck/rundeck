@@ -389,7 +389,7 @@ class ExecutionJob implements InterruptableJob {
         long jobAverageDuration=0
         if(runContext.scheduledExecution){
             ScheduledExecution.withTransaction {
-                jobAverageDuration = runContext.scheduledExecution.averageDuration?:0
+                jobAverageDuration = runContext.executionService.getAverageDuration(runContext.scheduledExecutionId)?:0
             }
         }
 

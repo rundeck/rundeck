@@ -755,8 +755,9 @@ public class NotificationService implements ApplicationContextAware{
                 project: scheduledExecution.project,
                 description: scheduledExecution.description
         ]
-        if (scheduledExecution.getAverageDuration() > 0) {
-            job.averageDuration = scheduledExecution.getAverageDuration()
+        def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+        if (averageDuration > 0) {
+            job.averageDuration = averageDuration
         }
         job
     }

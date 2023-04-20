@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.testing.gorm.DataTest
 import org.quartz.*
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
@@ -477,8 +478,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "average notification threshold from options"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
-                uuid: UUID.randomUUID().toString(),
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -515,8 +519,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "average notification threshold add time to avg"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
-                uuid: UUID.randomUUID().toString(),
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -539,7 +546,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -549,7 +556,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "average notification threshold fixed time"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -572,7 +583,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -582,8 +593,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "average notification threshold perc time"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
-                uuid: UUID.randomUUID().toString(),
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -606,7 +620,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -616,8 +630,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "average notification threshold bad value"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
-                uuid: UUID.randomUUID().toString(),
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -640,7 +657,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -723,6 +740,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 testThread.start()
                 execmap
             }
+            getAverageDuration(_) >> 1
         }
 
         ExecutionJob executionJob = new ExecutionJob()

@@ -3157,53 +3157,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     def updateJobRefScheduledExecStatistics(String jobUuid, long time) {
         return jobStatsDataProvider.updateJobRefStats(jobUuid, time)
-        def success = false
-        try {
-            def scheduledExecution = ScheduledExecution.get(schedId)
-            def seStats = scheduledExecution.getStats()
-            def statsMap = seStats.getContentMap()
-
-            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                statsMap.execCount = 1
-                statsMap.totalTime = time
-            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                statsMap.execCount++
-                statsMap.totalTime += time
-            } else if (statsMap.execCount >= 10) {
-                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                statsMap.totalTime -= popTime
-                statsMap.totalTime += time
-            }
-
-
-            if (!statsMap.refExecCount) {
-                statsMap.refExecCount = 1
-            } else {
-                statsMap.refExecCount++
-            }
-            seStats.setContentMap(statsMap)
-
-            if (seStats.validate()) {
-                if (seStats.save(flush: true)) {
-                    log.info("updated referenced Job Stats")
-                } else {
-                    seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                    log.warn("failed saving referenced Job Stats")
-                }
-                success = true
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, dismissed statistic for referenced Job")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, dismissed statistic for for referenced Job")
-        } catch (DuplicateKeyException ve) {
-            // Do something ...
-            log.warn("Caught DuplicateKeyException for migrated stats, dismissed statistic for referenced Job")
-        }
-        return success
     }
 
-
+    Long getAverageDuration(String jobUuid) {
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
+        }
+        return 0;
+    }
 
 
     /**
@@ -3739,7 +3701,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createSuccess()
                 }
             } else {
-                averageDuration = se.averageDuration
+                averageDuration = getAverageDuration(se.uuid)
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
