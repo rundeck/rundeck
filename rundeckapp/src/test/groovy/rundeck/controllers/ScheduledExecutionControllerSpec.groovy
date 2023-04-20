@@ -746,6 +746,80 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     }
 
+    def "no failed nodes show job retry with original nodeset"(){
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList: null,
+                failedNodeList: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        NodeSetImpl originalNodeSet = new NodeSetImpl()
+        originalNodeSet.putNode(new NodeEntryImpl("nodea"))
+        originalNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            _*authorizeProjectJobAny(_,_,_,_)>>true
+            _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+        }
+
+        controller.executionService = Mock(ExecutionService){
+            filtersAsNodeSet(_,_) >> originalNodeSet
+        }
+
+        controller.frameworkService=Mock(FrameworkService){
+            filterNodeSet(_,_)>>originalNodeSet
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+        def model = controller.show()
+
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.nodes == originalNodeSet.nodes
+
+    }
+
     @Unroll
     def "job download #format"() {
         given:
@@ -4297,6 +4371,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
 
         then:
+        1 * client.setUri(_)
         1 * client.execute(_) >> {
             RequestProcessor processor = it[0]
             processor.accept(rsp)
