@@ -27,7 +27,6 @@ import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.internal.storage.file.WindowCache;
 import org.eclipse.jgit.storage.file.WindowCacheConfig
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Export

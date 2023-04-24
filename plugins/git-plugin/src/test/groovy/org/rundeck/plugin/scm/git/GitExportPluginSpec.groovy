@@ -1929,4 +1929,47 @@ class GitExportPluginSpec extends Specification {
 
 
     }
+
+    def "Should delete directory if this exists no matter the OS"(){
+        given:
+            def gitdir = new File(tempdir, 'scm')
+            def origindir = new File(tempdir, 'origin')
+            Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+            ScmOperationContext context = Mock(ScmOperationContext)
+            //create a git dir
+            def git = createGit(origindir)
+            addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
+            git.close()
+            def plugin = new GitExportPlugin(config)
+            plugin.initialize(Mock(ScmOperationContext))
+            File base = new File(config.dir)
+
+        when:
+            plugin.totalClean()
+
+        then:
+            !base.exists()
+    }
+
+    def "Directory should not exists and should not call FileUtils.Delete method"(){
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+        File base = new File("/test")
+
+        when:
+        plugin.totalClean()
+
+        then:
+        !base.exists()
+        0 * FileUtils.delete(_, _)
+    }
 }
