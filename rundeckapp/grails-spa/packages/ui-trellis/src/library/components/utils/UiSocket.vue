@@ -4,7 +4,7 @@
         <template v-for="i in items">
             <template v-if="i.text">{{ i.text }}</template>
             <span v-else-if="i.html" v-html="i.html"></span>
-            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="socketData"/>
+            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="itemData"/>
         </template>
     </span>
 </template>
@@ -38,6 +38,16 @@ export default class UiSocket extends Vue {
         if(this.uiwatcher){
             rootStore.ui.removeWatcher(this.uiwatcher)
         }
+    }
+    get itemData(){
+      if(typeof this.socketData === 'string'){
+        try{
+          return JSON.parse(this.socketData)
+        }catch (e){
+          return this.socketData
+        }
+      }
+      return this.socketData
     }
 
     uiwatcher: UIWatcher|null=null
