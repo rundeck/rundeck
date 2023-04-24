@@ -2008,9 +2008,6 @@ ansi-bg-default'''))
 
     def showLocalLogin = { attrs, body ->
         boolean shouldShowLocalLogin = configurationService.getBoolean("login.localLogin.enabled", true)
-        if(configurationService.getBoolean("login.showLocalLoginAfterFirstSSOLogin",false)) {
-            shouldShowLocalLogin = frameworkService.getFirstLoginFile().exists()
-        }
         if(shouldShowLocalLogin) {
             out << body()
         }
