@@ -23,7 +23,7 @@ export class KeyStoragePage extends Page {
     }
 
     async getCreateButton() {
-        return this.ctx.driver.findElement(By.css(".keySelector-button-group > .btn-cta"))
+        return this.ctx.driver.findElement(By.linkText("Add or Upload a Key"))
     }
 
     async selectKey(keyName: string) {
@@ -33,11 +33,15 @@ export class KeyStoragePage extends Page {
     }
 
     async getDeleteButton(){
-        return this.ctx.driver.findElement(By.css(".btn-danger"))
+        return this.ctx.driver.findElement(By.linkText("Delete Selected Item"))
+    }
+
+    async getDeleteDropdown(){
+        return this.ctx.driver.findElement(By.css(".btn-group > .dropdown-toggle"))
     }
 
     async getOverwriteButton(){
-        return this.ctx.driver.findElement(By.css(".btn-warning"))
+        return this.ctx.driver.findElement(By.linkText("Overwrite Key"))
     }
 
     async getDeleteConfirmButton(){
@@ -59,7 +63,7 @@ export class KeyStoragePage extends Page {
     }
 
     async getSaveButton() {
-        return this.ctx.driver.findElement(By.css(".text-right > .btn-cta"))
+        return this.ctx.driver.findElement(By.css(".btn-cta"))
     }
 
     async getUploadTypeDropdown() {

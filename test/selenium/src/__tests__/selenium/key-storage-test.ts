@@ -39,6 +39,9 @@ describe('create key', () => {
 
         const saveButton = await keyStoragePage.getSaveButton()
         await saveButton.click()
+
+        const selectedKey = await keyStoragePage.selectKey("newKey");
+        await ctx.driver.wait(until.elementIsVisible(selectedKey), 10000);
     })
 })
 
@@ -69,11 +72,16 @@ describe('delete key', () => {
         const selectKey = await keyStoragePage.selectKey("newKey");
         await selectKey.click();
 
+        const deleteDropdown = await keyStoragePage.getDeleteDropdown()
+        await deleteDropdown.click()
+
         const deleteButton = await keyStoragePage.getDeleteButton()
         await deleteButton.click()
 
         const deleteConfirmationButton = await keyStoragePage.getDeleteConfirmButton()
         await deleteConfirmationButton.click()
+
+        await ctx.driver.wait(until.stalenessOf(selectKey), 2000);
 
         const xpathExpression = `//tr[contains(@class, 'action') and .//span[contains(text(), 'newKey')]]/td/*[contains(@class, 'glyphicon')]`;
         const deletedKey = await ctx.driver.findElements(By.xpath(xpathExpression));
