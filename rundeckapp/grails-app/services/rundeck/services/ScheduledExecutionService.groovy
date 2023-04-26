@@ -3353,9 +3353,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
-        boolean failed  = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
-
-        if(failed){
+        def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
+        if (failed) {
+            if( scheduledExecution.hasSecureOptions() ){
+                def message = 'Job Queueing is not supported in jobs with secure options.'
+                throw new Exception(message)
+            }
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
