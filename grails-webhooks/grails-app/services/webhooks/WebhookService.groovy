@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
+import com.dtolabs.rundeck.core.event.EventQueryResult
+import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -33,9 +35,11 @@ import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
+import java.util.concurrent.TimeUnit
 
 @Transactional
 class WebhookService {
@@ -43,9 +47,13 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
+    static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
+    static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
     WebhookDataProvider webhookDataProvider;
 
+    @Autowired
+    EventStoreService eventStoreService
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
@@ -85,6 +93,32 @@ class WebhookService {
         WebhookEventContext context = new WebhookEventContextImpl(contextServices)
 
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
+    }
+
+    /**
+     * Receives a webhook and delete all the stored event data in DB related to it
+     * @param webhook
+     */
+    def deleteWebhookEventsData(RdWebhook webhook) {
+        Long queryResultForDebug = deleteEvents(TOPIC_DEBUG_EVENTS, webhook)
+        Long queryResultForRecentEvents = deleteEvents(TOPIC_RECENT_EVENTS, webhook)
+        def totalAmountOfRowsAffected = queryResultForDebug + queryResultForRecentEvents
+        log.info("${totalAmountOfRowsAffected} events deleted related to the webhook: ${webhook.name}")
+    }
+
+    /**
+     * Perform the delete querie for webhook events data in DB
+     * @param eventTopic : The string with data for the specific event (see webhook's records in stored_events table in DB)
+     * @param webhook
+     */
+    private def deleteEvents(String eventTopic, RdWebhook webhook) {
+        EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
+                queryType: EventQueryType.DELETE,
+                projectName: webhook.project,
+                subsystem: "webhooks",
+                topic: "${eventTopic}:${webhook.uuid}"
+        ))
+        return queryResult.totalCount;
     }
 
     @PackageScope
@@ -294,6 +328,8 @@ class WebhookService {
         String authToken = hook.authToken
         String name = hook.name
         try {
+            // Deleting all stored debug data for this particular hook from the DB
+            deleteWebhookEventsData(hook)
             webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]

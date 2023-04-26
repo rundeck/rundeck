@@ -16,6 +16,7 @@ module.exports = {
     'components/tour':                        { entry: './src/app/components/tour/main.js'},
     'components/version':                     { entry: './src/app/components/version/main.js'},
     'components/server-identity':             { entry: './src/app/components/server-identity/serverIdentity.js'},
+    'pages/storage':                          { entry: './src/app/pages/storage/main.ts'},
     'pages/login':                            { entry: './src/app/pages/login/main.ts'},
     'pages/project-dashboard':                { entry: './src/app/pages/project-dashboard/main.js'},
     'pages/project-activity':                 { entry: './src/app/pages/project-activity/main.js'},
@@ -29,7 +30,6 @@ module.exports = {
     'pages/user-summary':                     {entry: './src/app/pages/menu/main.js'},
     'pages/dynamic-form':                     {entry: './src/app/pages/dynamic-form/main.js'},
     'pages/job/editor':                       {entry: './src/app/pages/job/editor/main.js'},
-    
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,

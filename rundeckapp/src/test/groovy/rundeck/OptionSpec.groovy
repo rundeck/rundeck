@@ -245,5 +245,16 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
 
         then:"the option should have the value of sortValues"
         opt.sortValues == true
+    }    
+        
+        
+    def "from map to remote URL json filter"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [jsonFilter:"\$.key"]])
+        expect:
+        opt.optionType == 'text'
+        opt.configData == '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","jsonFilter":"\$.key"}}}'
+        opt.configRemoteUrl !=null
+        opt.configRemoteUrl.jsonFilter == "\$.key"
     }
 }

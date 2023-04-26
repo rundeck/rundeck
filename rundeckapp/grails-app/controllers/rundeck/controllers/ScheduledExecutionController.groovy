@@ -37,6 +37,8 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
@@ -845,6 +847,7 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     static Object getRemoteJSON(HttpClientCreator clientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
@@ -861,7 +864,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
-                } else if (configRemoteUrl) {
+                } else if (configRemoteUrl && configRemoteUrl.authenticationType) {
                     logger.debug("getRemoteJSON using authentication")
                     URIBuilder uriBuilder = new URIBuilder(cleanUrl)
 
@@ -937,16 +940,21 @@ class ScheduledExecutionController  extends ControllerBase{
                         stream.close()
                         writer.flush()
                         final string = writer.toString()
-                        def json=grails.converters.JSON.parse(string)
-                        if(string){
-                            stats.contentSHA1=string.encodeAsSHA1()
-                            if(stats.contentLength<0){
-                                stats.contentLength= len
-                            }
+                        def parseResult=remoteUrlParse(string, configRemoteUrl)
+
+                        if(parseResult.error){
+                            results = [error:parseResult.error]
                         }else{
-                            stats.contentSHA1=""
+                            if(parseResult.string){
+                                stats.contentSHA1=parseResult.string.encodeAsSHA1()
+                                if(stats.contentLength<0){
+                                    stats.contentLength= len
+                                }
+                            }else{
+                                stats.contentSHA1=""
+                            }
+                            results = [json:parseResult.jsonElement,stats:stats]
                         }
-                        results = [json:json,stats:stats]
                     }else{
                         results = [error:"Unexpected content type received: "+resultType,stats:stats]
                     }
@@ -982,6 +990,28 @@ class ScheduledExecutionController  extends ControllerBase{
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
+    }
+
+
+    static Map<String, Object> remoteUrlParse(String payload, JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl){
+
+        String jsonFilter = jobOptionConfigRemoteUrl?.getJsonFilter()
+        if(!jsonFilter){
+            return [jsonElement: grails.converters.JSON.parse(payload), string: payload]
+        }
+
+        def jpath = JsonPath.using(Configuration.defaultConfiguration())
+        try {
+            def jsonFilterResult = jpath.parse(payload).read(jobOptionConfigRemoteUrl.getJsonFilter())
+            if(jsonFilterResult instanceof ArrayList){
+                return [error: "the filter ${jobOptionConfigRemoteUrl.getJsonFilter()} return a list, please use another filter"]
+            }
+            return [jsonElement: jsonFilterResult, string: jsonFilterResult.toString()]
+
+        }catch (Exception e){
+            return [error: e.getMessage()]
+        }
+
     }
 
     static int copyToWriter(Reader read, Writer writer){
@@ -2251,17 +2281,26 @@ class ScheduledExecutionController  extends ControllerBase{
                 Execution e = Execution.get(params.retryFailedExecId)
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
                     model.failedNodes = e.failedNodeList
-                    if(varfound){
-                        nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                    // If there is no "failed nodes" from previous execution, we use the original node set to prevent NPE
+                    if( e.failedNodeList ){
+                        if(varfound){
+                            nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                        }
+                        model.nodesetvariables = false
+                        def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                        failedNodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
+                                scheduledExecution.project,
+                                new HashSet<String>(["read", "run"]),
+                                frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
+                                authContext).nodes;
+                    }else{
+                        def originalSet = ExecutionService.filtersAsNodeSet([filter: e.filter])
+                        failedNodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
+                                scheduledExecution.project,
+                                new HashSet<String>(["read", "run"]),
+                                frameworkService.filterNodeSet(originalSet, scheduledExecution.project),
+                                authContext).nodes;
                     }
-                    model.nodesetvariables = false
-
-                    def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
-                    failedNodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
-                            scheduledExecution.project,
-                            new HashSet<String>(["read", "run"]),
-                            frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
-                            authContext).nodes;
                 }
             }
             def nodes = rundeckAuthContextProcessor.filterAuthorizedNodes(

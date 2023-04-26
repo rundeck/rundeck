@@ -18,6 +18,7 @@ package rundeck.services
 
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import rundeck.LogFileStorageRequest
 import rundeck.PluginMeta
 import testhelper.RundeckHibernateSpec
@@ -27,11 +28,13 @@ import testhelper.RundeckHibernateSpec
  */
 class JobMetadataServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<JobMetadataService> {
 
+    GormPluginMetaDataProvider pluginMetaProvider = new GormPluginMetaDataProvider()
     List<Class> getDomainClasses() {
         [PluginMeta]
     }
 
     def setup() {
+        service.pluginMetaDataProvider = pluginMetaProvider
     }
 
     def cleanup() {

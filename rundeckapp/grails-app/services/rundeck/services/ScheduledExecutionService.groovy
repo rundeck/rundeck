@@ -3856,32 +3856,37 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         TimeZone.getAvailableIDs()
     }
     @NotTransactional
-    def isProjectExecutionEnabled(String project){
+    def isProjectExecutionEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectExecutionEnabled(fwProject)
+        isRundeckProjectExecutionEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
-        def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
+    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableEx = config.get(CONF_PROJECT_DISABLE_EXECUTION)
         ((!disableEx) || disableEx.toLowerCase() != 'true')
     }
 
     @NotTransactional
-    def isProjectScheduledEnabled(String project){
+    def isProjectScheduledEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectScheduleEnabled(fwProject)
+        isRundeckProjectScheduleEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
-        def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
+    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableSe = config.get(CONF_PROJECT_DISABLE_SCHEDULE)
         ((!disableSe) || disableSe.toLowerCase() != 'true')
     }
 
     @NotTransactional
     def shouldScheduleInThisProject(String project){
-        return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
+        IRundeckProjectConfig config = frameworkService.getProjectConfigReloaded(project)
+        return isProjectExecutionEnabled(project, config) && isProjectScheduledEnabled(project, config)
     }
 
     def deleteScheduledExecutionById(jobid, String callingAction){
@@ -4059,6 +4064,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 result = []
                 jobject.keys().each { k ->
                     result << [name: k, value: jobject.get(k)]
+                }
+            } else if (result instanceof Map) {
+                Map map = result
+                result = []
+                map.forEach { key, value ->
+                    result << [name: key, value: value]
                 }
             } else {
                 validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
