@@ -193,6 +193,7 @@ export default Vue.extend({
     value: String,
     storageFilter: String,
     project: String,
+    rootPath: String
   } ,
   data() {
     return {
@@ -202,7 +203,6 @@ export default Vue.extend({
       staticRoot: true,
       inputPath: '',
       upPath: '',
-      rootPath: '',
       path: '',
       isConfirmingDeletion: false,
       modalEdit: false,
@@ -218,7 +218,6 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
     this.loadKeys()
   },
   methods: {
@@ -251,6 +250,14 @@ export default Vue.extend({
     cancelDeleteKey() {
       this.isConfirmingDeletion=false
     },
+    calcBrowsePath(path: string){
+      let browse=path
+      if (this.rootPath != 'keys/' && this.rootPath != 'keys') {
+        browse = (this.rootPath) + "/" + path
+        browse = browse.substring(5)
+      }
+      return browse
+    },
     loadKeys(selectedKey?: any) {
       if(selectedKey) {
         this.selectedKey = selectedKey
@@ -258,7 +265,8 @@ export default Vue.extend({
       this.loading=true
 
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      const getPath = this.calcBrowsePath(this.path)
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -266,17 +274,18 @@ export default Vue.extend({
           result.resources.forEach((resource: any) => {
             if (resource.type === 'directory') {
               this.directories.push(resource);
+              if(this.directories.size() > 1){
+                this.directories.sort((obj1: any, obj2: any) => {
+                  if (obj1.path > obj2.path) {
+                    return 1;
+                  }
 
-              this.directories.sort((obj1: any, obj2: any) => {
-                if (obj1.path > obj2.path) {
-                  return 1;
-                }
-
-                if (obj1.path < obj2.path) {
-                  return -1;
-                }
-                return 0;
-              });
+                  if (obj1.path < obj2.path) {
+                    return -1;
+                  }
+                  return 0;
+                });
+              }
             }
 
             if (resource.type === 'file') {
@@ -462,7 +471,7 @@ export default Vue.extend({
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
@@ -498,13 +507,7 @@ export default Vue.extend({
       if (this.staticRoot === false) {
         return relpath;
       }
-      return this.rootPath + relpath;
-    },
-    setRootPath() {
-      if (this.rootPath == null || this.rootPath === '') {
-        this.rootPath = 'keys';
-      }
-      this.path = '';
+      return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
       this.clean();
@@ -525,7 +528,8 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
       const fullPath = this.absolutePath(path);
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(path).then((result: any) => {
+      const getPath = this.calcBrowsePath(path)
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         if (result.resources != null) {
           const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
           if (keys.length == 0) {

@@ -41,7 +41,7 @@ implied. - See the License for the specific language governing permissions and -
               <span class="text-h3"><i class="fas fa-key"></i> ${g.message(code:"gui.menu.KeyStorage")}</span>
             </div>
             <div>
-              <key-storage-page id="keyStoragePage" :read-only="false" :allow-upload="true"></key-storage-page>
+              <key-storage-page id="keyStoragePage" project="${params.project}" :read-only="false" :allow-upload="true"></key-storage-page>
             </div>
           </div>
         </div>
