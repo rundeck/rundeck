@@ -726,6 +726,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            1 * fwkService.listPluginGroupDescriptions()
             0 * fwkService._(*_)
     }
     def "save project plugin groups"() {

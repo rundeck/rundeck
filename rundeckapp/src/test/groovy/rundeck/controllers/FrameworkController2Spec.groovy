@@ -298,15 +298,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         _ * fwk.getDefaultFileCopyService()
         _ * fwk.getNodeExecConfigurationForType(*_)
         _ * fwk.getFileCopyConfigurationForType(*_)
-        (pgFeatureEnabled?1:0)*fwk.listPluginGroupDescriptions()>>[
+        1*fwk.listPluginGroupDescriptions()>>[
             DescriptionBuilder.
                 builder().
                 name('somePlugin').
                 stringProperty('aprop','blah',false,'title','desc').
                 build()
         ]
-            (pgFeatureEnabled?1:0)*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
-            (pgFeatureEnabled?1:0)*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
+            1*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
+            1*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
                 aprop:'avalue'
             ]
         _ * fwk.loadProjectConfigurableInput(*_)>>[:]
@@ -333,7 +333,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def pluginPFmck = Mock(PasswordFieldsService)
 
         1 * pluginPFmck.reset()
-        (pgFeatureEnabled?1:0) * pluginPFmck.track([[type: 'somePlugin', props: [aprop:'avalue']]], true,_)
+        1 * pluginPFmck.track([[type: 'somePlugin', props: [aprop:'avalue']]], true,_)
         1 * execPFmck.reset()
         1 * execPFmck.track(_, _)
         1 * fcopyPFmck.reset()
@@ -362,9 +362,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         assertEquals("plugin", model["prefixKey"])
         assertEquals(model["project"], "edit_test_project")
         assertEquals(1, passwordFieldsService.fields.size())
-        model.pluginGroupConfig == (pgFeatureEnabled?[[type: 'somePlugin', config: [aprop:'avalue']]]:[])
-        where:
-            pgFeatureEnabled<<[true,false]
+        model.pluginGroupConfig == [[type: 'somePlugin', config: [aprop:'avalue']]]
     }
 
 
@@ -1009,7 +1007,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         }
 
         def fwk = Mock(FrameworkService) {
-            1*getFrameworkProject (_)>> proj
+            2*getFrameworkProject (_)>> proj
             1*listDescriptions()>>  [[withPasswordFieldDescription], null, null]
 
             1*getDefaultNodeExecutorService (_)>> "TestPluginsNodeExecutor"
@@ -1018,6 +1016,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             1*getNodeExecConfigurationForType (_,_)
             1*getFileCopyConfigurationForType (_,_)>> [:]
             1*loadProjectConfigurableInput (_,_)>>[:]
+            1*listPluginGroupDescriptions() >> []
         }
         controller.frameworkService = fwk
 
