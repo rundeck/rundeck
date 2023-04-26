@@ -9,23 +9,15 @@ import rundeck.Project
 interface ProjectDataService {
 
     /**
-     * Get an enabled project by id.
+     * Get a project by id.
      */
-    @Where({ id == pid && (state == null || state != RdProject.State.DISABLED) })
-    Project getEnabledProject(Serializable pid)
-
-    /**
-     * Get an enabled project by name
-     */
-    @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
-    Project getEnabledProject(String projectName)
+    Project get(Serializable id)
 
     /**
      * Get a project by name regardless of its state. 
      */
-    @Where({ name == projectName })
-    Project getAnyProject(String projectName)
-
+    Project getByName(String name)
+    
     /**
      * Saves a project 
      */

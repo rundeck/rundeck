@@ -1835,7 +1835,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     RdProject findProjectByName(String projectName) {
-        projectDataProvider.findByName(projectName)
+        projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
     }
 
     void update(Serializable id, RdProject data) throws DataAccessException {

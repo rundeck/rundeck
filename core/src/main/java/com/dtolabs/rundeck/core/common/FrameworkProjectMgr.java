@@ -197,6 +197,11 @@ public class FrameworkProjectMgr extends FrameworkResource implements IFramework
         throw new UnsupportedOperationException("Operation not supported for file-based projects");
     }
 
+    @Override
+    public boolean isFrameworkProjectDisabled(String projectName) {
+        return false;
+    }
+
     public List<String> listChildNames() {
         return listSubdirs().stream().filter(this::isValidProjectDir).map(File::getName).collect(Collectors.toList());
     }

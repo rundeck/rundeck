@@ -947,8 +947,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
+        } else if (framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project)) {
+            projectNameError = message(code: "project.disabled", args: [project])
+            log.error(projectNameError)
+            errors << projectNameError
         } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
-            projectNameError = "Project already exists: ${project}"
+            projectNameError = message(code: "project.exists", args: [project])
             log.error(projectNameError)
             errors << projectNameError
         } else if (!errors) {

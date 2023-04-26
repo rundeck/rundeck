@@ -42,4 +42,7 @@ class Project implements RdProject {
         }
     }
 
+    State getState() {
+        return state ?: State.ENABLED
+    }
 }

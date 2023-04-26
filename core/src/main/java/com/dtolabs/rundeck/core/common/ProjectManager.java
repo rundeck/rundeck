@@ -102,4 +102,9 @@ public interface ProjectManager {
      * @param projectName name of the project.
      */
     void enableFrameworkProject(String projectName);
+
+    /**
+     * @return true if the project exists and is disabled. false otherwise.
+     */
+    boolean isFrameworkProjectDisabled(String projectName);
 }

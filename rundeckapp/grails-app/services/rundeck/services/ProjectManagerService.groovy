@@ -573,6 +573,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         RdProject found = projectDataProvider.findByName(projectName)
+        
+        if(found?.state == RdProject.State.DISABLED) {
+            throw new IllegalArgumentException("Unable to create project. Project exists and is disabled")
+        }
 
         def description = properties.get('project.description')
         boolean generateInitProps = false
@@ -627,10 +631,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void enableFrameworkProject(String projectName) {
-        // TODO this won't work as findByName won't return disabled projects
         def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
         projectData.setState(RdProject.State.ENABLED)
         projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
+    boolean isFrameworkProjectDisabled(String projectName) {
+        def project = projectDataProvider.findByNameAndState(projectName, RdProject.State.DISABLED)
+        return project != null
     }
 
     @Override
@@ -651,7 +660,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            RdProject dbproj = projectDataProvider.findByName(project.name)
+            RdProject dbproj = projectDataProvider.findByNameAndState(project.name, RdProject.State.ENABLED)
             SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
             updatedProject.setDescription(description ? description : null)
             projectDataProvider.update(dbproj.getId(), updatedProject)
@@ -673,7 +682,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
-        RdProject found = projectDataProvider.findByName(projectName)
+        RdProject found = projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -719,7 +728,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         String description = properties['project.description']
-        def found = projectDataProvider.findByName(projectName)
+        def found = projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -793,7 +802,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         projectDataProvider.getProjectDescription(name)
     }
     boolean needsReload(IRundeckProject project) {
-        RdProject rdproject = projectDataProvider.findByName(project.name)
+        RdProject rdproject = projectDataProvider.findByNameAndState(project.name, RdProject.State.ENABLED)
         boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime
