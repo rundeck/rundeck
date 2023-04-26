@@ -3355,7 +3355,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
         if (failed) {
-            if( scheduledExecution.hasSecureOptions() ){
+            if( scheduledExecution.hasSecureOptions() && validation.containsKey("job-queue") ){
                 def message = 'Job Queueing is not supported in jobs with secure options.'
                 throw new Exception(message)
             }
