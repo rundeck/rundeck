@@ -3976,6 +3976,33 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * handler.handleException(_,_,_ as NotFound)
     }
 
+    def "Cannot update job when it has orchestrator + secure options + job queue"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
+        params.id = job1.id
+        params.project = job1.project
+        def thrownMessage = "Job Queueing is not supported in jobs with secure options."
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            it.getByIDorUUID(_) >> job1
+            it._doupdate(_,_,_) >> {throw new Exception(thrownMessage)}
+            it._dosaveupdated(_,_,_,_,_,_) >> {throw new Exception(thrownMessage)}
+        }
+
+        def handler = Mock(WebExceptionHandler)
+        controller.rundeckExceptionHandler= handler
+
+        setupFormTokens(params)
+        request.method='POST'
+        when:
+        controller.update()
+
+        then:
+        flash.error == "Failed to update job: [${thrownMessage}]"
+        response.redirectedUrl=="/project/AProject/job/edit/${job1.id}"
+    }
+
     def "test special chars in URL user-password"() {
         given:
         controller.apiService = Mock(ApiService)
