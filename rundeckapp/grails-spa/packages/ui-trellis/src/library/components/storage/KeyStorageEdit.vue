@@ -147,7 +147,7 @@ interface UploadSetting {
   password: '',
   status: 'new' | String,
   errorMsg: null | String,
-  dontOverwrite: boolean,
+  dontOverwrite: boolean
 }
 
 export default Vue.extend({
@@ -165,6 +165,7 @@ export default Vue.extend({
       errorMsg: '',
       directories: [] as any,
       files: [] as any,
+      createdKey: {} as any,
       keyTypes: [
         {text: 'Private Key', value: 'privateKey'},
         {text: 'Public Key', value: 'publicKey'},
@@ -275,10 +276,25 @@ export default Vue.extend({
         if(resp._response.status!=201){
           this.uploadSetting.errorMsg = resp.error;
           return
-        } 
+        }
+        await this.getCreatedKey(fullPath)
 
+        console.log("after get created")
+        console.log(this.createdKey)
+        this.$emit("keyCreated", this.createdKey)
         this.$emit("finishEditing", resp)
       }
+    },
+    async getCreatedKey(path: String){
+      console.log("getCreatedKey")
+      console.log(path)
+      const rundeckContext = getRundeckContext();
+       const result = await rundeckContext.rundeckClient.storageKeyGetMetadata(path)
+        if (result._response.status == 200) {
+          this.createdKey = result
+          console.log("in if")
+          console.log(this.createdKey)
+        }
     },
     calcBrowsePath(path: string){
       let browse=path

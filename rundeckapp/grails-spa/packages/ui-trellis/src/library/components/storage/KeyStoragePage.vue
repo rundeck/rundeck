@@ -1,8 +1,8 @@
 <template>
 <div>
-  <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
+  <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :createdKey="selectedKey" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
   <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
-    <key-storage-edit :project="this.project" :root-path="rootPath" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
+    <key-storage-edit :project="this.project" :root-path="rootPath" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @keyCreated="updateSelectedKey"  @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
   </modal>
 </div>
 </template>
@@ -25,10 +25,12 @@ export default Vue.extend({
   ],
   data() {
     return {
+      bus: new Vue(),
       modalEdit: false,
       path: '',
       uploadSetting: {},
-      ready: false
+      ready: false,
+      selectedKey: ''
     }
   },
   methods: {
@@ -43,6 +45,11 @@ export default Vue.extend({
     openEditor(uploadSetting: {}) {
       this.uploadSetting = uploadSetting
       this.modalEdit = true
+    },
+    updateSelectedKey(key: {}) {
+      console.log("into update selected key")
+      console.log(key)
+      this.selectedKey = key
     },
   },
   computed: {

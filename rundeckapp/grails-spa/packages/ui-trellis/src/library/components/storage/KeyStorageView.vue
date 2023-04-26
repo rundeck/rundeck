@@ -193,7 +193,8 @@ export default Vue.extend({
     value: String,
     storageFilter: String,
     project: String,
-    rootPath: String
+    rootPath: String,
+    createdKey: {}
   } ,
   data() {
     return {
@@ -219,6 +220,15 @@ export default Vue.extend({
   },
   mounted() {
     this.loadKeys()
+  },
+  watch : {
+    createdKey : function (newValue, oldValue) {
+      console.log("newValue")
+      console.log(newValue)
+      if(newValue !== null){
+        this.selectKey(newValue)
+      }
+    }
   },
   methods: {
     downloadUrl() {
@@ -404,10 +414,14 @@ export default Vue.extend({
       return false;
     },
     selectKey(key: any) {
+      console.log(key)
       if (this.selectedKey != null && this.selectedKey.path === key.path) {
-        this.selectedKey = {};
-        this.isSelectedKey = false;
+        console.log("r1")
+        //this.selectedKey = {};
+        this.isSelectedKey = true
+        //this.isSelectedKey = false;
       } else {
+        console.log("r2")
         this.selectedKey = key;
         this.isSelectedKey = true;
       }
