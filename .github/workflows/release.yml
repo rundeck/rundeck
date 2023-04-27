@@ -30,9 +30,6 @@ jobs:
         with:
           tag_name: ${{ env.TAG_NAME }}
           release_name: ${{ env.RELEASE_NAME }}
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
+          body: Release ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
