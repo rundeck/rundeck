@@ -281,6 +281,7 @@ export default Vue.extend({
         this.files = [];
 
         if (result.resources != null) {
+          console.log(result.resources)
           result.resources.forEach((resource: any) => {
             if (resource.type === 'directory') {
               this.directories.push(resource);
@@ -457,11 +458,10 @@ export default Vue.extend({
       }
 
       const inputPath = this.relativePath(this.parentDirString(this.selectedKey.path));
+      console.log("inputType")
+      console.log(this.selectedKey)
 
-      let inputType = InputType.File;
-      if (this.isPassword(this.selectedKey)) {
-        inputType = InputType.Text;
-      }
+      let inputType = InputType.Text;
 
       const upload = {
         modifyMode: true,
