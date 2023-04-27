@@ -1756,7 +1756,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @GrailsCompileStatic
-    private DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
+    protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Starting deletion of project ${project.name} by username $username")
         def result = new DeleteResponse(success: false)
         notify('projectWillBeDeleted', project.name)

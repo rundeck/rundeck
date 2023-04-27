@@ -4,6 +4,7 @@ import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
@@ -156,5 +157,41 @@ class GormProjectDataProviderSpec extends Specification implements DataTest{
         "Project1"    | "project number 1"
         "Project2"    | "project number 2"
         "Project3"    | "project number 3"
+    }
+
+    @Unroll
+    def "Should Find Project by name and state"() {
+
+        when:
+        SimpleProjectBuilder data =  new SimpleProjectBuilder()
+                .setName(name)
+                .setDescription(description)
+                .setState(state)
+        Long projectId = provider.create(data)
+        def createProj = provider.findByNameAndState(name, qstate)
+
+        then:
+        if(found) {
+            assert createProj != null
+            assert projectId == createProj.getId()
+            assert createProj.getName() == name
+            assert createProj.getDescription() == description
+        }
+        else {
+            assert createProj == null
+        }
+
+        where:
+        name       | state                    | qstate                   | description        | found
+        "Project1" | null                     | null                     | "project number 1" | true
+        "Project2" | null                     | RdProject.State.ENABLED  | "project number 2" | true
+        "Project3" | null                     | RdProject.State.DISABLED | "project number 3" | false
+        "Project1" | RdProject.State.ENABLED  | null                     | "project number 1" | true
+        "Project2" | RdProject.State.ENABLED  | RdProject.State.ENABLED  | "project number 2" | true
+        "Project3" | RdProject.State.ENABLED  | RdProject.State.DISABLED | "project number 3" | false
+        "Project1" | RdProject.State.DISABLED | null                     | "project number 1" | false
+        "Project2" | RdProject.State.DISABLED | RdProject.State.ENABLED  | "project number 2" | false
+        "Project3" | RdProject.State.DISABLED | RdProject.State.DISABLED | "project number 3" | true
+        
     }
 }

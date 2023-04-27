@@ -459,6 +459,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     }
 
     /**
+     * @return true if the project exists and is disabled. false otherwise.
+     */
+    boolean isFrameworkProjectDisabled(String projectName) {
+        return rundeckFramework.getFrameworkProjectMgr().isFrameworkProjectDisabled(projectName)
+    }
+
+    /**
      * Force project configuration load and returns it
      * @param projectName
      * @return new project configuration object

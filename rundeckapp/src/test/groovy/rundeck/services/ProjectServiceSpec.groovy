@@ -27,11 +27,13 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.util.ZipBuilder
+import grails.async.Promises
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
+import org.grails.async.factory.SynchronousPromiseFactory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.jetbrains.annotations.NotNull
 import org.rundeck.app.acl.ACLFileManager
@@ -87,6 +89,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def providerExec = new GormExecReportDataProvider()
         service.execReportDataProvider = providerExec
 
+
+        // Change the default promise factory so the project deletion in ProjectService.deleteProject()
+        // happens synchronously.
+        Promises.promiseFactory = new SynchronousPromiseFactory()
     }
 
     def "loadJobFileRecord"() {
@@ -370,8 +376,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.scmService.removeAllPluginConfiguration('myproject')
         1 * service.executionService.deleteBulkExecutionIds(*_)
-        1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
+            1 * disableFrameworkProject('myproject')
         }
         1 * service.fileUploadService.deleteRecordsForProject('myproject')
         result.success
@@ -395,8 +402,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
             1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-            1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * removeFrameworkProject('myproject')
+                1 * disableFrameworkProject('myproject')
             }
             result.success
     }
@@ -414,7 +422,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def fwk = Mock(Framework)
 
         when:
-            def result = service.deleteProject(project, fwk, null, null)
+            def result = service.deleteProjectInternal(project, fwk, null, null)
 
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])

@@ -86,7 +86,12 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     @Override
     RdProject findByNameAndState(String name, RdProject.State state) {
         RdProject project = projectDataService.getByName(name)
-        return (project && project.getState() == state) ? project : null
+        if (!project) return null
+
+        def pstate = project.state ?: RdProject.State.ENABLED
+        def qstate = state ?: RdProject.State.ENABLED
+
+        return (pstate == qstate) ? project : null
     }
 
     @Override

@@ -729,7 +729,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         given:
         RundeckProject rundeckProject = new RundeckProject("project", null, service)
         RundeckProjectDataProvider providerMock = Mock(RundeckProjectDataProvider){
-            findByName("project") >> Mock(RdProject)
+            findByNameAndState("project", _) >> Mock(RdProject)
         }
         service.configStorageService=Stub(ConfigStorageService){
             existsFileResource("projects/test1/my-resource") >> true

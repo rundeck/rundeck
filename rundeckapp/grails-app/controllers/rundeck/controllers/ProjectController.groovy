@@ -818,10 +818,7 @@ Authorization required: `create` for resource type `project`
                             format: respFormat
                     ])
         }
-        def disabled = frameworkService
-                .rundeckFramework
-                .frameworkProjectMgr
-                .isFrameworkProjectDisabled(project)
+        def disabled = frameworkService.isFrameworkProjectDisabled(project)
         if (disabled) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_CONFLICT,

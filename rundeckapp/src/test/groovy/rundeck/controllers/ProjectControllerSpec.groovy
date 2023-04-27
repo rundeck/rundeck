@@ -171,6 +171,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             args[2].json.call(args[0].JSON)
             true
         }
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aproject')>>false
         1 * controller.frameworkService.existsFrameworkProject('aproject')>>false
         1 * controller.frameworkService.createFrameworkProject('aproject',{
             it['project.description']==inputDesc
@@ -219,6 +220,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 args[2].json.call(jsonData)
                 true
             }
+            1 * controller.frameworkService.isFrameworkProjectDisabled('aproject') >> false
             1 * controller.frameworkService.existsFrameworkProject('aproject') >> false
             1 * controller.frameworkService.createFrameworkProject('aproject', _) >> [Mock(IRundeckProject) {
                 getName() >> 'aproject'

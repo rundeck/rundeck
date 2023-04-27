@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -804,6 +805,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def prefixKey = 'plugin'
         def project = params.newproject
         Framework framework = frameworkService.getRundeckFramework()
+        ProjectManager projectManager = framework.getFrameworkProjectMgr()
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
@@ -936,7 +938,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         Map<String, Map> extraConfig = pconfigurable.config
         projProps.putAll(pconfigurable.props)
-
+        
 
         if (!project) {
             projectNameError = "Project name is required"
@@ -947,11 +949,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
-        } else if (framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project)) {
+        } else if (projectManager.isFrameworkProjectDisabled(project)) {
             projectNameError = message(code: "project.disabled", args: [project])
             log.error(projectNameError)
             errors << projectNameError
-        } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
+        } else if (projectManager.existsFrameworkProject(project)) {
             projectNameError = message(code: "project.exists", args: [project])
             log.error(projectNameError)
             errors << projectNameError
