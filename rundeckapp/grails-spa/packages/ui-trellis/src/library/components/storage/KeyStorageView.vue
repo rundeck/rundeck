@@ -14,6 +14,22 @@
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
                :disabled="readOnly"
                placeholder="Enter a path"/>
+        <div v-if="!this.isProject" class="open input-group-btn" :class="isDropdownOpen ? 'open' : ''">
+          <button
+              type="button"
+              class="btn btn-default dropdown-toggle"
+              @click="toggleDropdown"
+              :aria-expanded="isDropdownOpen"
+          >
+            <span>{{ linksTitle }}</span>
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
+            <li v-for="link in jumpLinks" :key="link.path">
+              <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -175,6 +191,12 @@
       </div>
     </div>
   </div>
+  <div class="card-footer">
+    <hr>
+    <span class="text-info">
+        {{ $t('page.keyStorage.description') }}
+    </span>
+  </div>
 </div>
 </template>
 
@@ -184,6 +206,7 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
+import axios from "axios";
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -192,15 +215,16 @@ export default Vue.extend({
     allowUpload: Boolean,
     value: String,
     storageFilter: String,
-    project: String,
     rootPath: String,
     createdKey: {}
   } ,
   data() {
     return {
       errorMsg: '',
+      isDropdownOpen: false,
       modalOpen: false,
       invalid: false,
+      project: '',
       staticRoot: true,
       inputPath: '',
       upPath: '',
@@ -215,11 +239,17 @@ export default Vue.extend({
       directories: [] as any,
       uploadErrors: {} as any,
       selectedIsDownloadable: true,
-      loading: true
+      loading: true,
+      linksTitle: '',
+      projectList: [],
+      jumpLinks: [],
+      isProject: false
     }
   },
   mounted() {
     this.loadKeys()
+    this.loadProjectNames()
+    this.isProject = this.rootPath.startsWith("keys/project")
   },
   watch : {
     createdKey : function (newValue, oldValue) {
@@ -238,6 +268,28 @@ export default Vue.extend({
       if(!this.selectedKey || !this.selectedKey.path) return '#'
 
       return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`
+    },
+    isProject() {
+
+    },
+    async loadProjectNames() {
+      try {
+        const response = await getRundeckContext().rundeckClient.projectList(null);
+
+        this.linksTitle = 'Projects';
+        this.jumpLinks = response.map((v) => {
+          return { name: v.name, path: 'keys/project/' + v.name };
+        });
+        console.log("jumpLinks")
+        console.log(this.jumpLinks)
+      } catch (error) {
+        console.error('Error loading project names:', error);
+      }
+    },
+    toggleDropdown() {
+      console.log(this.isDropdownOpen)
+      this.isDropdownOpen = !this.isDropdownOpen;
+      console.log(this.isDropdownOpen)
     },
     deleteKey(){
       this.isConfirmingDeletion=true
@@ -535,6 +587,7 @@ export default Vue.extend({
       return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
+      this.isDropdownOpen=false
       this.clean();
       let path = '';
       if (selectedPath != null) {
