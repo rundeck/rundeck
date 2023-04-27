@@ -216,6 +216,8 @@ export default Vue.extend({
 
 
       let contentType = 'application/pgp-keys';
+      console.log("uploadSetting")
+      console.log(this.uploadSetting)
 
       let value = null as any;
 
@@ -285,7 +287,7 @@ export default Vue.extend({
         this.$emit("finishEditing", resp)
       }
     },
-    async getCreatedKey(path: String){
+    async getCreatedKey(path: string){
       console.log("getCreatedKey")
       console.log(path)
       const rundeckContext = getRundeckContext();
@@ -393,6 +395,10 @@ export default Vue.extend({
   },
   computed: {
     uploadFullPath(): string {
+      console.log("rootpath")
+      console.log(this.rootPath)
+      console.log("keyPath")
+      console.log(this.getKeyPath())
       return this.rootPath + "/" + this.getKeyPath();
     },
     browsePath(): string{

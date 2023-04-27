@@ -30,7 +30,7 @@ export default Vue.extend({
       path: '',
       uploadSetting: {},
       ready: false,
-      selectedKey: ''
+      selectedKey: {}
     }
   },
   methods: {
@@ -47,8 +47,6 @@ export default Vue.extend({
       this.modalEdit = true
     },
     updateSelectedKey(key: {}) {
-      console.log("into update selected key")
-      console.log(key)
       this.selectedKey = key
     },
   },

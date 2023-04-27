@@ -415,12 +415,23 @@ export default Vue.extend({
     },
     selectKey(key: any) {
       console.log(key)
-      if (this.selectedKey != null && this.selectedKey.path === key.path) {
+      console.log("isSelectedKey")
+      console.log(this.isSelectedKey)
+      console.log("SelectedKey")
+      console.log(this.selectedKey)
+      if (this.selectedKey.path === key.path && this.isSelectedKey==false) {
         console.log("r1")
         //this.selectedKey = {};
         this.isSelectedKey = true
         //this.isSelectedKey = false;
-      } else {
+      }
+      else if (this.selectedKey.path === key.path) {
+        console.log("r1")
+        this.selectedKey = {};
+        //this.isSelectedKey = true
+        this.isSelectedKey = false;
+      }
+      else {
         console.log("r2")
         this.selectedKey = key;
         this.isSelectedKey = true;
