@@ -39,6 +39,7 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
+import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -110,7 +111,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ConfigurationService configurationService
     RundeckProjectDataProvider projectDataProvider
     ExecReportDataProvider execReportDataProvider
-    AuditEventsService auditEventsService
 
     static transactional = false
 
@@ -1726,7 +1726,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Requested deletion of project ${project.name}")
 
         try {
-            framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
+            Project.withNewTransaction {
+                framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
+            }
         } catch (UnsupportedOperationException e) {
             // Disabling not supported by underlying framework. So we revert to old behavior and skip the deferral.
             log.warn("Could not disable project. Will try to delete it directly: ${e.getMessage()}", e)
@@ -1736,7 +1738,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-            return deleteProjectInternal(project, framework, authContext, username)
+            return Project.withNewTransaction {
+                return deleteProjectInternal(project, framework, authContext, username)
+            }
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
@@ -1764,7 +1768,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
 
-        ScheduledExecution.withTransaction { TransactionStatus status ->
+        Project.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
