@@ -1,9 +1,8 @@
 on:
   push:
-    tags:
     branches-ignore:
       - '*'
-    tags-ignore:
+    tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 name: Create Release
