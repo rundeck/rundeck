@@ -2498,10 +2498,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (notif && notif.type == NotificationConstants.WEBHOOK_NOTIFICATION_TYPE ) {
                 failed |= validateDefinitionUrlNotification(scheduledExecution, trigger, notif)
             } else if (notif.type) {
-                def data=notif
-                if(notif instanceof Notification){
-                    data=[type:notif.type, configuration:notif.configuration]
-                }
+                def data=[type:notif.type, configuration:notif.configuration]
                 failed |= validateDefinitionPluginNotification(scheduledExecution, trigger, data, params, validationMap, projectProperties)
             }
             if (!notif.validate()||failed) {
