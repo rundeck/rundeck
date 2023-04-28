@@ -2116,8 +2116,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     private boolean validateDefinitionEmailNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
         def failed
-        def fieldNames = NOTIFICATION_FIELD_NAMES
-        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
         Map conf = notif.mailConfiguration()
         def arr = conf?.recipients?.split(",")
         def validator = new AnyDomainEmailValidator()
@@ -2129,7 +2127,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }else if (email && !validator.isValid(email)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                        fieldNames[trigger],
+                        'notifications',
                         'scheduledExecution.notifications.invalidemail.message',
                         [email] as Object[],
                         'Invalid email address: {0}'
@@ -2141,7 +2139,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(!failed && validcount<1){
             failed=true
             scheduledExecution.errors.rejectValue(
-                    fieldNames[trigger],
+                    'notifications',
                     'scheduledExecution.notifications.email.blank.message',
                     'Cannot be blank'
             )
@@ -2150,7 +2148,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(!conf.containsKey("attachLogInFile") &&  !conf.containsKey("attachLogInline")){
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                        fieldAttachedNames[trigger],
+                        'notifications',
                         'scheduledExecution.notifications.email.attached.blank.message',
                         'You need select one of the options'
                 )
@@ -2159,7 +2157,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(conf.attachLogInFile == false && conf.attachLogInline == false){
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                        fieldAttachedNames[trigger],
+                        'notifications',
                         'scheduledExecution.notifications.email.attached.blank.message',
                         'You need select one of the options'
                 )
@@ -2170,7 +2168,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     private boolean validateDefinitionUrlNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
         def failed
-        def fieldNamesUrl = NOTIFICATION_FIELD_NAMES_URL
         Map urlsConfiguration = notif.urlConfiguration()
         String urls = urlsConfiguration.urls
         def arr = urls?.split(",")
@@ -2186,7 +2183,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (url && !valid) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                        fieldNamesUrl[trigger],
+                        'notifications',
                         'scheduledExecution.notifications.invalidurl.message',
                         [url] as Object[],
                         'Invalid URL: {0}'
@@ -2198,7 +2195,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(validCount<1){
             failed = true
             scheduledExecution.errors.rejectValue(
-                    fieldNamesUrl[trigger],
+                    'notifications',
                     'scheduledExecution.notifications.url.blank.message',
                     'Webhook URL cannot be blank'
             )
@@ -2493,8 +2490,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public boolean validateDefinitionNotifications(ScheduledExecution scheduledExecution, Map params, Map validationMap, Map projectProperties) {
         boolean failed=false
 
-        def fieldNames = NOTIFICATION_FIELD_NAMES
-        def fieldNamesUrl =NOTIFICATION_FIELD_NAMES_URL
         scheduledExecution.notifications?.each {Notification notif ->
             def trigger = notif.eventTrigger
 
