@@ -2493,28 +2493,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.notifications?.each {Notification notif ->
             def trigger = notif.eventTrigger
 
-            String failureField
-            if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
+            if (notif && notif.type == NotificationConstants.EMAIL_NOTIFICATION_TYPE ) {
                 failed|=validateDefinitionEmailNotification(scheduledExecution,trigger,notif)
-                failureField= fieldNames[trigger]
-            } else if (notif && notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
-
+            } else if (notif && notif.type == NotificationConstants.WEBHOOK_NOTIFICATION_TYPE ) {
                 failed |= validateDefinitionUrlNotification(scheduledExecution, trigger, notif)
-                failureField = fieldNamesUrl[trigger]
             } else if (notif.type) {
                 def data=notif
                 if(notif instanceof Notification){
                     data=[type:notif.type, configuration:notif.configuration]
                 }
                 failed |= validateDefinitionPluginNotification(scheduledExecution, trigger, data, params, validationMap, projectProperties)
-                failureField="notifications"
             }
             if (!notif.validate()||failed) {
                 failed = true
                 notif.discard()
                 def errmsg = trigger + " notification: " + notif.errors.allErrors.collect { lookupMessageError(it) }.join(";")
                 scheduledExecution.errors.rejectValue(
-                        failureField,
+                        'notifications',
                         'scheduledExecution.notifications.invalid.message',
                         [errmsg] as Object[],
                         'Invalid notification definition: {0}'
