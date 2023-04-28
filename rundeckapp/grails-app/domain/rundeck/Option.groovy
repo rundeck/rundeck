@@ -173,6 +173,9 @@ public class Option implements Comparable, OptionData {
         if (null!=sortIndex) {
             map.sortIndex = sortIndex
         }
+        if(sortValues){
+            map.sortValues = sortValues
+        }
         if(enforced){
             map.enforced=enforced
         }
@@ -259,6 +262,9 @@ public class Option implements Comparable, OptionData {
                 opt.configMap = config
             }
         }
+        if(data.sortValues){
+            opt.sortValues =data.sortValues
+        }
         if(data.description){
             opt.description=data.description
         }
@@ -278,7 +284,7 @@ public class Option implements Comparable, OptionData {
             opt.regex=data.regex
         }
         if(data.values){
-            def values=data.values instanceof Collection?new TreeSet(data.values):new TreeSet([data.values])
+            def values = data.values instanceof Collection ? data.values : new TreeSet([data.values])
             if(data.valuesListDelimiter){
                 opt.valuesListDelimiter=data.valuesListDelimiter
             }else{

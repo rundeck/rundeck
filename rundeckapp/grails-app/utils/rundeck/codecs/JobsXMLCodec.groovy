@@ -225,6 +225,9 @@ class JobsXMLCodec {
                         if (null != optm.enforcedvalues) {
                             optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'), false)
                         }
+                        if(null !=optm.sortValues){
+                            optm.sortValues = XmlParserUtil.stringToBool(optm.remove('sortValues'), false)
+                        }
                         if (null != optm.required) {
                             optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
                         }
@@ -560,6 +563,9 @@ class JobsXMLCodec {
                 //convert 'values' list to comma-separated attribute value @values
                 if(x.values){
                     BuilderUtil.addAttribute(x,'values',x.remove('values').join(listDelimiter))
+                }
+                if(x.sortValues){
+                    BuilderUtil.addAttribute(x,'sortValues',x.remove('sortValues'))
                 }
                 if(x.valuesListDelimiter){
                     BuilderUtil.addAttribute(x,'valuesListDelimiter',x.remove('valuesListDelimiter'))
