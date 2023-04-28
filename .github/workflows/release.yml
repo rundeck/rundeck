@@ -1,7 +1,5 @@
 on:
   push:
-    branches-ignore:
-      - '*'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
