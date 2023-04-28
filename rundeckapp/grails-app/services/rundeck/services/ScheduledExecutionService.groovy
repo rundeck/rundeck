@@ -2492,6 +2492,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         scheduledExecution.notifications?.each {Notification notif ->
             def trigger = notif.eventTrigger
+            if(!(NotificationConstants.TRIGGER_NAMES.contains(trigger))){
+                failed=true
+                notif.errors.rejectValue(
+                    'eventTrigger',
+                    'scheduledExecution.notifications.invalid.message',
+                    ['Not a valid trigger'] as Object[],
+                    'Invalid notification: {0}'
+                )
+            }
 
             if (notif && notif.type == NotificationConstants.EMAIL_NOTIFICATION_TYPE ) {
                 failed|=validateDefinitionEmailNotification(scheduledExecution,trigger,notif)
