@@ -1916,138 +1916,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             notify('jobChanged', event)
         }
     }
-    static List<Map> parseParamNotifications(params){
-        List nots=[]
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL]) {
-            def config= [
-                    recipients: params[ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS],
-            ]
-            if(params[ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT]){
-                config.subject= params[ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT]
-            }
-            if (params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['true',true]
-                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['file']
-                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['inline']
-            }
-            nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
-            ]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL]) {
-            nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    format: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL_FORMAT],
-                    content: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL]]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL]) {
-            def config = [
-                    recipients: params[ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS],
-            ]
-            if (params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]) {
-                config.subject = params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]
-            }
-            if (params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true',true]
-                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH_TYPE] in ['file']
-                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH_TYPE] in ['inline']
-            }
-            nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
-            ]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL]) {
-            nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    format: params[ScheduledExecutionController.NOTIFY_FAILURE_URL_FORMAT],
-                    content: params[ScheduledExecutionController.NOTIFY_FAILURE_URL]]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL]) {
-            def config = [
-                    recipients: params[ScheduledExecutionController.NOTIFY_START_RECIPIENTS],
-            ]
-            if (params[ScheduledExecutionController.NOTIFY_START_SUBJECT]) {
-                config.subject = params[ScheduledExecutionController.NOTIFY_START_SUBJECT]
-            }
-            nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
-            ]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL]) {
-            nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    format: params[ScheduledExecutionController.NOTIFY_START_URL_FORMAT],
-                    content: params[ScheduledExecutionController.NOTIFY_START_URL]]
-        }
-
-        if ('true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL]) {
-            def config = [
-                    recipients: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS],
-            ]
-            if (params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_SUBJECT]) {
-                config.subject = params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_SUBJECT]
-            }
-            nots << [eventTrigger: ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
-                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                     configuration: config
-            ]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL]) {
-            nots << [eventTrigger: ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
-                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                     format: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL_FORMAT],
-                     content: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL]]
-        }
-
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL]) {
-            def config = [
-                    recipients: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS],
-            ]
-            if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]) {
-                config.subject = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]
-            }
-            if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true',true]
-                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH_TYPE] in ['file']
-                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH_TYPE] in ['inline']
-            }
-            nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
-                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                     configuration: config
-            ]
-        }
-        if ('true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL]) {
-            nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
-                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                     format: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL_FORMAT],
-                     content: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL]]
-        }
-
-
-        //notifyOnsuccessPlugin
-        if (params.notifyPlugin) {
-            [ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController
-                    .ONFAILURE_TRIGGER_NAME, ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-             ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
-             ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME].each { trig ->
-//                params.notifyPlugin.each { trig, plug ->
-                def plugs = params.notifyPlugin[trig]
-                if (plugs) {
-                    def types = [plugs['type']].flatten()
-                    types.each { pluginType ->
-                        def config = plugs[pluginType]?.config
-                        if (plugs['enabled'][pluginType] == 'true') {
-                            nots << [eventTrigger: trig, type: pluginType, configuration: config]
-                        }
-                    }
-                }
-            }
-        }
-        nots
-    }
 
     @CompileStatic
     static Orchestrator parseParamOrchestrator(Map params, String type){
@@ -2202,13 +2070,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         true
     }
 
-
-
-    private Notification definePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif){
-        //plugin type
-        return Notification.fromMap(trigger, notif)
-    }
-
     private boolean validateDefinitionPluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params,validationMap, Map projectProperties){
         //plugin type
         def failed=false
@@ -2305,25 +2166,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         return failed
-    }
-    private Notification defineEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif){
-
-        def conf = notif.configuration
-        def arr = (conf?.recipients?: notif.content)?.split(",")
-
-        def addrs = arr.findAll { it.trim() }.join(",")
-        def configuration=[:]
-        if(conf){
-            configuration = conf + [recipients: addrs]
-        }else{
-            configuration.recipients = addrs
-        }
-        return Notification.fromMap(trigger, [email: configuration])
-    }
-    private Notification defineUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif){
-        def arr = notif.content.split(",")
-        def addrs = arr.findAll { it.trim() }.join(",")
-       return new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, format:notif.format, content: addrs)
     }
 
     private boolean validateDefinitionUrlNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
@@ -2921,20 +2763,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
-        }else if(params.notified != 'false'){
-            def notifications = parseParamNotifications(params)
-            notificationSet=notifications.collect {Map notif ->
-                String trigger = notif.eventTrigger
-                if ( notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
-                    defineEmailNotification(scheduledExecution,trigger,notif)
-                } else if ( notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
-                    defineUrlNotification(scheduledExecution, trigger, notif)
-                } else if (notif.type) {
-                    definePluginNotification(scheduledExecution, trigger, notif)
-                }else{
-                    null
-                }
-            }.findAll{it}
         }
 
         if (scheduledExecution.notifications) {
