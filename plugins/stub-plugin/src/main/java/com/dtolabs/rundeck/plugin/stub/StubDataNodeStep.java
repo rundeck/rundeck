@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
@@ -42,6 +43,7 @@ import static com.dtolabs.rundeck.plugin.stub.StubDataStep.parseData;
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = StubDataNodeStep.PROVIDER_NAME)
 @PluginDescription(title = "Data Node Step", description = "Produce data values for a node")
 @PluginMetadata(key = "faicon", value = "database")
+@PluginMetadata(key = ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY, value = ExecutionEnvironmentConstants.LOCAL_RUNNER)
 public class StubDataNodeStep implements NodeStepPlugin {
     public static final String PROVIDER_NAME = "stub-node-step";
 

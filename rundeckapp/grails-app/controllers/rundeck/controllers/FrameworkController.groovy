@@ -97,6 +97,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     public static final Integer MINIMUM_EXECUTION_TO_KEEP = 50
     public static final Integer MAXIMUM_DELETION_SIZE = 500
     public static final String SCHEDULE_DEFAULT = "0 0 0 1/1 * ? *"
+    static final String PROJECT_PLUGINS_REMOVED_EVENT = 'project.plugins.removed'
     public static final Map CRON_MODELS_SELECT_VALUES = [
             "0 0 0 1/1 * ? *"    : "Daily at 00:00",
             "0 0 23 ? * FRI *"   : "Weekly (Every Fridays 11PM)",
@@ -1694,7 +1695,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView("configPrefix parameter is required")
         }
         def plugins = request.JSON.plugins
-
+        List removedPlugins = request.JSON.removedPlugins as List
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
@@ -1703,6 +1704,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
+        if(removedPlugins)
+            notifyRemovedPlugins(project, removedPlugins)
 
         def errors = []
         def reports = [:]
@@ -3498,5 +3501,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
-}
 
+    private void notifyRemovedPlugins(String project, List removedPlugins){
+        removedPlugins.each { plugin ->
+            frameworkService.grailsEventBus.notify(PROJECT_PLUGINS_REMOVED_EVENT + '.' + plugin['type'], [ plugin: plugin, project: project ])
+        }
+    }
+}

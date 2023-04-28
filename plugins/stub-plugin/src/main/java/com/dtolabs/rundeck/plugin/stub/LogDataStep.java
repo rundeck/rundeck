@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata;
@@ -41,6 +42,7 @@ import java.util.*;
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = LogDataStep.PROVIDER_NAME)
 @PluginDescription(title = "Log Data Step", description = "Log all context data values")
 @PluginMetadata(key = "faicon", value = "print")
+@PluginMetadata(key = ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY, value = ExecutionEnvironmentConstants.LOCAL_RUNNER)
 public class LogDataStep implements StepPlugin {
     public static final String PROVIDER_NAME = "log-data-step";
 
