@@ -29,7 +29,9 @@ import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import groovy.transform.CompileStatic
+import org.grails.plugins.codecs.JSONCodec
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -56,6 +58,7 @@ import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import rundeck.data.constants.NotificationConstants
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -92,7 +95,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, DataTest {
+class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, GrailsWebUnitTest, DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -151,14 +154,15 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "blank email notification"() {
         given:
         setupDoValidate()
+        def json='[{"type":"email","trigger":"onsuccess","config":{"recipients":""}}]'
+
         def params = baseJobParams()+[
                 workflow      : new Workflow(
                         threadcount: 1,
                         keepgoing: true,
                         commands: [new CommandExec(adhocRemoteString: 'a remote string')]
                 ),
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'',
+                jobNotificationsJson: json,
 
         ]
         def authContext = Mock(UserAndRolesAuthContext){
@@ -178,19 +182,18 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         scheduledExecution.errors != null
         scheduledExecution.errors.hasErrors()
-        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS)
+        scheduledExecution.errors.hasFieldErrors('notifications')
 
     }
 
     def "blank webhook notification"() {
         given:
         setupDoValidate()
+        def json='[{"type":"url","trigger":"onsuccess","config":{"urls":"","format":"xml"}}]'
 
         when:
         def params = baseJobParams()+[
-                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'',
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
-
+            jobNotificationsJson: json,
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
@@ -207,7 +210,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         scheduledExecution.errors != null
         scheduledExecution.errors.hasErrors()
-        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_URL)
+        scheduledExecution.errors.hasFieldErrors('notifications')
 
     }
 
@@ -1000,11 +1003,18 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     @Unroll
     def "validate notifications email data for #trigger"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                (field):content,
-                (flag):'true',
 
+        def json = [[
+            type   : type,
+            trigger: trigger,
+            config : [
+                recipients: content
+            ]
+        ]].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1018,20 +1028,29 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content | field | flag
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
     }
     @Unroll
     def "validate notifications email data any domain #trigger for #content"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                (field):content,
-                (flag):'true',
+        def json = [
+            [
+                type   : type,
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1043,22 +1062,35 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content|field|flag
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | '${job.user.name}@something.org'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        trigger                                                      | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME          | 'email' | 'c@example.comd'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME          | 'email' | '${job.user.name}@something.org'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME          | 'email' | 'example@any.domain'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME          | 'email' | '${job.user.email}'
+        NotificationConstants.ONSTART_TRIGGER_NAME            | 'email' | 'monkey@internal'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME    | 'email' | 'user@test'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
     }
     @Unroll
     def "invalid notifications data"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                      (contentField):content,
-                      (flag):'true'
+
+        def config = type=='email'? [
+            recipients: content
+        ] : [
+            urls: content
+        ]
+        def json = [
+            [
+                type   : type,
+                trigger: trigger,
+                config : config
+            ]
+        ].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1066,30 +1098,30 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
         results.failed
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        contentField|trigger                                             | type    | content  |flag
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSTART_URL
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_URL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | ''
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | ''
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | ''
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | ''
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
     @Unroll
     def "do update job invalid notifications"() {
@@ -1111,27 +1143,38 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
         !results.success
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        contentField|trigger                                             | type    | content
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
-    def "validate notifications email form fields"() {
+    def "validate notifications email json"() {
         given:
+
+        mockCodec(JSONCodec)
         setupDoValidate()
+
+        def json = [
+            [
+                type   : 'email',
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                      (enablefield): 'true',
-                      (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1143,19 +1186,26 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | 'c@example.com,d@example.com'
+        content='c@example.com,d@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
     }
-    def "invalid notifications email form fields"() {
+    def "invalid notifications email json"() {
         given:
+
+        mockCodec(JSONCodec)
         setupDoValidate()
+
+        def json = [
+            [
+                type   : 'email',
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                      (enablefield): 'true',
-                      (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1163,15 +1213,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
         results.failed
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | '@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | '@example.com'
+        content='c@example.'//,'@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
     }
 
 
@@ -1800,12 +1846,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams()).save();
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
 
         def newJob = new ScheduledExecution(createJobParams())
-        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'))
-        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
+        newJob.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'))
+        newJob.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
 
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
 
@@ -1819,8 +1865,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.scheduledExecution.errors.hasErrors()
         results.success
         results.scheduledExecution.notifications.size()==2
-        results.scheduledExecution.notifications.find{it.eventTrigger==ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME}.configuration==[recipients:'spaghetti@nowhere.com']
-        results.scheduledExecution.notifications.find{it.eventTrigger==ScheduledExecutionController.ONFAILURE_TRIGGER_NAME}.configuration==[recipients:'milk@store.com']
+        results.scheduledExecution.notifications.find{it.eventTrigger==NotificationConstants.ONSUCCESS_TRIGGER_NAME}.configuration==[recipients:'spaghetti@nowhere.com']
+        results.scheduledExecution.notifications.find{it.eventTrigger==NotificationConstants.ONFAILURE_TRIGGER_NAME}.configuration==[recipients:'milk@store.com']
 
     }
     @Unroll
@@ -1828,13 +1874,19 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupSchedulerService(false)
         setupDoUpdate()
+        mockCodec(JSONCodec)
+
+        def json = inparams.encodeAsJSON().toString()
+        def params = [
+            jobNotificationsJson:json
+        ]
 
         def se = new ScheduledExecution(createJobParams()).save();
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
 
         when:
-        def results = service._doupdate([id:se.id.toString()]+inparams, mockAuth())
+        def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
 
 
         then:
@@ -1848,38 +1900,38 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         where:
         inparams|expect
         [
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'spaghetti@nowhere.com',
-                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS):'milk@store.com',
-                ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
+            [type:'email',trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,config:[recipients:'spaghetti@nowhere.com']],
+            [type:'email',trigger:NotificationConstants.ONFAILURE_TRIGGER_NAME,config:[recipients:'milk@store.com']]
+        ] | [(NotificationConstants.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (NotificationConstants.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
 
         [
+            [type:'url',trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,config:[urls:'http://monkey.com']]
+        ] | [(NotificationConstants.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
 
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'http://monkey.com',
-
-        ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
-
-        [notified: 'false',(ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
-        [notified: 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
-
+        [] | [:]
 
     }
 
     @Unroll
-    def "do update notifications form fields"() {
+    def "do update notifications json"() {
         given:
         setupSchedulerService(false)
         setupDoUpdate()
+        mockCodec(JSONCodec)
+
+        def json = [[
+            trigger:trigger,
+            type:'email',
+            config:[
+                recipients:content
+            ]
+        ]].encodeAsJSON().toString()
 
         def se = new ScheduledExecution(createJobParams()).save()
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com'))
 
         def params = baseJobParams() + [
-                notified: 'true',
-                (enablefield): 'true',
-                (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
@@ -1893,12 +1945,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | 'c@example.com,d@example.com'
+        content='c@example.com,d@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
+
     }
     @Unroll
     def "do update options modify"(){
@@ -4325,12 +4374,21 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "blank email notification attached options defaults to inline"() {
         given:
         setupDoValidate()
+        mockCodec(JSONCodec)
 
+        def json = [
+            [
+                trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,
+                type:'email',
+                config:[
+                    recipients:'a@example.com,z@example.com',
+                    attachLog:true,
+                    attachLogInFile:true
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'a@example.com,z@example.com',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
-
+                jobNotificationsJson:json
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
@@ -5111,20 +5169,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         notifications.size()==0
     }
 
-    def "job definition notifications from old params"() {
-        given:
-            def job = new ScheduledExecution(notifications:[])
-            def params = [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
-                          (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com']
-            def auth = Mock(UserAndRolesAuthContext)
-        when:
-            service.jobDefinitionNotifications(job, null, params, auth)
-        then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'email'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration == [recipients:  'c@example.com,d@example.com']
-    }
     def "job definition notifications from jobNotificationsJson email"() {
         given:
             def job = new ScheduledExecution(notifications:[])
