@@ -101,6 +101,7 @@ import rundeck.*
 import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
+import rundeck.data.constants.NotificationConstants
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
@@ -2251,26 +2252,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
-    static final Map NOTIFICATION_FIELD_NAMES= [
-            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
-            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
-            (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
-            (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
-            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
-    ]
-    static final Map NOTIFICATION_FIELD_ATTACHED_NAMES=[
-            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH,
-            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_FAILURE_ATTACH,
-            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
-                    ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH,
-    ]
+
     private boolean validateDefinitionEmailNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
         def failed
         def fieldNames = NOTIFICATION_FIELD_NAMES
@@ -2439,14 +2421,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         [failed: failed, validation: validation]
     }
-
-    static final Map NOTIFICATION_FIELD_NAMES_URL=[
-            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
-            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
-            (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
-            (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
-            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
-    ]
 
 
     /**
