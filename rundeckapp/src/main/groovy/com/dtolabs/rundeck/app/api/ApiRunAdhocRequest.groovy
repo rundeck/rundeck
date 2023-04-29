@@ -37,6 +37,8 @@ class ApiRunAdhocRequest implements Validateable{
     String fileExtension
     Boolean nodeKeepgoing
     Integer nodeThreadcount
+    Meta meta
+
     static constraints={
         filter(nullable:true)
         asUser(nullable:true)
@@ -51,6 +53,7 @@ class ApiRunAdhocRequest implements Validateable{
         fileExtension(nullable:true)
         description(nullable:true)
         project(nullable:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        meta(nullable: true)
     }
 
     @Override
@@ -69,6 +72,32 @@ class ApiRunAdhocRequest implements Validateable{
                 ", fileExtension='" + fileExtension + '\'' +
                 ", nodeKeepgoing=" + nodeKeepgoing +
                 ", nodeThreadcount=" + nodeThreadcount +
+                ", meta=" + meta +
                 '}';
+    }
+
+    static class Meta {
+        String jobRunnerFilter
+        String jobRunnerFilterType
+
+        static constraints= {
+            filter(nullable: false)
+            jobRunnerFilterType(nullable: false)
+        }
+
+        public String toString() {
+            return "Meta{" +
+                    "jobRunnerFilter='" + jobRunnerFilter + '\'' +
+                    ", jobRunnerFilterType='" + jobRunnerFilterType + '\'' +
+                    '}';
+        }
+
+        public Map<String, String> toMap() {
+            return [
+                "jobRunnerFilter": jobRunnerFilter,
+                "jobRunnerFilterType": jobRunnerFilterType,
+                "filterString": jobRunnerFilter
+            ]
+        }
     }
 }

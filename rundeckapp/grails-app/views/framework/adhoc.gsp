@@ -147,7 +147,6 @@ search
               </div>
             </div>
           </div>
-
           <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
             <div class="card">
               <div class="card-content">
@@ -202,19 +201,21 @@ search
             </div>
 
           </g:ifExecutionMode>
-
         </div>
-
         <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
           <div class="col-xs-12">
-
+            <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
+            <g:form action="adhoc" params="[project: params.project]">
             <div class="" id="runtab">
               <div class="" id="runbox">
-                <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
-                <g:form action="adhoc" params="[project: params.project]">
                   <div data-ko-bind="nodeFilter">
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
                   </div>
+              <div class="card">
+                <div class="card-content vue-ui-socket">
+                  <ui-socket section="job-runner-adhoc-selector" location="top" :event-bus="EventBus" />
+                </div>
+              </div>
 
                   <div data-ko-bind="adhocCommand">
                     <span class="input-group multiple-control-input-group tight">
@@ -334,10 +335,10 @@ search
                       </div>
                     </div>
                   </div>
-                </g:form>
+
               </div>
             </div>
-
+            </g:form>
           </div>
         </g:ifExecutionMode>
       </div>
