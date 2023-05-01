@@ -216,8 +216,6 @@ export default Vue.extend({
 
 
       let contentType = 'application/pgp-keys';
-      console.log("uploadSetting")
-      console.log(this.uploadSetting)
 
       let value = null as any;
 
@@ -281,21 +279,15 @@ export default Vue.extend({
         }
         await this.getCreatedKey(fullPath)
 
-        console.log("after get created")
-        console.log(this.createdKey)
         this.$emit("keyCreated", this.createdKey)
         this.$emit("finishEditing", resp)
       }
     },
     async getCreatedKey(path: string){
-      console.log("getCreatedKey")
-      console.log(path)
       const rundeckContext = getRundeckContext();
        const result = await rundeckContext.rundeckClient.storageKeyGetMetadata(path)
         if (result._response.status == 200) {
           this.createdKey = result
-          console.log("in if")
-          console.log(this.createdKey)
         }
     },
     calcBrowsePath(path: string){
@@ -395,10 +387,6 @@ export default Vue.extend({
   },
   computed: {
     uploadFullPath(): string {
-      console.log("rootpath")
-      console.log(this.rootPath)
-      console.log("keyPath")
-      console.log(this.getKeyPath())
       return this.rootPath + "/" + this.getKeyPath();
     },
     browsePath(): string{

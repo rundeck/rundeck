@@ -257,8 +257,6 @@ export default Vue.extend({
   },
   watch : {
     createdKey : function (newValue, oldValue) {
-      console.log("newValue")
-      console.log(newValue)
       if(newValue !== null){
         this.selectKey(newValue)
       }
@@ -281,16 +279,12 @@ export default Vue.extend({
         this.jumpLinks = response.map((v) => {
           return { name: v.name, path: 'keys/project/' + v.name };
         });
-        console.log("jumpLinks")
-        console.log(this.jumpLinks)
       } catch (error) {
         console.error('Error loading project names:', error);
       }
     },
     toggleDropdown() {
-      console.log(this.isDropdownOpen)
       this.isDropdownOpen = !this.isDropdownOpen;
-      console.log(this.isDropdownOpen)
     },
     deleteKey(){
       this.isConfirmingDeletion=true
@@ -328,18 +322,12 @@ export default Vue.extend({
       this.loading=true
 
       const rundeckContext = getRundeckContext();
-      console.log("this.path")
-      console.log(this.path)
-      console.log("NEWWWWWWWWWW")
       const getPath = this.calcBrowsePath(this.path)
-      console.log("getPath")
-      console.log(getPath)
       rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
         if (result.resources != null) {
-          console.log(result.resources)
           result.resources.forEach((resource: any) => {
             if (resource.type === 'directory') {
               this.directories.push(resource);
@@ -473,25 +461,14 @@ export default Vue.extend({
       return false;
     },
     selectKey(key: any) {
-      console.log(key)
-      console.log("isSelectedKey")
-      console.log(this.isSelectedKey)
-      console.log("SelectedKey")
-      console.log(this.selectedKey)
       if (this.selectedKey.path === key.path && this.isSelectedKey==false) {
-        console.log("r1")
-        //this.selectedKey = {};
         this.isSelectedKey = true
-        //this.isSelectedKey = false;
       }
       else if (this.selectedKey.path === key.path) {
-        console.log("r1")
         this.selectedKey = {};
-        //this.isSelectedKey = true
         this.isSelectedKey = false;
       }
       else {
-        console.log("r2")
         this.selectedKey = key;
         this.isSelectedKey = true;
       }
@@ -516,8 +493,6 @@ export default Vue.extend({
       }
 
       const inputPath = this.relativePath(this.parentDirString(this.selectedKey.path));
-      console.log("inputType")
-      console.log(this.selectedKey)
 
       let inputType = InputType.Text;
 
