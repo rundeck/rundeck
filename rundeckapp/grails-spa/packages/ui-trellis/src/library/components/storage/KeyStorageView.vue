@@ -4,6 +4,8 @@
     <span>{{errorMsg}}</span>
   </div>
 
+  <div class="card">
+    <div class="card-content">
   <div class="row text-info ">
     <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
       <div class="input-group">
@@ -191,11 +193,13 @@
       </div>
     </div>
   </div>
-  <div class="card-footer">
-    <hr>
-    <span class="text-info">
-        {{ $t('page.keyStorage.description') }}
-    </span>
+    </div>
+    <div class="card-footer">
+      <hr>
+      <span class="text-info">
+          {{ $t('page.keyStorage.description') }}
+      </span>
+    </div>
   </div>
 </div>
 </template>
