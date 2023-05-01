@@ -328,7 +328,12 @@ export default Vue.extend({
       this.loading=true
 
       const rundeckContext = getRundeckContext();
+      console.log("this.path")
+      console.log(this.path)
+      console.log("NEWWWWWWWWWW")
       const getPath = this.calcBrowsePath(this.path)
+      console.log("getPath")
+      console.log(getPath)
       rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
@@ -338,7 +343,7 @@ export default Vue.extend({
           result.resources.forEach((resource: any) => {
             if (resource.type === 'directory') {
               this.directories.push(resource);
-              if(this.directories.size() > 1){
+              if(this.directories.length > 1){
                 this.directories.sort((obj1: any, obj2: any) => {
                   if (obj1.path > obj2.path) {
                     return 1;
