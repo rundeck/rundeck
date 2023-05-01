@@ -1619,7 +1619,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             privateDataContext(privatecontext)
             executionListener(listener)
             workflowExecutionListener(wlistener)
-            execution(executionReference)
+            execution(executionReference?:origContext?.getExecution())
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
