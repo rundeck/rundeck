@@ -16,7 +16,7 @@
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
                :disabled="readOnly"
                placeholder="Enter a path"/>
-        <div v-if="!this.isProject" class="open input-group-btn" :class="isDropdownOpen ? 'open' : ''">
+        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open' : ''">
           <button
               type="button"
               class="btn btn-default dropdown-toggle"
