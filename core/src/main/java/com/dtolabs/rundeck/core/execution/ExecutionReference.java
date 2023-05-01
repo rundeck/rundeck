@@ -41,6 +41,6 @@ public interface ExecutionReference extends PreparedExecutionReference{
     String getAdhocCommand();
 
     Map getMetadata();
-
+    boolean isDoNodedispatch();
 
 }
