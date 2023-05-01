@@ -242,7 +242,7 @@ export default Vue.extend({
       loading: true,
       linksTitle: '',
       projectList: [],
-      jumpLinks: [],
+      jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
       isProject: false
     }
   },
@@ -269,12 +269,9 @@ export default Vue.extend({
 
       return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`
     },
-    isProject() {
-
-    },
     async loadProjectNames() {
       try {
-        const response = await getRundeckContext().rundeckClient.projectList(null);
+        const response = await getRundeckContext().rundeckClient.projectList();
 
         this.linksTitle = 'Projects';
         this.jumpLinks = response.map((v) => {
