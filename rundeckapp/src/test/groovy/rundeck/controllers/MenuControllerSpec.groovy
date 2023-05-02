@@ -1628,9 +1628,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             false   | 0
     }
 
-    def "SCM disabled when an unauthorized user request status and import is enabled"(){
+    def "SCM NOT disabled when an unauthorized user request status and import is enabled"(){
         given:
-        def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
@@ -1665,13 +1664,13 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                                                                                           AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
-        2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
         1 * controller.storageService.hasPath(_,_) >> false
         0 * controller.scmService.initProject(project,'export')
         0 * controller.scmService.initProject(project,'import')
 
-        1 * controller.scmService.disablePlugin(_,_,_)
-        response.json.warning == unauthorizedMessage
+        0 * controller.scmService.disablePlugin(_,_,_)
+        response.json.warning !== null
 
     }
 
