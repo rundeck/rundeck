@@ -261,7 +261,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    isProject() {
+    isProject(): boolean {
       return this.rootPath.startsWith("keys/project");
     },
   },
