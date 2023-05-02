@@ -212,7 +212,7 @@ search
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
                   </div>
                   <div class="vue-ui-socket">
-                    <ui-socket section="job-runner-adhoc-command" location="runner-edit" :event-bus="EventBus" />
+                    <ui-socket section="adhoc-command-page" location="nodefilter" :event-bus="EventBus" />
                   </div>
 
                   <div data-ko-bind="adhocCommand">
