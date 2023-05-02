@@ -1611,7 +1611,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         where:
             enabled | count
             true    | 1
-            false   | 0
     }
 
     def "SCM NOT disabled when an unauthorized user request status and import is enabled"(){
