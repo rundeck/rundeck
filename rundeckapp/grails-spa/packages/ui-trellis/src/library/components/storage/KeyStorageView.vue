@@ -526,8 +526,7 @@ export default Vue.extend({
       this.uploadErrors = {} as any;
     },
     loadDirInputPath() {
-      this.clean()
-      this.loadDir(this.inputPath)
+      this.loadDir(this.rootPath + "/" + this.inputPath)
     },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
