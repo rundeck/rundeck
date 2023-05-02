@@ -3235,10 +3235,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         def userHasPathAccessToSshKey = storageService.hasPath(authContext, scmService.loadScmConfig(params.project, 'import')?.config?.sshPrivateKeyPath)
                         if( !userHasPathAccessToSshKey ){
-                            def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
-                            scmService.disablePlugin('import', params.project, scmService.loadScmConfig(params.project, 'import').type)
-                            pluginData.warning = unauthorizedMessage
-                            log.error(unauthorizedMessage)
+                            results.warning = "Failed to update SCM Import status; user don't have access rights to SCM's configured key."
+                            log.error("Failed to update SCM Import status; user don't have access rights to SCM's configured key.")
                         }else{
                             pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                             if (pluginData.scmImportEnabled) {
@@ -3246,11 +3244,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                                 pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
+                                results.putAll(pluginData)
                             }
                         }
-                        results.putAll(pluginData)
                     }
-
                 } catch (ScmPluginException e) {
                     results.warning = "Failed to update SCM Import status: ${e.message}"
                 }
