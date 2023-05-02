@@ -16,7 +16,7 @@
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
                :disabled="readOnly"
                placeholder="Enter a path"/>
-        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open' : ''">
+        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
           <button
               type="button"
               class="btn btn-default dropdown-toggle"
@@ -266,7 +266,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    downloadUrl() {
+    downloadUrl(): string {
       const downloadBaseUrl = 'storage/download/keys'
       const rundeckContext = getRundeckContext()
 
