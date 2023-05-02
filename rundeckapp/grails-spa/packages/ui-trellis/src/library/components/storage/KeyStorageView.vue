@@ -197,7 +197,7 @@
     <div class="card-footer">
       <hr>
       <span class="text-info">
-          {{ $t('page.keyStorage.description') }}
+          {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
       </span>
     </div>
   </div>
@@ -247,13 +247,11 @@ export default Vue.extend({
       linksTitle: '',
       projectList: [],
       jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
-      isProject: false
     }
   },
   mounted() {
     this.loadKeys()
     this.loadProjectNames()
-    this.isProject = this.rootPath.startsWith("keys/project")
   },
   watch : {
     createdKey : function (newValue, oldValue) {
@@ -261,6 +259,11 @@ export default Vue.extend({
         this.selectKey(newValue)
       }
     }
+  },
+  computed: {
+    isProject() {
+      return this.rootPath.startsWith("keys/project");
+    },
   },
   methods: {
     downloadUrl() {
