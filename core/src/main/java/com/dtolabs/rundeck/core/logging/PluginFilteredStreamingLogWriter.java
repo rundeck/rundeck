@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
@@ -237,8 +238,16 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
     @Override
     public void close() {
+        finish(null);
+    }
+
+    /**
+     * Called when logging is completed
+     * @param result status of the enclosed action, may be null if an error occurred
+     */
+    public void finish(StatusResult result) {
         for (LogFilterPlugin plugin : plugins) {
-            plugin.complete(myLoggingContext);
+            plugin.complete(myLoggingContext, result);
         }
     }
 
