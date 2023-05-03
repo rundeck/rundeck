@@ -68,6 +68,9 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 /**
  * Manages scm integration
  */
@@ -1590,6 +1593,31 @@ class ScmService {
             // synch commit info to exported commit data
             checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
         }
+    }
+
+    static String expand(final String source, final ScmUserInfo scmUserInfo) {
+        def userInfoProps = ['fullName', 'firstName', 'lastName', 'email', 'userName']
+        def map = userInfoProps.collectEntries { [it, scmUserInfo[it]] }
+        map['login'] = map['userName']
+        expand(source, map, 'user')
+    }
+
+    static String expand(final String source, final Map<String, String> data, String prefix = '') {
+        data.keySet().inject(source) { String x, String y ->
+            return x.replaceAll(
+                    Pattern.quote('${' + (prefix ? prefix + '.' : '') + y + '}'),
+                    Matcher.quoteReplacement(data[y] ?: '')
+            )
+        }
+    }
+
+    /**
+     * Expand variable references in the storage path, such as ${user.name} and ${project}* @param context
+     * @param path
+     * @return
+     */
+    def expandVariablesInScmConfiguredPath(ScmOperationContext context, String path) {
+        expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
 
 }
