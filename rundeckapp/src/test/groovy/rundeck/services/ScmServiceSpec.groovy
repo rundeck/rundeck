@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import grails.testing.gorm.DataTest
@@ -1272,6 +1273,40 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         "scm-export"    | [name: 'test', groupPath: 'test', srcId:"1234"]     | null            | 1     | "1234"
         "scm-export"    | [name: 'test', groupPath: 'test']                   | null            | 1     | null
 
+    }
+
+    def "expanded variables with SCM Operation Context"(){
+        setup:
+        def project = 'test'
+        def user = username
+//        def unexpandedString = 'keys/${user.login}/key.key'
+        def scmUserInfo = Mock(ScmUserInfo){
+            it.getUserName() >> user
+        }
+        def context = Mock(ScmOperationContext){
+            it.getUserInfo() >> scmUserInfo
+            it.getFrameworkProject() >> project
+        }
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        when:
+        def result = service.expandVariablesInScmConfiguredPath(context, unexpandedString)
+
+        then:
+        result == expandedString
+
+        where:
+        username   | unexpandedString             | expandedString
+        'Bob'      | 'keys/${user.login}/key.key' | 'keys/Bob/key.key'
+        'Jose'     | 'keys/${user.login}/key.key' | 'keys/Jose/key.key'
+        'Darwis'   | 'keys/${user.login}/key.key' | 'keys/Darwis/key.key'
+        null       | 'keys/${user.login}/key.key' | 'keys/${user.login}/key.key'
     }
 
 }

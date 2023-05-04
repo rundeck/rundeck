@@ -1699,16 +1699,15 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         def scmUserInfo = Mock(ScmUserInfo){
             it.getUserName() >> 'test'
         }
-        def scmOperationContext = ScmOperationContextBuilder.builder()
-                .frameworkProject(project)
-                .userInfo(scmUserInfo)
-                .build()
+        def scmOperationContext = Mock(ScmOperationContext){
+            it.getUserInfo() >> scmUserInfo
+        }
         def scmService = Mock(ScmService){
-            it.scmOperationContext(_,_,_) >> scmOperationContext
+            it.scmOperationContext(_,_,project) >> scmOperationContext
             it.projectHasConfiguredExportPlugin(project) >> false
             it.projectHasConfiguredImportPlugin(project) >> true
             it.loadScmConfig(_,_) >> scmConfig
-//            it.expandVariablesInScmConfiguredPath(_,_) >> 'keys/test/testKey.key'
+            it.expandVariablesInScmConfiguredPath(_,_) >> 'keys/test/testKey.key'
         }
         controller.scmService = scmService
 
@@ -1720,7 +1719,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.listExport()
 
         then:
-        response.json == 'hey'
+        1 * controller.scmService.expandVariablesInScmConfiguredPath(_,_)
 
     }
 

@@ -1617,6 +1617,9 @@ class ScmService {
      * @return
      */
     def expandVariablesInScmConfiguredPath(ScmOperationContext context, String path) {
+        if( !context.userInfo.userName ){
+            return path
+        }
         expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
 
