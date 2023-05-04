@@ -3253,9 +3253,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                                 pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
-                                results.putAll(pluginData)
                             }
                         }
+                        results.putAll(pluginData)
                     }
                 } catch (ScmPluginException e) {
                     results.warning = "Failed to update SCM Import status: ${e.message}"
