@@ -34,9 +34,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
-import com.dtolabs.rundeck.plugins.scm.ScmOperationContextBuilder
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
