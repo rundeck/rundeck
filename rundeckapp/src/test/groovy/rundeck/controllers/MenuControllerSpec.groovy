@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -84,6 +86,7 @@ import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.StorageService
+import rundeck.services.scm.ScmUser
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -1585,6 +1588,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.storageService = Mock(StorageService)
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
+        def userAndRolesAuthContext = Mock(UserAndRolesAuthContext){
+            it.getRoles() >> new HashSet<String>(Arrays.asList("role1", "role2"))
+            it.username >> 'test'
+        }
 
         when:
         request.method = 'POST'
@@ -1605,6 +1612,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> userAndRolesAuthContext
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
         2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
@@ -1641,6 +1649,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
+        def userAndRolesAuthContext = Mock(UserAndRolesAuthContext){
+            it.getRoles() >> new HashSet<String>(Arrays.asList("role1", "role2"))
+            it.username >> 'test'
+        }
 
         when:
         request.method = 'POST'
@@ -1661,6 +1673,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
                                                                                           AuthConstants.ACTION_IMPORT,
                                                                                           AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> userAndRolesAuthContext
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
         1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
@@ -1670,6 +1683,65 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         0 * controller.scmService.disablePlugin(_,_,_)
         response.json.warning !== null
+
+    }
+
+    def "Expanded path variable in SCM ssh key"(){
+        setup:
+        def project = 'test'
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            it.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                              AuthConstants.ACTION_EXPORT,
+                                                                                              AuthConstants.ACTION_SCM_EXPORT]) >> true
+            it.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                              AuthConstants.ACTION_IMPORT,
+                                                                                              AuthConstants.ACTION_SCM_IMPORT]) >> true
+            it.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext){
+                it.getRoles() >> new HashSet<String>(Arrays.asList("role1", "role2"))
+                it.username >> 'test'
+            }
+        }
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            it.listWorkflows(_,_) >> [schedlist : []]
+            it.finishquery(_,_,_) >> [max: 20,
+                                      offset:0,
+                                      paginateParams:[:],
+                                      displayParams:[:]]
+        }
+        controller.storageService = Mock(StorageService){
+            it.hasPath(_,'keys/test/testKey.key') >> true
+        }
+        def scmConfig = Mock(ScmPluginConfigData) {
+            it.getConfig() >> [sshPrivateKeyPath: 'keys/${user.login}/testKey.key']
+        }
+        def scmUserInfo = Mock(ScmUserInfo){
+            it.getUserName() >> 'test'
+        }
+        def scmOperationContext = Mock(ScmOperationContext){
+            it.getUserInfo() >> scmUserInfo
+        }
+        def scmService = Mock(ScmService){
+            it.scmOperationContext(_,_,project) >> scmOperationContext
+            it.projectHasConfiguredExportPlugin(project) >> false
+            it.projectHasConfiguredImportPlugin(project) >> true
+            it.loadScmConfig(_,_) >> scmConfig
+            it.expandVariablesInScmConfiguredPath(_,_) >> 'keys/test/testKey.key'
+        }
+        controller.scmService = scmService
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scmService.expandVariablesInScmConfiguredPath(_,_)
 
     }
 
