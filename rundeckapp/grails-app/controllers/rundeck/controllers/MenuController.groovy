@@ -3839,8 +3839,9 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         def userHasPathAccessToSshKey = storageService.hasPath(authContext, scmService.loadScmConfig(params.project, 'import')?.config?.sshPrivateKeyPath)
                         if( !userHasPathAccessToSshKey ){
-                            results.warning = "Failed to update SCM Import status; user don't have access rights to SCM's configured key."
-                            log.error("Failed to update SCM Import status; user don't have access rights to SCM's configured key.")
+                            def warning = "Failed to update SCM Import status; user don't have access rights to SCM's configured key."
+                            results.warning = warning
+                            log.error(warning)
                         }else{
                             pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                             if (pluginData.scmImportEnabled) {
