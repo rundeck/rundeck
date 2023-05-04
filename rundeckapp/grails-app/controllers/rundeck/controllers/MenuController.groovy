@@ -3242,8 +3242,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         // Validate of the user have rights to access the key
                         def userHasPathAccessToSshKey = storageService.hasPath(authContext, userExpandedSshKeyPath)
                         if( !userHasPathAccessToSshKey ){
-                            results.warning = "Failed to update SCM Import status; user don't have access rights to SCM's configured key."
-                            log.error("Failed to update SCM Import status; user don't have access rights to SCM's configured key.")
+                            def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
+                            scmService.disablePlugin('import', params.project, scmService.loadScmConfig(params.project, 'import').type)
+                            pluginData.warning = unauthorizedMessage
+                            log.error(unauthorizedMessage)
                         }else{
                             pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                             if (pluginData.scmImportEnabled) {
