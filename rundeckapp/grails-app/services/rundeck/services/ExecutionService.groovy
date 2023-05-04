@@ -2042,45 +2042,56 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-   def Execution createExecution(Map params) {
-        def Execution execution
-        if (params.project && params.workflow) {
-            execution = new Execution(project:params.project,
-                                      user:params.user, loglevel:params.loglevel,
-                                      doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
-                                      filter: params.filter,
-                                      filterExclude: params.filterExclude,
-                                      nodeExcludePrecedence:params.nodeExcludePrecedence,
-                                      nodeThreadcount:params.nodeThreadcount,
-                                      nodeKeepgoing:params.nodeKeepgoing,
-                                      orchestrator:params.orchestrator,
-                                      nodeRankOrderAscending:params.nodeRankOrderAscending,
-                                      nodeRankAttribute:params.nodeRankAttribute,
-                                      workflow:params.workflow,
-                                      argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
-                                      timeout:params.timeout?:null,
-                                      retryAttempt:params.retryAttempt?:0,
-                                      retryOriginalId:params.retryOriginalId?:null,
-                                      retryPrevId:params.retryPrevId?:null,
-                                      retry:params.retry?:null,
-                                      retryDelay: params.retryDelay?:null,
-                                      serverNodeUUID: frameworkService.getServerUUID(),
-                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
-                                      extraMetadataMap: params.extraMetadataMap?:null
-            )
+   def Execution createExecution(ScheduledExecution scheduledExecution, AuthContext authContext, Map params) {
+       Map props = [
+                       project:params.project,
+                       user:params.user, loglevel:params.loglevel,
+                       doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
+                       filter: params.filter,
+                       filterExclude: params.filterExclude,
+                       nodeExcludePrecedence:params.nodeExcludePrecedence,
+                       nodeThreadcount:params.nodeThreadcount,
+                       nodeKeepgoing:params.nodeKeepgoing,
+                       orchestrator:params.orchestrator,
+                       nodeRankOrderAscending:params.nodeRankOrderAscending,
+                       nodeRankAttribute:params.nodeRankAttribute,
+                       workflow:params.workflow,
+                       argString:params.argString,
+                       executionType: params.executionType ?: 'scheduled',
+                       timeout:params.timeout?:null,
+                       retryAttempt:params.retryAttempt?:0,
+                       retryOriginalId:params.retryOriginalId?:null,
+                       retryPrevId:params.retryPrevId?:null,
+                       retry:params.retry?:null,
+                       retryDelay: params.retryDelay?:null,
+                       serverNodeUUID: frameworkService.getServerUUID(),
+                       excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
+                       extraMetadataMap: params.extraMetadataMap?:null,
+                       _replaceNodeFilters: params._replaceNodeFilters?:true,
+                    ]
 
-            execution.userRoles = params.userRoles
+        Execution execution = createExecution(scheduledExecution, authContext, props)
 
-
-            //parse options
-            if(!execution.loglevel){
-                execution.loglevel=defaultLogLevel
-            }
-
-        } else {
-            throw new IllegalArgumentException("insufficient params to create a new Execution instance: " + params)
+        if(!execution.loglevel){
+            execution.loglevel=defaultLogLevel
         }
+
+//        if (params.project && params.workflow) {
+//            execution = new Execution(
+//            )
+//
+//            execution.userRoles = params.userRoles
+//
+//
+//            //parse options
+//            if(!execution.loglevel){
+//                execution.loglevel=defaultLogLevel
+//            }
+//
+//        } else {
+//            throw new IllegalArgumentException("insufficient params to create a new Execution instance: " + params)
+//        }
+
         return execution
     }
     /**
@@ -2124,21 +2135,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(Map params, String user) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(ScheduledExecution scheduledExecution, AuthContext authContext, Map params) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
-        if(!props.user){
-            props.user=user
-        }
-        def Execution execution = createExecution(props)
+
+        def Execution execution = createExecution(scheduledExecution, authContext, props)
         execution.dateStarted = new Date()
+
+
+//        Execution execution = int_createExecution(props)
+//
+//        def beforeExecutionResult = checkBeforeAdhocCommandExecution(execution, props, authContext)
+
+        // Process metadata updates
+//        if (beforeExecutionResult?.isUseNewMetadata()) {
+//            props.extraMetadataMap = beforeExecutionResult.newExecutionMetadata
+//        }
 
         /**
          * Set extraMetadataMap. Extra metadata is used to store additional information to decide the runner selection
          */
-        if(props.extraMetadataMap){
-            execution.extraMetadataMap = props.extraMetadataMap
-        }
+//        if(props.extraMetadataMap){
+//            execution.extraMetadataMap = props.extraMetadataMap
+//        }
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
         if(newstr!=execution.argString){
@@ -4259,6 +4278,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         list = list + fwPlugins
 
         return list
+    }
+
+    JobLifecycleStatus checkBeforeAdhocCommandExecution(Execution execution, Map<String, String> props, UserAndRolesAuthContext authContext) {
+
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
+            "jobName",
+            "jobUUID",
+            props.project,
+            props.user,
+            [],
+            [:],
+            "",
+            [],
+            props.extraMetadataMap)
+
+        try {
+            return jobLifecycleComponentService.beforeJobExecution(event)
+        } catch (JobLifecycleComponentException e) {
+            log.warn("Suppressed. beforeAdhocCommandExecution check failure: " + e.getMessage())
+            def jobEventStatus = new JobEventStatusImpl(
+                    successful: false,
+                    eventType: event.getClass(),
+                    optionsValues: event.optionsValues,
+                    errorMessage: e.getMessage()
+            )
+            JobLifecycleComponentService.mergeEvent(jobEventStatus, event)
+            return jobEventStatus
+        }
     }
 
     /**

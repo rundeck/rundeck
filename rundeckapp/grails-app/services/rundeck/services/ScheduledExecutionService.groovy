@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -1461,8 +1462,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     )
                 )
                 .build()
-
-
 
         def Trigger trigger = TriggerBuilder.newTrigger().withIdentity(ident.jobname + "Trigger").startNow().build()
         def nextTime

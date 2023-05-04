@@ -2144,7 +2144,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def Execution e
         try {
-            e = executionService.createExecutionAndPrep(params, params.user)
+            e = executionService.createExecutionAndPrep(scheduledExecution, authContext, params)
         } catch (ExecutionServiceException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }
