@@ -681,6 +681,7 @@ Authorization required: `read` access for `project` resource type to get basic p
             description = "Project details",
             content = @Content(
                     mediaType = "application/json",
+                    schema=@Schema(type='object'),
                     examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
             )
     )
