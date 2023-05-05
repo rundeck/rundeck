@@ -2699,6 +2699,7 @@ Requires `export` authorization for the project resource.""",
             content = [
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
                             examples = [
                                     @ExampleObject('''{
     "token":"[TOKEN]",
