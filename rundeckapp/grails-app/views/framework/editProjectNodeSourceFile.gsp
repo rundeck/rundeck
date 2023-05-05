@@ -67,6 +67,7 @@
         <g:form action="saveProjectNodeSourceFile" method="post"
                 params="${[project: params.project, index: index]}"
                 useToken="true"
+                id=""
                 class="form-horizontal">
             <div class="">
                 <div class="" id="createform">
@@ -133,6 +134,12 @@
                         <g:if test="${fileEmpty}">
                             <div class="text-warning"><g:message code="project.nodes.edit.empty.description" /></div>
                         </g:if>
+
+                        <div class="vue-ui-socket">
+                            <div>
+                                <ui-socket section="noderesource" location="main" :event-bus="eventBus"/>
+                            </div>
+                        </div>
                     </div>
 
 
