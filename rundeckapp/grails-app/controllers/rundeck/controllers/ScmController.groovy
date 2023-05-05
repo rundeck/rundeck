@@ -2377,7 +2377,7 @@ The response will include information about the result.
         if (!validateCommandInput(scm)) {
             return
         }
-        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
+        ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(scm.id)
         if (!apiRequireJob(scheduledExecution, scm)) {
             return
         }
