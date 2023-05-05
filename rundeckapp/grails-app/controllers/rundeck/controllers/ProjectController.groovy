@@ -1019,11 +1019,13 @@ Authorization required: `configure` access for `project` resource type or `admin
             content = [
                     @Content(
                             mediaType = "application/text",
+                            schema=@Schema(type='string'),
                             examples = @ExampleObject('''key=value
 key2=value''')
                     ),
                     @Content(
                             mediaType = "application/json",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''{
     "key":"value",
     "key2":"value2..."
@@ -1108,6 +1110,7 @@ Since: v14""",
             content = [
                     @Content(
                             mediaType = "application/text",
+                            schema=@Schema(type='string'),
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1119,6 +1122,7 @@ by:
                     ),
                     @Content(
                             mediaType = "application/yaml",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1172,6 +1176,7 @@ by:
                             ),
                             @Content(
                                     mediaType = "application/yaml",
+                                    schema=@Schema(type='object'),
                                     examples = @ExampleObject('''description: "my policy"
 context:
   application: rundeck
@@ -1183,6 +1188,7 @@ by:
                             ),
                             @Content(
                                     mediaType = "application/json",
+                                    schema=@Schema(type='object'),
                                     examples = @ExampleObject('''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
 }''')
@@ -1707,12 +1713,14 @@ Authorization required: `configure` access for `project` resource type or `admin
                     content = [
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
                                     examples = [
                                             @ExampleObject('''{"contents":"The readme contents"}''')
                                     ]
                             ),
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
                                     examples = [
                                             @ExampleObject('''The readme contents''')
                                     ]
@@ -1749,10 +1757,12 @@ Authorization required: `configure` access for `project` resource type or `admin
             content = [
                     @Content(
                             mediaType = "application/text",
+                            schema=@Schema(type='string'),
                             examples = @ExampleObject('''The readme contents''')
                     ),
                     @Content(
                             mediaType = "application/json",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''{"contents":"The readme contents"}''')
                     )
             ]
@@ -1897,10 +1907,12 @@ Authorization required: `configure` access for `project` resource type or `admin
             content = [
                     @Content(
                             mediaType = "application/text",
+                            schema=@Schema(type='string'),
                             examples = @ExampleObject('''The readme contents''')
                     ),
                     @Content(
                             mediaType = "application/json",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''{"contents":"The readme contents"}''')
                     )
             ]
@@ -2038,6 +2050,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                     content = [
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
                                     examples = [
                                             @ExampleObject(
                                                     name = 'set-project-config',
@@ -2051,6 +2064,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                             ),
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
                                     examples = [
                                             @ExampleObject(
                                                     name = 'set-project-config',
@@ -2082,6 +2096,7 @@ key2=value'''
             content = [
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
                             examples = [
                                     @ExampleObject('''{
     "key":"value",
@@ -2092,6 +2107,7 @@ key2=value'''
                     ),
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
+                            schema=@Schema(type='string'),
                             examples = [
                                     @ExampleObject('''key=value
 key2=value'''
@@ -2195,11 +2211,13 @@ Authorization required: `configure` access for `project` resource type or `admin
             content = [
                     @Content(
                             mediaType = "application/text",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''key=value
 key2=value''')
                     ),
                     @Content(
                             mediaType = "application/json",
+                            schema=@Schema(type='object'),
                             examples = @ExampleObject('''{
     "key":"value",
     "key2":"value2..."
@@ -2292,6 +2310,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                     content = [
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
                                     examples = [
                                             @ExampleObject(
                                                     name = 'set-project-config',
@@ -2302,6 +2321,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                             ),
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
                                     examples = [
                                             @ExampleObject(
                                                     name = 'set-project-config',
@@ -2342,6 +2362,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             content = [
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
                             examples = [
                                     @ExampleObject('''{ "[KEY]" : "key value" }'''
                                     )
@@ -2349,6 +2370,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                     ),
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
+                            schema=@Schema(type='string'),
                             examples = [
                                     @ExampleObject('''key value'''
                                     )
@@ -2762,6 +2784,7 @@ Since: v19""",
             content = [
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
                             examples = [
                                     @ExampleObject('''{
     "token":"[TOKEN]",
@@ -2964,6 +2987,7 @@ Note: `other_errors` included since API v35""",
             content = [
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
                             examples = [
                                     @ExampleObject(name = 'successful-result', description = 'All imported jobs and files were successful' , value = '''{"import_status":"successful"}'''),
                                     @ExampleObject(name = 'status-failed-result', description = 'Some imported files failed' , value = '''{
