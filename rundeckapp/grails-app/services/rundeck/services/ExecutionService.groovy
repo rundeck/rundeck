@@ -2133,18 +2133,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
 
-        /**
-         * Set extraMetadataMap. Extra metadata is used to store additional information to decide the runner selection
-         */
-//        if(props.extraMetadataMap){
-//            execution.extraMetadataMap = props.extraMetadataMap
-//        }
-
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
         if(newstr!=execution.argString){
             execution.argString=newstr
         }
 
+        // Abandon the transient ScheduledExecution entity instance.
         execution.scheduledExecution = null
 
         if(execution.workflow){
@@ -2414,6 +2408,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ) {
         Map props = [:]
 
+        // For adhoc command the ScheduledExecution instance is created as transient that has no a corresponding entity in database.
         se = ScheduledExecution.get(se.id) ?: se
         def propset=[
                 'project',
