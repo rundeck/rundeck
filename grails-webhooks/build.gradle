@@ -83,7 +83,7 @@ bootRun {
 }
 
 tasks.withType(GroovyCompile) {
-    def target = new File(project.rootDir, "rundeckapp/build/openapi/${project.name}.yml").absolutePath
+    def target = new File(project.rootDir, "${project.findProperty('openapiPathPrefix')?:''}rundeckapp/build/openapi/${project.name}.yml").absolutePath
     configure(groovyOptions) {
         forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.target.file=${target}".toString()]
     }
