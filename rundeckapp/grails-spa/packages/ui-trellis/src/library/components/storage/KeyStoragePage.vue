@@ -1,8 +1,8 @@
 <template>
 <div>
-  <key-storage-view ref="keyStorageViewRef" :project="project" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
+  <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :createdKey="selectedKey" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
   <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
-    <key-storage-edit :project="this.project" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
+    <key-storage-edit :project="this.project" :root-path="rootPath" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @keyCreated="updateSelectedKey"  @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
   </modal>
 </div>
 </template>
@@ -20,14 +20,17 @@ export default Vue.extend({
     'readOnly',
     'allowUpload',
     'value',
-    'storageFilter'
+    'storageFilter',
+    'project'
   ],
   data() {
     return {
+      bus: new Vue(),
       modalEdit: false,
       path: '',
       uploadSetting: {},
-      project: ''
+      ready: false,
+      selectedKey: {}
     }
   },
   methods: {
@@ -43,10 +46,18 @@ export default Vue.extend({
       this.uploadSetting = uploadSetting
       this.modalEdit = true
     },
+    updateSelectedKey(key: {}) {
+      this.selectedKey = key
+    },
+  },
+  computed: {
+    rootPath(): string {
+      return this.project ? "keys/project/" + this.project: "keys"
+    }
   },
   async mounted() {
-    this.project = getRundeckContext().projectName;
     this.path=this.value ? this.value : ""
+    this.ready=true
   }
 })
 </script>

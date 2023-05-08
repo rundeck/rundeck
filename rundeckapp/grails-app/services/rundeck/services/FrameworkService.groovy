@@ -452,6 +452,16 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
 
+    /**
+     * Force project configuration load and returns it
+     * @param projectName
+     * @return new project configuration object
+     */
+    @CompileStatic
+    IRundeckProjectConfig getProjectConfigReloaded(String projectName){
+        return rundeckFramework.getFrameworkProjectMgr().loadProjectConfig(projectName)
+    }
+
     @CompileStatic
     IRundeckProject getFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)

@@ -2295,7 +2295,15 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,found.project)
-        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
+        def result = [:]
+        try{
+            result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
+        }catch(exception){
+            flash.error = "Failed to update job: [${exception.message}]"
+            log.warn("There was errors with the update process: ${exception.stackTrace}")
+            return redirect(controller: 'scheduledExecution', action: 'edit',
+                        params: [id: params.id, project: found.project])
+        }
         def scheduledExecution=result.scheduledExecution
         def success = result.success
         if(!scheduledExecution){
@@ -2641,6 +2649,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 }
             }
         }
+
+        params.extraMetadataMap = runAdhocRequest.meta ?: [:]
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')

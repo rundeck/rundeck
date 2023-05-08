@@ -276,13 +276,21 @@ export default Vue.extend({
     },
     loadPluginData(data: any) {
       this.props = data.props
-      if(data.dynamicProps) {
-        this.props.forEach((prop: any) => {
-          if (data.dynamicProps[prop.name]) {
-            prop.allowed = data.dynamicProps[prop.name]
+
+      this.props.forEach((prop: any) => {
+        if (data.dynamicProps && data.dynamicProps[prop.name]) {
+          prop.allowed = data.dynamicProps[prop.name]
+        }
+        if(prop.type === 'AutogenInstanceId'){
+          if(this.isCreateMode && prop.defaultValue === '') {
+            prop.defaultValue = Math.random().toString(36).slice(2)
+          } else if (!this.isCreateMode) {
+            prop.defaultValue = ''
           }
-        })
-      }
+          prop.staticTextDefaultValue = prop.defaultValue
+        }
+      })
+
       this.detail = data
       this.prepareInputs()
 

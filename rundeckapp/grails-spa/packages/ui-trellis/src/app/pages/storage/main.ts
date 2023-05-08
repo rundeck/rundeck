@@ -1,5 +1,7 @@
 import Vue from 'vue'
 import KeyStoragePage from "../../../library/components/storage/KeyStoragePage.vue";
+import KeyStorageView from "../../../library/components/storage/KeyStorageView.vue";
+import KeyStorageEdit from "../../../library/components/storage/KeyStorageEdit.vue";
 
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
@@ -33,6 +35,6 @@ const elm = document.getElementById('keyStoragePage')
 
 const vue = new Vue({
     el: elm as Element,
-    components: { KeyStoragePage },
+    components: { KeyStoragePage, KeyStorageView, KeyStorageEdit },
     i18n
 })

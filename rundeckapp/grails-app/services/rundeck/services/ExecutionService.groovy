@@ -2133,6 +2133,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
+        /**
+         * Set extraMetadataMap. Extra metadata is used to store additional information to decide the runner selection
+         */
+        if(props.extraMetadataMap){
+            execution.extraMetadataMap = props.extraMetadataMap
+        }
+
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
         if(newstr!=execution.argString){
             execution.argString=newstr
