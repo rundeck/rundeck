@@ -1,0 +1,22 @@
+/**
+ * Sets up artifacts and configurations for the openapi spec generation for grails plugins
+ */
+configurations{
+    apiSpecFiles{
+        canBeConsumed = true
+        canBeResolved = false
+    }
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m', "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()]
+    }
+}
+artifacts{
+    //note: both builtBy tasks seem to declare outputs which include the openapi spec file, so we include both otherwise
+    //gradle warns about implicit dependencies
+    apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: compileGroovy
+    apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: copyAstClasses
+}

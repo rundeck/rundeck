@@ -14,6 +14,7 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 
+apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
@@ -105,13 +106,6 @@ bootJar.enabled = false
 
 tasks.withType(Test) {
     useJUnitPlatform()
-}
-
-tasks.withType(GroovyCompile) {
-    def target = new File(project.rootDir, "${project.findProperty('openapiPathPrefix')?:''}rundeckapp/build/openapi/${project.name}.yml").absolutePath
-    configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.target.file=${target}".toString()]
-    }
 }
 
 jar {

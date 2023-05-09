@@ -17,6 +17,8 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
+apply from:'../gradle/grailsopenapispec.gradle'
+
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
@@ -80,13 +82,6 @@ bootRun {
     sourceResources sourceSets.main
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
-}
-
-tasks.withType(GroovyCompile) {
-    def target = new File(project.rootDir, "${project.findProperty('openapiPathPrefix')?:''}rundeckapp/build/openapi/${project.name}.yml").absolutePath
-    configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.target.file=${target}".toString()]
-    }
 }
 
 tasks.withType(Test) {
