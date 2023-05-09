@@ -44,6 +44,15 @@ ext.coreGrailsPlugins = [
     ':grails-rundeck-data-shared',
 ]
 
+//force gradle configuration of core grails plugins
+coreGrailsPlugins.each{
+    project.evaluationDependsOn(it)
+}
+//force gradle configuration of extra grails plugins
+project.findProperty('extraGrailsPlugins')?.each{
+    project.evaluationDependsOn(it)
+}
+
 configurations {
     agent
     war{}
@@ -51,6 +60,7 @@ configurations {
     pluginFiles {
         transitive = false
     }
+    apiSpecFiles
     spa //dependency on grails-spa
     developmentOnly
     runtimeClasspath {
@@ -96,6 +106,19 @@ dependencies {
     for(proj in project.findProperty('bundledGrailsPlugins')) {
         logger.info("Injecting Grails plugin ${proj}")
         implementation project("$proj")
+    }
+
+    //api spec file dependencies from extra grails plugins
+    for(proj in project.findProperty('extraGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
+    }
+    //api spec file dependencies from core grails plugins
+    for(proj in project.findProperty('coreGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
     }
 
     // From BuildConfig.groovy.
@@ -301,11 +324,22 @@ bootRun {
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
-tasks.withType(GroovyCompile) {
-    def additionalSpecDir = new File(project.buildDir, 'openapi')
+
+tasks.register('copyApiSpecFiles', Copy){
+    description 'Copy openapi spec files from each grails plugin dependency into a common dir'
+    def additionalSpecDir = file("${buildDir}/openapi")
     doFirst {
         additionalSpecDir.mkdirs()
     }
+    outputs.dir additionalSpecDir
+    inputs.files configurations.apiSpecFiles
+    from configurations.apiSpecFiles
+    into additionalSpecDir
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    def additionalSpecDir = new File(project.buildDir, 'openapi')
+    dependsOn copyApiSpecFiles
     configure(groovyOptions) {
         forkOptions.jvmArgs = [
             '-Xmx1024m',
