@@ -199,7 +199,12 @@ public class FrameworkProjectMgr extends FrameworkResource implements IFramework
 
     @Override
     public boolean isFrameworkProjectDisabled(String projectName) {
-        return false;
+        throw new UnsupportedOperationException("Operation not supported for file-based projects");
+    }
+
+    @Override
+    public String getProjectDescription(String projectName) {
+        throw new UnsupportedOperationException("Operation not supported for file-based projects");
     }
 
     public List<String> listChildNames() {

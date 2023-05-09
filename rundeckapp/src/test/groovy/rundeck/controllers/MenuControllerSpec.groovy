@@ -1325,11 +1325,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
         GormProjectDataProvider provider = new GormProjectDataProvider()
-
-        controller.projectService = Mock(ProjectService){
-            findProjectByName(_) >>  prj
-        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1339,6 +1336,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
+        1 * controller.frameworkService.getFrameworkProjectManager().getProjectDescription(_) >> description
         0 * iproj.hasProperty('project.description')
         description == response.json.projects[0].description
     }
@@ -1357,10 +1355,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1398,10 +1393,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
-        1 * controller.projectService.findProjectByName('proj') >> Mock(RdProject)
+        1 * controller.frameworkService.getFrameworkProjectManager().getProjectDescription(_) >> null
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
-        0 * controller.projectService.update(_,_)
         description == response.json.projects[0].description
     }
 
@@ -1418,10 +1412,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
 
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
@@ -1849,10 +1840,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:

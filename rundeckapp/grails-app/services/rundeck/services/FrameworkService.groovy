@@ -192,6 +192,10 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         file.delete()
     }
 
+    @Override
+    ProjectManager getFrameworkProjectManager() {
+        return rundeckFramework.frameworkProjectMgr
+    }
 /**
      * Return a list of FrameworkProject objects
      */

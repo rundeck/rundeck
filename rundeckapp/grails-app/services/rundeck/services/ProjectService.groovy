@@ -39,7 +39,6 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
-import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -64,7 +63,6 @@ import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.spi.data.DataAccessException
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -75,7 +73,6 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.audit.AuditEventsService
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
@@ -89,7 +86,6 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 @Transactional
-
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
@@ -109,7 +105,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
-    RundeckProjectDataProvider projectDataProvider
     ExecReportDataProvider execReportDataProvider
 
     static transactional = false
@@ -1836,27 +1831,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project
         )
-    }
-
-    RdProject findProjectByName(String projectName) {
-        projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
-    }
-
-    void update(Serializable id, RdProject data) throws DataAccessException {
-        projectDataProvider.update(id, data)
-    }
-
-    int countFrameworkProjects() {
-        projectDataProvider.countFrameworkProjects()
-    }
-
-    boolean projectExists(String project) {
-        projectDataProvider.projectExists(project)
-
-    }
-
-    String getProjectDescription(String name) {
-        projectDataProvider.getProjectDescription(name)
     }
 }
 

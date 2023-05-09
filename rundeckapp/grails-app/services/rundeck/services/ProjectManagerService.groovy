@@ -660,7 +660,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            RdProject dbproj = projectDataProvider.findByNameAndState(project.name, RdProject.State.ENABLED)
+            RdProject dbproj = projectDataProvider.findByName(project.name)
             SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
             updatedProject.setDescription(description ? description : null)
             projectDataProvider.update(dbproj.getId(), updatedProject)
@@ -682,7 +682,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
-        RdProject found = projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
+        RdProject found = projectDataProvider.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -728,7 +728,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         String description = properties['project.description']
-        def found = projectDataProvider.findByNameAndState(projectName, RdProject.State.ENABLED)
+        def found = projectDataProvider.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -797,12 +797,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return rdproject
     }
 
-    @CompileStatic(TypeCheckingMode.SKIP)
     def String getProjectDescription(String name){
         projectDataProvider.getProjectDescription(name)
     }
-    boolean needsReload(IRundeckProject project) {
-        RdProject rdproject = projectDataProvider.findByNameAndState(project.name, RdProject.State.ENABLED)
+    
+    private boolean needsReload(IRundeckProject project) {
+        RdProject rdproject = projectDataProvider.findByName(project.name)
         boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime

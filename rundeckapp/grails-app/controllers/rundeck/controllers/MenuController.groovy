@@ -2398,8 +2398,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
-            def prj = projectService.findProjectByName(project.name)
-            def description = prj?.description
+            
+            def description = frameworkService.getFrameworkProjectManager().getProjectDescription(project.name)
+            
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
             }

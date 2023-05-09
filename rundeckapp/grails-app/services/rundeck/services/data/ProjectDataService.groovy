@@ -1,8 +1,6 @@
 package rundeck.services.data
 
 import grails.gorm.services.Service
-import grails.gorm.services.Where
-import org.rundeck.app.data.model.v1.project.RdProject
 import rundeck.Project
 
 @Service(Project)
@@ -31,13 +29,24 @@ interface ProjectDataService {
     /**
      * Counts the number of enabled projects. 
      */
-    @Where({ state == null || state != RdProject.State.DISABLED })
-    int countEnabled()
+    int count()
 
     /**
      * Counts the number of enabled projects by name. 
      */
-    @Where({ name == projectName && (state == null || state != RdProject.State.DISABLED) })
-    int countEnabledByName(String projectName)
+    int countByName(String projectName)
+
+
+    /**
+     * Get all available project names
+     * @return
+     */
+    List<String> findProjectName()
+
+    /**
+     * Get the description of a project.
+     * @return
+     */
+    String findProjectDescription(String name)
 
 }

@@ -1,9 +1,6 @@
 package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
-import groovy.transform.CompileDynamic
-import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
@@ -96,41 +93,22 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     int countFrameworkProjects() {
-        return projectDataService.countEnabled()
+        return projectDataService.count()
     }
 
     @Override
     boolean projectExists(String project) {
-        projectDataService.countEnabledByName(project) > 0
+        projectDataService.countByName(project) > 0
     }
 
     @Override
-    @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> getFrameworkProjectNames() {
-        return Project.createCriteria().list {
-            or {
-                isNull('state')
-                ne('state', RdProject.State.DISABLED)
-            }
-            projections {
-                property "name"
-            }
-        }
+        return projectDataService.findProjectName()
     }
 
     @Override
-    @CompileDynamic
     String getProjectDescription(String name){
-        return Project.createCriteria().get {
-            or {
-                isNull('state')
-                ne('state', RdProject.State.DISABLED)
-            }
-            eq('name', name)
-            projections {
-                property "description"
-            }
-        }
+        return projectDataService.findProjectDescription(name)
     }
 
 }

@@ -3,6 +3,7 @@ package org.rundeck.app.core;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.common.ProjectManager;
 import com.dtolabs.rundeck.core.config.FeatureService;
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever;
 import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities;
@@ -31,6 +32,7 @@ public interface FrameworkServiceCapabilities {
     RemoteJsonOptionRetriever getRemoteJsonOptionRetriever();
     WorkflowExecutionItemFactory getWorkflowExecutionItemFactory();
     ExecutionLifecycleJobDataAdapter getExecutionLifecyclePluginService();
+    ProjectManager getFrameworkProjectManager();
 
 
     Map validateDescription(Description description, String prefix, Map params);

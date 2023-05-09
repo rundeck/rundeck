@@ -107,4 +107,12 @@ public interface ProjectManager {
      * @return true if the project exists and is disabled. false otherwise.
      */
     boolean isFrameworkProjectDisabled(String projectName);
+
+    /**
+     * Gets the project description
+     * 
+     * @param projectName Project name identifier
+     * @return The description if any. null otherwise.
+     */
+    String getProjectDescription(String projectName);
 }
