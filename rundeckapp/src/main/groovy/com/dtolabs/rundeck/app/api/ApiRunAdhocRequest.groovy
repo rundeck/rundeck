@@ -37,6 +37,8 @@ class ApiRunAdhocRequest implements Validateable{
     String fileExtension
     Boolean nodeKeepgoing
     Integer nodeThreadcount
+    Map<String, String> meta = [:]
+
     static constraints={
         filter(nullable:true)
         asUser(nullable:true)
@@ -51,6 +53,7 @@ class ApiRunAdhocRequest implements Validateable{
         fileExtension(nullable:true)
         description(nullable:true)
         project(nullable:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        meta(nullable: true)
     }
 
     @Override
@@ -69,6 +72,7 @@ class ApiRunAdhocRequest implements Validateable{
                 ", fileExtension='" + fileExtension + '\'' +
                 ", nodeKeepgoing=" + nodeKeepgoing +
                 ", nodeThreadcount=" + nodeThreadcount +
+                ", meta=" + meta +
                 '}';
     }
 }

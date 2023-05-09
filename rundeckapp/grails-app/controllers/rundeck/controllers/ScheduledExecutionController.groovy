@@ -2095,6 +2095,8 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
+        params.extraMetadataMap = runAdhocRequest.meta ?: [:]
+
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         def result= scheduledExecutionService._dovalidateAdhoc(params,authContext)

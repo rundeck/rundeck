@@ -4,6 +4,8 @@
     <span>{{errorMsg}}</span>
   </div>
 
+  <div class="card">
+    <div class="card-content">
   <div class="row text-info ">
     <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
       <div class="input-group">
@@ -14,6 +16,22 @@
                v-model="inputPath" @keyup.enter="loadDirInputPath()"
                :disabled="readOnly"
                placeholder="Enter a path"/>
+        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+          <button
+              type="button"
+              class="btn btn-default dropdown-toggle"
+              @click="toggleDropdown"
+              :aria-expanded="isDropdownOpen"
+          >
+            <span>{{ linksTitle }}</span>
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
+            <li v-for="link in jumpLinks" :key="link.path">
+              <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -44,7 +62,7 @@
 
       <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
         <i class="glyphicon glyphicon-time"></i>
-        {{$t('loading.text')}}
+        {{ "Loading..." }}
       </div>
       <table class="table table-hover table-condensed" v-else>
         <tbody>
@@ -175,6 +193,14 @@
       </div>
     </div>
   </div>
+    </div>
+    <div class="card-footer">
+      <hr>
+      <span class="text-info">
+          {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
+      </span>
+    </div>
+  </div>
 </div>
 </template>
 
@@ -184,6 +210,7 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
+import axios from "axios";
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -192,17 +219,19 @@ export default Vue.extend({
     allowUpload: Boolean,
     value: String,
     storageFilter: String,
-    project: String,
+    rootPath: String,
+    createdKey: {}
   } ,
   data() {
     return {
       errorMsg: '',
+      isDropdownOpen: false,
       modalOpen: false,
       invalid: false,
+      project: '',
       staticRoot: true,
       inputPath: '',
       upPath: '',
-      rootPath: '',
       path: '',
       isConfirmingDeletion: false,
       modalEdit: false,
@@ -214,21 +243,51 @@ export default Vue.extend({
       directories: [] as any,
       uploadErrors: {} as any,
       selectedIsDownloadable: true,
-      loading: true
+      loading: true,
+      linksTitle: '',
+      projectList: [],
+      jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
     }
   },
   mounted() {
-    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
     this.loadKeys()
+    this.loadProjectNames()
+  },
+  watch : {
+    createdKey : function (newValue, oldValue) {
+      if(newValue !== null){
+        this.selectKey(newValue)
+      }
+    }
+  },
+  computed: {
+    isProject(): boolean {
+      return this.rootPath.startsWith("keys/project");
+    },
   },
   methods: {
-    downloadUrl() {
+    downloadUrl(): string {
       const downloadBaseUrl = 'storage/download/keys'
       const rundeckContext = getRundeckContext()
 
       if(!this.selectedKey || !this.selectedKey.path) return '#'
 
       return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`
+    },
+    async loadProjectNames() {
+      try {
+        const response = await getRundeckContext().rundeckClient.projectList();
+
+        this.linksTitle = 'Projects';
+        this.jumpLinks = response.map((v) => {
+          return { name: v.name, path: 'keys/project/' + v.name };
+        });
+      } catch (error) {
+        console.error('Error loading project names:', error);
+      }
+    },
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen;
     },
     deleteKey(){
       this.isConfirmingDeletion=true
@@ -251,6 +310,14 @@ export default Vue.extend({
     cancelDeleteKey() {
       this.isConfirmingDeletion=false
     },
+    calcBrowsePath(path: string){
+      let browse=path
+      if (this.rootPath != 'keys/' && this.rootPath != 'keys') {
+        browse = (this.rootPath) + "/" + path
+        browse = browse.substring(5)
+      }
+      return browse
+    },
     loadKeys(selectedKey?: any) {
       if(selectedKey) {
         this.selectedKey = selectedKey
@@ -258,7 +325,8 @@ export default Vue.extend({
       this.loading=true
 
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      const getPath = this.calcBrowsePath(this.path)
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -266,17 +334,18 @@ export default Vue.extend({
           result.resources.forEach((resource: any) => {
             if (resource.type === 'directory') {
               this.directories.push(resource);
+              if(this.directories.length > 1){
+                this.directories.sort((obj1: any, obj2: any) => {
+                  if (obj1.path > obj2.path) {
+                    return 1;
+                  }
 
-              this.directories.sort((obj1: any, obj2: any) => {
-                if (obj1.path > obj2.path) {
-                  return 1;
-                }
-
-                if (obj1.path < obj2.path) {
-                  return -1;
-                }
-                return 0;
-              });
+                  if (obj1.path < obj2.path) {
+                    return -1;
+                  }
+                  return 0;
+                });
+              }
             }
 
             if (resource.type === 'file') {
@@ -395,10 +464,14 @@ export default Vue.extend({
       return false;
     },
     selectKey(key: any) {
-      if (this.selectedKey != null && this.selectedKey.path === key.path) {
+      if (this.selectedKey.path === key.path && this.isSelectedKey==false) {
+        this.isSelectedKey = true
+      }
+      else if (this.selectedKey.path === key.path) {
         this.selectedKey = {};
         this.isSelectedKey = false;
-      } else {
+      }
+      else {
         this.selectedKey = key;
         this.isSelectedKey = true;
       }
@@ -424,10 +497,7 @@ export default Vue.extend({
 
       const inputPath = this.relativePath(this.parentDirString(this.selectedKey.path));
 
-      let inputType = InputType.File;
-      if (this.isPassword(this.selectedKey)) {
-        inputType = InputType.Text;
-      }
+      let inputType = InputType.Text;
 
       const upload = {
         modifyMode: true,
@@ -456,13 +526,12 @@ export default Vue.extend({
       this.uploadErrors = {} as any;
     },
     loadDirInputPath() {
-      this.clean()
-      this.loadDir(this.inputPath)
+      this.loadDir(this.rootPath + "/" + this.inputPath)
     },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
@@ -498,15 +567,10 @@ export default Vue.extend({
       if (this.staticRoot === false) {
         return relpath;
       }
-      return this.rootPath + relpath;
-    },
-    setRootPath() {
-      if (this.rootPath == null || this.rootPath === '') {
-        this.rootPath = 'keys';
-      }
-      this.path = '';
+      return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
+      this.isDropdownOpen=false
       this.clean();
       let path = '';
       if (selectedPath != null) {
@@ -525,7 +589,8 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
       const fullPath = this.absolutePath(path);
 
-      rundeckContext.rundeckClient.storageKeyGetMetadata(path).then((result: any) => {
+      const getPath = this.calcBrowsePath(path)
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         if (result.resources != null) {
           const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
           if (keys.length == 0) {
