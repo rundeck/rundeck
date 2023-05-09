@@ -33,6 +33,17 @@ apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
+//list of grails plugins to depend on in various ways
+ext.coreGrailsPlugins = [
+    ':grails-metricsweb',
+    ':grails-persistlocale',
+    ':grails-securityheaders',
+    ':grails-repository',
+    ':grails-webhooks',
+    ':grails-execution-mode-timer',
+    ':grails-rundeck-data-shared',
+]
+
 configurations {
     agent
     war{}
@@ -246,13 +257,9 @@ dependencies {
 }
 grails{
     plugins{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
-        implementation project(':grails-rundeck-data-shared')
+        coreGrailsPlugins.each {
+            implementation project(it)
+        }
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
@@ -272,13 +279,9 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependencies{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
-        implementation project(':grails-rundeck-data-shared')
+        coreGrailsPlugins.each{
+            implementation project(it)
+        }
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
