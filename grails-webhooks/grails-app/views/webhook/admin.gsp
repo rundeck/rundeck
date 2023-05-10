@@ -24,9 +24,6 @@
     <asset:javascript src="ace-bundle.js"/>
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
 
-%{--    <g:templateExists name="prowebhooks">--}%
-%{--        <g:render template="prowebhooks" />--}%
-%{--    </g:templateExists>--}%
     <style type="text/css">
         .dismiss-positioner button.close {
             right: -8px !important;
