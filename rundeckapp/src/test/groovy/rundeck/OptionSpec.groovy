@@ -196,4 +196,65 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
 
 
     }
+    
+    def "toMap should order valueList if sortValues is true "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                valuesList:'A,C,B',
+                sortValues: true
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should be in order"
+        result.sortValues==true
+        result.values[0]=="A"
+        result.values[1]=="B"
+        result.values[2]=="C"
+    }
+
+    def "toMap should keep order in valueList if sortValues is false "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                sortValues:false,
+                valuesList:'A,C,B'
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should keep original order"
+        result.values[0]=="A"
+        result.values[1]=="C"
+        result.values[2]=="B"
+    }
+
+    def "option fromMap should have sortValues value"() {
+
+        given: "a map with option data"
+        Map map = [enforcedvalues:'true', name:'option1', sortValues:true, required:'true', values:'A,C,B,D,E', valuesListDelimiter:',']
+        String name = "test"
+
+        when:"creating the option"
+        def opt = Option.fromMap(name,map )
+
+        then:"the option should have the value of sortValues"
+        opt.sortValues == true
+    }    
+        
+        
+    def "from map to remote URL json filter"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [jsonFilter:"\$.key"]])
+        expect:
+        opt.optionType == 'text'
+        opt.configData == '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","jsonFilter":"\$.key"}}}'
+        opt.configRemoteUrl !=null
+        opt.configRemoteUrl.jsonFilter == "\$.key"
+    }
 }

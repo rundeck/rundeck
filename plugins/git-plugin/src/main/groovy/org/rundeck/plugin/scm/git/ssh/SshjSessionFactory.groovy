@@ -33,5 +33,8 @@ class SshjSessionFactory extends SshSessionFactory {
         return new SshjSession(uri, sshConfig, config, keyContent )
     }
 
-
+    @Override
+    String getType() {
+        return null
+    }
 }

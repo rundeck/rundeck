@@ -17,43 +17,55 @@
 package com.dtolabs.rundeck.app.api.scm
 
 import com.dtolabs.rundeck.app.api.CDataString
+import io.swagger.v3.oas.annotations.media.Schema
 
 
 /**
  * Created by greg on 10/27/15.
  */
+@Schema
 class ScmPluginInputField {
 
+    @Schema(description = 'display title for the field')
     /**
      * @return descriptive name of the property
      */
     String title
 
+    @Schema(description='identifier for the field, used when submitting the input values')
     /**
      * @return property key to use
      */
     String name
 
+    @Schema(description='textual description',type='string')
     /**
      * @return description of the values of the property
      */
     CDataString description
 
+    @Schema(
+        description='data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)',
+        allowableValues = ['String','Integer','Select','FreeSelect','Boolean']
+    )
     /**
      * @return the property type
      */
     String type;
 
+    @Schema(description='whether the input is required')
     /**
      * @return true if an empty value is not allowed
      */
     boolean required;
 
+    @Schema(description='a default value if the input does not specify one')
     /**
      * @return the default value of the property, or default select value to select
      */
     String defaultValue;
 
+    @Schema(description='if the type is `Select` or `FreeSelect`, a list of string values to choose from')
     /**
      * @return a list of values for a select property
      */
@@ -65,6 +77,7 @@ class ScmPluginInputField {
      */
     String scope;
 
+    @Schema(description='a key/value map of options, such as declaring that GUI display the input as a password field.')
     /**
      * @return a map of optional rendering options for the UI
      */

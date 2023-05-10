@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.core.jobs.JobReference;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.jobs.JobState;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -58,6 +60,7 @@ import java.util.Map;
                        + "* *Status When Halted* - if set, the workflow will halt with this status.\n"
                        + "* Otherwise it will halt with Success status.\n")
 
+@PluginMetadata(key = ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY, value = ExecutionEnvironmentConstants.LOCAL_RUNNER)
 
 public class JobStateWorkflowStep implements StepPlugin {
     public static final String EXEC_STATE_FAILED = "Failed";

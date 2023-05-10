@@ -18,6 +18,12 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestXml
+import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
+import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
+import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
@@ -41,6 +47,21 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.headers.Header
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
 import org.rundeck.core.auth.AuthConstants
@@ -66,6 +87,7 @@ import java.text.SimpleDateFormat
 /**
 * ExecutionController
 */
+@Controller()
 class ExecutionController extends ControllerBase{
     FrameworkService frameworkService
     ExecutionService executionService
@@ -905,6 +927,246 @@ setTimeout(function(){
                 true
         ) && !(params.convertContent in ['false', false, 'off'])
     }
+
+    @Get(uri= "/execution/{id}/output")
+    @Operation(
+        method="GET",
+        summary="Execution Output",
+        description="""Get the output for an execution by ID. The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
+
+The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
+
+Output can be selected by Node or Step Context or both as of API v10.
+
+Several parameters can be used to retrieve only part of the output log data. You can use these parameters to more efficiently retrieve the log content over time while an execution is running.
+
+The log file used to store the execution output is a formatted text file which also contains metadata about each line of log output emitted during an execution. Several data values in this API endpoint refer to "bytes", but these do not reflect the size of the final log data; they are only relative to the formatted log file itself. You can treat these byte values as opaque locations in the log file, but you should not try to correlate them to the actual textual log lines.
+
+#### Tailing Output
+
+To "tail" the output from a running execution, you will need to make a series of requests to this API endpoint, and update the `offset` value that you send to reflect the returned `dataoffset` value that you receive.  This gives you a consistent pointer into the output log file.
+
+When starting these requests, there are two mechanisms you can use:
+
+1. Start at the beginning, specifying either a `lastmod` or a `offset` of 0
+2. Start at the end, by using `lastlines` to receive the last available set of log lines.
+
+After your first request you will have the `dataoffset` and `lastmod` response values you can use to continue making requests for subsequent log output. You can choose several ways to do this:
+
+1. Use the `offset` and `lastmod` parameters to indicate modification time and receive as much output as is available
+2. Use the `offset` and `maxlines` parameter to specify a maximum number of log entries
+3. Use only the `offset` parameter and receive as much output as is available.
+
+After each request, you will update your `offset` value to reflect the `dataoffset` in the response.
+
+All log output has been read when the `iscompleted` value is "true".
+
+Below is some example pseudo-code for using this API endpoint to follow the output of a running execution "live":
+
+* set offset to 0
+* set lastmod to 0
+* Repeat until `iscompleted` response value is "true":
+    * perform request sending `offset` and `lastmod` parameters
+    * print any log entries, update progress bar, etc.
+    * Record the resulting `dataoffset` and `lastmod` response values for the next request
+    * if `unmodified` is "true", sleep for 5 seconds
+    * otherwise sleep for 2 seconds
+
+**Authorization:**
+
+This endpoint requires that the user have `read` access to the Job or to Adhoc executions to retrieve the output content.
+
+""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "nodename",
+                description = "Node Name, all results will be filtered for only this node.",
+                in = ParameterIn.QUERY,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "stepctx",
+                description = "Step Context ID. This is a string in the form `1/2/3` indicating the step context.",
+                in = ParameterIn.QUERY,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name='offset',
+                in=ParameterIn.QUERY,
+                description = "byte offset to read from in the file. 0 indicates the beginning.",
+                schema = @Schema(type = "integer")
+            ),
+            @Parameter(
+                name='lastlines',
+                in=ParameterIn.QUERY,
+                description = "number of lines to retrieve from the end of the available output. If specified it will override the `offset` value and return only the specified number of lines at the end of the log.",
+                schema = @Schema(type = "integer")
+            ),
+            @Parameter(
+                name='lastmod',
+                in=ParameterIn.QUERY,
+                description = "epoch datestamp in milliseconds, return results only if modification changed since the specified date OR if more data is available at the given `offset`.",
+                schema = @Schema(type = "integer", format = "int64")
+            ),
+            @Parameter(
+                name='maxlines',
+                in=ParameterIn.QUERY,
+                description = "maximum number of lines to retrieve forward from the specified offset.",
+                schema = @Schema(type = "integer")
+            ),
+            @Parameter(
+                name='compacted',
+                in=ParameterIn.QUERY,
+                description = "if true, results will be in compacted form. Since: v21",
+                schema = @Schema(type = "boolean")
+            ),
+            @Parameter(
+                name='format',
+                in=ParameterIn.QUERY,
+                description = "Specify output format",
+                schema = @Schema(
+                    allowableValues = ['xml','json','text'],
+                    type = "string"
+                )
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. 
+
+The result will contain a set of data values reflecting the execution's status, as well as the status and read location in the output file.
+
+* In JSON, there will be an object containing these entries.
+* In XML, there will be an `output` element, containing these sub-elements, each with a text value.
+* In plain text format, HTTP headers will include some information about the loging state, but individual log entries will only be returned in textual form without metadata.
+
+Entries:
+
+* `id`: ID of the execution
+* `message`: optional text message indicating why no entries were returned
+* `error`: optional text message indicating an error case
+* `unmodified`: true/false, (optional) "true" will be returned if the `lastmod` parameter was used and the file had not changed
+* `empty`: true/false, (optional) "true" will be returned if the log file does not exist or is empty, which may occur if the log data is requested before any output has been stored.
+* `offset`: Byte offset to read for the next set of data
+* `completed`: true/false, "true" if the current log entries or request parameters include all of the available data
+* `execCompleted`: true/false, "true" if the execution has completed.
+* `hasFailedNodes`: true/false, "true" if the execution has recorded a list of failed nodes
+* `execState`: execution state, one of "running","succeeded","failed","aborted"
+* `lastModified`: (long integer), millisecond timestamp of the last modification of the log file
+* `execDuration`: (long integer), millisecond duration of the execution
+* `percentLoaded`: (float), (optional) percentage of the output which has been loaded by the parameters to this request
+* `totalSize`: (integer), total bytes available in the output file
+* `filter` - if a `node` or `step` filter was used
+    - `nodename` - value of the node name filter
+    - `stepctx` - value of the step context filter
+* `compacted`: `true` if compacted form was requested and is used in the response (API v21+)
+* `compactedAttr`: name of JSON log entry key used by default for fully compacted entries (API v21+)
+
+Each log entry will be included in a section called `entries`.
+
+* In JSON, `entries` will contain an array of Objects, each containing the following format
+* In XML, the `entries` element will contain a sequence of `entry` elements
+
+Content of each Log Entry:
+
+* `time`: Timestamp in format: "HH:MM:SS"
+* `absolute_time`: Timestamp in format: "yyyy-MM-dd'T'HH:mm:ssZ"
+* `level`: Log level, one of: ERROR,WARN,NORMAL,VERBOSE,DEBUG,OTHER
+* `log`: The log message
+* `user`: User name
+* `command`: Workflow command context string
+* `node`: Node name
+* `stepctx`: The step context such as `1` or `1/2/3`
+* `metadata`: Map of extra metadata for the entry (API v43+)
+
+#### Log Entries in Compacted Form (API v21+)
+
+As of API v21, you can specify `compacted=true` in the URL parameters, which will send the Output Content in "compacted" form. This will be indicated by the `compacted`=`true` value in
+the result data.
+
+In this mode, Log Entries are compacted by only including the changed values from the
+previous Log Entry in the list.  The first Log Entry in the results will always have complete information.  Subsequent entries may include only changed values.
+
+In JSON format, if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not an object.
+
+When no values changed from the previous Log Entry, the Log Entry will be an empty object.
+
+When an entry value is not present in the subsequent Log Entry, but was present in the previous
+one, in JSON this will be represented with a `null` value, and in XML the entry name will be
+included in a `removed` attribute.""",
+        headers = [
+            @Header(name='X-Rundeck-ExecOutput-Error', description='The `error` field (text format only)',schema = @Schema(type="string")),
+            @Header(name='X-Rundeck-ExecOutput-Message', description='The `message` field (text format only)',schema = @Schema(type="string")),
+            @Header(name='X-Rundeck-ExecOutput-Empty', description='The `empty` field (text format only)',schema = @Schema(type="boolean")),
+            @Header(name='X-Rundeck-ExecOutput-Unmodified', description='The `unmodified` field (text format only)',schema = @Schema(type="boolean")),
+            @Header(name='X-Rundeck-ExecOutput-Offset', description='The `offset` field (text format only)',schema = @Schema(type="integer")),
+            @Header(name='X-Rundeck-ExecOutput-Completed', description='The `completed` field (text format only)',schema = @Schema(type="boolean")),
+            @Header(name='X-Rundeck-Exec-Completed', description='The `execCompleted` field (text format only)',schema = @Schema(type="boolean")),
+            @Header(name='X-Rundeck-Exec-State', description='The `execState` field (text format only)',schema = @Schema(type="string")),
+            @Header(name='X-Rundeck-Exec-Duration', description='the `execDuration` field (text format only)',schema = @Schema(type="integer")),
+            @Header(name='X-Rundeck-ExecOutput-LastModifed', description='The `lastModified` field (text format only)',schema = @Schema(type="string",format="iso")),
+            @Header(name='X-Rundeck-ExecOutput-TotalSize', description='The `totalSize` field (text format only)',schema = @Schema(type="integer"))
+        ],
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = "object"),
+                examples=@ExampleObject(
+                    value="""{
+  "id": 1,
+  
+  "compacted": "true",
+  "compactedAttr": "log",
+  "entries": [
+    {
+      "time": "17:00:00",
+      "absolute_time": "1970-01-02T01:00:00Z",
+      "level": "NORMAL",
+      "log": "This is the first log message",
+      "user": "bob",
+      "node": "anode1",
+      "stepctx": "1"
+    },
+    "This is the second log message",
+    {},
+    {
+      "stepctx": "2",
+      "level": "DEBUG",
+      "log": "This is the fourth log message"
+    },
+    {
+      "stepctx": null,
+      "log": "This is the fifth log message",
+      "node": null
+    }
+  ]
+}""",
+                    description="""
+In this example, four log entries are included. The first includes all Log Entry fields.
+The second is only a String, indicating only `log` value changed.
+The third is an empty object, indicating the previous Log Entry was repeated identically.
+The fourth specifies a new value for `stepctx` and `log` and `level` to use.
+The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for
+this Log Entry.""")
+            ),
+            @Content(
+                mediaType = MediaType.TEXT_PLAIN,
+                schema = @Schema(type = "string", description="Textual log output"),
+                examples = @ExampleObject(
+                    value = """Log output text..."""
+                )
+            )
+        ]
+    )
+    @Tag(name = 'execution')
     /**
      * API: /api/execution/{id}/output, version 5
      */
@@ -919,6 +1181,116 @@ setTimeout(function(){
         }
         return tailExecutionOutput()
     }
+
+    @Get(uri="/execution/{id}/output/node/{nodename}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Node",
+        description="""Get the output for an execution filtered for a specific node.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "nodename",
+                description = "Node Name, all results will be filtered for only this node.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/node/{nodename}, version 5
+     */
+    def apiExecutionOutputNodeFilter() {
+        return apiExecutionOutput()
+    }
+
+    @Get(uri="/execution/{id}/output/node/{nodename}/step/{stepctx}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Node and Step",
+        description="""Get the output for an execution filtered for a specific node and step.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "nodename",
+                description = "Node Name, all results will be filtered for only this node.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "stepctx",
+                description = "Step Context ID. This is a string in the form `1/2/3` indicating the step context.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
+     */
+    def apiExecutionOutputNodeStepFilter() {
+        return apiExecutionOutput()
+    }
+
+    @Get(uri="/execution/{id}/output/step/{stepctx}")
+    @Operation(
+        method="GET",
+        summary="Execution Output For Step",
+        description="""Get the output for an execution filtered for a specific step.""",
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "stepctx",
+                description = "Step Context ID. This is a string in the form `1/2/3` indicating the step context.",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
+    )
+    @Tag(name = 'execution')
+    /**
+     * API: /api/execution/{id}/output/step/{stepctx}, version 5
+     */
+    def apiExecutionOutputStepFilter() {
+        return apiExecutionOutput()
+    }
+
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
             "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
@@ -1099,6 +1471,43 @@ setTimeout(function(){
         jsonoutput.entries = jsonDatamapList
         return jsonoutput
     }
+
+
+    @Get(uri="/execution/{id}/output/state")
+    @Operation(
+        summary="Execution Output with State",
+        description = """Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
+
+JSON response requires API v14.
+""",
+        method='GET',
+        parameters =[ @Parameter(
+            name = "id",
+            description = "Execution ID",
+            in = ParameterIn.PATH,
+            required = true,
+            schema = @Schema(implementation = String)
+        ),@Parameter(
+            name = "stateOnly",
+            description = "Whether to include only state information. When false, log entries will be included.",
+            in = ParameterIn.QUERY,
+            schema = @Schema(type="boolean")
+        )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """The output format is the same as [Execution Output](#execution-output), with this change:
+
+* in the `entries` section, each entry will have a `type` value indicating the entry type
+    - `log` a normal log entry
+    - `stepbegin` beginning of the step indicated by the `stepctx`
+    - `stepend` finishing of the step
+    - `nodebegin` beginning of execution of a node for the given step
+    - `nodeend` finishing of execution of a node for the given step
+* metadata about the entry may be included in the entry"""
+    )
+    @Tag(name = 'execution')
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -1689,6 +2098,67 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id} , version 1
      */
+    @Get(uri="/execution/{id}")
+    @Operation(
+        summary="Execution Info",
+        description = "Get the status for an execution by ID.",
+        method='GET',
+        parameters = @Parameter(
+            name = "id",
+            description = "Execution ID",
+            in = ParameterIn.PATH,
+            required = true,
+            schema = @Schema(implementation = String)
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "See: Listing Running Executions. JSON response requires API v14.",
+        content=[
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "id": 1,
+  "href": "[url]",
+  "permalink": "[url]",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
+    "averageDuration": 6094,
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}""")
+            )
+        ]
+    )
+    @Tag(name = 'execution')
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
@@ -1712,6 +2182,263 @@ setTimeout(function(){
             }
         }
     }
+
+    @Get(uri="/execution/{id}/state")
+    @Operation(
+        summary="Execution State",
+        description = """Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
+
+JSON response requires API v14.
+""",
+        method='GET',
+        parameters = @Parameter(
+            name = "id",
+            description = "Execution ID",
+            in = ParameterIn.PATH,
+            required = true,
+            schema = @Schema(implementation = String)
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """The content of the response contains state information for different parts of the workflow:
+
+* overall state
+* per-node overall state
+* per-step node state
+
+A workflow can have a step which consists of a sub-workflow, so each particular step has a "Step Context Identifier" 
+which defines its location in the workflow(s), and looks something like "1/5/2". Each number identifies the step 
+number (starting at 1) at a workflow level. If there is a "/" in the context identifier, it means there are 
+sub-workflow step numbers, and each preceding number corresponds to a step which has a sub-workflow.
+
+To identify the state of a particular node at a particular step, both a Node name, and a Step Context Identifier are 
+necessary.
+
+In the result set returned by this API call, state information is organized primarily by Step and is structured in 
+the same way as the workflow.  This means that sub-workflows will have nested state structures for their steps.
+
+The state information for a Node will not contain the full set of details for the Step and Node, since this 
+information is present in the workflow structure which contains the step state.
+
+#### State Result Content
+
+The result set contains this top-level structure:
+
+* general overall state information
+    - `startTime` execution start time (see *Timestamp format* below)
+    - `endTime` execution end time if complete
+    - `updateTime` last update time
+    - `executionState` overall execution state
+* `allNodes` contains a *Node Name List* (see below) of nodes known to be targeted in some workflow
+* `nodes` contains an *Overall Node State List* of per-node step states
+* `serverNode` name of the server node
+* `executionId` current execution ID
+* `completed` true/false whether the execution is completed
+* A *Workflow Section* (see below)
+
+**Workflow Section**
+
+Each Workflow Section within the result set will contain these structures
+
+* `stepCount` Number of steps in the workflow
+* `targetNodes` contains a Node Name List identifying the target nodes of the current workflow
+* `steps` contains a *Step State List* (see below) of information and state for each step
+
+**Node Name List**
+
+Consists of a sequence of node name entries, identifying each entry by a name.
+
+
+In JSON, an array of node names.
+
+**Overall Node State List**
+
+Consists of a sequence of entries for each Node. Each entry contains
+
+* `name` node name
+* `steps` list of simple state indicator for steps executed by this node
+
+State Indicators:
+
+* `stepctx` Step Context Identifier
+* `executionState` execution state for this step and node
+
+
+In JSON: an object where each key is a node name, and the value is an array of State indicators.  A state indicator 
+is an object with two keys, `stepctx` and `executionState`
+
+``` json
+{
+    "abc": [
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "1"
+      },
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "2/1"
+      }
+    ]
+}
+```
+
+**Step State List**
+
+A list of Step State information.  Each step is identified by its number in the workflow (starting at 1) and its step
+ context
+
+* `id` the step number (JSON)
+* `stepctx` the step context identifier in the workflow
+* general overall state information for the step
+    - `startTime` execution start time
+    - `endTime` execution end time if complete
+    - `updateTime` last update time
+    - `executionState` overall execution state
+* `nodeStep` true/false. true if this step directly targets each node from the targetNodes list.  If true, this means
+ the step will contain a `nodeStates` section
+* `nodeStates` a *Node Step State Detail List* (see below) for the target nodes if this is a node step.
+* `hasSubworkflow` true/false. true if this step has a sub-workflow and a `workflow` entry
+* `workflow` this section contains a Workflow Section
+
+**Node Step State Detail List**
+
+A sequence of state details for a set of Nodes for the containing step. Each entry will contain:
+
+* `name` the node name
+* state information for the Node
+    - `startTime` execution start time
+    - `endTime` execution end time if complete
+    - `updateTime` last update time
+    - `executionState` overall execution state
+
+
+In JSON: an object with node names as keys.  Values are objects containing the state information entries.
+
+``` json
+{
+    "abc": {
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:31Z",
+      "updateTime": "2014-01-13T20:38:31Z",
+      "startTime": "2014-01-13T20:38:25Z"
+    }
+}
+```
+
+**Timestamp format:**
+
+The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
+
+**Execution states:**
+
+* `WAITING` - Waiting to start running
+* `RUNNING` - Currently running
+* `RUNNING_HANDLER` - Running error handler\\*
+* `SUCCEEDED` - Finished running successfully
+* `FAILED` - Finished with a failure
+* `ABORTED` - Execution was aborted
+* `NODE_PARTIAL_SUCCEEDED` - Partial success for some nodes\\*
+* `NODE_MIXED` - Mixed states among nodes\\*
+* `NOT_STARTED` - After waiting the execution did not start\\*
+
+\\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
+""",
+        content=[
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type='object'),
+                examples = @ExampleObject("""{
+  "completed": true,
+  "executionState": "SUCCEEDED",
+  "endTime": "2014-01-13T20:38:36Z",
+  "serverNode": "dignan",
+  "startTime": "2014-01-13T20:38:25Z",
+  "updateTime": "2014-01-13T20:38:36Z",
+  "stepCount": 2,
+  "allNodes": [
+    "dignan"
+  ],
+  "targetNodes": [
+    "dignan"
+  ],
+  "nodes": {
+    "dignan": [
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "1"
+      },
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "2/1"
+      }
+    ]
+  },
+  "executionId": 134,
+  "steps": [
+    {
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:31Z",
+      "nodeStates": {
+        "dignan": {
+          "executionState": "SUCCEEDED",
+          "endTime": "2014-01-13T20:38:31Z",
+          "updateTime": "2014-01-13T20:38:31Z",
+          "startTime": "2014-01-13T20:38:25Z"
+        }
+      },
+      "updateTime": "2014-01-13T20:38:25Z",
+      "nodeStep": true,
+      "id": "1",
+      "startTime": "2014-01-13T20:38:25Z"
+    },
+    {
+      "workflow": {
+        "completed": true,
+        "startTime": "2014-01-13T20:38:31Z",
+        "updateTime": "2014-01-13T20:38:36Z",
+        "stepCount": 1,
+        "allNodes": [
+          "dignan"
+        ],
+        "targetNodes": [
+          "dignan"
+        ],
+        "steps": [
+          {
+            "executionState": "SUCCEEDED",
+            "endTime": "2014-01-13T20:38:36Z",
+            "nodeStates": {
+              "dignan": {
+                "executionState": "SUCCEEDED",
+                "endTime": "2014-01-13T20:38:36Z",
+                "updateTime": "2014-01-13T20:38:36Z",
+                "startTime": "2014-01-13T20:38:31Z"
+              }
+            },
+            "updateTime": "2014-01-13T20:38:31Z",
+            "nodeStep": true,
+            "id": "1",
+            "startTime": "2014-01-13T20:38:31Z"
+          }
+        ],
+        "endTime": "2014-01-13T20:38:36Z",
+        "executionState": "SUCCEEDED"
+      },
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:36Z",
+      "hasSubworkflow": true,
+      "updateTime": "2014-01-13T20:38:36Z",
+      "nodeStep": false,
+      "id": "2",
+      "startTime": "2014-01-13T20:38:31Z"
+    }
+  ]
+}""")
+            )
+        ]
+    )
+    @Tag(name = 'execution')
     /**
      * API: /api/execution/{id}/state , version 11
      */
@@ -1819,6 +2546,65 @@ setTimeout(function(){
         }
     }
 
+    @Post(uri="/execution/{id}/abort")
+    @Operation(
+        summary="Aborting Executions",
+        description = "Abort a running execution by ID.",
+        method='POST',
+        parameters = [
+            @Parameter(
+                name = "id",
+                description = "Execution ID",
+                in = ParameterIn.PATH,
+                required = true,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "asUser",
+                description = "Specifies a username identifying the user who aborted the execution. Requires `runAs` actiion authorization.",
+                in = ParameterIn.QUERY,
+                required = false,
+                schema = @Schema(implementation = String)
+            ),
+            @Parameter(
+                name = "forceIncomplete",
+                description = "if `true`, forces a running execution to be marked as \"incomplete\".",
+                in = ParameterIn.QUERY,
+                required = false,
+                schema = @Schema(implementation = Boolean)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = """The status of the abort action will be included as an element.
+
+The `[abort-state]` will be one of: "pending", "failed", or "aborted".
+
+If the `[abort-state]` is "failed", then `[reason]` will be a textual description of the reason.
+
+Authorization required:
+* action: `kill`, or `admin`, `app_admin`
+* resource: `execution`
+""",
+        content=[
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = @ExampleObject("""{
+  "abort": {
+    "status": "[abort-state]",
+    "reason": "[reason]"
+  },
+  "execution": {
+    "id": "[id]",
+    "status": "[execution status]",
+    "href": "[API href]",
+  }
+}""")
+            )
+        ]
+    )
+    @Tag(name = 'execution')
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -1897,6 +2683,32 @@ setTimeout(function(){
             }
         }
     }
+
+    @Delete(uri="/execution/{id}")
+    @Operation(
+        summary="Delete an Execution",
+        description = """Delete an execution by ID.
+
+Authorization requirement: Requires the `delete_execution` action allowed for a `project` in the `application` context.
+
+See: [Administration - Access Control Policy - Application Scope Resources and Actions](https://docs.rundeck.com/docs/administration/security/authorization.html#application-scope-resources-and-actions)
+
+Since: V12
+""",
+        method='DELETE',
+        parameters = @Parameter(
+            name = "id",
+            description = "Execution ID",
+            in = ParameterIn.PATH,
+            required = true,
+            schema = @Schema(implementation = String)
+        )
+    )
+    @ApiResponse(
+        responseCode = '204',
+        description = "No Content"
+    )
+    @Tag(name = 'execution')
     /**
      * DELETE /api/12/execution/[ID]
      * @return
@@ -1925,6 +2737,76 @@ setTimeout(function(){
         return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @Post('/executions/delete')
+    @Operation(
+        method="POST",
+        summary="Bulk Delete Executions",
+        description = """Delete a set of Executions by their IDs.
+
+The IDs can be specified in two ways:
+
+1. Using a URL parameter `ids`, as a comma separated list, with no body content
+
+        POST /api/12/executions/delete?ids=1,2,17
+        Content-Length: 0
+
+2. Using a request body of JSON data.
+
+Note: the JSON schema also supports a basic JSON array 
+""",
+        requestBody = @RequestBody(
+            description = "Delete Bulk IDs request.",
+            content=[
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(oneOf = [
+                        DeleteBulkRequest, DeleteBulkRequestLong, List
+                    ]),
+                    examples = [
+                        @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
+                        @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
+                    ]
+                )
+            ]
+        ),
+        parameters = @Parameter(
+            name = "ids",
+            description = "comma separated list of IDs",
+            in = ParameterIn.QUERY,
+            required = false,
+            schema = @Schema(type = "string", format = "comma-separated")
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description = """Summary of bulk delete results""",
+        content=[@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = DeleteBulkResponse),
+            examples = @ExampleObject("""{
+  "failures": [
+    {
+      "id": "82",
+      "message": "Not found: 82"
+    },
+    {
+      "id": "83",
+      "message": "Not found: 83"
+    },
+    {
+      "id": "84",
+      "message": "Not found: 84"
+    }
+  ],
+  "failedCount": 3,
+  "successCount": 2,
+  "allsuccessful": false,
+  "requestCount": 5
+}""")
+        )]
+
+    )
+    @Tag(name = 'execution')
     /**
      * Delete bulk API action
      * @return
@@ -1988,6 +2870,154 @@ setTimeout(function(){
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
 
+
+
+    @Get(uri="/project/{project}/executions",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query",
+        description = """Query for Executions based on Job or Execution details.""",
+        tags = ["execution","project"],
+        parameters = [
+            @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true),
+            @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
+            @Parameter(in=ParameterIn.QUERY,name="abortedbyFilter",description="Username who aborted an execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobIdListFilter",description="specify a Job ID to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobIdListFilter",description="specify a Job ID to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobListFilter",description="specify a full Job group/name to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobListFilter",description="specify a full Job group/name to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPath",description="""specify a group or partial group path to include all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPathExact",description="""specify an exact group path to match.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPath",description="""specify a group or partial group path to exclude all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPathExact",description="""specify an exact group path to exclude.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobFilter",description="specify a filter for the job Name. Include any job name that matches this value",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobFilter",description="specify a filter for the job Name. Exclude any job name that matches this value.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobExactFilter",description="specify an exact job name to match.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobExactFilter",description="specify an exact job name to exclude.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="startafterFilter",description="start after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="startbeforeFilter",description="start before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endafterFilter",description="end after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endbeforeFilter",description="end before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="begin",description="Specify exact date for earliest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="end",description="Specify exact date for latest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="adhoc",description="if true, include only Adhoc executions, if false return only Job executions. By default any matching executions are returned, however if you use any of the Job filters below, then only Job executions will be returned.",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="recentFilter",
+                description="""Use a simple text format to filter executions that completed within a period of time.
+The format is \"XY\" where X is an integer, and \"Y\" is one of:
+* `s`: second
+* `n`: minute
+* `h`: hour
+* `d`: day
+* `w`: week
+* `m`: month
+* `y`: year
+
+So a value of `2w` would return executions that completed within the last two weeks.
+""",
+                schema=@Schema(type="string")
+            ),
+            @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
+            @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = """It contains a `paging` entry with paging information, and an `executions` entry with execution information:
+
+The `[status]` value indicates the execution status.  It is one of:
+
+* `running`: execution is running
+* `succeeded`: execution completed successfully
+* `failed`: execution completed with failure
+* `aborted`: execution was aborted
+* `timedout`: execution timed out
+* `failed-with-retry`: execution failed and will retry
+* `scheduled`: execution is scheduled to run in the future
+* `other`: execution had a custom exit status string
+
+If `status` is `other`, then, `customStatus` will contain the exit status.
+
+The `[url]` value for the `href` is a URL the Rundeck API for the execution.
+The `[url]` value for the `permalink` is a URL to the Rundeck server page to view the execution output.
+
+`[user]` is the username of the user who started the execution.
+
+`[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
+
+If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`.
+
+`project="[project]"` is the project name of the execution.
+
+`successfulNodes` and `failedNodes` list the names of nodes which succeeded or failed.
+
+The `job` section contains `options` if an `argstring` value is set.  Inside `options` is a sequence of `<option>` elements with two attributes:
+
+* `name` the parsed option name
+* `value` the parsed option value
+
+**Since API v13**: The `serverUUID` will indicate the server UUID
+if executed in cluster mode.""",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = @ExampleObject("""{
+  "paging": {
+    "count": 2,
+    "total": 2,
+    "offset": 0,
+    "max": 20
+  },
+  "executions":[
+    {
+      "id": 387,
+      "href": "[API url]",
+      "permalink": "[GUI url]",
+      "status": "[status]",
+      "customStatus": "[string]",
+      "project": "test",
+      "user": "[user]",
+      "serverUUID":"[UUID]",
+      "date-started": {
+        "unixtime": 1431536339809,
+        "date": "2015-05-13T16:58:59Z"
+      },
+      "date-ended": {
+        "unixtime": 1431536346423,
+        "date": "2015-05-13T16:59:06Z"
+      },
+      "job": {
+        "id": "7400ff98-31c4-4834-ba3d-aee9646e867f",
+        "averageDuration": 6094,
+        "name": "test job",
+        "group": "api-test/job-run-steps",
+        "project": "test",
+        "description": "",
+        "href": "[API url]",
+        "permalink": "[GUI url]",
+        "options": {
+          "opt2": "a",
+          "opt1": "testvalue"
+        }
+      },
+      "description": "echo hello there [... 5 steps]",
+      "argstring": "-opt1 testvalue -opt2 a",
+      "successfulNodes": [
+        "madmartigan.local"
+      ]
+    }
+    ]
+}""")
+        )
+    )
+    /**
+     * nb: non-functional method annotated for documentation
+     * see implementation {@link #apiExecutionsQueryv14(com.dtolabs.rundeck.app.support.ExecutionQuery)}
+     */
+    protected def apiExecutionsQueryv14_docs(){
+
+    }
 
     /**
      * API: /api/14/project/NAME/executions
@@ -2117,8 +3147,56 @@ setTimeout(function(){
     }
 
 
+    @Get(uri="/system/executions/status")
+    @Operation(
+        method="GET",
+        summary = "Get Current Execution Mode",
+        description = """Gets the current execution mode.
+
+Note:
+Prior to API version 36 if the mode was **passive** a status `HTTP 503 - Service Unavailable` would be returned.
+As of API v36 a `200` status will now be returned when the mode is **passive**.
+To return a 503 when the mode is **passive** add `?passiveAs503=true` to the API call.  
+
+Authorization Required: `read` for `system` resource
+
+Since: V32
+""",
+        tags = "system",
+        parameters = @Parameter(
+            name="passiveAs503",
+            description="if true, return 503 response when execution mode is passive. Since: v36",
+            in=ParameterIn.QUERY,
+            schema=@Schema(type="boolean")
+        ),
+        responses=[
+            @ApiResponse(
+                responseCode="200",
+                description="Execution Mode status result for API v36+, or for active status only for API<v36.",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            ),
+            @ApiResponse(
+                responseCode="503",
+                description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
+                content=[@Content(
+                    mediaType='application/json',
+                    schema = @Schema(implementation= ExecutionModeResult),
+                    examples=[
+                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+                    ]
+                )]
+            )
+        ]
+    )
     /**
-     *
+     * /api/V/system/executions/status
      * @return
      */
     @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN)
@@ -2150,11 +3228,36 @@ setTimeout(function(){
 
     }
 
+
     /**
      *
      * @return
      */
+    @Post(uri = "/system/executions/enable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Active",
+        description = """Enables executions, allowing adhoc and manual and scheduled jobs to be run.
 
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `enable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
     )
@@ -2165,6 +3268,31 @@ setTimeout(function(){
      *
      * @return
      */
+    @Post(uri = "/system/executions/disable")
+    @Operation(
+        method = "POST",
+        summary = "Set Execution Mode Passive",
+        description = """Disables executions, preventing adhoc and manual and scheduled jobs from running.
+
+The state of the current
+execution mode can be viewed via the `/system/info`
+endpoint, or the `/system/executions/status`
+endpoint.
+
+Authorization Required: `disable_executions` on `system` resource.
+
+Since: v14
+""",
+        tags = "system",
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "Execution Mode Status",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ExecutionModeResult)
+            )
+        )
+    )
     @RdAuthorizeSystem(
         RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
     )
@@ -2195,6 +3323,49 @@ setTimeout(function(){
         }
     }
 
+    @Get(uri="/execution/{id}/input/files")
+    @Operation(
+        summary="List Input Files for an Execution",
+        description = "List input files used for an execution. Since: V19",
+        method='GET',
+        parameters = @Parameter(
+            name = "id",
+            description = "Execution ID",
+            in = ParameterIn.PATH,
+            required = true,
+            schema = @Schema(implementation = String)
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "",
+        content=[
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(
+                    implementation = ExecutionFileInfoList
+                ),
+                examples = @ExampleObject("""{
+  "files": [
+    {
+      "id": "382c7596-435b-4103-8781-6b32fbd629b2",
+      "user": "admin",
+      "fileState": "deleted",
+      "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+      "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+      "dateCreated": "2017-02-24T23:26:48Z",
+      "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+      "fileName": null,
+      "size": 12,
+      "expirationDate": "2017-02-24T23:27:18Z",
+      "execId": 2837
+    }
+  ]
+}""")
+            )
+        ]
+    )
+    @Tag(name = 'execution')
     /**
      * List input files for an execution
      */
@@ -2214,6 +3385,122 @@ setTimeout(function(){
         )
     }
 
+    @Get(uri="/executions/metrics",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query Metrics",
+        description = """Obtain metrics over the result set of an execution query.""",
+        tags = "execution",
+        parameters = [
+            @Parameter(in=ParameterIn.QUERY,name="project",description="Project name",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
+            @Parameter(in=ParameterIn.QUERY,name="abortedbyFilter",description="Username who aborted an execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobIdListFilter",description="specify a Job ID to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobIdListFilter",description="specify a Job ID to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobListFilter",description="specify a full Job group/name to include, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobListFilter",description="specify a full Job group/name to exclude, can be specified multiple times",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPath",description="""specify a group or partial group path to include all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="groupPathExact",description="""specify an exact group path to match.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPath",description="""specify a group or partial group path to exclude all jobs within that group path. Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeGroupPathExact",description="""specify an exact group path to exclude.  Set to the special value "-" to match the top level jobs only.""",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobFilter",description="specify a filter for the job Name. Include any job name that matches this value",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobFilter",description="specify a filter for the job Name. Exclude any job name that matches this value.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="jobExactFilter",description="specify an exact job name to match.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="excludeJobExactFilter",description="specify an exact job name to exclude.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="startafterFilter",description="start after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="startbeforeFilter",description="start before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endafterFilter",description="end after date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="endbeforeFilter",description="end before date",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="begin",description="Specify exact date for earliest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="end",description="Specify exact date for latest execution completion time. Format: a unix millisecond timestamp, or a W3C dateTime string in the format \"yyyy-MM-ddTHH:mm:ssZ\".",schema=@Schema(type="string",format="iso")),
+            @Parameter(in=ParameterIn.QUERY,name="adhoc",description="if true, include only Adhoc executions, if false return only Job executions. By default any matching executions are returned, however if you use any of the Job filters below, then only Job executions will be returned.",schema=@Schema(type="boolean")),
+
+
+            @Parameter(in=ParameterIn.QUERY,name="recentFilter",
+                description="""Use a simple text format to filter executions that completed within a period of time.
+The format is \"XY\" where X is an integer, and \"Y\" is one of:
+* `s`: second
+* `n`: minute
+* `h`: hour
+* `d`: day
+* `w`: week
+* `m`: month
+* `y`: year
+
+So a value of `2w` would return executions that completed within the last two weeks.
+""",
+                schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="olderFilter",description="(same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="userFilter",description="Username who started the execution",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
+            @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
+            @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description="Metrics response",
+        content=[
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MetricsQueryResponse),
+                examples = @ExampleObject("""{
+    "duration": {
+        "average": "1s",
+        "min": "0s",
+        "max": "3s"
+    },
+    "total": 1325
+}""")
+            )
+        ]
+    )
+    /**
+     * Placeholder method to annotate for openapi spec generation.
+     * Note: this method will never be used.
+     * This is used in place of annotating the apiExecutionMetrics method because
+     * the grails binding parameter type ExecutionQuery gets included
+     * as a required parameter in the spec, which is incorrect
+     */
+    protected def apiExecutionMetrics_docs() {
+        apiExecutionMetrics(null)
+    }
+
+
+    @Get(uri="/project/{project}/executions/metrics",produces = "application/json")
+    @Operation(
+        method = "GET",
+        summary = "Execution Query Metrics",
+        description = """Obtain metrics over the result set of an execution query over the executions of a single project.
+
+Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
+""",
+        tags = "execution",
+        parameters = [
+            @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description="Metrics response",
+        content=[
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = MetricsQueryResponse)
+            )
+        ]
+    )
+    @Tag(name = 'execution')
+    /**
+     * Placeholder method to annotate for openapi spec generation.
+     * Note: this method will never be used.
+     * This is used in place of annotating the apiExecutionMetrics method because
+     * the grails binding parameter type ExecutionQuery gets included
+     * as a required parameter in the spec, which is incorrect
+     */
+    protected def apiExecutionMetricsProject_docs() {
+        apiExecutionMetrics(null)
+    }
     /**
      * API: /api/28/executions/metrics
      */

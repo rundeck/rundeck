@@ -3349,9 +3349,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
-        boolean failed  = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
-
-        if(failed){
+        def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
+        if (failed) {
+            if( scheduledExecution.hasSecureOptions() && validation.containsKey("job-queue") ){
+                def message = 'Job Queueing is not supported in jobs with secure options.'
+                throw new Exception(message)
+            }
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
@@ -3845,32 +3848,37 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         TimeZone.getAvailableIDs()
     }
     @NotTransactional
-    def isProjectExecutionEnabled(String project){
+    def isProjectExecutionEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectExecutionEnabled(fwProject)
+        isRundeckProjectExecutionEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
-        def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
+    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableEx = config.get(CONF_PROJECT_DISABLE_EXECUTION)
         ((!disableEx) || disableEx.toLowerCase() != 'true')
     }
 
     @NotTransactional
-    def isProjectScheduledEnabled(String project){
+    def isProjectScheduledEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectScheduleEnabled(fwProject)
+        isRundeckProjectScheduleEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
-        def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
+    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableSe = config.get(CONF_PROJECT_DISABLE_SCHEDULE)
         ((!disableSe) || disableSe.toLowerCase() != 'true')
     }
 
     @NotTransactional
     def shouldScheduleInThisProject(String project){
-        return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
+        IRundeckProjectConfig config = frameworkService.getProjectConfigReloaded(project)
+        return isProjectExecutionEnabled(project, config) && isProjectScheduledEnabled(project, config)
     }
 
     def deleteScheduledExecutionById(jobid, String callingAction){

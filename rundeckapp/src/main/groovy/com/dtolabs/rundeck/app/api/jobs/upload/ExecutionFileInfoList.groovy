@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.Paging
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.Ignore
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * @author greg
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.app.api.marshall.Ignore
  */
 @ApiResource
 @ElementName('executionFiles')
+@Schema
 class ExecutionFileInfoList  {
     ExecutionFileInfoList(final List<JobFileInfo> files, final Map params) {
         this.files = files

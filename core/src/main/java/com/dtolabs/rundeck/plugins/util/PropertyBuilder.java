@@ -86,6 +86,18 @@ public class PropertyBuilder {
     }
 
     /**
+     * Return a new PropertyBuilder of type {@link Property.Type#AutogenInstanceId}
+     * @param name name
+     *
+     * @return this builder
+     */
+    public PropertyBuilder autogenInstanceId(final String name) {
+        name(name);
+        type(Property.Type.AutogenInstanceId);
+        return defaultValue("").renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT);
+    }
+
+    /**
      * Return a new PropertyBuilder of type {@link Property.Type#Boolean}
      * @param name name
      *
