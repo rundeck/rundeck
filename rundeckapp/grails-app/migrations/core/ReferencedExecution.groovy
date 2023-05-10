@@ -35,12 +35,19 @@ databaseChangeLog = {
         }
 
     }
-    changeSet(author: "rundeckdev", id: "Populate-refedxec-job-uuid") {
+    changeSet(author: "rundeckdev", id: "Populate-refedxec-job-uuid", dbms: "!mssql") {
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "referenced_execution")
             tableExists(tableName: "scheduled_execution")
         }
         sql("update referenced_execution rex set job_uuid = (select uuid from scheduled_execution where id = rex.scheduled_execution_id)")
+    }
+    changeSet(author: "rundeckdev", id: "Populate-refedxec-job-uuid-mssql", dbms: "mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "referenced_execution")
+            tableExists(tableName: "scheduled_execution")
+        }
+        sql("update referenced_execution set job_uuid = (select uuid from scheduled_execution where id = referenced_execution.scheduled_execution_id)")
     }
     changeSet(author: "rundeckdev", id: "Index referenced_execution job uuid") {
         preConditions(onFail: "MARK_RAN"){
