@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
 
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Intercept all responses with 5xx status and removes stacktrace data
@@ -16,25 +17,27 @@ class InternalErrorsInterceptor {
 
     InternalErrorsInterceptor() {
         matchAll().excludes {
-            grailsApplication.config.getProperty(SHOW_TRACES_DEBUG_PROP_NAME, 'false') == 'true' ||
-            response == null ||
-            response.getStatus() < HttpStatus.SC_INTERNAL_SERVER_ERROR
+            grailsApplication.config.getProperty(SHOW_TRACES_DEBUG_PROP_NAME, 'false') == 'true' || response == null || response.getStatus() < HttpStatus.SC_INTERNAL_SERVER_ERROR
         }
     }
 
     boolean after() {
+        if(response.getStatus() < HttpStatus.SC_INTERNAL_SERVER_ERROR)
+            return true
+
         HttpServletRequest requestForRendering = request
 
-        for(String exceptionAttrName: EXCEPT_ATTR_NAMES){
+        for (String exceptionAttrName : EXCEPT_ATTR_NAMES) {
             Throwable serverException = (requestForRendering.getAttribute(exceptionAttrName) as Throwable)
-            if(serverException) {
+            if (serverException) {
                 requestForRendering.removeAttribute(exceptionAttrName)
                 cleanStackTraces(serverException)
                 requestForRendering.setAttribute(exceptionAttrName, serverException)
             }
         }
 
-        return true
+        render(view: '/error.gsp')
+        return false
     }
 
     static void cleanStackTraces(Throwable exceptionToClean) {
