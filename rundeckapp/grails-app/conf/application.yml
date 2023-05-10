@@ -335,7 +335,7 @@ server:
             persistent: false
             cookie:
                 http-only: true
-            same-site: "Strict"
+                same-site: "Lax"
             tracking-modes: 'cookie'
 rundeck:
     web:

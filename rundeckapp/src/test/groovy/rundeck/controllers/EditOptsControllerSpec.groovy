@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -819,4 +820,21 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         "\$.test" | false
 
     }
+
+    def "cleaning remoteUrlConfig json filter"() {
+        given:
+        def option = new Option(name:"test",enforced:false, valuesType:'url', valuesUrl:'http://test.com', "configData":"{\"jobOptionConfigEntries\":{\"remote-url\":{\"@class\":\"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl\",\"jsonFilter\":\"\$.test\"}}}")
+        params.name='test'
+        params.newoption = 'modify'
+        params.valuesType = 'url'
+        params.valuesUrl = 'http://test.com'
+
+        when:
+        def result = controller._setOptionFromParams(option, params)
+
+        then:
+        result!=null
+        result.configRemoteUrl == null
+    }
+
 }

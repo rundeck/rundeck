@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -3344,6 +3345,42 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.shouldScheduleInThisProject('proj')
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
+
+    def "should schedule despite project properties being outdated"() {
+        given:
+        def projectPropsOutdated = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':(disableSchedule)?!Boolean.valueOf(disableSchedule):'true',
+                                       'project.disable.executions':(disableExecution)?!Boolean.valueOf(disableSchedule):'true']
+        }
+
+        def projectPropsUpdated = Mock(IRundeckProjectConfig) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectPropsOutdated
+            getProjectConfigReloaded(_) >> projectPropsUpdated
         }
         when:
         def result = service.shouldScheduleInThisProject('proj')
