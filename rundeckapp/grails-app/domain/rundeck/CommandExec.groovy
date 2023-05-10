@@ -161,6 +161,7 @@ public class CommandExec extends WorkflowStep  {
         if (config) {
             map.plugins = config
         }
+        map.enabled = enabled
         return map
     }
     /**
@@ -227,6 +228,11 @@ public class CommandExec extends WorkflowStep  {
         if (data.plugins) {
             ce.pluginConfig = data.plugins
         }
+<<<<<<< HEAD
+=======
+        ce.enabled==data.enabled!=null?data.enabled:true
+        return ce
+>>>>>>> 88f587e27 (add enabled field to fromMap and toMap)
     }
 
     public boolean isNodeStep(){
