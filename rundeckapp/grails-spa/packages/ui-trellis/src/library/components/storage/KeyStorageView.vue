@@ -62,7 +62,7 @@
 
       <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
         <i class="glyphicon glyphicon-time"></i>
-        {{$t('loading.text')}}
+        {{ "Loading..." }}
       </div>
       <table class="table table-hover table-condensed" v-else>
         <tbody>
