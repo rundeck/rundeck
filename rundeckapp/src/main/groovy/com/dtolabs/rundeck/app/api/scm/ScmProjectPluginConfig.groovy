@@ -16,14 +16,21 @@
 
 package com.dtolabs.rundeck.app.api.scm
 
+import io.swagger.v3.oas.annotations.media.Schema
+
 /**
  * Created by greg on 10/29/15.
  */
+@Schema
 class ScmProjectPluginConfig {
+    @Schema(allowableValues = ['import','export'])
     String integration
+    @Schema(description = 'project name')
     String project
+    @Schema(description = 'plugin type name')
     String type
     boolean enabled
 
+    @Schema(description = ' set of key/value pairs for the configuration')
     Map<String, String> config
 }

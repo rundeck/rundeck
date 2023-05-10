@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import io.swagger.v3.oas.annotations.media.Schema
 import org.rundeck.app.components.jobs.JobQueryInput
 
 /*
@@ -26,20 +27,28 @@ import org.rundeck.app.components.jobs.JobQueryInput
  * Created: Feb 12, 2010 1:02:43 PM
  * $Id$
  */
+@Schema
 public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput, Validateable{
 
+    @Schema(description = 'specify a filter for the job Name. Matches any job name that contains this value.')
     String jobFilter
+    @Schema(description = 'specify an exact job name to match.')
     String jobExactFilter
     String projFilter
+    @Schema(description = 'specify a group or partial group path to include all jobs within that group path. (Default value: "*", all groups). Set to the special value "-" to match the top level jobs only')
     String groupPath
+    @Schema(description = 'specify an exact group path to match.  Set to the special value "-" to match the top level jobs only')
     String groupPathExact
 
     String descFilter
     String loglevelFilter
+    @Schema(description = 'specify a comma-separated list of Job IDs to include')
     String idlist
+    @Schema(description='specify whether to return only scheduled or only not scheduled jobs.')
     Boolean scheduledFilter
     Boolean scheduleEnabledFilter
     Boolean executionEnabledFilter
+    @Schema(description = 'In cluster mode, use to select scheduled jobs assigned to the server with given UUID.',format='uuid')
     String serverNodeUUIDFilter
 
     Integer daysAhead

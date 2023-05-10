@@ -5,6 +5,14 @@ import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
@@ -26,6 +34,7 @@ import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
 
+@Controller
 class PluginController extends ControllerBase {
     private static final String RELATIVE_PLUGIN_UPLOAD_DIR = "var/tmp/pluginUpload"
     private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
@@ -146,6 +155,24 @@ class PluginController extends ControllerBase {
         sendResponse(format, istream)
     }
 
+    @Get('/plugin/list')
+    @Operation(
+        method = 'GET',
+        summary = 'List installed plugins',
+        description = '''Get the list of installed Plugins.
+
+Since: v33
+''',
+        tags = ['plugins'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'List of Plugins',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = ApiPluginListProvider))
+            )
+        )
+    )
     def listPlugins() {
         String service = params.service
 
