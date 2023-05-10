@@ -19,21 +19,29 @@ package com.dtolabs.rundeck.app.api.scm
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ApiVersion
 import com.dtolabs.rundeck.app.api.marshall.Ignore
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * Created by greg on 10/30/15.
  */
 @ApiResource
+@Schema
 class ScmImportActionItem {
+
+    @Schema(description = 'ID of the repo item, e.g. a file path')
     String itemId
     JobReference job
+
+    @Schema(description = 'true if there is an associated `job`')
     boolean tracked
 
     @ApiVersion(22)
     @Ignore(onlyIfNull = true)
+    @Schema(description = 'whether the job was deleted on remote and requires to be deleted')
     boolean deleted
 
     @ApiVersion(22)
     @Ignore(onlyIfNull = true)
+    @Schema(description = 'file status String, the same value as in the `synchState` of Job Scm Status result.')
     String status
 }

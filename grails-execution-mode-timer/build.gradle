@@ -14,6 +14,7 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 
+apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
@@ -75,6 +76,14 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
+
+    compileOnly "io.micronaut.openapi:micronaut-openapi:${micronautOpenapiVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"

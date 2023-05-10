@@ -159,6 +159,11 @@ project(':rundeckapp') {
         project(':plugins:source-refresh-plugin'),
         project(':plugins:upvar-plugin')
     ]
+
+    //extra grails plugins
+    it.ext.extraGrailsPlugins = []
+    //only grails plugins that will be used in bootRun
+    it.ext.bundledGrailsPlugins = []
 }
 
 // prompt for PGP key passphrase if not set

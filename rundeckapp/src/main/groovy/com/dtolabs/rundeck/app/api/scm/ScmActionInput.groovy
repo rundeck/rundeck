@@ -18,15 +18,23 @@ package com.dtolabs.rundeck.app.api.scm
 
 import com.dtolabs.rundeck.app.api.CDataString
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * Action input data
  */
 @ApiResource
+@Schema
 class ScmActionInput {
+    @Schema(description = 'ID for the action')
     String actionId
+
+    @Schema(allowableValues = ['import','export'])
     String integration
+    @Schema(description = 'Display title for the action')
     String title
+
+    @Schema(type='string')
     CDataString description
     List<ScmPluginInputField> fields
 
