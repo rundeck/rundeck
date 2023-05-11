@@ -27,3 +27,15 @@ artifacts{
     apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: compileGroovy
     apiSpecFiles file: file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"), name: "${project.name}", type: 'file', builtBy: copyAstClasses
 }
+
+dependencies{
+    compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    compileOnly("io.micronaut.openapi:micronaut-openapi:${micronautOpenapiVersion}") {
+        exclude group: 'org.slf4j', module: 'slf4j-nop'
+    }
+    compileOnly "io.micronaut:micronaut-http-server:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject-java:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-core:${micronautVersion}"
+}
