@@ -18,6 +18,8 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import rundeck.data.validation.shared.SharedNotificationConstraints
 
 /*
  * Notification.java
@@ -30,7 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 /**
  * Represents a registration of notification to happen on some event trigger, and some type of notification.
  */
-public class Notification {
+public class Notification implements NotificationData {
     /**
      * eventTrigger is the name of the event to cause the notification, e.g. "onfailure" to happen when a
      * failure of some type occurs
@@ -52,10 +54,8 @@ public class Notification {
     static belongsTo=[scheduledExecution:ScheduledExecution]
 
     static constraints={
-        eventTrigger(nullable:false,blank:false)
-        type(nullable:false,blank:false)
+        importFrom SharedNotificationConstraints
         content(nullable:true,blank:true)
-        format(nullable:true,blank:true)
     }
     static mapping = {
         content type: 'text'

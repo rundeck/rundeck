@@ -560,13 +560,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             def beanName = pluginRegistryMap[type + ':' + name] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
-                if(!bean){
+                if(bean == null){
                     return false
                 }
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
-                if(!bean){
+                if(bean == null){
                     return false
                 }
 
@@ -590,18 +590,18 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         return false
     }
-    private <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
+    <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
         try {
             def beanName = pluginRegistryMap[type + ':' + name] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
-                if(!bean){
+                if(bean == null){
                     return null
                 }
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
-                if(!bean){
+                if(bean == null){
                     return null
                 }
 

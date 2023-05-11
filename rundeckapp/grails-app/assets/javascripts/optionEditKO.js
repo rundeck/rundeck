@@ -29,6 +29,15 @@ function OptionEditor(data) {
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
     self.originalIsNonSecure = data.showDefaultValue;
+
+    self.remoteUrlAuthenticationList  = ko.observableArray([
+        new RemoteOptionValues("BASIC", message('form.option.valuesType.url.authType.basic.label')),
+        new RemoteOptionValues("API_KEY", message('form.option.valuesType.url.authType.apiKey.label')),
+        new RemoteOptionValues("BEARER_TOKEN", message('form.option.valuesType.url.authType.bearerToken.label'))
+    ]);
+
+    self.remoteUrlAuthenticationType = ko.observable(data.remoteUrlAuthenticationType);
+
     self.tofilebashvar = function (str) {
         return self.bashVarPrefix + "FILE_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
     };
@@ -61,6 +70,7 @@ function OptionEditor(data) {
         self.defaultValue('');
         self.valuesList('');
         self.valuesUrl('');
+        self.remoteUrlAuthenticationType('');
         self.enforceType('none');
         self.showDefaultValue(showDefaultValueInput);
         return true;
@@ -77,4 +87,21 @@ function OptionEditor(data) {
     var subscription = this.optionType.subscribe(function(newValue) {
         self.showDefaultValue(self.originalIsNonSecure);
     });
+
+    self.isRemoteUrlUserAuth = ko.computed(function () {
+        return "BASIC" === self.remoteUrlAuthenticationType();
+    });
+
+    self.isRemoteUrlTokenAuth = ko.computed(function () {
+        return "API_KEY" === self.remoteUrlAuthenticationType();
+    });
+    self.isRemoteUrlBearerTokenAuth = ko.computed(function () {
+        return "BEARER_TOKEN" === self.remoteUrlAuthenticationType();
+    });
 }
+
+
+var RemoteOptionValues = function(value, label) {
+    this.value = value;
+    this.label = label;
+};

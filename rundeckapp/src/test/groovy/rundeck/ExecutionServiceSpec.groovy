@@ -1664,7 +1664,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1696,7 +1696,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1737,7 +1737,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Option opt = new Option(name: 'test1', enforced: true, defaultValue: defaultValue, optionValues: null)
         se.addToOptions(opt)
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
-        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1988,7 +1988,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : option,
                     values       : [],
@@ -3239,7 +3239,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : ["A", "B", "C"],
@@ -5673,7 +5673,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,
-                ['option':'test1', 'extra':['option':['test1':'Foo']]],_) >> {
+                ['option':'test1', 'extra':['option':['test1':'Foo']]],_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -5818,8 +5818,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         HashMap optparams = service.parseJobOptionInput([:], se, admin)
 
         then:
-            1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin') >> [:]
-            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null) >> [:]
+            1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin',_) >> [:]
+            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null,_) >> [:]
     }
 
 

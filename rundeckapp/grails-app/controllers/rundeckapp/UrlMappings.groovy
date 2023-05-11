@@ -36,13 +36,18 @@ class UrlMappings {
         "/api/$api_version/execution/$id/input/files"(controller: 'execution', action: 'apiExecutionInputFiles')
         "/api/$api_version/execution/$id/output(.$format)?"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
+        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutputNodeFilter')
+        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputNodeStepFilter')
+        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputStepFilter')
 
 
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
 
+        "/api/$api_version/incubator/job/$id?"(controller: 'rdJob') {
+            action = [GET: 'get', POST: 'save', DELETE: 'delete']
+        }
+
+        "/api/$api_version/incubator/jobs"(controller: 'rdJob', action: "list")
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']

@@ -14,6 +14,7 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 
+apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
@@ -75,6 +76,7 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
+
 
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"

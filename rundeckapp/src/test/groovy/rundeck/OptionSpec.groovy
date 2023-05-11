@@ -18,6 +18,7 @@ package rundeck
 
 
 import grails.testing.gorm.DomainUnitTest
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -74,8 +75,9 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         def opt = new Option(
                 name: 'bob',
                 optionType: 'atype',
-                configData: '{"key":"val","key2":"val2"}'
+                configData: '{"jobOptionConfigEntries":{"plugin-attributes":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes","pluginAttributes":{"key":"val","key2":"val2"}}}}'
         )
+
         when:
         def result = opt.toMap()
         then:
@@ -160,5 +162,99 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         assertEquals(false, option.validate())
         assertEquals(true, option.errors.hasErrors())
         assertEquals(true, option.errors.hasFieldErrors('name'))
+    }
+
+    def "to map remote URL config"() {
+        given:
+        def opt = new Option(
+                name: 'bob',
+                optionType: 'text',
+                valuesUrl: 'http://test.com',
+                configData: '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","authenticationType":"BASIC","username":"admin","passwordStoragePath":"keys/test"}}}'
+        )
+
+        when:
+        def result = opt.toMap()
+        then:
+        result.type == 'text'
+        result.configRemoteUrl.authenticationType == "BASIC"
+        result.configRemoteUrl.username == "admin"
+        result.configRemoteUrl.passwordStoragePath == "keys/test"
+
+    }
+
+    def "from map to remote URL config"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [authenticationType: 'API_KEY', tokenStoragePath: 'keys/test', keyName: 'api-key']])
+        expect:
+        opt.optionType == 'text'
+        opt.configData == '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","authenticationType":"API_KEY","keyName":"api-key","tokenStoragePath":"keys/test"}}}'
+        opt.configRemoteUrl !=null
+        opt.configRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY
+        opt.configRemoteUrl.tokenStoragePath == 'keys/test'
+        opt.configRemoteUrl.keyName == 'api-key'
+
+
+    }
+    
+    def "toMap should order valueList if sortValues is true "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                valuesList:'A,C,B',
+                sortValues: true
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should be in order"
+        result.sortValues==true
+        result.values[0]=="A"
+        result.values[1]=="B"
+        result.values[2]=="C"
+    }
+
+    def "toMap should keep order in valueList if sortValues is false "() {
+
+        given:"an option"
+        def opt = new Option(
+                name: 'bob',
+                sortValues:false,
+                valuesList:'A,C,B'
+        )
+
+        when:"the options is being converted into a map"
+        def result = opt.toMap()
+
+        then:"values should keep original order"
+        result.values[0]=="A"
+        result.values[1]=="C"
+        result.values[2]=="B"
+    }
+
+    def "option fromMap should have sortValues value"() {
+
+        given: "a map with option data"
+        Map map = [enforcedvalues:'true', name:'option1', sortValues:true, required:'true', values:'A,C,B,D,E', valuesListDelimiter:',']
+        String name = "test"
+
+        when:"creating the option"
+        def opt = Option.fromMap(name,map )
+
+        then:"the option should have the value of sortValues"
+        opt.sortValues == true
+    }    
+        
+        
+    def "from map to remote URL json filter"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'text', configRemoteUrl: [jsonFilter:"\$.key"]])
+        expect:
+        opt.optionType == 'text'
+        opt.configData == '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","jsonFilter":"\$.key"}}}'
+        opt.configRemoteUrl !=null
+        opt.configRemoteUrl.jsonFilter == "\$.key"
     }
 }

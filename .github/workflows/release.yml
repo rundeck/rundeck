@@ -1,0 +1,32 @@
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+name: Create Release
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Set tag name
+        id: tag_name
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          DATE_SUFFIX=$(date +'%Y%m%d')
+          echo "RELEASE_NAME=$TAG_NAME-$DATE_SUFFIX" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: ${{ env.RELEASE_NAME }}
+          body: Release ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false

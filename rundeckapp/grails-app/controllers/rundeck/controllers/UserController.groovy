@@ -21,7 +21,20 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import org.rundeck.app.data.RdPageable
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
@@ -33,10 +46,12 @@ import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.commandObjects.RdUserCommandObject
+import rundeck.data.paging.RdPageable
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class UserController extends ControllerBase{
 
     private static final int DEFAULT_USER_PAGE_SIZE = 100
@@ -239,6 +254,145 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Post(uris=['/user/info/{username}'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags = ['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = true,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}''')
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+
+    )
+    protected def apiOtherUserDataPost_docs(){}
+
+    @Post(uris=['/user/info'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for current user.
+
+Since: v21''',
+        tags = ['user'],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}''')
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+
+    )
+    protected def apiUserDataPost_docs(){}
+
+    @Get(uris=['/user/info'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for current user.
+
+Since: v21''',
+        tags=['user'],
+        responses=[
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "login": "username",
+  "firstName": "first name",
+  "lastName": "last name",
+  "email": "email@domain"
+}''')
+                )
+            )
+        ]
+
+    )
+    protected def apiUserData_docs(){}
+
+    @Get(uris=['/user/info/{username}'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags=['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = true,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+    )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return
@@ -341,6 +495,28 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/roles')
+    @Operation(
+        method = 'GET',
+        summary = 'List Authorized Roles',
+        description = '''Get a list of the authenticated user's roles.
+
+Since: v30''',
+        tags = ['user', 'authorization'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success response, with a list of roles.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "roles":["admin","user"]
+}''')
+                )
+            )
+        ]
+    )
     def apiListRoles() {
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
             return
@@ -368,6 +544,54 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/list')
+    @Operation(
+        method = 'GET',
+        summary = 'List users',
+        description = '''Get a list of all the users.
+
+Authorization required: `app_admin` for `system` resource
+
+Since: v21''',
+        tags = ['user'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success Response, with a list of users.
+
+For APIv27+, the results will contain additional fields:
+* `created` creation date
+* `updated` updated date
+* `lastJob` last job execution
+* `tokens` number of API tokens
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema = @Schema(type = 'object')),
+                    examples = @ExampleObject('''[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com",
+    "created": "2017-10-01T09:00:20Z",
+    "updated": "2018-08-24T13:53:02Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 1
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com",
+    "created": "2016-07-17T18:42:00Z",
+    "updated": "2018-08-24T13:53:00Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 6
+}]''')
+                )
+            )
+        ]
+    )
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return

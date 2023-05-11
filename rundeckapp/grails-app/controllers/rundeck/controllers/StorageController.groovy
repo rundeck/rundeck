@@ -26,6 +26,20 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
@@ -40,6 +54,7 @@ import rundeck.services.StorageService
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class StorageController extends ControllerBase{
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
     public static final List<String> RES_META_RUNDECK_OUTPUT = [
@@ -441,7 +456,89 @@ class StorageController extends ControllerBase{
         }
     }
 
-    def apiPostResource(StorageParams storageParams) {
+    @Post(uri='/storage/keys/{path}')
+    @Operation(
+        method = "POST",
+        summary = "Create Keys",
+        description = '''
+Specify the type of key via the `Content-type` header:
+
+* `application/octet-stream` specifies a **private key**
+* `application/pgp-keys` specifies a **public key**
+* `application/x-rundeck-data-password` specifies a **password**
+
+Authorization required: `create` for the `key` resource.
+ 
+Authorization under the key path `project/{project}` can be granted at the project context.
+''',
+        tags = ['key storage'],
+        parameters = @Parameter(
+            name = 'path',
+            in = ParameterIn.PATH,
+            description = "Path and Key file name. Can be a directory path such as `subdir/` or include a filename `subdir/file.password`",
+            schema=@Schema(type='string'),
+            allowReserved = true
+        ),
+        requestBody = @RequestBody(
+            description='Private key, public key, or password content',
+            required=true,
+            content=[
+                @Content(
+                    mediaType='application/octet-stream',
+                    schema=@Schema(type='string'),
+                    examples=@ExampleObject('''...private key...''')
+                ),
+                @Content(
+                    mediaType='application/pgp-keys',
+                    schema=@Schema(type='string'),
+                    examples=@ExampleObject('''...public key...''')
+                ),
+                @Content(
+                    mediaType='application/x-rundeck-data-password',
+                    schema=@Schema(type='string'),
+                    examples=@ExampleObject('''password-value''')
+                )
+            ]
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = "201",
+                description = "Created",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(type = 'object'),
+                        examples = [
+                            @ExampleObject(value='''
+{
+  "meta": {
+    "Rundeck-key-type": "public",
+    "Rundeck-content-size": "393",
+    "Rundeck-content-type": "application/pgp-keys"
+  },
+  "url": "http://rundeckhost/api/11/storage/keys/test1.pub",
+  "name": "test1.pub",
+  "type": "file",
+  "path": "keys/test1.pub"
+}''',name='key-metadata',summary='Key Metadata Result'),
+                            ]
+                    ),
+                    @Content(
+                        mediaType = 'application/pgp-keys',
+                        schema=@Schema(type='string'),
+                        examples = @ExampleObject(
+                            name='public-key',
+                            summary='Public Key contents',
+                            value='''...Public Key Contents...'''
+                        )
+                    )
+                ]
+            ),
+            @ApiResponse(responseCode='403',description='Unauthorized'),
+            @ApiResponse(responseCode='409',description='Conflict: the specified file or path already exists')
+        ]
+    )
+    def apiPostResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -494,7 +591,32 @@ class StorageController extends ControllerBase{
     }
 
 
-    def apiDeleteResource(StorageParams storageParams) {
+    @Delete(uri = '/storage/keys/{path}')
+    @Operation(
+        method = "DELETE",
+        summary = "Delete A Key",
+        description = '''Deletes the file if it exists and returns `204` response.
+
+Authorization required: `delete` for the `key` resource.
+
+Authorization under the key path `project/{project}` can be granted at the project context.
+''',
+        tags = ['key storage'],
+        parameters = @Parameter(
+            name = 'path',
+            in = ParameterIn.PATH,
+            description = "Path and Key file name. Can be a directory path such as `subdir/` or include a filename `subdir/file.password`",
+            schema=@Schema(type='string'),
+            allowReserved = true,
+            required = true
+        ),
+        responses = [
+            @ApiResponse(responseCode='204',description='Deleted'),
+            @ApiResponse(responseCode='403',description='Unauthorized'),
+            @ApiResponse(responseCode='404',description='The file does not exist')
+        ]
+    )
+    def apiDeleteResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -547,7 +669,38 @@ class StorageController extends ControllerBase{
         }
     }
 
-    def apiPutResource(StorageParams storageParams) {
+    @Put(uri='/storage/keys/{path}')
+    @Operation(
+        method = "PUT",
+        summary = "Modify A Key",
+        description = '''
+Specify the type of key via the `Content-type` header:
+
+* `application/octet-stream` specifies a **private key**
+* `application/pgp-keys` specifies a **public key**
+* `application/x-rundeck-data-password` specifies a **password**
+
+Authorization required: `update` for the `key` resource.
+
+Authorization under the key path `project/{project}` can be granted at the project context.
+''',
+        tags = ['key storage'],
+        parameters = @Parameter(
+            name = 'path',
+            in = ParameterIn.PATH,
+            description = "Path and Key file name. Can be a directory path such as `subdir/` or include a filename `subdir/file.password`",
+            schema=@Schema(type='string'),
+            allowReserved = true,
+            required = true
+        ),
+        requestBody = @RequestBody(ref = '#/paths/~1storage~1keys~1%7Bpath%7D/post/requestBody'),
+        responses = [
+            @ApiResponse(ref = '#/paths/~1storage~1keys~1%7Bpath%7D/get/responses/200'),
+            @ApiResponse(responseCode='403',description='Unauthorized'),
+            @ApiResponse(responseCode='404',description='The file does not exist')
+        ]
+    )
+    def apiPutResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -595,7 +748,116 @@ class StorageController extends ControllerBase{
         }
     }
 
-    def apiGetResource(StorageParams storageParams) {
+    @Get(uri = '/storage/keys/{path}')
+    @Operation(
+        method = "GET",
+        summary = "List and Get Keys and Key Metadata",
+        description = '''
+Lists resources at the specified PATH if it is a directory.
+
+Otherwise if it is a file, return the metadata about the stored file if JSON response is requested.
+
+Provides the content for **public key** files if the `Accept` request header matches `*/*` or `application/pgp-keys`.
+
+Returns `403` if content is requested from other Key file types.
+
+Authorization required: `read` for the `key` resource
+
+Authorization under the key path `project/{project}` can be granted at the project context.
+''',
+        tags = ['key storage'],
+        parameters = @Parameter(
+            name = 'path',
+            in = ParameterIn.PATH,
+            description = "Path and Key file name. Can be a directory path such as `subdir/` or include a filename `subdir/file.password`",
+            schema=@Schema(type='string'),
+            allowReserved = true,
+            allowEmptyValue = true
+        ),
+        responses = [
+            @ApiResponse(
+            responseCode = "200",
+            description = "Key Metadata",
+            content = [
+                @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = [
+                    @ExampleObject(value='''
+{
+  "meta": {
+    "Rundeck-key-type": "public",
+    "Rundeck-content-size": "393",
+    "Rundeck-content-type": "application/pgp-keys"
+  },
+  "url": "http://rundeckhost/api/11/storage/keys/test1.pub",
+  "name": "test1.pub",
+  "type": "file",
+  "path": "keys/test1.pub"
+}''',name='key-metadata',summary='Key Metadata Result'),
+                    @ExampleObject(value='''
+{
+  "resources": [
+    {
+      "meta": {
+        "Rundeck-key-type": "private",
+        "Rundeck-content-mask": "content",
+        "Rundeck-content-size": "1679",
+        "Rundeck-content-type": "application/octet-stream"
+      },
+      "url": "http://rundeckhost/api/11/storage/keys/test1.pem",
+      "name": "test1.pem",
+      "type": "file",
+      "path": "keys/test1.pem"
+    },
+    {
+      "url": "http://rundeckhost/api/11/storage/keys/subdir",
+      "type": "directory",
+      "path": "keys/subdir"
+    },
+    {
+      "meta": {
+        "Rundeck-key-type": "public",
+        "Rundeck-content-size": "640198",
+        "Rundeck-content-type": "application/pgp-keys"
+      },
+      "url": "http://rundeckhost/api/11/storage/keys/monkey1.pub",
+      "name": "monkey1.pub",
+      "type": "file",
+      "path": "keys/monkey1.pub"
+    },
+    {
+      "meta": {
+        "Rundeck-key-type": "public",
+        "Rundeck-content-size": "393",
+        "Rundeck-content-type": "application/pgp-keys"
+      },
+      "url": "http://rundeckhost/api/11/storage/keys/test1.pub",
+      "name": "test1.pub",
+      "type": "file",
+      "path": "keys/test1.pub"
+    }
+  ],
+  "url": "http://rundeckhost/api/11/storage/keys",
+  "type": "directory",
+  "path": "keys"
+}''', name='list-keys',summary='List Directory')]
+            ),
+            @Content(
+                mediaType = 'application/pgp-keys',
+                schema=@Schema(type='string'),
+                examples = @ExampleObject(
+                    name='public-key',
+                    summary='Public Key contents',
+                    value='''...Public Key Contents...'''
+                )
+            )
+            ]
+        ),
+        @ApiResponse(responseCode='403',description='Unauthorized')
+        ]
+    )
+    def apiGetResource(@Parameter(hidden = true) StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -648,6 +910,13 @@ class StorageController extends ControllerBase{
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: e.message
+            ])
+        }catch(Exception e){
+            log.error("Error reading resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: "Error: ${e.getMessage()}",
+                    meta: "Error: ${e.message}"
             ])
         }
     }

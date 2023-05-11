@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -47,12 +48,13 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import org.rundeck.util.HttpClientCreator
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
-import rundeck.services.data.UserDataService
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -121,6 +123,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
             pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
@@ -1567,7 +1570,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
-
         then:
         !results.success
         results.scheduledExecution.errors.hasFieldErrors(fieldName)
@@ -1587,7 +1589,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
-
 
         then:
         !results.success
@@ -3364,6 +3365,42 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     }
 
+    def "should schedule despite project properties being outdated"() {
+        given:
+        def projectPropsOutdated = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':(disableSchedule)?!Boolean.valueOf(disableSchedule):'true',
+                                       'project.disable.executions':(disableExecution)?!Boolean.valueOf(disableSchedule):'true']
+        }
+
+        def projectPropsUpdated = Mock(IRundeckProjectConfig) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectPropsOutdated
+            getProjectConfigReloaded(_) >> projectPropsUpdated
+        }
+        when:
+        def result = service.shouldScheduleInThisProject('proj')
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
+
     @Unroll
     def "do save job with dynamic threadcount"(){
         given:
@@ -3521,7 +3558,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         results.success
-        1 * service.jobLifecycleComponentService.beforeJobSave(se,_)>>lfresult
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_)>>lfresult
 
         where:
         inparams                                        | lfresult
@@ -3547,7 +3584,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.success
         se.errors.hasErrors()
         se.errors.hasGlobalErrors()
-        1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
             throw new JobLifecycleComponentException('an error')
         }
 
@@ -3568,7 +3605,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.frameworkService = Stub(FrameworkService) {
-            existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled() >> false
             getServerUUID() >> TEST_UUID1
             pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
@@ -4040,7 +4077,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             se.errors.hasErrors()
             se.errors.hasGlobalErrors()
             se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-            1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+            1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
                 throw new JobLifecycleComponentException('an error')
             }
 
@@ -5607,7 +5644,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
 
             def input=[:]
-            ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
                 input.url=url
                 input.timeout=vtimeout
                 input.contimeout=vcontimeout
@@ -5618,7 +5655,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         ]
                 ]
             }
-            def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+            def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"the values on the input should be the same as the spectec values "
             input.url=='file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
@@ -5653,7 +5690,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ))
         se.save()
         def input=[:]
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url,JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             input.url=url
             input.timeout=vtimeout
             input.contimeout=vcontimeout
@@ -5677,7 +5714,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 _ * loadProjectConfig('testProject')
             }
         }
-        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"values setted on the config.properties should be equals to input values"
         input.url=='file://test'
@@ -5719,10 +5756,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         when:"getRemoteJSON trow an exception"
         Exception e = new Exception("some exception")
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             throw new Exception(e)
         }
-        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"result should have the information of the exception"
         result.err.exception.toString() == "java.lang.Exception: java.lang.Exception: some exception"

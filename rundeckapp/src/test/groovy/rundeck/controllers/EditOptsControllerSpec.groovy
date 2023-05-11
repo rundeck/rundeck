@@ -16,17 +16,20 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -174,7 +177,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, params, true)
+        EditOptsController._validateOption(opt, provider, null, null, params, true)
         then:
         iserr == opt.errors.hasFieldErrors('defaultValue')
 
@@ -191,7 +194,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, optionType: 'file', name: 'abc',enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, provider, params, isched)
+        EditOptsController._validateOption(opt, provider, null, null, params, isched)
         then:
         iserr == opt.errors.hasFieldErrors('required')
 
@@ -355,6 +358,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -383,6 +387,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -487,6 +492,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1, optname2: test2]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -584,6 +590,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'modify', name: 'optname', params: [name                          : 'optname', description:
@@ -629,6 +636,8 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def optsmap = [optname: test1]
 
         controller.fileUploadService = Mock(FileUploadService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'modify', name: 'optname', params: [name                          : 'optname2', description:
@@ -668,7 +677,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         opt.name = "opt1"
         opt.optionValuesPluginType = "optionValues"
         opt.enforced = true
-        def result = controller._validateOption(opt, provider)
+        def result = controller._validateOption(opt, provider, null)
 
         then:
         result.isEmpty()
@@ -784,4 +793,48 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         map1==map2
 
     }
+
+
+    def "validate opt configRemoteUrl json path filter"() {
+        given:
+        Option opt = new Option(name: "test",
+                                defaultValue: "123",
+                                required: true,
+                                enforced: false,
+                                valuesUrl: "http://test.com",
+                                configData: "{\"jobOptionConfigEntries\":{\"remote-url\":{\"@class\":\"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl\",\"jsonFilter\":\"${jsonFilter}\"}}}")
+
+        when:
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = jsonFilter
+        def result = EditOptsController._validateOption(opt, provider, null, configRemoteUrl, params, true)
+        then:
+        opt.errors.hasErrors()==hasError
+        opt.errors.hasFieldErrors('configRemoteUrl') == hasError
+
+        where:
+        jsonFilter | hasError
+        "dsdasd." | true
+        "\$\$" | true
+        "\$" | false
+        "\$.test" | false
+
+    }
+
+    def "cleaning remoteUrlConfig json filter"() {
+        given:
+        def option = new Option(name:"test",enforced:false, valuesType:'url', valuesUrl:'http://test.com', "configData":"{\"jobOptionConfigEntries\":{\"remote-url\":{\"@class\":\"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl\",\"jsonFilter\":\"\$.test\"}}}")
+        params.name='test'
+        params.newoption = 'modify'
+        params.valuesType = 'url'
+        params.valuesUrl = 'http://test.com'
+
+        when:
+        def result = controller._setOptionFromParams(option, params)
+
+        then:
+        result!=null
+        result.configRemoteUrl == null
+    }
+
 }

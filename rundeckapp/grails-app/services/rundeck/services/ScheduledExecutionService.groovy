@@ -16,21 +16,24 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
+import org.apache.http.HttpResponse
 import org.grails.web.json.JSONArray
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -45,7 +48,10 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -61,7 +67,6 @@ import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
@@ -82,6 +87,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -97,6 +103,8 @@ import rundeck.*
 import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
+import rundeck.data.validation.validators.AnyDomainEmailValidator
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -187,6 +195,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
     UserDataProvider userDataProvider
+    JobDataProvider jobDataProvider
+    UserService userService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -206,6 +216,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
+    JobData saveJob(JobData job) {
+        jobDataProvider.save(job)
+    }
     /**
      * Return project config for node cache delay
      * @param project
@@ -948,7 +961,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    static class DeleteJobResult{
+    static class DeleteJobResult implements DeletionResult {
+        String dataType = "Job"
+        String id
         boolean success
         String error
     }
@@ -1036,7 +1051,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        return new DeleteJobResult(success:success,error:errmsg)
+        return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
     }
     /**
      * Attempt to delete a job given an id
@@ -2709,7 +2724,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -2940,7 +2955,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def notifications = parseParamNotifications(params)
             notificationSet=notifications.collect {Map notif ->
                 String trigger = notif.eventTrigger
-                def Notification n
                 if ( notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                     defineEmailNotification(scheduledExecution,trigger,notif)
                 } else if ( notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
@@ -3339,9 +3353,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
-        boolean failed  = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
-
-        if(failed){
+        def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
+        if (failed) {
+            if( scheduledExecution.hasSecureOptions() && validation.containsKey("job-queue") ){
+                def message = 'Job Queueing is not supported in jobs with secure options.'
+                throw new Exception(message)
+            }
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
@@ -3842,32 +3859,37 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         TimeZone.getAvailableIDs()
     }
     @NotTransactional
-    def isProjectExecutionEnabled(String project){
+    def isProjectExecutionEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectExecutionEnabled(fwProject)
+        isRundeckProjectExecutionEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
-        def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
+    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableEx = config.get(CONF_PROJECT_DISABLE_EXECUTION)
         ((!disableEx) || disableEx.toLowerCase() != 'true')
     }
 
     @NotTransactional
-    def isProjectScheduledEnabled(String project){
+    def isProjectScheduledEnabled(String project, IRundeckProjectConfig projectConfig = null){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
-        isRundeckProjectScheduleEnabled(fwProject)
+        isRundeckProjectScheduleEnabled(fwProject, projectConfig?.getProjectProperties())
     }
 
     @NotTransactional
-    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
-        def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
+    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject, Map<String,String> config = null) {
+        if(config == null)
+            config = fwProject.getProjectProperties()
+        def disableSe = config.get(CONF_PROJECT_DISABLE_SCHEDULE)
         ((!disableSe) || disableSe.toLowerCase() != 'true')
     }
 
     @NotTransactional
     def shouldScheduleInThisProject(String project){
-        return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
+        IRundeckProjectConfig config = frameworkService.getProjectConfigReloaded(project)
+        return isProjectExecutionEnabled(project, config) && isProjectScheduledEnabled(project, config)
     }
 
     def deleteScheduledExecutionById(jobid, String callingAction){
@@ -3885,10 +3907,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
+        JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
+
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
@@ -3985,7 +4009,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                remoteResult = ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, srcUrl, configRemoteUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
                 result = remoteResult.json
                 if (remoteResult.stats) {
                     remoteStats.putAll(remoteResult.stats)
@@ -4043,6 +4067,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 result = []
                 jobject.keys().each { k ->
                     result << [name: k, value: jobject.get(k)]
+                }
+            } else if (result instanceof Map) {
+                Map map = result
+                result = []
+                map.forEach { key, value ->
+                    result << [name: key, value: value]
                 }
             } else {
                 validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
@@ -4182,7 +4212,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
         def jobEventStatus
         try {
-            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution, jobPersistEvent)
+            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution.project, jobPersistEvent)
         } catch (JobLifecycleComponentException exception) {
             log.debug("JobLifecycle error: " + exception.message, exception)
             log.warn("JobLifecycle error: " + exception.message)
@@ -4236,7 +4266,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider,scheduledExecution, null,null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
@@ -4274,19 +4304,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return INodeSet
      */
-    def getNodes(scheduledExecution, filter, authContext = null, Set<String> actions = null){
+    INodeSet getNodes(JobData job, filter, authContext = null, Set<String> actions = null){
 
         NodesSelector nodeselector
-        if (scheduledExecution.doNodedispatch) {
+        if (job.nodeConfig.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            filter = filter? filter : scheduledExecution.asFilter()
-            def filterExclude = scheduledExecution.asExcludeFilter()
+            filter = filter? filter : BaseNodeFilters.asFilter(job)
             NodeSet nodeset = ExecutionService.filtersAsNodeSet([
                     filter:filter,
-                    filterExclude: filterExclude,
-                    nodeExcludePrecedence:scheduledExecution.nodeExcludePrecedence,
-                    nodeThreadcount: scheduledExecution.nodeThreadcount,
-                    nodeKeepgoing: scheduledExecution.nodeKeepgoing
+                    filterExclude: job.nodeConfig.filterExclude,
+                    nodeExcludePrecedence:job.nodeConfig.nodeExcludePrecedence,
+                    nodeThreadcount: job.nodeConfig.nodeThreadcount,
+                    nodeKeepgoing: job.nodeConfig.nodeKeepgoing
             ])
             nodeselector=nodeset
         } else if(frameworkService != null){
@@ -4298,12 +4327,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if(authContext){
             return rundeckAuthContextProcessor.filterAuthorizedNodes(
-                    scheduledExecution.project,
+                    job.project,
                     actions,
-                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                    frameworkService.filterNodeSet(nodeselector, job.project),
                     authContext)
         }else{
-            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project)
+            return frameworkService.filterNodeSet(nodeselector,job.project)
         }
     }
 
@@ -4543,6 +4572,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         return model
 
+    }
+
+
+    JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
+        JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
+
+        if(configRemoteUrl?.getPasswordStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){
+                def password = executionService.readStoragePassword(authContext, configRemoteUrl.getPasswordStoragePath())
+                configRemoteUrl.password = password
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getPasswordStoragePath()
+            }
+        }
+        if(configRemoteUrl?.getTokenStoragePath()){
+            if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getTokenStoragePath(), false )) {
+                def token = executionService.readStoragePassword(authContext, configRemoteUrl.getTokenStoragePath())
+                configRemoteUrl.token = token
+            }else{
+                configRemoteUrl.errors = "Cannot access to the storage path " +    configRemoteUrl.getTokenStoragePath()
+            }
+        }
+
+        return configRemoteUrl
     }
 
 }

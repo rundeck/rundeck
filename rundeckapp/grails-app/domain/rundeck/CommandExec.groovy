@@ -16,6 +16,8 @@
 
 package rundeck
 
+import rundeck.data.constants.WorkflowStepConstants
+
 /*
 * CommandExec.java
 *
@@ -99,7 +101,24 @@ public class CommandExec extends WorkflowStep  {
         return ce
     }
 
+    public Map getConfiguration() { null }
 
+    public String getPluginType() {
+        if(adhocRemoteString) {
+            return WorkflowStepConstants.TYPE_COMMAND
+        } else if(adhocLocalString) {
+            return WorkflowStepConstants.TYPE_SCRIPT
+        } else if(adhocFilepath && adhocFilePathIsUrl()) {
+            return WorkflowStepConstants.TYPE_SCRIPT_URL
+        } else if(adhocFilepath && !adhocFilePathIsUrl()) {
+            return WorkflowStepConstants.TYPE_SCRIPT_FILE
+        }
+        return null
+    }
+
+    boolean adhocFilePathIsUrl() {
+        return adhocFilepath==~/^(?i:https?|file):.*$/
+    }
 
     /**
     * Return canonical map representation
@@ -111,7 +130,7 @@ public class CommandExec extends WorkflowStep  {
         }else if(adhocLocalString){
             map.script=adhocLocalString
         }else {
-            if(adhocFilepath==~/^(?i:https?|file):.*$/){
+            if(adhocFilePathIsUrl()){
                 map.scripturl = adhocFilepath
             }else{
                 map.scriptfile=adhocFilepath
@@ -154,7 +173,7 @@ public class CommandExec extends WorkflowStep  {
         }else if(adhocLocalString){
             map.script='script'
         }else {
-            if(adhocFilepath==~/^(?i:https?|file):.*$/){
+            if(adhocFilePathIsUrl()){
                 map.scripturl = 'scripturl'
             }else{
                 map.scriptfile='scriptfile'
@@ -170,8 +189,13 @@ public class CommandExec extends WorkflowStep  {
         return map
     }
 
-    static CommandExec fromMap(Map data){
+    static CommandExec fromMap(Map data) {
         CommandExec ce = new CommandExec()
+        updateFromMap(ce, data)
+        return ce
+    }
+
+    static void updateFromMap(CommandExec ce, Map data) {
         if(data.exec != null){
             ce.adhocExecution = true
             ce.adhocRemoteString=data.exec.toString()
@@ -203,10 +227,13 @@ public class CommandExec extends WorkflowStep  {
         if (data.plugins) {
             ce.pluginConfig = data.plugins
         }
-        return ce
     }
 
     public boolean isNodeStep(){
         return true;
+    }
+
+    public Boolean getNodeStep(){
+        return isNodeStep();
     }
 }
