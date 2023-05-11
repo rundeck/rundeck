@@ -87,7 +87,11 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-filesys",
         ":rundeck-storage:rundeck-storage-conf"
 ]
-
+/** Detect if this is being bootRun: typically by the grails cli **/
+def isRunning = project.gradle.startParameter.taskNames.any {
+    return it.toLowerCase().contains('bootrun')
+}
+project.ext.isRunning = isRunning
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
 project.ext.artifactDir = "$projectDir/artifacts"
 
