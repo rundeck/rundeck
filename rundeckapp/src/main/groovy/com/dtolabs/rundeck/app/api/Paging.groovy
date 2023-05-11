@@ -18,12 +18,14 @@ package com.dtolabs.rundeck.app.api
 
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * @author greg
  * @since 2/24/17
  */
 @ApiResource
+@Schema
 class Paging {
     @XmlAttribute
     Integer count
