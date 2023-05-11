@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.services;
+package com.dtolabs.rundeck.core.storage.service;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -25,7 +24,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
-import com.dtolabs.rundeck.server.plugins.storage.FileStoragePlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,16 +43,11 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
 
     private final List<ProviderService<StoragePlugin>> serviceList;
     private PluggableStoragePluginProviderService pluggableStoragePluginProviderService;
-    private final Map<String, Class<? extends StoragePlugin>> builtinProviders;
+
+    private Map<String, Class<? extends StoragePlugin>> builtinProviders = new HashMap<>();
 
     public StoragePluginProviderService() {
         serviceList = new ArrayList<>();
-        builtinProviders = new HashMap<>();
-        builtinProviders.put(FileStoragePlugin.PROVIDER_NAME, FileStoragePlugin.class);
-        final ProviderRegistryService<StoragePlugin>
-                builtinResourceStoragePluginProviderService =
-                ServiceFactory.builtinService(SERVICE_NAME, builtinProviders);
-        serviceList.add(builtinResourceStoragePluginProviderService);
     }
 
     @Override
@@ -107,6 +100,15 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
             pluggableStoragePluginProviderService) {
         this.pluggableStoragePluginProviderService = pluggableStoragePluginProviderService;
         serviceList.add(this.pluggableStoragePluginProviderService);
+    }
+
+    public void setBuiltinProviders(Map<String, Class<? extends StoragePlugin>> builtinProviders) {
+        this.builtinProviders = builtinProviders;
+        final ProviderRegistryService<StoragePlugin>
+                builtinResourceStoragePluginProviderService =
+                ServiceFactory.builtinService(SERVICE_NAME, builtinProviders);
+        serviceList.add(builtinResourceStoragePluginProviderService);
+
     }
 
 }

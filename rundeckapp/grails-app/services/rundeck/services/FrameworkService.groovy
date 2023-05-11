@@ -38,7 +38,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
