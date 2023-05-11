@@ -17,9 +17,9 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import org.rundeck.app.data.model.v1.logstorage.RdLogFileStorageRequest
+import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 
-class LogFileStorageRequest implements RdLogFileStorageRequest{
+class LogFileStorageRequest implements LogFileStorageRequestData{
     Execution execution
     String pluginName
     String filetype

@@ -1,23 +1,26 @@
 package org.rundeck.app.data.providers.logstorage
 
-import org.hibernate.Criteria
+import grails.compiler.GrailsCompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 import org.hibernate.type.IntegerType
 import org.hibernate.type.LongType
-import org.rundeck.app.data.model.v1.logstorage.RdLogFileStorageRequest
+import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
 import org.rundeck.app.data.providers.v1.logstorage.dto.CompletedStatusLogFileStorageResponse
 import org.rundeck.app.data.providers.v1.logstorage.dto.DuplicateLogFileStorageResponse
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 
+@GrailsCompileStatic
 class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider {
     @Override
-    RdLogFileStorageRequest get(Long id) {
+    LogFileStorageRequestData get(Long id) {
         return LogFileStorageRequest.get(id)
     }
 
     @Override
-    RdLogFileStorageRequest retryLoad(Long requestId, Long retryMaxMs) {
+    LogFileStorageRequestData retryLoad(Long requestId, Long retryMaxMs) {
         LogFileStorageRequest.withNewSession {
             long start = System.currentTimeMillis()
             LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
@@ -33,7 +36,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest build(String pluginName, String filetype, Boolean completed, Long executionId) {
+    LogFileStorageRequestData build(String pluginName, String filetype, Boolean completed, Long executionId) {
         return new LogFileStorageRequest(
                 execution: Execution.get(executionId),
                 pluginName: pluginName,
@@ -43,7 +46,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest create(RdLogFileStorageRequest data) throws Exception {
+    LogFileStorageRequestData create(LogFileStorageRequestData data) throws Exception {
         var newLogFile = new LogFileStorageRequest(
                 execution: Execution.get(data.executionId),
                 pluginName: data.pluginName,
@@ -54,7 +57,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest update(Long id, RdLogFileStorageRequest data) throws Exception {
+    LogFileStorageRequestData update(Long id, LogFileStorageRequestData data) throws Exception {
         var currentLogFileStorage = LogFileStorageRequest.get(id)
         currentLogFileStorage.refresh()
         currentLogFileStorage.filetype = data.filetype
@@ -65,7 +68,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest updateFiletypeAndCompleted(Long id, String filetype, Boolean completed) throws Exception {
+    LogFileStorageRequestData updateFiletypeAndCompleted(Long id, String filetype, Boolean completed) throws Exception {
         var currentLogFileStorage = LogFileStorageRequest.get(id)
         currentLogFileStorage.refresh()
         currentLogFileStorage.filetype = filetype
@@ -74,7 +77,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest updateCompleted(Long id, Boolean completed) throws Exception {
+    LogFileStorageRequestData updateCompleted(Long id, Boolean completed) throws Exception {
         var currentLogFileStorage = LogFileStorageRequest.get(id)
         currentLogFileStorage.refresh()
         currentLogFileStorage.completed = completed
@@ -87,11 +90,12 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    RdLogFileStorageRequest findByExecutionId(Long executionId) {
+    LogFileStorageRequestData findByExecutionId(Long executionId) {
         return LogFileStorageRequest.findByExecution(Execution.get(executionId))
     }
 
     @Override
+    @TypeChecked(TypeCheckingMode.SKIP)
     List<DuplicateLogFileStorageResponse> findDuplicates() {
         def list = LogFileStorageRequest.createCriteria().list {
             projections{
@@ -108,6 +112,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
+    @TypeChecked(TypeCheckingMode.SKIP)
     Long countByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> execIds) {
         return LogFileStorageRequest.createCriteria().get{
             eq('completed',false)
@@ -130,7 +135,8 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
-    List<RdLogFileStorageRequest> listByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> execIds, Map paging) {
+    @TypeChecked(TypeCheckingMode.SKIP)
+    List<LogFileStorageRequestData> listByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> execIds, Map paging) {
         return LogFileStorageRequest.withCriteria{
             eq('completed',false)
 
@@ -150,6 +156,6 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
                 maxResults(paging.max.toInteger())
                 firstResult(paging.offset?:0)
             }
-        } as List<RdLogFileStorageRequest>
+        } as List<LogFileStorageRequestData>
     }
 }

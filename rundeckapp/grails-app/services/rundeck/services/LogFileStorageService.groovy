@@ -35,7 +35,7 @@ import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginPro
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import org.hibernate.sql.JoinType
-import org.rundeck.app.data.model.v1.logstorage.RdLogFileStorageRequest
+import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
@@ -47,6 +47,7 @@ import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
+import org.springframework.transaction.annotation.Propagation
 import rundeck.Execution
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
@@ -289,7 +290,7 @@ class LogFileStorageService
         failedRequests.remove(requestId)
         failures.remove(requestId)
         long retryMax = 30000
-
+        Execution.withNewSession {
             Execution execution = Execution.get(execId)
             def files = getExecutionFiles(execution, typelist, false)
 
@@ -302,7 +303,7 @@ class LogFileStorageService
                 if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
                     def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
 
-                    RdLogFileStorageRequest request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
+                    LogFileStorageRequestData request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
                     if (!request) {
                         log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
                         success = false
@@ -311,9 +312,8 @@ class LogFileStorageService
                         boolean saveDone = false
                         Exception saveError
                         while (retryC > 0) {
-                            request = logFileStorageRequestProvider.get(requestId)
                             try {
-                                logFileStorageRequestProvider.updateFiletypeAndCompleted(request.id as Long, ftype, success)
+                                logFileStorageRequestProvider.updateFiletypeAndCompleted(requestId as Long, ftype, success)
                                 saveDone = true
                                 break
                             } catch (Exception e) {
@@ -344,7 +344,7 @@ class LogFileStorageService
                     //if policy, remove the request from db
                     executorService.execute {
                         //use executorService to run within hibernate session
-                        RdLogFileStorageRequest request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
+                        LogFileStorageRequestData request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
                         if (!request) {
                             log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
                         } else {
@@ -366,7 +366,7 @@ class LogFileStorageService
                 //use executorService to run within hibernate session
                 executorService.execute {
                     log.debug("executorService saving storage request status...")
-                    RdLogFileStorageRequest request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
+                    LogFileStorageRequestData request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
                     if (!request) {
                         log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
                     } else if (request) {
@@ -377,6 +377,7 @@ class LogFileStorageService
                     getStorageSuccessCounter()?.inc()
                 }
             }
+        }
     }
 
     /**
@@ -613,12 +614,12 @@ class LogFileStorageService
         if(orig){
             return
         }
-        RdLogFileStorageRequest request = createStorageRequest(e, '*')
+        LogFileStorageRequestData request = createStorageRequest(e, '*')
         def reqid = request.executionId.toString() + ":" + request.filetype
         storeLogFileAsync(reqid, plugin, request)
     }
 
-    private RdLogFileStorageRequest createStorageRequest(Execution e, String filetype) {
+    private LogFileStorageRequestData createStorageRequest(Execution e, String filetype) {
         def newData = logFileStorageRequestProvider.build(
                 getConfiguredPluginName(),
                 filetype,
@@ -699,7 +700,7 @@ class LogFileStorageService
         log.debug("dequeueIncompleteLogStorage, processing ${taskId}")
         Long invalidId
         String serverUuid
-        RdLogFileStorageRequest request = logFileStorageRequestProvider.get(taskId)
+        LogFileStorageRequestData request = logFileStorageRequestProvider.get(taskId)
         Execution e = Execution.get(request.executionId)
         if (!frameworkService.existsFrameworkProject(e.project)) {
             log.error(
@@ -770,7 +771,7 @@ class LogFileStorageService
      * @param serverUUID
      */
     void resumeIncompleteLogStoragePeriodic(String serverUUID, Long id = null) {
-        List<RdLogFileStorageRequest> incomplete
+        List<LogFileStorageRequestData> incomplete
         if (!id) {
             incomplete = listIncompleteRequests(serverUUID)
         } else {
@@ -780,7 +781,7 @@ class LogFileStorageService
             }
         }
 
-        incomplete.each { RdLogFileStorageRequest request ->
+        incomplete.each { LogFileStorageRequestData request ->
             if(!retryIncompleteRequests.contains(request.id)){
                 retryIncompleteRequests.add(request.id as Long)
                 storageQueueCounter?.inc()
@@ -847,7 +848,7 @@ class LogFileStorageService
      * @return
      */
     int cleanupIncompleteLogStorage(String serverUUID, Long id = null) {
-        List<RdLogFileStorageRequest> incomplete
+        List<LogFileStorageRequestData> incomplete
         if (!id) {
             incomplete = listIncompleteRequests(serverUUID)
         } else {
@@ -857,7 +858,7 @@ class LogFileStorageService
             }
         }
         incomplete = incomplete.findAll { !retryIncompleteRequests.contains(it.id) }
-        incomplete.each { RdLogFileStorageRequest request ->
+        incomplete.each { LogFileStorageRequestData request ->
             failedRequests.remove(request.id)
             failures.remove(request.id)
             Execution.get(request.executionId).logFileStorageRequest = null
@@ -873,7 +874,7 @@ class LogFileStorageService
      * @return
      */
     int resumeIncompleteLogStorageDelayed(String serverUUID,Long id=null){
-        List<RdLogFileStorageRequest> incomplete
+        List<LogFileStorageRequestData> incomplete
         if (!id) {
             incomplete = listIncompleteRequests(serverUUID)
         } else {
@@ -893,7 +894,7 @@ class LogFileStorageService
         def count=0
         List<Long> invalid = []
 
-        incomplete.each{ RdLogFileStorageRequest request ->
+        incomplete.each{ LogFileStorageRequestData request ->
             Execution e = Execution.get(request.executionId)
                 log.debug("re-queueing incomplete log storage request for execution ${e.id} delay ${delay}")
             if (!frameworkService.existsFrameworkProject(e.project)) {
@@ -938,7 +939,7 @@ class LogFileStorageService
      * @param serverUUID
      * @return list of incomplete storage requests for this cluster id or null
      */
-    def List<RdLogFileStorageRequest> listIncompleteRequests(String serverUUID,Map paging =[:]){
+    def List<LogFileStorageRequestData> listIncompleteRequests(String serverUUID, Map paging =[:]){
         def skipExecIds = getRunningExecIds()
         def found2= logFileStorageRequestProvider.listByIncompleteAndClusterNodeNotInExecIds(serverUUID, skipExecIds, paging)
         return found2
@@ -1693,7 +1694,7 @@ class LogFileStorageService
     private void storeLogFileAsync(
             String id,
             ExecutionFileStorage storage,
-            RdLogFileStorageRequest executionLogStorage,
+            LogFileStorageRequestData executionLogStorage,
             int delay = 0
     )
     {
