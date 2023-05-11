@@ -9,9 +9,16 @@ configurations{
 }
 
 tasks.withType(GroovyCompile).configureEach {
-    outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
+    def opts=['-Xmx1024m']
+    if(isRunning){
+        //disable openapi spec generation during bootRun
+        opts.add('-Dmicronaut.openapi.enabled=false')
+    }else{
+        outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
+        opts.add "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()
+    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m', "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()]
+        forkOptions.jvmArgs = opts
     }
 }
 artifacts{

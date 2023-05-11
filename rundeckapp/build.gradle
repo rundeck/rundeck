@@ -347,13 +347,20 @@ tasks.register('copyApiSpecFiles', Copy){
 
 tasks.withType(GroovyCompile).configureEach {
     def additionalSpecDir = new File(project.buildDir, 'openapi')
-    dependsOn copyApiSpecFiles
-    configure(groovyOptions) {
-        forkOptions.jvmArgs = [
-            '-Xmx1024m',
+    def opts=[
+        '-Xmx1024m'
+    ]
+    if(!project.findProperty('isRunning')) {
+        dependsOn copyApiSpecFiles
+        opts.addAll([
             '-Dmicronaut.openapi.filename=rundeck-api',
             "-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()
-        ]
+        ])
+    }else{
+        opts.add('-Dmicronaut.openapi.enabled=false')
+    }
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = opts
     }
 }
 
