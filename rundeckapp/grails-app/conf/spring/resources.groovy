@@ -795,16 +795,6 @@ beans={
             }
             authenticationStrategies.add(0, concurrentSessionControlAuthenticationStrategy)
     }
-    else{
-        concurrentSessionControlAuthenticationStrategy(
-                ConcurrentSessionControlAuthenticationStrategy,
-                ref('sessionRegistry')
-        ) {
-            exceptionIfMaximumExceeded = false
-            maximumSessions = 1 // default to 1 session
-        }
-        authenticationStrategies.add(0, concurrentSessionControlAuthenticationStrategy)
-    }
 
     sessionAuthenticationStrategy(
             CompositeSessionAuthenticationStrategy,
