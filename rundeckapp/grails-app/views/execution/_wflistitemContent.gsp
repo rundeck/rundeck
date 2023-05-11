@@ -24,7 +24,6 @@
  --%>
 
 <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
-<% System.out.println(item) %>
 <div id="wfivis_${enc(attr:i)}" class="${item?.enabled ? '' : 'bg-danger'}" style="${i==highlight?'opacity: 0':''}; border-radius: 5px;">
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
