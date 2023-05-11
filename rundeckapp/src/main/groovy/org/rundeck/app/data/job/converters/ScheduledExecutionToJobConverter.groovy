@@ -118,8 +118,8 @@ class ScheduledExecutionToJobConverter {
             rds.configuration.remove("description")
             rds.configuration.remove("keepgoingOnSuccess")
         }
-        rds.nodeStep = wstep.nodeStep
-        rds.pluginType = wstep.getPluginType()
+//        rds.nodeStep = wstep.nodeStep
+//        rds.pluginType = wstep.getPluginType()
         return rds
     }
 
