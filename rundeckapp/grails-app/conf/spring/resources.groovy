@@ -613,7 +613,7 @@ beans={
     rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
         storageTree = ref('rundeckStorageTree')
         updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, true)
+        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
         basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
     }
 
@@ -794,6 +794,16 @@ beans={
                 maximumSessions = grailsApplication.config.getProperty("rundeck.security.maxSessions", Integer.class, 1)
             }
             authenticationStrategies.add(0, concurrentSessionControlAuthenticationStrategy)
+    }
+    else{
+        concurrentSessionControlAuthenticationStrategy(
+                ConcurrentSessionControlAuthenticationStrategy,
+                ref('sessionRegistry')
+        ) {
+            exceptionIfMaximumExceeded = false
+            maximumSessions = 1 // default to 1 session
+        }
+        authenticationStrategies.add(0, concurrentSessionControlAuthenticationStrategy)
     }
 
     sessionAuthenticationStrategy(
