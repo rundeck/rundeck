@@ -44,13 +44,21 @@ ext.coreGrailsPlugins = [
     ':grails-rundeck-data-shared',
 ]
 
-//force gradle configuration of core grails plugins
-coreGrailsPlugins.each{
-    project.evaluationDependsOn(it)
-}
-//force gradle configuration of extra grails plugins
-project.findProperty('extraGrailsPlugins')?.each{
-    project.evaluationDependsOn(it)
+if(!project.findProperty('isRunning')) {
+    //for openapi spec generation, make gradle
+    //evaluate each grails plugin to define the
+    //apiSpecFiles configurations, before we depend on them.
+    //however, it seems to interfere with proper
+    //behavior when running "bootRun", so skip it in that case
+
+    //force gradle configuration of core grails plugins
+    coreGrailsPlugins.each{
+        project.evaluationDependsOn(it)
+    }
+    //force gradle configuration of extra grails plugins
+    project.findProperty('extraGrailsPlugins')?.each{
+        project.evaluationDependsOn(it)
+    }
 }
 
 configurations {
