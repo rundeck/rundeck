@@ -300,5 +300,29 @@ databaseChangeLog = {
             }
         }
     }
-    
+
+
+    changeSet(author: "rundeckdev", id: "4.11.0-add-job-uuid-to-stats-mssql", dbms: "mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution_stats", columnName: 'job_uuid')
+            }
+        }
+        addColumn(tableName: "scheduled_execution_stats") {
+            column(name: 'job_uuid', type: '${varchar255.type}')
+        }
+        sql("update scheduled_execution_stats set job_uuid = (select uuid from scheduled_execution where id = scheduled_execution_stats.se_id)")
+    }
+
+    changeSet(author: "rundeckdev", id: "4.11.0-add-job-uuid-to-stats", dbms: "!mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution_stats", columnName: 'job_uuid')
+            }
+        }
+        addColumn(tableName: "scheduled_execution_stats") {
+            column(name: 'job_uuid', type: '${varchar255.type}')
+        }
+        sql("update scheduled_execution_stats stats set job_uuid = (select uuid from scheduled_execution where id = stats.se_id)")
+    }
 }

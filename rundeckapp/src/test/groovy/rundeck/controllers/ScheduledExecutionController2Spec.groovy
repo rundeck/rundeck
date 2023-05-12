@@ -1939,6 +1939,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
+            getRefExecCountStats('testUUID'){jobUuid -> 1}
+            getRefExecCountStats('testUUID'){jobUuid -> 1}
             isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}

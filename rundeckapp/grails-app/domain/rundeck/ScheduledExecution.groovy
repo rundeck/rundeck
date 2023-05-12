@@ -115,7 +115,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
+                         'crontabString', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
                          'pluginConfigMap', 'components']
@@ -1093,15 +1093,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         }
     }
 
-    long getAverageDuration() {
-        def stats = getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent && statsContent.totalTime && statsContent.execCount) {
-            return Math.floor(statsContent.totalTime / statsContent.execCount)
-        }
-        return 0;
-    }
-
     //new threadcount value that can be defined using an option value
     Integer getNodeThreadcount() {
         if(null!=nodeThreadcount && null==nodeThreadcountDynamic){
@@ -1148,50 +1139,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         }
     }
 
-    ScheduledExecutionStats getStats(lock = false) {
-        def stats
-
-        if(this.id) {
-            def queryArgs = lock ? [lock: true]  : [:]
-
-            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
-            if (!stats) {
-                def content = [execCount   : this.execCount,
-                               totalTime   : this.totalTime,
-                               refExecCount: this.refExecCount]
-
-                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
-            }
-        }
-        stats
-    }
-
-    Long getRefExecCountStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.refExecCount) {
-            return statsContent.refExecCount
-        }
-        return 0;
-    }
-
-    Long getTotalTimeStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.totalTime) {
-            return statsContent.totalTime
-        }
-        return 0;
-    }
-
-    Long getExecCountStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.execCount) {
-            return statsContent.execCount
-        }
-        return 0;
-    }
 
     /**
      *

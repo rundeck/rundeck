@@ -658,8 +658,8 @@
       <td colspan="3" style="padding: 0 10px;">
         <div class="spacer py-sm-10" style="line-height: 30px;">‌</div>
         <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-
-          <g:set var="avgduration" value="${scheduledExecution.getAverageDuration()}"/>
+          <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
+          <g:set var="avgduration" value="${executionService.getAverageDuration(scheduledExecution.uuid)}"/>
 
           <tr>
             <g:if test="${avgduration>0}">
