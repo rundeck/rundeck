@@ -45,14 +45,14 @@
         <g:if test="${rpt?.jcJobId}">
             <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
         </g:if>
-        <g:if test="${rpt?.jcExecId}">
-            <g:set var="execution" value="${Execution.get(it.jcExecId)}"/>
+        <g:if test="${rpt?.executionId}">
+            <g:set var="execution" value="${Execution.get(it.executionId)}"/>
             <g:set var="status" value="${execution.executionState}"/>
         </g:if>
         <tr class="link autoclick ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " >
             <g:if test="${!hideEdit}">
             <td style="display: none" class="eventicon obs_bulk_edit_enable">
-                <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
+                <input type="checkbox" value="${enc(attr:rpt.executionId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             </g:if>
             <g:set var="statusIcon" value="${execution.status == 'scheduled' ? 'time' :
@@ -81,9 +81,9 @@
 
             <g:set var="hasJobArgs" value="${rpt?.jcJobId && execution && execution.argString}"/>
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${hasJobArgs?1:2}">
-            <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
+            <g:link controller="execution" action="show" id="${rpt.executionId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.project?:params.project]"
-                    title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
+                    title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.executionId}</g:enc></g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
