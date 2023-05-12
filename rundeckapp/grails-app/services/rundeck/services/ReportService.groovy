@@ -59,7 +59,7 @@ class ReportService  {
 
         //TODO: authorize event creation?
 
-        if (saveReportResponse.report && !saveReportResponse.isSaved) {
+        if (!saveReportResponse.isSaved) {
 //            System.err.println("error saving report: ${fields}")
 //            rep.errors.allErrors.each {
 //                System.err.println(it)
