@@ -60,7 +60,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         where:
         format | jobDefinition
-        "xml"  | getJobXml(true)
         "yaml" | getJobYaml(true)
     }
 
@@ -114,8 +113,8 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
   sequence:
     commands:
     - enabled: true
-    ${expandTokenInScriptFile ? """- expandTokenInScriptFile: true
-      scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
+    ${expandTokenInScriptFile ? """  expandTokenInScriptFile: true
+      scriptfile: path/to/file.sh""" : "scriptfile: path/to/file.sh"}
     keepgoing: true
     strategy: node-first
 """

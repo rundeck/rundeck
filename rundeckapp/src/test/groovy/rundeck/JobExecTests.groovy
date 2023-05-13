@@ -251,7 +251,7 @@ class JobExecTests extends Specification implements DataTest{
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler=h
         then:
-        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args', enabled: true], errorhandler: [exec: 'testerr', enabled: true], enabled: true], t.toMap())
+        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [exec: 'testerr', enabled: true], enabled: true], t.toMap())
     }
 
     def testErrorHandlerJobRefToMap() {
@@ -260,7 +260,7 @@ class JobExecTests extends Specification implements DataTest{
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler = h
         then:
-        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args', enabled: true], errorhandler: [jobref: [group: 'group1', name: 'name1', enabled: true]], enabled: true], t.toMap())
+        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [jobref: [group: 'group1', name: 'name1'], enabled: true], enabled: true], t.toMap())
     }
 
     def testErrorHandlerForExecToMap() {

@@ -228,7 +228,7 @@ public class CommandExec extends WorkflowStep  {
         if (data.plugins) {
             ce.pluginConfig = data.plugins
         }
-        ce.enabled==data.enabled!=null?data.enabled:true
+        ce.enabled=data.enabled!=null?data.enabled:true
 //        return ce
     }
 
