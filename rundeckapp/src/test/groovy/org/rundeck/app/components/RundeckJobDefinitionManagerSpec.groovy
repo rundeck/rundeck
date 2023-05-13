@@ -114,7 +114,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     commands:
     - enabled: true
     ${expandTokenInScriptFile ? """  expandTokenInScriptFile: true
-      scriptfile: path/to/file.sh""" : "scriptfile: path/to/file.sh"}
+      scriptfile: path/to/file.sh""" : "  scriptfile: path/to/file.sh"}
     keepgoing: true
     strategy: node-first
 """
