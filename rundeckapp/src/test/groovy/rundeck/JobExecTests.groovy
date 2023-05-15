@@ -43,14 +43,14 @@ class JobExecTests extends Specification implements DataTest{
         when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name')
         then:
-        assertEquals([jobref: [group:'group',name:'name']], t.toMap())
+        assertEquals([jobref: [group:'group',name:'name'], enabled: true], t.toMap())
     }
 
     def testBasicToMapDesc() {
         when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey')
         then:
-        assertEquals([jobref: [group:'group',name:'name'], description: 'a monkey'], t.toMap())
+        assertEquals([jobref: [group:'group',name:'name'], description: 'a monkey', enabled: true], t.toMap())
     }
 
     def testBasicToMapNodeFilter() {
@@ -59,7 +59,7 @@ class JobExecTests extends Specification implements DataTest{
                 nodeFilter: 'abc def')
         then:
         assertEquals([jobref: [group:'group',name:'name', nodefilters:[filter: 'abc def']],
-                description: 'a monkey'], t.toMap())
+                description: 'a monkey', enabled: true], t.toMap())
     }
 
     def testBasicToMapNodeFilter_threadcount() {
@@ -84,7 +84,8 @@ class JobExecTests extends Specification implements DataTest{
                                         ]
                                 ]
                         ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -109,7 +110,8 @@ class JobExecTests extends Specification implements DataTest{
                                                 ]
                                         ]
                                 ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -134,7 +136,8 @@ class JobExecTests extends Specification implements DataTest{
                                                 ]
                                         ]
                                 ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -160,7 +163,8 @@ class JobExecTests extends Specification implements DataTest{
                                                 ]
                                         ]
                                 ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -186,7 +190,8 @@ class JobExecTests extends Specification implements DataTest{
                                                 ]
                                         ]
                                 ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -212,7 +217,8 @@ class JobExecTests extends Specification implements DataTest{
                                                 ]
                                         ]
                                 ],
-                        description: 'a monkey'
+                        description: 'a monkey',
+                        enabled: true
                 ],
                 t.toMap()
         )
@@ -222,21 +228,21 @@ class JobExecTests extends Specification implements DataTest{
         when:
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name',argString: 'job args')
         then:
-        assertEquals([jobref: [group: 'group', name: 'name',args: 'job args']], t.toMap())
+        assertEquals([jobref: [group: 'group', name: 'name',args: 'job args'], enabled: true], t.toMap())
     }
 
     def testSimpleToMap() {
         when:
         JobExec t = new JobExec(jobName: 'name')
         then:
-        assertEquals([jobref: [group:'',name:'name']], t.toMap())
+        assertEquals([jobref: [group:'',name:'name'], enabled: true], t.toMap())
     }
 
     def testSimpleArgsToMap() {
         when:
         JobExec t = new JobExec( jobName: 'name',argString: 'job args')
         then:
-        assertEquals([jobref: [group: '', name: 'name',args: 'job args']], t.toMap())
+        assertEquals([jobref: [group: '', name: 'name',args: 'job args'], enabled: true], t.toMap())
     }
 
     def testErrorHandlerExecToMap() {
@@ -245,7 +251,7 @@ class JobExecTests extends Specification implements DataTest{
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler=h
         then:
-        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [exec: 'testerr']], t.toMap())
+        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [exec: 'testerr', enabled: true], enabled: true], t.toMap())
     }
 
     def testErrorHandlerJobRefToMap() {
@@ -254,7 +260,7 @@ class JobExecTests extends Specification implements DataTest{
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler = h
         then:
-        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [jobref: [group: 'group1', name: 'name1']]], t.toMap())
+        assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [jobref: [group: 'group1', name: 'name1'], enabled: true], enabled: true], t.toMap())
     }
 
     def testErrorHandlerForExecToMap() {
@@ -263,7 +269,7 @@ class JobExecTests extends Specification implements DataTest{
         CommandExec t = new CommandExec(adhocRemoteString: 'testerr', argString: 'job args')
         t.errorHandler = h
         then:
-        assertEquals([jobref: [group: 'group1', name: 'name1', args: 'job args1']], t.toMap().errorhandler)
+        assertEquals([jobref: [group: 'group1', name: 'name1', args: 'job args1'], enabled: true], t.toMap().errorhandler)
     }
 
     //test jobExecFromMap

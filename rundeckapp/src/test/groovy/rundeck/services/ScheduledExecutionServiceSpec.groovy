@@ -4766,7 +4766,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.workflow != null
             job.workflow.toMap().keepgoing == true
             job.workflow.toMap().strategy == 'parallel'
-            job.workflow.toMap().commands == [[exec: 'test']]
+            job.workflow.toMap().commands == [[exec: 'test', enabled: true]]
 
     }
     def "job definition workflow strategy config from map params"() {

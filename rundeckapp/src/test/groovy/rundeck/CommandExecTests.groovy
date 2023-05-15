@@ -42,49 +42,49 @@ class CommandExecTests extends Specification implements DataTest {
         when:
         CommandExec t=new CommandExec(adhocRemoteString:'test1')
         then:
-        assertEquals([exec:'test1'],t.toMap())
+        assertEquals([exec:'test1', enabled: true],t.toMap())
     }
 
     def testAdhocRemoteStringNoArgsToMap(){
         when:
         CommandExec t=new CommandExec(adhocRemoteString:'test1',argString: 'blah')
         then:
-        assertEquals([exec:'test1'],t.toMap())
+        assertEquals([exec:'test1', enabled: true],t.toMap())
     }
 
     def testAdhocLocalStringToMap(){
         when:
         CommandExec t=new CommandExec(adhocLocalString:'test2')
         then:
-        assertEquals([script:'test2'],t.toMap())
+        assertEquals([script:'test2', enabled: true],t.toMap())
     }
 
     def testAdhocLocalStringWithArgsToMap(){
         when:
         CommandExec t=new CommandExec(adhocLocalString:'test2',argString: 'test args')
         then:
-        assertEquals([script:'test2',args:'test args'],t.toMap())
+        assertEquals([script:'test2',args:'test args', enabled: true],t.toMap())
     }
 
     def testAdhocFileStringToMap(){
         when:
         CommandExec t=new CommandExec(adhocFilepath:'test3')
         then:
-        assertEquals([scriptfile:'test3'],t.toMap())
+        assertEquals([scriptfile:'test3', enabled: true],t.toMap())
     }
 
     def testAdhocFileStringExpandTokenInScriptFileToMap(){
         when:
         CommandExec t=new CommandExec(adhocFilepath:'test3', expandTokenInScriptFile: true)
         then:
-        assertEquals([scriptfile:'test3', expandTokenInScriptFile: true],t.toMap())
+        assertEquals([scriptfile:'test3', expandTokenInScriptFile: true, enabled: true],t.toMap())
     }
 
     def testAdhocFileStringWithArgsToMap(){
         when:
         CommandExec t = new CommandExec(adhocFilepath: 'test3',argString: 'test args3')
         then:
-        assertEquals([scriptfile: 'test3',args:'test args3'], t.toMap())
+        assertEquals([scriptfile: 'test3',args:'test args3', enabled: true], t.toMap())
     }
 
     def testErrorHandlerExecToMap(){
@@ -92,7 +92,7 @@ class CommandExecTests extends Specification implements DataTest {
         CommandExec h=new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t=new CommandExec(adhocFilepath:'test3',errorHandler: h)
         then:
-        assertEquals([scriptfile:'test3',errorhandler:[exec: 'testerr']],t.toMap())
+        assertEquals([scriptfile:'test3',errorhandler:[exec: 'testerr', enabled: true], enabled: true],t.toMap())
     }
 
     def testErrorHandlerScriptToMap(){
@@ -100,14 +100,14 @@ class CommandExecTests extends Specification implements DataTest {
         CommandExec h = new CommandExec(adhocLocalString: 'testerr',argString: 'err args')
         CommandExec t = new CommandExec(adhocFilepath: 'test3', errorHandler: h)
         then:
-        assertEquals([scriptfile: 'test3', errorhandler: [script: 'testerr',args: 'err args']], t.toMap())
+        assertEquals([scriptfile: 'test3', errorhandler: [script: 'testerr',args: 'err args', enabled: true], enabled: true], t.toMap())
     }
 
     def testFileExtensionToMap() {
         when:
         CommandExec t = new CommandExec(adhocLocalString: 'test1', fileExtension: '.ext')
         then:
-        assertEquals([script: 'test1',fileExtension:'.ext'], t.toMap())
+        assertEquals([script: 'test1',fileExtension:'.ext', enabled: true], t.toMap())
     }
 
     //test fromMap
