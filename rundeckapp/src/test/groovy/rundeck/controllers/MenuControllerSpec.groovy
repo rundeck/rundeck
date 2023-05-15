@@ -1685,66 +1685,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.warning !== null
 
     }
-    
 
-    def "Expanded path variable in SCM ssh key"(){
-        setup:
-        def project = 'test'
-        controller.frameworkService = Mock(FrameworkService){
-            isClusterModeEnabled() >> true
-        }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            it.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
-                                                                                              AuthConstants.ACTION_EXPORT,
-                                                                                              AuthConstants.ACTION_SCM_EXPORT]) >> true
-            it.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
-                                                                                              AuthConstants.ACTION_IMPORT,
-                                                                                              AuthConstants.ACTION_SCM_IMPORT]) >> true
-            it.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext){
-                it.getRoles() >> new HashSet<String>(Arrays.asList("role1", "role2"))
-                it.username >> 'test'
-            }
-        }
-        controller.aclFileManagerService = Mock(AclFileManagerService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            it.listWorkflows(_,_) >> [schedlist : []]
-            it.finishquery(_,_,_) >> [max: 20,
-                                      offset:0,
-                                      paginateParams:[:],
-                                      displayParams:[:]]
-        }
-        controller.storageService = Mock(StorageService){
-            it.hasPath(_,'keys/test/testKey.key') >> true
-        }
-        def scmConfig = Mock(ScmPluginConfigData) {
-            it.getConfig() >> [sshPrivateKeyPath: 'keys/${user.login}/testKey.key']
-        }
-        def scmUserInfo = Mock(ScmUserInfo){
-            it.getUserName() >> 'test'
-        }
-        def scmOperationContext = Mock(ScmOperationContext){
-            it.getUserInfo() >> scmUserInfo
-        }
-        def scmService = Mock(ScmService){
-            it.scmOperationContext(_,_,project) >> scmOperationContext
-            it.projectHasConfiguredExportPlugin(project) >> false
-            it.projectHasConfiguredImportPlugin(project) >> true
-            it.loadScmConfig(_,_) >> scmConfig
-            it.expandVariablesInScmConfiguredPath(_,_) >> 'keys/test/testKey.key'
-        }
-        controller.scmService = scmService
-
-        when:
-        request.method = 'POST'
-        request.JSON = []
-        request.format = 'json'
-        params.project = project
-        controller.listExport()
-
-        then:
-        1 * controller.scmService.expandVariablesInScmConfiguredPath(_,_)
-
-    }
 
     def "project Toggle SCM off"(){
         given:

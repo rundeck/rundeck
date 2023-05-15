@@ -1595,34 +1595,6 @@ class ScmService {
         }
     }
 
-    static String expand(final String source, final ScmUserInfo scmUserInfo) {
-        def userInfoProps = ['fullName', 'firstName', 'lastName', 'email', 'userName']
-        def map = userInfoProps.collectEntries { [it, scmUserInfo[it]] }
-        map['login'] = map['userName']
-        expand(source, map, 'user')
-    }
-
-    static String expand(final String source, final Map<String, String> data, String prefix = '') {
-        data.keySet().inject(source) { String x, String y ->
-            return x.replaceAll(
-                    Pattern.quote('${' + (prefix ? prefix + '.' : '') + y + '}'),
-                    Matcher.quoteReplacement(data[y] ?: '')
-            )
-        }
-    }
-
-    /**
-     * Expand variable references in the storage path, such as ${user.name} and ${project}* @param context
-     * @param path
-     * @return
-     */
-    def expandVariablesInScmConfiguredPath(ScmOperationContext context, String path) {
-        if( !context.userInfo.userName ){
-            return path
-        }
-        expand(expand(path, context.userInfo), [project: context.frameworkProject])
-    }
-
 }
 
 
