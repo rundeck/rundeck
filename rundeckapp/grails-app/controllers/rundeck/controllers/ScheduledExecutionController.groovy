@@ -72,6 +72,7 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -175,6 +176,7 @@ class ScheduledExecutionController  extends ControllerBase{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -475,8 +477,8 @@ class ScheduledExecutionController  extends ControllerBase{
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
-        if(scheduledExecution.getRefExecCountStats()) {
-            reftotal = scheduledExecution.getRefExecCountStats()
+        if(scheduledExecutionService.getRefExecCountStats(scheduledExecution.uuid)) {
+            reftotal = scheduledExecutionService.getRefExecCountStats(scheduledExecution.uuid)
         }
 
         def remoteClusterNodeUUID=null
@@ -486,7 +488,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-        def parentList = ReferencedExecution.parentList(scheduledExecution,10)
+        def parentList = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,10)
         def isReferenced = parentList?.size()>0
 
         def pluginDescriptions=[:]
@@ -1448,7 +1450,7 @@ Since: V14''',
             return
         }
         if(request.method=='POST') {
-            def isReferenced = ReferencedExecution.parentList(scheduledExecution,1)?.size()>0
+            def isReferenced = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,1)?.size()>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,

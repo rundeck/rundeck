@@ -21,6 +21,7 @@ import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
@@ -76,6 +77,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -85,6 +87,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
+                referencedExecutionDataProvider: referencedExecutionDataProvider,
                 reportService: reportService
         ])
 
@@ -94,7 +97,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 getJobDataMap() >> datamap
             }
         }
-
         when:
         job.execute(context)
 
@@ -146,6 +148,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
         def reportService = Mock(ReportService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -155,7 +159,9 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
                 jobSchedulerService: jobSchedulerService,
+                referencedExecutionDataProvider: referencedExecutionDataProvider,
                 reportService: reportService
+
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()

@@ -262,7 +262,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         params:[project:it.scheduledExecution.project]
                 )
                 if (it.scheduledExecution){
-                    def avgDur = it.scheduledExecution.getAverageDuration()
+                    def avgDur = executionService.getAverageDuration(it.scheduledExecution.uuid)
                     if(avgDur > 0) {
                         data['jobAverageDuration'] = avgDur
                     }
@@ -472,8 +472,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             }
                         }
                     }
-                    if (se.getAverageDuration() > 0) {
-                        data.averageDuration = se.getAverageDuration()
+                    def averageDuration = executionService.getAverageDuration(se.uuid)
+                    if (averageDuration > 0) {
+                        data.averageDuration = averageDuration
                     }
                     JobInfo.from(
                             se,
@@ -2905,8 +2906,9 @@ Since: V18''',
             extra.serverNodeUUID = scheduledExecution.serverNodeUUID
             extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
         }
-        if (scheduledExecution.getAverageDuration()>0) {
-            extra.averageDuration = scheduledExecution.getAverageDuration()
+        def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+        if (averageDuration>0) {
+            extra.averageDuration = averageDuration
         }
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)

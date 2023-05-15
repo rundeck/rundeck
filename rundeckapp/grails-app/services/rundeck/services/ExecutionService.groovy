@@ -77,6 +77,8 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -161,6 +163,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
     ExecReportDataProvider execReportDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobStatsDataProvider jobStatsDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1921,9 +1925,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
                 //delete all reports
             execReportDataProvider.deleteAllByExecutionId(e.id)
 
@@ -2996,7 +2998,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
+            scheduledExecution = ScheduledExecution.findByUuid(schedId)
         }
 
         //check the final status of succeeded nodes
@@ -3150,45 +3152,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(Long schedId, eId, long time) {
-        def success = false
-        try {
-            ScheduledExecutionStats.withTransaction {
-                def scheduledExecution = ScheduledExecution.get(schedId)
-                def seStats = scheduledExecution.getStats(true)
-
-                def statsMap = seStats.getContentMap()
-                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                    statsMap.execCount = 1
-                    statsMap.totalTime = time
-                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                    statsMap.execCount++
-                    statsMap.totalTime += time
-                } else if (statsMap.execCount >= 10) {
-                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                    statsMap.totalTime -= popTime
-                    statsMap.totalTime += time
-                }
-                seStats.setContentMap(statsMap)
-
-                if (seStats.validate()) {
-                    if (seStats.save(flush: true)) {
-                        log.info("updated scheduled Execution Stats")
-                    } else {
-                        seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                        log.warn("failed saving execution to history")
-                    }
-                    success = true
-                }
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (DuplicateKeyException ve) {
-            log.warn("Caught DuplicateKeyException for migrated stats, will retry updateScheduledExecStatistics for ${eId}")
-        }
-        return success
+    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
     }
 
     /**
@@ -3198,54 +3163,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def updateJobRefScheduledExecStatistics(Long schedId, long time) {
-        def success = false
-        try {
-            def scheduledExecution = ScheduledExecution.get(schedId)
-            def seStats = scheduledExecution.getStats()
-            def statsMap = seStats.getContentMap()
-
-            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                statsMap.execCount = 1
-                statsMap.totalTime = time
-            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                statsMap.execCount++
-                statsMap.totalTime += time
-            } else if (statsMap.execCount >= 10) {
-                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                statsMap.totalTime -= popTime
-                statsMap.totalTime += time
-            }
-
-
-            if (!statsMap.refExecCount) {
-                statsMap.refExecCount = 1
-            } else {
-                statsMap.refExecCount++
-            }
-            seStats.setContentMap(statsMap)
-
-            if (seStats.validate()) {
-                if (seStats.save(flush: true)) {
-                    log.info("updated referenced Job Stats")
-                } else {
-                    seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                    log.warn("failed saving referenced Job Stats")
-                }
-                success = true
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, dismissed statistic for referenced Job")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, dismissed statistic for for referenced Job")
-        } catch (DuplicateKeyException ve) {
-            // Do something ...
-            log.warn("Caught DuplicateKeyException for migrated stats, dismissed statistic for referenced Job")
-        }
-        return success
+    def updateJobRefScheduledExecStatistics(String jobUuid, long time) {
+        return jobStatsDataProvider.updateJobRefStats(jobUuid, time)
     }
 
-
+    Long getAverageDuration(String jobUuid) {
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
+        }
+        return 0;
+    }
 
 
     /**
@@ -3781,7 +3709,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createSuccess()
                 }
             } else {
-                averageDuration = se.averageDuration
+                averageDuration = getAverageDuration(se.uuid)
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
@@ -3843,7 +3771,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
             executionReference = exec.asReference()
-            refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
+            refId = saveRefExecution(EXECUTION_RUNNING, null, se.uuid, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
                 String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3903,7 +3831,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (wresult.result) {
                 def savedJobState = false
                 if (!disableRefStats) {
-                    updateJobRefScheduledExecStatistics(id, duration)
+                    updateJobRefScheduledExecStatistics(se.uuid, duration)
                 }
                 saveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
             }
@@ -3961,18 +3889,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
-            if(refId){
-                ReferencedExecution refExec = ReferencedExecution.findById(refId)
-                refExec.status = status
-                refExec.save(flush:true)
-            }else{
-                ScheduledExecution se = ScheduledExecution.findById(seId)
-                Execution exec = Execution.findById(execId)
-                ReferencedExecution refExec = new ReferencedExecution(
-                        scheduledExecution: se, execution: exec, status: status).save(flush:true)
-                return refExec.id
-            }
+    def saveRefExecution(String status, Long refId, String jobUuid = null, Long execId=null){
+        return referencedExecutionDataProvider.updateOrCreateReference(refId, jobUuid, execId, status)
     }
     /**
      * Query for executions for the specified job

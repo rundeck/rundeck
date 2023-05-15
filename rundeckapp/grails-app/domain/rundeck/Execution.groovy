@@ -34,7 +34,7 @@ import rundeck.services.execution.ExecutionReferenceImpl
 /**
 * Execution
 */
-class Execution extends ExecutionContext implements EmbeddedJsonData {
+class Execution extends ExecutionContext implements EmbeddedJsonData, org.rundeck.app.data.model.v1.execution.Execution {
 
     ScheduledExecution scheduledExecution
     Date dateStarted

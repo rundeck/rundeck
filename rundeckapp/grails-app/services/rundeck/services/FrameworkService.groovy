@@ -50,6 +50,7 @@ import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import org.rundeck.app.job.option.JobOptionUrlExpander
@@ -101,6 +102,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     JobOptionUrlExpander jobOptionUrlExpander
     RemoteJsonOptionRetriever remoteJsonOptionRetriever
     WorkflowExecutionItemFactory workflowExecutionItemFactory
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -386,7 +388,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                                 fileUploadService     : fileUploadService,
                                 frameworkService      : this,
                                 jobSchedulerService   : jobSchedulerService,
+                                referencedExecutionDataProvider: referencedExecutionDataProvider,
                                 reportService         : reportService
+                                
                         ])
             }
         }
