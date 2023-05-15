@@ -29,6 +29,8 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -92,7 +94,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
+        GormReferencedExecutionDataProvider referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         service.userDataProvider = provider
+        service.referencedExecutionDataProvider = referencedExecutionDataProvider
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -3012,6 +3017,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -3945,8 +3951,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        def refexec = ReferencedExecution.findByScheduledExecution(job)
-        def seStats = ScheduledExecutionStats.findBySe(job)
+        def refexec = ReferencedExecution.findByJobUuid(job.uuid)
+        def seStats = ScheduledExecutionStats.findByJobUuid(job.uuid)
         if(expectedRef){
             seStats.getContentMap().refExecCount==0
         }else{

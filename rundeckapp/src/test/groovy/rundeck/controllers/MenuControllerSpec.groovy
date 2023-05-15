@@ -45,6 +45,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -144,6 +145,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
         when:
         params.id=testUUID
         controller.response.format = "xml"
@@ -187,6 +191,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
         params.id=testUUID
@@ -328,6 +334,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -373,6 +381,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000
@@ -425,6 +435,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             nextExecutions(_,_) >> [new Date()]
         }
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -473,6 +485,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             nextExecutions(_,_) >> [new Date()]
         }
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000

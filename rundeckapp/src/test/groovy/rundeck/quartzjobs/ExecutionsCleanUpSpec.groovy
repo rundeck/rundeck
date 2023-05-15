@@ -22,6 +22,7 @@ import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
@@ -74,6 +75,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -82,7 +84,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService
+                jobSchedulerService: jobSchedulerService,
+                referencedExecutionDataProvider: referencedExecutionDataProvider
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -91,7 +94,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 getJobDataMap() >> datamap
             }
         }
-
         when:
         job.execute(context)
 
@@ -142,6 +144,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -150,7 +154,9 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService
+                jobSchedulerService: jobSchedulerService,
+                referencedExecutionDataProvider: referencedExecutionDataProvider
+
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()

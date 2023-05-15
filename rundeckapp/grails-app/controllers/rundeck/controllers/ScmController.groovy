@@ -28,12 +28,25 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
@@ -121,7 +134,44 @@ class ScmController extends ControllerBase {
         return authContext
     }
 
-    def apiPlugins(ScmIntegrationRequest apiPluginsRequest) {
+    @Get(uri='/project/{project}/scm/{integration}/plugins')
+    @Operation(
+        method = 'GET',
+        summary = 'List SCM Plugins',
+        description = '''Lists the available plugins for the specified integration.  Each plugin is identified by a 
+`type` name.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15
+''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'Result',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmPluginList)
+            )
+        )
+    )
+    def apiPlugins(@Parameter(hidden=true) ScmIntegrationRequest apiPluginsRequest) {
         if (!validateCommandInput(apiPluginsRequest)) {
             return
         }
@@ -143,12 +193,56 @@ class ScmController extends ControllerBase {
         respond list, [formats: ['xml', 'json']]
     }
 
+    @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get SCM Plugin Input Fields',
+        description = ''' List the input fields for a specific plugin.
+
+The response will list each input field.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Input fields response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmPluginSetupInput)
+            )
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/input
      * @param pluginInputTypeReq
      * @return
      */
-    def apiPluginInput(ScmPluginTypeRequest pluginInputTypeReq) {
+    def apiPluginInput(@Parameter(hidden=true) ScmPluginTypeRequest pluginInputTypeReq) {
         if (!validateCommandInput(pluginInputTypeReq)) {
             return
         }
@@ -318,6 +412,77 @@ class ScmController extends ControllerBase {
         }
         respond(actionResult, map)
     }
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/setup')
+    @Operation(
+        method = 'POST',
+        summary = 'Setup SCM Plugin for a Project',
+        description = '''Configure and enable a plugin for a project.
+
+The request body is expected to contain entries for all of the `required` input fields for the plugin.
+
+See the `/project/{project}/scm/{integration}/plugin/{type}/input` endpoint.
+
+If a validation error occurs with the configuration, then the response will include detail about the errors.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Configuration values for the plugin.',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples=@ExampleObject('''{
+    "config":{
+        "key":"value",
+        "key2":"value2..."
+    }
+}''')
+            )
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success result.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '400',
+                description = '''Validation or input error occurred.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult)
+                )
+            )
+        ]
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/setup
      * @param scm
@@ -376,12 +541,50 @@ class ScmController extends ControllerBase {
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
         respondActionResult(scm, result)
     }
+
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/disable')
+    @Operation(
+        method = 'POST',
+        summary = 'Disable SCM Plugin for a Project',
+        description = ''' Disable a plugin. (Idempotent).
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/disable
      * @param projDisableTypeReq
      * @return
      */
-    def apiProjectDisable(ScmPluginTypeRequest projDisableTypeReq) {
+    def apiProjectDisable(@Parameter(hidden = true) ScmPluginTypeRequest projDisableTypeReq) {
         if (!projDisableTypeReq.project) {
             bindData(projDisableTypeReq, params)
         }
@@ -420,12 +623,49 @@ class ScmController extends ControllerBase {
         )
     }
 
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/enable')
+    @Operation(
+        method = 'POST',
+        summary = 'Enable SCM Plugin for a Project',
+        description = ''' Enable a plugin that was previously configured. (Idempotent).
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'type',
+                in = ParameterIn.PATH,
+                description = 'Plugin Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1scm~1%7Bintegration%7D~1plugin~1%7Btype%7D~1setup/post/responses/200'
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/enable
      * @param projEnableTypeReq
      * @return
      */
-    def apiProjectEnable(ScmPluginTypeRequest projEnableTypeReq) {
+    def apiProjectEnable(@Parameter(hidden=true) ScmPluginTypeRequest projEnableTypeReq) {
 
         if (!projEnableTypeReq.project) {
             bindData(projEnableTypeReq, params)
@@ -573,10 +813,51 @@ class ScmController extends ControllerBase {
 
         redirect(action: 'index', params: [project: project])
     }
+
+    @Get(uri='/project/{project}/scm/{integration}/status')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Status',
+        description = ''' Get the SCM plugin status and available actions for the project.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Status''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmProjectStatus)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '404', description = 'Not Found, plugin is not configured'
+            )
+        ]
+    )
     /**
      * /api/15/project/$project/scm/$integration/status
      */
-    def apiProjectStatus(ScmIntegrationRequest apiProjStatusIntRequest) {
+    def apiProjectStatus(@Parameter(hidden=true) ScmIntegrationRequest apiProjStatusIntRequest) {
         if (!validateCommandInput(apiProjStatusIntRequest)) {
             return
         }
@@ -647,12 +928,53 @@ class ScmController extends ControllerBase {
         respond scmProjectStatus, [formats: ['xml', 'json']]
     }
 
+    @Get(uri='/project/{project}/scm/{integration}/config')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Config',
+        description = ''' Get the configuration properties for the current plugin.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = [
+
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Status''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmProjectPluginConfig)
+                )
+            ),
+            @ApiResponse(
+                responseCode = '404', description = 'Not Found, plugin is not configured'
+            )
+        ]
+    )
     /**
      * /api/$api_version/project/$project/scm/$integration/config
      * @param apiProjConfigIntRequest
      * @return
      */
-    def apiProjectConfig(ScmIntegrationRequest apiProjConfigIntRequest) {
+    def apiProjectConfig(@Parameter(hidden=true) ScmIntegrationRequest apiProjConfigIntRequest) {
         if (!validateCommandInput(apiProjConfigIntRequest)) {
             return
         }
@@ -688,11 +1010,62 @@ class ScmController extends ControllerBase {
 
     }
 
+
+    @Get(uri='/project/{project}/scm/{integration}/action/{actionId}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Project SCM Action Input Fields',
+        description = ''' Get the input fields and selectable items for a specific action.
+
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `exportItems`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `importItems`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Action Input fields response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionInput)
+            )
+        )
+    )
     /**
      * /api/15/project/$project/scm/$integration/action/$actionId/input
      * list inputs for action
      */
-    def apiProjectActionInput(ScmActionRequest projActInputActReq) {
+    def apiProjectActionInput(@Parameter(hidden=true) ScmActionRequest projActInputActReq) {
         if (!validateCommandInput(projActInputActReq)) {
             return
         }
@@ -912,6 +1285,73 @@ class ScmController extends ControllerBase {
         }
         return view
     }
+
+    @Post(uri='/project/{project}/scm/{integration}/action/{actionId}')
+    @Operation(
+        method = 'POST',
+        summary = 'Perform Project SCM Action',
+        description = '''Perform the action for the SCM integration plugin, with a set of input parameters,
+selected Jobs, or Items, or Items to delete.
+
+Depending on the available Input Fields for the action (see `/project/{project}/scm/{integration}/action/{actionId}/input`), the action will
+expect a set of `input` values.
+
+The set of `jobs` and `items` to choose from will be included in the Input Fields response,
+however where an Item has an associated Job, you can supply either the Job ID, or the Item ID.
+
+When there are items to be deleted on `export` integration, you can specify the Item IDs in the `deleted`
+section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
+
+When there are items to be deleted on `import` integration, you must specify the Job IDs in the `deletedJobs`
+section.
+
+Note: including the Item ID of an associated job, instead of the Job ID,
+will not automatically delete a renamed item.
+
+Authorization Required: `export` or `scm_export` or `import` or `scm_import` for the Project resource (app context), depending on the integration type
+
+Since: v15''',
+        tags = ['scm', 'plugins'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'Integration Name',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Perform Action Request',
+            required=true,
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmAction)
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''Action response.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionResult)
+            )
+        )
+    )
     /**
      * /api/$api_version/project/$project/scm/$integration/action/$actionId
      * @return
@@ -1382,10 +1822,82 @@ class ScmController extends ControllerBase {
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 
+    @Get(uri='/job/{id}/scm/{integration}/status')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Status',
+        description = '''Get SCM status for a Job.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15
+''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Status response.
+
+Note: `import` status will not include any actions for the job, refer to the Project status to list import actions.
+
+Import plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `UNKNOWN` - status unknown, e.g. the job was not imported via SCM
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `IMPORT_NEEDED` - Job changes need to be imported
+* `DELETE_NEEDED` - Job need to be deleted
+
+Export plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `EXPORT_NEEDED` - job changes need to be exported
+* `CREATE_NEEDED` - Job needs to be added to the repo''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmJobStatus),
+                examples = @ExampleObject('''{
+  "actions": [
+    "$action"
+  ],
+  "commit": {
+    "author": "$commitAuthor",
+    "commitId": "$commitId",
+    "date": "$commitDate",
+    "info": {
+      "key": "value.."
+    },
+    "message": "$commitMessage"
+  },
+  "id": "$jobId",
+  "integration": "$integration",
+  "message": "$statusMessage",
+  "project": "$project",
+  "synchState": "$synchState"
+}''')
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/status
      */
-    def apiJobStatus(ScmJobRequest jobStatJobReq) {
+    def apiJobStatus(@Parameter(hidden = true) ScmJobRequest jobStatJobReq) {
         if (!validateCommandInput(jobStatJobReq)) {
             return
         }
@@ -1495,10 +2007,63 @@ class ScmController extends ControllerBase {
         )
     }
 
+    @Get(uri='/job/{id}/scm/{integration}/diff')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Diff',
+        description = '''Retrieve the file diff for the Job, if there are changes for the integration.
+
+The format of the diff content depends on the specific plugin. For the Git plugins,
+a unified diff format is used.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Diff response.
+
+The `commit` info will be the same structure as in `/job/{id}/scm/{integration}/status` response.
+
+For `import` only, `incomingCommit` will indicate the to-be-imported change.
+''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmJobDiff),
+                examples = @ExampleObject('''{
+  "commit": {
+  },
+  "diffContent": "...",
+  "id": "$jobId",
+  "incomingCommit": {
+  },
+  "integration": "$integration",
+  "project": "$project"
+}''')
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/diff
      */
-    def apiJobDiff(ScmJobRequest jobDiffJobReq) {
+    def apiJobDiff(@Parameter(hidden = true) ScmJobRequest jobDiffJobReq) {
         if (!validateCommandInput(jobDiffJobReq)) {
             return
         }
@@ -1594,13 +2159,99 @@ class ScmController extends ControllerBase {
         }
         true
     }
+    @Get(uri='/job/{id}/scm/{integration}/action/{actionId}/input')
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job SCM Action Input Fields',
+        description = '''Get the input fields and selectable items for a specific action.
 
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `exportItems`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `importItems`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action Name/ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''SCM Action Input response.
+
+`exportItems` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information
+    * `groupPath` group path, or empty/null
+    * `jobId` job ID
+    * `jobName` job name
+* `deleted` - boolean, whether the job was deleted and requires deleting the associated repo item
+* `renamed` - boolean if the job was renamed
+* `originalId` - ID of a repo item if the job was renamed and now is stored at a different repo path, or empty/null
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
+
+`importItems` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information, may be empty/null
+    * `groupPath` group path, or empty
+    * `jobId` job ID
+    * `jobName` job name
+* `tracked` - boolean, true if there is an associated `job`
+* `deleted` - boolean, whether the job was deleted on remote and requires to be deleted
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
+
+Input fields have a number of properties:
+
+* `name` identifier for the field, used when submitting the input values.
+* `defaultValue` a default value if the input does not specify one
+* `description` textual description
+* `renderOptions` a key/value map of options, such as declaring that GUI display the input as a password field.
+* `required` true/false whether the input is required
+* `scope`
+* `title` display title for the field
+* `type` data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)
+* `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
+
+''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmActionInput)
+            )
+        )
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId/input
      * @param jobActInputActRequest
      * @return
      */
-    def apiJobActionInput(ScmJobActionRequest jobActInputActRequest) {
+    def apiJobActionInput(@Parameter(hidden = true) ScmJobActionRequest jobActInputActRequest) {
 
         if (!validateCommandInput(jobActInputActRequest)) {
             return
@@ -1627,6 +2278,96 @@ class ScmController extends ControllerBase {
         respondApiActionInput(view, scheduledExecution.project, jobActInputActRequest, jobActInputActRequest.id)
     }
 
+    @Post(uri='/job/{id}/scm/{integration}/action/{actionId}')
+    @Operation(
+        method = 'POST',
+        summary = 'Perform Job SCM Action',
+        description = '''Perform the action for the SCM integration plugin, with a set of input parameters,
+for the Job.
+
+Depending on the available Input Fields for the action. (See `/job/{id}/scm/{integration}/action/inputs`), the action will
+expect a set of `input` values.
+
+Authorization required: `export` or `scm_export` (for export integration), or `import` or `scm_import` (for import integration), for the Job resource.
+
+Since: v15''',
+        tags = ['jobs', 'scm'],
+        parameters = [
+            @Parameter(
+                name = 'id',
+                in = ParameterIn.PATH,
+                description = 'Job ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'integration',
+                in = ParameterIn.PATH,
+                description = 'SCM integration type',
+                required = true,
+                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+            ),
+            @Parameter(
+                name = 'actionId',
+                in = ParameterIn.PATH,
+                description = 'Action Name/ID',
+                required = true,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='''SCM Action Input Request.''',
+            required=true,
+            content=@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+"input":{
+   "field1":"value1",
+   "field2":"value2"
+}}''')
+            )
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''SCM Action success response.
+    
+If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
+    ''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult),
+                    examples = @ExampleObject('''{
+                      "message": "Some message.",
+                      "nextAction": "next-action",
+                      "success": true,
+                      "validationErrors": null
+                    }''')
+                )
+            ),
+            @ApiResponse(
+                responseCode = '400',
+                description = '''SCM Action invalid response.
+   
+The response will include information about the result.
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ScmActionResult),
+                    examples = @ExampleObject('''{
+                      "message": "Some input was invalid.",
+                      "nextAction": null,
+                      "success": false,
+                      "validationErrors": {
+                        "dir": "required",
+                        "url": "required"
+                      }
+                    }''')
+                )
+            )
+        ]
+    )
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId
      */
@@ -1636,7 +2377,7 @@ class ScmController extends ControllerBase {
         if (!validateCommandInput(scm)) {
             return
         }
-        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
+        ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(scm.id)
         if (!apiRequireJob(scheduledExecution, scm)) {
             return
         }

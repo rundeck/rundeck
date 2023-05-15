@@ -26,11 +26,22 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ReferencedExecution
 import rundeck.ReportFilter
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
@@ -42,12 +53,14 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
 
+@Controller
 class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
     def scheduledExecutionService
     def MetricService metricService
+    def ReferencedExecutionDataProvider referencedExecutionDataProvider
     static allowedMethods = [
             deleteFilter    : 'POST',
             storeFilter     : 'POST',
@@ -154,7 +167,10 @@ class ReportsController extends ControllerBase{
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionProjectList(sched)
+                def list = []
+                if(sched!= null) {
+                    list = referencedExecutionDataProvider.executionProjectList(sched.uuid)
+                }
                 def allowedProjects = []
                 list.each { project ->
                     if(project != params.project){
@@ -621,10 +637,142 @@ class ReportsController extends ControllerBase{
     }
 
 
+    @Get(uri='/project/{project}/history')
+    @Operation(
+        method = 'GET',
+        summary = 'Listing History',
+        description = '''
+List the event history for a project.''',
+        tags = ['history'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'jobIdFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for a job ID.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'reportIdFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for a event Name.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'userFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events created by a user.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'statFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events based on result status.  this can be \'succeed\',\'fail\', or \'cancel\'.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'jobListFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for the job by name, format: \'group/name\'.  To use multiple values, include this parameter multiple times.',
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name = 'excludeJobListFilter',
+                in = ParameterIn.QUERY,
+                description = 'exclude events for the job by name, format: \'group/name\'. To use multiple values, include this parameter multiple times.',
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name = 'recentFilter',
+                in = ParameterIn.QUERY,
+                description = '''Use a simple text format to filter events that occurred within a period of time. The format is "XY" where X is an integer, and "Y" is one of:
+        * `h`: hour
+        * `d`: day
+        * `w`: week
+        * `m`: month
+        * `y`: year
+        So a value of "2w" would return events within the last two weeks.''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'begin',
+                in = ParameterIn.QUERY,
+                description = '''Specify exact date for earliest result. a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ"''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'end',
+                in = ParameterIn.QUERY,
+                description = '''Specify exact date for latest result. a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ"''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'max',
+                in = ParameterIn.QUERY,
+                description = '''indicate the maximum number of events to return. The default maximum to return is 20''',
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'offset',
+                in = ParameterIn.QUERY,
+                description = '''indicate the 0-indexed offset for the first event to return''',
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'History results',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "paging": {
+    "count": 10,
+    "total": 110,
+    "max": 20,
+    "offset": 100
+  },
+  "events": [
+  {
+  "starttime": 123,
+  "endtime": 123,
+  "title": "[job title, or adhoc]",
+  "status": "[status]",
+  "statusString": "[string]",
+  "summary": "[summary text]",
+  "node-summary": {
+    "succeeded": 1,
+    "failed": 2,
+    "total": 3
+  },
+  "user": "[user]",
+  "project": "[project]",
+  "date-started": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "date-ended": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "job": {
+    "id": "[uuid]",
+    "href": "[api href]"
+  },
+  "execution": {
+    "id": "[id]",
+    "href": "[api href]"
+  }
+}
+  ]
+}''')
+            )
+        )
+    )
     /**
      * API, /api/14/project/PROJECT/history
      */
-    def apiHistoryv14(ExecQuery query){
+    def apiHistoryv14(@Parameter(hidden=true) ExecQuery query){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
