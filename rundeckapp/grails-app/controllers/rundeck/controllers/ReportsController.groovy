@@ -166,7 +166,7 @@ class ReportsController extends ControllerBase{
         }
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
-                def list = referencedExecutionDataProvider.executionProjectList(params.jobIdFilter)
+                def list = referencedExecutionDataProvider.executionProjectList(params.jobIdFilter, 0)
                 def allowedProjects = []
                 list.each { project ->
                     if(project != params.project){

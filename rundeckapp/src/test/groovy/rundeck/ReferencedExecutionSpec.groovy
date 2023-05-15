@@ -302,7 +302,11 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
         def re2 = new ReferencedExecution(jobUuid: se.uuid,execution: exec2).save()
 
         when:
+<<<<<<< HEAD
         List l = ReferencedExecution.parentJobSummaries(se.uuid, max)
+=======
+        List l = ReferencedExecution.parentListScheduledExecutionUuid(se.uuid, max)
+>>>>>>> 65980006ae (Incorporate reference execution spi changes)
 
         then:
         l.size() == sizeList

@@ -48,6 +48,17 @@ class ReferencedExecution implements RdReferencedExecution{
         } as List<String>
     }
 
+    static List<String> parentListScheduledExecutionUuid(String jobUuid, int max = 0){
+        return createCriteria().list(max: (max!=0)?max:null) {
+            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
+            isNotNull( 'e.jobUuid')
+            eq("jobUuid", jobUuid)
+            projections {
+                distinct('e.jobUuid')
+            }
+        } as List<String>
+    }
+
     Serializable getExecutionId(){
         execution.id
     }

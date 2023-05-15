@@ -223,6 +223,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
         service.configurationService = Mock(ConfigurationService)
 
@@ -267,6 +268,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
 
 
@@ -309,6 +311,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
 
         when:
@@ -353,6 +356,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
 
         def mockPlugin = Mock(NotificationPlugin){
@@ -410,6 +414,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
         service.configurationService = Mock(ConfigurationService)
 
@@ -468,6 +473,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
         service.configurationService = Mock(ConfigurationService)
 
@@ -529,6 +535,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+            getAverageDuration(_)>>0
         }
         service.configurationService = Mock(ConfigurationService){
             getString("mail.template.file")>>tmpTemplate.getAbsolutePath()
@@ -604,6 +611,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['a']
+            getAverageDuration(_)>>0
         }
 
         def config = [method:null, url:null]
@@ -671,6 +679,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['f']
+            getAverageDuration(_)>>0
         }
         def testResult=configResult.collectEntries{[it.key,it.value.replaceAll('__',execution.id.toString())]}
 
@@ -730,6 +739,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService=Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['a','b']
+            getAverageDuration(_)>>0
         }
 
 
@@ -792,6 +802,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         }
         service.executionService=Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['a','b']
+            getAverageDuration(_)>>0
         }
 
 
@@ -1027,6 +1038,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService) {
             getEffectiveSuccessNodeList(_) >> []
+            getAverageDuration(_)>>0
         }
 
         when:
@@ -1069,6 +1081,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService) {
             getEffectiveSuccessNodeList(_) >> []
+            getAverageDuration(_)>>0
         }
 
         when:
@@ -1145,6 +1158,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         service.pluginService = Mock(PluginService)
         service.executionService = Mock(ExecutionService) {
             getEffectiveSuccessNodeList(_) >> []
+            getAverageDuration(_)>>0
         }
 
         when:

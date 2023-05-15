@@ -165,7 +165,7 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
 
         when:
         params.includeJobRef = true
-        params.jobIdFilter = job.id
+        params.jobIdFilter = job.uuid
         def result = controller.index_old()
 
 

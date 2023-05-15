@@ -302,7 +302,6 @@ class ExecutionJobIntegrationSpec extends Specification {
             execution!=null
             result.success
             testExecmap == result.execmap
-            1 * eus.getAverageDuration(_) >> 1
             1 * es.avgDurationExceeded(_, _)
     }
 

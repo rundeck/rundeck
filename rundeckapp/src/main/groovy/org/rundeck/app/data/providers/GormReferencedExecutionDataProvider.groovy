@@ -35,6 +35,11 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
+    List<String> parentList(String jobUuid, int max) {
+        return ReferencedExecution.parentListScheduledExecutionUuid(jobUuid, max)
+    }
+
+    @Override
     List<String> executionProjectList(String jobUuid, int max = 0) {
         return ReferencedExecution.executionProjectList(jobUuid, max)
     }
