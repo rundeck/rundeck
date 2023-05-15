@@ -526,6 +526,21 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
+    @Override
+    JobState getJobStatus(ScmOperationContext ctx, JobScmReference job, String originalPath) {
+        log.debug("Checking if user: ${ctx.userInfo.userName} has access to the configured SCM key/password.")
+        def userStorageTree = ctx.getStorageTree()
+        def scmAuthPath = commonConfig.sshPrivateKeyPath ? commonConfig.sshPrivateKeyPath : commonConfig.gitPasswordPath
+        def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
+        if( userStorageTree.hasPath(expandedAuthPath) ){
+            log.debug("User: ${ctx.userInfo.userName} has access to the configured SCM key/password, sending job status.")
+            return getJobStatus(job, originalPath)
+        }else{
+            def scmExceptionMessage = "User: \"${ctx.userInfo.userName}\" don't have access to the configured SCM key/password yet."
+            throw new ScmPluginException(scmExceptionMessage)
+        }
+    }
+
     List<Action> jobActionsForStatus(Map status) {
         if (status.synch != SynchState.CLEAN) {
             actionRefs(JOB_COMMIT_ACTION_ID)

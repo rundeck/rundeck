@@ -94,6 +94,17 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job, String originalPath);
 
     /**
+     * Return the state of the given job if the user has access to the key/password of
+     * SCM configuration.
+     *
+     * @param ctx          ScmOperationContext
+     * @param job          Job
+     *
+     * @return state
+     */
+    JobState getJobStatus(ScmOperationContext ctx, JobScmReference job, String originalPath);
+
+    /**
      * Return the state of the given job, with optional original repo path
      *
      * @param job          job
@@ -102,9 +113,7 @@ public interface ScmExportPlugin {
      *
      * @return state
      */
-    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
-        return getJobStatus(job, originalPath);
-    }
+    JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize);
 
     /**
      * Set default job status
