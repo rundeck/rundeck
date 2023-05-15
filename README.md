@@ -1,6 +1,19 @@
 Rundeck Step Disabler - PD Hackweek '23 Project
 ========
 
+## Technical Debt To Date
+
+1. Fix the log output in EngineWorkflowExecutor.logSkippedOperations to be more accurate about the skip cause.
+
+## Tests To Asses Basic Functionality
+
+1. Basic enable/disable jobs
+2. Export to file
+3. Import from file
+4. Export to another instance
+5. Export from older than disabler version
+6. SCM export from older than disabler version
+
 by:
 
 * Rodrigo Navarro ([@ronaveva](https://github.com/ronaveva))
