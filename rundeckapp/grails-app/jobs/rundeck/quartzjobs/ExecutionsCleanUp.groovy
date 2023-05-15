@@ -9,7 +9,6 @@ import org.quartz.UnableToInterruptJobException
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
@@ -26,6 +25,7 @@ class ExecutionsCleanUp implements InterruptableJob {
     void execute(JobExecutionContext context) throws JobExecutionException {
         JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
+        ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
         String project = context.jobDetail.jobDataMap.get('project')
         String uuid = frameworkService.getServerUUID()
 
@@ -51,12 +51,12 @@ class ExecutionsCleanUp implements InterruptableJob {
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                     maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
             logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
-            deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider)
+            deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
         }
     }
 
     private Map deleteBulkExecutionIds(List<Long> execs, FileUploadService fileUploadService,
-                                LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider) {
+                                LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService) {
         def failures=[]
         def failed=false
         def count=0
@@ -65,7 +65,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + exec, id: exec]
             } else {
-                result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider)
+                result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
                 result.id = exec
             }
             if(!result.success){
@@ -79,7 +79,7 @@ class ExecutionsCleanUp implements InterruptableJob {
         return [success:!failed, failures:failures, successTotal:count]
     }
 
-    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider){
+    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService){
         Map result
         try {
             Execution e = Execution.findById(execId)
@@ -91,10 +91,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             referencedExecutionDataProvider.deleteByExecutionId(e.id)
 
             //delete all reports
-            ExecReport.findAllByExecutionId(e.id).each { rpt ->
-                rpt.delete()
-            }
-
+            reportService.deleteByExecutionId(e.id)
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
 
             List<File> files = []
@@ -250,10 +247,10 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
     }
 
-    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider) {
+    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider, ReportService reportService) {
         logger.info("Start to delete ${collectedExecutions.size()} executions")
         if(collectedExecutions.size()>0) {
-            Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService, referencedExecutionDataProvider)
+            Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
             if (result != null) {
                 List failureList = new ArrayList<>();
                 List<Map> resultList = (List<Map>) result.get("failures")
@@ -346,6 +343,18 @@ class ExecutionsCleanUp implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid JobSchedulerService type: " + jobSchedulerService.getClass().getName())
         }
         return jobSchedulerService
+    }
+
+
+    private ReportService fetchReportService(def jobDataMap) {
+        def fws = jobDataMap.get("reportService")
+        if (fws==null) {
+            throw new RuntimeException("reportService could not be retrieved from JobDataMap!")
+        }
+        if (! (fws instanceof ReportService)) {
+            throw new RuntimeException("JobDataMap contained invalid reportService type: " + fws.getClass().getName())
+        }
+        return fws
     }
 
     private ReferencedExecutionDataProvider fetchReferencedExecutionDataProvider(def jobDataMap){

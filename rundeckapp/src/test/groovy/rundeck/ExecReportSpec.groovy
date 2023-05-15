@@ -50,7 +50,7 @@ class ExecReportSpec extends Specification implements DataTest {
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
     def "adhoc from execution, succeeded"(){
@@ -77,7 +77,7 @@ class ExecReportSpec extends Specification implements DataTest {
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
 
@@ -105,7 +105,7 @@ class ExecReportSpec extends Specification implements DataTest {
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
 
@@ -134,7 +134,7 @@ class ExecReportSpec extends Specification implements DataTest {
         report.node==result
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
 
         where:
@@ -173,7 +173,7 @@ class ExecReportSpec extends Specification implements DataTest {
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
         report.title=='[0 steps]'
     }

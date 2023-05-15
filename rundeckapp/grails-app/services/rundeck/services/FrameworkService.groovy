@@ -98,6 +98,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     FeatureService featureService
     ExecutorService executorService
     AppAuthContextProcessor rundeckAuthContextProcessor
+    ReportService reportService
     JobOptionUrlExpander jobOptionUrlExpander
     RemoteJsonOptionRetriever remoteJsonOptionRetriever
     WorkflowExecutionItemFactory workflowExecutionItemFactory
@@ -387,7 +388,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                                 fileUploadService     : fileUploadService,
                                 frameworkService      : this,
                                 jobSchedulerService   : jobSchedulerService,
-                                referencedExecutionDataProvider: referencedExecutionDataProvider
+                                referencedExecutionDataProvider: referencedExecutionDataProvider,
+                                reportService         : reportService
+                                
                         ])
             }
         }
