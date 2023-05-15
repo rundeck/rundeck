@@ -1223,6 +1223,7 @@ class ScmService {
      */
     Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
+        def scmOperationCtx = scmOperationContext(auth, project)
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){
             fixImportStatus(auth,project,jobs)
@@ -1240,7 +1241,7 @@ class ScmService {
 
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                status[jobReference.id] = plugin.getJobStatus(jobReference)
+                status[jobReference.id] = plugin.getJobStatus(scmOperationCtx, jobReference)
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
             }
         }
