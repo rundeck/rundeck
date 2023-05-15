@@ -3837,13 +3837,20 @@ if executed in cluster mode.
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
-                        if (pluginData.scmImportEnabled) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
-                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
-                            pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
-                            results.putAll(pluginData)
+                        def userHasPathAccessToSshKey = storageService.hasPath(authContext, scmService.loadScmConfig(params.project, 'import')?.config?.sshPrivateKeyPath)
+                        if( !userHasPathAccessToSshKey ){
+                            def warning = "Failed to update SCM Import status; user don't have access rights to SCM's configured key."
+                            results.warning = warning
+                            log.error(warning)
+                        }else{
+                            pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
+                            if (pluginData.scmImportEnabled) {
+                                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
+                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
+                                pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                                pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
+                                results.putAll(pluginData)
+                            }
                         }
                     }
                 } catch (ScmPluginException e) {
