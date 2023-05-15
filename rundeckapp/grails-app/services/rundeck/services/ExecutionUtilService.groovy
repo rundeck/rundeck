@@ -448,13 +448,4 @@ class ExecutionUtilService {
         return [result: thread.result, interrupt: interrupt]
     }
 
-    long getAverageDuration(String jobuuid) {
-        def stats = ScheduledExecutionStats.findByJobUuid(jobuuid)
-        def statsContent= stats?.getContentMap()
-        if (statsContent && statsContent.totalTime && statsContent.execCount) {
-            return Math.floor(statsContent.totalTime / statsContent.execCount)
-        }
-        return 0;
-    }
-
 }
