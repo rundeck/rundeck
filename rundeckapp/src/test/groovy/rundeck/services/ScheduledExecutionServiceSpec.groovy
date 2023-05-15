@@ -39,6 +39,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -4228,6 +4229,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.rundeckAuthContextProcessor.authorizeProjectResource(*_)>>false
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
+        service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
@@ -4526,6 +4528,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
             service.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
@@ -4600,6 +4603,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
             service.jobStatsDataProvider = new GormJobStatsDataProvider()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
@@ -4637,7 +4641,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     user: 'bob',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
             ).save(flush: true)
-            def ref = new ReferencedExecution(scheduledExecution: job, status: 'success', execution: exec1).save()
+            def ref = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
 
             def authContext = Mock(AuthContext)
             def username = 'bob'
@@ -4648,6 +4652,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
             service.jobStatsDataProvider = new GormJobStatsDataProvider()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)

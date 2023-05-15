@@ -42,6 +42,8 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -653,6 +655,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     def "show job retry failed exec id filter nodes"(){
         given:
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
@@ -808,6 +811,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -873,7 +877,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 it[2]<<"format: $format"
             }
         }
-
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
@@ -1592,6 +1596,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        
 
 
 
@@ -1805,6 +1811,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.fileUploadService = Mock(FileUploadService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1912,6 +1920,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -1977,7 +1987,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: jobuuid,execution: exec).save()
         }
 
 
@@ -2010,6 +2020,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2080,7 +2092,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: "uuid",execution: exec).save()
         }
 
 
@@ -2112,6 +2124,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2356,6 +2370,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2433,6 +2449,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2514,6 +2532,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2600,6 +2620,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2938,6 +2960,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3022,6 +3046,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3106,6 +3132,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3187,6 +3215,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3292,6 +3322,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3375,6 +3407,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job and request has ajax header"
@@ -3447,6 +3481,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job and request has ajax header"

@@ -75,6 +75,7 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -159,6 +160,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
@@ -1920,9 +1922,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
                 //delete all reports
             ExecReport.findAllByExecutionId(e.id).each { rpt ->
                 rpt.delete()
@@ -3770,7 +3770,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
             executionReference = exec.asReference()
-            refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
+            refId = saveRefExecution(EXECUTION_RUNNING, null, se.uuid, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
                 String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3888,18 +3888,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
-            if(refId){
-                ReferencedExecution refExec = ReferencedExecution.findById(refId)
-                refExec.status = status
-                refExec.save(flush:true)
-            }else{
-                ScheduledExecution se = ScheduledExecution.findById(seId)
-                Execution exec = Execution.findById(execId)
-                ReferencedExecution refExec = new ReferencedExecution(
-                        scheduledExecution: se, execution: exec, status: status).save(flush:true)
-                return refExec.id
-            }
+    def saveRefExecution(String status, Long refId, String jobUuid = null, Long execId=null){
+        return referencedExecutionDataProvider.updateOrCreateReference(refId, jobUuid, execId, status)
     }
     /**
      * Query for executions for the specified job

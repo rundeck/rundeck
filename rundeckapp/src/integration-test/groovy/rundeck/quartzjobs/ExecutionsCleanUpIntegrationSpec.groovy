@@ -23,6 +23,8 @@ import groovy.mock.interceptor.MockFor
 import org.grails.config.NavigableMap
 import org.junit.Assert
 import org.junit.Test
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -90,6 +92,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
         def logFileStorageService = Mock(LogFileStorageService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -114,7 +117,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIds.size() > 0
 
         when:
-        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService)
+        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService, referencedExecutionDataProvider)
 
         then:
         execIds.size() == sucessTotal

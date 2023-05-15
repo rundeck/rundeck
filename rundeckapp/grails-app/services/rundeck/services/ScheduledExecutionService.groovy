@@ -49,6 +49,7 @@ import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
@@ -130,6 +131,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuditEventsService auditEventsService
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
@@ -994,15 +996,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return new DeleteJobResult(success:false,error:errmsg)
             }
-
+            
             jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
-
-            def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
-            if(refExec){
-                refExec.each { re ->
-                    re.delete()
-                }
-            }
+            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){
