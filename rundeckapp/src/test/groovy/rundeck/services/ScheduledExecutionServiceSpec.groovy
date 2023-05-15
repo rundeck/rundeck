@@ -4641,7 +4641,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     user: 'bob',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
             ).save(flush: true)
-            def ref = new ReferencedExecution(scheduledExecution: job, status: 'success', execution: exec1).save()
+            def ref = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
 
             def authContext = Mock(AuthContext)
             def username = 'bob'
