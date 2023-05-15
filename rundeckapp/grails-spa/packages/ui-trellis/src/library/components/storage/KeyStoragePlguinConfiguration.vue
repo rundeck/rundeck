@@ -5,7 +5,7 @@
         {{title}}
         <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
-          {{editButtonText || $t('Edit')}}
+          {{$t('Edit')}}
         </a>
       </h3>
     </div>
@@ -19,14 +19,14 @@
       <div>
         <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
-          {{editButtonText || $t('Edit')}}
+          {{$t('Edit')}}
         </a>
         <div class="help-block" v-if="help">{{help}}</div>
 
         <div class="list-group">
           <div
               class="list-group-item"
-              v-for="(plugin,index) in pluginConfigs"
+              v-for="(plugin,index) in workingData"
               :key="'pluginStorageAccessplugin_'+index"
           >
             <plugin-config
@@ -37,20 +37,7 @@
                 :show-description="true"
                 @hasKeyStorageAccess="hasKeyStorageAccess"
             >
-              <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
-
-            <div v-if="additionalProps && additionalProps.props.length>0">
-              <plugin-config
-                  :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
-                  v-model="plugin.extra"
-                  :config="plugin.extra.config"
-                  :key="'additional_config_'+index+'/'+((editFocus===index)?'true':'false' )"
-                  :show-title="false"
-                  :show-description="false"
-                  :plugin-config="additionalProps"
-              ></plugin-config>
-            </div>
             <plugin-config
                 :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
                 :serviceName="serviceName"
@@ -69,7 +56,7 @@
                   <span v-if="editFocus===-1">
                     <a
                         class="btn btn-default btn-xs"
-                        @click="editFocus=index"
+                        @click="editPlugin(index,plugin)"
                         :key="'edit'"
                     >{{$t('Edit')}}</a>
                   </span>
@@ -79,7 +66,7 @@
                         @click="savePlugin(plugin,index)"
                         :key="'save'"
                     >{{$t('Save')}}</a>
-                    <a class="btn btn-default btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
+                    <a class="btn btn-default btn-xs" @click="didCancel(plugin, index)">{{$t('Cancel')}}</a>
                   </span>
                   <span class="small text-info" v-if="plugin.modified">
                     <i class="fas fa-pen-square"></i>
@@ -94,44 +81,29 @@
                       {{$t('Delete')}}
                       <i class="fas fa-minus"></i>
                     </btn>
-                    <btn
-                        class="btn-xs"
-                        @click="movePlugin(index,plugin,-1)"
-                        :disabled="editFocus!==-1 || index==0"
-                    >
-                      <i class="fas fa-arrow-up"></i>
-                    </btn>
-                    <btn
-                        class="btn-xs"
-                        @click="movePlugin(index,plugin,1)"
-                        :disabled="editFocus!==-1 || index>=pluginConfigs.length-1"
-                    >
-                      <i class="fas fa-arrow-down"></i>
-                    </btn>
                   </div>
                 </div>
               </div>
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
           </div>
-          <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
+          <div class="list-group-item" v-if="workingData.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
-                {{$t('empty.message.default',[pluginLabels && pluginLabels.addButton || serviceName])}}
+                {{$t("No Plugin Groups Configured",serviceName)}}
               </span>
             </slot>
           </div>
         </div>
-
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="primary" @click="modalAddOpen=true">
-            {{pluginLabels && pluginLabels.addButton || serviceName}}
             <i class="fas fa-plus"></i>
+            {{"Plugin Config"}}
           </btn>
 
           <modal
               v-model="modalAddOpen"
-              :title="pluginLabels && pluginLabels.addButton || serviceName"
+              :title="serviceName"
               ref="modal"
               size="lg"
               id="add-new-modal"
@@ -140,6 +112,7 @@
             <div class="list-group">
               <a
                   v-for="plugin in pluginProviders"
+                  v-if="!plugin['configSet']"
                   v-bind:key="plugin.name"
                   href="#"
                   @click="addPlugin(plugin.name)"
@@ -161,10 +134,7 @@
           </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-          <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
-          <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>
-          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
-          <span class="text-warning" v-if="modified">Changes have not been saved.</span>
+          <slot name="footer"></slot>
         </div>
       </div>
     </div>
@@ -181,10 +151,21 @@ import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
+import {RundeckBrowser} from "@rundeck/client";
+import {cloneDeep} from "lodash"
+import _ from 'lodash';
+
+const client: RundeckBrowser = getRundeckContext().rundeckClient
+const rdBase = getRundeckContext().rdBase
+const context = getRundeckContext()
 
 interface PluginConf {
-  readonly type: string;
+  type: string;
   config: any;
+  project: any;
+}
+interface EditedProjectPluginConfigEntry {
+  entry: PluginConf;
 }
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
@@ -193,7 +174,10 @@ interface ProjectPluginConfigEntry {
   create?: boolean;
   origIndex?: number;
   modified: boolean;
+  configSet: boolean
 }
+
+const array_clone = (arr: any[]): any[] => arr.map(val => Object.assign({}, val))
 export default Vue.extend({
   name: "App",
   components: {
@@ -209,17 +193,31 @@ export default Vue.extend({
       project: "",
       rdBase: "",
       cancelUrl: "",
+      contextConfig: [] as PluginConf[],
       pluginConfigs: [] as ProjectPluginConfigEntry[],
-      removedPluginConfigs: [] as ProjectPluginConfigEntry[],
+      workingData: [] as ProjectPluginConfigEntry[],
+      editedPlugins:{} as {[key:string]:EditedProjectPluginConfigEntry},
+      pluginData:{} as {[key:string]:PluginConf},
       configOrig: [] as any[],
       rundeckContext: {} as RundeckContext,
       modalAddOpen: false,
-      pluginProviders: [],
+      pluginProviders: [] as any,
       pluginLabels: {},
+      projectSettings: {},
       editFocus: -1,
       errors: [] as string[],
       pluginStorageAccess: [] as any[]
     };
+  },
+  computed:{
+    exportedData():any[]{
+      let data = [] as any
+      let inputData = this.pluginConfigs
+      inputData.forEach((plugin, index) => {
+        data.push({type: plugin.entry.type, config: plugin.entry.config})
+      });
+      return data
+    }
   },
   props: {
     editMode: {
@@ -264,34 +262,70 @@ export default Vue.extend({
     },
     createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
       return {
-        extra: { config: Object.assign({}, entry.extra) },
-        entry: { type: entry.type, config: Object.assign({}, entry.config) },
-        origIndex: origIndex
+        entry: { type: entry.type, config: Object.assign({}, entry.config) }
       } as ProjectPluginConfigEntry;
     },
 
     serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
       return {
-        extra: Object.assign({}, entry.extra.config),
         type: entry.entry.type,
+        serviceName: "PluginGroup",
         config: Object.assign({}, entry.entry.config),
-        origIndex: entry.origIndex
       };
     },
     addPlugin(provider: string) {
       this.modalAddOpen = false;
-      this.pluginConfigs.push({
+      this.workingData.push({
         entry: { type: provider, config: {} },
         extra: { config: {} },
         create: true
       } as ProjectPluginConfigEntry);
 
-      this.setFocus(this.pluginConfigs.length - 1);
+      this.setFocus(this.workingData.length - 1);
     },
     setFocus(focus: number) {
       this.editFocus = focus;
     },
+    editPlugin(index:any, plugin: ProjectPluginConfigEntry){
+      this.editFocus=index
+      this.editedPlugins[plugin.entry.type]= {entry: plugin.entry}
+    },
+    didCancel(plugin: ProjectPluginConfigEntry, index: any){
+      if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type]){
+        this.errors=[]
+        this.removePlugin(plugin, index)
+      }
+      else{
+        this.editFocus=-1
+        this.errors=[]
+        const found = this.workingData.indexOf(plugin);
+        if(this.editedPlugins[plugin.entry.type]){
+          this.workingData[found].entry=this.editedPlugins[plugin.entry.type].entry
+          this.pluginConfigs = array_clone(this.workingData)
+        }
+        else{
+          this.removePlugin(plugin, index)
+        }
+      }
+
+    },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+
+      if(this.errors.length>0){
+        this.errors=[]
+      }
+
+      if(Object.keys(plugin.entry.config).length===0){
+        this.removePlugin(plugin,index)
+        return
+      }
+      const type = plugin.entry.type
+      this.pluginProviders.forEach((item: any, index: any)=> {
+        if(item.name == type){
+          item.configSet=true
+        }
+
+      })
       //validate
       const validation: PluginValidation = await pluginService.validatePluginConfig(
           this.serviceName,
@@ -303,30 +337,33 @@ export default Vue.extend({
         return;
       }
       Vue.delete(plugin, "validation");
+      this.pluginConfigs = array_clone(this.workingData)
       plugin.create = false;
       plugin.modified = true;
-      this.setPluginConfigsModified();
       this.setFocus(-1);
+      this.$emit("input", this.exportedData);
     },
-    removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
-      const found = this.pluginConfigs.indexOf(plugin);
-      this.pluginConfigs.splice(found, 1);
-      if (!plugin.create) {
-        this.setPluginConfigsModified();
-      }
-      if (plugin.create === undefined)
-        this.removedPluginConfigs.push(plugin);
-
+    removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+      const type = plugin.entry.type
+      this.pluginProviders.forEach((item: any, index: any)=> {
+        if(item.name == type){
+          item.configSet=false
+        }
+      })
+      const found = this.workingData.indexOf(plugin);
+      this.workingData.splice(found, 1);
+      this.pluginConfigs = array_clone(this.workingData)
+      this.$emit("input", this.exportedData)
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
 
     movePlugin(index: number, plugin: ProjectPluginConfigEntry, shift: number) {
-      const found = this.pluginConfigs.indexOf(plugin);
-      const item = this.pluginConfigs.splice(found, 1)[0];
+      const found = this.workingData.indexOf(plugin);
+      const item = this.workingData.splice(found, 1)[0];
       const newindex = found + shift;
-      this.pluginConfigs.splice(newindex, 0, item);
-      this.setPluginConfigsModified();
+      this.workingData.splice(newindex, 0, item);
+      this.pluginConfigs = array_clone(this.workingData)
       this.editFocus = -1;
     },
     didSave(success: boolean) {
@@ -335,133 +372,10 @@ export default Vue.extend({
       }
     },
     async savePlugins() {
-      try {
-        const result = await this.saveProjectPluginConfig(
-            this.project,
-            this.configPrefix,
-            this.serviceName,
-            this.pluginConfigs,
-            this.removedPluginConfigs
-        );
-        if (result.success) {
-          this.didSave(true);
-          this.notifySuccess("Success", "Configuration Saved");
-          this.configOrig = result.data.plugins;
-          //copy
-          this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
-          this.pluginConfigsModifiedReset();
-          this.$emit("saved", result);
-        }
-      } catch (error) {
-        //@ts-ignore
-        this.notifyError(error.message, []);
-      }
-    },
-    async loadProjectPluginConfig(
-        project: string,
-        configPrefix: string,
-        serviceName: string
-    ) {
-      const response = await axios({
-        method: "get",
-        headers: { "x-rundeck-ajax": true },
-        url: `${this.rdBase}framework/projectPluginsAjax`,
-        params: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName,
-          format: "json"
-        },
-        withCredentials: true
-      });
-      if (!response || response.status < 200 || response.status >= 300) {
-        throw new Error(
-            `Error reading project configuration for ${serviceName}: Response status: ${
-                response ? response.status : "None"
-            }`
-        );
-      }
-      if (response.data && response.data.plugins) {
-        return response.data.plugins;
-      }
-    },
-    async saveProjectPluginConfig(
-        project: string,
-        configPrefix: string,
-        serviceName: string,
-        data: ProjectPluginConfigEntry[],
-        removedData: ProjectPluginConfigEntry[]
-    ) {
-
-      const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        pathTemplate: `/framework/saveProjectPluginsAjax`,
-        baseUrl: this.rdBase,
-        method: "POST",
-        queryParameters: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName
-        },
-        body: {
-          plugins: data.map(this.serializeConfigEntry),
-          removedPlugins: removedData.map(this.serializeConfigEntry)
-        }
-      });
-
-      if (resp && resp.status >= 200 && resp.status < 300) {
-        return { success: true, data: resp.parsedBody };
-      }
-      if (resp && resp.status == 422) {
-        //look for validation
-        if (resp.parsedBody && resp.parsedBody.errors instanceof Array) {
-          this.errors = resp.parsedBody.errors;
-          if (resp.parsedBody.reports) {
-            const reports = resp.parsedBody.reports as { [key: string]: any };
-            //console.log("reports ",resp.parsedBody.reports)
-            this.pluginConfigs.forEach((plugin, index) => {
-              if (reports[`${index}`] !== undefined) {
-                plugin.validation = {
-                  valid: false,
-                  errors: reports[`${index}`]
-                };
-              }
-            });
-          }
-          return { success: false };
-        }
-      }
-      throw new Error(
-          `Error saving project configuration for ${serviceName}: Response status: ${
-              resp ? resp.status : "None"
-          }`
-      );
-    },
-    cancelAction() {
-      this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
-      this.pluginConfigsModifiedReset();
-      this.didSave(false);
-    },
-    setPluginConfigsModified() {
-      this.modified = true;
-      this.$emit("modified");
-      this.notifyPluginConfigs();
-    },
-    pluginConfigsModified() {
-      if (this.loaded) {
-        this.setPluginConfigsModified();
-      }
-    },
-    pluginConfigsModifiedReset() {
-      this.modified = false;
-      this.removedPluginConfigs = []
-      this.$emit("reset");
-      this.notifyPluginConfigs();
-    },
-    notifyPluginConfigs(){
-      this.$emit("plugin-configs-data",this.pluginConfigs);
+      this.$emit("saved", this.pluginConfigs);
     },
     configUpdated() {
-      this.pluginConfigsModified();
+      this.modified = true;
     },
     hasKeyStorageAccess(provider: any){
       this.pluginStorageAccess.push(provider)
@@ -477,42 +391,37 @@ export default Vue.extend({
 
       this.pluginStorageAccess = pluginStorageAccess;
     },
-  },
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    const self = this;
-    this.notifyPluginConfigs();
-    if (
-        window._rundeck &&
-        window._rundeck.rdBase &&
-        window._rundeck.projectName
-    ) {
-      this.rdBase = window._rundeck.rdBase;
-      this.project = window._rundeck.projectName;
+    async getPluginConfigs(){
+      let projectPluginConfigList = [] as ProjectPluginConfigEntry[]
+      let data = await pluginService.getPluginProvidersForService(this.serviceName)
 
-      this.loadProjectPluginConfig(
-          window._rundeck.projectName,
-          this.configPrefix,
-          this.serviceName
-      ).then(pluginConfigs => {
-        this.configOrig = pluginConfigs;
-        //copy
-        this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
-            this.createConfigEntry(val, index)
-        );
-        this.loaded = true;
-        this.notifyPluginConfigs();
-      }).catch(error => console.error(error));
+      if (data.service) {
+        this.pluginProviders = data.descriptions;
+        this.pluginLabels = data.labels;
 
-      pluginService
-          .getPluginProvidersForService(this.serviceName)
-          .then(data => {
-            if (data.service) {
-              this.pluginProviders = data.descriptions;
-              this.pluginLabels = data.labels;
+        this.contextConfig.forEach((provider2: any, index: any) => {
+          let projectPluginConfig = {entry:provider2,create:true} as ProjectPluginConfigEntry
+          projectPluginConfigList.push(projectPluginConfig)
+          this.pluginProviders.forEach((provider: any, index: any) => {
+            if (provider.name === provider2.type) {
+              provider['configSet'] = true
             }
-          }).catch(error => console.error(error));
+          })
+        })
+        this.loaded = true
+      }
+
+      this.workingData = projectPluginConfigList
+      this.pluginConfigs = array_clone(projectPluginConfigList)
+      this.$emit('input', this.exportedData)
     }
+  },
+  async mounted() {
+    this.project = window._rundeck.projectName;
+    const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
+    this.contextConfig = pluginGroups.config
+    await this.getPluginConfigs()
+
   }
 });
 </script>
