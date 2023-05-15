@@ -68,8 +68,6 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 /**
  * Manages scm integration
