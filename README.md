@@ -4,8 +4,9 @@ Rundeck Step Disabler - PD Hackweek '23 Project
 ## Technical Debt To Date
 
 1. Fix the log output in EngineWorkflowExecutor.logSkippedOperations to be more accurate about the skip cause.
+2. Externalize CSS on the step dashboards
 
-## Tests To Asses Basic Functionality
+## Tests To Assess Basic Functionality
 
 1. Basic enable/disable jobs
 2. Export to file
