@@ -9,6 +9,7 @@ import VueI18n from 'vue-i18n'
 import international from './i18n'
 import moment from 'moment'
 import uivLang from '../../../library/utilities/uivi18n'
+import {getRundeckContext} from '@/library'
 
 Vue.config.productionTip = false
 
@@ -42,13 +43,16 @@ const i18n = new VueI18n({
   messages // set locale messages,
 
 })
-
-/* eslint-disable no-new */
-new Vue({
-  el: '#user-summary-vue',
-  components: {
-    App
-  },
-  template: '<App/>',
-  i18n
-})
+const rootStore = getRundeckContext().rootStore
+rootStore.ui.addItems([
+    {
+        section: 'user-summary',
+        location: 'main',
+        visible: true,
+        widget: Vue.extend({
+            components: {App},
+            template: '<App/>',
+            i18n
+        })
+    }
+])

@@ -24,9 +24,11 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.query.RdExecQuery
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponseImpl
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.core.auth.AuthConstants
-import org.springframework.transaction.TransactionDefinition
-import rundeck.ExecReport
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 
@@ -38,55 +40,31 @@ class ReportService  {
     def grailsApplication
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     ConfigurationService configurationService
+    ExecReportDataProvider execReportDataProvider
 
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
-    public Map reportExecutionResult(Map fields) {
+    public Map reportExecutionResult(SaveReportRequestImpl saveReportRequest) {
         /**
          * allowed fields are specified
          */
-
-        if (fields['rundeckEpochDateStarted']) {
-            def long dstart = Long.parseLong(fields['rundeckEpochDateStarted'])
-            if (dstart > 0) {
-                fields['dateStarted'] = new Date(dstart)
-            }
-        } else if (fields['epochDateStarted']) {
-            def long dstart = Long.parseLong(fields['epochDateStarted'])
-            if (dstart > 0) {
-                fields['dateStarted'] = new Date(dstart)
-            }
+        if (!saveReportRequest.dateStarted) {
+            saveReportRequest.dateStarted= saveReportRequest.dateCompleted
         }
-        if (fields['rundeckEpochDateEnded']) {
-            def long dstart = Long.parseLong(fields['rundeckEpochDateEnded'])
-            if (dstart > 0) {
-                fields['dateCompleted'] = new Date(dstart)
-            }
-        } else if (fields['epochDateEnded']) {
-            def long dstart = Long.parseLong(fields['epochDateEnded'])
-            if (dstart > 0) {
-                fields['dateCompleted'] = new Date(dstart)
-            }
+        if(!saveReportRequest.message){
+            saveReportRequest.message="[no message]"
         }
-
-        if (!fields['dateStarted']) {
-            fields['dateStarted'] = fields['dateCompleted']
-        }
-        if(!fields.message){
-            fields.message="[no message]"
-        }
-        fields.actionType= fields.status
-        def rep = new ExecReport(fields)
+        SaveReportResponseImpl saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
 
         //TODO: authorize event creation?
 
-        if (rep && !rep.save(flush: true)) {
+        if (!saveReportResponse.isSaved) {
 //            System.err.println("error saving report: ${fields}")
 //            rep.errors.allErrors.each {
 //                System.err.println(it)
 //            }
-            return [error:true,report:rep]
+            return [error:true,report:saveReportResponse.report]
         }else{
             return [success:true]
         }
@@ -214,8 +192,8 @@ class ReportService  {
         def eqfilters = [
             stat: 'status',
             reportId: 'reportId',
-            jobId:'jcJobId',
-            proj: 'ctxProject',
+            jobId:'jobId',
+            proj: 'project',
         ]
         return eqfilters
     }
@@ -223,13 +201,10 @@ class ReportService  {
     /**
      * Count the query results matching the filter
      */
-    def countExecutionReports(ExecQuery query) {
+    def countExecutionReports(RdExecQuery query) {
 
-        def total = ExecReport.createCriteria().count {
+        def total = execReportDataProvider.countExecutionReports(query)
 
-            applyExecutionCriteria(query, delegate)
-
-        }
         return total
     }
 
@@ -239,8 +214,8 @@ class ReportService  {
                 reportId: 'reportId',
         ]
         def jobfilters = [
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',
@@ -307,11 +282,11 @@ class ReportService  {
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
                                 for(def partition : execProjectsPartitioned){
-                                    'in'('this.ctxProject', partition)
+                                    'in'('this.project', partition)
                                 }
                             }
                         })
-                        eq('jcJobId', String.valueOf(se.id))
+                        eq('jobId', String.valueOf(se.id))
                         and{
                             jobfilters.each { key, val ->
                                 if (query["${key}Filter"] == 'null') {
@@ -352,8 +327,8 @@ class ReportService  {
 
                 if (query.titleFilter) {
                     or {
-                        eq('jcJobId', '')
-                        isNull('jcJobId')
+                        eq('jobId', '')
+                        isNull('jobId')
                     }
                 }
                 if (query.jobListFilter || query.excludeJobListFilter) {
@@ -398,11 +373,11 @@ class ReportService  {
 
             if (isJobs) {
                 or {
-                    isNotNull("jcJobId")
+                    isNotNull("jobId")
                     isNotNull("executionId")
                 }
             } else {
-                isNull("jcJobId")
+                isNull("jobId")
                 isNull("executionId")
             }
 
@@ -424,12 +399,12 @@ class ReportService  {
             query.statFilter='cancel'
         }
     }
-    def getExecutionReports(ExecQuery query, boolean isJobs) {
+    def getExecutionReports(RdExecQuery query, boolean isJobs) {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
-                jobId: 'jcJobId',
-                proj: 'ctxProject',
+                jobId: 'jobId',
+                proj: 'project',
         ]
         def txtfilters = [
                 user: 'author',
@@ -458,25 +433,9 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
-        def runlist=ExecReport.createCriteria().list {
+        def seId = se?.id?: null
+        def runlist = execReportDataProvider.getExecutionReports(query, isJobs, seId)
 
-            if (query?.max) {
-                maxResults(query?.max.toInteger())
-            } else {
-                maxResults(configurationService.getInteger("pagination.default.max",20))
-            }
-            if (query?.offset) {
-                firstResult(query.offset.toInteger())
-            }
-
-            applyExecutionCriteria(query, delegate,isJobs, se)
-
-            if (query && query.sortBy && filters[query.sortBy]) {
-                order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
-            } else {
-                order("dateCompleted", 'desc')
-            }
-        }
         def executions=[]
         def lastDate = -1
         runlist.each{
@@ -485,13 +444,8 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def minLevel = configurationService.getString("min.isolation.level","")
-        def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
-        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
-            ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, se)
-            }
-        }
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query, isJobs, seId)
+
         filters.putAll(specialfilters)
 
         return [
@@ -502,27 +456,6 @@ class ReportService  {
             _filters:filters
             ]
 	}
-    /**
-     * Find any report status strings that are incorrect and fix them
-     */
-    def fixReportStatusStrings(){
-        int count=0
-        ExecReport.findAllByStatus("succeeded").each{
-            it.status='succeed'
-            it.actionType='succeed'
-            it.save()
-            count++
-        }
-        ExecReport.findAllByStatus("failed").each{
-            it.status='fail'
-            it.actionType='fail'
-            it.save()
-            count++
-        }
-        if(count){
-            log.info("Corrected ${count} report status strings")
-        }
-    }
 
     /**
      * Sorts jobs according to user permission
@@ -584,6 +517,9 @@ class ReportService  {
         return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
     }
 
+    def deleteByExecutionId(Long id){
+        execReportDataProvider.deleteAllByExecutionId(id)
+    }
     private boolean isOracleDatasource(){
         def dataSource = applicationContext.getBean('dataSource', DataSource)
         def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName

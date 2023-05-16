@@ -29,6 +29,10 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.providers.GormExecReportDataProvider
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -92,7 +96,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
+        GormExecReportDataProvider providerExec = new GormExecReportDataProvider()
+        GormReferencedExecutionDataProvider referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         service.userDataProvider = provider
+        service.execReportDataProvider = providerExec
+        service.referencedExecutionDataProvider = referencedExecutionDataProvider
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -476,7 +485,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def params = [:]
         service.reportService = Stub(ReportService) {
             reportExecutionResult(_) >> { args ->
-                params = args[0]
+                SaveReportRequestImpl saveReportRequest = args[0]
+                params = [
+                        'executionId': saveReportRequest.executionId,
+                        'jcJobId': saveReportRequest.jobId,
+                        'reportId': saveReportRequest.reportId,
+                        'adhocExecution': saveReportRequest.adhocExecution,
+                        'ctxProject': saveReportRequest.project,
+                        'author': saveReportRequest.author,
+                        'title': saveReportRequest.title,
+                        'status': saveReportRequest.status,
+                        'node': saveReportRequest.node,
+                        'message': saveReportRequest.message,
+                        'dateStarted': saveReportRequest.dateStarted,
+                        'dateCompleted': saveReportRequest.dateCompleted,
+                        'succeededNodeList': saveReportRequest.succeededNodeList,
+                        'failedNodeList': saveReportRequest.failedNodeList,
+                        'filterApplied': saveReportRequest.filterApplied,
+                ]
             }
         }
         when:
@@ -1210,7 +1236,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
-        ExecReport execReport = ExecReport.fromExec(execution).save()
+        ExecReport execReport = ExecReport.fromExec(execution)
         assert execReport!=null
         def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
@@ -3012,6 +3038,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -3945,8 +3972,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        def refexec = ReferencedExecution.findByScheduledExecution(job)
-        def seStats = ScheduledExecutionStats.findBySe(job)
+        def refexec = ReferencedExecution.findByJobUuid(job.uuid)
+        def seStats = ScheduledExecutionStats.findByJobUuid(job.uuid)
         if(expectedRef){
             seStats.getContentMap().refExecCount==0
         }else{
@@ -5960,7 +5987,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
-        ExecReport execReport = ExecReport.findByJcJobId(job.id.toString())
+        ExecReport execReport = ExecReport.findByJobId(job.id.toString())
 
         then:
         triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)

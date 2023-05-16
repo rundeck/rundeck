@@ -1,18 +1,18 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.sql.JoinType
+import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
 
-class ReferencedExecution {
-    ScheduledExecution scheduledExecution
+class ReferencedExecution implements RdReferencedExecution{
+    String jobUuid
     String status
     Execution execution
 
     static belongsTo=[Execution]
 
     static constraints = {
-        scheduledExecution(nullable:true)
+        jobUuid(nullable:true)
         status(nullable:true)
         execution(nullable: false)
 
@@ -21,7 +21,7 @@ class ReferencedExecution {
     static mapping = {
 
         DomainIndexHelper.generate(delegate) {
-            index 'REFEXEC_IDX_1', ['scheduledExecution', 'status']
+            index 'REFEXEC_IDX_JOBUUID', ['jobUuid', 'status']
         }
     }
 
@@ -29,7 +29,7 @@ class ReferencedExecution {
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
             isNotNull( 'e.scheduledExecution')
-            eq("scheduledExecution", se)
+            eq("jobUuid", se.uuid)
             projections {
                 distinct('e.scheduledExecution')
             }
@@ -39,10 +39,25 @@ class ReferencedExecution {
     static List executionProjectList(ScheduledExecution se, int max = 0){
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            eq("scheduledExecution", se)
+            eq("jobUuid", se.uuid)
             projections {
                 groupProperty('e.project', "project")
             }
         }
+    }
+
+    static List<Long> parentListScheduledExecutionId(ScheduledExecution se, int max = 0){
+        return createCriteria().list(max: (max!=0)?max:null) {
+            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
+            isNotNull( 'e.scheduledExecution')
+            eq("jobUuid", se.uuid)
+            projections {
+                distinct('e.scheduledExecution.id')
+            }
+        } as List<Long>
+    }
+
+    Serializable getExecutionId(){
+        execution.id
     }
 }

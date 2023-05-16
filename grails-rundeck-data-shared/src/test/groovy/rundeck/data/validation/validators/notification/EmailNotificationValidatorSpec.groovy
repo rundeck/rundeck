@@ -29,7 +29,7 @@ class EmailNotificationValidatorSpec extends Specification {
         NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
         NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'
         NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'
-        NotificationConstants.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME | 'email' | 'user@test'
         NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
     }
 

@@ -73,7 +73,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             boolean saveStateCalled = false
             1 * mockes.saveExecutionState(
-                scheduledExecution.id, execution.id, {
+                scheduledExecution.uuid, execution.id, {
                 it.status == 'succeeded'
                 it.cancelled == false
                 it.failedNodes == null
@@ -84,7 +84,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }
             def saveStatsComplete = false
             def fail3times = throwXTimes(3)
-            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.id, execution.id, { it > 0 }) >> {
+            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> {
                 fail3times()
                 saveStatsComplete = true
             }
@@ -101,7 +101,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                     false,
                     false,
                     null,
-                    scheduledExecution.id,
+                    scheduledExecution.uuid,
                     null,
                     execMap
                 )
@@ -175,18 +175,18 @@ class ExecutionJobIntegrationSpec extends Specification {
                     false,
                     false,
                     null,
-                    scheduledExecution.id,
+                    scheduledExecution.uuid,
                     null,
                     execMap
                 )
         then:
             1 * mockes.saveExecutionState(
-                scheduledExecution.id, execution.id, {
+                scheduledExecution.uuid, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, _, _
             ) >> true
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.id, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
     }
 
     def testSaveStateWithFailureNoJob() {
@@ -208,7 +208,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def fail3times = throwXTimes(3)
 
             2 * mockes.saveExecutionState(
-                scheduledExecution.id, execution.id, {
+                scheduledExecution.uuid, execution.id, {
                 it.subMap(expectresult.keySet()) == expectresult
             }, _, _
             ) >> {
@@ -226,14 +226,14 @@ class ExecutionJobIntegrationSpec extends Specification {
                     false,
                     false,
                     null,
-                    scheduledExecution.id,
+                    scheduledExecution.uuid,
                     null,
                     execMap
                 )
         then:
             !result
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.id, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
     }
 
 
@@ -267,6 +267,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 testExecmap
             }
             _ * es.isApplicationShutdown()
+            1 * es.getAverageDuration(_) >> 1
 
 
             1 * eus.finishExecution(testExecmap)
@@ -319,7 +320,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def initMap = new ExecutionJob.RunContext([scheduledExecution: [logOutputThresholdStatus: 'custom']])
 
         when:
-            job.saveState(null, mockes, execution, true, false, false, true, null, -1, initMap, execMap)
+            job.saveState(null, mockes, execution, true, false, false, true, null, null, initMap, execMap)
         then:
             1 * mockes.saveExecutionState(
                 null, execution.id, {
@@ -473,7 +474,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 frameworkService: mockfs,
                 executionService: mockes,
                 executionUtilService: mockeus,
@@ -486,7 +487,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def result = job.initialize(null, contextMock)
 
         then:
-        result.scheduledExecutionId == se.id
+        result.scheduledExecutionId == se.uuid
         result.scheduledExecution.id == se.id
         result.executionService == mockes
         result.executionUtilService == mockeus
@@ -502,7 +503,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             ExecutionJob job = new ExecutionJob()
             def mockes = Mock(ExecutionService)
 
-            def contextMock = new JobDataMap(scheduledExecutionId: se.id.toString(), executionService: mockes)
+            def contextMock = new JobDataMap(scheduledExecutionId: se.uuid, executionService: mockes)
 
         when:
             job.initialize(null, contextMock)
@@ -517,7 +518,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             ScheduledExecution se = setupJob()
             ExecutionJob job = new ExecutionJob()
 
-            def contextMock = new JobDataMap(scheduledExecutionId: se.id.toString())
+            def contextMock = new JobDataMap(scheduledExecutionId: se.uuid)
 
         when:
             job.initialize(null, contextMock)
@@ -558,7 +559,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             def contextMock = new JobDataMap(
                 timeout: '123',
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 executionId: e.id.toString(),
                 frameworkService: mockfs,
                 executionService: mockes,
@@ -648,7 +649,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 frameworkService: mockfs,
                 executionService: mockes,
                 executionUtilService: mockeus,
@@ -712,7 +713,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 frameworkService: mockfs,
                 executionService: mockes,
                 executionUtilService: mockeus,
@@ -900,7 +901,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def execMap = new ExecutionService.AsyncStarted()
 
         when:
-            job.saveState(null, mockes, execution, true, false, false, true, null, -1, null, execMap)
+            job.saveState(null, mockes, execution, true, false, false, true, null, null, null, execMap)
         then:
 
             1 * mockes.saveExecutionState(
@@ -958,6 +959,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
     ScheduledExecution setupJob() {
         def se = new ScheduledExecution(
+            uuid: UUID.randomUUID().toString(),
             jobName: 'blue',
             project: 'AProject',
             groupPath: 'some/where',

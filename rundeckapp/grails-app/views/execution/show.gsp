@@ -32,6 +32,7 @@
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
                                       AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
+      <g:set var="scheduledExecutionService" bean="${rundeck.services.ScheduledExecutionService}"/>
       <g:each in="${authKeys}" var="actionName">
       <g:if test="${execution.scheduledExecution}">
           <%-- set auth values --%>
@@ -1155,8 +1156,8 @@ search
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
       </g:if>
-        totalDuration : '${enc(js:scheduledExecution?.getTotalTimeStats()?: -1)}',
-        totalCount: '${enc(js: scheduledExecution?.getExecCountStats() ?: -1)}',
+        totalDuration : '${enc(js:scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid)?: -1)}',
+        totalCount: '${enc(js: scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid) ?: -1)}',
         colStep:{value:${enc(js: !isAdhoc)} },
         colNode:{value:false}
       });

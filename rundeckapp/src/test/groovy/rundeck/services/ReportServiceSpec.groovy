@@ -150,8 +150,8 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
 
             ExecReport execReport = new ExecReport(
                     jcExecId: e1.id,
-                    jcJobId: job.id,
-                    ctxProject: "AProject",
+                    jobId: job.id,
+                    project: "AProject",
                     author: 'admin',
                     title: "title",
                     message: "message",
@@ -163,8 +163,8 @@ class ReportServiceSpec extends Specification implements ServiceUnitTest<ReportS
             execReport.save(flush: true, failOnError: true)
             ExecReport execReport2 = new ExecReport(
                     jcExecId: e2.id,
-                    jcJobId: job2.id,
-                    ctxProject: "AProject",
+                    jobId: job2.id,
+                    project: "AProject",
                     author: 'admin',
                     title: "title",
                     message: "message",

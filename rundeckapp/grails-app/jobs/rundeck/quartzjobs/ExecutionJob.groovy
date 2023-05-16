@@ -168,7 +168,7 @@ class ExecutionJob implements InterruptableJob {
                 wasTimeout,
                 initMap.temp,
                 statusString,
-                initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
+                initMap.scheduledExecutionId,
                 initMap,
                 result?.execmap
         )
@@ -190,7 +190,7 @@ class ExecutionJob implements InterruptableJob {
         boolean temp
         long executionId
         ScheduledExecution scheduledExecution
-        long scheduledExecutionId
+        String scheduledExecutionId
         ExecutionService executionService
         ExecutionUtilService executionUtilService
         FrameworkService frameworkService
@@ -226,7 +226,7 @@ class ExecutionJob implements InterruptableJob {
             if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
-            initMap.scheduledExecutionId = initMap.scheduledExecution.id
+            initMap.scheduledExecutionId = initMap.scheduledExecution.uuid
         }
 
         initMap.executionService = requireEntry(jobDataMap, "executionService", ExecutionService)
@@ -389,7 +389,7 @@ class ExecutionJob implements InterruptableJob {
         long jobAverageDuration=0
         if(runContext.scheduledExecution){
             ScheduledExecution.withTransaction {
-                jobAverageDuration = runContext.scheduledExecution.averageDuration?:0
+                jobAverageDuration = runContext.executionService.getAverageDuration(runContext.scheduledExecutionId)?:0
             }
         }
 
@@ -556,7 +556,7 @@ class ExecutionJob implements InterruptableJob {
         boolean timedOut,
         boolean isTemp,
         String statusString,
-        long scheduledExecutionId = -1,
+        String scheduledExecutionId,
         RunContext initMap,
         ExecutionService.AsyncStarted execmap
     )
@@ -591,7 +591,7 @@ class ExecutionJob implements InterruptableJob {
         ]
         Closure action={
             executionService.saveExecutionState(
-                    scheduledExecutionId > 0 ? scheduledExecutionId : null,
+                    scheduledExecutionId,
                     execution.id,
                     resultMap,
                     execmap,
@@ -648,12 +648,12 @@ class ExecutionJob implements InterruptableJob {
         return execution
     }
 
-    @CompileStatic
+
     def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
-        def ScheduledExecution se=null
-        se = ScheduledExecution.get(Long.parseLong(seid))
-        if(se){
+        def se=null
+        se = ScheduledExecution.findByUuid(seid)
+        if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }
 
