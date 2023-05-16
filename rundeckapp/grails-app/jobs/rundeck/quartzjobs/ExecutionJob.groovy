@@ -211,6 +211,7 @@ class ExecutionJob implements InterruptableJob {
         def initMap = new RunContext()
         initMap.temp = "true" == jobDataMap.get("isTempExecution")
         def executionId = jobDataMap.get("executionId")
+        String project = jobDataMap.get("project")
         if (initMap.temp) {
             //temp execution, means no associated ScheduledExecution object
             if (!executionId) {
@@ -229,14 +230,20 @@ class ExecutionJob implements InterruptableJob {
             initMap.scheduledExecutionId = initMap.scheduledExecution.uuid
         }
 
+        FrameworkService frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
         initMap.executionService = requireEntry(jobDataMap, "executionService", ExecutionService)
         initMap.executionUtilService = requireEntry(jobDataMap, "executionUtilService", ExecutionUtilService)
-        initMap.frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
         initMap.authContextProvider = requireEntry(jobDataMap, "authContextProvider", AuthContextProvider)
         initMap.jobSchedulesService = requireEntry(jobDataMap, "jobSchedulesService", JobSchedulesService)
         initMap.jobSchedulerService = requireEntry(jobDataMap, "jobSchedulerService", JobSchedulerService)
+        initMap.frameworkService = frameworkService
+        initMap.framework = frameworkService.rundeckFramework
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
+        }
+        
+        if(frameworkService.isFrameworkProjectDisabled(project)) {
+            throw new IllegalStateException("Cannot run execution #${executionId}: Project ${project} is disabled")
         }
 
         if(initMap.temp){
@@ -246,8 +253,6 @@ class ExecutionJob implements InterruptableJob {
                 throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
             }
             initMap.execution.refresh()
-            FrameworkService frameworkService = initMap.frameworkService
-            initMap.framework = frameworkService.rundeckFramework
             initMap.authContext=requireEntry(jobDataMap,'authContext',UserAndRolesAuthContext)
         }else if(executionId){
             //a job execution invoked by a user
@@ -285,8 +290,6 @@ class ExecutionJob implements InterruptableJob {
                         DataContextUtils.addContext("option", jobArguments, null))
                 initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
             }
-            FrameworkService frameworkService = initMap.frameworkService
-            initMap.framework = frameworkService.rundeckFramework
             initMap.authContext = requireEntry(jobDataMap, 'authContext', UserAndRolesAuthContext)
         }else{
             //a scheduled job that was triggered
@@ -313,8 +316,6 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
 
-            FrameworkService frameworkService = initMap.frameworkService
-            def project = initMap.scheduledExecution.project
             def fwProject = frameworkService.getFrameworkProject(project)
             def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
             def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
@@ -327,8 +328,6 @@ class ExecutionJob implements InterruptableJob {
                 return initMap
             }
 
-
-            initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = initMap.authContextProvider.getAuthContextForUserAndRolesAndProject(
                     initMap.scheduledExecution.user,
