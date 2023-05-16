@@ -34,6 +34,12 @@
 
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
+    <asset:stylesheet href="static/css/pages/project-nodes-editor.css"/>
+    <asset:javascript src="static/pages/project-nodes-editor.js" defer="defer"/>
+    <g:embedJSON data="${[index:index,nextPageUrl:g.createLink(controller: 'framework',
+                                                           action: 'projectNodeSources',
+                                                           params: [project: project],absolute:true)]}"
+                 id="editProjectNodeSourceData"></g:embedJSON>
     <g:javascript>
 
         function init() {
@@ -46,6 +52,9 @@
             jQuery('.apply_ace').each(function () {
                 _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
             });
+            window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+                "editProjectNodeSourceData": loadJsonData('editProjectNodeSourceData')
+            })
         }
         jQuery(init);
     </g:javascript>
@@ -64,10 +73,10 @@
   <div class="row">
     <div class="col-xs-12">
       <div class="card">
+          <g:if test="${params.legacyUi}">
         <g:form action="saveProjectNodeSourceFile" method="post"
                 params="${[project: params.project, index: index]}"
                 useToken="true"
-                id=""
                 class="form-horizontal">
             <div class="">
                 <div class="" id="createform">
@@ -134,12 +143,6 @@
                         <g:if test="${fileEmpty}">
                             <div class="text-warning"><g:message code="project.nodes.edit.empty.description" /></div>
                         </g:if>
-
-                        <div class="vue-ui-socket">
-                            <div>
-                                <ui-socket section="noderesource" location="main" :event-bus="eventBus"/>
-                            </div>
-                        </div>
                     </div>
 
 
@@ -150,6 +153,10 @@
                 </div>
             </div>
         </g:form>
+          </g:if>
+          <g:else>
+            <ui-socket class="vue-ui-socket" section="edit-project-node-source-file" location="main"/>
+          </g:else>
       </div>
     </div>
 
