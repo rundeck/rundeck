@@ -24,6 +24,7 @@ module.exports = {
     'pages/command':                          { entry: './src/app/pages/command/main.ts'},
     'pages/community-news':                   { entry: './src/app/pages/community-news/main.js'},
     'pages/project-nodes-config':             { entry: './src/app/pages/project-nodes-config/main.js'},
+    'pages/project-nodes-editor':             { entry: './src/app/pages/project-nodes-editor/main.ts'},
     'pages/project-config':                   { entry: './src/app/pages/project-config/main.js'},
     'pages/execution-show':                   { entry: './src/app/pages/execution-show/main.js'},
     'pages/webhooks':                         { entry: './src/app/pages/webhooks/main.js'},
