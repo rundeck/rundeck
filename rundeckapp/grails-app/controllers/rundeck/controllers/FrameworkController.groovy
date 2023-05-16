@@ -3253,7 +3253,9 @@ Since: v23''',
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
         }
-
+        if(source.source.nodes.size()<1){
+            return render(status: HttpServletResponse.SC_NO_CONTENT)
+        }
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
 
