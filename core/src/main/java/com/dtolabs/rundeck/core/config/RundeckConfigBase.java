@@ -393,7 +393,7 @@ public class RundeckConfigBase {
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
         Enabled pluginGroups = new Enabled(false);
-
+        Debug debug = new Debug();
 
 
         @Data
@@ -406,6 +406,11 @@ public class RundeckConfigBase {
         @Data
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
+        }
+
+        @Data
+        public static class Debug {
+            Boolean showTracesOnResponse = false;
         }
     }
 
