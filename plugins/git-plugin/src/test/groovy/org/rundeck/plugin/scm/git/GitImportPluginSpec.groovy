@@ -184,7 +184,8 @@ class GitImportPluginSpec extends Specification {
 
         then:
         !status
-        thrown ScmPluginException
+        def ex = thrown(ScmPluginException)
+        ex.message == BaseGitPlugin.ScmAuthMessages.NO_ACCESS.getMessage()
     }
 
     def "Allow get job status if user has permission to config key"() {

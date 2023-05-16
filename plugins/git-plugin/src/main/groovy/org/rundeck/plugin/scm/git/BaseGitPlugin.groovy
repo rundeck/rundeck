@@ -77,6 +77,19 @@ class BaseGitPlugin {
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
+    protected enum ScmAuthMessages {
+        CHECKING("Checking if user has access to the configured SCM key/password."),
+        NO_ACCESS("User don't have access to the configured SCM key/password yet."),
+        HAS_ACCESS("User has access to the configured SCM key/password, sending job status.");
+        private String message;
+        ScmAuthMessages( String message ){
+            this.message = message;
+        }
+        String getMessage(){
+            return message;
+        }
+    }
+
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
         this.commonConfig = commonConfig
@@ -740,6 +753,9 @@ class BaseGitPlugin {
      * @return
      */
     public static String expandContextVarsInPath(ScmOperationContext context, String path) {
+        if( null === path  || !path ){
+            return null
+        }
         expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
 }

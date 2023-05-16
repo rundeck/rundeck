@@ -526,15 +526,15 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     JobImportState getJobStatus(ScmOperationContext ctx, JobScmReference job) {
-        log.debug("Checking if user: ${ctx.userInfo.userName} has access to the configured SCM key/password.")
+        log.debug(ScmAuthMessages.CHECKING.getMessage())
         def userStorageTree = ctx.getStorageTree()
-        def scmAuthPath = commonConfig.sshPrivateKeyPath ? commonConfig.sshPrivateKeyPath : commonConfig.gitPasswordPath
+        def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
         def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
-        if( userStorageTree.hasPath(expandedAuthPath) ){
-            log.debug("User: ${ctx.userInfo.userName} has access to the configured SCM key/password, sending job status.")
+        if( expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath) ){
+            log.debug(ScmAuthMessages.HAS_ACCESS.getMessage())
             return getJobStatus(job, null)
         }else{
-            def scmExceptionMessage = "User: \"${ctx.userInfo.userName}\" don't have access to the configured SCM key/password yet."
+            def scmExceptionMessage = ScmAuthMessages.NO_ACCESS.getMessage()
             throw new ScmPluginException(scmExceptionMessage)
         }
     }
