@@ -527,7 +527,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    JobState getJobStatus(ScmOperationContext ctx, JobScmReference job, String originalPath) {
+    JobState getJobStatus(ScmOperationContext ctx, JobExportReference job, String originalPath) {
         log.debug("Checking if user: ${ctx.userInfo.userName} has access to the configured SCM key/password.")
         def userStorageTree = ctx.getStorageTree()
         def scmAuthPath = commonConfig.sshPrivateKeyPath ? commonConfig.sshPrivateKeyPath : commonConfig.gitPasswordPath
