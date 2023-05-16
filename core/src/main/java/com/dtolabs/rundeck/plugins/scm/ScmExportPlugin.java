@@ -102,7 +102,7 @@ public interface ScmExportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(ScmOperationContext ctx, JobScmReference job, String originalPath);
+    JobState getJobStatus(ScmOperationContext ctx, JobExportReference job, String originalPath);
 
     /**
      * Return the state of the given job, with optional original repo path
