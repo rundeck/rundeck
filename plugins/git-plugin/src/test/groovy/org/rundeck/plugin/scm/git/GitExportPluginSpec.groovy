@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
@@ -35,6 +36,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
+import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -1595,6 +1597,95 @@ class GitExportPluginSpec extends Specification {
 
         then:
         status != null
+        status.synchState == SynchState.CREATE_NEEDED
+        status.commit == null
+        1 * serializer.serialize('xml', _, (false), null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
+
+    def "Don't get job status if user dont have permissions to config key"() {
+        given:
+        def scmUserInfo = Mock(ScmUserInfo)
+        def storageTree = Mock(StorageTreeImpl){
+            it.hasPath(_) >> false
+        }
+        def scmOperationContext = Mock(ScmOperationContext){
+            getStorageTree() >> storageTree
+            getUserInfo() >> scmUserInfo
+        }
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def common = Mock(Common){
+            getSshPrivateKeyPath() >> 'keys/test'
+        }
+        def plugin = new GitExportPlugin(config)
+        plugin.setCommonConfig(common)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(scmOperationContext, jobref, null)
+
+        then:
+        !status
+        thrown ScmPluginException
+
+    }
+
+    def "Allow get job status if user has permissions to config key"() {
+        given:
+        def scmUserInfo = Mock(ScmUserInfo)
+        def storageTree = Mock(StorageTreeImpl){
+            it.hasPath(_) >> true
+        }
+        def scmOperationContext = Mock(ScmOperationContext){
+            getStorageTree() >> storageTree
+            getUserInfo() >> scmUserInfo
+        }
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def common = Mock(Common){
+            getSshPrivateKeyPath() >> 'keys/test'
+        }
+        def plugin = new GitExportPlugin(config)
+        plugin.setCommonConfig(common)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(scmOperationContext, jobref, null)
+
+        then:
+        status !== null
         status.synchState == SynchState.CREATE_NEEDED
         status.commit == null
         1 * serializer.serialize('xml', _, (false), null) >> { args ->
