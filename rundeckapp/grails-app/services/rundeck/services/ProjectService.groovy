@@ -39,6 +39,7 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
+import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -53,13 +54,10 @@ import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
-import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
-import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
@@ -67,6 +65,7 @@ import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.Execution
@@ -103,6 +102,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
+    @Autowired
+    TransactionService transactionService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
@@ -1721,7 +1722,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Requested deletion of project ${project.name}")
 
         try {
-            Project.withNewTransaction {
+            transactionService.withNewTransaction {
                 framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
             }
         } catch (UnsupportedOperationException e) {
@@ -1733,7 +1734,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-            return Project.withNewTransaction {
+            return transactionService.withNewTransaction {
                 return deleteProjectInternal(project, framework, authContext, username)
             }
         }
@@ -1758,12 +1759,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Starting deletion of project ${project.name} by username $username")
         def result = new DeleteResponse(success: false)
+        
+        return result
+        
+        
         notify('projectWillBeDeleted', project.name)
 
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
 
-        Project.withTransaction { TransactionStatus status ->
+        transactionService.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
