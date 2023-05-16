@@ -65,11 +65,11 @@ import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.Execution
 import rundeck.JobFileRecord
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
@@ -102,8 +102,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
-    @Autowired
-    TransactionService transactionService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
@@ -1722,7 +1720,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Requested deletion of project ${project.name}")
 
         try {
-            transactionService.withNewTransaction {
+            Project.withNewTransaction {
                 framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
             }
         } catch (UnsupportedOperationException e) {
@@ -1734,7 +1732,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-            return transactionService.withNewTransaction {
+            return Project.withNewTransaction {
                 return deleteProjectInternal(project, framework, authContext, username)
             }
         }
@@ -1768,7 +1766,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
 
-        transactionService.withTransaction { TransactionStatus status ->
+        Project.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
