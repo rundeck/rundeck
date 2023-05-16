@@ -861,7 +861,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         }
 
         1 * plugin.clusterFixJobs(_,_,_)>> [:]
-        1 * plugin.getJobStatus(_,_)>> Mock(JobState)
+        1 * plugin.getJobStatus(_,_,_)>> Mock(JobState)
     }
 
     def "get job plugin meta"(){
