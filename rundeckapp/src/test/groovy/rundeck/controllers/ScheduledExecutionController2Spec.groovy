@@ -514,7 +514,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
             controller.executionService = Mock(ExecutionService) {
                 1 * getExecutionsAreActive() >> true
-                1 * createExecutionAndPrep(_, _) >> exec
+                1 * createExecutionAndPrep(_, _, _) >> exec
             }
 
 
@@ -592,7 +592,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
+            return exec
             return exec
         }
         controller.executionService = eServiceControl.proxyInstance()
@@ -679,7 +680,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep {params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
             return exec
         }
         controller.executionService = eServiceControl.proxyInstance()
@@ -759,7 +760,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
             assert null!=exec.save()
-            eServiceControl.demand.createExecutionAndPrep { params, user ->
+            eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
                 return exec
             }
             sec.executionService = eServiceControl.proxyInstance()
@@ -1148,7 +1149,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
             assert 'testuser' == user
             exec
         }
@@ -1320,7 +1321,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1412,7 +1413,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1497,7 +1498,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1578,7 +1579,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1662,7 +1663,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1751,7 +1752,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1834,8 +1835,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anotheruser' == user
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
+            assert 'anotheruser' == params.user
             exec
         }
         sec.executionService = eServiceControl.proxyInstance()
