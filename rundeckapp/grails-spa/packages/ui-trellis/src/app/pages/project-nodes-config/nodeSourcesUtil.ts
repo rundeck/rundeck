@@ -3,7 +3,6 @@ import { client } from '../../services/rundeckClient'
 import {
   getRundeckContext
 } from '../../../library'
-import axios from 'axios'
 
 export interface NodeSourceResources {
   href: string
