@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import EditProjectNodeSourceFile from './EditProjectNodeSourceFile.vue'
+import {loadJsonData} from '../../utilities/loadJsonData'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import EditProjectNodeSourcePage from './EditProjectNodeSourcePage.vue'
@@ -47,16 +47,31 @@ context.rootStore.ui.addItems([{
   location: 'main',
   visible: true,
   widget: Vue.extend({
-    data() {
+    data: function(){
       return {
-        EventBus: context.eventBus
+        EventBus: context.eventBus,
+        index:-1,
+        nextPageUrl:''
       }
     },
     provide: { nodeSourceFile:context.rootStore.nodeSourceFile },
     components: {
       EditProjectNodeSourcePage
     },
-    template:`<edit-project-node-source-page project="" index=""/>`,
+    template:`<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :event-bus="EventBus" v-if="index>=0"/>`,
+    mounted(){
+      const context = getRundeckContext()
+
+      if (context.data && context.data.editProjectNodeSourceData) {
+        this.index = context.data.editProjectNodeSourceData.index
+        this.nextPageUrl=context.data.editProjectNodeSourceData.nextPageUrl
+      }else {
+        console.log("use load Json data, instead of data",context.data)
+        const data = loadJsonData('editProjectNodeSourceData')
+        this.index=data.index
+        this.nextPageUrl=data.nextPageUrl
+      }
+    },
     i18n
   })
 }])
