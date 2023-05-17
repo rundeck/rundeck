@@ -132,6 +132,8 @@ buildConfig {
     // Only add date if in CI mode to avoid UP-TO-DATE and build cache misses
     if (System.env.CI) {
         buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
+    } else {
+        buildConfigField('String', 'BUILD_DATE', "")
     }
 }
 
