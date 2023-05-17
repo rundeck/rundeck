@@ -2617,7 +2617,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
      * if there is an error, return [error:'type',message:errormesg,...]
      */
     private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, AuthContext authContext){
-        def object
+
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])

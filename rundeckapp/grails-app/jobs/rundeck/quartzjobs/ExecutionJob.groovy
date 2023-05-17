@@ -241,10 +241,6 @@ class ExecutionJob implements InterruptableJob {
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
         }
-        
-        if(frameworkService.isFrameworkProjectDisabled(project)) {
-            throw new IllegalStateException("Cannot run execution #${executionId}: Project ${project} is disabled")
-        }
 
         if(initMap.temp){
             //an adhoc execution without associated job
@@ -321,8 +317,9 @@ class ExecutionJob implements InterruptableJob {
             def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
             def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')
             def isProjectScheduledEnabled = ((!disableSe)||disableSe.toLowerCase()!='true')
+            def isProjectEnabled = !frameworkService.isFrameworkProjectDisabled(project)
 
-            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled)){
+            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled && isProjectEnabled)){
                 initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
                 context.getScheduler().deleteJob(context.jobDetail.key)
                 return initMap

@@ -1426,6 +1426,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * Schedule a temp job to execute immediately.
      */
     Map scheduleTempJob(AuthContext authContext, Execution e) {
+
+        if(frameworkService.isFrameworkProjectDisabled(e.project)){
+            def msg=g.message(
+                    code: 'project.disabled',
+                    args: [e.project]
+            )
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+        
         if(!executionService.getExecutionsAreActive()){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
