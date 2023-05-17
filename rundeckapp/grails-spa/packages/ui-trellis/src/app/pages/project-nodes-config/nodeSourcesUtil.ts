@@ -2,7 +2,7 @@ import { client } from '../../services/rundeckClient'
 
 import {
   getRundeckContext
-} from '../../../library'
+} from "../../../library"
 
 export interface NodeSourceResources {
   href: string
@@ -34,7 +34,8 @@ export async function getProjectNodeSources(): Promise<NodeSource[]> {
   })
   if (!resp.parsedBody) {
     throw new Error(`Error getting node sources list for ${rundeckContext.projectName}`)
-  } else {
+  }
+  else {
     return resp.parsedBody as NodeSource[]
   }
 }
