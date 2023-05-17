@@ -1165,8 +1165,11 @@ class ScmService {
      * @return
      */
     Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
+        def scmOperationCxt = null
+        if( auth || null !== auth ){
+            scmOperationCxt = scmOperationContext(auth, project)
+        }
         def clusterMode = frameworkService.isClusterModeEnabled()
-        def scmOperationContext = scmOperationContext(auth, project)
 
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix){
             if(auth){
@@ -1178,6 +1181,7 @@ class ScmService {
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
             jobs.each { job ->
+                JobState jobState = null
                 def jobPluginMeta = null
                 if (!jobsPluginMeta) {
                     jobPluginMeta = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
@@ -1188,7 +1192,11 @@ class ScmService {
                 def jobReference = exportJobRef(job, jobPluginMeta)
 
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                JobState jobState = plugin.getJobStatus(scmOperationContext, jobReference, originalPath)
+                if( !scmOperationCxt || null === scmOperationCxt ){
+                    jobState = plugin.getJobStatus(jobReference, originalPath)
+                }else{
+                    jobState = plugin.getJobStatus(scmOperationCxt, jobReference, originalPath)
+                }
                 status[jobReference.id] = jobState
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
@@ -1221,8 +1229,11 @@ class ScmService {
      * @return
      */
     Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
+        def scmOperationCxt = null
+        if( auth || null !== auth ){
+            scmOperationCxt = scmOperationContext(auth, project)
+        }
         def status = [:]
-        def scmOperationCtx = scmOperationContext(auth, project)
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){
             fixImportStatus(auth,project,jobs)
@@ -1240,7 +1251,11 @@ class ScmService {
 
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                status[jobReference.id] = plugin.getJobStatus(scmOperationCtx, jobReference)
+                if( !scmOperationCxt || null === scmOperationCxt ){
+                    status[jobReference.id] = plugin.getJobStatus(jobReference)
+                }else{
+                    status[jobReference.id] = plugin.getJobStatus(scmOperationCxt, jobReference)
+                }
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
             }
         }
