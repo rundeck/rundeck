@@ -2,8 +2,7 @@ package rundeck.interceptors
 
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.apache.http.HttpStatus
-import org.grails.taglib.GrailsTagException
-import org.springframework.context.ApplicationContext
+import rundeck.services.ConfigurationService
 import spock.lang.Specification
 
 class InternalErrorsInterceptorSpec extends Specification implements InterceptorUnitTest<InternalErrorsInterceptor> {
@@ -15,6 +14,11 @@ class InternalErrorsInterceptorSpec extends Specification implements Interceptor
         request.setAttribute(EXCEPT_ATTR_NAMES[0], new Exception("This is a \"${EXCEPT_ATTR_NAMES[0]}\""))
         request.setAttribute(EXCEPT_ATTR_NAMES[1], new Exception("This is a \"${EXCEPT_ATTR_NAMES[1]}\""))
         response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         when:
         interceptor.after()
@@ -31,7 +35,13 @@ class InternalErrorsInterceptorSpec extends Specification implements Interceptor
         request.setAttribute(EXCEPT_ATTR_NAMES[0], new Exception("This is a \"${EXCEPT_ATTR_NAMES[0]}\""))
         request.setAttribute(EXCEPT_ATTR_NAMES[1], new Exception("This is a \"${EXCEPT_ATTR_NAMES[1]}\""))
         response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-        grailsApplication.config.put(SHOW_TRACES_DEBUG_PROP_NAME, 'true')
+        grailsApplication.config.put(SHOW_TRACES_DEBUG_PROP_NAME,true)
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         withRequest(controller:"demo", action: 'index')
 
         then:

@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest
 class InternalErrorsInterceptor {
     private static final String[] EXCEPT_ATTR_NAMES = ['javax.servlet.error.exception', 'exception']
 
-    final ConfigurationService configurationService
+   private final ConfigurationService configurationService
     int order = HIGHEST_PRECEDENCE + 600
 
     @Autowired
