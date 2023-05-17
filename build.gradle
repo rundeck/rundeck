@@ -104,6 +104,10 @@ def vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty
 def vDate = ext.vDate = versionProps.getProperty('version.date')
 def vRevision = ext.vRevision = versionProps.getProperty('version.release.number')
 
+/** Determine if incremental build is enabled */
+def enableIncremental = project.hasProperty('rundeck.proj.incremental.enabled') ? findProperty('rundeck.proj.incremental.enabled').toBoolean() : true
+
+
 if (ext.environment == 'release') {
     project.ext.resolvedVersion = vVersion
 } else {
@@ -121,6 +125,7 @@ allprojects {
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
+    ext.enableIncremental = enableIncremental
     if(project.environment == 'release'){
         ext.isReleaseBuild=true
     } else {
@@ -142,6 +147,19 @@ subprojects {
     apply plugin: 'eclipse'
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
+
+/**
+ * Enable incremental Groovy compile
+ */
+if (enableIncremental) {
+    getAllprojects().findAll() {proj ->
+        proj.tasks.withType(GroovyCompile).configureEach {
+            options.incremental = true
+            options.incrementalAfterFailure = true
+        }
+    }
+}
+
 
 def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
