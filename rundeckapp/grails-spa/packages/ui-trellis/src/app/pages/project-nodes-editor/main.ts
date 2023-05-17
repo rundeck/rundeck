@@ -2,7 +2,6 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
-import VueCookies from 'vue-cookies'
 import {loadJsonData} from '../../utilities/loadJsonData'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
@@ -14,7 +13,6 @@ import {getRundeckContext} from '../../../library'
 Vue.config.productionTip = false
 
 Vue.use(Vue2Filters)
-Vue.use(VueCookies)
 Vue.use(uiv)
 Vue.use(VueI18n)
 
