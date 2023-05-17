@@ -52,6 +52,7 @@ context.rootStore.ui.addItems([{
         EventBus: context.eventBus
       }
     },
+    provide: { nodeSourceFile:context.rootStore.nodeSourceFile },
     components: {
       EditProjectNodeSourcePage
     },

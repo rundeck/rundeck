@@ -57,11 +57,11 @@
                             v-model="valueInternal"/>
 
             </ui-socket>
-            <div v-if="saveError">
+            <div v-if="errorMessage">
                 <h3>
                     {{ $t('project.nodes.edit.save.error.message') }}
                 </h3>
-                <div class="text-warning">{{ saveError }}</div>
+                <div class="text-warning">{{ errorMessage }}</div>
             </div>
             <div v-if="fileEmpty">
                 <div class="text-warning">
@@ -72,13 +72,15 @@
 
 
         <div class="card-footer">
-            <btn name="cancel" class="reset_page_confirm" @click="$emit('cancel')">{{
-                    $t('button.action.Cancel')
-                }}
+            <btn name="cancel" class="reset_page_confirm" @click="$emit('cancel')">
+                {{ $t('button.action.Cancel') }}
             </btn>
             <btn name="save" class="btn-cta reset_page_confirm" @click="$emit('save',valueInternal)">
                 {{ $t('button.action.Save') }}
             </btn>
+
+            <page-confirm class="text-warning footer-text" :message="$t('page.unsaved.changes')" :event-bus="eventBus"
+                          :display="true"/>
         </div>
     </div>
 
@@ -91,21 +93,22 @@ Vue.use(VueI18n)
 import PluginConfig from '../../../library/components/plugins/pluginConfig.vue'
 import AceEditor from '../../../library/components/utils/AceEditor.vue'
 import UiSocket from '../../../library/components/utils/UiSocket.vue'
+import PageConfirm from '../../../library/components/utils/PageConfirm.vue'
 
 export default Vue.extend({
-  components: {PluginConfig, AceEditor, UiSocket},
+  components: {PluginConfig, AceEditor, UiSocket, PageConfirm},
   props: {
+    eventBus: {type: Vue, required: true},
     index: {type: Number, required: true},
     sourceDesc: {type: String, default: '', required: false},
     fileFormat: {type: String, default: '', required: false},
     provider: {type: String, default: '', required: false},
-    value: {type: String, required: true}
+    value: {type: String, required: true},
+    errorMessage: {type: String, default: ''}
   },
   data() {
     return {
-      saveError: null,
       valueInternal: '',
-      inited: false
     }
   },
   computed: {
@@ -116,11 +119,15 @@ export default Vue.extend({
   watch: {
     value(newVal) {
       this.valueInternal = newVal
+    },
+    valueInternal(newVal) {
+      this.eventBus.$emit('node-source-file-set-content', {nodesYaml: newVal})
     }
-  },
-  mounted() {
-    this.valueInternal = this.value
-    this.inited = true
   }
 })
 </script>
+<style lang="scss" scoped>
+.btn + .footer-text {
+  margin-left: 1em;
+}
+</style>

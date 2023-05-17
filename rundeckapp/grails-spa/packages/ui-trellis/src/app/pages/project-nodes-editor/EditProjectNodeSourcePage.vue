@@ -6,6 +6,8 @@
             :source-desc="nodeSource.resources.description"
             :file-format="modelFormat"
             :value="nodesText"
+            :event-bus="eventBus"
+            :error-message="errorMessage"
             @cancel="handleCancel"
             @save="handleSave"
             v-if="nodeSource">
@@ -13,19 +15,28 @@
 </template>
 <script lang="ts">
 import {getRundeckContext} from '../../../library'
+import {NodeSource} from '../../../library/stores/NodeSourceFile'
 import EditProjectNodeSourceFile from './EditProjectNodeSourceFile.vue'
-import {
-  getProjectNodeSource,
-  getProjectWriteableNodeSourceText,
-  NodeSource, saveProjectWriteableNodeSourceText
-} from '../project-nodes-config/nodeSourcesUtil'
 
 export default Vue.extend({
+  inject: ['nodeSourceFile'],
   components: {EditProjectNodeSourceFile},
-  props: {},
+  props: {
+    index: {
+      type: Number,
+      required: true,
+    },
+    nextPageUrl: {
+      type: String,
+      required: true,
+    },
+    eventBus: {
+      type: Object,
+      required: true
+    }
+  },
   data() {
     return {
-      index:-1,
       nodeSource: null as NodeSource,
       mimeFormats: {
         'text/xml': 'xml',
@@ -35,46 +46,57 @@ export default Vue.extend({
         'application/json': 'json',
       },
       nodesText: '',
-      nextPageUrl:''
+      errorMessage: '',
+      inited: false
     }
   },
   computed: {
     modelFormat() {
-      if(this.nodeSource) {
-        return this.mimeFormats[this.nodeSource.resources.syntaxMimeType] || this.nodeSource.resources.syntaxMimeType || ''
-      }
-      return ''
+      return this.nodeSourceFile.modelFormat
     }
   },
   methods: {
     handleCancel() {
-      console.log('cancel')
+      this.eventBus.$emit('page-reset', 'nodes')
+      if (this.nextPageUrl) {
+        window.location = this.nextPageUrl
+      }
     },
     async handleSave(newVal) {
-      this.nodesText=newVal
-      let resp = await saveProjectWriteableNodeSourceText(this.index, this.nodeSource.resources.syntaxMimeType, this.nodesText)
+      this.nodesText = newVal
+      this.eventBus.$emit('page-reset', 'nodes')
+      let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText)
       this.$notify('Content Saved')
-      if(this.nextPageUrl){
-        window.location=this.nextPageUrl
+      if (this.nextPageUrl) {
+        window.location = this.nextPageUrl
+      }
+    },
+    acceptContent(newVal) {
+      console.log("acceptContent",newVal)
+      if (newVal && typeof (newVal.nodesYaml) !== 'undefined' && this.nodesText !== newVal.nodesYaml) {
+        this.nodesText = newVal.nodesYaml
+        this.eventBus.$emit('node-source-file-content-loaded', this.nodesText)
+        if (this.inited) {
+          this.eventBus.$emit('page-modified', 'nodes')
+        }
       }
     }
   },
   async mounted() {
     const context = getRundeckContext()
-    if (context.data && context.data.editProjectNodeSourceData) {
-      this.index = context.data.editProjectNodeSourceData.index
-      this.nextPageUrl=context.data.editProjectNodeSourceData.nextPageUrl
-    }else if(typeof(loadJsonData)==='function'){
-      const data = loadJsonData('editProjectNodeSourceData')
-      this.index=data.index
-      this.nextPageUrl=data.nextPageUrl
-    }
     if(this.index>=0) {
-      this.nodeSource = await getProjectNodeSource(this.index)
+      this.nodeSourceFile.index = this.index
+      await this.nodeSourceFile.load()
+      this.nodeSource = this.nodeSourceFile.nodeSource
     }
+    this.eventBus.$on('node-source-file-set-content', this.acceptContent)
     if (this.nodeSource && this.nodeSource.resources.writeable && this.modelFormat) {
       //load value
-      this.nodesText = await getProjectWriteableNodeSourceText(this.index, this.nodeSource.resources.syntaxMimeType)
+
+      await this.nodeSourceFile.retrieveSourceContent()
+      this.acceptContent({nodesYaml: this.nodeSourceFile.content})
+      this.eventBus.$emit('node-source-file-content-inited', this.nodesText)
+      this.inited = true
     }
   }
 })
