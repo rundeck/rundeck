@@ -112,6 +112,7 @@ export default Vue.extend({
     if(this.index>=0) {
       this.nodeSourceFile.index = this.index
       await this.nodeSourceFile.load()
+      this.eventBus.$emit('node-source-file-loaded', this.nodeSourceFile)
       this.nodeSource = this.nodeSourceFile.nodeSource
     }
     this.eventBus.$on('node-source-file-set-content', this.acceptContent)
