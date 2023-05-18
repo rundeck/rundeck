@@ -14,11 +14,11 @@ localnode=$(grep 'framework.server.name' $RDECK_ETC/framework.properties | sed '
 test_proj="APIProjectResourceGetTest"
 
 
-test_begin "Get project source resources"
 res_file1=$RDECK_BASE/projects/$test_proj/etc/resources1.xml
 res_file2=$RDECK_BASE/projects/$test_proj/etc/resources2.xml
 # Create a project
 ENDPOINT="${APIURL}/projects"
+test_begin "Get project source resources"
 tmp_file=$DIR/proj_create_$test_proj.post.json
 cat > $tmp_file <<END
 {
@@ -53,22 +53,24 @@ rm $tmp_file
 
 ENDPOINT="${APIURL}/project/$test_proj/sources"
 ACCEPT="application/json"
+test_begin "sources list json"
 api_request $ENDPOINT $file
 assert_json_value '2' 'length' $file
 assert_json_value 'true' '.[0].resources.writeable' $file
 assert_json_value 'true' '.[0].resources.empty' $file
 assert_json_value 'false' '.[1].resources.writeable' $file
+test_succeed
 
-# auto server node
 ENDPOINT="${APIURL}/project/$test_proj/source/2/resources"
 ACCEPT="application/json"
+test_begin "not empty with auto server node"
 api_request $ENDPOINT $file
 assert_json_value '1' 'length' $file
 assert_json_not_null ".[\"$localnode\"].nodename" $file
 assert_json_not_null ".[\"$localnode\"].hostname" $file
 assert_json_not_null ".[\"$localnode\"].osFamily" $file
+test_succeed
 
-# empty resources data
 ENDPOINT="${APIURL}/project/$test_proj/source/1/resources"
 test_begin "json empty object"
 ACCEPT="application/json"
@@ -76,7 +78,7 @@ api_request $ENDPOINT $file
 assert_json_value '0' 'length' $file
 test_succeed
 
-# post resources data
+
 tmp_file=$DIR/resources_create_$test_proj.post.json
 cat > $tmp_file <<END
 {
@@ -89,6 +91,7 @@ cat > $tmp_file <<END
 }
 END
 ENDPOINT="${APIURL}/project/$test_proj/source/1/resources"
+test_begin "post resources json data"
 ACCEPT="application/json"
 TYPE="application/json"
 POSTFILE=$tmp_file
