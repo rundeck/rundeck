@@ -70,11 +70,30 @@ export default Vue.extend({
       }
       this.errorMessage = ''
       this.nodesText = newVal
-      this.eventBus.$emit('page-reset', 'nodes')
-      let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText)
-      this.$notify('Content Saved')
-      if (this.nextPageUrl) {
+      this.saving = true
+      try {
+        let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText)
+        this.eventBus.$emit('page-reset', 'nodes')
+        this.$notify('Content Saved')
         window.location = this.nextPageUrl
+      } catch (e) {
+        this.saving = false
+        if (e.response && e.response.data && e.response.data) {
+          //extract error message from API if present
+          let errData = e.response.data
+          if (typeof (errData) === 'string') {
+            errData = JSON.parse(e.response.data)
+          }
+          if (errData.message) {
+            this.errorMessage = errData.message
+          } else if (errData.errorCode) {
+            this.errorMessage = `An error occurred. Error code: ${errData.errorCode}`
+          }
+        } else if (e.response.status == 400) {
+          this.errorMessage = `The content was an invalid format`
+        } else {
+          this.errorMessage = e.message
+        }
       }
     },
     acceptContent(newVal) {
