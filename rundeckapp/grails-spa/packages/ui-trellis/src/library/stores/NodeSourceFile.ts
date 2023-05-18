@@ -83,9 +83,12 @@ export class NodeSourceFile {
           headers: {
             'X-Rundeck-Ajax': 'true',
             accept: mimeType + ', text/*, */*'
-          }
-        })
-      if (response.data) {
+          },
+          //don't parse json
+          transformResponse: (data) => data
+        }
+      )
+      if (response.status===200 && typeof(response.data)==='string') {
         return response.data
       } else if (response.status === 204) {
         return ''
