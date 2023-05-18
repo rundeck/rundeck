@@ -15,6 +15,7 @@
   </edit-project-node-source-file>
 </template>
 <script lang="ts">
+import Vue from 'vue'
 import {getRundeckContext} from '../../../library'
 import {NodeSource} from '../../../library/stores/NodeSourceFile'
 import EditProjectNodeSourceFile from './EditProjectNodeSourceFile.vue'
@@ -60,9 +61,7 @@ export default Vue.extend({
   methods: {
     handleCancel() {
       this.eventBus.$emit('page-reset', 'nodes')
-      if (this.nextPageUrl) {
-        window.location = this.nextPageUrl
-      }
+      window.location = this.nextPageUrl
     },
     async handleSave(newVal) {
       if (this.saving) {
@@ -97,7 +96,6 @@ export default Vue.extend({
       }
     },
     acceptContent(newVal) {
-      console.log("acceptContent",newVal)
       if (newVal && typeof (newVal.nodesYaml) !== 'undefined' && this.nodesText !== newVal.nodesYaml) {
         this.nodesText = newVal.nodesYaml
         this.eventBus.$emit('node-source-file-content-loaded', this.nodesText)
@@ -109,7 +107,7 @@ export default Vue.extend({
   },
   async mounted() {
     const context = getRundeckContext()
-    if(this.index>=0) {
+    if (this.index >= 0) {
       this.nodeSourceFile.index = this.index
       await this.nodeSourceFile.load()
       this.eventBus.$emit('node-source-file-loaded', this.nodeSourceFile)
@@ -117,8 +115,6 @@ export default Vue.extend({
     }
     this.eventBus.$on('node-source-file-set-content', this.acceptContent)
     if (this.nodeSource && this.nodeSource.resources.writeable && this.modelFormat) {
-      //load value
-
       await this.nodeSourceFile.retrieveSourceContent()
       this.acceptContent({nodesYaml: this.nodeSourceFile.content})
       this.eventBus.$emit('node-source-file-content-inited', this.nodesText)

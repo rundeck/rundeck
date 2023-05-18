@@ -62,12 +62,11 @@ context.rootStore.ui.addItems([{
 
       if (context.data && context.data.editProjectNodeSourceData) {
         this.index = context.data.editProjectNodeSourceData.index
-        this.nextPageUrl=context.data.editProjectNodeSourceData.nextPageUrl
+        this.nextPageUrl = context.data.editProjectNodeSourceData.nextPageUrl
       }else {
-        console.log("use load Json data, instead of data",context.data)
         const data = loadJsonData('editProjectNodeSourceData')
-        this.index=data.index
-        this.nextPageUrl=data.nextPageUrl
+        this.index = data.index
+        this.nextPageUrl = data.nextPageUrl
       }
     },
     i18n
