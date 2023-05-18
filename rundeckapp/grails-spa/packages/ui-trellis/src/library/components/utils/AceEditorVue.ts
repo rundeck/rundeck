@@ -76,6 +76,7 @@ export default Vue.extend({
         editor.$blockScrolling = Infinity
 
         this.$emit('init', editor)
+        editor.getSession().setUseWorker(false)
         editor.getSession().setMode(this.resolveLang(lang))
         editor.setTheme(this.resolveTheme(theme))
 
