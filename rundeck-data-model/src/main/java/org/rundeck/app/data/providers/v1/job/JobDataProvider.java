@@ -2,6 +2,7 @@ package org.rundeck.app.data.providers.v1.job;
 
 import org.rundeck.app.data.model.v1.DeletionResult;
 import org.rundeck.app.data.model.v1.job.JobData;
+import org.rundeck.app.data.model.v1.job.JobDataSummary;
 import org.rundeck.app.data.model.v1.page.Page;
 import org.rundeck.spi.data.DataAccessException;
 

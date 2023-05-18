@@ -186,10 +186,6 @@ class GormJobQueryProvider implements JobQueryProvider {
         return idlist
     }
 
-    def JobDataSummary toSummary(ScheduledExecution se) {
-
-    }
-
 
     static class GormPage<T> implements Page<T> {
         List<T> results = []

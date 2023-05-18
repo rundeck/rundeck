@@ -255,7 +255,7 @@ jQuery(function(){
                                     <g:each var="job" in="${parentList}">
                                         <li>
                                         <span class=" wfitem jobtype" title="">
-                                        <g:link controller="scheduledExecution" action="show" id="${job.extid}">
+                                        <g:link controller="scheduledExecution" action="show" id="${job.uuid}">
                                             <i class="glyphicon glyphicon-book"></i>
                                             ${(job.groupPath?job.groupPath+'/':'')+job.jobName+(scheduledExecution.project!=job.project?' ('+job.project+')':'')}
                                         </g:link>
