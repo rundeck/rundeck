@@ -96,8 +96,8 @@ export default Vue.extend({
       }
     },
     acceptContent(newVal) {
-      if (newVal && typeof (newVal.nodesYaml) !== 'undefined' && this.nodesText !== newVal.nodesYaml) {
-        this.nodesText = newVal.nodesYaml
+      if (newVal && typeof (newVal.content) === 'string' && this.nodesText !== newVal.content) {
+        this.nodesText = newVal.content
         this.eventBus.$emit('node-source-file-content-loaded', this.nodesText)
         if (this.inited) {
           this.eventBus.$emit('page-modified', 'nodes')
@@ -116,7 +116,7 @@ export default Vue.extend({
     this.eventBus.$on('node-source-file-set-content', this.acceptContent)
     if (this.nodeSource && this.nodeSource.resources.writeable && this.modelFormat) {
       await this.nodeSourceFile.retrieveSourceContent()
-      this.acceptContent({nodesYaml: this.nodeSourceFile.content})
+      this.acceptContent({content: this.nodeSourceFile.content})
       this.eventBus.$emit('node-source-file-content-inited', this.nodesText)
       this.inited = true
     }

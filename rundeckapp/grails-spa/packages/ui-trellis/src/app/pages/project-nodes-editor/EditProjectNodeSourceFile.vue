@@ -122,7 +122,7 @@ export default Vue.extend({
       this.valueInternal = newVal
     },
     valueInternal(newVal) {
-      this.eventBus.$emit('node-source-file-set-content', {nodesYaml: newVal})
+      this.eventBus.$emit('node-source-file-set-content', {content: newVal})
     }
   }
 })
