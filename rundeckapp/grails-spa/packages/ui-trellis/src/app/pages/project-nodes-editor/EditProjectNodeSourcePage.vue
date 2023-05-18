@@ -1,17 +1,18 @@
 <template>
-    <edit-project-node-source-file
-            class="form-horizontal"
-            :index="index"
-            :provider="nodeSource.type"
-            :source-desc="nodeSource.resources.description"
-            :file-format="modelFormat"
-            :value="nodesText"
-            :event-bus="eventBus"
-            :error-message="errorMessage"
-            @cancel="handleCancel"
-            @save="handleSave"
-            v-if="nodeSource">
-    </edit-project-node-source-file>
+  <edit-project-node-source-file
+    class="form-horizontal"
+    :index="index"
+    :provider="nodeSource.type"
+    :source-desc="nodeSource.resources.description"
+    :file-format="modelFormat"
+    :value="nodesText"
+    :event-bus="eventBus"
+    :error-message="errorMessage"
+    @cancel="handleCancel"
+    @save="handleSave"
+    :saving="saving"
+    v-if="nodeSource">
+  </edit-project-node-source-file>
 </template>
 <script lang="ts">
 import {getRundeckContext} from '../../../library'
@@ -47,7 +48,8 @@ export default Vue.extend({
       },
       nodesText: '',
       errorMessage: '',
-      inited: false
+      inited: false,
+      saving: false
     }
   },
   computed: {
@@ -63,6 +65,10 @@ export default Vue.extend({
       }
     },
     async handleSave(newVal) {
+      if (this.saving) {
+        return
+      }
+      this.errorMessage = ''
       this.nodesText = newVal
       this.eventBus.$emit('page-reset', 'nodes')
       let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText)

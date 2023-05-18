@@ -72,10 +72,10 @@
 
 
         <div class="card-footer">
-            <btn name="cancel" class="reset_page_confirm" @click="$emit('cancel')">
+            <btn name="cancel" class="reset_page_confirm" @click="$emit('cancel')"  :disabled="saving">
                 {{ $t('button.action.Cancel') }}
             </btn>
-            <btn name="save" class="btn-cta reset_page_confirm" @click="$emit('save',valueInternal)">
+            <btn name="save" class="btn-cta reset_page_confirm" @click="$emit('save',valueInternal)" :disabled="saving">
                 {{ $t('button.action.Save') }}
             </btn>
 
@@ -104,7 +104,8 @@ export default Vue.extend({
     fileFormat: {type: String, default: '', required: false},
     provider: {type: String, default: '', required: false},
     value: {type: String, required: true},
-    errorMessage: {type: String, default: ''}
+    errorMessage: {type: String, default: ''},
+    saving: {type: Boolean, default: false}
   },
   data() {
     return {
