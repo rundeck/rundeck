@@ -1,38 +1,33 @@
 import {RundeckToken} from '../interfaces/rundeckWindow'
 
-export const getUIAjaxTokens = () => {
-  return new Promise<RundeckToken>((resolve, reject) => {
-    if (window._rundeck.token) {
-      resolve(window._rundeck.token)
-    } else {
-      let uiTokenElement = document.getElementById('ui_token')
+export async function getUIAjaxTokens (): Promise<RundeckToken> {
+  if (window._rundeck.token) {
+    return (window._rundeck.token)
+  } else {
+    let uiTokenElement = document.getElementById('ui_token')
 
-      if (uiTokenElement) {
-        let jsonText = uiTokenElement.textContent || uiTokenElement.innerText
-        let response = jsonText && jsonText !== '' ? JSON.parse(jsonText) : null
-        window._rundeck.token = response
-        resolve(response)
-      } else {
-        reject(new Error('No token exists'))
-      }
+    if (uiTokenElement) {
+      let jsonText = uiTokenElement.textContent || uiTokenElement.innerText
+      let response = jsonText && jsonText !== '' ? JSON.parse(jsonText) : null
+      window._rundeck.token = response
+      return response
+    } else {
+      throw new Error('No token exists')
     }
-  })
+  }
 }
 
-export const setNewUIToken = (responseHeaders: any) => {
-  return new Promise<void>((resolve) => {
+
+export async function setNewUIToken  (responseHeaders: any){
     window._rundeck.token = {
       'TOKEN': responseHeaders['x-rundeck-token-key'],
       'URI': responseHeaders['x-rundeck-token-uri']
     }
-    resolve()
-  })
 }
 
-export const getToken = (token_name: string) => {
-  return new Promise((resolve, reject) => {
+export async function getToken  (token_name: string){
     if (window._rundeck.tokens[token_name]) {
-      resolve(window._rundeck.tokens[token_name])
+      return (window._rundeck.tokens[token_name])
     } else {
       let uiTokenElement = document.getElementById(token_name)
 
@@ -40,22 +35,18 @@ export const getToken = (token_name: string) => {
         let jsonText = uiTokenElement.textContent || uiTokenElement.innerText
         let response = jsonText && jsonText !== '' ? JSON.parse(jsonText) : null
         window._rundeck.tokens[token_name] = response
-        resolve(response)
+        return(response)
       } else {
-        reject(new Error('No token exists'))
+        throw new Error('No token exists')
       }
     }
-  })
 }
 
-export const setToken = (responseHeaders: any, token_name: string) => {
-  return new Promise<void>((resolve) => {
+export async function setToken  (responseHeaders: any, token_name: string) {
     window._rundeck.tokens[token_name] = {
       'TOKEN': responseHeaders['x-rundeck-token-key'],
       'URI': responseHeaders['x-rundeck-token-uri']
     }
-    resolve()
-  })
 }
 
 export default {
