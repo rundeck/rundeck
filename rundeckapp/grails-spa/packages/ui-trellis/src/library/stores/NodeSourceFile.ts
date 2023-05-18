@@ -1,9 +1,10 @@
 import {observable} from 'mobx'
 import {RundeckClient} from '@rundeck/client'
 import {client} from '../../app/services/rundeckClient'
+import Tokens from '../modules/tokens'
 import {getRundeckContext} from '../rundeckService'
 import {RootStore} from './RootStore'
-import axios from 'axios'
+import axios, { AxiosResponse } from 'axios'
 
 export class NodeSourceFile {
   @observable index: number=-1
@@ -99,29 +100,31 @@ export class NodeSourceFile {
 
   async saveProjectWriteableNodeSourceText(index: number, mimeType: string, content: string): Promise<string> {
     let ctx = getRundeckContext()
-    try {
-      const response = await axios.post(
-        `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
-        content,
-        {
-          headers: {
-            'X-Rundeck-Ajax': 'true',
-            accept: mimeType,
-            'Content-Type': mimeType,
-            'X-RUNDECK-TOKEN-KEY': client.token,
-            'X-RUNDECK-TOKEN-URI': client.uri
-          }
-        })
-      if (response.data) {
-        return response.data
-      } else if (response.status === 204) {
-        return ''
-      } else {
-        throw new Error('request failed: ' + response)
-      }
-    } catch (e) {
-      console.log('error', e)
-      throw new Error('request error: ' + e)
+    let token=await Tokens.getUIAjaxTokens()
+    const response = await axios.post(
+      `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
+      content,
+      {
+        headers: {
+          'X-Rundeck-Ajax': 'true',
+          accept: mimeType,
+          'Content-Type': mimeType,
+          'X-RUNDECK-TOKEN-KEY': token.TOKEN,
+          'X-RUNDECK-TOKEN-URI': token.URI
+        }
+      }).catch((e)=>{
+        if(e.response && e.response.headers){
+            Tokens.setNewUIToken(e.response.headers)
+        }
+        throw e
+    }) as AxiosResponse<any>
+    await Tokens.setNewUIToken(response.headers)
+    if (response.data) {
+      return response.data
+    } else if (response.status === 204) {
+      return ''
+    } else {
+      throw new Error('request failed: ' + response)
     }
   }
 
