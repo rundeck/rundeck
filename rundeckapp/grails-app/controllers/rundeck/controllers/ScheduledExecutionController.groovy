@@ -2624,6 +2624,10 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,error:'unauthorized',message:msg]
         }
 
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)){
+            def msg = g.message(code: 'project.disabled', args: [scheduledExecution.project])
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
 
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
