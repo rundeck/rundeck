@@ -2920,9 +2920,19 @@ Since: v23''',
                 )
             ]
         ),
-        responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-        )
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1source~1%7Bindex%7D~1resources/get/responses/200'
+            ),
+            @ApiResponse(
+                responseCode="400",
+                description="Invalid format",
+                content=@Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema = @Schema(type='object', implementation = ApiErrorResponse)
+                )
+            )
+        ]
     )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3221,9 +3231,19 @@ Since: v23''',
                 schema = @Schema(type = 'integer')
             )
         ],
-        responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-        )
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+            ),
+            @ApiResponse(
+                responseCode="204",
+                description="No content, if the source has no data",
+                content=@Content(
+                    mediaType = 'text/plain',
+                    schema = @Schema(type='string')
+                )
+            )
+        ]
     )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
