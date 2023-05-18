@@ -70,10 +70,11 @@ assert_json_not_null ".[\"$localnode\"].osFamily" $file
 
 # empty resources data
 ENDPOINT="${APIURL}/project/$test_proj/source/1/resources"
+test_begin "json empty object"
 ACCEPT="application/json"
-EXPECT_STATUS=204
 api_request $ENDPOINT $file
 assert_json_value '0' 'length' $file
+test_succeed
 
 # post resources data
 tmp_file=$DIR/resources_create_$test_proj.post.json
