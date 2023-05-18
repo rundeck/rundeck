@@ -49,7 +49,7 @@
                     </div>
                 </div>
             </div>
-            <ui-socket class="vue-ui-socket" section="edit-project-node-source-file" location="editor">
+            <ui-socket section="edit-project-node-source-file" location="editor">
                 <ace-editor :soft-wrap-control="true"
                             :lang="fileFormat"
                             height="500"
