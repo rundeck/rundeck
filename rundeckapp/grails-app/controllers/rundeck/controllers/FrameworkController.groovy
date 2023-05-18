@@ -3234,14 +3234,6 @@ Since: v23''',
         responses = [
             @ApiResponse(
                 ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-            ),
-            @ApiResponse(
-                responseCode="204",
-                description="No content, if the source has no data",
-                content=@Content(
-                    mediaType = 'text/plain',
-                    schema = @Schema(type='string')
-                )
             )
         ]
     )
@@ -3287,9 +3279,6 @@ Since: v23''',
         def source = projectNodes.resourceModelSources.find { it.index == index }
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
-        }
-        if(source.source.nodes.size()<1){
-            return render(status: HttpServletResponse.SC_NO_CONTENT)
         }
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
