@@ -68,6 +68,9 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
+import java.util.function.Function
+import java.util.function.Predicate
+
 
 /**
  * Manages scm integration
@@ -1160,15 +1163,64 @@ class ScmService {
     }
 
     /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param auth: UserAndRolesAuthContext object from the controller
+     * @param integration: import, export, etc.
+     * @return [true/false , message]
+     */
+    def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
+        def hasAccess = false;
+        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess])
+        if( null == auth || null == integration ){
+            return hasAccess;
+        }
+        def ctx = scmOperationContext(auth, project)
+        if( ctx ){
+            switch(integration){
+                case IMPORT:
+                    def plugin = getLoadedImportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)])
+                    }
+                    return defaultResponse
+                    break;
+                case EXPORT:
+                    def plugin = getLoadedExportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)])
+                    }
+                    return defaultResponse
+                    break;
+                default:
+                    return defaultResponse
+            }
+        }
+        return defaultResponse
+    }
+
+    /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param userAuthenticated: a boolean which will be a decisive parameter to return an unauthorized message or not.
+     * @return [true/false , message]
+     */
+    Function<LinkedHashMap<String, Boolean>, LinkedHashMap<Boolean, String>> scmAuthenticationResponse = integrationAndAccess -> {
+        def integration = integrationAndAccess.integration
+        def access = integrationAndAccess.access
+        def responsePrefix = "[SCM - ${integration}]"
+        def unauthorizedMessage = "${responsePrefix} User don't have access to the configured key or password yet."
+        def authorizedMessage = "${responsePrefix} User has access to the configured key or password."
+        if( access ){
+            return [ hasAccess: access, message: authorizedMessage ]
+        }
+        return [ hasAccess: access, message: unauthorizedMessage ]
+    }
+
+    /**
      * Return a map of status for jobs
      * @param jobs
      * @return
      */
     Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
-        def scmOperationCxt = null
-        if( auth || null !== auth ){
-            scmOperationCxt = scmOperationContext(auth, project)
-        }
         def clusterMode = frameworkService.isClusterModeEnabled()
 
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix){
@@ -1181,7 +1233,6 @@ class ScmService {
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
             jobs.each { job ->
-                JobState jobState = null
                 def jobPluginMeta = null
                 if (!jobsPluginMeta) {
                     jobPluginMeta = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
@@ -1192,11 +1243,7 @@ class ScmService {
                 def jobReference = exportJobRef(job, jobPluginMeta)
 
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                if( !scmOperationCxt || null === scmOperationCxt ){
-                    jobState = plugin.getJobStatus(jobReference, originalPath)
-                }else{
-                    jobState = plugin.getJobStatus(scmOperationCxt, jobReference, originalPath)
-                }
+                JobState jobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
@@ -1229,10 +1276,6 @@ class ScmService {
      * @return
      */
     Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
-        def scmOperationCxt = null
-        if( auth || null !== auth ){
-            scmOperationCxt = scmOperationContext(auth, project)
-        }
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){
@@ -1251,11 +1294,7 @@ class ScmService {
 
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                if( !scmOperationCxt || null === scmOperationCxt ){
-                    status[jobReference.id] = plugin.getJobStatus(jobReference)
-                }else{
-                    status[jobReference.id] = plugin.getJobStatus(scmOperationCxt, jobReference)
-                }
+                status[jobReference.id] = plugin.getJobStatus(jobReference)
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
             }
         }

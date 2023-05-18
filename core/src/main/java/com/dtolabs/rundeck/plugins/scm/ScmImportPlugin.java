@@ -92,17 +92,6 @@ public interface ScmImportPlugin {
     JobImportState getJobStatus(JobScmReference job, String originalPath);
 
     /**
-     * Return the state of the given job if the user has access to the key/password of
-     * SCM configuration.
-     *
-     * @param ctx          ScmOperationContext
-     * @param job          Job
-     *
-     * @return state
-     */
-    JobImportState getJobStatus(ScmOperationContext ctx, JobScmReference job);
-
-    /**
      * Set default job status
      *
      * @param jobs
@@ -233,5 +222,15 @@ public interface ScmImportPlugin {
      * @return map with information on the process
      */
     default void refreshJobsStatus(List<JobScmReference> jobs){
+    }
+
+    /**
+     * Returns true or false if the user has access to the key/password or not
+     *
+     * @param ctx: ScmOperationContext object from the controller.
+     * @return true or false
+     */
+    default Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx){
+      return true;
     }
 }

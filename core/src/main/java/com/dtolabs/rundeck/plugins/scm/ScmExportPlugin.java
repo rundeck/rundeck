@@ -94,17 +94,6 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job, String originalPath);
 
     /**
-     * Return the state of the given job if the user has access to the key/password of
-     * SCM configuration.
-     *
-     * @param ctx          ScmOperationContext
-     * @param job          Job
-     *
-     * @return state
-     */
-    JobState getJobStatus(ScmOperationContext ctx, JobExportReference job, String originalPath);
-
-    /**
      * Return the state of the given job, with optional original repo path
      *
      * @param job          job
@@ -205,5 +194,15 @@ public interface ScmExportPlugin {
      */
     default String getExportPushActionId(){
         return null;
+    }
+
+    /**
+     * Returns true or false if the user has access to the key/password or not
+     *
+     * @param ctx: ScmOperationContext object from the controller.
+     * @return true or false
+     */
+    default Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx){
+        return false;
     }
 }

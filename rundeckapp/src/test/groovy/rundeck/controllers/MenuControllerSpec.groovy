@@ -1626,6 +1626,113 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             true    | 1
     }
 
+    @Unroll
+    def "No SCM import status if the user don't have access to the SCM's configured key or password"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.loadScmConfig(_,integration) >> scmConfig
+        }
+        controller.storageService = Mock(StorageService)
+        def project = 'test'
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        0 * controller.scmService.getRenamedJobPathsForProject(project)
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        (statusCalls) * controller.scmService.getJobsPluginMeta(project, false)
+        (statusCalls) * controller.scmService.importStatusForJobs(project,_, _, _, _)
+        (statusCalls) * controller.scmService.importPluginStatus(_,project)
+        (statusCalls) * controller.scmService.importPluginActions(_,project,_)
+
+        where:
+        access   |  integration   | statusCalls
+        true     | 'import'       | 1
+        false    | 'import'       | 0
+    }
+
+    @Unroll
+    def "No SCM export status if the user don't have access to the SCM's configured key or password"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.loadScmConfig(_,integration) >> scmConfig
+        }
+        controller.storageService = Mock(StorageService)
+        def project = 'test'
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        (statusCalls) * controller.scmService.getJobsPluginMeta(project, true)
+        (statusCalls) * controller.scmService.exportStatusForJobs(project,_, _, _, _)
+
+        where:
+        access   |  integration   | statusCalls
+        true     | 'export'       | 1
+        false    | 'export'       | 0
+    }
+
     def "project Toggle SCM off"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
