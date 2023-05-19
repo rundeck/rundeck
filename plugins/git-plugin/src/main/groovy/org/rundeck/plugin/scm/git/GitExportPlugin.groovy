@@ -528,17 +528,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx) {
-        log.debug(ScmAuthMessages.CHECKING.getMessage())
-        def userStorageTree = ctx.getStorageTree()
-        def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
-        def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
-        if( expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath) ){
-            log.debug(ScmAuthMessages.HAS_ACCESS.getMessage())
-            return true;
-        }else{
-            log.debug(ScmAuthMessages.NO_ACCESS.getMessage())
-            return false;
-        }
+        return userHasAccessToCommonConfigKeyOrPassword(ctx)
     }
 
     List<Action> jobActionsForStatus(Map status) {

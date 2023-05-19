@@ -758,4 +758,26 @@ class BaseGitPlugin {
         }
         expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
+
+    /**
+     * Checks if the user in context has access to the configured key or password of the common config
+     * @param ctx: ScmConfigurationContext
+     * @return true / false
+     */
+    protected Boolean userHasAccessToCommonConfigKeyOrPassword(ScmOperationContext ctx){
+        if( !ctx || !ctx.getUserInfo().userName ){
+            return false
+        }
+        logger.debug(ScmAuthMessages.CHECKING.getMessage())
+        def userStorageTree = ctx.getStorageTree()
+        def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
+        def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
+        if( expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath) ){
+            logger.debug(ScmAuthMessages.HAS_ACCESS.getMessage())
+            return true;
+        }else{
+            logger.debug(ScmAuthMessages.NO_ACCESS.getMessage())
+            return false;
+        }
+    }
 }

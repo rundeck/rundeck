@@ -19,6 +19,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
@@ -546,6 +547,40 @@ class BaseGitPluginSpec extends Specification {
         url                       | configMap
         "test@host:/git/repo.git" | ["ConfigProp":"Value"]
         "test@host:/git/repo.git" | ["ConfigProp":"Value", "StrictHostKeyChecking":"true"]
+    }
+
+    def "user has access to the common config key or password or not"(){
+        given:
+        def username = 'user'
+        def userStorageTree = Mock(StorageTreeImpl){
+            hasPath(validPathForUser) >> true
+        }
+        def context = Mock(ScmOperationContext){
+            getStorageTree() >> userStorageTree
+            getUserInfo() >> Mock(ScmUserInfo){
+                getUserName() >> username
+            }
+        }
+        def commonConfig = Mock(Common){
+            getGitPasswordPath() >> commonConfigPassword
+            getSshPrivateKeyPath() >> commonConfigKey
+        }
+        def baseGitPlugin = new BaseGitPlugin(commonConfig)
+
+        when:
+        def userHasAccess = baseGitPlugin.userHasAccessToCommonConfigKeyOrPassword(context)
+
+        then:
+        methodResult == userHasAccess
+
+        where:
+        validPathForUser      | commonConfigPassword    | commonConfigKey         | methodResult
+        'keys/grantedAccess'  | 'keys/grantedAccess'    | null                    | true
+        'keys/grantedAccess'  | null                    | 'keys/grantedAccess'    | true
+        'keys/grantedAccess'  | null                    | null                    | false
+        'keys/grantedAccess'  | null                    | 'keys/notGrantedAccess' | false
+        'keys/grantedAccess'  | 'keys/notGrantedAccess' | null                    | false
+
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....
