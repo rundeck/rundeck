@@ -1243,7 +1243,7 @@ class ScmService {
                 def jobReference = exportJobRef(job, jobPluginMeta)
 
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                JobState jobState jobState = plugin.getJobStatus(jobReference, originalPath)
+                JobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
