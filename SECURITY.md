@@ -1,5 +1,5 @@
 # Security and Vulnerability Policy and Workflow
-The Rundeck Security Team exists to provide help and advice to Rundeck projects on security issues and to provide coordination of the handling of security vulnerabilities.
+The PagerDuty Security Team exists to provide help and advice related to Rundeck security issues and to provide coordination of the handling of security vulnerabilities.
 
 ## REPORTING A VULNERABILITY
 We strongly encourage the reporting of potential security vulnerabilities with our Vulnerability Report Form. Please note that the Vulnerability Report Form should only be used for reporting undisclosed security vulnerabilities in Rundeck projects. We cannot accept regular bug reports or other security related queries via the Form. All issues submitted via the Form that do not relate to an undisclosed security problem in a Rundeck project will be ignored.
