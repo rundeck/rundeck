@@ -205,6 +205,6 @@ public interface ScmExportPlugin {
      * @return true or false
      */
     default Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx){
-        return false;
+        return true;
     }
 }
