@@ -69,6 +69,13 @@ public interface RundeckProjectDataProvider extends DataProvider {
     Collection<String> getFrameworkProjectNames();
 
     /**
+     * Rerieves all enabled project names
+     *
+     * @return Collection of project names
+     */
+    Collection<String> getFrameworkProjectNamesByState(RdProject.State state);
+
+    /**
      * Retrieves the number of enabled RundeckProjects
      *
      * @return Count of RundeckProjects

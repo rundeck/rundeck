@@ -183,6 +183,11 @@ public class FrameworkProjectMgr extends FrameworkResource implements IFramework
     }
 
     @Override
+    public Collection<String> listEnabledFrameworkProjectNames() {
+        return listFrameworkProjectNames();
+    }
+
+    @Override
     public int countFrameworkProjects() {
         return listChildNames().size();
     }

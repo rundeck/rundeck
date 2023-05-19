@@ -1,6 +1,7 @@
 package rundeck.services.data
 
 import grails.gorm.services.Service
+import org.rundeck.app.data.model.v1.project.RdProject
 import rundeck.Project
 
 @Service(Project)
@@ -44,9 +45,17 @@ interface ProjectDataService {
     List<String> findProjectName()
 
     /**
+     * Get all available project names by state
+     * @return
+     */
+    List<String> findProjectName(RdProject.State state)
+
+    /**
      * Get the description of a project.
      * @return
      */
     String findProjectDescription(String name)
+    
+    
 
 }

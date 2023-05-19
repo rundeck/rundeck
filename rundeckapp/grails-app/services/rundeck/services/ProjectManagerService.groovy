@@ -179,6 +179,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     Collection<String> listFrameworkProjectNames() {
         projectDataProvider.getFrameworkProjectNames()
     }
+
+    @Override
+    Collection<String> listEnabledFrameworkProjectNames() {
+        def nameList = []
+        nameList.addAll(projectDataProvider.getFrameworkProjectNamesByState(null))
+        nameList.addAll(projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED))
+        return nameList 
+    }
+
     @Override
     int countFrameworkProjects() {
         return projectDataProvider.countFrameworkProjects()

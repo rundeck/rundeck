@@ -107,6 +107,11 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
+    Collection<String> getFrameworkProjectNamesByState(RdProject.State state) {
+        return projectDataService.findProjectName(state)
+    }
+
+    @Override
     String getProjectDescription(String name){
         return projectDataService.findProjectDescription(name)
     }
