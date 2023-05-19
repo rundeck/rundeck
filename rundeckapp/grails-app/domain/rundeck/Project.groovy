@@ -41,8 +41,4 @@ class Project implements RdProject {
             index 'PROJECT_IDX_NAME', ['name']
         }
     }
-
-    State getState() {
-        return state ?: State.ENABLED
-    }
 }

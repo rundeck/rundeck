@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectInfo
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -1318,8 +1319,12 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = 'desc'
         def prj = new Project(name: 'proj', description: description).save(flush: true)
+        def projinfo = Mock(IProjectInfo) {
+            getDescription() >> description
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projinfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
@@ -1336,7 +1341,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
-        1 * controller.frameworkService.getFrameworkProjectManager().getProjectDescription(_) >> description
         0 * iproj.hasProperty('project.description')
         description == response.json.projects[0].description
     }
@@ -1376,8 +1380,12 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     new Project(name: 'proj').save(flush: true)
+        def projInfo = Mock(IProjectInfo) {
+            getDescription() >> description
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projInfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
@@ -1393,7 +1401,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
-        1 * controller.frameworkService.getFrameworkProjectManager().getProjectDescription(_) >> null
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
         description == response.json.projects[0].description

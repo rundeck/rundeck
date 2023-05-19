@@ -144,4 +144,9 @@ public interface IRundeckProject extends IRundeckProjectConfig {
      * @throws IOException if an IO error occurs
      */
     long loadFileResource(String path, OutputStream output) throws IOException;
+
+    /**
+     * Indicates if the projects is enabled
+     */
+    default boolean isEnabled() { return true; }
 }

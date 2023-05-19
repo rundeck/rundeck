@@ -40,8 +40,7 @@ public class SimpleProjectBuilder implements RdProject {
 
   @Override
   public State getState() {
-      return Optional.ofNullable(this.state)
-              .orElse(State.ENABLED);
+      return this.state;
   }
 
   public SimpleProjectBuilder setName(String name) {

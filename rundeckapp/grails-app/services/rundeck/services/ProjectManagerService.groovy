@@ -572,20 +572,20 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @CompileStatic(TypeCheckingMode.SKIP)
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
-        RdProject found = projectDataProvider.findByName(projectName)
+        RdProject projectData = projectDataProvider.findByName(projectName)
         
-        if(found?.state == RdProject.State.DISABLED) {
+        if(projectData?.state == RdProject.State.DISABLED) {
             throw new IllegalArgumentException("Unable to create project. Project exists and is disabled")
         }
 
         def description = properties.get('project.description')
         boolean generateInitProps = false
-        if (!found) {
-            SimpleProjectBuilder project = new SimpleProjectBuilder()
+        if (!projectData) {
+            projectData = new SimpleProjectBuilder()
                                         .setDescription(description)
                                         .setName(projectName)
                                         .setState(RdProject.State.ENABLED)
-            projectDataProvider.create(project)
+            projectDataProvider.create(projectData)
             generateInitProps = true
         }
         Properties storedProps = new Properties()
@@ -605,8 +605,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        res.lastModified, res.creationTime
         )
-
-        def newproj= preloadedProject(projectName, rdprojectconfig)
+        
+        def newproj= new RundeckProject(projectData, rdprojectconfig, this)
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
@@ -762,12 +762,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
         return rdprojectconfig
     }
-    RundeckProject preloadedProject(String project, IRundeckProjectConfig config){
-        new RundeckProject(project, config, this)
-    }
-    RundeckProject lazyProject(String project){
-        new RundeckProject(project,null, this)
-    }
+
     /**
      * Load the project config and node support
      * @param project
@@ -780,8 +775,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
-        def rdproject = lazyProject(project)
-        def description = projectDataProvider.getProjectDescription(project)
+        def projectData = projectDataProvider.findByName(project)
+        def description = projectData.description
+        def rdproject = new RundeckProject(projectData,null, this)
         //preload cached readme/motd
 //        String readme = readCachedProjectFileAsAstring(project,"readme.md")
 //        String motd = readCachedProjectFileAsAstring(project,"motd.md")
@@ -805,7 +801,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         RdProject rdproject = projectDataProvider.findByName(project.name)
         boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
-                getProjectConfigLastModified(project.name) > project.configLastModifiedTime
+                getProjectConfigLastModified(project.name) > project.configLastModifiedTime ||
+                RdProject.State.DISABLED != rdproject.state == project.isEnabled()
 
         needsReload
     }

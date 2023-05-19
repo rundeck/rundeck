@@ -2144,7 +2144,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
-        final def projectDescription = frameworkService.getFrameworkProjectManager().getProjectDescription(project)
+        final def projectDescription = fwkProject.info.description
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
