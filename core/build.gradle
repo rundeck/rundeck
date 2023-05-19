@@ -127,10 +127,14 @@ buildConfig {
     buildConfigField('String', 'GIT_COMMIT', "\"${project.gitCommit}\"")
     buildConfigField('String', 'GIT_BRANCH', "\"${project.gitBranch}\"")
     buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
-    buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
     buildConfigField('String', 'BUILD_NUM', "\"${buildNum}\"")
     buildConfigField('String', 'BUILD_IDENT', "\"${version + '-' + buildNum}\"")
-
+    // Only add date if in CI mode to avoid UP-TO-DATE and build cache misses
+    if (System.env.CI) {
+        buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
+    } else {
+        buildConfigField('String', 'BUILD_DATE', "\"1970-01-01T00:00:00-00\"")
+    }
 }
 
 def archiveName = project.name

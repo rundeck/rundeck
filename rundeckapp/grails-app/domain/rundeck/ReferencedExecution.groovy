@@ -3,6 +3,7 @@ package rundeck
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import org.hibernate.sql.JoinType
 import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
+import org.rundeck.app.data.model.v1.job.JobDataSummary
 
 class ReferencedExecution implements RdReferencedExecution{
     String jobUuid
@@ -25,36 +26,25 @@ class ReferencedExecution implements RdReferencedExecution{
         }
     }
 
-    static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
+    static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
             isNotNull( 'e.scheduledExecution')
-            eq("jobUuid", se.uuid)
+            eq("jobUuid", jobUuid)
             projections {
                 distinct('e.scheduledExecution')
             }
-        } as List<ScheduledExecution>
+        }*.toJobDataSummary()
     }
 
-    static List executionProjectList(ScheduledExecution se, int max = 0){
+    static List<String> executionProjectList(String jobUuid, int max = 0){
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            eq("jobUuid", se.uuid)
+            eq("jobUuid", jobUuid)
             projections {
                 groupProperty('e.project', "project")
             }
-        }
-    }
-
-    static List<Long> parentListScheduledExecutionId(ScheduledExecution se, int max = 0){
-        return createCriteria().list(max: (max!=0)?max:null) {
-            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            isNotNull( 'e.scheduledExecution')
-            eq("jobUuid", se.uuid)
-            projections {
-                distinct('e.scheduledExecution.id')
-            }
-        } as List<Long>
+        } as List<String>
     }
 
     Serializable getExecutionId(){

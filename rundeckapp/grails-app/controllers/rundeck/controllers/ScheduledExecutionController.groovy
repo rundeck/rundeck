@@ -74,6 +74,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -119,6 +120,7 @@ class ScheduledExecutionController  extends ControllerBase{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService
+    JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
 
 
@@ -431,7 +433,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-        def parentList = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,10)
+        def parentList = referencedExecutionDataProvider.parentJobSummaries(scheduledExecution.uuid,10)
         def isReferenced = parentList?.size()>0
 
         def pluginDescriptions=[:]
@@ -1393,7 +1395,7 @@ Since: V14''',
             return
         }
         if(request.method=='POST') {
-            def isReferenced = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,1)?.size()>0
+            def isReferenced = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,

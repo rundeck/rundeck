@@ -1,10 +1,12 @@
 package org.rundeck.app.data.providers
 
 import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
+import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
+import rundeck.services.JobSchedulerService
 
 class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProvider{
     @Override
@@ -28,15 +30,13 @@ class GormReferencedExecutionDataProvider implements ReferencedExecutionDataProv
     }
 
     @Override
-    List<Long> parentList(String jobUuid, int max) {
-        def se = ScheduledExecution.findByUuid(jobUuid)
-        return ReferencedExecution.parentListScheduledExecutionId(se, max)
+    List<JobDataSummary> parentJobSummaries(String jobUuid, int max) {
+        return ReferencedExecution.parentJobSummaries(jobUuid, max)
     }
 
     @Override
-    List executionProjectList(String jobUuid, int max = 0) {
-        def se = ScheduledExecution.findByUuid(jobUuid)
-        return ReferencedExecution.executionProjectList(se, max)
+    List<String> executionProjectList(String jobUuid, int max = 0) {
+        return ReferencedExecution.executionProjectList(jobUuid, max)
     }
 
     @Override

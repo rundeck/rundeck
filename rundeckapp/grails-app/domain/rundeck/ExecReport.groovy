@@ -22,7 +22,9 @@ import org.rundeck.app.data.model.v1.report.RdExecReport
 
 class ExecReport extends BaseReport implements RdExecReport{
 
+    @Deprecated
     String ctxCommand
+    @Deprecated
     String ctxController
     Long executionId
     String jobId
