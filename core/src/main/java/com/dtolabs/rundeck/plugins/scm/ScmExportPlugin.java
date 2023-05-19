@@ -102,7 +102,9 @@ public interface ScmExportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize);
+    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
+        return getJobStatus(job, originalPath);
+    }
 
     /**
      * Set default job status
