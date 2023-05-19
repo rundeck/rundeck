@@ -197,4 +197,14 @@ public interface ScmExportPlugin {
     default String getExportPushActionId(){
         return null;
     }
+
+    /**
+     * Returns true or false if the user has access to the key/password or not
+     *
+     * @param ctx: ScmOperationContext object from the controller.
+     * @return true or false
+     */
+    default Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx){
+        return true;
+    }
 }

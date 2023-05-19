@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
@@ -35,6 +36,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
+import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -1601,6 +1603,44 @@ class GitExportPluginSpec extends Specification {
             args[1].write('data'.bytes)
         }
         0 * serializer.serialize(*_)
+
+    }
+
+    def "Check if the user has permission to the ssh or password configured for the integration"() {
+        given:
+        def scmUserInfo = Mock(ScmUserInfo)
+        def storageTree = Mock(StorageTreeImpl){
+            it.hasPath(_) >> userAccess
+        }
+        def scmOperationContext = Mock(ScmOperationContext){
+            getStorageTree() >> storageTree
+            getUserInfo() >> scmUserInfo
+        }
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def common = Mock(Common){
+            getSshPrivateKeyPath() >> 'keys/test'
+        }
+        def plugin = new GitExportPlugin(config)
+        plugin.setCommonConfig(common)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        hasAccess = plugin.userHasAccessToKeyOrPassword(scmOperationContext)
+
+        then:
+        hasAccess !== null
+
+        where:
+        userAccess | hasAccess
+        true       | true
+        false      | false
 
     }
 
