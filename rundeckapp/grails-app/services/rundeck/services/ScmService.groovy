@@ -1168,26 +1168,27 @@ class ScmService {
      * @param integration: import, export, etc.
      * @return [true/false , message]
      */
+    @CompileStatic
     def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
         def hasAccess = true;
+        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess] as LinkedHashMap<String, Boolean>)
         if( null == auth || null == integration ){
-            return hasAccess;
+            return defaultResponse;
         }
-        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess])
         def ctx = scmOperationContext(auth, project)
         if( ctx ){
             switch(integration){
                 case IMPORT:
                     def plugin = getLoadedImportPluginFor project
                     if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)])
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
                     }
                     return defaultResponse
                     break;
                 case EXPORT:
                     def plugin = getLoadedExportPluginFor project
                     if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)])
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
                     }
                     return defaultResponse
                     break;
