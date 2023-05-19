@@ -730,10 +730,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
 
         then:
-        0 * service.getLoadedImportPluginFor(_) >> Mock(ScmImportPlugin){
-            it.userHasAccessToKeyOrPassword(_) >> true
-        }
-        !response.hasAccess
+        response.hasAccess
 
     }
 

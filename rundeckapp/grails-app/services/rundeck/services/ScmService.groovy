@@ -1169,7 +1169,7 @@ class ScmService {
      * @return [true/false , message]
      */
     def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
-        def hasAccess = false;
+        def hasAccess = true;
         if( null == auth || null == integration ){
             return hasAccess;
         }
