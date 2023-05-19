@@ -1169,10 +1169,10 @@ class ScmService {
      * @return [true/false , message]
      */
     def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
+        def hasAccess = false;
         if( null == auth || null == integration ){
             return hasAccess;
         }
-        def hasAccess = false;
         def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess])
         def ctx = scmOperationContext(auth, project)
         if( ctx ){
