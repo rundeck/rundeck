@@ -138,11 +138,11 @@ class GitImportPluginSpec extends Specification {
         status.synchState == ImportSynchState.CLEAN
     }
 
-    def "Don't get job status if user don't have permission to config key"() {
+    def "Check if the user has permission to the ssh or password configured for the integration"() {
         given:
         def scmUserInfo = Mock(ScmUserInfo)
         def storageTree = Mock(StorageTreeImpl){
-            it.hasPath(_) >> false
+            it.hasPath(_) >> userAccess
         }
         def scmOperationContext = Mock(ScmOperationContext){
             getStorageTree() >> storageTree
@@ -161,6 +161,7 @@ class GitImportPluginSpec extends Specification {
         def plugin = new GitImportPlugin(config, [])
         def common = Mock(Common){
             getSshPrivateKeyPath() >> 'keys/test'
+            getGitPasswordPath() >> 'keys/password'
         }
         plugin.setCommonConfig(common)
         plugin.initialize(Mock(ScmOperationContext) {
@@ -179,61 +180,15 @@ class GitImportPluginSpec extends Specification {
         }
 
         when:
-        def status = plugin.getJobStatus(scmOperationContext, job)
-
-
-        then:
-        !status
-        def ex = thrown(ScmPluginException)
-        ex.message == BaseGitPlugin.ScmAuthMessages.NO_ACCESS.getMessage()
-    }
-
-    def "Allow get job status if user has permission to config key"() {
-        given:
-        def scmUserInfo = Mock(ScmUserInfo)
-        def storageTree = Mock(StorageTreeImpl){
-            it.hasPath(_) >> true
-        }
-        def scmOperationContext = Mock(ScmOperationContext){
-            getStorageTree() >> storageTree
-            getUserInfo() >> scmUserInfo
-        }
-        def projectName = 'GitImportPluginSpec'
-        def gitdir = new File(tempdir, 'scm')
-        def origindir = new File(tempdir, 'origin')
-        Import config = createTestConfig(gitdir, origindir)
-
-        Git git = GitExportPluginSpec.createGit(origindir)
-
-        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
-        git.close()
-
-        def plugin = new GitImportPlugin(config, [])
-        def common = Mock(Common){
-            getSshPrivateKeyPath() >> 'keys/test'
-        }
-        plugin.setCommonConfig(common)
-        plugin.initialize(Mock(ScmOperationContext) {
-            getFrameworkProject() >> projectName
-        }
-        )
-        def job = Mock(JobScmReference) {
-            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
-            getProject() >> projectName
-            getId() >> '123'
-            getJobName() >> 'job1'
-            getGroupPath() >> ''
-            getJobAndGroup() >> 'job1'
-            getImportVersion() >> 12L
-            getVersion() >> 12L
-        }
-
-        when:
-        def status = plugin.getJobStatus(scmOperationContext, job)
-
+        hasAccess = plugin.userHasAccessToKeyOrPassword(scmOperationContext)
 
         then:
-        status != null
+        hasAccess !== null
+
+        where:
+        userAccess | hasAccess
+        true       | true
+        false      | false
     }
 
     /**

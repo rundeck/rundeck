@@ -1606,11 +1606,11 @@ class GitExportPluginSpec extends Specification {
 
     }
 
-    def "Don't get job status if user dont have permissions to config key"() {
+    def "Check if the user has permission to the ssh or password configured for the integration"() {
         given:
         def scmUserInfo = Mock(ScmUserInfo)
         def storageTree = Mock(StorageTreeImpl){
-            it.hasPath(_) >> false
+            it.hasPath(_) >> userAccess
         }
         def scmOperationContext = Mock(ScmOperationContext){
             getStorageTree() >> storageTree
@@ -1631,68 +1631,16 @@ class GitExportPluginSpec extends Specification {
         plugin.setCommonConfig(common)
         plugin.initialize(Mock(ScmOperationContext))
 
-        def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobScmReference) {
-            getJobName() >> 'name'
-            getGroupPath() >> 'a/b'
-            getId() >> 'xyz'
-            getVersion() >> 1
-            getJobSerializer() >> serializer
-        }
         when:
-        def status = plugin.getJobStatus(scmOperationContext, jobref, null)
+        hasAccess = plugin.userHasAccessToKeyOrPassword(scmOperationContext)
 
         then:
-        !status
-        def ex = thrown(ScmPluginException)
-        ex.message == BaseGitPlugin.ScmAuthMessages.NO_ACCESS.getMessage()
+        hasAccess !== null
 
-    }
-
-    def "Allow get job status if user has permissions to config key"() {
-        given:
-        def scmUserInfo = Mock(ScmUserInfo)
-        def storageTree = Mock(StorageTreeImpl){
-            it.hasPath(_) >> true
-        }
-        def scmOperationContext = Mock(ScmOperationContext){
-            getStorageTree() >> storageTree
-            getUserInfo() >> scmUserInfo
-        }
-        def gitdir = new File(tempdir, 'scm')
-        def origindir = new File(tempdir, 'origin')
-        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
-
-        //create a git dir
-        def git = createGit(origindir)
-
-        git.close()
-        def common = Mock(Common){
-            getSshPrivateKeyPath() >> 'keys/test'
-        }
-        def plugin = new GitExportPlugin(config)
-        plugin.setCommonConfig(common)
-        plugin.initialize(Mock(ScmOperationContext))
-
-        def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobScmReference) {
-            getJobName() >> 'name'
-            getGroupPath() >> 'a/b'
-            getId() >> 'xyz'
-            getVersion() >> 1
-            getJobSerializer() >> serializer
-        }
-        when:
-        def status = plugin.getJobStatus(scmOperationContext, jobref, null)
-
-        then:
-        status !== null
-        status.synchState == SynchState.CREATE_NEEDED
-        status.commit == null
-        1 * serializer.serialize('xml', _, (false), null) >> { args ->
-            args[1].write('data'.bytes)
-        }
-        0 * serializer.serialize(*_)
+        where:
+        userAccess | hasAccess
+        true       | true
+        false      | false
 
     }
 

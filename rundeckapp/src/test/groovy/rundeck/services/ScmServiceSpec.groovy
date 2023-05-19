@@ -711,6 +711,32 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         info.email == 'test@test.com'
     }
 
+    def "Call for the scm plugin implementations to see if a user has access to the configured key o password"(){
+        given:
+        def project = 'testProject'
+        def authContext = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'test'
+        }
+        def integration = 'import'
+        service.storageService = Mock(StorageService)
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        service.pluginConfigService = Mock(PluginConfigService){
+            getConfig() >> Mock(ScmPluginConfigData)
+        }
+
+        when:
+        def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
+
+        then:
+        0 * service.getLoadedImportPluginFor(_) >> Mock(ScmImportPlugin){
+            it.userHasAccessToKeyOrPassword(_) >> true
+        }
+        !response.hasAccess
+
+    }
+
 
     def "lookup config on cluster mode"() {
         given:
