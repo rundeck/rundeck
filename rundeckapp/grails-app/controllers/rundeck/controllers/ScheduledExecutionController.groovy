@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -2597,7 +2598,12 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         def result= scheduledExecutionService._dovalidateAdhoc(params,authContext)
-        def ScheduledExecution scheduledExecution=result.scheduledExecution
+        ScheduledExecution scheduledExecution=result.scheduledExecution
+
+        // The default log level for ScheduledExecution is WARN which prevents log writing into the rdlog file later.
+        // For adhoc command we have to designate the log level to NORMAL.
+        scheduledExecution.loglevel = LogLevel.NORMAL
+
         def failed=result.failed
         if(!failed){
             return _transientExecute(scheduledExecution,params,authContext)
@@ -2641,7 +2647,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
         def Execution e
         try {
-            e = executionService.createExecutionAndPrep(params, params.user)
+            e = executionService.createExecutionAndPrep(scheduledExecution, authContext, params)
         } catch (ExecutionServiceException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }

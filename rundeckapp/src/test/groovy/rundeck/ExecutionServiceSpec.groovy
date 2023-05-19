@@ -321,28 +321,48 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "create execution and prep expand date strings"() {
 
         given:
+        ScheduledExecution scheduledExecution = new ScheduledExecution(
+                jobName: 'Temp/adHoc',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a Adhoc command job',
+                argString: argString,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+
         def params = [
                 project    : 'AProject',
                 groupPath  : 'some/where',
                 description: 'a job',
                 argString  : argString,
                 user       : 'bob',
-                workflow   : new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
+                workflow   : scheduledExecution.workflow,
                 retry      : '1'
         ]
+
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
 
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
         }
+
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
         when:
         Execution e2 = service.createExecutionAndPrep(
-                params,
-                null
+                scheduledExecution,
+                authContext,
+                params
         )
 
         then:
