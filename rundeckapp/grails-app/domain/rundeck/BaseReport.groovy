@@ -23,10 +23,14 @@ class BaseReport {
     String node
     String title
     String status
+    @Deprecated
     String actionType
     String project
+    @Deprecated
     String ctxType
+    @Deprecated
     String ctxName
+    @Deprecated
     String maprefUri
     String reportId
     String tags
