@@ -20,7 +20,6 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
-import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestXml
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
 import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
@@ -187,7 +186,8 @@ class ExecutionController extends ControllerBase{
                         href: href,
                         execid: exec.id,
                         title: exec.workflow.commands[0].adhocRemoteString,
-                        filter: appliedFilter
+                        filter: appliedFilter,
+                        extraMetadata: exec.extraMetadataMap
                 ]
             }
         }
