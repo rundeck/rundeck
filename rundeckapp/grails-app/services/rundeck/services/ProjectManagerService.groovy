@@ -808,7 +808,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime ||
-                RdProject.State.DISABLED != rdproject.state == project.isEnabled()
+                (RdProject.State.DISABLED != rdproject.state) != project.isEnabled()
 
         needsReload
     }
