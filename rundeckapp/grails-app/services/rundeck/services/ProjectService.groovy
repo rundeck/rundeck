@@ -1756,12 +1756,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     @GrailsCompileStatic
     protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Starting deletion of project ${project.name} by username $username")
-        def result = new DeleteResponse(success: false)
-        
-        return result
-        
-        
         notify('projectWillBeDeleted', project.name)
+        def result = new DeleteResponse(success: false)
 
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)

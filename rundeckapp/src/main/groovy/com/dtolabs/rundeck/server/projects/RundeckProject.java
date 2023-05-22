@@ -35,7 +35,6 @@ public class RundeckProject implements IRundeckProject{
     private IRundeckProjectConfig projectConfig;
     private IProjectInfo info;
     private IProjectNodesFactory nodesFactory;
-    //private final String name;
     private final RdProject projectData;
 
     public RundeckProject(
@@ -147,7 +146,7 @@ public class RundeckProject implements IRundeckProject{
 
     public IRundeckProjectConfig getProjectConfig() {
         if (null == projectConfig) {
-            this.projectConfig = projectService.loadProjectConfig(this.projectData.getName());
+            this.projectConfig = projectService.loadProjectConfig(this.getName());
         }
         return projectConfig;
     }
