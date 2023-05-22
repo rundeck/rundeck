@@ -51,6 +51,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     @Override
     SaveReportResponse saveReport(SaveReportRequest saveReportRequest) {
         ExecReport execReport = new ExecReport()
+        Execution execution = Execution.get(saveReportRequest.executionId)
         execReport.executionId = saveReportRequest.executionId
         execReport.jobId = saveReportRequest.jobId
         execReport.adhocExecution = saveReportRequest.adhocExecution
@@ -70,6 +71,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.message = saveReportRequest.message
         execReport.dateStarted = saveReportRequest.dateStarted
         execReport.dateCompleted = saveReportRequest.dateCompleted
+        execReport.jobUuid = execution.scheduledExecution?.uuid
         boolean isUpdated = execReport.save(flush: true)
         String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
