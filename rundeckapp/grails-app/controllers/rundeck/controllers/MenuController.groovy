@@ -2991,6 +2991,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         }
 
+        Assert.notNull(null, "This is a NULL EXAMPLE FOR API")
+        
         query.projFilter = params.project
         //test valid project
 
