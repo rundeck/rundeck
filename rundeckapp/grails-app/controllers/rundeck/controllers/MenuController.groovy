@@ -54,6 +54,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.util.Assert
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
@@ -343,6 +344,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             job.extid
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
+        Assert.notNull(null,"This is a null EXAMPLE")
 
         withFormat{
             html {
