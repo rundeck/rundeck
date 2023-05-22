@@ -108,7 +108,13 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     Collection<String> getFrameworkProjectNamesByState(RdProject.State state) {
-        return projectDataService.findProjectName(state)
+        def namelist = []
+        // If searching for enabled, we must include legacy projects with null in their field.
+        if(state == RdProject.State.ENABLED) {
+            namelist.addAll(projectDataService.findProjectNameByState(null))
+        }
+        namelist.addAll(projectDataService.findProjectNameByState(state))
+        return namelist
     }
 
     @Override

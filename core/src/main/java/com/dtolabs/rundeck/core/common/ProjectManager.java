@@ -38,12 +38,6 @@ public interface ProjectManager {
     Collection<String> listFrameworkProjectNames();
 
     /**
-     * List only enabled project names
-     * @return
-     */
-    Collection<String> listEnabledFrameworkProjectNames();
-
-    /**
      * @return number of projects
      */
     int countFrameworkProjects();

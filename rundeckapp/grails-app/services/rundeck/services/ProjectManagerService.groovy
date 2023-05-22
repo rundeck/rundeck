@@ -175,23 +175,20 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         log.debug("init: listFrameworkProjects: ${System.currentTimeMillis() - now}")
     }
 
+    /**
+     * List the names of available projects.
+     * @return
+     */
     @Override
     Collection<String> listFrameworkProjectNames() {
-        projectDataProvider.getFrameworkProjectNames()
-    }
-
-    @Override
-    Collection<String> listEnabledFrameworkProjectNames() {
-        def nameList = []
-        nameList.addAll(projectDataProvider.getFrameworkProjectNamesByState(null))
-        nameList.addAll(projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED))
-        return nameList 
+        return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED) 
     }
 
     @Override
     int countFrameworkProjects() {
         return projectDataProvider.countFrameworkProjects()
     }
+    
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
             throw new IllegalArgumentException("Project does not exist: " + name)
