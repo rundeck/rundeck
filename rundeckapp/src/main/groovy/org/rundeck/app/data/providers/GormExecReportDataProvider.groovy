@@ -20,6 +20,7 @@ import rundeck.BaseReport;
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
+import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 
 import javax.sql.DataSource;
@@ -105,10 +106,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, Long scheduledExecutionId) {
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, Long jobId) {
         return ExecReport.withTransaction {
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, scheduledExecutionId)
+                applyExecutionCriteria(query, delegate, isJobs, jobId)
             }
         }
     }
@@ -133,7 +134,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    Collection<String> getExecutionReports(RdExecQuery query, boolean isJobs, Long scheduledExecutionId) {
+    List<RdExecReport> getExecutionReports(RdExecQuery query, boolean isJobs, Long jobId) {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -152,10 +153,6 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
-        BuildableCriteria a = ExecReport.createCriteria()
-        a.list {
-
-        }
          return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -166,14 +163,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
             }
-            applyExecutionCriteria(query, delegate,isJobs, scheduledExecutionId)
+            applyExecutionCriteria(query, delegate,isJobs, jobId)
 
             if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
             }
-        }
+        } as List<RdExecReport>
     }
 
     @Override
@@ -267,10 +264,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                 }
 
                 if (query.execProjects && seId) {
+                    String jobUuid = ScheduledExecution.get(seId).uuid
                     or {
                         exists(new DetachedCriteria(ReferencedExecution, "re").build {
                             projections { property 're.execution.id' }
-                            eq('re.scheduledExecution.id', seId)
+                            eq('re.jobUuid', jobUuid)
                             eqProperty('re.execution.id', 'this.executionId')
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
