@@ -30,17 +30,13 @@ class InternalErrorsInterceptor {
             return true
 
         HttpServletRequest requestForRendering = request
-        Enumeration<String> reqAttributes = requestForRendering.getAttributeNames()
 
-        reqAttributes.each { String attributeName ->
-            def attribute = requestForRendering.getAttribute(attributeName)
-            if(attribute instanceof Throwable) {
-                Throwable serverException = (attribute as Throwable)
-                if (serverException) {
-                    requestForRendering.removeAttribute(attributeName)
-                    cleanStackTraces(serverException)
-                    requestForRendering.setAttribute(attributeName, serverException)
-                }
+        for (String exceptionAttrName : EXCEPT_ATTR_NAMES) {
+            Throwable serverException = (requestForRendering.getAttribute(exceptionAttrName) as Throwable)
+            if (serverException) {
+                requestForRendering.removeAttribute(exceptionAttrName)
+                cleanStackTraces(serverException)
+                requestForRendering.setAttribute(exceptionAttrName, serverException)
             }
         }
 
