@@ -621,18 +621,6 @@ jobs:
       - test-packages
       - package-cloud-install
 
-  trigger-packaging:
-    <<: *defaults
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    steps:
-      - trigger/trigger:
-          debug: true
-          branch: 'main'
-          token: '${CIRCLECI_API_TOKEN}'
-          project-slug: 'gh/rundeck/packaging-core'
-          pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
     executor:
