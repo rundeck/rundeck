@@ -59,6 +59,14 @@ public class RundeckConfigBase {
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
+    RundeckScm scm;
+
+    @Data public static class RundeckScm{
+        ScmStartup startup;
+    }
+    @Data public static class ScmStartup{
+        Boolean initDeferred;
+    }
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
