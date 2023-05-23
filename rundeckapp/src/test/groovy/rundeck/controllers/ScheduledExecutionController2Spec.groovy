@@ -553,7 +553,10 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
+        
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
@@ -642,7 +645,10 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
+        
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
@@ -1286,6 +1292,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1378,6 +1387,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1464,6 +1476,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1547,6 +1562,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1627,6 +1645,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
+        }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1717,6 +1738,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1799,6 +1823,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
+        }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){

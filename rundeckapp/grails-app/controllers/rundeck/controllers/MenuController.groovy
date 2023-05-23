@@ -2399,7 +2399,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
             
-            def description = project.info.description
+            def description = project.info?.description
             
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''

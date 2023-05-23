@@ -1381,7 +1381,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     new Project(name: 'proj').save(flush: true)
         def projInfo = Mock(IProjectInfo) {
-            getDescription() >> description
+            getDescription() >> null
         }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
