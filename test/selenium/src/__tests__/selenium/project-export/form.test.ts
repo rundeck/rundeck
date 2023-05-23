@@ -18,6 +18,7 @@ import {Context} from '@rundeck/testdeck/context'
 import {CreateContext} from '@rundeck/testdeck/test/selenium'
 import {ProjectExportPage,Checkboxes,Radios} from 'pages/projectExport.page'
 import {LoginPage} from 'pages/login.page'
+import {sleep} from '@rundeck/testdeck/async/util'
 
 import {until} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
@@ -83,6 +84,8 @@ describe('projectExport', () => {
     expect(checked).not.toContain(null)
     //click each label
     await Promise.all(labels.map(label=>label.click()))
+
+    await sleep(3000)
 
     let checked2 = await Promise.all(elems.map((elem)=>elem.getAttribute('checked')))
     expect(checked2.length).toBe(Checkboxes.length)
