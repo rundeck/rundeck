@@ -30,6 +30,9 @@ configurations{
         extendsFrom pluginLibs
     }
 }
+
+apply from: "../../gradle/java-version.gradle"
+
 repositories {
     mavenLocal()
     maven{ //snapshot dependency

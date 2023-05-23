@@ -16,6 +16,8 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 apply plugin: "java-library"
 
+apply from: "../gradle/java-version.gradle"
+
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }

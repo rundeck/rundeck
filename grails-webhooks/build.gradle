@@ -31,6 +31,8 @@ configurations {
     }
 }
 
+apply from: "../gradle/java-version.gradle"
+
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
