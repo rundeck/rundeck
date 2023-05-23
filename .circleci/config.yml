@@ -321,13 +321,12 @@ jobs:
       - install-java
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.14
       - run:
           name: Build
           command: |
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh build
-      - setup_remote_docker:
-          version: 20.10.14
       - run:
           name: Build Docker Images
           command: |
