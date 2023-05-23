@@ -88,7 +88,7 @@ export default Vue.extend({
           } else if (errData.errorCode) {
             this.errorMessage = `An error occurred. Error code: ${errData.errorCode}`
           }
-        } else if (e.response.status == 400) {
+        } else if (e.response && e.response.status == 400) {
           this.errorMessage = `The content was an invalid format`
         } else {
           this.errorMessage = e.message
