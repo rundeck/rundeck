@@ -31,7 +31,7 @@ tasks.register('ensureWar') {
 
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile = file(rundeckapp.war.archiveFile)
-    if (! warFile.exists()) {
+    if (!warFile.exists()) {
         dependsOn rundeckapp.bootWar
     }
 }
@@ -56,8 +56,8 @@ tasks.register('officialBuild') {
         file(outputDir).mkdir()
 
         def rundeckapp = project(":rundeckapp")
-        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain","")
-        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain","")
+        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain", "")
+        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain", "")
 
         copy {
             from archiveFile
@@ -74,8 +74,8 @@ tasks.register('officialBuild') {
 
         for (tag in dockerTags)
             args.add("-t=rundeck/rundeck:$tag")
-        
-        args.add( "." )
+
+        args.add(".")
 
         exec {
             workingDir "./official"
@@ -85,7 +85,7 @@ tasks.register('officialBuild') {
         for (tag in dockerTags) {
             file("$outputDir/$tag").createNewFile()
         }
-        
+
     }
 
     clean {
@@ -101,7 +101,7 @@ tasks.register('officialPush') {
                 commandLine "docker", "push", "rundeck/rundeck:$tag"
             }
         }
-        
+
     }
 }
 
