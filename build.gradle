@@ -145,6 +145,7 @@ subprojects {
     // set the eclipse project naming convention to rundeck:<path>:<projectName>
     // so it matches the logical hierarchy more closely
     apply plugin: 'eclipse'
+    apply from: "${rootDir}/gradle/java-version.gradle"
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 

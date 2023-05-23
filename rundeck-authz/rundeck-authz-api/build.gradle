@@ -1,11 +1,13 @@
 apply plugin: "groovy"
 
+apply from: "../../gradle/java-version.gradle"
+
 dependencies {
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
 
-    compileOnly "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
 }
 

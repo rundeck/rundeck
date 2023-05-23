@@ -40,6 +40,7 @@ configurations{
     provided
 }
 
+apply from: "../gradle/java-version.gradle"
 
 dependencies {
 
