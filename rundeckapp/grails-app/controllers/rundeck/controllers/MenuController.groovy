@@ -262,7 +262,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         params:[project:it.scheduledExecution.project]
                 )
                 if (it.scheduledExecution){
-                    def avgDur = it.scheduledExecution.getAverageDuration()
+                    def avgDur = executionService.getAverageDuration(it.scheduledExecution.uuid)
                     if(avgDur > 0) {
                         data['jobAverageDuration'] = avgDur
                     }
@@ -472,8 +472,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             }
                         }
                     }
-                    if (se.getAverageDuration() > 0) {
-                        data.averageDuration = se.getAverageDuration()
+                    def averageDuration = executionService.getAverageDuration(se.uuid)
+                    if (averageDuration > 0) {
+                        data.averageDuration = averageDuration
                     }
                     JobInfo.from(
                             se,
@@ -2905,8 +2906,9 @@ Since: V18''',
             extra.serverNodeUUID = scheduledExecution.serverNodeUUID
             extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
         }
-        if (scheduledExecution.getAverageDuration()>0) {
-            extra.averageDuration = scheduledExecution.getAverageDuration()
+        def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
+        if (averageDuration>0) {
+            extra.averageDuration = averageDuration
         }
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
@@ -3813,11 +3815,16 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, true)
-                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
-                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                            pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                            pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, params.project)
+                            if( null !== validation && validation.hasAccess ){
+                                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, true)
+                                pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
+                                pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                                pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                                pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                            }else{
+                                results.warning = validation.message
+                            }
                         }
                         results.putAll(pluginData)
                     }
@@ -3835,24 +3842,20 @@ if executed in cluster mode.
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        def userHasPathAccessToSshKey = storageService.hasPath(authContext, scmService.loadScmConfig(params.project, 'import')?.config?.sshPrivateKeyPath)
-                        if( !userHasPathAccessToSshKey ){
-                            def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
-                            scmService.disablePlugin('import', params.project, scmService.loadScmConfig(params.project, 'import').type)
-                            pluginData.warning = unauthorizedMessage
-                            log.error(unauthorizedMessage)
-                        }else{
-                            pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
-                            if (pluginData.scmImportEnabled) {
+                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
+                        if (pluginData.scmImportEnabled) {
+                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, params.project)
+                            if( null !== validation && validation.hasAccess ){
                                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
-                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
+                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                                 pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
+                                results.putAll(pluginData)
+                            }else{
+                                results.warning = validation.message
                             }
                         }
-                        results.putAll(pluginData)
                     }
-
                 } catch (ScmPluginException e) {
                     results.warning = "Failed to update SCM Import status: ${e.message}"
                 }

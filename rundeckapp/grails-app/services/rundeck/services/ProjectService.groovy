@@ -40,7 +40,6 @@ import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
@@ -55,6 +54,10 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.model.v1.report.RdExecReport
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
@@ -67,8 +70,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
-import rundeck.BaseReport
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
@@ -107,6 +108,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     RundeckProjectDataProvider projectDataProvider
+    ExecReportDataProvider execReportDataProvider
 
     static transactional = false
 
@@ -119,21 +121,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         rundeckJobDefinitionManager.exportAs('xml', [job], JobFormat.options(true, [:], stripJobRef), writer)
     }
 
-    def exportHistoryReport(ZipBuilder zip, BaseReport report, String name) throws ProjectServiceException {
+    def exportHistoryReport(ZipBuilder zip, RdExecReport report, String name) throws ProjectServiceException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-        def map = report.toMap()
-        if (map.jcJobId) {
+        if (report.jobId) {
             //convert internal job ID to extid
             def se
             try {
-                se = ScheduledExecution.get(Long.parseLong(map.jcJobId))
+                se = ScheduledExecution.get(Long.parseLong(report.jobId))
                 if (se) {
-                    map.jcJobId = se.extid
+                    report.jobId = se.extid
                 }
             } catch (NumberFormatException e) {
 
@@ -142,7 +143,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //convert map to xml
         zip.file("$name") { Writer writer ->
             def xml = new MarkupBuilder(writer)
-            builder.objToDom("report", map, xml)
+            builder.objToDom("report", report, xml)
         }
     }
 
@@ -225,32 +226,37 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //load doc as report
         def object = XmlParserUtil.toObject(doc)
         if (object instanceof Map) {
+            convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Report ${identity}")
+            SaveReportRequest saveReportRequest = SaveReportRequestImpl.fromMap(object)
+
             //remap job id if necessary
+            if (object.jobId && jobsByOldIdMap && jobsByOldIdMap[object.jobId]) {
+                saveReportRequest.jobId = jobsByOldIdMap[object.jobId].id
+            }
             if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                object.jcJobId = jobsByOldIdMap[object.jcJobId].id
+                saveReportRequest.jobId = jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
             //nb: support old "jcExecId" name
             if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
-                object.executionId = execIdMap[object.jcExecId]
+                saveReportRequest.executionId = execIdMap[object.jcExecId]
             } else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
-                object.executionId = execIdMap[object.executionId]
+                saveReportRequest.executionId = execIdMap[object.executionId]
             } else {
                 //skip report for exec id that cannot be found
                 return null
             }
             //convert dates
-            convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Report ${identity}")
+
             if (!(object.dateCompleted instanceof Date)) {
-                object.dateCompleted = new Date()
+                saveReportRequest.dateCompleted = new Date()
+            } else {
+                saveReportRequest.dateCompleted = object.dateCompleted
             }
-            def report
-            try {
-                report = ExecReport.fromMap(object)
-            } catch (Throwable e) {
-                throw new ProjectServiceException("Unable to create Report: " + e.getMessage(), e)
+            if (object.dateStarted instanceof Date) {
+                saveReportRequest.dateStarted = object.dateStarted
             }
-            return report
+            return saveReportRequest
         } else {
             throw new ProjectServiceException("Unexpected data type for Report: " + object.class.name)
         }
@@ -750,7 +756,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + BaseReport.countByCtxProject(projectName)
+                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -787,7 +793,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 } else if (compName == BuiltinExportComponents.executions.name()) {
                     List<Execution> execs = []
-                    List<BaseReport> reports = []
+                    List<RdExecReport> reports = []
                     if (options.executionsOnly) {
                         //find execs
                         List<Long> execIds = []
@@ -799,10 +805,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                         execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = ExecReport.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
+                        reports = execReportDataProvider.findAllByProjectAndExecutionIdInList(projectName, execIds)
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
-                        reports = BaseReport.findAllByCtxProject(projectName)
+                        reports = execReportDataProvider.findAllByProject(projectName)
                     }
                     List<JobFileRecord> jobfilerecords = []
 
@@ -827,7 +833,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         //export history
 
                         dir('reports/') {
-                            reports.each { BaseReport report ->
+                            reports.each { RdExecReport report ->
                                 exportHistoryReport zip, report, "report-${report.id}.xml"
                                 listener?.inc('export', 1)
                             }
@@ -1327,6 +1333,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @CompileStatic
     public Map<String, ProjectComponent> getProjectComponents() {
+        def some = null
         def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
@@ -1514,7 +1521,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def loadedreports = []
         def execids = new ArrayList<Long>(execidmap.values())
         reportxml.each { rxml ->
-            ExecReport report
+            SaveReportRequestImpl report
             try {
                 report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
             } catch (ProjectServiceException e) {
@@ -1527,23 +1534,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.debug("[${reportxmlnames[rxml]}] Report skipped: no matching execution imported.")
                 return
             }
-            report.ctxProject = projectName
-            if (!report.save(flush: true)) {
-                log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
+            report.project = projectName
+            def response = execReportDataProvider.saveReport(report)
+            if (!response.isSaved) {
+                log.error("[${reportxmlnames[rxml]}] Unable to save report: ${response.errors}")
                 return
             }
-            execids.remove(report.executionId)
-            loadedreports << report
+            execids.remove(response.report.executionId)
+            loadedreports << response.report
         }
         //generate reports for executions without matching reports
         execids.each { eid ->
-            Execution newe = Execution.get(eid)
-            def report = ExecReport.fromExec(newe)
-            if (!report.save()) {
-                log.error("Unable to save generated report: ${report.errors} (execution ${eid})")
+            def saveReportResponse = execReportDataProvider.createReportFromExecution(eid)
+            if (!saveReportResponse.isSaved) {
+                log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return
             }
-            loadedreports << report
+            loadedreports << saveReportResponse.report
         }
         log.info("Loaded ${loadedreports.size()} reports")
     }
@@ -1720,12 +1727,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
 
-        BaseReport.withTransaction { TransactionStatus status ->
+        ScheduledExecution.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
-                BaseReport.deleteByCtxProject(project.name)
-                ExecReport.deleteByCtxProject(project.name)
+                execReportDataProvider.deleteWithTransaction(project.name)
 
                 //delete all jobs with their executions
 

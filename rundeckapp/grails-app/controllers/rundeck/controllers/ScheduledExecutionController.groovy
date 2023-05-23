@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -72,6 +73,8 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -102,64 +105,6 @@ import java.util.regex.Pattern
 class ScheduledExecutionController  extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(ScheduledExecutionController)
 
-    public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
-    public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'
-    public static final String NOTIFY_ONSTART_EMAIL = 'notifyOnstartEmail'
-    public static final String NOTIFY_START_RECIPIENTS = 'notifyStartRecipients'
-    public static final String NOTIFY_START_SUBJECT = 'notifyStartSubject'
-    public static final String NOTIFY_ONSUCCESS_URL = 'notifyOnsuccessUrl'
-    public static final String NOTIFY_SUCCESS_URL = 'notifySuccessUrl'
-    public static final String NOTIFY_SUCCESS_URL_FORMAT = 'notifySuccessUrlFormat'
-    public static final String NOTIFY_FAILURE_RECIPIENTS = 'notifyFailureRecipients'
-    public static final String NOTIFY_FAILURE_SUBJECT= 'notifyFailureSubject'
-    public static final String NOTIFY_FAILURE_ATTACH= 'notifyFailureAttach'
-    public static final String NOTIFY_FAILURE_ATTACH_TYPE= 'notifyFailureAttachType'
-    public static final String NOTIFY_SUCCESS_RECIPIENTS = 'notifySuccessRecipients'
-    public static final String NOTIFY_SUCCESS_SUBJECT= 'notifySuccessSubject'
-    public static final String NOTIFY_SUCCESS_ATTACH= 'notifySuccessAttach'
-    public static final String NOTIFY_SUCCESS_ATTACH_TYPE= 'notifySuccessAttachType'
-    public static final String NOTIFY_FAILURE_URL = 'notifyFailureUrl'
-    public static final String NOTIFY_FAILURE_URL_FORMAT = 'notifyFailureUrlFormat'
-    public static final String NOTIFY_ONFAILURE_URL = 'notifyOnfailureUrl'
-    public static final String NOTIFY_ONSTART_URL = 'notifyOnstartUrl'
-    public static final String NOTIFY_START_URL = 'notifyStartUrl'
-    public static final String NOTIFY_START_URL_FORMAT = 'notifyStartUrlFormat'
-    public static final String ONSUCCESS_TRIGGER_NAME = 'onsuccess'
-    public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
-    public static final String ONSTART_TRIGGER_NAME = 'onstart'
-    public static final String OVERAVGDURATION_TRIGGER_NAME = 'onavgduration'
-    public static final String ONRETRYABLEFAILURE_TRIGGER_NAME = 'onretryablefailure'
-    public static final String NOTIFY_OVERAVGDURATION_EMAIL = 'notifyAvgDurationEmail'
-    public static final String NOTIFY_OVERAVGDURATION_URL = 'notifyAvgDurationUrl'
-    public static final String NOTIFY_OVERAVGDURATION_URL_FORMAT = 'notifyAvgDurationUrlFormat'
-    public static final String NOTIFY_ONOVERAVGDURATION_URL = 'notifyOnAvgDurationUrl'
-    public static final String NOTIFY_OVERAVGDURATION_RECIPIENTS = 'notifyAvgDurationRecipients'
-    public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
-    public static final String NOTIFY_ONRETRYABLEFAILURE_URL = 'notifyOnRetryableFailureUrl'
-    public static final String NOTIFY_ONRETRYABLEFAILURE_EMAIL = 'notifyOnRetryableFailureEmail'
-    public static final String NOTIFY_RETRYABLEFAILURE_URL = 'notifyRetryableFailureUrl'
-    public static final String NOTIFY_RETRYABLEFAILURE_URL_FORMAT = 'notifyRetryableFailureUrlFormat'
-    public static final String NOTIFY_RETRYABLEFAILURE_RECIPIENTS = 'notifyRetryableFailureRecipients'
-    public static final String NOTIFY_RETRYABLEFAILURE_SUBJECT = 'notifyRetryableFailureSubject'
-    public static final String NOTIFY_RETRYABLEFAILURE_ATTACH= 'notifyRetryableFailureAttach'
-    public static final String NOTIFY_RETRYABLEFAILURE_ATTACH_TYPE= 'notifyRetryableFailureType'
-
-    public static final String EMAIL_NOTIFICATION_TYPE = 'email'
-    public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
-    public static final ArrayList<String> NOTIFICATION_ENABLE_FIELD_NAMES = [
-            NOTIFY_ONFAILURE_URL,
-            NOTIFY_ONFAILURE_EMAIL,
-            NOTIFY_ONSUCCESS_EMAIL,
-            NOTIFY_ONSUCCESS_URL,
-            NOTIFY_ONSTART_EMAIL,
-            NOTIFY_ONSTART_URL,
-            NOTIFY_OVERAVGDURATION_EMAIL,
-            NOTIFY_ONOVERAVGDURATION_URL,
-            NOTIFY_ONRETRYABLEFAILURE_EMAIL,
-            NOTIFY_ONRETRYABLEFAILURE_URL
-    ]
-
-
     def ExecutionService executionService
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
@@ -175,6 +120,8 @@ class ScheduledExecutionController  extends ControllerBase{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService
+    JobDataProvider jobDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -475,8 +422,8 @@ class ScheduledExecutionController  extends ControllerBase{
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
-        if(scheduledExecution.getRefExecCountStats()) {
-            reftotal = scheduledExecution.getRefExecCountStats()
+        if(scheduledExecutionService.getRefExecCountStats(scheduledExecution.uuid)) {
+            reftotal = scheduledExecutionService.getRefExecCountStats(scheduledExecution.uuid)
         }
 
         def remoteClusterNodeUUID=null
@@ -486,7 +433,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-        def parentList = ReferencedExecution.parentList(scheduledExecution,10)
+        def parentList = referencedExecutionDataProvider.parentJobSummaries(scheduledExecution.uuid,10)
         def isReferenced = parentList?.size()>0
 
         def pluginDescriptions=[:]
@@ -1448,7 +1395,7 @@ Since: V14''',
             return
         }
         if(request.method=='POST') {
-            def isReferenced = ReferencedExecution.parentList(scheduledExecution,1)?.size()>0
+            def isReferenced = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,
@@ -2330,11 +2277,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 //                scheduledExecution.refresh()
 //            }
             //update notification checkbox values
-            NOTIFICATION_ENABLE_FIELD_NAMES.each{
-                if(params[it]!='true'){
-                    params[it]='false'
-                }
-            }
+
             def model = scheduledExecutionService.prepareCreateEditJob(params,scheduledExecution, AuthConstants.ACTION_UPDATE,  authContext)
             model["sessionOpts"] = params['_sessionEditOPTSObject']?.values()
             model["notificationValidation"] = params['notificationValidation']
@@ -2655,7 +2598,12 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         def result= scheduledExecutionService._dovalidateAdhoc(params,authContext)
-        def ScheduledExecution scheduledExecution=result.scheduledExecution
+        ScheduledExecution scheduledExecution=result.scheduledExecution
+
+        // The default log level for ScheduledExecution is WARN which prevents log writing into the rdlog file later.
+        // For adhoc command we have to designate the log level to NORMAL.
+        scheduledExecution.loglevel = LogLevel.NORMAL
+
         def failed=result.failed
         if(!failed){
             return _transientExecute(scheduledExecution,params,authContext)
@@ -2699,7 +2647,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
         def Execution e
         try {
-            e = executionService.createExecutionAndPrep(params, params.user)
+            e = executionService.createExecutionAndPrep(scheduledExecution, authContext, params)
         } catch (ExecutionServiceException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }

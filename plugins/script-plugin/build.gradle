@@ -22,6 +22,8 @@ ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.d
 ext.pluginName = 'Script Execution'
 ext.pluginDescription = 'Delegate command and script execution to another external script'
 
+apply from: "../../gradle/java-version.gradle"
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

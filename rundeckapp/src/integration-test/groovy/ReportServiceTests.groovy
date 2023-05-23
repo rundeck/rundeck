@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.junit.Test
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.ScheduledExecution
@@ -34,10 +35,11 @@ import rundeck.services.ReportService
 @Rollback
 class ReportServiceTests extends GroovyTestCase {
     ReportService reportService
+    ExecReportDataProvider execReportDataProvider
     def sessionFactory
 
     private BaseReport proto(props=[:]){
-        def repprops=[author: 'bob', ctxProject: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
+        def repprops=[author: 'bob', project: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
@@ -119,15 +121,15 @@ class ReportServiceTests extends GroovyTestCase {
     void testGetExecReportsProjFilterIsExact(){
         def r1,r2,r3
 
-        r1=proto(reportId:'blah', executionId: '123', ctxProject:'abc')
+        r1=proto(reportId:'blah', executionId: '123', project:'abc')
         assert r1.validate()
         assert null!=r1.save(flush: true)
         assert 'blah'==r1.reportId
         assertNotNull(r1.id)
-        r2 = proto(reportId: 'blah2', executionId: '124', ctxProject: 'abc')
+        r2 = proto(reportId: 'blah2', executionId: '124', project: 'abc')
         assert r2.validate()
         assert null != r2.save(flush: true)
-        r3 = proto(reportId: 'blah3', executionId: '125', ctxProject: 'abcdef')
+        r3 = proto(reportId: 'blah3', executionId: '125', project: 'abcdef')
         assert r3.validate()
         println r3.save(flush: true)
 
@@ -207,9 +209,9 @@ class ReportServiceTests extends GroovyTestCase {
         assert null != se.save(flush: true)
         assert null != se2.save(flush: true)
 
-        def r1 = proto(reportId: 'group/name', jcJobId: se.id,ctxProject: 'one')
+        def r1 = proto(reportId: 'group/name', jobId: se.id,project: 'one')
         assert null != r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', jcJobId: se2.id,ctxProject: 'one')
+        def r2 = proto(reportId: 'group/name2', jobId: se2.id,project: 'one')
         assert null != r2.save(flush: true)
         sessionFactory.currentSession.flush()
 

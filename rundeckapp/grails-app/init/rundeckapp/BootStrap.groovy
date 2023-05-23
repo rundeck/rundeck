@@ -420,12 +420,6 @@ class BootStrap {
             executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
 
-            if(configurationService.getBoolean("reportService.startup.cleanupReports", false)) {
-                timer("reportService.fixReportStatusStrings") {
-                    reportService.fixReportStatusStrings()
-                }
-            }
-
             def cleanupMode = configurationService.getString(
                     'executionService.startup.cleanupMode',
                     'async'

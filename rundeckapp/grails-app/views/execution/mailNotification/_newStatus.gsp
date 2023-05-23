@@ -21,18 +21,19 @@
    $Id$
 --%>
 
-<%@ page import="rundeck.Execution" contentType="text/html" %>
+<%@ page import="org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider; rundeck.Execution" %>
 <%@ page import="rundeck.ReferencedExecution" %>
 
 <%
     request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
 %>
 
+<g:set var="referencedExecutionDataProvider" bean="${org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider}"/>
 <g:set var="execCount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="successcount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
-<g:set var="refsuccesscount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
+<g:set var="refsuccesscount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded') : 0}"/>
 
-<g:set var="refexecCount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
+<g:set var="refexecCount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid) : 0}"/>
 
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 
@@ -658,8 +659,8 @@
       <td colspan="3" style="padding: 0 10px;">
         <div class="spacer py-sm-10" style="line-height: 30px;">‌</div>
         <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-
-          <g:set var="avgduration" value="${scheduledExecution.getAverageDuration()}"/>
+          <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
+          <g:set var="avgduration" value="${executionService.getAverageDuration(scheduledExecution.uuid)}"/>
 
           <tr>
             <g:if test="${avgduration>0}">

@@ -3,18 +3,22 @@ apply plugin: "java-library"
 repositories {
     mavenCentral()
 }
+
+apply from: "../gradle/java-version.gradle"
+
 dependencies {
     api project(":rundeck-storage:rundeck-storage-api")
     api 'commons-codec:commons-codec:1.15'
     api 'commons-lang:commons-lang:2.6'
     api "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    implementation 'org.slf4j:slf4j-api:1.7.32'
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
-    compileOnly "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 }
 
 ext.description = "Rundeck project ${project.name}"

@@ -26,6 +26,7 @@ ext.rundeckPluginVersion= '1.2'
 subprojects{
 
     apply from: "${projectDir}/../../gradle/java.gradle"
+    apply from: "../../gradle/java-version.gradle"
 
     defaultTasks 'clean','build'
     archivesBaseName = "rundeck-$project.name"

@@ -19,6 +19,9 @@ ext.pluginName = 'Git Plugin'
 ext.pluginDescription = 'Export and Import Jobs with a Git repository'
 
 apply plugin: "groovy"
+
+apply from: "../../gradle/java-version.gradle"
+
 configurations{
     pluginLibs
 

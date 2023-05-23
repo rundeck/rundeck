@@ -2,6 +2,8 @@ plugins {
     id 'groovy'
 }
 
+apply from: "../../gradle/java-version.gradle"
+
 ext.pluginClassNames='org.rundeck.plugin.azureobjectstore.AzureObjectStorePlugin'
 ext.pluginName = 'Azure Object Store Plugin'
 ext.pluginDescription = 'Stores data in an Azure Storage compliant object store'

@@ -30,7 +30,6 @@ import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.rmi.CORBA.Stub
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
