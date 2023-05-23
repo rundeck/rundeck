@@ -26,7 +26,7 @@ if (vTag != 'SNAPSHOT'){
     dockerTags << vTag //SNAPSHOT
 }
 
-task ensureWar {
+tasks.register('ensureWar') {
     def rundeckapp = project(":rundeckapp")
 
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
@@ -36,7 +36,7 @@ task ensureWar {
     }
 }
 
-task officialBuild {
+tasks.register('officialBuild') {
     dependsOn ensureWar
 
     inputs.dir "official/etc"
@@ -93,7 +93,7 @@ task officialBuild {
     }
 }
 
-task officialPush {
+tasks.register('officialPush') {
     dependsOn officialBuild
     doLast {
         for (tag in dockerTags) {
@@ -105,7 +105,7 @@ task officialPush {
     }
 }
 
-task buildUbuntuBase {
+tasks.register('buildUbuntuBase') {
     doLast {
         exec {
             workingDir "./ubuntu-base"
@@ -114,7 +114,7 @@ task buildUbuntuBase {
     }
 }
 
-task pushUbuntuBase {
+tasks.register('pushUbuntuBase') {
     dependsOn buildUbuntuBase
     doLast {
         exec {
