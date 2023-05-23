@@ -301,9 +301,9 @@
                   <span v-else>
                     {{rpt.executionString}}
                   </span>
-                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId && query.jobIdFilter !=='!null' && rpt.jobUuid" class="text-secondary">
+                  <span v-if="query.jobIdFilter && rpt.jobUuid && query.jobIdFilter !==rpt.jobUuid && query.jobIdFilter !=='!null'" class="text-secondary">
                     <i class="fas fa-arrow-circle-right-alt"></i>
-                    {{rpt.jobUuid}}
+                    {{$t('Referenced')}}
                   </span>
 
 

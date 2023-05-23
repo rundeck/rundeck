@@ -93,21 +93,8 @@ databaseChangeLog = {
             column(name: 'job_uuid', type: '${varchar255.type}')
         }
     }
-        changeSet(author: "rundeckdev", id: "Populate-base-report-job-uuid", dbms: "!mssql") {
-        preConditions(onFail: "MARK_RAN") {
-            tableExists(tableName: "base_report")
-            tableExists(tableName: "execution")
-            tableExists(tableName: "scheduled_execution")
-        }
-        sql("update base_report br\n" +
-                "set job_uuid =\n" +
-                "        (select se.uuid\n" +
-                "         from scheduled_execution se\n" +
-                "                  inner join execution ex ON ex.scheduled_execution_id = se.id\n" +
-                "         WHERE br.execution_id = ex.id)")
-    }
 
-    changeSet(author: "rundeckdev", id: "Populate-base-report-job-uuid-mssql", dbms: "mssql") {
+    changeSet(author: "rundeckdev", id: "Populate-base-report-job-uuid") {
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "base_report")
             tableExists(tableName: "execution")
