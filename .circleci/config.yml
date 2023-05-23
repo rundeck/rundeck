@@ -319,6 +319,8 @@ jobs:
       - install-node
       - restore-gradle-cache
       - install-java
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: Build
           command: |
