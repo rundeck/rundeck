@@ -18,6 +18,8 @@ ext.pluginClassNames='org.rundeck.plugin.example.MaxPercentageOrchestatorPlugin,
 ext.pluginName = 'Orchestrator Plugin'
 ext.pluginDescription = 'Utility Orchestrator plugins'
 
+apply from: "../../gradle/java-version.gradle"
+
 repositories {
     mavenLocal()
     maven{ //snapshot dependency

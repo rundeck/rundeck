@@ -22,6 +22,8 @@ ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.LogDataStep,com.dtolabs.
 ext.pluginName = 'Stub Execution'
 ext.pluginDescription = 'Mock execution of commands and scripts'
 
+apply from: "../../gradle/java-version.gradle"
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

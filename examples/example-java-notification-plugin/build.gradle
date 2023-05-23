@@ -4,10 +4,9 @@ apply plugin: 'java-library'
 apply plugin: 'idea'
 ext.rundeckPluginVersion= '1.2'
 
-java{
-    sourceCompatibility='VERSION_1_8'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
-}
 repositories {
     mavenLocal()
     mavenCentral()

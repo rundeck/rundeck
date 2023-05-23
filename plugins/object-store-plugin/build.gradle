@@ -2,6 +2,8 @@ plugins {
     id 'groovy'
 }
 
+apply from: "../../gradle/java-version.gradle"
+
 ext.pluginClassNames='org.rundeck.plugin.objectstore.ObjectStorePlugin'
 ext.pluginName = 'Object Store Plugin'
 ext.pluginDescription = 'Stores data in an Amazon S3 compliant object store'

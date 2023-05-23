@@ -3,14 +3,15 @@ package org.rundeck.app.data.model.v1.report.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class SaveReportRequestImpl implements SaveReportRequest {
     Long executionId;
     Date dateStarted;
@@ -63,8 +64,12 @@ public class SaveReportRequestImpl implements SaveReportRequest {
                     }
                 }
 
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
+            } catch (NoSuchFieldException nsfe) {
+                if(!DEPRECATED_FIELD_NAMES.contains(key)) {
+                    log.info("Report builder found unknown field: " + key);
+                }
+            } catch (IllegalAccessException iex) {
+                log.warn("Unable to set field: "+key+" illegal access");
             }
         }
     }
@@ -74,4 +79,5 @@ public class SaveReportRequestImpl implements SaveReportRequest {
         return SaveReportRequest;
     }
 
+    public static final List<String> DEPRECATED_FIELD_NAMES = Arrays.asList("ctxProject","jcJobId","jcExecId","actionType","ctxType","ctxName","ctxCommand","ctxController","maprefUri");
 }

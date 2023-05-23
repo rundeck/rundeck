@@ -36,6 +36,9 @@ description = 'The Rundeck Core API project'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean'
 apply plugin: "groovy"
+
+apply from: "../gradle/java-version.gradle"
+
 configurations {
      provided
 }
@@ -98,8 +101,8 @@ dependencies {
 
     implementation ("org.apache.httpcomponents:httpcore:4.4.16")
 
-    compileOnly "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 

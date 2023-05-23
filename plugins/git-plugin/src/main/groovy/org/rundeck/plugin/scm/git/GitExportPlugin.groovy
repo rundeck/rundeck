@@ -526,6 +526,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
+    @Override
+    Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx) {
+        return userHasAccessToCommonConfigKeyOrPassword(ctx)
+    }
+
     List<Action> jobActionsForStatus(Map status) {
         if (status.synch != SynchState.CLEAN) {
             actionRefs(JOB_COMMIT_ACTION_ID)

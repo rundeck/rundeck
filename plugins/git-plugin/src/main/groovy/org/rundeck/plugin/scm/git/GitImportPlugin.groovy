@@ -524,6 +524,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return createJobImportStatus(status,jobActionsForStatus(status), jobRenamed)
     }
 
+    @Override
+    Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx) {
+        return userHasAccessToCommonConfigKeyOrPassword(ctx)
+    }
+
     List<Action> jobActionsForStatus(Map status) {
         if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
             [actions[ACTION_IMPORT_JOBS]]

@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -73,6 +74,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -118,6 +120,7 @@ class ScheduledExecutionController  extends ControllerBase{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService
+    JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
 
 
@@ -430,7 +433,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-        def parentList = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,10)
+        def parentList = referencedExecutionDataProvider.parentJobSummaries(scheduledExecution.uuid,10)
         def isReferenced = parentList?.size()>0
 
         def pluginDescriptions=[:]
@@ -1392,7 +1395,7 @@ Since: V14''',
             return
         }
         if(request.method=='POST') {
-            def isReferenced = referencedExecutionDataProvider.parentList(scheduledExecution.uuid,1)?.size()>0
+            def isReferenced = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,
@@ -2595,7 +2598,12 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         def result= scheduledExecutionService._dovalidateAdhoc(params,authContext)
-        def ScheduledExecution scheduledExecution=result.scheduledExecution
+        ScheduledExecution scheduledExecution=result.scheduledExecution
+
+        // The default log level for ScheduledExecution is WARN which prevents log writing into the rdlog file later.
+        // For adhoc command we have to designate the log level to NORMAL.
+        scheduledExecution.loglevel = LogLevel.NORMAL
+
         def failed=result.failed
         if(!failed){
             return _transientExecute(scheduledExecution,params,authContext)
@@ -2639,7 +2647,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
         def Execution e
         try {
-            e = executionService.createExecutionAndPrep(params, params.user)
+            e = executionService.createExecutionAndPrep(scheduledExecution, authContext, params)
         } catch (ExecutionServiceException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }
