@@ -114,7 +114,9 @@ export class NodeSourceFile {
           'Content-Type': mimeType,
           'X-RUNDECK-TOKEN-KEY': token.TOKEN,
           'X-RUNDECK-TOKEN-URI': token.URI
-        }
+        },
+        //don't parse json
+        transformResponse: (data) => data
       }).catch((e)=>{
         if(e.response && e.response.headers){
             Tokens.setNewUIToken(e.response.headers)
@@ -122,7 +124,7 @@ export class NodeSourceFile {
         throw e
     }) as AxiosResponse<any>
     await Tokens.setNewUIToken(response.headers)
-    if (response.data) {
+    if (response.status === 200 && typeof (response.data) === 'string') {
       return response.data
     } else if (response.status === 204) {
       return ''
