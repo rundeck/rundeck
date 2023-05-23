@@ -113,6 +113,7 @@ tasks.register('buildUbuntuBase') {
         }
     }
 }
+officialBuild.dependsOn buildUbuntuBase
 
 tasks.register('pushUbuntuBase') {
     dependsOn buildUbuntuBase
