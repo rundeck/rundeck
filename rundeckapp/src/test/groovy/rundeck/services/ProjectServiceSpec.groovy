@@ -2328,6 +2328,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <succeededNodeList />
   <failedNodeList />
   <filterApplied />
+  <jobUuid>test-job-uuid</jobUuid>
 </report>'''
     /**
      * uses deprecated jcExecId
@@ -2388,6 +2389,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateStarted: new Date(0),
             dateCompleted: new Date(3600000),
             message: 'Report message',
+            jobUuid: se.uuid,
             )
         assertNotNull exec.save()
 
