@@ -1719,13 +1719,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Requested deletion of project ${project.name}")
 
+        if(framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)) {
+            return new DeleteResponse(
+            success: false,
+            error: "Cannot delete an already disabled project.")
+        }
+
+        if(!configurationService.getBoolean("projectService.deferredProjectDelete", false)) {
+            return deleteProjectInternal(project, framework, authContext, username)
+        }
+
         try {
             Project.withNewTransaction {
                 framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
             }
         } catch (UnsupportedOperationException e) {
             // Disabling not supported by underlying framework. So we revert to old behavior and skip the deferral.
-            log.warn("Could not disable project. Will try to delete it directly: ${e.getMessage()}", e)
+            log.warn("Could not disable project. Aborting project delete deferral: ${e.getMessage()}", e)
             return deleteProjectInternal(project, framework, authContext, username)
         }
 

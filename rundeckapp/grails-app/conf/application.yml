@@ -270,6 +270,7 @@ rundeck:
         default:
             max: 20
     projectService:
+        deferredProjectDelete: false
         projectExportCache:
             spec: "expireAfterAccess=30m"
     projectManagerService:
