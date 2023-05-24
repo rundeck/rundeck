@@ -73,6 +73,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
+                project: se.project,
                 executionId: e.id.toString(),
                 scheduledExecutionId: se.uuid,
                 executionService:es,
@@ -108,6 +109,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
+                project: se.project,
                 executionId: e.id.toString(),
                 scheduledExecutionId: se.uuid,
                 executionService:es,
@@ -220,6 +222,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
+                        project             : se.project,
                         scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
@@ -286,6 +289,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
+                        project             : se.project,
                         scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
@@ -351,6 +355,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
+                        project             : se.project,
                         scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
@@ -392,22 +397,22 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def "scheduled job quartz trigger context with scheduleArgs sets execution argString"() {
 
-            def serverUUID = UUID.randomUUID().toString()
-            def jobUUID = UUID.randomUUID().toString()
-            def es = Mock(ExecutionService)
-            def eus = Mock(ExecutionUtilService)
-            def jobSchedulesService = Mock(JobSchedulesService)
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService)
+        def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def jobSchedulerService = Mock(JobSchedulerService)
-            def fs = Mock(FrameworkService) {
-                getServerUUID() >> serverUUID
-                getFrameworkProject('AProject')>>Mock(IRundeckProject){
-                    getProjectProperties()>>[:]
-                }
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> [:]
             }
-            AuthContextProvider authContextProvider = Mock(AuthContextProvider){
-                getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
-            }
-            ScheduledExecution se = new ScheduledExecution(
+        }
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_, _, _) >> Mock(UserAndRolesAuthContext)
+        }
+        ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -415,65 +420,66 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 argString: '-a b -c d',
                 serverNodeUUID: jobUUID,
                 workflow: new Workflow(
-                    keepgoing: true,
-                    commands: [new CommandExec(
-                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                    )]
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
                 ),
                 scheduled: true,
                 executionEnabled: true,
                 scheduleEnabled: true,
-                    uuid: jobUUID
-            )
-            se.save(flush:true)
-            Execution e = new Execution(
+                uuid: jobUUID
+        )
+        se.save(flush: true)
+        Execution e = new Execution(
                 scheduledExecution: se,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: se.project,
                 user: 'bob',
                 workflow: new Workflow(commands: [new CommandExec(
-                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                 )]
                 )
-            ).save(flush: true)
-            def datamap = new JobDataMap(
+        ).save(flush: true)
+        def datamap = new JobDataMap(
                 [
-                    scheduledExecutionId: se.uuid,
-                    executionService    : es,
-                    executionUtilService: eus,
-                    frameworkService    : fs,
-                    bySchedule          : true,
-                    jobSchedulesService : jobSchedulesService,
-                    jobSchedulerService : jobSchedulerService,
-                    authContextProvider : authContextProvider,
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
                 ]
-            )
-            ExecutionJob job = new ExecutionJob()
-            def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+        )
+        ExecutionJob job = new ExecutionJob()
+        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
-            def quartzScheduler = Mock(Scheduler)
-            def trigger=Mock(Trigger)
-            def context = Mock(JobExecutionContext) {
-                getJobDetail() >> Mock(JobDetail) {
-                    getJobDataMap() >> datamap
-                    getKey() >> ajobKey
-                }
-
-                getScheduler() >> quartzScheduler
-                getTrigger() >> trigger
+        def quartzScheduler = Mock(Scheduler)
+        def trigger = Mock(Trigger)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+                getKey() >> ajobKey
             }
-            1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
-            new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
+
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
+        }
+        1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
+                new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         given: "trigger has scheduleArgs"
-            1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
+        1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
 
         when: "job is executed"
-            job.execute(context)
+        job.execute(context)
 
         then: "execution args are set"
-            0 * quartzScheduler.deleteJob(ajobKey)
-            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+        0 * quartzScheduler.deleteJob(ajobKey)
+        1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
     }
 
     def "average notification threshold from options"() {
@@ -819,6 +825,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         ).save(flush: true)
         def dataMap = new JobDataMap(
                 [
+                        project             : se.project,
                         scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
