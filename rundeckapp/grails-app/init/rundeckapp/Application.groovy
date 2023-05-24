@@ -17,6 +17,7 @@ import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+import org.springframework.cloud.bootstrap.config.BootstrapPropertySource
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -129,6 +130,22 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
+        setRundeckConstraintSchema(environment)
+    }
+
+    /**
+     * It sets the constraint schema name at system property level so it can be used by db migration
+     * @param environment
+     * @return void
+     */
+    void setRundeckConstraintSchema(final Environment environment){
+        if(environment && environment.propertySources){
+            environment.propertySources.findAll{it instanceof BootstrapPropertySource}.each{
+                if(it.containsProperty("dataSource.constraintSchema")){
+                    System.setProperty("dataSource.constraintSchema", it.getProperty("dataSource.constraintSchema"))
+                }
+            }
+        }
     }
 
     @Override
