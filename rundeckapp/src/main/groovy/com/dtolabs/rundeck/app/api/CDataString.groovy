@@ -16,9 +16,12 @@
 
 package com.dtolabs.rundeck.app.api
 
+import io.swagger.v3.oas.annotations.media.Schema
+
 /**
  * Wrapper for a string that is marshalled wrappedin CDATA to preserve whitespace
  */
+@Schema(type='string')
 class CDataString {
     String value
     static CDataString from(String value) {

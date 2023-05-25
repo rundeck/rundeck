@@ -298,10 +298,10 @@ commands:
       - run:
           name: Install Java
           command: |
-            sudo add-apt-repository -y ppa:openjdk-r/ppa  
-            sudo apt-get update 
-            sudo apt-get install -y openjdk-8-jdk
-            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+            sudo apt-get update
+            sudo apt-get install -y openjdk-11-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
             sudo apt-get install -y groovy
 
 jobs:
@@ -318,13 +318,15 @@ jobs:
       - checkout
       - install-node
       - restore-gradle-cache
+      - install-java
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: 20.10.14
       - run:
           name: Build
           command: |
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh build
-      - setup_remote_docker:
-          version: 20.10.14
       - run:
           name: Build Docker Images
           command: |
@@ -416,6 +418,30 @@ jobs:
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
+
+  test-openapi:
+    <<: *defaults
+    executor: gradle-docker
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - attach_workspace:
+          at: artifacts
+      - run:
+          name: Extract OpenAPI spec
+          command: |
+            mkdir -p openapi
+            find artifacts -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
+            mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
+      - run: npm install @redocly/cli -g
+      - run:
+          name: Redocly OpenAPI Linting
+          command: |
+            redocly lint \
+            openapi/rundeck-api.yml \
+            --skip-rule=operation-4xx-response \
+            --skip-rule=no-invalid-media-type-examples
 
   test-docker:
     <<: *defaults
@@ -673,6 +699,13 @@ workflows:
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-openapi:
+          <<: *filter-no-tags
+          name: OpenAPI Spec Validation
           requires: *stage-build
           context:
             - slack-secrets

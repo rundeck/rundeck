@@ -2,13 +2,15 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.execution.RdJobStats
 
-class ScheduledExecutionStats {
+class ScheduledExecutionStats implements RdJobStats {
     String content
+    String jobUuid
 
     long _version = 0
 
-    static belongsTo=[se:ScheduledExecution]
+//    static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {
@@ -39,6 +41,10 @@ class ScheduledExecutionStats {
         } else {
             content = null
         }
+    }
+
+    Long getVersion(){
+        _version
     }
 
 }

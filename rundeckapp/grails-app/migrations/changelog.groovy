@@ -81,6 +81,7 @@ databaseChangeLog = {
 
         property name: "varchar3072.type", global: "true", value: "VARCHAR(3072)", dbms: "mysql,postgresql,mssql,h2,mariadb"
         property name: "varchar3072.type", global: "true", value: "VARCHAR2(3072 CHAR)", dbms: "oracle"
+        property name: "constraintSchema", global: "true", value: (System.getProperty("dataSource.constraintSchema")?:"")
 
         include file: 'core/HibernateIndex.groovy'
         include file: 'core/AuthToken.groovy'

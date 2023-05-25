@@ -415,6 +415,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     maxLines: Infinity,
     minLines: 10
   });
+  editor.getSession().setUseWorker(false)
 
   setAceSyntaxMode(data.aceSessionMode, editor);
   applyAceTheme(editor);

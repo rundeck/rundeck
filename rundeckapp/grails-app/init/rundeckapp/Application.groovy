@@ -5,14 +5,19 @@ import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.info.License
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+import org.springframework.cloud.bootstrap.config.BootstrapPropertySource
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -38,12 +43,13 @@ import java.nio.file.Paths
         description = 'Original Rundeck API Documentation',
         url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
     ),
+    security = @SecurityRequirement(name = "rundeckApiToken"),
     servers = @Server(
         url = '{host}/api/{apiversion}',
         variables = [
             @ServerVariable(
                 name = 'apiversion',
-                defaultValue = '41' //NB: spec generation doesn't seem to accept a constant string :(
+                defaultValue = '44' //NB: spec generation doesn't seem to accept a constant string :(
             ),
             @ServerVariable(
                 name = 'host',
@@ -52,7 +58,12 @@ import java.nio.file.Paths
         ]
     )
 )
-
+@SecurityScheme(
+    name = "rundeckApiToken",
+    type = SecuritySchemeType.APIKEY,
+    in = SecuritySchemeIn.HEADER,
+    paramName = "X-Rundeck-Auth-Token"
+)
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
@@ -119,6 +130,22 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
+        setRundeckConstraintSchema(environment)
+    }
+
+    /**
+     * It sets the constraint schema name at system property level so it can be used by db migration
+     * @param environment
+     * @return void
+     */
+    void setRundeckConstraintSchema(final Environment environment){
+        if(environment && environment.propertySources){
+            environment.propertySources.findAll{it instanceof BootstrapPropertySource}.each{
+                if(it.containsProperty("dataSource.constraintSchema")){
+                    System.setProperty("dataSource.constraintSchema", it.getProperty("dataSource.constraintSchema"))
+                }
+            }
+        }
     }
 
     @Override

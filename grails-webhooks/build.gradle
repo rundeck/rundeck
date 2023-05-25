@@ -17,6 +17,8 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
+apply from:'../gradle/grailsopenapispec.gradle'
+
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
@@ -28,6 +30,8 @@ configurations {
         extendsFrom developmentOnly
     }
 }
+
+apply from: "../gradle/java-version.gradle"
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -53,6 +57,7 @@ dependencies {
     implementation project(':rundeck-data-model')
     implementation project(':rundeck-app-util')
 
+
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "org.grails:grails-plugin-domain-class"
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
@@ -71,12 +76,6 @@ bootRun {
     sourceResources sourceSets.main
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
-}
-
-tasks.withType(GroovyCompile) {
-    configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m']
-    }
 }
 
 tasks.withType(Test) {

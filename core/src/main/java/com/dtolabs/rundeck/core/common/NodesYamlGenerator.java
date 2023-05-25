@@ -89,7 +89,7 @@ public class NodesYamlGenerator implements NodesFileGenerator {
             throw new NullPointerException("destfile or outputstream was not set");
         }
         if (null == maps || maps.size() < 1) {
-            throw new NodesGeneratorException("Node set is empty");
+            return;
         }
         final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);

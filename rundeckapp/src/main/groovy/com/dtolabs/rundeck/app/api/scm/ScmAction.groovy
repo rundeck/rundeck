@@ -18,27 +18,38 @@ package com.dtolabs.rundeck.app.api.scm
 
 import com.dtolabs.rundeck.util.JsonUtil
 import grails.validation.Validateable
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * Input for performing an action
  */
+@Schema
 class ScmAction implements Validateable {
+    @Schema(description = 'input fields for the action')
     /**
      * Input field key/value
      */
     Map<String, String> input
+
+    @Schema(description = 'list of selected item IDs', name = 'items')
     /**
      * selected items
      */
     List<String> selectedItems
+
+    @Schema(description = 'list of selected Job IDs', name = 'jobs')
     /**
      * selected items
      */
     List<String> jobIds
+
+    @Schema(description = 'list of deleted item IDs', name = 'deleted')
     /**
      * items to delete
      */
     List<String> deletedItems
+
+    @Schema(description = 'list of deleted Job IDs (import)', name = 'deletedJobs')
     /**
      * Jobs to delete for import
      */

@@ -23,6 +23,8 @@ ext.pluginName = 'Flow Control'
 ext.pluginDescription = 'Control execution flow'
 apply plugin: "groovy"
 
+apply from: "../../gradle/java-version.gradle"
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

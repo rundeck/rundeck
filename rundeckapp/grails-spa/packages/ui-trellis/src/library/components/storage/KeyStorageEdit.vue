@@ -63,7 +63,7 @@
         <div class="col-sm-9">
           <div class="input-group">
             <div class="input-group-addon">
-              <span>{{rootPath}}</span>
+              <span>{{this.rootPath}}</span>
             </div>
             <input v-model="uploadSetting.inputPath" :disabled="uploadSetting.modifyMode===true"
                    id="uploadResourcePath2" name="relativePath" class="form-control"
@@ -147,7 +147,7 @@ interface UploadSetting {
   password: '',
   status: 'new' | String,
   errorMsg: null | String,
-  dontOverwrite: boolean,
+  dontOverwrite: boolean
 }
 
 export default Vue.extend({
@@ -155,7 +155,8 @@ export default Vue.extend({
   props: {
     storageFilter: String,
     uploadSetting: {} as PropType<UploadSetting>,
-    project: String
+    project: String,
+    rootPath: String
   },
   data() {
     return {
@@ -164,7 +165,7 @@ export default Vue.extend({
       errorMsg: '',
       directories: [] as any,
       files: [] as any,
-      rootPath: '',
+      createdKey: {} as any,
       keyTypes: [
         {text: 'Private Key', value: 'privateKey'},
         {text: 'Public Key', value: 'publicKey'},
@@ -175,9 +176,6 @@ export default Vue.extend({
         {text: 'Upload File', value: 'file'},
       ],
     }
-  },
-  async mounted(){
-    this.rootPath = this.project ? "keys/project/" + this.project + "/" : "keys/"
   },
   methods: {
     allowedResource(meta: any) {
@@ -214,7 +212,8 @@ export default Vue.extend({
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
 
-      let fullPath = this.getKeyPath();
+      let fullPath = this.calcBrowsePath(this.getKeyPath())
+
 
       let contentType = 'application/pgp-keys';
 
@@ -277,14 +276,31 @@ export default Vue.extend({
         if(resp._response.status!=201){
           this.uploadSetting.errorMsg = resp.error;
           return
-        } 
+        }
+        await this.getCreatedKey(fullPath)
 
+        this.$emit("keyCreated", this.createdKey)
         this.$emit("finishEditing", resp)
       }
     },
+    async getCreatedKey(path: string){
+      const rundeckContext = getRundeckContext();
+       const result = await rundeckContext.rundeckClient.storageKeyGetMetadata(path)
+        if (result._response.status == 200) {
+          this.createdKey = result
+        }
+    },
+    calcBrowsePath(path: string){
+      let browse=path
+      if (this.rootPath != 'keys/') {
+        browse = (this.rootPath) + "/" + path
+        browse = browse.substring(5)
+      }
+      return browse
+    },
     loadKeys() {
       const rundeckContext = getRundeckContext();
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.path).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(this.browsePath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -371,8 +387,11 @@ export default Vue.extend({
   },
   computed: {
     uploadFullPath(): string {
-      return 'keys/' + this.getKeyPath();
+      return this.rootPath + "/" + this.getKeyPath();
     },
+    browsePath(): string{
+      return this.calcBrowsePath(this.path)
+    }
   }
 })
 </script>

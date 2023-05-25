@@ -33,6 +33,38 @@ apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
+allprojects {
+    ext["liquibase.version"] = liquibaseVersion
+}
+
+//list of grails plugins to depend on in various ways
+ext.coreGrailsPlugins = [
+    ':grails-metricsweb',
+    ':grails-persistlocale',
+    ':grails-securityheaders',
+    ':grails-repository',
+    ':grails-webhooks',
+    ':grails-execution-mode-timer',
+    ':grails-rundeck-data-shared',
+]
+
+if(!project.findProperty('isRunning')) {
+    //for openapi spec generation, make gradle
+    //evaluate each grails plugin to define the
+    //apiSpecFiles configurations, before we depend on them.
+    //however, it seems to interfere with proper
+    //behavior when running "bootRun", so skip it in that case
+
+    //force gradle configuration of core grails plugins
+    coreGrailsPlugins.each{
+        project.evaluationDependsOn(it)
+    }
+    //force gradle configuration of extra grails plugins
+    project.findProperty('extraGrailsPlugins')?.each{
+        project.evaluationDependsOn(it)
+    }
+}
+
 configurations {
     agent
     war{}
@@ -40,6 +72,7 @@ configurations {
     pluginFiles {
         transitive = false
     }
+    apiSpecFiles
     spa //dependency on grails-spa
     developmentOnly
     runtimeClasspath {
@@ -85,6 +118,19 @@ dependencies {
     for(proj in project.findProperty('bundledGrailsPlugins')) {
         logger.info("Injecting Grails plugin ${proj}")
         implementation project("$proj")
+    }
+
+    //api spec file dependencies from extra grails plugins
+    for(proj in project.findProperty('extraGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
+    }
+    //api spec file dependencies from core grails plugins
+    for(proj in project.findProperty('coreGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
     }
 
     // From BuildConfig.groovy.
@@ -159,7 +205,7 @@ dependencies {
     implementation "org.eclipse.jetty:jetty-jaas"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
-    implementation ('org.grails.plugins:spring-security-core:5.0.0'){
+    implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     implementation 'org.kohsuke:libpam4j:1.11'
@@ -171,7 +217,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    //implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
@@ -185,8 +231,10 @@ dependencies {
     implementation ("net.minidev:json-smart:2.4.10")
     
     // OpenApi Dependencies
-    compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
-    implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
+    compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    compileOnly("io.micronaut.openapi:micronaut-openapi:${micronautOpenapiVersion}") {
+        exclude group: 'org.slf4j', module: 'slf4j-nop'
+    }
     implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
@@ -199,6 +247,7 @@ dependencies {
     // Database drivers
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
+    //runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.8'
     runtimeOnly 'org.postgresql:postgresql:42.3.3'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
@@ -246,13 +295,9 @@ dependencies {
 }
 grails{
     plugins{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
-        implementation project(':grails-rundeck-data-shared')
+        coreGrailsPlugins.each {
+            implementation project(it)
+        }
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
@@ -272,13 +317,9 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependencies{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
-        implementation project(':grails-rundeck-data-shared')
+        coreGrailsPlugins.each{
+            implementation project(it)
+        }
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
@@ -298,13 +339,35 @@ bootRun {
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
-tasks.withType(GroovyCompile) {
-    def additionalSpecDir = new File(project.buildDir, 'openapi')
+
+tasks.register('copyApiSpecFiles', Copy){
+    description 'Copy openapi spec files from each grails plugin dependency into a common dir'
+    def additionalSpecDir = file("${buildDir}/openapi")
     doFirst {
         additionalSpecDir.mkdirs()
     }
+    outputs.dir additionalSpecDir
+    inputs.files configurations.apiSpecFiles
+    from configurations.apiSpecFiles
+    into additionalSpecDir
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    def additionalSpecDir = new File(project.buildDir, 'openapi')
+    def opts=[
+        '-Xmx1024m'
+    ]
+    if(!project.findProperty('isRunning')) {
+        dependsOn copyApiSpecFiles
+        opts.addAll([
+            '-Dmicronaut.openapi.filename=rundeck-api',
+            "-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()
+        ])
+    }else{
+        opts.add('-Dmicronaut.openapi.enabled=false')
+    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()]
+        forkOptions.jvmArgs = opts
     }
 }
 
@@ -544,6 +607,7 @@ publishing {
 }
 
 apply from: "${rootDir}/gradle/java.gradle"
+apply from: "../gradle/java-version.gradle"
 
 
 if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {

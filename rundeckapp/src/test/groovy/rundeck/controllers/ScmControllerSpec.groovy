@@ -36,6 +36,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -438,6 +439,96 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         'application/xml'  | importXmlReqString  | [message: 'blah'] | ['item1', 'item2'] | ['del1', 'del2']
         integration = 'import'
     }
+
+    @Unroll
+    def 'api import action job perform with job remotes'() {
+        given:
+        def projectName = 'testproj2'
+        def actionName = 'import-jobs'
+        params.actionId = actionName
+        params.project = projectName
+        params.id = 'dummy'
+        params.integration = 'import'
+        def definedJobs = defineJobs('job1', 'job2', 'job3')
+        def job1 = definedJobs.job1
+        def job2 = definedJobs.job2
+        ScheduledExecution se1 = new ScheduledExecution(
+                uuid: 'test1',
+                jobName: 'red color',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
+        )
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se1
+        }
+
+        controller.apiService = Mock(ApiService) {
+            3 * requireAuthorized(_, _, _) >> true
+            1 * parseJsonXmlWith(_, _, _) >> { args ->
+                if (ctype == 'application/json') {
+                    args[2].json(args[0].JSON)
+                } else {
+                    args[2].xml(args[0].XML)
+                }
+                true
+            }
+            1 * requireExists(_, _, _) >> true
+            1 * requireExists(_, _, _, "no.scm.integration.plugin.configured") >> true
+            1 * requireExists(_, _, _, "scm.not.a.valid.action.actionid") >> true
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            3 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            2 * authResourceForProject(_)
+            2 * authorizeApplicationResourceAny(_, _, _) >>true
+            //1 * authorizeProjectJobAny(_, se1, ['read', 'view'], 'AProject') >> true
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(_, _) >> true
+            1 * getInputView(_, _, _, _) >> Mock(BasicInputView)
+            1 * getTrackingItemsForAction(_, _) >> [
+                    Mock(ScmImportTrackedItem){
+                        getId()>> job1.id
+                        getJobId()>>job1.uuid
+                    },
+                    Mock(ScmImportTrackedItem){
+                        getId()>>job2.id
+                        getJobId()>>job2.uuid
+                    }
+            ]
+            1 * performImportAction(_, _, _, _, _, _) >>
+                    [valid: true, nextAction: [id: 'someAction']]
+            0 * _(*_)
+        }
+
+        response.format = 'xml'
+        request.method = 'POST'
+        request.contentType = ctype
+        request.content = requestData.bytes
+
+        when:
+        controller.apiJobActionPerform()
+
+        then:
+        response.status == 200
+        response.format == 'xml'
+        response.xml != null
+        response.xml.success == 'true'
+        response.xml.message == 'api.scm.action.integration.success.message'
+
+        where:
+        ctype              | requestData
+        'application/json' | importJsonReqString3
+    }
+
+    static final String importJsonReqString3 = '''{
+"items":[
+"demo.yaml"
+]}'''
 
     static final String importJsonReqString2 = '''{"input":
 {"message":"blah"},

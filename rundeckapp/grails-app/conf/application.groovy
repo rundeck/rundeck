@@ -151,6 +151,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/actuator/health/**',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
+grails.plugin.springsecurity.printStatusMessages=false
 grails.plugin.springsecurity.useSecurityEventListener=true
 grails.plugin.springsecurity.useHttpSessionEventPublisher=true
 grails.plugin.springsecurity.apf.filterProcessesUrl = "/j_security_check"

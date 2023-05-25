@@ -36,7 +36,9 @@ public enum Features implements FeaturesDefinition{
     PLUGIN_SECURITY("pluginSecurity"),
     PROJECT_KEY_STORAGE("projectKeyStorage"),
     FILE_UPLOAD_PLUGIN("fileUploadPlugin"),
-    PLUGIN_GROUPS("pluginGroups");
+    PLUGIN_GROUPS("pluginGroups"),
+    VUE_KEY_STORAGE("vueKeyStorage"),
+    LEGACY_UI("legacyUi");
 
     private final String propertyName;
 
