@@ -392,11 +392,11 @@ public class RundeckConfigBase {
         Enabled pluginSecurity = new Enabled(false);
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
-        Enabled pluginGroups = new Enabled(false);
         Debug debug = new Debug();
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
+
 
 
         @Data
