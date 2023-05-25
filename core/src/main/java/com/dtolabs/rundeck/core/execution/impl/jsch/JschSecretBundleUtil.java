@@ -23,6 +23,8 @@ import com.dtolabs.utils.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JschSecretBundleUtil {
 
@@ -68,5 +70,39 @@ public class JschSecretBundleUtil {
         } catch(IOException iex) {
             throw new RuntimeException("Unable to prepare secret bundle", iex);
         }
+    }
+
+
+    public static List<String> getSecretsPath(final ExecutionContext context, final INodeEntry node){
+        List<String> listSecretsPath = new ArrayList<>();
+
+        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, context.getFramework(),
+                context
+        );
+        if(nodeAuthentication.getPasswordStoragePath() != null) {
+            listSecretsPath.add(nodeAuthentication.getPasswordStoragePath());
+        }
+        if(nodeAuthentication.getPrivateKeyPassphraseStoragePath() != null) {
+            listSecretsPath.add(
+                    nodeAuthentication.getPrivateKeyPassphraseStoragePath()
+            );
+        }
+        if(nodeAuthentication.getPrivateKeyStoragePath() != null) {
+            listSecretsPath.add(
+                    nodeAuthentication.getPrivateKeyStoragePath()
+            );
+        }
+        if(nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO_OPT_PREFIX) != null) {
+            listSecretsPath.add(
+                    nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO_OPT_PREFIX)
+            );
+        }
+        if(nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO2_OPT_PREFIX) != null) {
+            listSecretsPath.add(
+                    nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO2_OPT_PREFIX)
+            );
+        }
+
+        return listSecretsPath;
     }
 }
