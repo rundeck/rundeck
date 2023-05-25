@@ -322,28 +322,44 @@ search
             var pageParams = loadJsonData('pageParams');
             var nextScheduled = loadJsonData('nextScheduled');
 
+            // Call only if atleast one of the SCM integrations is enabled
             jQuery.ajax({
                 dataType:'json',
-                type: "POST",
-                url: appLinks.scmjobs,
-                data: JSON.stringify(nextScheduled),
+                type: "GET",
+                url: _genUrl('/project/scm/enabled'),
+                data: {project: pageParams.project},
                 contentType: 'application/json; charset=utf-8',
                 success:function(data,status,xhr){
-                    bulkeditor.scmExportEnabled(data.scmExportEnabled);
-                    bulkeditor.scmStatus(data.scmStatus);
-                    bulkeditor.scmExportStatus(data.scmExportStatus);
-                    bulkeditor.scmExportActions(data.scmExportActions);
-                    bulkeditor.scmExportRenamed(data.scmExportRenamed);
+                    console.log(`This is the data: `)
+                    console.log(data)
+                    if( !data.scmEnabled ){
+                        bulkeditor.scmDone(true);
+                    }else{
+                        jQuery.ajax({
+                            dataType:'json',
+                            type: "POST",
+                            url: appLinks.scmjobs,
+                            data: JSON.stringify(nextScheduled),
+                            contentType: 'application/json; charset=utf-8',
+                            success:function(data,status,xhr){
+                                bulkeditor.scmExportEnabled(data.scmExportEnabled);
+                                bulkeditor.scmStatus(data.scmStatus);
+                                bulkeditor.scmExportStatus(data.scmExportStatus);
+                                bulkeditor.scmExportActions(data.scmExportActions);
+                                bulkeditor.scmExportRenamed(data.scmExportRenamed);
 
-                    bulkeditor.scmImportEnabled(data.scmImportEnabled);
-                    bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
-                    bulkeditor.scmImportStatus(data.scmImportStatus);
-                    bulkeditor.scmImportActions(data.scmImportActions);
-                    if( data.warning !== undefined ){
-                        showError(data.warning)
+                                bulkeditor.scmImportEnabled(data.scmImportEnabled);
+                                bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
+                                bulkeditor.scmImportStatus(data.scmImportStatus);
+                                bulkeditor.scmImportActions(data.scmImportActions);
+                                if( data.warning !== undefined ){
+                                    showError(data.warning)
+                                }
+
+                                bulkeditor.scmDone(true);
+                            }
+                        });
                     }
-
-                    bulkeditor.scmDone(true);
                 }
             });
             const filtersData=loadJsonData('jobFiltersJson')

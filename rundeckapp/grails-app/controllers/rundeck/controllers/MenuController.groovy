@@ -3790,6 +3790,24 @@ if executed in cluster mode.
         }
     }
 
+    def scmEnabled(){
+        def project = params.project
+        if( project && !scmService.projectHasConfiguredExportPlugin(project) && !scmService.projectHasConfiguredImportPlugin(project) ){
+            render(
+                    contentType: 'application/json', text:
+                    (
+                            [scmEnabled: false]
+                    ) as JSON
+            )
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [scmEnabled: true]
+                ) as JSON
+        )
+    }
+
     def listExport(){
         UserAndRolesAuthContext authContext
 
