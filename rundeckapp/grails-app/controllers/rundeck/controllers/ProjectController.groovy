@@ -2160,6 +2160,8 @@ key2=value'''
         }
         Properties currentProps = project.getProjectProperties() as Properties
 
+        //TODO: validate plugin property values
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
 
         if(!result.success){
@@ -2424,6 +2426,8 @@ Authorization required: `configure` access for `project` resource type or `admin
         }else{
             propValueBefore = new Properties([(key_): ''])
         }
+
+        //TODO: validate plugin property values
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
 
