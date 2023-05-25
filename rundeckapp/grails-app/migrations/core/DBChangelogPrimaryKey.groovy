@@ -5,9 +5,10 @@ databaseChangeLog = {
         comment { 'add primary key to DATABASECHANGELOG' }
         preConditions(onFail: 'MARK_RAN') {
             not {
-                primaryKeyExists(tableName: 'DATABASECHANGELOG')
+                primaryKeyExists(tableName: 'DATABASECHANGELOG', primaryKeyName: "databasechangelogPK")
             }
         }
+
         addPrimaryKey(
             tableName: "DATABASECHANGELOG",
             columnNames: "id, author, filename",
