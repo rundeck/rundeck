@@ -666,4 +666,15 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "alberto", id: "4.14.0-project-states") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "project", indexName: "PROJECT_STATE_IDX")
+            }
+        }
+        createIndex(indexName: "PROJECT_STATE_IDX", tableName: "project") {
+            column(name: "state")
+        }
+    }
+
 }

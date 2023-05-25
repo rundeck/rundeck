@@ -92,11 +92,6 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
-    int countFrameworkProjects() {
-        return projectDataService.count()
-    }
-
-    @Override
     boolean projectExists(String project) {
         projectDataService.countByName(project) > 0
     }
@@ -115,6 +110,22 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
         }
         namelist.addAll(projectDataService.findProjectNameByState(state))
         return namelist
+    }
+
+    @Override
+    int countFrameworkProjects() {
+        return projectDataService.count()
+    }
+
+    @Override
+    int countFrameworkProjectsByState(RdProject.State state) {
+        int count = 0
+        // If searching for enabled, we must include legacy projects with null in their field.
+        if(state == RdProject.State.ENABLED) {
+            count += projectDataService.countProjectByState(null)
+        }
+        count += projectDataService.countProjectByState(state)
+        return count
     }
 
     @Override

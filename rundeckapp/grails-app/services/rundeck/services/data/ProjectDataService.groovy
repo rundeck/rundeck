@@ -53,6 +53,13 @@ interface ProjectDataService {
     List<String> findProjectNameByState(RdProject.State state)
 
     /**
+     * Count all available project names by state
+     * @return
+     */
+    @Query("select count($p.name) from ${Project p} where ($state is null and $p.state is null) or ( $p.state = $state )")
+    int countProjectByState(RdProject.State state)
+
+    /**
      * Get the description of a project.
      * @return
      */

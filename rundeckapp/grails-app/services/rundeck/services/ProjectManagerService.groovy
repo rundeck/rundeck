@@ -186,7 +186,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     int countFrameworkProjects() {
-        return projectDataProvider.countFrameworkProjects()
+        return projectDataProvider.countFrameworkProjectsByState(RdProject.State.ENABLED)
     }
     
     IRundeckProject getFrameworkProject(final String name) {
