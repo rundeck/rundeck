@@ -35,7 +35,7 @@ class ApiProjectSelectInterceptor {
             }
             if (frameworkService.isFrameworkProjectDisabled(project)) {
                 apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_CONFLICT,
+                        status: HttpServletResponse.SC_NOT_FOUND,
                         code  : 'api.error.project.disabled',
                         args  : [params.project]
                 ])

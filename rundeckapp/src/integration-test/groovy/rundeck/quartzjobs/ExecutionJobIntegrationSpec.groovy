@@ -499,11 +499,16 @@ class ExecutionJobIntegrationSpec extends Specification {
 
     def "testInitializeWithoutExecutionUtilService"() {
         given:
+            FrameworkService fs = Mock(FrameworkService)
             ScheduledExecution se = setupJob()
             ExecutionJob job = new ExecutionJob()
             def mockes = Mock(ExecutionService)
 
-            def contextMock = new JobDataMap(scheduledExecutionId: se.uuid, executionService: mockes)
+            def contextMock = new JobDataMap(
+                    frameworkService: fs,
+                    scheduledExecutionId: se.uuid,
+                    executionService: mockes
+            )
 
         when:
             job.initialize(null, contextMock)
@@ -515,10 +520,14 @@ class ExecutionJobIntegrationSpec extends Specification {
 
     def "testInitializeWithoutExecutionService"() {
         given:
+            FrameworkService fs = Mock(FrameworkService)
             ScheduledExecution se = setupJob()
             ExecutionJob job = new ExecutionJob()
 
-            def contextMock = new JobDataMap(scheduledExecutionId: se.uuid)
+            def contextMock = new JobDataMap(
+                    frameworkService: fs,
+                    scheduledExecutionId: se.uuid
+            )
 
         when:
             job.initialize(null, contextMock)

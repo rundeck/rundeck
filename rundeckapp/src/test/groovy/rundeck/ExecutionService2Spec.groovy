@@ -72,6 +72,17 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         mock.proxyInstance()
     }
 
+    private FrameworkService createFrameworkService() {
+        return mockWith(FrameworkService){
+            isFrameworkProjectDisabled(1..1) { project ->
+                false
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
+    }
+
     void testCreateExecutionRunning(){
         when:
         ScheduledExecution se = new ScheduledExecution(
@@ -97,12 +108,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){scheduledExecution, filter, authContext ->
                 null
@@ -153,11 +159,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -235,11 +237,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -287,11 +285,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -333,11 +327,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -373,11 +363,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -415,11 +401,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -528,11 +510,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -575,11 +553,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -617,11 +591,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -658,11 +628,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -699,11 +665,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -746,11 +708,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -796,11 +754,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -827,11 +781,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -858,11 +808,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -890,11 +836,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -920,11 +862,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -969,11 +907,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2488,11 +2422,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2535,11 +2465,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2597,11 +2523,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null

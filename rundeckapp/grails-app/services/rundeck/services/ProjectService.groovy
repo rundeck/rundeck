@@ -1734,9 +1734,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
             }
         } catch (UnsupportedOperationException e) {
-            // Disabling not supported by underlying framework. So we revert to old behavior and skip the deferral.
-            log.warn("Could not disable project. Aborting project delete deferral: ${e.getMessage()}", e)
-            return deleteProjectInternal(project, framework, authContext, username)
+            log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
+            throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
         }
 
         log.info("Deferring deletion of project ${project.name} to background task.")
