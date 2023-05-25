@@ -37,7 +37,7 @@ databaseChangeLog = {
             }
         }
         addColumn(tableName: "project") {
-            column(name: 'state', type: '${text.type}')
+            column(name: 'state', type: '${varchar255.type}')
         }
     }    
 }
