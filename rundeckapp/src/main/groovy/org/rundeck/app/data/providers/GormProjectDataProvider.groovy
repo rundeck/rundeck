@@ -1,6 +1,8 @@
 package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
@@ -11,6 +13,7 @@ import rundeck.Project
 import rundeck.services.data.ProjectDataService
 
 import javax.transaction.Transactional
+
 
 @GrailsCompileStatic
 @Slf4j
@@ -24,7 +27,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     MessageSource messageSource
 
     @Override
-    RdProject getData (final Serializable id) {
+    RdProject getData(final Serializable id) {
         RdProject project = projectDataService.get(id)
         return project ?: null
     }
@@ -32,7 +35,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     Long create(RdProject data) throws DataAccessException {
         Project project = new Project(
                 name: data.getName(),
-                description: data.getDescription(), 
+                description: data.getDescription(),
                 state: data.getState())
         try {
             if (projectDataService.save(project)) {
@@ -75,7 +78,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
-    RdProject findByName (final String name) {
+    RdProject findByName(final String name) {
         RdProject project = projectDataService.getByName(name)
         return project ?: null
     }
@@ -97,18 +100,31 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> getFrameworkProjectNames() {
-        return projectDataService.findProjectName()
+        return Project.createCriteria().list {
+            projections {
+                property "name"
+            }
+        }
     }
 
     @Override
-    Collection<String> getFrameworkProjectNamesByState(RdProject.State state) {
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Collection<String> getFrameworkProjectNamesByState(RdProject.State qstate) {
+        Objects.requireNonNull(qstate, "null qstate")
         def namelist = []
-        // If searching for enabled, we must include legacy projects with null in their field.
-        if(state == RdProject.State.ENABLED) {
-            namelist.addAll(projectDataService.findProjectNameByState(null))
+
+        namelist.addAll(Project.where {
+            state == qstate
+        }.property("name").list())
+
+        if(qstate == RdProject.State.ENABLED) {
+            namelist.addAll(Project.where {
+                state == null
+            }.property("name").list())
         }
-        namelist.addAll(projectDataService.findProjectNameByState(state))
+
         return namelist
     }
 
@@ -118,19 +134,30 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
-    int countFrameworkProjectsByState(RdProject.State state) {
+    @CompileStatic(TypeCheckingMode.SKIP)
+    int countFrameworkProjectsByState(RdProject.State qstate) {
+        Objects.requireNonNull(qstate, "null qstate")
         int count = 0
-        // If searching for enabled, we must include legacy projects with null in their field.
-        if(state == RdProject.State.ENABLED) {
-            count += projectDataService.countProjectByState(null)
+
+        count += Project.where {
+            state == qstate
+        }.count()
+
+        if(qstate == RdProject.State.ENABLED) {
+            count += Project.where {
+                state == null
+            }.count()
         }
-        count += projectDataService.countProjectByState(state)
+
         return count
     }
 
     @Override
-    String getProjectDescription(String name){
-        return projectDataService.findProjectDescription(name)
+    @CompileStatic(TypeCheckingMode.SKIP)
+    String getProjectDescription(String qname) {
+        return Project.where {
+            name == qname
+        }.property("description").get()
     }
 
 }

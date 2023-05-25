@@ -194,4 +194,111 @@ class GormProjectDataProviderSpec extends Specification implements DataTest{
         "Project3" | RdProject.State.DISABLED | RdProject.State.DISABLED | "project number 3" | true
         
     }
+
+    @Unroll
+    def "Should Find Project names by state"() {
+
+        given:
+        buildProjectSet()
+
+        when:
+        Collection<String> result = provider.getFrameworkProjectNamesByState(qstate)
+
+        then:
+        result.size() == resultSize
+        result.containsAll(names)
+
+        where:
+        qstate                   | resultSize | names
+        RdProject.State.ENABLED  | 5          | ["Project1", "Project2", "ProjectE1", "ProjectE2", "ProjectE3"]
+        RdProject.State.DISABLED | 4          | ["ProjectD1", "ProjectD2", "ProjectD3", "ProjectD4"]
+
+    }
+
+    @Unroll
+    def "Should Count Projects by state"() {
+
+        given:
+        buildProjectSet()
+
+        when:
+        int result = provider.countFrameworkProjectsByState(qstate)
+
+        then:
+        result == resultSize
+
+        where:
+        qstate                   | resultSize
+        RdProject.State.ENABLED  | 5
+        RdProject.State.DISABLED | 4
+
+    }
+
+    @Unroll
+    def "get project description"() {
+
+        given:
+        buildProjectSet()
+
+        when:
+        String result = provider.getProjectDescription(name)
+
+        then:
+        result == description
+
+        where:
+        name        | description
+        "Project2"  | "Project 2"
+        "ProjectE1" | "Project E1"
+        "ProjectD2" | "Project D2"
+
+    }
+
+    private void buildProjectSet() {
+        new Project(
+                name: "Project1",
+                description: "Project 1",
+                state: null
+        ).save(flush:true)
+        new Project(
+                name: "Project2",
+                description: "Project 2",
+                state: null
+        ).save(flush:true)
+        new Project(
+                name: "ProjectE1",
+                description: "Project E1",
+                state: RdProject.State.ENABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectE2",
+                description: "Project E2",
+                state: RdProject.State.ENABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectE3",
+                description: "Project E3",
+                state: RdProject.State.ENABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectD1",
+                description: "Project D1",
+                state: RdProject.State.DISABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectD2",
+                description: "Project D2",
+                state: RdProject.State.DISABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectD3",
+                description: "Project D3",
+                state: RdProject.State.DISABLED
+        ).save(flush:true)
+        new Project(
+                name: "ProjectD4",
+                description: "Project D4",
+                state: RdProject.State.DISABLED
+        ).save(flush:true)
+    }
 }
