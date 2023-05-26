@@ -464,7 +464,7 @@ export default Vue.extend({
       keyPath:'',
       jobContext: [] as any,
       aceEditorEnabled: false,
-    renderReadOnly:false
+      renderReadOnly:false
     }
   },
   watch:{
@@ -474,6 +474,9 @@ export default Vue.extend({
     },
     value:function(newval){
       this.currentValue = newval
+    },
+    readOnly:function(newval){
+        this.renderReadOnly= newval || (this.prop.options && this.prop.options['displayType']==='READONLY')
     }
   },
   computed:{
@@ -517,8 +520,6 @@ export default Vue.extend({
     }
 
     this.renderReadOnly= this.readOnly || (this.prop.options && this.prop.options['displayType']==='READONLY')
-      console.log("this.renderReadOnly", this.renderReadOnly)
-      console.log("props", this.prop)
 
   }
 })
