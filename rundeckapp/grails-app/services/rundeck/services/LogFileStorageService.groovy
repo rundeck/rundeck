@@ -290,7 +290,7 @@ class LogFileStorageService
         failedRequests.remove(requestId)
         failures.remove(requestId)
         long retryMax = 30000;
-        LogFileStorageRequest.withNewSession {
+        LogFileStorageRequest.withNewTransaction {
 
             Execution execution = Execution.get(execId)
             def files = getExecutionFiles(execution, typelist, false)
