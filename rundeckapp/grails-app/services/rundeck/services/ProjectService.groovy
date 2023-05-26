@@ -1730,9 +1730,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         try {
-            ScheduledExecution.withNewTransaction {
-                framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
-            }
+            framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
         } catch (UnsupportedOperationException e) {
             log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
             throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
@@ -1741,9 +1739,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-            return ScheduledExecution.withNewTransaction {
                 return deleteProjectInternal(project, framework, authContext, username)
-            }
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")

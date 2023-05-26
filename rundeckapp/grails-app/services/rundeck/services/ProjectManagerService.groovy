@@ -60,6 +60,7 @@ import org.rundeck.storage.conf.TreeBuilder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.transaction.annotation.Propagation
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -629,6 +630,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     void disableFrameworkProject(String projectName) {
         def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
         projectData.setState(RdProject.State.DISABLED)
