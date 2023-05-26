@@ -156,6 +156,7 @@ class ConfigurationService implements InitializingBean, ConfigService {
      * Set boolean config value, rundeck.some.property.name, to true/false.
      * @param property property name
      * @param val value to set
+     * @deprecated
      */
     def setBoolean(String property, boolean val) {
         def strings = property.split('\\.')
