@@ -1487,9 +1487,17 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def mockImportScmConfig = Mock(ScmPluginConfigData){
+            it.getEnabled() >> importIntegrationEnabled
+        }
+        def mockExportScmConfig = Mock(ScmPluginConfigData){
+            it.getEnabled() >> exportIntegrationEnabled
+        }
         controller.scmService = Mock(ScmService){
-            it.projectHasConfiguredImportPlugin(project) >> importEnabled
-            it.projectHasConfiguredExportPlugin(project) >> exportEnabled
+            it.projectHasConfiguredImportPlugin(project) >> importConfigured
+            it.loadScmConfig(project,ScmService.IMPORT) >> mockImportScmConfig
+            it.loadScmConfig(project,ScmService.EXPORT) >> mockExportScmConfig
+            it.projectHasConfiguredExportPlugin(project) >> exportConfigured
         }
 
         when:
@@ -1502,10 +1510,13 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.json.scmEnabled == scmEnabled
 
         where:
-        importEnabled | exportEnabled | scmEnabled
-        true          | true          | true
-        true          | false         | true
-        false         | false         | false
+        importConfigured | exportConfigured | importIntegrationEnabled | exportIntegrationEnabled  | scmEnabled
+        true             | true             | true                     | true                      | true
+        true             | true             | false                    | true                      | true
+        true             | true             | true                     | false                     | true
+        true             | true             | false                    | false                     | false
+        true             | false            | false                    | false                     | false
+        false            | false            | false                    | false                     | false
 
     }
 

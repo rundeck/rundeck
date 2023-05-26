@@ -79,6 +79,7 @@ import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import java.util.function.BiFunction
 
 @Controller
 @Transactional
@@ -3797,7 +3798,7 @@ if executed in cluster mode.
     def scmEnabled(){
         def project = params.project
         def scmEnabled = true
-        if( project && (!scmService.projectHasConfiguredExportPlugin(project) && !scmService.projectHasConfiguredImportPlugin(project)) ){
+        if( project && (!checkScmIntegrationEnabled.apply(project, ScmService.IMPORT) && !checkScmIntegrationEnabled.apply(project, ScmService.EXPORT)) ){
             scmEnabled = false
         }
         render(
@@ -3806,6 +3807,33 @@ if executed in cluster mode.
                         [scmEnabled: scmEnabled]
                 ) as JSON
         )
+    }
+
+    BiFunction<String, String, Boolean> checkScmIntegrationEnabled = ( project,integration ) -> {
+        def integrationEnabled = false
+        if( !project || !integration ){
+            return integrationEnabled
+        }
+        // checking for the configuration
+        switch (integration){
+            case ScmService.EXPORT:
+                if( scmService.projectHasConfiguredExportPlugin(project) ){
+                    def exportEnabled = scmService.loadScmConfig(project,ScmService.EXPORT)?.enabled
+                    return exportEnabled ? exportEnabled : false
+                }
+                return false
+                break;
+            case ScmService.IMPORT:
+                if( scmService.projectHasConfiguredImportPlugin(project) ){
+                    def importEnabled = scmService.loadScmConfig(project,ScmService.IMPORT)?.enabled
+                    return importEnabled ? importEnabled : false
+                }
+                return false
+                break;
+            default:
+                return false
+        }
+        return false
     }
 
     /**
