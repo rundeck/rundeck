@@ -580,31 +580,9 @@ export default Vue.extend({
       this.path = path;
       this.inputPath = path;
 
-      this.checkParentDir(path)
-
       this.loadUpPath();
       this.loadKeys();
-    },
-    checkParentDir(path: any) {
-      const rundeckContext = getRundeckContext();
-      const fullPath = this.absolutePath(path);
-
-      const getPath = this.calcBrowsePath(path)
-      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
-        if (result.resources != null) {
-          const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
-          if (keys.length == 0) {
-            this.invalid = true
-            this.errorMsg = 'invalid path';
-          }
-        } else {
-          this.invalid = true
-          this.errorMsg = 'invalid path';
-        }
-      }).catch((err: Error) => {
-        this.invalid = true
-        this.errorMsg = `Failed to change parent directory. Error: ${err.message}`;
-      });
+      console.log("NEWEST!!!!")
     },
     showUpPath() {
       if (this.upPath != this.rootPath) {
