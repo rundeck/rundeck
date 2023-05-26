@@ -584,6 +584,7 @@ public class RundeckConfigBase {
         String helpLink;
         String helpLinkName;
         Boolean workflowGraph;
+        Boolean showInlineJobSchedules;
         Boolean realJobTree;
         String logoSmall;
         Integer matchedNodesMaxCount;

@@ -300,6 +300,7 @@ class UrlMappings {
         "/menu/acls/save"(controller: 'menu', action: 'saveSystemAclFile')
         "/menu/acls/delete/$id**"(controller: 'menu', action: 'deleteSystemAclFile')
         "/menu/storage/$resourcePath**"(controller: 'menu', action: 'storage')
+        "/menu/jobMenuInlineJobSchedulesEnabled"(controller: 'menu', action: 'jobMenuInlineJobSchedulesEnabled')
         "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
         "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')
         "/storage/upload/keys"(controller: 'storage', action: 'keyStorageUpload')

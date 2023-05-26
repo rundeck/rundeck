@@ -322,7 +322,7 @@ search
             var pageParams = loadJsonData('pageParams');
             var nextScheduled = loadJsonData('nextScheduled');
 
-            // Call only if atleast one of the SCM integrations is enabled
+            // Call only if one of the SCM integrations is enabled
             jQuery.ajax({
                 dataType:'json',
                 type: "GET",

@@ -3790,20 +3790,36 @@ if executed in cluster mode.
         }
     }
 
+    /**
+     * Returns a boolean flag depending if there were at least one SCM integration enabled.
+     * @return true/false
+     * */
     def scmEnabled(){
         def project = params.project
+        def scmEnabled = true
         if( project && !scmService.projectHasConfiguredExportPlugin(project) && !scmService.projectHasConfiguredImportPlugin(project) ){
-            render(
-                    contentType: 'application/json', text:
-                    (
-                            [scmEnabled: false]
-                    ) as JSON
-            )
+            scmEnabled = false
         }
         render(
                 contentType: 'application/json', text:
                 (
-                        [scmEnabled: true]
+                        [scmEnabled: scmEnabled]
+                ) as JSON
+        )
+    }
+
+    /**
+     * Returns a boolean flag depending on user's configuration for the inline job schedules
+     * renderization in job's page.
+     * @return true/false
+     * */
+    def jobMenuInlineJobSchedulesEnabled(){
+        def showInlineJobSchedules
+        showInlineJobSchedules = configurationService.getBoolean('gui.showInlineJobSchedules', true)
+        render(
+                contentType: 'application/json', text:
+                (
+                        [showInlineJobSchedules: showInlineJobSchedules]
                 ) as JSON
         )
     }
