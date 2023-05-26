@@ -1644,6 +1644,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1699,6 +1700,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){

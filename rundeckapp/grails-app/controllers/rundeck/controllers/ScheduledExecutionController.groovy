@@ -4497,6 +4497,10 @@ Since: v19''',
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return
+        }
+
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
@@ -4832,6 +4836,15 @@ Authorization required: `delete` for the job.''',
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext,
                 false, session.user, 'apiJobDelete')
         if (!result.success) {

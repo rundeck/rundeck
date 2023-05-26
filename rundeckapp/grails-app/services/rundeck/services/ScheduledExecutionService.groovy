@@ -1957,6 +1957,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             logJobChange(changeinfo+[extraInfo: extraInfo],scheduledExecution.properties)
         }
 
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return [success           : false,
+                    scheduledExecution: scheduledExecution,
+                    message           : lookupMessage('api.error.project.disabled', [scheduledExecution.project]),
+                    status            : 409,
+                    errorCode         : 'api.error.project.disabled']
+        }
 
         def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
         def oldJobName = scheduledExecution.generateJobScheduledName()
