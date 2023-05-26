@@ -1730,7 +1730,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         try {
-            Project.withNewTransaction {
+            ScheduledExecution.withNewTransaction {
                 framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
             }
         } catch (UnsupportedOperationException e) {
@@ -1741,7 +1741,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-            return Project.withNewTransaction {
+            return ScheduledExecution.withNewTransaction {
                 return deleteProjectInternal(project, framework, authContext, username)
             }
         }
@@ -1771,7 +1771,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
 
-        Project.withTransaction { TransactionStatus status ->
+        ScheduledExecution.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
