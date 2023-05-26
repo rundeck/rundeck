@@ -582,7 +582,6 @@ export default Vue.extend({
 
       this.loadUpPath();
       this.loadKeys();
-      console.log("NEWEST!!!!")
     },
     showUpPath() {
       if (this.upPath != this.rootPath) {
