@@ -21,4 +21,5 @@ public interface SaveReportRequest {
     Date getDateCompleted();
     String getAdhocScript();
     String getTags();
+    String getJobUuid();
 }

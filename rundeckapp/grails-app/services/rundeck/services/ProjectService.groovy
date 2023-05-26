@@ -1535,7 +1535,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 return
             }
             report.project = projectName
-            def response = execReportDataProvider.saveReport(report)
+            def response = execReportDataProvider.saveReport(UtilBaseReport.findJobUuidForBaseReport(report))
             if (!response.isSaved) {
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${response.errors}")
                 return
@@ -1545,7 +1545,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //generate reports for executions without matching reports
         execids.each { eid ->
-            def saveReportResponse = execReportDataProvider.createReportFromExecution(eid)
+            SaveReportRequest saveReportRequest = UtilBaseReport.createSaveReportRequestFromExecution(Execution.get(eid))
+            def saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
             if (!saveReportResponse.isSaved) {
                 log.error("Unable to save generated report: ${saveReportResponse.errors} (execution ${eid})")
                 return

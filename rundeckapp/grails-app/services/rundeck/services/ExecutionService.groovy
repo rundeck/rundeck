@@ -74,6 +74,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
@@ -4246,7 +4247,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.createReportFromExecution(missed.id)
+        SaveReportRequest saveReportRequest = UtilBaseReport.createSaveReportRequestFromExecution(missed)
+        execReportDataProvider.saveReport(saveReportRequest)
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

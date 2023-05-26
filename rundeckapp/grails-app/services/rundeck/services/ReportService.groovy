@@ -55,7 +55,7 @@ class ReportService  {
         if(!saveReportRequest.message){
             saveReportRequest.message="[no message]"
         }
-        SaveReportResponseImpl saveReportResponse = execReportDataProvider.saveReport(saveReportRequest)
+        SaveReportResponseImpl saveReportResponse = execReportDataProvider.saveReport(UtilBaseReport.findJobUuidForBaseReport(saveReportRequest))
 
         //TODO: authorize event creation?
 

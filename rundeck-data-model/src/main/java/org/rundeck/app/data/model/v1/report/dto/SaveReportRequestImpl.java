@@ -31,6 +31,7 @@ public class SaveReportRequestImpl implements SaveReportRequest {
     Date dateCompleted;
     String adhocScript;
     String tags;
+    String jobUuid;
 
     public static void buildFromMap(SaveReportRequestImpl obj, Map<String, Object> data) {
         for (String key : data.keySet()) {
@@ -80,4 +81,5 @@ public class SaveReportRequestImpl implements SaveReportRequest {
     }
 
     public static final List<String> DEPRECATED_FIELD_NAMES = Arrays.asList("ctxProject","jcJobId","jcExecId","actionType","ctxType","ctxName","ctxCommand","ctxController","maprefUri");
+
 }

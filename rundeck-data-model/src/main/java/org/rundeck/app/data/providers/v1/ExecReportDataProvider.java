@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface ExecReportDataProvider extends DataProvider{
     RdExecReport get(Long id);
-    SaveReportResponse createReportFromExecution(Long id);
     SaveReportResponse saveReport(SaveReportRequest saveReportRequest);
     List<RdExecReport> findAllByProject(String projectName);
     List<RdExecReport> findAllByStatus(String status);

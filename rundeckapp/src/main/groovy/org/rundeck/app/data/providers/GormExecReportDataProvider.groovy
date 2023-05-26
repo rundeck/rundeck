@@ -4,7 +4,6 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
@@ -18,7 +17,6 @@ import org.springframework.transaction.TransactionStatus
 import org.springframework.validation.Errors
 import rundeck.BaseReport;
 import rundeck.ExecReport
-import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
@@ -39,19 +37,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         return ExecReport.get(id)
     }
 
-    @Override
-    SaveReportResponse createReportFromExecution(Long id) {
-        Execution execution = Execution.get(id)
-        ExecReport execReport = ExecReport.fromExec(execution)
-        boolean isUpdated = execReport.save(flush: true)
-        Errors errors = execReport.errors
-        return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
-    }
 
     @Override
     SaveReportResponse saveReport(SaveReportRequest saveReportRequest) {
         ExecReport execReport = new ExecReport()
-        Execution execution = Execution.get(saveReportRequest.executionId)
         execReport.executionId = saveReportRequest.executionId
         execReport.jobId = saveReportRequest.jobId
         execReport.adhocExecution = saveReportRequest.adhocExecution
@@ -71,7 +60,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.message = saveReportRequest.message
         execReport.dateStarted = saveReportRequest.dateStarted
         execReport.dateCompleted = saveReportRequest.dateCompleted
-        execReport.jobUuid = execution.scheduledExecution?.uuid
+        execReport.jobUuid = saveReportRequest.jobUuid
         boolean isUpdated = execReport.save(flush: true)
         String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
