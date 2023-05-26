@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import org.rundeck.app.data.model.v1.query.RdExecQuery
 
 /*
  * ExecQuery.java
@@ -25,7 +26,7 @@ import grails.validation.Validateable
  * Created: Feb 29, 2008 3:17:13 PM
  * $Id$
  */
-class ExecQuery extends ReportQuery implements Validateable{
+class ExecQuery extends ReportQuery implements Validateable, RdExecQuery{
     String controllerFilter
     String cmdFilter
     String groupPathFilter
@@ -77,5 +78,29 @@ class ExecQuery extends ReportQuery implements Validateable{
             "abortedByFilter",
         ])
 
+    }
+    public static final ArrayList<String> exportProps = ReportQuery.exportProps +[
+             'controllerFilter',
+             'cmdFilter',
+             'groupPathFilter',
+             'groupPathExactFilter',
+             'execIdFilter',
+             'execProjects'
+    ]
+    def Map toMap() {
+
+        def map = this.properties.subMap(exportProps)
+        map
+    }
+
+    static Map fromMap(Map map) {
+        ExecQuery execQuery = new ExecQuery()
+        execQuery.controllerFilter = map.controllerFilter
+        execQuery.cmdFilter = map.cmdFilter
+        execQuery.groupPathFilter = map.groupPathFilter
+        execQuery.groupPathExactFilter = map.groupPathExactFilter
+        execQuery.execIdFilter = map.execIdFilter
+        execQuery.execProjects = map.execProjects
+        execQuery
     }
 }

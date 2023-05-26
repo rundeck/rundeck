@@ -78,21 +78,14 @@
               <div class="card-content">
                 <div class="row">
                     <div class="col-md-4 col-xs-6">
-                        <div class="row">
-                            <div class="col-xs-1">
-                                <g:link action="edit"
-                                        params="[login: user.login]"
-                                        class="btn btn-default btn-sm"
-                                        title="${message(code: 'userController.action.edit.description', args: [user.login])}">
-                                    <g:icon name="edit"/>
-                                    <g:message code="button.Edit.label"/>
-                                </g:link>
-                            </div>
-                            <div class="col-xs-1">
-                            </div>
-                            <div class="col-xs-1" id="password-manager">
-                            </div>
-                        </div>
+                        <g:link action="edit"
+                                params="[login: user.login]"
+                                class="btn btn-default btn-sm"
+                                title="${message(code: 'userController.action.edit.description', args: [user.login])}">
+                            <g:icon name="edit"/>
+                            <g:message code="button.Edit.label"/>
+                        </g:link>
+                        <ui-socket section="user-profile" location="header-buttons" class="vue-ui-socket"></ui-socket>
                     </div>
 
                     <div class="col-md-8 col-xs-6 form-inline">

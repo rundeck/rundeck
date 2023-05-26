@@ -23,6 +23,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
@@ -123,11 +124,13 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
             jobHistoryAuthorizations(_,_) >> authorizations
         }
         controller.metricService = Mock(MetricService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         def jobname = 'abc'
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -152,7 +155,7 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
         )
         e1.save()
 
-        ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
+        ReferencedExecution refexec = new ReferencedExecution(status: 'running',jobUuid: job.uuid, execution: e1)
         refexec.save()
 
 

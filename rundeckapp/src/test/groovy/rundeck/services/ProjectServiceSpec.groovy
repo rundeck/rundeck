@@ -42,6 +42,8 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
@@ -61,7 +63,7 @@ import static org.junit.Assert.*
  */
 class ProjectServiceSpec extends Specification implements ServiceUnitTest<ProjectService>, GrailsWebUnitTest, DataTest {
 
-    def setup() {
+    void setupSpec() {
         mockDomain Project
         mockDomain BaseReport
         mockDomain ExecReport
@@ -71,6 +73,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain JobFileRecord
         mockCodec JobsXMLCodec
 
+    }
+
+    void setup() {
         def configService = Stub(ConfigurationService) {
             getString('projectService.projectExgitportCache.spec', _) >> 'refreshAfterWrite=2m'
         }
@@ -78,6 +83,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         defineBeans {
             configurationService(InstanceFactoryBean, configService)
         }
+
+        def providerExec = new GormExecReportDataProvider()
+        service.execReportDataProvider = providerExec
+
     }
 
     def "loadJobFileRecord"() {
@@ -1173,6 +1182,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 Map<String, ProjectComponent> beans=[:]
             }
 
+            ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'testproj', uuid: 'new-job-uuid')
+            assertNotNull se.save()
             Execution exec = new Execution(
                 argString: "-test args",
                 user: "testuser",
@@ -1185,6 +1196,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 nodeExcludeTags: 'monkey',
                 status: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+                scheduledExecution: se
 
             )
             assertNotNull exec.save()
@@ -1217,6 +1229,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.loggingService = Mock(LoggingService)
             service.workflowService = Mock(WorkflowService)
+
+
+
+        
             service.executionUtilService=Mock(ExecutionUtilService){
                 1 * exportExecutionXml(_, _, _)>>{
                     it[1].write('test\n')
@@ -2297,7 +2313,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <title>blah</title>
   <status>succeed</status>
   <actionType>succeed</actionType>
-  <ctxProject>testproj1</ctxProject>
+  <project>testproj1</project>
   <reportId>test/job</reportId>
   <tags>a,b,c</tags>
   <author>admin</author>
@@ -2305,13 +2321,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <executionId>123</executionId>
-  <jcJobId>test-job-uuid</jcJobId>
+  <jobId>test-job-uuid</jobId>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
   <succeededNodeList />
   <failedNodeList />
   <filterApplied />
+  <jobUuid>test-job-uuid</jobUuid>
 </report>'''
     /**
      * uses deprecated jcExecId
@@ -2360,18 +2377,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
             executionId:123L,
-            jcJobId: oldJobId.toString(),
+            jobId: oldJobId.toString(),
             node:'1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
             dateStarted: new Date(0),
             dateCompleted: new Date(3600000),
             message: 'Report message',
+            jobUuid: se.uuid,
             )
         assertNotNull exec.save()
 
@@ -2395,17 +2413,16 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
+        def SaveReportRequestImpl result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
         then:
         result!=null
         def expected = [
             executionId: 456L,
-            jcJobId: newJobId.toString(),
+            jobId: newJobId.toString(),
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
-            actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
@@ -2456,12 +2473,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
             executionId: 123,
-            jcJobId: '321',
+            jobId: '321',
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
             actionType: 'succeed',
-            ctxProject: 'testproj1',
+            project: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',
             author: 'admin',
@@ -2476,16 +2493,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def str = outwriter.toString()
 
         when:
-        def ExecReport result = service.loadHistoryReport(str,[(123):123],null,'test')
+        def SaveReportRequestImpl result = service.loadHistoryReport(str,[(123):123],null,'test')
         then:
         assertNotNull result
         def keys = [
             executionId: 456,
-            jcJobId: '321',
+            jcJobId: 321,
             node: '1/0/0',
             title: 'blah',
             status: 'succeed',
-            actionType: 'succeed',
             ctxProject: 'testproj1',
             reportId: 'test/job',
             tags: 'a,b,c',

@@ -59,6 +59,41 @@ class ReportQuery extends BaseQuery implements Validateable{
     String abortedByFilter
     String execnodeFilter
 
+    public static final ArrayList<String> exportProps = [
+             'startafterFilter',
+             'startbeforeFilter',
+             'endafterFilter',
+             'endbeforeFilter',
+             'dostartafterFilter',
+             'dostartbeforeFilter',
+             'doendafterFilter',
+             'doendbeforeFilter',
+             'recentFilter',
+             'jobListFilter',
+             'excludeJobListFilter',
+             'jobFilter',
+             'jobIdFilter',
+             'nodeFilter',
+             'titleFilter',
+             'projFilter',
+             'cmdFilter',
+             'objFilter',
+             'maprefUriFilter',
+             'typeFilter',
+             'userFilter',
+             'messageFilter',
+             'statFilter',
+             'reportIdFilter',
+             'tagsFilter',
+             'abortedByFilter',
+             'execnodeFilter',
+    ]
+
+    def Map toMap(){
+        def map=this.properties.subMap(exportProps)
+        map
+    }
+
     public void configureFilter(){
         if(recentFilter){
             Calendar n = GregorianCalendar.getInstance()

@@ -39,9 +39,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ReferencedExecution
 import rundeck.ReportFilter
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
@@ -60,6 +60,7 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     def scheduledExecutionService
     def MetricService metricService
+    def ReferencedExecutionDataProvider referencedExecutionDataProvider
     static allowedMethods = [
             deleteFilter    : 'POST',
             storeFilter     : 'POST',
@@ -166,7 +167,10 @@ class ReportsController extends ControllerBase{
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionProjectList(sched)
+                def list = []
+                if(sched!= null) {
+                    list = referencedExecutionDataProvider.executionProjectList(sched.uuid)
+                }
                 def allowedProjects = []
                 list.each { project ->
                     if(project != params.project){
@@ -868,15 +872,15 @@ List the event history for a project.''',
                                 summary(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                                 user(rpt.author)
-                                project(rpt.ctxProject)
+                                project(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
-                                    def jparms=[id:foundjob?foundjob.extid:rpt.jcJobId]
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
+                                    def jparms=[id:foundjob?foundjob.extid:rpt.jobId]
                                     if(foundjob){
                                         jparms.href=apiService.apiHrefForJob(foundjob)
                                         jparms.permalink=apiService.guiHrefForJob(foundjob)
@@ -926,14 +930,14 @@ List the event history for a project.''',
                                 summary=(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'=[succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]]
                                 user=(rpt.author)
-                                project=(rpt.ctxProject)
+                                project=(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby=(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'=(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'=(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
                                     if(foundjob){
                                         job = [
                                                 id       : foundjob.extid,
