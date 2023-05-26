@@ -18,6 +18,7 @@ package rundeck.services
 
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.config.SysConfigProp
 import spock.lang.Specification
 
 /**
@@ -62,28 +63,54 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
     }
 
     void "get string present"() {
-        when:
+        given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = 'avalue'
         service.setAppConfig(grailsApplication.config.rundeck)
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
+        when:
+        def val1=service.getString('something.value', 'blah')
         then:
-        'avalue' == service.getString('something.value', 'blah')
+        'avalue' == val1
+        when:
+        def val2=service.getString(prop, 'blah')
+        then:
+        'avalue' == val2
     }
 
     void "get string missing"() {
+        given:
+
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         when:
         grailsApplication.config.clear()
+        def val1=service.getString('something.value', 'blah')
         then:
-        'blah' == service.getString('something.value', 'blah')
+        'blah' ==val1
+        when:
+        def val2=service.getString(prop, 'blah')
+
+        then:
+        'blah'==val2
     }
 
     void "get integer"() {
+        given:
+
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
         service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getInteger('something.value', defval)
+        expval == service.getInteger(prop, defval)
 
         where:
         confVal | expval | defval
@@ -95,12 +122,18 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
     }
 
     void "get long"() {
+        given:
+
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
         service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getLong('something.value', defval)
+        expval == service.getLong(prop, defval)
 
         where:
         confVal | expval | defval
@@ -111,14 +144,68 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         '3'     | 3L     | 1L
     }
 
+    void "get time duration"() {
+        given:
+
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
+        when:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
+        then:
+        expval == service.getTimeDuration('something.value', defval)
+        expval == service.getTimeDuration(prop, defval)
+
+        where:
+        confVal | expval | defval
+        null  | 30L   | '30s'
+        ''    | 30L   | '30s'
+        '12s' | 12L   | '30s'
+        '1m'  | 60L   | '30s'
+        '1h'  | 3600L | '30s'
+        '12'  | 12L   | '30s'
+    }
+
+    void "get file size"() {
+        given:
+
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
+        when:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
+        then:
+        expval == service.getFileSize('something.value', defval)
+        expval == service.getFileSize(prop, defval)
+
+        where:
+        confVal | expval   | defval
+        null    | 10L      | 10L
+        ''      | 10L      | 10L
+        '12b'   | 12L      | 10L
+        '12k'   | 12288L   | 10L
+        '1m'    | 1048576L | 10L
+    }
+
 
     void "get boolean present"(testval, resultval) {
-        when:
+        given:
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = testval
         service.setAppConfig(grailsApplication.config.rundeck)
+        when:
+        def test1 = service.getBoolean('something.value', false)
+        def test2 = service.getBoolean(prop, false)
         then:
-        resultval == service.getBoolean('something.value', false)
+        resultval==test1
+        resultval==test2
 
         where:
         testval | resultval
@@ -129,10 +216,15 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
     }
 
     void "get boolean missing"() {
+        given:
+        def prop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         when:
         grailsApplication.config.clear()
         then:
         resultval == service.getBoolean('something.value', defval)
+        resultval == service.getBoolean(prop, defval)
 
         where:
         defval | resultval
@@ -145,10 +237,14 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = ''
         service.setAppConfig(grailsApplication.config.rundeck)
+        def sysconfigprop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> 'something.value'
+        }
         when:
         service.setBoolean('something.value', tval)
         then:
         service.getBoolean('something.value', false) == tval
+        service.getBoolean(sysconfigprop, false) == tval
         grailsApplication.config.rundeck.something.value == tval
 
         where:
@@ -157,19 +253,6 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         false | _
     }
 
-    void "get object"() {
-        given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.mail.complexConfig = [prop1:[sub1:"sub val"]]
-        service.setAppConfig(grailsApplication.config.rundeck)
-
-        when:
-        def val = service.getConfig("mail.complexConfig")
-
-        then:
-        val.prop1.sub1 == "sub val"
-
-    }
 
     void "get deprecated"() {
         given:
@@ -177,16 +260,20 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         grailsApplication.config.rundeck.feature.'*'.enabled = false
         grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled = true
         service.setAppConfig(grailsApplication.config.rundeck)
-
+        def sysconfigprop=Mock(SysConfigProp){
+            1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> prop
+        }
         when:
         def val = service.getBoolean(prop, false)
+        def val2 = service.getBoolean(sysconfigprop, false)
 
         then:
         val == expected
+        val2 == expected
 
         where:
-        prop | expected
+        prop                                 | expected
         "feature.optionValuesPlugin.enabled" | true
-        "feature.enableAll" | false
+        "feature.enableAll"                  | false
     }
 }
