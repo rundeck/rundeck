@@ -17,6 +17,9 @@ package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
 import org.eclipse.jetty.server.Handler
+import org.eclipse.jetty.server.HttpConfiguration
+import org.eclipse.jetty.server.HttpConnectionFactory
+import org.eclipse.jetty.server.SecureRequestCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.webapp.AbstractConfiguration
@@ -36,12 +39,27 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      */
     Map<String, String> initParams = [:]
     Boolean useForwardHeaders
+    Boolean sniHostCheck = false
+    long stsMaxAgeSeconds
+    Boolean stsIncludeSubdomains
 
+    /**
+     * Applies customizations such as adding a SecureRequestCustomizer
+     * for SSL configurations and setting the maximum form keys for the handlers.
+     *
+     * @param factory the Jetty servlet web server factory to customize
+     */
     @Override
     void customize(final JettyServletWebServerFactory factory) {
         factory.addServerCustomizers(new JettyServerCustomizer() {
             @Override
             void customize(Server server) {
+                server.getConnectors().each { connector ->
+                    HttpConfiguration config = connector.getConnectionFactory(HttpConnectionFactory.class).getHttpConfiguration()
+                    if(checkSSL(config)){
+                        config.addCustomizer(new SecureRequestCustomizer(sniHostCheck, stsMaxAgeSeconds, stsIncludeSubdomains))
+                    }
+                }
                 for (Handler handler : server.getHandlers()) {
                     if (handler instanceof ContextHandler) {
                         ((ContextHandler) handler).setMaxFormKeys(2000)
@@ -50,9 +68,22 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
-        factory.useForwardHeaders=useForwardHeaders
+        factory.useForwardHeaders = useForwardHeaders
+    }
+
+    /**
+     * Checks if SSL is enabled in the HTTP configuration.
+     *
+     * @param httpConfig the HTTP configuration to check
+     * @return true if SSL is enabled, false otherwise
+     */
+    static boolean checkSSL(HttpConfiguration httpConfig) {
+        int securePort = httpConfig.getSecurePort()
+        boolean isSslEnabled = (securePort > 0)
+        return isSslEnabled
     }
 }
+
 
 /**
  * Set init params for the WebAppContext

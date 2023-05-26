@@ -327,6 +327,9 @@ public class RundeckConfigBase {
         @Data
         public static class Servlet {
             Map<String,Object> initParams;
+            Integer stsMaxAgeSeconds;
+            Boolean stsIncludeSubdomains;
+
         }
     }
 
