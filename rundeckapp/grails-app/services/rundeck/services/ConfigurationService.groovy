@@ -338,14 +338,6 @@ class ConfigurationService implements InitializingBean, ConfigService {
         }
     }
 
-    String getCacheSpecFor(String service, String cache, String defval) {
-        grailsApplication.config.getProperty("rundeck.${service}.${cache}.spec", String.class, defval)
-    }
-
-    boolean getCacheEnabledFor(String service, String cache, boolean defval) {
-        grailsApplication.config.getProperty("rundeck.${service}.${cache}.enabled", Boolean.class, defval)
-    }
-
     @Override
     void afterPropertiesSet() throws Exception {
         appCfg = grailsApplication.config.getProperty("rundeck", Map.class)

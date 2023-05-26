@@ -227,7 +227,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void afterPropertiesSet() throws Exception {
-        def spec = configurationService?.getCacheSpecFor("projectManagerService", "projectCache", DEFAULT_PROJECT_CACHE_SPEC)?:DEFAULT_PROJECT_CACHE_SPEC
+        def spec = configurationService?.getString("projectManagerService.projectCache.spec", DEFAULT_PROJECT_CACHE_SPEC)?:DEFAULT_PROJECT_CACHE_SPEC
 
         log.debug("projectCache: creating from spec: ${spec}")
 
@@ -259,7 +259,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        def spec3 = configurationService?.getCacheSpecFor("projectManagerService", "fileCache", DEFAULT_FILE_CACHE_SPEC)?:DEFAULT_FILE_CACHE_SPEC
+        def spec3 = configurationService?.getString("projectManagerService.fileCache.spec", DEFAULT_FILE_CACHE_SPEC)?:DEFAULT_FILE_CACHE_SPEC
 
         log.debug("fileCache: creating from spec: ${spec3}")
         //basic creation, created via spec string in afterPropertiesSet()
