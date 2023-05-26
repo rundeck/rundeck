@@ -91,20 +91,4 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
     def void toggleFeature(String name, boolean enable) {
         configurationService.setBoolean("feature.${name}.enabled", enable)
     }
-    /**
-     * Get feature config
-     * @param name
-     * @param enable
-     */
-    def getFeatureConfig(FeaturesDefinition feature) {
-        configurationService.getConfig("feature.${feature.propertyName}.config")
-    }
-    /**
-     * Get feature config
-     * @param name
-     * @param enable
-     */
-    def getFeatureConfig(String name) {
-        configurationService.getConfig("feature.${name}.config")
-    }
 }
