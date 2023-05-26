@@ -67,16 +67,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
     File testLogFile1
     File testLogFileDNE
 
-    //List<Class> getDomainClasses() { [LogFileStorageRequest,Execution,ScheduledExecution,Workflow]}
-
-    /**
-     * utility method to mock a class
-     */
-    private mockWith(Class clazz, Closure clos) {
-        def mock = new MockFor(clazz)
-        mock.demand.with(clos)
-        return mock.proxyInstance()
-    }
 
     def setupSpec(){
         mockDomain LogFileStorageRequest
@@ -106,97 +96,7 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         LogFileStorageRequest.metaClass.static.withNewSession = {Closure c -> c.call() }
     }
 
-    void testConfiguredPluginName() {
-        assertNull(service.getConfiguredPluginName())
-        service.configurationService=mockWith(ConfigurationService){
-            getString{String prop,String defval->'test1'}
-        }
-        assertEquals("test1", service.getConfiguredPluginName())
 
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    void testConfiguredStorageRetryCount() {
-
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger{String x, int defval->defval}
-        }
-        assertEquals(1, service.getConfiguredStorageRetryCount())
-
-        expect:
-        // asserts validate test
-        1 == 1
-
-    }
-    void testConfiguredStorageRetryDelay() {
-
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger{String x, int defval->defval}
-        }
-        assertEquals(60,service.getConfiguredStorageRetryDelay())
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    void testConfiguredRetrievalCount() {
-
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger{String x, int defval->defval}
-        }
-        assertEquals(3,service.getConfiguredRetrievalRetryCount())
-        expect:
-        // asserts validate test
-        1 == 1
-
-    }
-    void testConfiguredRetrievalDelay() {
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger{String x, int defval->defval}
-        }
-        assertEquals(60,service.getConfiguredRetrievalRetryDelay())
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    void testIsCachedItemFresh() {
-
-
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger(4..4){String prop,int defval->defval}
-        }
-        assertTrue(service.isResultCacheItemFresh([time: new Date(), count: 0]))
-        assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 0]))
-
-        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis()- (61*1000)), count: 0]))
-        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
-
-
-        def vals=[:]
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger(3..3){String prop,int defval->vals[prop]?:defval}
-        }
-        vals['execution.logs.fileStorage.retrievalRetryDelay'] = 30
-
-        assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
-        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
-        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
-
-
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger(4..4){String prop,int defval->vals[prop]?:defval}
-        }
-        vals['execution.logs.fileStorage.retrievalRetryDelay'] = 30
-        vals['execution.logs.fileStorage.retrievalRetryCount'] = 10
-
-        assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
-        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
-        assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
-        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
-        expect:
-        // asserts validate test
-        1 == 1
-    }
     void testGetFileForLocalPath(){
         def fmock = new MockFor(FrameworkService)
         fmock.demand.getFrameworkProperties() {->
@@ -222,56 +122,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         } catch (IllegalStateException e) {
             assertEquals("framework.logs.dir is not set in framework.properties", e.message)
         }
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    void testCacheResult(){
-        grailsApplication.config=new ConfigObject()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-
-        service.configurationService=mockWith(ConfigurationService){
-            getString{String prop,String defval->'test1'}
-            getInteger(1..2){String prop,int defval->defval}
-        }
-        def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
-        assertNotNull(result)
-        assertEquals("1",result.id)
-        assertEquals(0, result.count)
-        assertEquals('errorCode',result.errorCode)
-        assertEquals(['errorData'],result.errorData)
-        assertEquals('error',result.error)
-        assertEquals('test1',result.name)
-        assertEquals(LogFileState.NOT_FOUND,result.state)
-        assertEquals(1, service.getCurrentRetrievalResults().size())
-
-        Map result1 = service.getRetrievalCacheResult("1")
-        assertNotNull(result1)
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    void testCacheResultDefaults(){
-        grailsApplication.config=new ConfigObject()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        service.configurationService=mockWith(ConfigurationService){
-            getString{String prop,String defval->'test1'}
-
-            getInteger(1..2){String prop,int defval->defval}
-        }
-        def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
-        assertNotNull(result)
-        assertEquals("1",result.id)
-        assertEquals(0, result.count)
-        assertEquals('execution.log.storage.retrieval.ERROR',result.errorCode)
-        assertEquals(['test1','error'],result.errorData)
-        assertEquals('error',result.error)
-        assertEquals('test1',result.name)
-        assertEquals(LogFileState.NOT_FOUND,result.state)
-        assertEquals(1, service.getCurrentRetrievalResults().size())
-
-        Map result1 = service.getRetrievalCacheResult("1")
-        assertNotNull(result1)
         expect:
         // asserts validate test
         1 == 1
@@ -342,7 +192,7 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    class testStoragePlugin implements ExecutionFileStoragePlugin{
+    public static class testStoragePlugin implements ExecutionFileStoragePlugin{
         Map<String, ? extends Object> context
         boolean available
         boolean availableException
@@ -407,11 +257,11 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
             assert retrieveLogFileCalled
         }
     }
-    class testOptionsStoragePlugin extends testStoragePlugin implements ExecutionFileStorageOptions{
+    public static class testOptionsStoragePlugin extends testStoragePlugin implements ExecutionFileStorageOptions{
         boolean retrieveSupported
         boolean storeSupported
     }
-    class testMultiStoragePlugin extends testStoragePlugin implements ExecutionMultiFileStorage{
+    public static class testMultiStoragePlugin extends testStoragePlugin implements ExecutionMultiFileStorage{
         Map<String,Boolean> storeMultipleResponseSet=[:]
         boolean storeMultipleCalled=false
         MultiFileStorageRequest storeMultipleFiles
@@ -424,7 +274,7 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
             }
         }
     }
-    class testStoragePluginWithDelete extends testStoragePlugin{
+    public static class testStoragePluginWithDelete extends testStoragePlugin{
 
         @Override
         boolean deleteFile(String filetype){
@@ -877,50 +727,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         request == null
 
     }
-    void testRunStorageRequestFailureWithRetry(){
-        given:
-
-        def test = new testStoragePlugin()
-        test.storeLogFileSuccess=false
-        LogFileStorageService svc
-        boolean queued=false
-        def sched = new MockFor(TaskScheduler)
-        sched.demand.schedule() { Closure clos, Date when ->
-            queued=true
-            assert when > new Date()
-        }
-
-        service.logFileStorageTaskScheduler = sched.proxyInstance()
-        when:
-        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30, 'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
-            service.configurationService = Mock(ConfigurationService) {
-                getInteger(_,_)>>{String value, Integer defVal->
-                    if(value == "execution.logs.fileStorage.storageRetryDelay"){
-                        return 30
-                    }
-                    if(value == "execution.logs.fileStorage.storageRetryCount"){
-                        return 2
-                    }
-                    null
-                }
-                getString(_)>>"test1"
-            }
-
-            svc = service
-        }
-
-
-        then:
-        test.storeLogFileCalled
-        test.storeFiletype == "rdlog"
-        test.storeLength == testLogFile1.length()
-        test.storeLastModified == new Date(testLogFile1.lastModified())
-        task.count == 1
-        !svc.executorService.executeCalled
-        svc.getCurrentRequests().size() == 0
-        queued
-
-    }
     class testProducer implements ExecutionFileProducer{
         String executionFileType
         File testfile
@@ -995,28 +801,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         def task = [execId: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
         service.runStorageRequest(task)
         return task
-    }
-
-    @DirtiesRuntime
-    void testSubmitForStorage_plugin_storeSupported(){
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-
-        def test = new testOptionsStoragePlugin()
-        test.storeSupported=true
-        service.configurationService=Mock(ConfigurationService){
-            _ * getString('execution.logs.fileStoragePlugin',_)>>'test1'
-        }
-
-        Execution execution=createExecution()
-        execution.save()
-        prepareSubmitForStorage(test)
-        service.submitForStorage(execution)
-
-        assertEquals(1,service.storageRequests.size())
-        expect:
-        // asserts validate test
-        1 == 1
     }
 
     @DirtiesRuntime
@@ -1123,33 +907,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         assertNotNull(reader)
         assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
-        expect:
-        // asserts validate test
-        1 == 1
-    }
-    @DirtiesRuntime
-    void testRequestLogFileReaderFileExists(){
-
-        grailsApplication.config.clear()
-
-        def test = new testStoragePlugin()
-        test.available = false
-
-        def reader = performReaderRequest(test, false, testLogFile1, false, createExecution(), false) { svc ->
-
-            svc.configurationService=mockWith(ConfigurationService){
-                getString{String prop,String defval->null}
-                getBoolean{String prop,Boolean defval->false}
-            }
-        }
-
-        //initialize should not have been called
-        assert !test.initializeCalled
-
-        assert null != (reader)
-        assert ExecutionFileState.AVAILABLE == reader.state
-        assert null != (reader.reader)
-        assert (reader.reader instanceof FSStreamingLogReader)
         expect:
         // asserts validate test
         1 == 1

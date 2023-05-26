@@ -1531,4 +1531,256 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         projectName = 'projectExample'
         logStoragePluginPath = 'rootDir/logs/${job.project}/${job.execid}.log'
     }
+    def "default getConfiguredStorageRetryCount"(){
+        expect:
+            1==service.getConfiguredStorageRetryCount()
+    }
+    def "default getConfiguredStorageRetryDelay"(){
+        expect:
+            60==service.getConfiguredStorageRetryDelay()
+    }
+    def "default getConfiguredRetrievalRetryCount"(){
+        expect:
+            3==service.getConfiguredRetrievalRetryCount()
+    }
+    def "default getConfiguredRetrievalRetryDelay"(){
+        expect:
+            60==service.getConfiguredRetrievalRetryDelay()
+    }
+
+    def testIsCachedItemFresh() {
+
+        expect:
+            service.isResultCacheItemFresh([time: new Date(), count: 0])
+            service.isResultCacheItemAllowedRetry([time: new Date(), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (61 * 1000)), count: 0])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+    }
+
+    def "test cache refreshness with retry delay"() {
+
+        given:
+            service.configurationService = Mock(ConfigService) {
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_DELAY, _) >> 30
+            }
+        expect:
+            service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+    }
+
+    def "test cache refreshness with retry delay count"() {
+
+        given:
+            service.configurationService = Mock(ConfigService) {
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_DELAY, _) >> 30
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_COUNT, _) >> 10
+            }
+        expect:
+
+            service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0])
+            service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 10])
+    }
+
+
+    def "testCacheResult"(){
+        when:
+            def result = service
+                .cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', 'errorCode', ['errorData'])
+            Map result1 = service.getRetrievalCacheResult("1")
+        then:
+            result != null
+            "1" == result.id
+            0 == result.count
+            'errorCode' == result.errorCode
+            ['errorData'] == result.errorData
+            'error' == result.error
+            'test1' == result.name
+            LogFileState.NOT_FOUND == result.state
+            1 == service.getCurrentRetrievalResults().size()
+
+            result1 != null
+    }
+
+    def testCacheResultDefaults() {
+        when:
+            def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
+            Map result1 = service.getRetrievalCacheResult("1")
+        then:
+            result != null
+            "1" == result.id
+            0 == result.count
+            'execution.log.storage.retrieval.ERROR' == result.errorCode
+            ['test1', 'error'] == result.errorData
+            'error' == result.error
+            'test1' == result.name
+            LogFileState.NOT_FOUND == result.state
+            1 == service.getCurrentRetrievalResults().size()
+    }
+
+    def testRunStorageRequestFailureWithRetry(){
+        given:
+
+            def testPlugin = Mock(ExecutionFileStoragePlugin)
+
+            boolean queued=false
+
+            service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+            service.configurationService=Mock(ConfigService){
+                1*getInteger(LogFileStorageService.STORAGE_RETRY_DELAY,_)>>30
+                1*getInteger(LogFileStorageService.STORAGE_RETRY_COUNT,_)>>2
+                0 * getInteger(_, _)
+                _*getString(LogFileStorageService.FILE_STORAGE_PLUGIN,_)>>'test1'
+            }
+            def e = new Execution(dateStarted: new Date(),
+                                   dateCompleted: null,
+                                   user: 'user1',
+                                   project: 'test',
+                                   serverNodeUUID: null
+            ).save()
+
+            def testfile = File.createTempFile("LogFileStorageServiceTests", ".txt")
+            testfile<<'some content'
+            testfile.deleteOnExit()
+            long length=testfile.length()
+            Date modified=new Date(testfile.lastModified())
+
+            service.executorService=Mock(ThreadPoolTaskScheduler){
+                0 * execute(_)
+            }
+            Map<String,ExecutionFileProducer> loggingBeans=[:]
+            loggingBeans[filetype] = Mock(ExecutionFileProducer){
+                _*getExecutionFileType()>>filetype
+                1 *  produceStorageFileForExecution(_)>> {
+                    new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
+                }
+                _*produceStorageCheckpointForExecution(_)>> {
+                    new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
+                }
+            }
+
+
+            def appmock = Mock(ApplicationContext){
+              _*  getBeansOfType(ExecutionFileProducer)>>loggingBeans
+            }
+            service.applicationContext=appmock
+
+
+            LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
+            request.validate()
+            request.save(flush:true)
+            def task = [execId: e.id.toString(), file: testfile, storage: testPlugin, filetype: filetype,request:request,requestId:request.id]
+
+        when:
+            def result=service.runStorageRequest(task)
+
+
+        then:
+            1*testPlugin.store(filetype,_, length, {it== modified })>>storeSuccess
+
+            task.count == 1
+//            !svc.executorService.executeCalled
+            service.getCurrentRequests().size() == 0
+            1 * service.logFileStorageTaskScheduler.schedule(_, _ as Date)>>{
+                assert it[1]>new Date()
+            }
+        cleanup:
+            testfile.delete()
+        where:
+
+             filetype = 'rdlog'
+            storeSuccess=false
+
+    }
+
+    def testSubmitForStorage_plugin_storeSupported() {
+        given:
+            def test = new LogFileStorageServiceTests.testOptionsStoragePlugin()
+            test.storeSupported=true
+
+            def execution = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: null
+            ).save()
+
+
+            service.frameworkService = Mock(FrameworkService) {
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+            }
+            service.pluginService = Mock(PluginService) {
+                _ * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >>
+                new ConfiguredPlugin(test, [:])
+            }
+            service.executorService = Mock(ExecutionService)
+            service.grailsLinkGenerator=Mock(grails.web.mapping.LinkGenerator){
+
+            }
+        when:
+            service.submitForStorage(execution)
+        then:
+            1 == service.storageRequests.size()
+
+    }
+
+    def testRequestLogFileReaderFileExists(){
+
+        given:
+            def testfile = File.createTempFile("LogFileStorageServiceTests", ".txt")
+            testfile<<'some content'
+            testfile.deleteOnExit()
+
+            def execution = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: null
+            ).save()
+
+            service.frameworkService = Mock(FrameworkService) {
+                _ * isClusterModeEnabled() >> false
+                _ * getServerUUID() >> UUID.randomUUID()
+
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+                _ * getFrameworkProperties() >> (['framework.logs.dir': '/tmp/dir'] as Properties)
+            }
+            service.pluginService = Mock(PluginService) {
+                0*configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance)
+            }
+            List useStoredValues = [true, true]
+            List partialValues = [false, false]
+            int useStoredNdx=0
+            service.metaClass.getFileForExecutionFiletype = {
+                Execution e2, String filetype, boolean useStored, boolean partial ->
+                    assert execution == e2
+                    assert "rdlog"==filetype
+                    assert useStored==useStoredValues[useStoredNdx]
+                    assert partial == partialValues[useStoredNdx]
+                    useStoredNdx++
+                    testfile
+            }
+
+
+            service.grailsLinkGenerator=Mock(grails.web.mapping.LinkGenerator){
+
+            }
+            service.configurationService=Mock(ConfigService)
+
+        when:
+            def reader =  service.requestLogFileReader(execution, LoggingService.LOG_FILE_FILETYPE, false)
+        then:
+             null != (reader)
+             ExecutionFileState.AVAILABLE == reader.state
+            null != (reader.reader)
+            reader.reader instanceof FSStreamingLogReader
+        cleanup:
+            testfile.delete()
+
+    }
+
 }
