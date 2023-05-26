@@ -36,6 +36,7 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
 import webhooks.Webhook
 
@@ -467,7 +468,7 @@ class BootStrap {
             }
 
              logFileStorageService.cleanupDuplicates()
-             def resumeMode = configurationService.getString("logFileStorageService.startup.resumeMode", "")
+             def resumeMode = configurationService.getString(LogFileStorageService.STARTUP_RESUMEMODE, "")
              if ('sync' == resumeMode) {
                  timer("logFileStorageService.resumeIncompleteLogStorage") {
                      logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
