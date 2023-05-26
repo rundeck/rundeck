@@ -3797,7 +3797,7 @@ if executed in cluster mode.
     def scmEnabled(){
         def project = params.project
         def scmEnabled = true
-        if( project && !scmService.projectHasConfiguredExportPlugin(project) && !scmService.projectHasConfiguredImportPlugin(project) ){
+        if( project && (!scmService.projectHasConfiguredExportPlugin(project) && !scmService.projectHasConfiguredImportPlugin(project)) ){
             scmEnabled = false
         }
         render(

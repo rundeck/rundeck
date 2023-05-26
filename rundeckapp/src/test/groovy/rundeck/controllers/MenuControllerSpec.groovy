@@ -1480,6 +1480,61 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             true      | true          | false
     }
 
+    def "scmEnabled should return false is there's any integration configured"(){
+        given:
+        def project = 'test'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService){
+            it.projectHasConfiguredImportPlugin(project) >> importEnabled
+            it.projectHasConfiguredExportPlugin(project) >> exportEnabled
+        }
+
+        when:
+        request.method = 'GET'
+        request.format = 'json'
+        params.project = project
+        controller.scmEnabled()
+
+        then:
+        response.json.scmEnabled == scmEnabled
+
+        where:
+        importEnabled | exportEnabled | scmEnabled
+        true          | true          | true
+        true          | false         | true
+        false         | false         | false
+
+    }
+
+    def "Inline schedules in job menu will not render if the user don't want to"(){
+        given:
+        def project = 'test'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.configurationService = Mock(ConfigurationService){
+            it.getBoolean('gui.showInlineJobSchedules', true) >> userPropValue
+        }
+
+        when:
+        request.method = 'GET'
+        request.format = 'json'
+        controller.jobMenuInlineJobSchedulesEnabled()
+
+        then:
+        response.json.showInlineJobSchedules == flagReturned
+
+        where:
+        userPropValue | flagReturned
+        true          | true
+        false         | false
+
+    }
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
