@@ -1568,7 +1568,7 @@ JSON response requires API v14.
             )
         }
 
-        if(!frameworkService.isFrameworkProjectDisabled(e.project)) {
+        if(frameworkService.isFrameworkProjectDisabled(e.project)) {
             return apiError('api.error.project.disabled', [e.project], HttpServletResponse.SC_NOT_FOUND)
         }
 

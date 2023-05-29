@@ -465,6 +465,10 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
             1 * getByIDorUUID(_) >> se1
         }
 
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_) >> false
+        }
+
         controller.apiService = Mock(ApiService) {
             3 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->

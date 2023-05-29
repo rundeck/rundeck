@@ -3887,6 +3887,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectJobAll(_, se, [AuthConstants.ACTION_READ], 'project1')>>true
             }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * isFrameworkProjectDisabled(_) >> false
+            }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             params.id='testUUID'
             response.format = format
