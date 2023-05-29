@@ -865,9 +865,6 @@ beans={
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
-        //stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
-        //stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
-
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
 
