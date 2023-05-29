@@ -536,9 +536,8 @@ beans={
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
-    storagePluginProviderService(StoragePluginProviderService) {
+    storagePluginProviderService(StoragePluginProviderService, [(FileStoragePlugin.PROVIDER_NAME): FileStoragePlugin.class]) {
         pluggableStoragePluginProviderService = ref('pluggableStoragePluginProviderService')
-        builtinProviders = [(FileStoragePlugin.PROVIDER_NAME): FileStoragePlugin.class]
     }
 
     storageConverterPluginProviderService(StorageConverterPluginProviderService) {

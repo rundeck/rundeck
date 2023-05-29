@@ -663,10 +663,6 @@ public class SSHTaskBuilder {
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
                 final String sshKeyResource = sshConnectionInfo.getPrivateKeyStoragePath();
                 if (null != sshKeyResource) {
-                    if (!PathUtil.hasRoot(sshKeyResource, "keys/")) {
-                        throw new BuilderException("SSH Private key path is expected to start with \"keys/\": " +
-                                sshKeyResource);
-                    }
                     logger.log(Project.MSG_DEBUG, "Using ssh key storage path: " + sshKeyResource);
                     try {
                         InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyStorageData();

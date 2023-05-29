@@ -50,6 +50,15 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
         serviceList = new ArrayList<>();
     }
 
+    public StoragePluginProviderService(Map<String, Class<? extends StoragePlugin>> builtinProviders) {
+        serviceList = new ArrayList<>();
+        this.builtinProviders = builtinProviders;
+        final ProviderRegistryService<StoragePlugin>
+                builtinResourceStoragePluginProviderService =
+                ServiceFactory.builtinService(SERVICE_NAME, builtinProviders);
+        serviceList.add(builtinResourceStoragePluginProviderService);
+    }
+
     @Override
     public boolean canLoadWithLoader(final ProviderLoader loader) {
         return pluggableStoragePluginProviderService.canLoadWithLoader(loader);
@@ -101,14 +110,4 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
         this.pluggableStoragePluginProviderService = pluggableStoragePluginProviderService;
         serviceList.add(this.pluggableStoragePluginProviderService);
     }
-
-    public void setBuiltinProviders(Map<String, Class<? extends StoragePlugin>> builtinProviders) {
-        this.builtinProviders = builtinProviders;
-        final ProviderRegistryService<StoragePlugin>
-                builtinResourceStoragePluginProviderService =
-                ServiceFactory.builtinService(SERVICE_NAME, builtinProviders);
-        serviceList.add(builtinResourceStoragePluginProviderService);
-
-    }
-
 }
