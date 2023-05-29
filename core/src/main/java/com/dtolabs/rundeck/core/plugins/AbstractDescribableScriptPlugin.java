@@ -79,6 +79,8 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
 
+    public static final String CONFIG_BLANK_IF_UNEXPANDED = "blankIfUnexpanded";
+
     private final ScriptPluginProvider provider;
     private final Framework framework;
     Description description;
@@ -154,6 +156,17 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     }
 
                     pbuild.required(required);
+
+
+                    final Object blankIfUnexpandedValue = itemmeta.get(CONFIG_BLANK_IF_UNEXPANDED);
+                    final boolean blankIfUnexpanded;
+                    if (blankIfUnexpandedValue instanceof Boolean) {
+                        blankIfUnexpanded = (Boolean) blankIfUnexpandedValue;
+                    } else {
+                        blankIfUnexpanded = blankIfUnexpandedValue instanceof String && Boolean.parseBoolean((String) blankIfUnexpandedValue);
+                    }
+
+                    pbuild.blankIfUnexpandable(blankIfUnexpanded);
 
 
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
