@@ -2141,6 +2141,15 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
         if (!apiService.requireExists(response, scheduledExecution, ['Job', scm.id])) {
             return false
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+            return false
+        }
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project

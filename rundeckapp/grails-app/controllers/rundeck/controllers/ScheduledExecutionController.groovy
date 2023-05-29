@@ -701,6 +701,14 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 ]
             )
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
         def maxDepth=3
 
         def readAuth = rundeckAuthContextProcessor.authorizeProjectJobAny(
@@ -1247,7 +1255,7 @@ Since: V14''',
                 }
             }
         } else {
-            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(response, [status: result.status?:400, code: result.errorCode] + result)
         }
     }
 
@@ -3893,6 +3901,14 @@ Authorization required: `read` for the Job.''',
             return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
 
         def defaultFormat = 'xml'//TODO: set default to json after 5.0
         def contentTypes = [
@@ -4705,6 +4721,15 @@ Since: v19''',
         if (!apiService.requireExists(response, job, ['Job File Record', params.id])) {
             return
         }
+        if (frameworkService.isFrameworkProjectDisabled(job.project)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [job.project],
+                    format: response.format
+            ])
+            return
+        }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, job.project)
         if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
             authContext,
@@ -4746,6 +4771,16 @@ Since: v19''',
             job.project
         )) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job ID', params.id])
+        }
+
+        if (frameworkService.isFrameworkProjectDisabled(job.project)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [job.project],
+                    format: response.format
+            ])
+            return
         }
 
         def paging = [offset: 0, max: 20, sort: 'dateCreated', order: 'desc']
@@ -4910,6 +4945,14 @@ Authorization required: `delete` for the job.''',
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
                     scheduledExecution.project]])
+        }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
         }
         def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
@@ -5603,6 +5646,14 @@ return.''',
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
                     args: [response.format]
+            ])
+        }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
             ])
         }
 

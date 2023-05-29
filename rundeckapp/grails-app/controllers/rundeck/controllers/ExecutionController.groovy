@@ -1568,6 +1568,10 @@ JSON response requires API v14.
             )
         }
 
+        if(!frameworkService.isFrameworkProjectDisabled(e.project)) {
+            return apiError('api.error.project.disabled', [e.project], HttpServletResponse.SC_NOT_FOUND)
+        }
+
         if (params.stepctx && !(params.stepctx ==~ /^(\d+e?(@.+?)?\/?)+$/)) {
             return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
@@ -2173,6 +2177,14 @@ JSON response requires API v14.
                     args: [response.format]
             ])
         }
+        if (frameworkService.isFrameworkProjectDisabled(e.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [e.project],
+                    format: response.format
+            ])
+        }
         withFormat{
             xml{
                 return executionService.respondExecutionsXml(request,response, [e])
@@ -2449,6 +2461,15 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
         }
         Execution e = authorizingExecution.resource
 
+        if (frameworkService.isFrameworkProjectDisabled(e.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [e.project],
+                    format: response.format
+            ])
+        }
+
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
         if(!loader.workflowState){
@@ -2616,6 +2637,17 @@ Authorization required:
 
         def auth = authorizingExecution
         Execution e = auth.resource
+
+        if (frameworkService.isFrameworkProjectDisabled(e.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [e.project],
+                    format: response.format
+            ])
+        }
+
+
         ExecutionService.AbortResult abortresult
         try {
             def killas=null
@@ -2719,8 +2751,19 @@ Since: V12
             return
         }
         def eauth=authorizingExecution
+        def project = eauth.resource.project
+
+        if (frameworkService.isFrameworkProjectDisabled(project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [project],
+                    format: response.format
+            ])
+        }
+
         def result = executionService.deleteExecution(
-            authorizingProject(eauth.resource.project),
+            authorizingProject(project),
             eauth
         )
         if(!result.success){
@@ -3376,6 +3419,15 @@ Since: v14
         }
 
         Execution e = authorizingExecution.resource
+
+        if (frameworkService.isFrameworkProjectDisabled(e.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [e.project],
+                    format: response.format
+            ])
+        }
 
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
 

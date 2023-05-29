@@ -2900,6 +2900,14 @@ Since: V18''',
                     ]
             )
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
         def extra = [:]
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
@@ -3029,7 +3037,14 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     ]
             )
         }
-
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
         def extra = [:]
 
         //future scheduled executions forecast

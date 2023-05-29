@@ -1069,6 +1069,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ]
             return [error: err,success: false]
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            def err = [
+                    message: lookupMessage( "api.error.project.disabled",  [scheduledExecution.project]),
+                    errorCode: 'api.error.project.disabled',
+                    id: jobid
+            ]
+            return [error: err,success: false]
+        }
 
         //extend auth context using project-specific authorization
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextWithProject(original, scheduledExecution.project)
