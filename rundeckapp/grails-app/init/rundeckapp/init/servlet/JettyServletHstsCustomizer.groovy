@@ -12,7 +12,6 @@ public class JettyServletHstsCustomizer implements JettyServerCustomizer {
     long stsMaxAgeSeconds
     Boolean stsIncludeSubdomains
 
-
     /**
      * Customizes the given server by adding a secure request customizer for SSL configurations
      *
@@ -34,9 +33,15 @@ public class JettyServletHstsCustomizer implements JettyServerCustomizer {
      * @param httpConfig the HTTP configuration to check
      * @return true if SSL is enabled, false otherwise
      */
-    static boolean checkSSL(HttpConfiguration httpConfig) {
+    public static boolean checkSSL(HttpConfiguration httpConfig) {
         int securePort = httpConfig.getSecurePort()
         boolean isSslEnabled = (securePort > 0)
         return isSslEnabled
     }
+
+    JettyServletHstsCustomizer( long stsMaxAgeSeconds, Boolean stsIncludeSubdomains) {
+        this.stsMaxAgeSeconds = stsMaxAgeSeconds
+        this.stsIncludeSubdomains = stsIncludeSubdomains
+    }
+
 }
