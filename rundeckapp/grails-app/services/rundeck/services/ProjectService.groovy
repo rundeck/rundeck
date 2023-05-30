@@ -1725,7 +1725,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             error: "Cannot delete an already disabled project.")
         }
 
-        if(!configurationService.getBoolean("projectService.deferredProjectDelete", false)) {
+        if(!configurationService.getBoolean("projectService.deferredProjectDelete", true)) {
             return deleteProjectInternal(project, framework, authContext, username)
         }
 
