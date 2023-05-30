@@ -31,19 +31,21 @@ class InternalErrorsInterceptor {
 
         HttpServletRequest requestForRendering = request
         Enumeration<String> reqAttributes = requestForRendering.getAttributeNames()
+        boolean throwableFound = false
+
         log.error(":::::::::::::::::::::::::::::ENTERING ERRORS INTERCEPTOR:::::::::::::")
         log.error("Request URI: " + request.getRequestURI())
         log.error("Status: " + response.getStatus())
-        log.error(request.dump())
+        log.error("response: " + response.getOutputStream().toString())
         log.error("---------------------------------------------------------------------")
 
         reqAttributes.each { String attributeName ->
             def attribute = requestForRendering.getAttribute(attributeName)
             if(attribute instanceof Throwable && attribute != null) {
+                throwableFound = true
                 Throwable serverException = (attribute as Throwable)
                 log.error("Has a throwable instance!")
                 log.error("Attr Name: " + attributeName)
-                log.error(response.dump())
                 log.error("SERVER ERROR:::::::::: ")
                 attribute.printStackTrace()
 
@@ -54,8 +56,9 @@ class InternalErrorsInterceptor {
         }
 
         log.error(":::::::::::::::::::::::::::::EXITING ERRORS INTERCEPTOR:::::::::::::")
-        render(view: '/error.gsp')
-        return false
+        if(throwableFound)
+            render(view: '/error.gsp')
+        return !throwableFound
     }
 
     static void cleanStackTraces(Throwable exceptionToClean) {
