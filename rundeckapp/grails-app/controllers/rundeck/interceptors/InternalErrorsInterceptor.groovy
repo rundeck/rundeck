@@ -19,7 +19,7 @@ class InternalErrorsInterceptor {
     InternalErrorsInterceptor(ConfigurationService configurationService) {
         this.configurationService = configurationService
         matchAll().excludes {
-            this.configurationService.getBoolean('feature', 'debug', 'showTracesOnResponse', false) || response == null
+            this.configurationService.getBoolean('feature', 'debug', 'showTracesOnResponse', true) || response == null
         }
     }
 
