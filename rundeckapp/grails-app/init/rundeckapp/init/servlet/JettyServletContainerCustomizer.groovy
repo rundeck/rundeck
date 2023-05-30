@@ -54,7 +54,6 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
     }
 }
 
-
 /**
  * Set init params for the WebAppContext
  */
