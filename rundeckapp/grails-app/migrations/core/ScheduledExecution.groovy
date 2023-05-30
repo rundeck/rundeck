@@ -325,4 +325,16 @@ databaseChangeLog = {
         }
         sql("update scheduled_execution_stats stats set job_uuid = (select uuid from scheduled_execution where id = stats.se_id)")
     }
+
+    changeSet(author: "rundeckuser (generated)", id: "4.14.0-add-index-workflow-id"){
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(indexName: "scheduled_execution_workflow_id_idx", tableName: "scheduled_execution")
+            }
+        }
+
+        createIndex(indexName: "scheduled_execution_workflow_id_idx", tableName: "scheduled_execution", unique: false) {
+            column(name: "workflow_id")
+        }
+    }
 }
