@@ -59,6 +59,7 @@ import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -79,6 +80,8 @@ class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
     ContextACLManager<AppACLContext> aclFileManagerService
+    ConfigurationService configurationService
+
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -922,7 +925,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
-    @GrailsCompileStatic
+
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def apiProjectDelete(){
         if (!apiService.requireApi(request, response)) {
@@ -930,7 +933,9 @@ Authorization required: `delete` access for `project` resource type or `admin` o
         }
         def authorizing = authorizingProject
         def project1 = authorizing.resource
-        Boolean deferred = null
+
+        Boolean deferred = (request.api_version < ApiVersions.V45) ? false :
+                configurationService.getBoolean("projectService.deferredProjectDelete", true)
 
         if(params.containsKey("deferred")) {
             if (!apiService.requireApi(request, response, ApiVersions.V45)) {

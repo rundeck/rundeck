@@ -49,7 +49,7 @@ assert_xml_value "$test_proj" "/project/name" $DIR/curl.out
 #TEST: delete project
 ##
 
-runurl="${APIURL}/project/$test_proj"
+runurl="${APIURL}/project/${test_proj}?deferred=false"
 
 # get listing
 docurl -D $DIR/headers.out -X DELETE ${runurl} > $DIR/curl.out

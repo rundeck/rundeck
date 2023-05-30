@@ -45,6 +45,7 @@ import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
@@ -469,8 +470,51 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 message: 'message'
         ]
         )
+    }
 
+    def "api project delete deferred parameter behavior"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> configValue
+        }
+        setupAuthDelete()
 
+        params.project = 'aproject'
+        request.method = 'DELETE'
+        request.api_version = apiVersion
+        if(deferParamPresent) {
+            params.deferred = deferredValue
+        }
+
+        when:
+        def result = controller.apiProjectDelete()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        reqApiVerCount * controller.apiService.requireApi(_, _, _) >> (apiVersion >= ApiVersions.V45)
+        successCount * controller.projectService.deleteProject(_, _, _, _, deferredResult) >> [success: true]
+
+        where:
+        apiVersion | deferParamPresent | deferredValue | configValue | deferredResult | reqApiVerCount | successCount
+        11         | false             | null          | true        | false          | 0              | 1
+        11         | true              | "null"        | true        | false          | 1              | 0
+        11         | true              | "false"       | true        | false          | 1              | 0
+        11         | true              | "true"        | true        | false          | 1              | 0
+        11         | false             | null          | false       | false          | 0              | 1
+        11         | true              | "null"        | false       | false          | 1              | 0
+        11         | true              | "false"       | false       | false          | 1              | 0
+        11         | true              | "true"        | false       | false          | 1              | 0
+        45         | false             | null          | true        | true           | 0              | 1
+        45         | true              | "null"        | true        | false          | 1              | 1
+        45         | true              | "false"       | true        | false          | 1              | 1
+        45         | true              | "true"        | true        | true           | 1              | 1
+        45         | false             | null          | false       | false          | 0              | 1
+        45         | true              | "null"        | false       | false          | 1              | 1
+        45         | true              | "false"       | false       | false          | 1              | 1
+        45         | true              | "true"        | false       | true           | 1              | 1
     }
 
     def "export prepare"() {
