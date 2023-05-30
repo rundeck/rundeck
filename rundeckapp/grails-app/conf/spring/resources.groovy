@@ -868,10 +868,9 @@ beans={
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
 
-    jettyServletHstsCustomizer(JettyServletHstsCustomizer) {
-        stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
-        stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
-    }
+    def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
+    def stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
+    jettyServletHstsCustomizer(JettyServletHstsCustomizer,stsMaxAgeSeconds,stsIncludeSubdomains)
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')
@@ -879,7 +878,7 @@ beans={
 
     if(grailsApplication.config.getProperty("rundeck.security.syncLdapUser",Boolean.class,false)) {
         rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
-            configurationService = ref('configurationService')
+            configurationService = ref('configurationService')4e3r
         }
     }
 

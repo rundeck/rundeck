@@ -50,7 +50,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
-        factory.useForwardHeaders = useForwardHeaders
+        factory.useForwardHeaders=useForwardHeaders
     }
 }
 

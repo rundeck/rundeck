@@ -14,7 +14,6 @@ public class JettyServletHstsCustomizer implements JettyServerCustomizer {
 
     /**
      * Customizes the given server by adding a secure request customizer for SSL configurations
-     *
      * @param server The server to customize.
      */
     @Override
@@ -29,7 +28,6 @@ public class JettyServletHstsCustomizer implements JettyServerCustomizer {
 
     /**
      * Checks if SSL is enabled in the HTTP configuration.
-     *
      * @param httpConfig the HTTP configuration to check
      * @return true if SSL is enabled, false otherwise
      */
