@@ -1,6 +1,7 @@
 package rundeck.interceptors
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletRequest
 /**
  * Intercept all responses with 5xx status and removes stacktrace data
  */
+@Slf4j
 @CompileStatic
 class InternalErrorsInterceptor {
     private final ConfigurationService configurationService
@@ -19,7 +21,7 @@ class InternalErrorsInterceptor {
     InternalErrorsInterceptor(ConfigurationService configurationService) {
         this.configurationService = configurationService
         matchAll().excludes {
-            this.configurationService.getBoolean('feature', 'debug', 'showTracesOnResponse', true) || response == null
+            this.configurationService.getBoolean('feature', 'debug', 'showTracesOnResponse', false) || response == null
         }
     }
 
@@ -29,19 +31,29 @@ class InternalErrorsInterceptor {
 
         HttpServletRequest requestForRendering = request
         Enumeration<String> reqAttributes = requestForRendering.getAttributeNames()
+        log.error(":::::::::::::::::::::::::::::ENTERING ERRORS INTERCEPTOR:::::::::::::")
+        log.error("Request URI: " + request.getRequestURI())
+        log.error("Status: " + response.getStatus())
+        log.error(request.dump())
+        log.error("---------------------------------------------------------------------")
 
         reqAttributes.each { String attributeName ->
             def attribute = requestForRendering.getAttribute(attributeName)
-            if(attribute instanceof Throwable) {
+            if(attribute instanceof Throwable && attribute != null) {
                 Throwable serverException = (attribute as Throwable)
-                if (serverException) {
-                    requestForRendering.removeAttribute(attributeName)
-                    cleanStackTraces(serverException)
-                    requestForRendering.setAttribute(attributeName, serverException)
-                }
+                log.error("Has a throwable instance!")
+                log.error("Attr Name: " + attributeName)
+                log.error(response.dump())
+                log.error("SERVER ERROR:::::::::: ")
+                attribute.printStackTrace()
+
+                requestForRendering.removeAttribute(attributeName)
+                cleanStackTraces(serverException)
+                requestForRendering.setAttribute(attributeName, serverException)
             }
         }
 
+        log.error(":::::::::::::::::::::::::::::EXITING ERRORS INTERCEPTOR:::::::::::::")
         render(view: '/error.gsp')
         return false
     }
