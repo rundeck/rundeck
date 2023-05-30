@@ -1716,7 +1716,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @GrailsCompileStatic
-    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
+    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username, Boolean deferred = null) {
         log.info("Requested deletion of project ${project.name}")
 
         if(framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)) {
@@ -1725,7 +1725,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             error: "Cannot delete an already disabled project.")
         }
 
-        if(!configurationService.getBoolean("projectService.deferredProjectDelete", true)) {
+        def deferDelete = Optional.ofNullable(deferred)
+            .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
+
+        if(!deferDelete) {
             return deleteProjectInternal(project, framework, authContext, username)
         }
 

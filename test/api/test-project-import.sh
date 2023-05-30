@@ -51,7 +51,8 @@ delete_proj(){
         errorMsg "ERROR: failed DELETE request"
         exit 2
     fi
-    sleep 3
+    # V45 delete adds async project delete by default, we wait for it to finish
+    sleep 5
 }
 assert_job_count(){
     projname=$1

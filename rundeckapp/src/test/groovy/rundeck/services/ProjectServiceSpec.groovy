@@ -535,6 +535,44 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         result.success
     }
 
+    def "delete project deferral switch config override"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> configValue
+        }
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null, deferParam)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            disablingCalls * disableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject')
+        }
+        result.success
+
+        where:
+        deferParam | configValue | disablingCalls
+        null       | true        | 1
+        null       | false       | 0
+        true       | true        | 1
+        true       | false       | 1
+        false      | true        | 0
+        false      | false       | 0
+
+    }
+
     def "import project archive only nodes without config"() {
         setup:
 

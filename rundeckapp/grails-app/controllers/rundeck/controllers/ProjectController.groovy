@@ -887,14 +887,23 @@ Authorization required: `create` for resource type `project`
             description = """Delete an existing projects on the server.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
-            parameters = @Parameter(
-                    name = 'project',
-                    in = ParameterIn.PATH,
-                    description = 'Project Name',
-                    allowEmptyValue = false,
-                    required = true,
-                    schema = @Schema(implementation = String.class)
-            )
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'deferred',
+                            in = ParameterIn.QUERY,
+                            description = 'Deferred Delete',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
+                    )]
     )
     @Tags(
             [
@@ -921,12 +930,21 @@ Authorization required: `delete` access for `project` resource type or `admin` o
         }
         def authorizing = authorizingProject
         def project1 = authorizing.resource
+        Boolean deferred = null
+
+        if(params.containsKey("deferred")) {
+            if (!apiService.requireApi(request, response, ApiVersions.V45)) {
+                return
+            }
+            deferred = params.getBoolean("deferred")
+        }
 
         ProjectService.DeleteResponse result = projectService.deleteProject(
             project1,
             frameworkService.getRundeckFramework(),
             authorizing.authContext,
-            authorizing.authContext.username
+            authorizing.authContext.username,
+            deferred
         )
         if (!result.success) {
             return apiService.renderErrorFormat(
