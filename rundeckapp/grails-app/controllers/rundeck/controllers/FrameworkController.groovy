@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -1179,6 +1180,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if (!desc) {
                         return null
                     }
+                    def validation = pluginService.validatePluginConfig(svcName, provider, config, null)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
                     pconfigs << [type: provider, props: config]
                 }
 
@@ -1454,7 +1464,25 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
 
-            //TODO: validate props for other plugins
+            //validate props for other plugins
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> config ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = pluginService.validatePluginConfig(svcName, provider, config, null)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
+                    }
+                }
+            }
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
