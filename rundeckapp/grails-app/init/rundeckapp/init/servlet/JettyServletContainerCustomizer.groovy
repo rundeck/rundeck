@@ -49,6 +49,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
                 }
             }
         })
+        factory.addServerCustomizers(new BanConfigCustomizer())
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
     }
