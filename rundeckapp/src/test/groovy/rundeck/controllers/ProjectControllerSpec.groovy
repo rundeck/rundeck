@@ -462,7 +462,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
+        1 * controller.projectService.deleteProject(_, _, _, _, _) >> [success: false, error: 'message']
         1 * controller.apiService.renderErrorFormat(_, [
                 status : 500,
                 code   : 'api.error.unknown',
