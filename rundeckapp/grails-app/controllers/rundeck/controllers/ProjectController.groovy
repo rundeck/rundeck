@@ -2178,14 +2178,16 @@ key2=value'''
                                         "${provider} configuration was invalid: " + report.errors :
                                         "${provider} configuration was invalid"
                         )
-                        return apiService.renderErrorFormat(response,[
-                                status: HttpServletResponse.SC_BAD_REQUEST,
-                                message:errors,
-                                format:respFormat
-                        ])
                     }
                 }
             }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
         }
 
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
@@ -2470,14 +2472,16 @@ Authorization required: `configure` access for `project` resource type or `admin
                                         "${provider} configuration was invalid: " + report.errors :
                                         "${provider} configuration was invalid"
                         )
-                        return apiService.renderErrorFormat(response,[
-                                status: HttpServletResponse.SC_BAD_REQUEST,
-                                message:errors,
-                                format:respFormat
-                        ])
                     }
                 }
             }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
         }
         def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
