@@ -49,10 +49,9 @@ class InternalErrorsInterceptor {
     }
 
     static void cleanStackTraces(Throwable exceptionToClean) {
-        Throwable cause = exceptionToClean
-        while (cause?.stackTrace != null && cause.stackTrace.size() > 0 ){
-            cause.setStackTrace(new StackTraceElement[]{})
-            cause = cause.getCause()
+        while (exceptionToClean?.stackTrace != null && exceptionToClean.stackTrace.size() > 0 ){
+            exceptionToClean.setStackTrace(new StackTraceElement[]{})
+            exceptionToClean = exceptionToClean.getCause()
         }
     }
 }
