@@ -29,21 +29,23 @@ class InternalErrorsInterceptor {
 
         HttpServletRequest requestForRendering = request
         Enumeration<String> reqAttributes = requestForRendering.getAttributeNames()
+        boolean throwableFound = false
 
         reqAttributes.each { String attributeName ->
             def attribute = requestForRendering.getAttribute(attributeName)
-            if(attribute instanceof Throwable) {
+            if(attribute instanceof Throwable && attribute != null) {
                 Throwable serverException = (attribute as Throwable)
-                if (serverException) {
-                    requestForRendering.removeAttribute(attributeName)
-                    cleanStackTraces(serverException)
-                    requestForRendering.setAttribute(attributeName, serverException)
-                }
+                throwableFound = true
+
+                requestForRendering.removeAttribute(attributeName)
+                cleanStackTraces(serverException)
+                requestForRendering.setAttribute(attributeName, serverException)
             }
         }
 
-        render(view: '/error.gsp')
-        return false
+        if(throwableFound)
+            render(view: '/error.gsp')
+        return !throwableFound
     }
 
     static void cleanStackTraces(Throwable exceptionToClean) {
