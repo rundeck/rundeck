@@ -18,9 +18,9 @@ public interface ExecReportDataProvider extends DataProvider{
     List<RdExecReport> findAllByProjectAndExecutionIdInList(String projectName, List<Long> execIds);
     int countByProject(String projectName);
     int countExecutionReports(RdExecQuery execQuery);
-    int countExecutionReportsWithTransaction(RdExecQuery execQuery, boolean isJobs, Long scheduledExecutionId);
+    int countExecutionReportsWithTransaction(RdExecQuery execQuery, boolean isJobs, Long jobId);
     int countAndSaveByStatus();
-    Collection<String> getExecutionReports(RdExecQuery execQuery, boolean isJobs, Long scheduledExecutionId);
+    List<RdExecReport> getExecutionReports(RdExecQuery execQuery, boolean isJobs, Long jobId);
     void deleteByProject(String projectName);
     void deleteWithTransaction(String projectName);
     void deleteAllByExecutionId(Long executionId);

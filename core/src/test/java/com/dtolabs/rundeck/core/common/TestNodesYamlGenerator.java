@@ -111,19 +111,13 @@ public class TestNodesYamlGenerator extends TestCase {
             assertNotNull(e);
         }
     }
+    public void testGenerateEmptyNodeSetIsBlank() throws Exception{
+        StringWriter writer=new StringWriter();
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(writer);
+        nodesYamlGenerator.generate();
+        assertEquals("",writer.toString());
+    }
     public void testGenerate() throws Exception {
-        {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);
-
-            try {
-                nodesYamlGenerator.generate();
-                fail("Should have thrown an Exception");
-            }
-            catch (NodesGeneratorException ex) {
-            }
-        }
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);

@@ -24,6 +24,7 @@ export default Vue.extend({
         height: String,
         width: String,
         lang: String,
+        softWrap: Boolean,
         theme: String,
         options: Object,
     },
@@ -46,6 +47,9 @@ export default Vue.extend({
         },
         lang: function (newLang): void {
             this.editor!.getSession().setMode(this.resolveLang(newLang))
+        },
+        softWrap: function (newSoftWrap): void {
+            this.editor!.getSession().setUseWrapMode(newSoftWrap);
         },
         options: function(newOption): void {
             this.editor!.setOptions(newOption)
@@ -72,6 +76,7 @@ export default Vue.extend({
         editor.$blockScrolling = Infinity
 
         this.$emit('init', editor)
+        editor.getSession().setUseWorker(false)
         editor.getSession().setMode(this.resolveLang(lang))
         editor.setTheme(this.resolveTheme(theme))
 

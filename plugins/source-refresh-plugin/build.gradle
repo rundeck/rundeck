@@ -18,6 +18,8 @@ ext.pluginClassNames = 'org.rundeck.plugin.nodes.NodeRefreshWorkflowStep'
 ext.pluginName = 'Node Refresh Plugin'
 ext.pluginDescription = 'Force refresh node list'
 
+apply from: "../../gradle/java-version.gradle"
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

@@ -2127,26 +2127,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(Map params, String user) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(ScheduledExecution scheduledExecution, AuthContext authContext, Map params) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
-        if(!props.user){
-            props.user=user
-        }
-        def Execution execution = createExecution(props)
-        execution.dateStarted = new Date()
 
-        /**
-         * Set extraMetadataMap. Extra metadata is used to store additional information to decide the runner selection
-         */
-        if(props.extraMetadataMap){
-            execution.extraMetadataMap = props.extraMetadataMap
-        }
+        props.executionType = 'scheduled'
+
+        Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
+        execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
         if(newstr!=execution.argString){
             execution.argString=newstr
         }
+
+        // Abandon the transient ScheduledExecution entity instance.
+        execution.scheduledExecution = null
 
         if(execution.workflow){
             if(!execution.workflow.save(flush:true)){
@@ -2415,7 +2411,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ) {
         Map props = [:]
 
-        se = ScheduledExecution.get(se.id)
+        // For adhoc command the ScheduledExecution instance is created as transient that has no a corresponding entity in database.
+        se = ScheduledExecution.get(se.id) ?: se
         def propset=[
                 'project',
                 'user',
