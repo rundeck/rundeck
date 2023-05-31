@@ -23,4 +23,3 @@ rundeck.security.authorization.preauthenticated.redirectLogout=false
 rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
 
 rundeck.feature.repository.enabled=true
-rundeck.feature.debug.showTracesOnResponse=true
