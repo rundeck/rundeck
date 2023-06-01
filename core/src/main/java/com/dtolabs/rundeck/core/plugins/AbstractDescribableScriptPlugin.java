@@ -436,22 +436,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final Map<String, Object> renderingOptions
     ) throws ConfigurationException
     {
-        //a storage path property
-        String root = null;
-        if (null != renderingOptions.get( StringRenderingConstants.STORAGE_PATH_ROOT_KEY)) {
-            root = renderingOptions.get(StringRenderingConstants.STORAGE_PATH_ROOT_KEY).toString();
-        }
         String filter = null;
         if (null != renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)) {
             filter = renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY).toString();
         }
         boolean clearValue = isValueConversionFailureRemove(renderingOptions);
-        if (null != root && !PathUtil.hasRoot(propValue, root)) {
-            if(clearValue) {
-                data.remove(name);
-            }
-            return;
-        }
         try {
             Resource<ResourceMeta> resource = storageTree.getResource(propValue);
             ResourceMeta contents = resource.getContents();

@@ -54,6 +54,8 @@ import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
+import com.dtolabs.rundeck.core.storage.service.PluggableStoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.core.utils.cache.FileCache
@@ -78,6 +80,7 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import com.dtolabs.rundeck.server.plugins.storage.FileStoragePlugin
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
@@ -533,7 +536,7 @@ beans={
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
-    storagePluginProviderService(StoragePluginProviderService) {
+    storagePluginProviderService(StoragePluginProviderService, [(FileStoragePlugin.PROVIDER_NAME): FileStoragePlugin.class]) {
         pluggableStoragePluginProviderService = ref('pluggableStoragePluginProviderService')
     }
 
