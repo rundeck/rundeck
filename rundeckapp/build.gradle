@@ -252,14 +252,14 @@ dependencies {
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
-    implementation "com.squareup.okhttp3:okhttp:4.9.2"
+    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
-    testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
+    testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
