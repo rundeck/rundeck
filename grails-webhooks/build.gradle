@@ -9,6 +9,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
 group "webhooks"
 
 apply plugin:"eclipse"

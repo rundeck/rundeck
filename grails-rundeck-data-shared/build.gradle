@@ -7,6 +7,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
 version "0.1"
 group "grails.rundeck.data.shared"
 
