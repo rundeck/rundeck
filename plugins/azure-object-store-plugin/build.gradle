@@ -42,12 +42,6 @@ dependencies {
         pluginLibs("net.minidev:json-smart:2.4.11")  {
             because "json-smart affected by CVE-2023-1370 CVE-2021-31684"
         }
-        pluginLibs("com.squareup.okhttp3:okhttp:4.11.0")  {
-            because "json-smart affected by PRISMA-2022-0239"
-        }
-        pluginLibs("com.squareup.okhttp3:okhttp-urlconnection:4.11.0")  {
-            because "json-smart affected by PRISMA-2022-0239"
-        }
     }
 }
 
