@@ -30,7 +30,7 @@ dependencies {
 
     // Use the awesome Spock testing and specification framework
     testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
-    testImplementation "com.squareup.okhttp3:mockwebserver:3.11.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.11.0"
     testImplementation "org.testcontainers:testcontainers:1.18.2"
     testImplementation "cglib:cglib-nodep:3.2.5"
     testImplementation 'org.objenesis:objenesis:1.4'
@@ -41,6 +41,12 @@ dependencies {
     constraints {
         pluginLibs("net.minidev:json-smart:2.4.11")  {
             because "json-smart affected by CVE-2023-1370 CVE-2021-31684"
+        }
+        pluginLibs("com.squareup.okhttp3:okhttp:4.11.0")  {
+            because "json-smart affected by PRISMA-2022-0239"
+        }
+        pluginLibs("com.squareup.okhttp3:okhttp-urlconnection:4.11.0")  {
+            because "json-smart affected by PRISMA-2022-0239"
         }
     }
 }
