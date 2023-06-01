@@ -299,8 +299,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
         for (String propValue : listStoragePaths) {
             Resource<ResourceMeta> r = context.getStorageTree().getResource(propValue);
             if(r != null) {
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                try {
+                try( ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()){
                     r.getContents().writeContent(byteArrayOutputStream);
                     bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
                 } catch (IOException iex) {
