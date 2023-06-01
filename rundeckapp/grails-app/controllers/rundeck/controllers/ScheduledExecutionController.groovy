@@ -43,6 +43,7 @@ import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import groovy.transform.TypeCheckingMode
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -99,6 +100,7 @@ import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
+import java.util.function.Predicate
 import java.util.regex.Pattern
 
 @Controller()
@@ -249,18 +251,31 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
             if(scmService.projectHasConfiguredExportPlugin(project)) {
-                model.scmExportEnabled = true
-                model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
+                if( getAccessForScmIntegration(authorizingProject.authContext, ScmService.EXPORT, project) ){
+                    model.scmExportEnabled = true
+                    model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
+                }
             }
         }
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
             if(scmService.projectHasConfiguredPlugin('import',project)) {
-                model.scmImportEnabled = true
-                model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+                if( getAccessForScmIntegration(authorizingProject.authContext, ScmService.IMPORT, project) ){
+                    model.scmImportEnabled = true
+                    model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+                }
             }
         }
         render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
+    }
+
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    private def getAccessForScmIntegration(UserAndRolesAuthContext authContext, String integration, String project ) {
+        def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project)
+        if( null !== validation ){
+            return validation?.hasAccess
+        }
+        return true
     }
 
     private def jobDetailData(keys = []) {
