@@ -5884,11 +5884,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
-        true                        | false                       | true                     | true          | false
-        false                       | true                        | true                     | false         | true
-        true                        | true                        | true                     | true          | true
-        false                       | false                       | true                     | false         | false
-        true                        | true                        | false                    | false         | false
+        true                        | false                       | ["hasAccess": true]      | true          | false
+        false                       | true                        | ["hasAccess": true]      | false         | true
+        true                        | true                        | ["hasAccess": true]      | true          | true
+        false                       | false                       | ["hasAccess": true]      | false         | false
+        true                        | true                        | ["hasAccess": false]     | false         | false
 
     }
 
