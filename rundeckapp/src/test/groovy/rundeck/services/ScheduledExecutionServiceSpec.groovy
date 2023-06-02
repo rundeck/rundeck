@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
