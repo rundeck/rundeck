@@ -475,20 +475,23 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
-            if(scmService.projectHasConfiguredExportPlugin(params.project)){
-                dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
-                dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
-            }
+            def scmExportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmExportActionsForShowDropdown
         }
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
-            if(scmService.projectHasConfiguredPlugin('import',params.project)) {
-                dataMap.scmImportEnabled = true
-                dataMap.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
-            }
+            def scmImportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmImportActionsForShowDropdown
         }
 
         withFormat{
