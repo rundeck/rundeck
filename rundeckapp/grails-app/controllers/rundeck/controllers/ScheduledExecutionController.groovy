@@ -238,7 +238,7 @@ class ScheduledExecutionController  extends ControllerBase{
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     @GrailsCompileStatic
     def actionMenuFragment(){
-        ScheduledExecution scheduledExecution = authorizingJob.resource
+        ScheduledExecution scheduledExecution = getAuthorizingJob().resource
         String project = scheduledExecution.project
         AuthorizingProject authorizingProject = authorizingProject(project)
 
@@ -250,32 +250,15 @@ class ScheduledExecutionController  extends ControllerBase{
         ]
 
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
-            if(scmService.projectHasConfiguredExportPlugin(project)) {
-                if( getAccessForScmIntegration(authorizingProject.authContext, ScmService.EXPORT, project) ){
-                    model.scmExportEnabled = true
-                    model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
-                }
-            }
+            def scmExportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmExportOptions
         }
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
-            if(scmService.projectHasConfiguredPlugin('import',project)) {
-                if( getAccessForScmIntegration(authorizingProject.authContext, ScmService.IMPORT, project) ){
-                    model.scmImportEnabled = true
-                    model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                }
-            }
+            def scmImportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmImportOptions
         }
-        render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
-    }
 
-    @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    private def getAccessForScmIntegration(UserAndRolesAuthContext authContext, String integration, String project ) {
-        def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project)
-        if( null !== validation ){
-            return validation?.hasAccess
-        }
-        return true
+        render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
 
     private def jobDetailData(keys = []) {

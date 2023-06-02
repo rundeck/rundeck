@@ -4445,6 +4445,4 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         result.error == "the filter \$..* return a list, please use another filter"
 
     }
-
-
 }

@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -5854,6 +5855,42 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             sort    | size
             true    | 4
             false   | 4
+    }
+
+    def "Returns the SCM options to dropdown list"(){
+        given:
+        def project = 'test'
+        def authContext = Mock(UserAndRolesAuthContext)
+        def scheduledExecution = Mock(ScheduledExecution)
+        service.scmService = Mock(ScmService){
+            it.projectHasConfiguredExportPlugin(_) >> exportIntegrationConfigured
+            it.projectHasConfiguredImportPlugin(_) >> importIntegrationConfigured
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> hasAccessToKeyOrPassword
+        }
+        def scmImportKeys = [:]
+        scmImportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_IMPORT_ENABLED.optionKey, "test")
+        scmImportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_IMPORT_STATUS.optionKey, "test")
+        def scmExportKeys = [:]
+        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_ENABLED.optionKey, "test")
+        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_STATUS.optionKey, "test")
+        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_RENAMED_PATH.optionKey, "test")
+
+        when:
+        def result = service.scmActionMenuOptions(project, authContext, scheduledExecution)
+
+        then:
+        result != null
+        scmImportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasImportKeys
+        scmExportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasExportKeys
+
+        where:
+        importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
+        true                        | false                       | true                     | true          | false
+        false                       | true                        | true                     | false         | true
+        true                        | true                        | true                     | true          | true
+        false                       | false                       | true                     | false         | false
+        true                        | true                        | false                    | false         | false
+
     }
 
 }
