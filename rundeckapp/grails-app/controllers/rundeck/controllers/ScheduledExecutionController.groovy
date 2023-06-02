@@ -100,7 +100,6 @@ import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
-import java.util.function.Predicate
 import java.util.regex.Pattern
 
 @Controller()
@@ -238,7 +237,7 @@ class ScheduledExecutionController  extends ControllerBase{
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     @GrailsCompileStatic
     def actionMenuFragment(){
-        ScheduledExecution scheduledExecution = getAuthorizingJob().resource
+        ScheduledExecution scheduledExecution = authorizingJob.resource
         String project = scheduledExecution.project
         AuthorizingProject authorizingProject = authorizingProject(project)
 
