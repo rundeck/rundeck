@@ -5867,12 +5867,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> hasAccessToKeyOrPassword
         }
         def scmImportKeys = [:]
-        scmImportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_IMPORT_ENABLED.optionKey, "test")
-        scmImportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_IMPORT_STATUS.optionKey, "test")
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.optionKey, "test")
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.optionKey, "test")
         def scmExportKeys = [:]
-        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_ENABLED.optionKey, "test")
-        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_STATUS.optionKey, "test")
-        scmExportKeys.put(ScheduledExecutionService.ScmOptionsForDropdown.SCM_EXPORT_RENAMED_PATH.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.optionKey, "test")
 
         when:
         def result = service.scmActionMenuOptions(project, authContext, scheduledExecution)

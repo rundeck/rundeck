@@ -4424,40 +4424,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scmService.projectHasConfiguredExportPlugin(project)) {
             if (scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project)) {
                 def exportModel = [:]
-                exportModel.put(ScmOptionsForDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
-                exportModel.put(ScmOptionsForDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
-                exportModel.put(ScmOptionsForDropdown.SCM_EXPORT_RENAMED_PATH.getOptionKey(), scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid))
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.getOptionKey(), scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid))
                 scmOptions << exportModel
             }
         }
         if (scmService.projectHasConfiguredImportPlugin(project)) {
             if (scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)) {
                 def importModel = [:]
-                importModel.put(ScmOptionsForDropdown.SCM_IMPORT_ENABLED.getOptionKey(), true)
-                importModel.put(ScmOptionsForDropdown.SCM_IMPORT_STATUS.getOptionKey(), scmService.importStatusForJobs(project, authContext, [scheduledExecution]))
+                importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.getOptionKey(), true)
+                importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.getOptionKey(), scmService.importStatusForJobs(project, authContext, [scheduledExecution]))
                 scmOptions << importModel
             }
         }
         return scmOptions
     }
 
-    enum ScmOptionsForDropdown{
-        SCM_EXPORT_ENABLED("scmExportEnabled"),
-        SCM_EXPORT_STATUS("scmExportStatus"),
-        SCM_EXPORT_RENAMED_PATH("scmExportRenamedPath"),
-        SCM_IMPORT_ENABLED("scmImportEnabled"),
-        SCM_IMPORT_STATUS("scmImportStatus")
-
-        String optionKey
-
-        ScmOptionsForDropdown(String optionKey){
-            this.optionKey = optionKey
-        }
-
-        String getOptionKey(){
-            return optionKey
-        }
-    }
 }
 @CompileStatic
 class OldJob{
