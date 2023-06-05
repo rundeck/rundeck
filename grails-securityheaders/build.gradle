@@ -8,6 +8,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
 group "org.rundeck.grails.plugins.securityheaders"
 
 apply plugin:"eclipse"

@@ -480,4 +480,69 @@ class BaseScriptPluginSpec extends Specification {
         }
 
     }
+
+    def "list secret bundle"() {
+        given:
+        def node = new NodeEntryImpl('anode')
+
+        def pluginMeta = [
+                (BaseScriptPlugin.SETTING_MERGE_ENVIRONMENT): false,
+                config                                      :
+                        [
+                                [
+                                        type            : 'String',
+                                        name            : 'c',
+                                        renderingOptions: [
+                                                (StringRenderingConstants.VALUE_CONVERSION_KEY): 'STORAGE_PATH_AUTOMATIC_READ',
+                                        ]
+                                ]
+                        ]
+        ]
+        File tempFile = File.createTempFile("test", "zip");
+        tempFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getService() >> 'NodeExecutor'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> pluginMeta
+            getArchiveFile() >> tempFile
+            getScriptFile() >> tempFile
+            getContentsBasedir() >> basedir
+            getProviderMeta() >> null
+        }
+
+        def storageTree = Mock(StorageTree)
+
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+
+        def proj = framework.frameworkProjectMgr.getFrameworkProject(PROJECT_NAME)
+        Properties props = new Properties()
+        props.putAll(proj.getProjectProperties())
+        props.put("project.plugin.NodeExecutor.test1.c","keys/test")
+        proj.setProjectProperties(props)
+
+        PluginStepContext context = Mock(PluginStepContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext([:])
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+                getDataContext() >> new BaseDataContext([:])
+
+                getStorageTree() >> storageTree
+            }
+        }
+
+        when:
+        def result = plugin.listSecretsPath(context.getExecutionContext(), node)
+
+
+        then:
+        result!=null
+        result[0]=='keys/test'
+    }
 }

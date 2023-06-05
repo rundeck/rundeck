@@ -663,10 +663,6 @@ public class SSHTaskBuilder {
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
                 final String sshKeyResource = sshConnectionInfo.getPrivateKeyStoragePath();
                 if (null != sshKeyResource) {
-                    if (!PathUtil.hasRoot(sshKeyResource, "keys/")) {
-                        throw new BuilderException("SSH Private key path is expected to start with \"keys/\": " +
-                                sshKeyResource);
-                    }
                     logger.log(Project.MSG_DEBUG, "Using ssh key storage path: " + sshKeyResource);
                     try {
                         InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyStorageData();
@@ -693,12 +689,6 @@ public class SSHTaskBuilder {
                 //load private key passphrase from storage if a path is set
                 String privateKeyPassphraseStoragePath = sshConnectionInfo.getPrivateKeyPassphraseStoragePath();
                 if (null != privateKeyPassphraseStoragePath) {
-                    if (!PathUtil.hasRoot(privateKeyPassphraseStoragePath, "keys")) {
-                        throw new BuilderException(
-                                "SSH Private key passphrase path is expected to start with \"keys/\": " +
-                                privateKeyPassphraseStoragePath
-                        );
-                    }
                     logger.log(Project.MSG_DEBUG,
                                "Using ssh key passphrase storage path: " +
                                privateKeyPassphraseStoragePath
@@ -728,10 +718,6 @@ public class SSHTaskBuilder {
             case password:
                 final String passwordStoragePath = sshConnectionInfo.getPasswordStoragePath();
                 if (null != passwordStoragePath) {
-                    if (!PathUtil.hasRoot(passwordStoragePath, "keys")) {
-                        throw new BuilderException("SSH Password storage path is expected to start with \"keys/\": " +
-                                passwordStoragePath);
-                    }
                     logger.log(Project.MSG_DEBUG, "Using ssh password storage path: " + passwordStoragePath);
                     try {
                         byte[] data = sshConnectionInfo.getPasswordStorageData();
