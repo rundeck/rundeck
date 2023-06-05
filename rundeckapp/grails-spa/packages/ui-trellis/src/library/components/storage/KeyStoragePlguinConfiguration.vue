@@ -393,8 +393,11 @@ export default Vue.extend({
     },
     async getPluginConfigs(){
       let projectPluginConfigList = [] as ProjectPluginConfigEntry[]
+      console.log("servicename")
+      console.log(this.serviceName)
       let data = await pluginService.getPluginProvidersForService(this.serviceName)
-
+      console.log("data")
+      console.log(data)
       if (data.service) {
         this.pluginProviders = data.descriptions;
         this.pluginLabels = data.labels;
@@ -418,8 +421,6 @@ export default Vue.extend({
   },
   async mounted() {
     this.project = window._rundeck.projectName;
-    const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
-    this.contextConfig = pluginGroups.config
     await this.getPluginConfigs()
 
   }
