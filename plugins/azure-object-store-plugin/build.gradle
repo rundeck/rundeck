@@ -23,6 +23,7 @@ dependencies {
 
     pluginLibs (group: 'com.microsoft.azure', name: 'azure', version: '1.41.4'){
         exclude group: "com.fasterxml.jackson.core"
+        exclude group: 'net.minidev', module: 'json-smart'
     }
     pluginLibs (group: 'com.microsoft.azure', name: 'azure-storage', version: '8.6.6') {
         exclude group: "com.fasterxml.jackson.core"
@@ -39,9 +40,7 @@ dependencies {
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
 
     constraints {
-        pluginLibs("net.minidev:json-smart:2.4.11")  {
-            because "json-smart affected by CVE-2023-1370 CVE-2021-31684"
-        }
+        pluginLibs 'com.nimbusds:nimbus-jose-jwt:9.31'
     }
 }
 

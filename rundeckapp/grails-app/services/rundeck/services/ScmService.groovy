@@ -1650,6 +1650,24 @@ class ScmService {
         }
     }
 
+    enum ScmOptionsForJobActionDropdown{
+        SCM_EXPORT_ENABLED("scmExportEnabled"),
+        SCM_EXPORT_STATUS("scmExportStatus"),
+        SCM_EXPORT_RENAMED_PATH("scmExportRenamedPath"),
+        SCM_IMPORT_ENABLED("scmImportEnabled"),
+        SCM_IMPORT_STATUS("scmImportStatus")
+
+        String optionKey
+
+        ScmOptionsForJobActionDropdown(String optionKey){
+            this.optionKey = optionKey
+        }
+
+        String getOptionKey(){
+            return optionKey
+        }
+    }
+
 }
 
 

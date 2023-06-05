@@ -5856,6 +5856,42 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             false   | 4
     }
 
+    def "Returns the SCM options to dropdown list"(){
+        given:
+        def project = 'test'
+        def authContext = Mock(UserAndRolesAuthContext)
+        def scheduledExecution = Mock(ScheduledExecution)
+        service.scmService = Mock(ScmService){
+            it.projectHasConfiguredExportPlugin(_) >> exportIntegrationConfigured
+            it.projectHasConfiguredImportPlugin(_) >> importIntegrationConfigured
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> hasAccessToKeyOrPassword
+        }
+        def scmImportKeys = [:]
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.optionKey, "test")
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.optionKey, "test")
+        def scmExportKeys = [:]
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.optionKey, "test")
+
+        when:
+        def result = service.scmActionMenuOptions(project, authContext, scheduledExecution)
+
+        then:
+        result != null
+        scmImportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasImportKeys
+        scmExportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasExportKeys
+
+        where:
+        importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
+        true                        | false                       | ["hasAccess": true]      | true          | false
+        false                       | true                        | ["hasAccess": true]      | false         | true
+        true                        | true                        | ["hasAccess": true]      | true          | true
+        false                       | false                       | ["hasAccess": true]      | false         | false
+        true                        | true                        | ["hasAccess": false]     | false         | false
+
+    }
+
 }
 
 @CompileStatic

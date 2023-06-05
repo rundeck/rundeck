@@ -43,6 +43,7 @@ import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import groovy.transform.TypeCheckingMode
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -248,18 +249,14 @@ class ScheduledExecutionController  extends ControllerBase{
         ]
 
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
-            if(scmService.projectHasConfiguredExportPlugin(project)) {
-                model.scmExportEnabled = true
-                model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
-            }
+            def scmExportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmExportOptions
         }
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
-            if(scmService.projectHasConfiguredPlugin('import',project)) {
-                model.scmImportEnabled = true
-                model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-            }
+            def scmImportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmImportOptions
         }
+
         render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
 
@@ -478,20 +475,23 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
-            if(scmService.projectHasConfiguredExportPlugin(params.project)){
-                dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
-                dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
-            }
+            def scmExportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmExportActionsForShowDropdown
         }
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
-            if(scmService.projectHasConfiguredPlugin('import',params.project)) {
-                dataMap.scmImportEnabled = true
-                dataMap.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
-            }
+            def scmImportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmImportActionsForShowDropdown
         }
 
         withFormat{
