@@ -46,6 +46,15 @@ class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleC
     }
 
     @Override
+    Optional<ExecutionLifecycleStatus> abortingJob(StepExecutionContext executionContext) throws ExecutionLifecycleComponentException {
+        Optional.ofNullable executionLifecycleComponentService.handleEvent(
+                JobExecutionEventImpl.isKilled(executionContext, executionReference, null),
+                ExecutionLifecycleComponentService.EventType.IS_ABORTING,
+                components
+        )
+    }
+
+    @Override
     Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
             throws ExecutionLifecycleComponentException {
         Optional.ofNullable executionLifecycleComponentService.handleEvent(

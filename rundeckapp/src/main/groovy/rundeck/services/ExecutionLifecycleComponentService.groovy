@@ -74,7 +74,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
 
     enum EventType{
-        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
+        BEFORE_RUN('beforeJobRun'), IS_ABORTING('jobWasAborted'), AFTER_RUN('afterJobRun')
         private final String value
         EventType(String value){
             this.value = value
@@ -163,6 +163,8 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         switch (eventType) {
             case EventType.BEFORE_RUN:
                 return plugin.beforeJobStarts(event)
+            case EventType.IS_ABORTING:
+                return plugin.jobIsAborting(event)
             case EventType.AFTER_RUN:
                 return plugin.afterJobEnds(event)
         }
@@ -356,6 +358,10 @@ class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
 
     ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
         component.beforeJobStarts(event)
+    }
+
+    ExecutionLifecycleStatus jobIsAborting(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+        component.jobIsAborting(event)
     }
 
     ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException {

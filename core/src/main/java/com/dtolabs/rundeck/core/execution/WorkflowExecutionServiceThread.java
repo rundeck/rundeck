@@ -126,4 +126,13 @@ public class WorkflowExecutionServiceThread
     public void setResult(final WorkflowExecutionResult result) {
         this.result = result;
     }
+
+    public void abortingExecEvent(Long id){
+        if(this.context.getExecution().getId().equals(String.valueOf(id)))
+            try {
+                executionLifecycleComponentHandler.abortingJob(this.context);
+            } catch (ExecutionLifecycleComponentException err) {
+                err.printStackTrace(System.err);
+            }
+    }
 }

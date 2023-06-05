@@ -25,6 +25,15 @@ public interface ExecutionLifecycleComponentHandler {
      * Job end event
      *
      * @param executionContext execution context
+     * @throws ExecutionLifecycleComponentException
+     */
+    Optional<ExecutionLifecycleStatus> abortingJob(final StepExecutionContext executionContext)
+            throws ExecutionLifecycleComponentException;
+
+    /**
+     * Job end event
+     *
+     * @param executionContext execution context
      * @param result           result of job execution
      * @throws ExecutionLifecycleComponentException
      */

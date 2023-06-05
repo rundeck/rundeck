@@ -166,6 +166,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
+    private static final String ABORTING_EXEC_EVENT_NAME = 'executionAborting'
+
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
             @Override
@@ -1243,6 +1245,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     executionLifecyclePluginExecHandler
             )
 
+            this.eventBus.subscribe(ABORTING_EXEC_EVENT_NAME, { Map execIdMap ->
+                thread.abortingExecEvent(execIdMap['executionId'] as Long)
+            })
+
             thread.start()
             log.debug("started thread")
             return new AsyncStarted(
@@ -1714,6 +1720,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(killAsUser){
             execution.authorize(RundeckAccess.Execution.APP_KILLAS)
         }
+        notify(ABORTING_EXEC_EVENT_NAME, ['executionId': e.getId()])
         abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
@@ -3798,6 +3805,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     executionLifecyclePluginExecHandler
             )
 
+            this.eventBus.subscribe(ABORTING_EXEC_EVENT_NAME, { Map execIdMap ->
+                thread.abortingExecEvent(execIdMap['executionId'] as Long)
+            })
 
             if(!exec.abortedby){
                 thread.start()

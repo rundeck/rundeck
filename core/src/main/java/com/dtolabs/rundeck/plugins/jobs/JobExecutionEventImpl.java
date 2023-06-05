@@ -59,6 +59,15 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         this.result = result;
     }
 
+    public static JobExecutionEvent isKilled(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            JobEventResult result
+    )
+    {
+        return new JobExecutionEventImpl(executionContext, execution, result);
+    }
+
     public static JobExecutionEvent afterRun(
             StepExecutionContext executionContext,
             ExecutionReference execution,
