@@ -185,11 +185,16 @@
         <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin scripts for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
-                <script src="${createLink(
-                        controller: 'plugin',
-                        action: 'pluginFile',
-                        params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}" type="text/javascript"></script>
+                <g:if test="${scriptPath.startsWith('asset:')}">
+                    <asset:javascript src="${scriptPath.substring('asset:'.length())}"/>
+                </g:if>
+                <g:else>
+                    <script src="${createLink(
+                            controller: 'plugin',
+                            action: 'pluginFile',
+                            params: [service: 'UI', name: pluginname, path: scriptPath]
+                    )}" type="text/javascript"></script>
+                </g:else>
             </g:each>
             <!-- END UI Plugin scripts for ${pluginname} -->
         </g:each>
@@ -197,11 +202,16 @@
         <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin css for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].styles}" var="scriptPath">
-                <link rel="stylesheet" href="${createLink(
-                        controller: 'plugin',
-                        action: 'pluginFile',
-                        params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}"/>
+                <g:if test="${scriptPath.startsWith('asset:')}">
+                    <asset:stylesheet href="${scriptPath.substring('asset:'.length())}"/>
+                </g:if>
+                <g:else>
+                    <link rel="stylesheet" href="${createLink(
+                            controller: 'plugin',
+                            action: 'pluginFile',
+                            params: [service: 'UI', name: pluginname, path: scriptPath]
+                    )}"/>
+                </g:else>
             </g:each>
             <!-- END UI Plugin css for ${pluginname} -->
         </g:each>
