@@ -902,7 +902,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
                     @Parameter(
                             name = 'deferred',
                             in = ParameterIn.QUERY,
-                            description = 'Deferred Delete',
+                            description = 'Deferred Delete. Since: v45',
                             allowEmptyValue = false,
                             required = false,
                             schema = @Schema(implementation = Boolean.class)
@@ -934,14 +934,11 @@ Authorization required: `delete` access for `project` resource type or `admin` o
         def authorizing = authorizingProject
         def project1 = authorizing.resource
 
-        Boolean deferred = (request.api_version < ApiVersions.V45) ? false :
-                configurationService.getBoolean("projectService.deferredProjectDelete", true)
+        Boolean deferred = false
 
-        if(params.containsKey("deferred")) {
-            if (!apiService.requireApi(request, response, ApiVersions.V45)) {
-                return
-            }
-            deferred = params.getBoolean("deferred")
+        if (request.api_version >= ApiVersions.V45) {
+            deferred = params.getBoolean("deferred",
+                    configurationService.getBoolean("projectService.deferredProjectDelete", true))
         }
 
         ProjectService.DeleteResponse result = projectService.deleteProject(

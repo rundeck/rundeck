@@ -494,27 +494,26 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        reqApiVerCount * controller.apiService.requireApi(_, _, _) >> (apiVersion >= ApiVersions.V45)
-        successCount * controller.projectService.deleteProject(_, _, _, _, deferredResult) >> [success: true]
+        1 * controller.projectService.deleteProject(_, _, _, _, deferredResult) >> [success: true]
 
         where:
-        apiVersion | deferParamPresent | deferredValue | configValue | deferredResult | reqApiVerCount | successCount
-        11         | false             | null          | true        | false          | 0              | 1
-        11         | true              | "null"        | true        | false          | 1              | 0
-        11         | true              | "false"       | true        | false          | 1              | 0
-        11         | true              | "true"        | true        | false          | 1              | 0
-        11         | false             | null          | false       | false          | 0              | 1
-        11         | true              | "null"        | false       | false          | 1              | 0
-        11         | true              | "false"       | false       | false          | 1              | 0
-        11         | true              | "true"        | false       | false          | 1              | 0
-        45         | false             | null          | true        | true           | 0              | 1
-        45         | true              | "null"        | true        | false          | 1              | 1
-        45         | true              | "false"       | true        | false          | 1              | 1
-        45         | true              | "true"        | true        | true           | 1              | 1
-        45         | false             | null          | false       | false          | 0              | 1
-        45         | true              | "null"        | false       | false          | 1              | 1
-        45         | true              | "false"       | false       | false          | 1              | 1
-        45         | true              | "true"        | false       | true           | 1              | 1
+        apiVersion | deferParamPresent | deferredValue | configValue | deferredResult
+        11         | false             | null          | true        | false
+        11         | true              | "null"        | true        | false
+        11         | true              | "false"       | true        | false
+        11         | true              | "true"        | true        | false
+        11         | false             | null          | false       | false
+        11         | true              | "null"        | false       | false
+        11         | true              | "false"       | false       | false
+        11         | true              | "true"        | false       | false
+        45         | false             | null          | true        | true
+        45         | true              | "null"        | true        | false
+        45         | true              | "false"       | true        | false
+        45         | true              | "true"        | true        | true
+        45         | false             | null          | false       | false
+        45         | true              | "null"        | false       | false
+        45         | true              | "false"       | false       | false
+        45         | true              | "true"        | false       | true
     }
 
     def "export prepare"() {

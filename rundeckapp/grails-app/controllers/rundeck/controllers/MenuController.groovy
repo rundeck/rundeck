@@ -2868,6 +2868,15 @@ Since: V18''',
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
@@ -2899,14 +2908,6 @@ Since: V18''',
                             args  : [response.format]
                     ]
             )
-        }
-        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.project.disabled',
-                    args: [scheduledExecution.project],
-                    format: response.format
-            ])
         }
         def extra = [:]
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
@@ -3005,6 +3006,15 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
@@ -3037,14 +3047,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     ]
             )
         }
-        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.project.disabled',
-                    args: [scheduledExecution.project],
-                    format: response.format
-            ])
-        }
+
         def extra = [:]
 
         //future scheduled executions forecast
