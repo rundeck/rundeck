@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.utils.ZipUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -402,7 +403,7 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
      */
     static class SingleTypeConstructor extends Constructor{
         public SingleTypeConstructor(Class<?> clazz) {
-            super(clazz);
+            super(clazz, new LoaderOptions());
             this.yamlConstructors.put(null, undefinedConstructor);
             this.yamlConstructors.put(new Tag(clazz), new SubtypeConstructYamlObject());
         }

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.events.Event;
@@ -229,7 +230,7 @@ public class TestNodesYamlGenerator extends TestCase {
     }
 
     private Map parseYamlMap(String outputString) {
-        Yaml yaml = new Yaml(new SafeConstructor());
+        Yaml yaml = new Yaml(new LoaderOptions());
         final Object load = yaml.load(new StringReader(outputString));
         assertNotNull(load);
         assertTrue(load instanceof Map);
