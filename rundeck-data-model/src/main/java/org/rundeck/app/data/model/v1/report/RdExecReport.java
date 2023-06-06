@@ -21,4 +21,5 @@ public interface RdExecReport{
     String getSucceededNodeList();
     String getFailedNodeList();
     String getFilterApplied();
+    String getJobUuid();
 }

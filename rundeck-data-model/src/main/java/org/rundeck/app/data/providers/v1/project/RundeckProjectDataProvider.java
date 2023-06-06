@@ -53,22 +53,44 @@ public interface RundeckProjectDataProvider extends DataProvider {
      */
     RdProject findByName(String name);
 
+    /** Finds a project by name and state
+     * 
+     * @param name Project name
+     * @param state Project state from @{@link RdProject.State}
+     * @return Project instance or null if doesn't exists.
+     */
+    RdProject findByNameAndState(String name, RdProject.State state);
+
     /**
-     * Rerieves all project names
+     * Retrieves all project names
      *
      * @return Collection of project names
      */
     Collection<String> getFrameworkProjectNames();
 
     /**
-     * Retrieves the number of RundeckProjects
+     * Rerieves all enabled project names by state
+     *
+     * @return Collection of project names
+     */
+    Collection<String> getFrameworkProjectNamesByState(RdProject.State state);
+
+    /**
+     * Retrieves total the number of Rundeck Projects
      *
      * @return Count of RundeckProjects
      */
     int countFrameworkProjects();
 
     /**
-     * Checks if RundeckProject exists
+     * Retrieves total the number of Rundeck Projects
+     *
+     * @return Count of RundeckProjects
+     */
+    int countFrameworkProjectsByState(RdProject.State state);
+
+    /**
+     * Checks if RundeckProject exists and is enabled
      *
      * @param name of RundeckProject
      * @return true if RundeckProject is found, otherwise false
@@ -76,7 +98,7 @@ public interface RundeckProjectDataProvider extends DataProvider {
     boolean projectExists(final String name);
 
     /**
-     * Retrieves the description of a RundeckProject
+     * Retrieves the description of an enabled Rundeck Project
      *
      * @param name of RundeckProject
      * @return Description of the RundeckProject if found, otherwise null

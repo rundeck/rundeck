@@ -25,9 +25,12 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.common.NodeFileParserException
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -802,6 +805,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def prefixKey = 'plugin'
         def project = params.newproject
         Framework framework = frameworkService.getRundeckFramework()
+        ProjectManager projectManager = framework.getFrameworkProjectMgr()
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
@@ -934,7 +938,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         Map<String, Map> extraConfig = pconfigurable.config
         projProps.putAll(pconfigurable.props)
-
+        
 
         if (!project) {
             projectNameError = "Project name is required"
@@ -945,8 +949,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
-        } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
-            projectNameError = "Project already exists: ${project}"
+        } else if (projectManager.isFrameworkProjectDisabled(project)) {
+            projectNameError = message(code: "project.disabled", args: [project])
+            log.error(projectNameError)
+            errors << projectNameError
+        } else if (projectManager.existsFrameworkProject(project)) {
+            projectNameError = message(code: "project.exists", args: [project])
             log.error(projectNameError)
             errors << projectNameError
         } else if (!errors) {
@@ -2136,8 +2144,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
-        final def projectDescription = projectService.findProjectByName(project)?.description
-
+        final def projectDescription = fwkProject.info?.description
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
@@ -2918,9 +2925,19 @@ Since: v23''',
                 )
             ]
         ),
-        responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-        )
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1source~1%7Bindex%7D~1resources/get/responses/200'
+            ),
+            @ApiResponse(
+                responseCode="400",
+                description="Invalid format",
+                content=@Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema = @Schema(type='object', implementation = ApiErrorResponse)
+                )
+            )
+        ]
     )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3012,9 +3029,22 @@ Since: v23''',
 
         long size = -1
         def error = null
+        def errStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+        def errCode = 'api.error.resource.write.failure'
         try {
             size = source.writeableSource.writeData(inputStream)
-        } catch (ResourceModelSourceException | IOException exc) {
+        } catch (ResourceModelSourceException exc) {
+            error = exc
+            if(exc instanceof ResourceModelSourceException){
+                if(exc.cause instanceof ResourceFormatParserException){
+                    if(exc.cause.cause instanceof NodeFileParserException){
+                        errStatus = HttpServletResponse.SC_BAD_REQUEST
+                        errCode = 'api.error.resource.format.failure'
+                        error = exc.cause.cause
+                    }
+                }
+            }
+        } catch (IOException exc){
             log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
@@ -3022,8 +3052,8 @@ Since: v23''',
         if (error) {
             apiService.renderErrorFormat(
                 response,
-                [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                 code  : 'api.error.resource.write.failure',
+                [status: errStatus,
+                 code  : errCode,
                  args  : [error.message]]
             )
             return
@@ -3206,9 +3236,11 @@ Since: v23''',
                 schema = @Schema(type = 'integer')
             )
         ],
-        responses = @ApiResponse(
-            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
-        )
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+            )
+        ]
     )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3253,7 +3285,6 @@ Since: v23''',
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
         }
-
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
 

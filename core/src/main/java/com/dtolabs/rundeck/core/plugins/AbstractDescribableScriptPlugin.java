@@ -79,6 +79,8 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
 
+    public static final String CONFIG_BLANK_IF_UNEXPANDED = "blankIfUnexpanded";
+
     private final ScriptPluginProvider provider;
     private final Framework framework;
     Description description;
@@ -154,6 +156,17 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     }
 
                     pbuild.required(required);
+
+
+                    final Object blankIfUnexpandedValue = itemmeta.get(CONFIG_BLANK_IF_UNEXPANDED);
+                    final boolean blankIfUnexpanded;
+                    if (blankIfUnexpandedValue instanceof Boolean) {
+                        blankIfUnexpanded = (Boolean) blankIfUnexpandedValue;
+                    } else {
+                        blankIfUnexpanded = blankIfUnexpandedValue instanceof String && Boolean.parseBoolean((String) blankIfUnexpandedValue);
+                    }
+
+                    pbuild.blankIfUnexpandable(blankIfUnexpanded);
 
 
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
@@ -423,22 +436,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final Map<String, Object> renderingOptions
     ) throws ConfigurationException
     {
-        //a storage path property
-        String root = null;
-        if (null != renderingOptions.get( StringRenderingConstants.STORAGE_PATH_ROOT_KEY)) {
-            root = renderingOptions.get(StringRenderingConstants.STORAGE_PATH_ROOT_KEY).toString();
-        }
         String filter = null;
         if (null != renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)) {
             filter = renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY).toString();
         }
         boolean clearValue = isValueConversionFailureRemove(renderingOptions);
-        if (null != root && !PathUtil.hasRoot(propValue, root)) {
-            if(clearValue) {
-                data.remove(name);
-            }
-            return;
-        }
         try {
             Resource<ResourceMeta> resource = storageTree.getResource(propValue);
             ResourceMeta contents = resource.getContents();

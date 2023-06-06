@@ -27,11 +27,13 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.util.ZipBuilder
+import grails.async.Promises
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
+import org.grails.async.factory.SynchronousPromiseFactory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.jetbrains.annotations.NotNull
 import org.rundeck.app.acl.ACLFileManager
@@ -87,6 +89,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def providerExec = new GormExecReportDataProvider()
         service.execReportDataProvider = providerExec
 
+
+        // Change the default promise factory so the async project deletion in ProjectService.deleteProject()
+        // happens synchronously in tests
+        Promises.promiseFactory = new SynchronousPromiseFactory()
     }
 
     def "loadJobFileRecord"() {
@@ -360,6 +366,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.scmService = Mock(ScmService)
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
+        service.configurationService=Mock(ConfigurationService){
+            getBoolean('projectService.deferredProjectDelete',_)>>false
+        }
 
         def fwk = Mock(Framework)
 
@@ -370,8 +379,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.scmService.removeAllPluginConfiguration('myproject')
         1 * service.executionService.deleteBulkExecutionIds(*_)
-        1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
+            0 * disableFrameworkProject('myproject')
         }
         1 * service.fileUploadService.deleteRecordsForProject('myproject')
         result.success
@@ -387,6 +397,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.executionService = Mock(ExecutionService)
             service.fileUploadService = Mock(FileUploadService)
             service.targetEventBus = Mock(EventBus)
+            service.configurationService=Mock(ConfigurationService){
+                getBoolean('projectService.deferredProjectDelete',_)>>false
+            }
             def fwk = Mock(Framework)
 
         when:
@@ -395,8 +408,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
             1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-            1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * removeFrameworkProject('myproject')
+                0 * disableFrameworkProject('myproject')
             }
             result.success
     }
@@ -410,6 +424,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.fileUploadService = Mock(FileUploadService){
                 deleteRecordsForProject(_)>>{throw new Exception("test exception")}
             }
+            service.configurationService=Mock(ConfigurationService){
+                getBoolean('projectService.deferredProjectDelete',_)>>false
+            }
             service.targetEventBus = Mock(EventBus)
             def fwk = Mock(Framework)
 
@@ -419,7 +436,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
             1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
-            0 * fwk.getFrameworkProjectMgr()
+            1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                1 * isFrameworkProjectDisabled('myproject') >> false
+                0 * disableFrameworkProject('myproject')
+                0 * removeFrameworkProject('myproject')
+            }
             !result.success
     }
     def "delete project calls component projectDelete"() {
@@ -456,6 +477,100 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * component1.projectDeleted('myproject')
         1 * component2.projectDeleted('myproject')
+    }
+
+    def "delete project without deferral wont disable project"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService=Mock(ConfigurationService){
+            getBoolean('projectService.deferredProjectDelete',_) >> false
+        }
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            0 * disableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject')
+        }
+        result.success
+    }
+
+    def "delete project with deferral disables project"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService=Mock(ConfigurationService){
+            getBoolean('projectService.deferredProjectDelete',_) >> true
+        }
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            1 * disableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject')
+        }
+        result.success
+    }
+
+    def "delete project deferral switch config override"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> configValue
+        }
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null, deferParam)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            disablingCalls * disableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject')
+        }
+        result.success
+
+        where:
+        deferParam | configValue | disablingCalls
+        null       | true        | 1
+        null       | false       | 0
+        true       | true        | 1
+        true       | false       | 1
+        false      | true        | 0
+        false      | false       | 0
+
     }
 
     def "import project archive only nodes without config"() {
@@ -2328,6 +2443,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <succeededNodeList />
   <failedNodeList />
   <filterApplied />
+  <jobUuid>test-job-uuid</jobUuid>
 </report>'''
     /**
      * uses deprecated jcExecId
@@ -2388,6 +2504,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             dateStarted: new Date(0),
             dateCompleted: new Date(3600000),
             message: 'Report message',
+            jobUuid: se.uuid,
             )
         assertNotNull exec.save()
 

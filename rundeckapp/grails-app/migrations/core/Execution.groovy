@@ -147,4 +147,16 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckuser (generated)", id: "4.14.0-add-workflow-id-index") {
+        preConditions(onFail: "MARK_RAN"){
+            not {
+                indexExists(indexName: "execution_workflow_id_idx", tableName: "execution")
+            }
+        }
+
+        createIndex(indexName: "execution_workflow_id_idx", tableName: "execution", unique: false) {
+            column(name: "workflow_id")
+        }
+    }
 }

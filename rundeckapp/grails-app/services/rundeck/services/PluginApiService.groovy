@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import grails.web.mapping.LinkGenerator

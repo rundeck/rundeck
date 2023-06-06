@@ -1,7 +1,6 @@
 package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
@@ -15,6 +14,7 @@ import rundeck.services.data.ProjectDataService
 
 import javax.transaction.Transactional
 
+
 @GrailsCompileStatic
 @Slf4j
 @Transactional
@@ -27,13 +27,16 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     MessageSource messageSource
 
     @Override
-    RdProject getData (final Serializable id) {
+    RdProject getData(final Serializable id) {
         RdProject project = projectDataService.get(id)
         return project ?: null
     }
 
     Long create(RdProject data) throws DataAccessException {
-        Project project = new Project(description: data.getDescription(), name: data.getName())
+        Project project = new Project(
+                name: data.getName(),
+                description: data.getDescription(),
+                state: data.getState())
         try {
             if (projectDataService.save(project)) {
                 return project.getId()
@@ -53,6 +56,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
             throw new DataAccessException("Not found: project with ID: ${id}")
         }
         project.description = data.getDescription()
+        project.state = data.getState()
         try {
             projectDataService.save(project)
         } catch (Exception e) {
@@ -74,24 +78,20 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
-    RdProject findByName (final String name) {
+    RdProject findByName(final String name) {
         RdProject project = projectDataService.getByName(name)
         return project ?: null
     }
 
     @Override
-    @CompileStatic(TypeCheckingMode.SKIP)
-    Collection<String> getFrameworkProjectNames() {
-        def c = Project.createCriteria().list {
-            projections {
-                property "name"
-            }
-        }
-    }
+    RdProject findByNameAndState(String name, RdProject.State state) {
+        RdProject project = projectDataService.getByName(name)
+        if (!project) return null
 
-    @Override
-    int countFrameworkProjects() {
-        return projectDataService.count()
+        def pstate = project.state ?: RdProject.State.ENABLED
+        def qstate = state ?: RdProject.State.ENABLED
+
+        return (pstate == qstate) ? project : null
     }
 
     @Override
@@ -100,16 +100,64 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
-    @CompileDynamic
-    String getProjectDescription(String name){
-        def c = Project.createCriteria()
-        c.get {
-            eq('name', name)
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Collection<String> getFrameworkProjectNames() {
+        return Project.createCriteria().list {
             projections {
-                property "description"
+                property "name"
             }
         }
+    }
 
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Collection<String> getFrameworkProjectNamesByState(RdProject.State qstate) {
+        Objects.requireNonNull(qstate, "null qstate")
+        def namelist = []
+
+        namelist.addAll(Project.where {
+            state == qstate
+        }.property("name").list())
+
+        if(qstate == RdProject.State.ENABLED) {
+            namelist.addAll(Project.where {
+                state == null
+            }.property("name").list())
+        }
+
+        return namelist
+    }
+
+    @Override
+    int countFrameworkProjects() {
+        return projectDataService.count()
+    }
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    int countFrameworkProjectsByState(RdProject.State qstate) {
+        Objects.requireNonNull(qstate, "null qstate")
+        int count = 0
+
+        count += Project.where {
+            state == qstate
+        }.count()
+
+        if(qstate == RdProject.State.ENABLED) {
+            count += Project.where {
+                state == null
+            }.count()
+        }
+
+        return count
+    }
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    String getProjectDescription(String qname) {
+        return Project.where {
+            name == qname
+        }.property("description").get()
     }
 
 }

@@ -222,6 +222,7 @@ public class RundeckConfigBase {
 
     @Data
     public static class RundeckProjectServiceConfig {
+        Boolean deferredProjectDelete;
         ProjectExportCache projectExportCache;
 
         @Data
@@ -402,6 +403,7 @@ public class RundeckConfigBase {
         Enabled fileUploadPlugin = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
+        Enabled legacyUi = new Enabled(false);
 
 
 

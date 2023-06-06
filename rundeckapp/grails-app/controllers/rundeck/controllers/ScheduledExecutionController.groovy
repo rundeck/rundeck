@@ -43,6 +43,7 @@ import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import groovy.transform.TypeCheckingMode
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -248,18 +249,14 @@ class ScheduledExecutionController  extends ControllerBase{
         ]
 
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
-            if(scmService.projectHasConfiguredExportPlugin(project)) {
-                model.scmExportEnabled = true
-                model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
-            }
+            def scmExportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmExportOptions
         }
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
-            if(scmService.projectHasConfiguredPlugin('import',project)) {
-                model.scmImportEnabled = true
-                model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-            }
+            def scmImportOptions = scheduledExecutionService.scmActionMenuOptions(project, authorizingProject.authContext, scheduledExecution) as LinkedHashMap<String, Object>
+            model << scmImportOptions
         }
+
         render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
 
@@ -478,20 +475,23 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
-            if(scmService.projectHasConfiguredExportPlugin(params.project)){
-                dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
-                dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
-            }
+            def scmExportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmExportActionsForShowDropdown
         }
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
-            if(scmService.projectHasConfiguredPlugin('import',params.project)) {
-                dataMap.scmImportEnabled = true
-                dataMap.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
-            }
+            def scmImportActionsForShowDropdown = scheduledExecutionService.scmActionMenuOptions(
+                    scheduledExecution.project,
+                    authContext,
+                    scheduledExecution
+            )
+            dataMap << scmImportActionsForShowDropdown
         }
 
         withFormat{
@@ -673,6 +673,15 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                                                            code  : 'api.error.item.doesnotexist',
@@ -701,6 +710,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 ]
             )
         }
+
         def maxDepth=3
 
         def readAuth = rundeckAuthContextProcessor.authorizeProjectJobAny(
@@ -1247,7 +1257,7 @@ Since: V14''',
                 }
             }
         } else {
-            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(response, [status: result.status?:400, code: result.errorCode] + result)
         }
     }
 
@@ -2617,13 +2627,17 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
      * if there is an error, return [error:'type',message:errormesg,...]
      */
     private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, AuthContext authContext){
-        def object
+
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)){
+            def msg = g.message(code: 'project.disabled', args: [scheduledExecution.project])
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [success:false,error:'unauthorized',message:msg]
         }
-
 
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
@@ -3881,9 +3895,20 @@ Authorization required: `read` for the Job.''',
             )
         }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
         }
+
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_FORBIDDEN,
@@ -4490,9 +4515,19 @@ Since: v19''',
 
         ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
+
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
@@ -4694,6 +4729,15 @@ Since: v19''',
             return
         }
         def job = scheduledExecutionService.getByIDorUUID(jobFileRecord.jobId)
+        if (job?.project && frameworkService.isFrameworkProjectDisabled(job.project)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [job.project],
+                    format: response.format
+            ])
+            return
+        }
         if (!apiService.requireExists(response, job, ['Job File Record', params.id])) {
             return
         }
@@ -4727,6 +4771,17 @@ Since: v19''',
         }
 
         def job = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (job?.project && frameworkService.isFrameworkProjectDisabled(job.project)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [job.project],
+                    format: response.format
+            ])
+            return
+        }
+
         if (!apiService.requireExists(response, job, ['Job ID', params.id])) {
             return
         }
@@ -4819,6 +4874,16 @@ Authorization required: `delete` for the job.''',
             return
         }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
@@ -4828,6 +4893,7 @@ Authorization required: `delete` for the job.''',
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
+
         def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext,
                 false, session.user, 'apiJobDelete')
         if (!result.success) {
@@ -4883,6 +4949,16 @@ Authorization required: `delete` for the job.''',
             return
         }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
@@ -5541,6 +5617,16 @@ return.''',
      */
     private def apiJobExecutionsResult(boolean apiRequest) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }

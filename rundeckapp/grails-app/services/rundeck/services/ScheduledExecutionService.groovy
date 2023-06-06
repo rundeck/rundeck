@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -131,6 +132,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     def JobScheduleManager rundeckJobScheduleManager
+    ScmService scmService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuditEventsService auditEventsService
     ReferencedExecutionDataProvider referencedExecutionDataProvider
@@ -1069,6 +1071,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ]
             return [error: err,success: false]
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            def err = [
+                    message: lookupMessage( "api.error.project.disabled",  [scheduledExecution.project]),
+                    errorCode: 'api.error.project.disabled',
+                    id: jobid
+            ]
+            return [error: err,success: false]
+        }
 
         //extend auth context using project-specific authorization
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextWithProject(original, scheduledExecution.project)
@@ -1426,18 +1436,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * Schedule a temp job to execute immediately.
      */
     Map scheduleTempJob(AuthContext authContext, Execution e) {
+
         if(!executionService.getExecutionsAreActive()){
-            def msg=g.message(code:'disabled.execution.run')
+            def msg=lookupMessageError('disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if(!isProjectExecutionEnabled(e.project)){
-            def msg=g.message(code:'project.execution.disabled')
+            def msg=lookupMessageError('project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if (!e.hasExecutionEnabled()) {
-            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            def msg=lookupMessageError('scheduleExecution.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -1450,7 +1461,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         [
                             'isTempExecution': 'true',
                             'executionId': e.id.toString(),
-                            'authContext': authContext
+                            'authContext': authContext,
+                            'project': e.project    
                         ]
                     )
                 )
@@ -1475,6 +1487,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @NotTransactional
     Map createJobDetailMap(ScheduledExecution se) {
         Map data = [:]
+        data.put("project", se.project)
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
@@ -1954,6 +1967,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             logJobChange(changeinfo+[extraInfo: extraInfo],scheduledExecution.properties)
         }
 
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return [success           : false,
+                    scheduledExecution: scheduledExecution,
+                    message           : lookupMessage('api.error.project.disabled', [scheduledExecution.project]),
+                    status            : 409,
+                    errorCode         : 'api.error.project.disabled']
+        }
 
         def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
         def oldJobName = scheduledExecution.generateJobScheduledName()
@@ -4404,6 +4424,42 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return 0;
     }
 
+    /**
+     * Returns properties from the SCM integration validations, these properties will be options for the job's
+     * dropdown menu.
+     * @param project: String - The project name
+     * @param authContext: UserAndRolesAuthContext - The auth context
+     * @param se: ScheduledExecution - The job in which the options will be rendered.
+     * @return scmOptions: Map<String, Object> - The properties to be added to the view model
+     *
+     * */
+    @GrailsCompileStatic
+    def scmActionMenuOptions(
+            String project = null,
+            UserAndRolesAuthContext authContext = null,
+            ScheduledExecution scheduledExecution) {
+        def scmOptions = [:]
+        if (scmService.projectHasConfiguredExportPlugin(project)) {
+            def userRightsToExport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project) as Map<String, Object>
+            if (userRightsToExport.get("hasAccess")) {
+                def exportModel = [:]
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.getOptionKey(), scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid))
+                scmOptions << exportModel
+            }
+        }
+        if (scmService.projectHasConfiguredImportPlugin(project)) {
+            def userRightsToImport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project) as Map<String, Object>
+            if (userRightsToImport.get("hasAccess")) {
+                def importModel = [:]
+                importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.getOptionKey(), true)
+                importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.getOptionKey(), scmService.importStatusForJobs(project, authContext, [scheduledExecution]))
+                scmOptions << importModel
+            }
+        }
+        return scmOptions
+    }
 
 }
 @CompileStatic

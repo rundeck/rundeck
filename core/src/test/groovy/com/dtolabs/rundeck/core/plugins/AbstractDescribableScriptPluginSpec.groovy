@@ -86,6 +86,12 @@ class AbstractDescribableScriptPluginSpec extends Specification{
             def description = builder.build()
             return loadConfigData(context, instaceData, localDataContext, description, serviceName)
         }
+
+        def getPluginProperties(ExecutionContext context, Map<String, Object> instanceData, Map<String, Map<String, String>> localDataContext,String serviceName){
+            DescriptionBuilder builder = DescriptionBuilder.builder()
+            createDescription(provider, isAllowCustomProperties(), isUseConventionalPropertiesMapping(), builder)
+            return builder.build()
+        }
     }
 
     @Unroll
@@ -168,6 +174,47 @@ class AbstractDescribableScriptPluginSpec extends Specification{
 
         result!=null
         result==[config:[debug:"true", example:"this is an example",password : "key/path/some.pass"],nodeexecutor:[debug:"true", example:"this is an example",password : "key/path/some.pass"]]
+
+    }
+
+    @Unroll
+    def "check description contains blankIfUnexpanded field"() {
+        given:
+        File tempFile = File.createTempFile("test", "zip")
+        tempFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir")
+        basedir.deleteOnExit()
+
+        when:
+
+        def pluginMeta = Mock(PluginMeta){
+            getRundeckPluginVersion() >> "2.0"
+        }
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'testProperties'
+            getMetadata() >> pluginMetaData
+            getPluginMeta() >> pluginMeta
+            getContentsBasedir() >> basedir
+        }
+
+        ExecutionContext context = Mock(ExecutionContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
+            getDataContext() >> new BaseDataContext([:])
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+            }
+        }
+
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+        def result = plugin.getPluginProperties(context, instanceData,localDataContext, ServiceNameConstants.NodeExecutor)
+
+        then:
+
+        result!=null
+        result.properties.get(0).hasProperty("blankIfUnexpandable")
 
     }
 }

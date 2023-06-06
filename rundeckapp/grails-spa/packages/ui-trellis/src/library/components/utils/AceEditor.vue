@@ -15,7 +15,7 @@
   -->
 
 <template>
-  <div class="wrapp">
+  <div >
     <div v-if="codeSyntaxSelectable" class="ace_text_controls form-inline">
       <label>
         Syntax Mode:
@@ -25,10 +25,14 @@
         </select>
       </label>
     </div>
+    <div v-if="softWrapControl"  class="checkbox ace_text_controls">
+      <input type="checkbox" v-model="wrapInternal" id="ace_wrap"><label for="ace_wrap">Soft Wrap</label>
+    </div>
     <ace v-model="valueInternal"
          @init="aceEditorInit"
          :identifier="identifier"
          :lang="modeInternal"
+         :soft-wrap="wrapInternal"
          :theme="theme"
          :height="height"
          :width="width"
@@ -74,12 +78,14 @@ export default Vue.extend({
     lang: String,
     theme: String,
     codeSyntaxSelectable: Boolean,
+    softWrapControl: Boolean,
     readOnly: Boolean
   },
   data () {
     return {
       valueInternal: this.value || '',
       modeInternal: this.lang || 'text',
+      wrapInternal: false,
       localAce: null,
       aceModes: [
         'batchfile',

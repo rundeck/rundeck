@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.services;
+package com.dtolabs.rundeck.core.storage.service;
 
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;

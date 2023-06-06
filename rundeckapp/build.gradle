@@ -17,6 +17,7 @@ buildscript {
     }
 }
 plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
     id "com.github.node-gradle.node" version "3.1.1"
     id "java-library"
@@ -243,7 +244,7 @@ dependencies {
     // Database drivers
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.3.3'
+    runtimeOnly 'org.postgresql:postgresql:42.3.8'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
@@ -252,14 +253,14 @@ dependencies {
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
-    implementation "com.squareup.okhttp3:okhttp:4.9.2"
+    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
-    testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
+    testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"

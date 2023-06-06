@@ -34,6 +34,7 @@ class ExecReport extends BaseReport implements RdExecReport{
     String succeededNodeList
     String failedNodeList
     String filterApplied
+    String jobUuid
 
     static mapping = {
         adhocScript type: 'text'
@@ -59,6 +60,7 @@ class ExecReport extends BaseReport implements RdExecReport{
         succeededNodeList(nullable:true,blank:true)
         failedNodeList(nullable:true,blank:true)
         filterApplied(nullable:true,blank:true)
+        jobUuid(nullable:true)
 
     }
 
@@ -70,7 +72,8 @@ class ExecReport extends BaseReport implements RdExecReport{
             'abortedByUser',
             'succeededNodeList',
             'failedNodeList',
-            'filterApplied'
+            'filterApplied',
+            'jobUuid'
     ]
     def Map toMap(){
         def map = this.properties.subMap(exportProps)
@@ -131,7 +134,8 @@ class ExecReport extends BaseReport implements RdExecReport{
                 actionType: status,
                 failedNodeList: failedList,
                 succeededNodeList: succeededList,
-                filterApplied: exec.filter
+                filterApplied: exec.filter,
+                jobUuid: exec.scheduledExecution?.uuid
         ])
     }
     static ExecReport fromMap(Map map) {

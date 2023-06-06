@@ -65,7 +65,6 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-
 rm $DIR/proj_create.post
 rm $DIR/curl.out
 

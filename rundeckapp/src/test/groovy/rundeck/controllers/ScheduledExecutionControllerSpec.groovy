@@ -1644,6 +1644,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1699,6 +1700,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -3885,6 +3887,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectJobAll(_, se, [AuthConstants.ACTION_READ], 'project1')>>true
             }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * isFrameworkProjectDisabled(_) >> false
+            }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             params.id='testUUID'
             response.format = format
@@ -4445,6 +4450,4 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         result.error == "the filter \$..* return a list, please use another filter"
 
     }
-
-
 }

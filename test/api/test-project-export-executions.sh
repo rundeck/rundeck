@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# use api V44
+API_VERSION=44
 #export API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)

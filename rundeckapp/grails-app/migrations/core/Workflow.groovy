@@ -129,4 +129,16 @@ databaseChangeLog = {
             column(name: "commands_idx", type: '${int.type}')
         }
     }
+
+    changeSet(author: "rundeckuser (generated)", id: "4.14.0-add-index-workflow-workflow-step-id"){
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists(indexName: "workflow_workflow_step_workflow_step_id_idx", tableName: "workflow_workflow_step")
+            }
+        }
+
+        createIndex(indexName: "workflow_workflow_step_workflow_step_id_idx", tableName: "workflow_workflow_step", unique: false) {
+            column(name: "workflow_step_id")
+        }
+    }
 }

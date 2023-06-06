@@ -42,7 +42,7 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, S
 
     @Override
     boolean exists() {
-        return projectService.projectExists(identifier)
+        return projectManager.existsFrameworkProject(identifier)
     }
 
     @Override

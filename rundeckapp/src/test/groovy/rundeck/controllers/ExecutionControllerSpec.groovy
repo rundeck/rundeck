@@ -592,6 +592,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
             1 * isClusterModeEnabled()
+            1 * isFrameworkProjectDisabled(_) >> false
             _ * getServerUUID()
             0 * _(*_)
         }
@@ -702,6 +703,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
             1 * isClusterModeEnabled()
+            1 * isFrameworkProjectDisabled(_) >> false
             _ * getServerUUID()
             0 * _(*_)
         }
@@ -854,6 +856,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
             1 * isClusterModeEnabled()
+            1 * isFrameworkProjectDisabled(_) >> false
             _ * getServerUUID()
             0 * _(*_)
         }
@@ -904,6 +907,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
             1 * isClusterModeEnabled()
+            1 * isFrameworkProjectDisabled(_) >> false
             _ * getServerUUID()
             0 * _(*_)
         }
