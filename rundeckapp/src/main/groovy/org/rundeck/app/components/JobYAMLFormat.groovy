@@ -22,6 +22,7 @@ import groovy.transform.TypeCheckingMode
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
 import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import org.yaml.snakeyaml.nodes.Node
@@ -121,7 +122,7 @@ class JobYAMLFormat implements JobFormat {
     }
     static class CommaStringQuotedRepresenter extends Representer{
         CommaStringQuotedRepresenter() {
-            super()
+            super(new DumperOptions())
             this.representers.put(String,new CommaStringQuotedRepresent(this.representers.get(String)))
         }
     }

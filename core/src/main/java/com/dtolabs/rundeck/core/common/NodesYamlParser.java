@@ -69,7 +69,7 @@ public class NodesYamlParser implements NodeFileParser {
             throw new NullPointerException("file or inputStream was not set");
         }
         final Reader reader;
-        final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+        final Yaml yaml = new Yaml(new LoaderOptions());
         try {
             if (null != file) {
                 reader = new FileReader(file);

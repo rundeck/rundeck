@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import org.rundeck.core.projects.ProjectDataImporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import webhooks.exporter.WebhooksProjectExporter
@@ -59,7 +60,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
             return ["Import file ${WebhooksProjectExporter.WEBHOOKS_YAML_FILE} was not found"]
         }
         def errors = []
-        Yaml yaml = new Yaml(new SafeConstructor())
+        Yaml yaml = new Yaml(new LoaderOptions())
         def data = yaml.load(new FileReader(file))
         if(data instanceof Map) {
             data.webhooks.each { hook ->
