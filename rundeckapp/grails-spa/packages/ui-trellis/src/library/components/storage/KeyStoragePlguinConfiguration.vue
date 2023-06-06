@@ -243,6 +243,24 @@ export default Vue.extend({
     editButtonText: { required: false, type: String },
   },
   methods: {
+    async getConfig(){
+      console.log("into get config")
+      try {
+        const resp = await client.sendRequest({
+          pathTemplate: `/config/storagePluginList`,
+          baseUrl: `${window._rundeck.rdBase}/api/${window._rundeck.apiVersion}`,
+          method: 'GET'
+        });
+        if (!resp.parsedBody) {
+          throw new Error(`Unable to list configured plugins`);
+        }
+        const data = resp.parsedBody as any[]
+        console.log("got config", data)
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    },
     notifyError(msg: string, args: any[]) {
       Notification.notify({
         type: "danger",
@@ -422,6 +440,9 @@ export default Vue.extend({
   async mounted() {
     this.project = window._rundeck.projectName;
     await this.getPluginConfigs()
+    console.log("getconfig")
+    await this.getConfig()
+    console.log("after getconfig")
 
   }
 });
