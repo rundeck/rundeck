@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
@@ -140,7 +141,7 @@ public class StubDataStep implements StepPlugin {
             }
 
         } else if ("yaml".equals(format)) {
-            Yaml yaml = new Yaml(new SafeConstructor());
+            Yaml yaml = new Yaml(new LoaderOptions());
             Object ydata = yaml.load(data);
             if (ydata instanceof Map) {
                 Map<String, String> result = (Map) ydata;
