@@ -29,7 +29,7 @@
             :edit-mode="true"
             :help="$t('help')"
             project=""
-            :edit-button-text="$t('Edit Plugin Groups')"
+            :edit-button-text="$t('Edit Storage Plugins')"
             :mode-toggle="false"
         >
         </key-storage-plguin-configuration>

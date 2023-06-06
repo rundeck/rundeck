@@ -90,7 +90,7 @@
           <div class="list-group-item" v-if="workingData.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
-                {{$t("No Plugin Groups Configured",serviceName)}}
+                {{$t("No Storage Plugins Configured",serviceName)}}
               </span>
             </slot>
           </div>
@@ -287,7 +287,7 @@ export default Vue.extend({
     serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
       return {
         type: entry.entry.type,
-        serviceName: "PluginGroup",
+        serviceName: "Storage",
         config: Object.assign({}, entry.entry.config),
       };
     },
