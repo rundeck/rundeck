@@ -2609,6 +2609,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         JobValidationReference jobReference = ExecutionValidatorService.buildJobReference(se)
 
+        // Prevent any execution if project is disabled
+        if(frameworkService.isFrameworkProjectDisabled(se.project)) {
+            throw new ExecutionServiceException(lookupMessage("project.disabled",[se.project]))
+        }
+        
         // Validate max executions.
         if(!executionValidatorService.canRunMoreExecutions(jobReference, retry, prevId)) {
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')

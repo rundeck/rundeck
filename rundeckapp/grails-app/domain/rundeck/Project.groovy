@@ -27,10 +27,12 @@ class Project implements RdProject {
     String description
     Date dateCreated
     Date lastUpdated
+    State state
 
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
         description(nullable:true, maxSize: 255)
+        state(nullable:true)
     }
 
     static mapping = {

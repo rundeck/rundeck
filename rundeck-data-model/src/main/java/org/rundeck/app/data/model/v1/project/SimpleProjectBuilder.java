@@ -1,10 +1,8 @@
 package org.rundeck.app.data.model.v1.project;
-import org.rundeck.app.data.model.v1.AuthTokenMode;
-import org.rundeck.app.data.model.v1.AuthenticationToken;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Set;
+import java.util.Optional;
 
 public class SimpleProjectBuilder implements RdProject {
 
@@ -13,6 +11,7 @@ public class SimpleProjectBuilder implements RdProject {
   private String description;
   private Date dateCreated;
   private Date lastUpdated;
+  private State state;
 
   @Override
   public Serializable getId() {
@@ -39,6 +38,10 @@ public class SimpleProjectBuilder implements RdProject {
         return lastUpdated;
     }
 
+  @Override
+  public State getState() {
+      return this.state;
+  }
 
   public SimpleProjectBuilder setName(String name) {
     this.name = name;
@@ -50,20 +53,24 @@ public class SimpleProjectBuilder implements RdProject {
     return this;
   }
 
-
   public SimpleProjectBuilder setLastUpdated(Date lastUpdated) {
     this.lastUpdated = lastUpdated;
     return this;
   }
 
-
+  public SimpleProjectBuilder setState(State state) {
+    this.state = state;
+    return this;
+  }
 
   public static SimpleProjectBuilder with(RdProject input) {
     SimpleProjectBuilder project1 = new SimpleProjectBuilder();
     project1.id = input.getId();
     project1.name = input.getName();
     project1.description = input.getDescription();
+    project1.dateCreated = input.getDateCreated();
     project1.lastUpdated = input.getLastUpdated();
+    project1.state = input.getState();
 
     return project1;
   }

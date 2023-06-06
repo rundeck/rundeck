@@ -323,10 +323,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
 
         controller.frameworkService = fwk
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
 
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
@@ -981,10 +978,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
                 1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         params.project = "edit_test_project"
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:
@@ -1026,11 +1020,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
         def pluginPFmck = Mock(PasswordFieldsService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
-
+        controller.projectService = Mock(ProjectService)
         controller.execPasswordFieldsService = execPFmck
         controller.fcopyPasswordFieldsService = fcopyPFmck
         controller.pluginGroupPasswordFieldsService = pluginPFmck

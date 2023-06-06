@@ -27,7 +27,6 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
-import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.rundeck.storage.api.HasInputStream

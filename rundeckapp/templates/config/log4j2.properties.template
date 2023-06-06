@@ -9,7 +9,7 @@ property.prefix = [%style{%d{ISO8601}}{dim, noConsoleNoAnsi=${noConsoleNoAnsi}}]
 appender.console.type = Console
 appender.console.name = STDOUT
 appender.console.layout.type = PatternLayout
-appender.console.layout.pattern = ${prefix} - %m%n
+appender.console.layout.pattern = ${prefix} [%t] - %m%n
 
 appender.rundeck.type = RollingFile
 appender.rundeck.name = rundeck

@@ -214,6 +214,7 @@ public class RundeckConfigBase {
 
     @Data
     public static class RundeckProjectServiceConfig {
+        Boolean deferredProjectDelete;
         ProjectExportCache projectExportCache;
 
         @Data
