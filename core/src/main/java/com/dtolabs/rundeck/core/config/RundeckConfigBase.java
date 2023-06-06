@@ -59,6 +59,14 @@ public class RundeckConfigBase {
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
+    JobsImport jobsImport;
+
+    @Data public static class JobsImport{
+        XmlValueListDelimiter xmlValueListDelimiter;
+        @Data public static class XmlValueListDelimiter{
+            String xmlValueListDelimiter;
+        }
+    }
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
@@ -620,6 +628,7 @@ public class RundeckConfigBase {
         @Data
         public static class Job {
             Description description;
+
         }
         @Data
         public static class Description {
