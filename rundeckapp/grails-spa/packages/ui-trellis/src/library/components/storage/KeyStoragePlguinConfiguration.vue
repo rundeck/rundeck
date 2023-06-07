@@ -294,6 +294,7 @@ export default Vue.extend({
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       //validate
+      console.log("savePlugin", plugin)
       const validation: PluginValidation = await pluginService.validatePluginConfig(
           this.serviceName,
           plugin.entry.type,
@@ -336,11 +337,9 @@ export default Vue.extend({
       }
     },
     async savePlugins() {
+      console.log("savePlugins", this.pluginConfigs, this.removedPluginConfigs)
       try {
-        const result = await this.saveProjectPluginConfig(
-            this.project,
-            this.configPrefix,
-            this.serviceName,
+        const result = await this.saveStoragePluginConfig(
             this.pluginConfigs,
             this.removedPluginConfigs
         );
@@ -386,23 +385,15 @@ export default Vue.extend({
         return response.data.plugins;
       }
     },
-    async saveProjectPluginConfig(
-        project: string,
-        configPrefix: string,
-        serviceName: string,
+    async saveStoragePluginConfig(
         data: ProjectPluginConfigEntry[],
         removedData: ProjectPluginConfigEntry[]
     ) {
 
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        pathTemplate: `/framework/saveProjectPluginsAjax`,
-        baseUrl: this.rdBase,
+        pathTemplate: `/config/saveStoragePlugins`,
+        baseUrl: `${window._rundeck.rdBase}/api/${window._rundeck.apiVersion}`,
         method: "POST",
-        queryParameters: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName
-        },
         body: {
           plugins: data.map(this.serializeConfigEntry),
           removedPlugins: removedData.map(this.serializeConfigEntry)
@@ -432,7 +423,7 @@ export default Vue.extend({
         }
       }
       throw new Error(
-          `Error saving project configuration for ${serviceName}: Response status: ${
+          `Error saving project configuration for  Response status: ${
               resp ? resp.status : "None"
           }`
       );
