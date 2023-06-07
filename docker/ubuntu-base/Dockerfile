@@ -42,9 +42,9 @@ RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}
     chmod +x /tini
 
 # Install Remco
-ENV REMCO_VERSION=0.12.3
+ENV REMCO_VERSION=0.12.4
 RUN curl -ssL "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_amd64.zip" -o remco.zip && \
-    echo '45f7073e02ce967e9bdc1e4f4a0b5c52b48a3085be4c2b9d04c912f839439c24  remco.zip' > remco.zip.sha && \
+    echo 'c7eae0db823660f8cf0c0ccba1beebec64ee1c2e5b6b66ca3d20208cbcb70962  remco.zip' > remco.zip.sha && \
     sha256sum -c remco.zip.sha && \
     unzip remco.zip && \
     cp remco_linux /usr/local/bin/remco && \
