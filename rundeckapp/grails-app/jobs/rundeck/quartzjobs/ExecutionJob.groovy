@@ -415,7 +415,7 @@ class ExecutionJob implements InterruptableJob {
                         execmap.execution.status=ExecutionService.AVERAGE_DURATION_EXCEEDED
                     }
                     runContext.executionService.avgDurationExceeded(
-                            execmap.scheduledExecution.id,
+                            execmap.scheduledExecution.uuid,
                             [
                                     execution: execmap.execution,
                                     context:context

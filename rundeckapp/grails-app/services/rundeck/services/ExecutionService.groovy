@@ -811,7 +811,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     private void cleanupExecution(Execution e, String status = null) {
         saveExecutionState(
-                e.scheduledExecution?.id,
+                e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
@@ -831,7 +831,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     private void cleanupExecution_currentTransaction(Execution e, String status = null) {
         saveExecutionState_currentTransaction(
-                e.scheduledExecution?.id,
+                e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
@@ -1203,7 +1203,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
-                notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
+                notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
                         [execution: execution, context:executioncontext])
 
             }
@@ -1819,7 +1819,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } else if (null == dateCompleted) {
             scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
-                se ? se.id : null,
+                se ? se.uuid : null,
                 eid,
                     [
                         status       : forceIncomplete ? cleanupStatus : String.valueOf(false),
@@ -3810,7 +3810,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
-                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
+                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
                                 [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
                     }
 
@@ -3860,8 +3860,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
             }
             if(!jitem.ignoreNotifications) {
+                def scheduledExecution = ScheduledExecution.get(id)
+
                 if (averageDuration > 0 && duration > averageDuration) {
-                    avgDurationExceeded(id, [
+                    avgDurationExceeded(scheduledExecution.uuid, [
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
@@ -3869,10 +3871,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ])
                 }
 
-                def scheduledExecution = ScheduledExecution.get(id)
                 notificationService.asyncTriggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
-                        scheduledExecution.id,
+                        scheduledExecution.uuid,
                         [
                                 execution : execution,
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
@@ -4156,8 +4157,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
-    void avgDurationExceeded(schedId, Map content){
-        notificationService.asyncTriggerJobNotification('avgduration', schedId, content)
+    void avgDurationExceeded(schedUuid, Map content){
+        notificationService.asyncTriggerJobNotification('avgduration', schedUuid, content)
     }
 
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){

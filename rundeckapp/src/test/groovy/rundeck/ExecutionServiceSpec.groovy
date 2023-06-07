@@ -5811,7 +5811,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         when:
-        service.saveExecutionState(job.id, e1.id, resultMap, execmap, [:])
+        service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
         then:
 
         calls * service.workflowService.requestStateSummary(_,succeededNodes.toList()) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: nodeSummaries])
