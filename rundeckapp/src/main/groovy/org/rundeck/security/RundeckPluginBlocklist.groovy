@@ -3,6 +3,7 @@ package org.rundeck.security
 import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
@@ -32,7 +33,7 @@ class RundeckPluginBlocklist implements PluginBlocklist {
     @CompileDynamic
     private load() {
         if (!loaded) {
-            Yaml yaml = new Yaml(new SafeConstructor());
+            Yaml yaml = new Yaml(new LoaderOptions());
             Map data = yaml.load(new FileReader(blockListFileName));
             fileNameEntries = data.get("fileNameEntries")
             providerNameEntries = data.get("providerNameEntries")

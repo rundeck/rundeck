@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.core.projects.ProjectDataExporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
@@ -44,7 +45,7 @@ class WebhooksProjectExporter implements ProjectDataExporter {
     @Override
     void export(String project, def zipBuilder, Map<String, String> exportOptions) {
         logger.info("Project Webhook export running")
-        Yaml yaml = new Yaml(new SafeConstructor())
+        Yaml yaml = new Yaml(new LoaderOptions())
         def export = [webhooks:[]]
         webhookService.listWebhooksByProject(project).each { hk ->
             logger.debug("exporting hook: " + hk.name)
