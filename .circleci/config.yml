@@ -822,7 +822,7 @@ workflows:
           continue: 'false'
           context:
             - tl_scan_context
-            - slack
+            - slack-secrets
           <<: *slack-fail-post-step
           filters:
             branches: { only: main }
@@ -832,7 +832,7 @@ workflows:
           continue: 'true'
           context:
             - tl_scan_context
-            - slack
+            - slack-secrets
           <<: *slack-fail-post-step
           filters:
             branches: { ignore: main }
