@@ -4816,7 +4816,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                retry: '1'
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
         )
         job.save()
         Execution e1 = new Execution(
@@ -4908,8 +4909,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.notificationService.asyncTriggerJobNotification('start', job.id, _)
-        1 * service.notificationService.asyncTriggerJobNotification(trigger, job.id, _)
+        1 * service.notificationService.asyncTriggerJobNotification('start', job.uuid, _)
+        1 * service.notificationService.asyncTriggerJobNotification(trigger, job.uuid, _)
         where:
         success      | trigger
         true         | 'success'
@@ -5732,7 +5733,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                retry: '1'
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
         )
         job.save()
         Execution e1 = new Execution(
