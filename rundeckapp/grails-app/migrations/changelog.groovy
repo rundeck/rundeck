@@ -115,4 +115,5 @@ databaseChangeLog = {
         include file: 'core/WorkflowWorkflowStepPrimaryKey.groovy'
         include file: 'core/OptionRemoveValues.groovy'
         include file: 'core/DBChangelogPrimaryKey.groovy'
+        include file: 'core/BaseReportSpi.groovy'
 }
