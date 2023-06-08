@@ -76,7 +76,6 @@ class BaseGitPlugin {
     JobFileMapper mapper
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
-    boolean clusterFixPullNotConsumed = false
 
     protected enum ScmAuthMessages {
         CHECKING("Checking if user has access to the configured SCM key/password."),
@@ -312,7 +311,6 @@ class BaseGitPlugin {
     PullResult gitPull(ScmOperationContext context, Git git1 = null) {
         def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
         setupTransportAuthentication(sshConfig, context, pullCommand)
-        this.clusterFixPullNotConsumed = true
         pullCommand.call()
     }
 
