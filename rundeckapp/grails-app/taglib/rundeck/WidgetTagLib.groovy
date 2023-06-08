@@ -533,7 +533,7 @@ public class WidgetTagLib {
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'addClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').classList.remove(\''+ g.enc(js:attrs.addClassname)+'\');'
+            funcinvaction+=''+ftarget+'.classList.remove(\''+ g.enc(js:attrs.addClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'addClassname invert trigger\');\n'+funcinvaction+'\n'
@@ -546,7 +546,7 @@ public class WidgetTagLib {
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'removeClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+=''+ftarget+').classList.add(\''+ g.enc(js:attrs.removeClassname)+'\');'
+            funcinvaction+=''+ftarget+'.classList.add(\''+ g.enc(js:attrs.removeClassname)+'\');'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'removeClassname invert trigger\');\n'+funcinvaction+'\n'
             }
