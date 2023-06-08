@@ -768,11 +768,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         def bstat = BranchTrackingStatus.of(repo, branch)
         PullResult pullResult = null
-        if (bstat && bstat.behindCount > 0 || clusterFixPullNotConsumed) {
+        if (bstat && bstat.behindCount > 0) {
             try {
-                if(bstat && bstat.behindCount > 0)
-                    pullResult = gitPull(context)
-                clusterFixPullNotConsumed = false
+                pullResult = gitPull(context)
             } catch (TransportException e) {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
