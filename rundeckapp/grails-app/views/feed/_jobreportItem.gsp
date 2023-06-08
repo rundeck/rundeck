@@ -56,7 +56,7 @@
 
     <span >
         <g:link controller="execution" action="show" id="${rpt.executionId}" class="_defaultAction"
-                params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
+                params="[project:execution?execution.project:rpt.project?:params.project]"
                 title="View execution output" absolute="true">#<g:enc>${rpt.executionId}</g:enc></g:link>
         <g:if test="${rpt?.jcJobId}">
             <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(rpt.jcJobId)}"/>
