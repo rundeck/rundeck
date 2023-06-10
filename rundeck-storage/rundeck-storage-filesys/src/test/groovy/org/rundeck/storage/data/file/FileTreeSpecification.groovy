@@ -23,6 +23,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
+import java.nio.file.attribute.AclFileAttributeView
+import java.nio.file.attribute.AclEntryPermission
+import java.nio.file.attribute.AclEntryType
 import java.nio.file.attribute.PosixFilePermission
 
 /**
@@ -39,6 +42,10 @@ class FileTreeSpecification extends Specification {
     }
     def cleanup(){
         testDir.delete()
+    }
+    def isPosixSystem() {
+        def osName = System.getProperty("os.name").toLowerCase()
+        return !(osName.contains("win") || osName.contains("mac") || osName.contains("sunos"))
     }
 
     def "notfound resource causes exception"() {
@@ -244,17 +251,35 @@ class FileTreeSpecification extends Specification {
         expectedDataFile.isFile()
         expectedDataFile.text=='sample text'
 
-        Set<PosixFilePermission> sourcePerms = Files.getPosixFilePermissions(expectedDataFile.toPath());
-        sourcePerms.contains(PosixFilePermission.OWNER_READ)
-        sourcePerms.contains(PosixFilePermission.OWNER_WRITE)
-        !sourcePerms.contains(PosixFilePermission.OWNER_EXECUTE)
+        if (isPosixSystem()) {
+            Set<PosixFilePermission> sourcePerms = Files.getPosixFilePermissions(expectedDataFile.toPath())
+            sourcePerms.contains(PosixFilePermission.OWNER_READ)
+            sourcePerms.contains(PosixFilePermission.OWNER_WRITE)
+            !sourcePerms.contains(PosixFilePermission.OWNER_EXECUTE)
 
-        !sourcePerms.contains(PosixFilePermission.GROUP_EXECUTE)
-        !sourcePerms.contains(PosixFilePermission.GROUP_READ)
-        !sourcePerms.contains(PosixFilePermission.GROUP_WRITE)
+            !sourcePerms.contains(PosixFilePermission.GROUP_EXECUTE)
+            !sourcePerms.contains(PosixFilePermission.GROUP_READ)
+            !sourcePerms.contains(PosixFilePermission.GROUP_WRITE)
 
-        !sourcePerms.contains(PosixFilePermission.OTHERS_EXECUTE)
-        !sourcePerms.contains(PosixFilePermission.OTHERS_READ)
-        !sourcePerms.contains(PosixFilePermission.OTHERS_WRITE)
+            !sourcePerms.contains(PosixFilePermission.OTHERS_EXECUTE)
+            !sourcePerms.contains(PosixFilePermission.OTHERS_READ)
+            !sourcePerms.contains(PosixFilePermission.OTHERS_WRITE)
+        } else {
+            AclFileAttributeView aclAttributeView = Files.getFileAttributeView(expectedDataFile.toPath(), AclFileAttributeView.class)
+            if (aclAttributeView != null) {
+                def aclEntries = aclAttributeView.getAcl()
+                aclEntries.each { entry ->
+                    if (entry.type() == AclEntryType.ALLOW) {
+                        def principalName = entry.principal().getName()
+                        if (principalName == "OWNER") {
+                            assert entry.permissions().contains(AclEntryPermission.READ_DATA)
+                            assert entry.permissions().contains(AclEntryPermission.WRITE_DATA)
+                        } else if (principalName == "GROUP") {
+                            assert entry.permissions().contains(AclEntryPermission.READ_DATA)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
