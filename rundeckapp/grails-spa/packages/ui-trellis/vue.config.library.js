@@ -10,7 +10,8 @@ const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Righ
 
 /** Create a "page" for each component */
 pages = {}
-walk.walkSync('./src/library/components', {
+folder = Path.join('.', 'src', 'library', 'components')
+walk.walkSync(folder, {
     listeners: {
         file: (root, stat, next) => {
             const path = Path.parse(stat.name)

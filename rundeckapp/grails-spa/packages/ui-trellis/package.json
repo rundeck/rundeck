@@ -12,12 +12,14 @@
     "dev": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode development --watch && tsc -p ./tsconfig.app.json && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode development --watch",
     "build:app": "run-script-os",
     "build:app:darwin:linux": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.app.json",
-    "build:app:win32": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js node_modules/.bin/vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.app.json",
+    "build:app:win32": "cross-env VUE_CLI_SERVICE_CONFIG_PATH=./vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.app.json",
     "build:library": "run-script-os",
     "build:library:darwin:linux": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.build.json && npm run clean",
-    "build:library:win32": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json && npm run clean",
+    "build:library:win32": "cross-env VUE_CLI_SERVICE_CONFIG_PATH=./vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.build.json && npm run clean",
     "storybook": "start-storybook -s public,theme,tests/data",
-    "clean": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0"
+    "clean": "run-script-os",
+    "clean:darwin:linux": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0",
+    "clean:win32": "xcopy /E /I /Y .\\lib\\src\\library .\\lib\\ && rmdir /S /Q .\\lib\\src\\ && exit"
   },
   "repository": {
     "type": "git",
@@ -73,6 +75,7 @@
     "@vue/test-utils": "^1.0.3",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^5.1.2",
+    "cross-env": "^7.0.3",
     "cssnano": "^5.1.14",
     "cssnano-preset-default": "^5.2.13",
     "eslint-import-resolver-typescript": "^3.5.2",
