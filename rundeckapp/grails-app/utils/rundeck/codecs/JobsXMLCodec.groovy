@@ -216,7 +216,7 @@ class JobsXMLCodec {
                         if(optm.valuesListDelimiter){
                             listDelimiter = optm.valuesListDelimiter
                         }
-                        if(jobXmlValueListDelimiter != ""){
+                        if(jobXmlValueListDelimiter != null && !jobXmlValueListDelimiter.isEmpty()){
                             listDelimiter = jobXmlValueListDelimiter
                         }
                         map.options[optm.name.toString()] = optm
