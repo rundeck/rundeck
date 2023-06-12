@@ -163,7 +163,7 @@
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
           <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>
-          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
+          <a class="btn btn-cta" @click="savePlugins" href="#">{{$t('Save')}}</a>
           <span class="text-warning" v-if="modified">Changes have not been saved.</span>
         </div>
       </div>
@@ -392,7 +392,7 @@ export default Vue.extend({
 
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
         pathTemplate: `/config/saveStoragePlugins`,
-        baseUrl: `${window._rundeck.rdBase}/api/${window._rundeck.apiVersion}`,
+        baseUrl: `${window._rundeck.rdBase}api/${window._rundeck.apiVersion}`,
         method: "POST",
         body: {
           plugins: data.map(this.serializeConfigEntry),
