@@ -64,6 +64,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
@@ -2857,6 +2858,7 @@ Since: V18''',
     /**
      * API: get job info: /api/18/job/{id}/info
      */
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobDetail() {
         if (!apiService.requireApi(request, response, ApiVersions.V18)) {
             return
@@ -2884,23 +2886,9 @@ Since: V18''',
                 session.subject,
                 scheduledExecution.project
         )
-        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-        )) {
-            return apiService.renderErrorXml(
-                    response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : 'api.error.item.unauthorized',
-                            args  : ['Read', 'Job ID', params.id]
-                    ]
-            )
-        }
+
         if (!(response.format in ['all', 'xml', 'json'])) {
-            return apiService.renderErrorXml(
+            return apiService.renderErrorFormat(
                     response,
                     [
                             status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -2995,6 +2983,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
         ]
     )
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobForecast() {
         if (!apiService.requireApi(request, response, ApiVersions.V31)) {
             return
@@ -3022,23 +3011,9 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 session.subject,
                 scheduledExecution.project
         )
-        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-        )) {
-            return apiService.renderErrorXml(
-                    response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : 'api.error.item.unauthorized',
-                            args  : ['Read', 'Job ID', params.id]
-                    ]
-            )
-        }
+
         if (!(response.format in ['all', 'xml', 'json'])) {
-            return apiService.renderErrorXml(
+            return apiService.renderErrorFormat(
                     response,
                     [
                             status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
