@@ -13,6 +13,11 @@ export vars pointing at correct directories, and specify name of xmlstarlet exec
 # Run Docker Tests
 These tests run against a docker image built from a `<rundeck-oss-package-name>.war` file located in `rundeck/rundeckapp/build/libs/`, make sure it's present before running any of the tests below.   
 
+Before running any test, export the following variable to prevent scripts from stopping containers after exiting
+```shell
+export DEBUG_RD_SERVER=true
+```
+
 ## Docker Test
 ```shell
 bash test/run-docker-tests.sh
@@ -40,11 +45,13 @@ bash test/run-docker-ssl-tests.sh
 
 ## Tomcat 8 API Test
 ```shell
+# Run tests test/api/test-*.sh in tomcat 8 environment
 bash test/run-docker-tomcat-tests.sh 8-jdk11
 ```
 
 ## Tomcat 9 API Test
 ```shell
+# Run tests test/api/test-*.sh in tomcat 9 environment
 bash test/run-docker-tomcat-tests.sh 9-jdk11
 ```
 
@@ -60,5 +67,6 @@ bash test/run-docker-ansible-tests.sh
 
 ## API Test
 ```shell
+# Run tests test/api/test-*.sh
 DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
 ```
