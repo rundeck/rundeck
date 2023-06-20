@@ -2882,10 +2882,6 @@ Since: V18''',
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
 
         if (!(response.format in ['all', 'xml', 'json'])) {
             return apiService.renderErrorFormat(
@@ -3007,10 +3003,6 @@ Format is a string like `2d1h4n5s` using the following characters for time units
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
 
         if (!(response.format in ['all', 'xml', 'json'])) {
             return apiService.renderErrorFormat(
