@@ -2870,8 +2870,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             result.value() == access
         where:
             endpoint                                | access
-            'apiJobDetail'                          | RundeckAccess.System.AUTH_APP_READ_OR_VIEW
-            'apiJobForecast'                        | RundeckAccess.System.AUTH_APP_READ_OR_VIEW
+            'apiJobDetail'                          | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+            'apiJobForecast'                        | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
     }
 
     @Unroll
