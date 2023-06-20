@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.springframework.core.task.AsyncListenableTaskExecutor
@@ -62,6 +63,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
         tempDir.deleteOnExit()
+        service.logFileStorageRequestProvider = new GormLogFileStorageRequestProvider()
     }
 
     def "resume incomplete delayed"() {

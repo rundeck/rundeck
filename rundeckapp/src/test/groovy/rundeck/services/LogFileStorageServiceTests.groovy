@@ -24,6 +24,7 @@ import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.springframework.core.task.TaskExecutor
 import spock.lang.Specification
 
@@ -90,6 +91,8 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         testLogFile1.deleteOnExit()
         testLogFileDNE = File.createTempFile("LogFileStorageServiceTests", ".txt")
         testLogFileDNE.delete()
+
+        service.logFileStorageRequestProvider = new GormLogFileStorageRequestProvider()
     }
 
     void cleanup() {
