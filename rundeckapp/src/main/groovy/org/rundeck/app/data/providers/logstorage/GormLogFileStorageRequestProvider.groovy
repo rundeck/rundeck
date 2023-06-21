@@ -113,7 +113,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
 
     @Override
     @TypeChecked(TypeCheckingMode.SKIP)
-    Long countByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> execIds) {
+    Long countByIncompleteAndClusterNodeNotInExecIds(String serverUUID, Set<Long> skipExecIds) {
         return LogFileStorageRequest.createCriteria().get{
             eq('completed',false)
             execution {

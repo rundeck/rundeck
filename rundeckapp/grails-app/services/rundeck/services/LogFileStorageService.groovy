@@ -172,7 +172,7 @@ class LogFileStorageService
     }
 
     void cleanup() {
-        logFileStorageTaskScheduler.shutdown()
+        logFileStorageTaskScheduler?.shutdown()
     }
 
     /**

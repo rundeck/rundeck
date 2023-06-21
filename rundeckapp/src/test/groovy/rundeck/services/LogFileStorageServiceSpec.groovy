@@ -1307,4 +1307,96 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             service.storageRequests.size()==1
 
     }
+
+    def "countIncompleteStorageRequests"() {
+        given:
+        def serveruuid = 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        service.frameworkService = Mock(FrameworkService){
+
+            serverUUID >> serveruuid
+        }
+        def e2 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: serveruuid
+        ).save(flush: true)
+        def l2 = new LogFileStorageRequest(
+                execution: e2,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: true
+        ).save(flush: true)
+        def e3 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save(flush: true)
+        def l3 = new LogFileStorageRequest(
+                execution: e3,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+
+        when:
+        int count = service.countIncompleteLogStorageRequests()
+
+        then:
+        count == 1
+    }
+
+    def "countIncompleteStorageRequests"() {
+        given:
+        def serveruuid = 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        service.frameworkService = Mock(FrameworkService){
+
+            serverUUID >> serveruuid
+        }
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: 'some-other-server-uuid'
+        ).save(flush: true)
+        def l = new LogFileStorageRequest(
+                execution: e,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+        def e2 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user2',
+                project: 'test',
+                serverNodeUUID: serveruuid
+        ).save(flush: true)
+        def l2 = new LogFileStorageRequest(
+                execution: e2,
+                pluginName: 'blah2',
+                filetype: '*',
+                completed: true
+        ).save(flush: true)
+        def e3 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save(flush: true)
+        def l3 = new LogFileStorageRequest(
+                execution: e3,
+                pluginName: 'blah3',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+
+        when:
+        def results = service.listIncompleteRequests(serveruuid)
+
+        then:
+        results.size() == 1
+        results[0].pluginName == 'blah3'
+
+    }
 }
