@@ -61,16 +61,6 @@
                             options: {
                                 groupName: 'Storage'
                             }
-                        },
-                        {
-                            name: 'type',
-                            title: 'Type',
-                            desc: 'Key Storage Provider Type (required)',
-                            type: 'String',
-                            required: true,
-                            options: {
-                                groupName: 'Storage'
-                            }
                         }
                     ]
                 }"
@@ -371,9 +361,6 @@ export default Vue.extend({
         if (result.success) {
           this.didSave(true);
           this.notifySuccess("Success", "Configuration Saved");
-          this.configOrig = result.data.plugins;
-          //copy
-          this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
           this.pluginConfigsModifiedReset();
           this.$emit("saved", result);
         }
