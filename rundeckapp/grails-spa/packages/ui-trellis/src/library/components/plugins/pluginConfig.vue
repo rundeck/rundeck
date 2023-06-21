@@ -54,6 +54,11 @@
         </span>
             </div>
             <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
+                <div class="form-group">
+                  <div class="col-sm-12" >
+                    <slot name="extraProperties"></slot>
+                  </div>
+                </div>
                 <div v-for="(group,gindex) in groupedProperties" :key="group.name">
                     <div v-if="!group.name"
                          v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">

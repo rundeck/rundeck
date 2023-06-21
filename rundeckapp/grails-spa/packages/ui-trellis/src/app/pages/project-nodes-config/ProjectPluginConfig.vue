@@ -64,6 +64,12 @@
               :validation-warning-text="$t('Validation errors')"
               @input="configUpdated"
             >
+              <div slot="extraProperties" class="row" v-if="mode==='edit'">
+                <ui-socket section="resources-extra-attributes" location="plugin-config" :event-bus="eventBus" :socket-data="{
+              type: plugin.entry.type,
+              index: index
+            }"/>
+              </div>
               <div slot="extra" class="row" v-if="mode==='edit'">
                 <div class="col-xs-12 col-sm-12">
                   <span v-if="editFocus===-1">
@@ -181,6 +187,7 @@ import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
+import UiSocket from "../../../library/components/utils/UiSocket.vue";
 
 interface PluginConf {
   readonly type: string;
@@ -194,9 +201,19 @@ interface ProjectPluginConfigEntry {
   origIndex?: number;
   modified: boolean;
 }
+
+interface PluginDef{
+  index: number;
+  tyoe: string;
+}
+interface PluginExtraConfig{
+  plugin: PluginDef;
+  extraConfig: any;
+}
 export default Vue.extend({
   name: "App",
   components: {
+    UiSocket,
     PluginInfo,
     PluginConfig,
     Expandable
@@ -243,6 +260,7 @@ export default Vue.extend({
     additionalProps: { required: false, type: Object },
     help: { required: false, type: String },
     editButtonText: { required: false, type: String },
+    eventBus: { type: Vue, required: false }
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -477,9 +495,18 @@ export default Vue.extend({
 
       this.pluginStorageAccess = pluginStorageAccess;
     },
+    setExtraConfig(pluginExtraConfig: PluginExtraConfig){
+      console.log("setRunnerConfig")
+      console.log(pluginExtraConfig)
+
+      console.log(this.pluginConfigs[pluginExtraConfig.plugin.index])
+
+      this.pluginConfigs[pluginExtraConfig.plugin.index].extra = pluginExtraConfig.extraConfig;
+    }
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
+
     const self = this;
     this.notifyPluginConfigs();
     if (
@@ -513,6 +540,8 @@ export default Vue.extend({
           }
         }).catch(error => console.error(error));
     }
+
+    this.eventBus.$on('resource-model-extra-config', this.setExtraConfig)
   }
 });
 </script>
