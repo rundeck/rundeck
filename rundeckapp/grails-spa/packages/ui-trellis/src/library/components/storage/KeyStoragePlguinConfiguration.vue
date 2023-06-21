@@ -40,7 +40,7 @@
               <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
 
-            <div v-if="additionalProps && additionalProps.props.length>0">
+            <div>
               <plugin-config
                   :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
                   v-model="plugin.extra"
@@ -48,7 +48,32 @@
                   :key="'additional_config_'+index+'/'+((editFocus===index)?'true':'false' )"
                   :show-title="false"
                   :show-description="false"
-                  :plugin-config="additionalProps"
+                  :plugin-config="{
+                    title: 'Key Storage Additional',
+                    desc: '',
+                    props: [
+                        {
+                            name: 'path',
+                            title: 'Key Storage Path',
+                            desc: 'The base path the plugin will be applied to (required, must be unique)',
+                            type: 'String',
+                            required: true,
+                            options: {
+                                groupName: 'Storage'
+                            }
+                        },
+                        {
+                            name: 'type',
+                            title: 'Type',
+                            desc: 'Key Storage Provider Type (required)',
+                            type: 'String',
+                            required: true,
+                            options: {
+                                groupName: 'Storage'
+                            }
+                        }
+                    ]
+                }"
               ></plugin-config>
             </div>
             <plugin-config
