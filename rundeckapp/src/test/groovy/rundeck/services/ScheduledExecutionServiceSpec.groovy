@@ -2180,7 +2180,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
-            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true,validations:[:])
+            validateImportedJob(_) >> new Validator.ReportSet(true, [:])
 
         }
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
