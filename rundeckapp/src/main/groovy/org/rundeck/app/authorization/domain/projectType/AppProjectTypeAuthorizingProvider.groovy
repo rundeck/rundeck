@@ -39,7 +39,7 @@ class AppProjectTypeAuthorizingProvider
         return getAuthorizingResource(
             subject,
             resolver.idForType(RundeckAccess.Project.TYPE),
-            resolver.idForType(RundeckAccess.ApplicationType.TYPE)
+            resolver.idForType(RundeckAccess.ProjectType.TYPE)
         )
     }
 }
