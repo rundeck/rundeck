@@ -81,7 +81,7 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
         }
         provider.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
             2 * getJobDefinitionComponents() >> [:]
-            1 * validateImportedJob(_) >> Mock(RundeckJobDefinitionManager.ReportSet) {
+            1 * validateImportedJob(_) >> Mock(Validator.ReportSet) {
                 getValidations() >> [:]
             }
             1 * updateJob(_,_,_) >> null
@@ -140,7 +140,7 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
         provider.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
             2 * getJobDefinitionComponents() >> [:]
             1 * updateJob(_,_,_) >> Mock(ImportedJob)
-            1 * validateImportedJob(_) >> Mock(RundeckJobDefinitionManager.ReportSet) {
+            1 * validateImportedJob(_) >> Mock(Validator.ReportSet) {
                 1 * getValidations() >> validations
             }
         }
