@@ -767,18 +767,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         fetchFromRemote(context)
 
         def bstat = BranchTrackingStatus.of(repo, branch)
+        PullResult pullResult = null
         if (bstat && bstat.behindCount > 0) {
             try {
-                PullResult result = gitPull(context)
-                jobs.each{job ->
-                    refreshJobStatus(job,originalPaths?.get(job.id))
-                }
+                pullResult = gitPull(context)
             } catch (TransportException e) {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
-            return [updated:true]
         }
-        [:]
+        jobs.each{job ->
+            refreshJobStatus(job,originalPaths?.get(job.id))
+        }
+        return (pullResult != null)? [updated:true]:[:]
     }
 
     @Override

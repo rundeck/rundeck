@@ -17,8 +17,9 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 
-class LogFileStorageRequest {
+class LogFileStorageRequest implements LogFileStorageRequestData{
     Execution execution
     String pluginName
     String filetype
@@ -40,5 +41,10 @@ class LogFileStorageRequest {
         DomainIndexHelper.generate(delegate) {
             index 'LOGFILESTORAGE_IDX_1', ['completed']
         }
+    }
+
+    @Override
+    Serializable getExecutionId() {
+        return execution.id
     }
 }
