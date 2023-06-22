@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.execution.workflow.SequentialWorkflowStrategy
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -3508,7 +3510,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!workflow.commands || workflow.commands.size() < 1) {
             return null
         }
-        def name = workflow.strategy
+        def name = (workflow.strategy == WorkflowExecutionItem.STEP_FIRST) ? SequentialWorkflowStrategy.PROVIDER_NAME : workflow.strategy
         //validate input values wrt to property definitions
 
         def pluginConfigFactory = frameworkService.pluginConfigFactory(configmap, projectProps)
