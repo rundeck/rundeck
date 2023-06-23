@@ -279,7 +279,7 @@ export default Vue.extend({
         const response = await getRundeckContext().rundeckClient.projectList();
 
         this.linksTitle = 'Projects';
-        this.jumpLinks = response.map((v) => {
+        this.jumpLinks = response.map((v:any) => {
           return { name: v.name, path: 'keys/project/' + v.name };
         });
       } catch (error) {
