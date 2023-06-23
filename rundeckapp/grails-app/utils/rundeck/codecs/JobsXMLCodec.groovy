@@ -145,7 +145,7 @@ class JobsXMLCodec {
     /**
      * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
      */
-    static convertXMapToJobMap={ Map map->
+    static convertXMapToJobMap={ Map map, String jobXmlValueListDelimiter->
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
@@ -214,7 +214,10 @@ class JobsXMLCodec {
                     opts.each { optm ->
                         String listDelimiter = Option.DEFAULT_DELIMITER
                         if(optm.valuesListDelimiter){
-                            listDelimiter=optm.valuesListDelimiter
+                            listDelimiter = optm.valuesListDelimiter
+                        }
+                        if(jobXmlValueListDelimiter != null && !jobXmlValueListDelimiter.isEmpty()){
+                            listDelimiter = jobXmlValueListDelimiter
                         }
                         map.options[optm.name.toString()] = optm
                         if (optm.values instanceof String) {

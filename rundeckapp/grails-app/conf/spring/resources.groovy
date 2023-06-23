@@ -546,7 +546,9 @@ beans={
     }
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
-    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobXmlFormat(JobXMLFormat){
+        jobXmlValueListDelimiter = application.config.getProperty('rundeck.jobsImport.xmlValueListDelimiter', String)
+    }
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
     }
