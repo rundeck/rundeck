@@ -20,7 +20,7 @@ export class NavBar {
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         if (window._rundeck.navbar) {
-            window._rundeck.navbar.items.forEach(i => {
+            window._rundeck.navbar.items.forEach((i:NavItem) => {
                 this.items.push({...i, visible: true, container: i.container || 'root'})
             })
         }
