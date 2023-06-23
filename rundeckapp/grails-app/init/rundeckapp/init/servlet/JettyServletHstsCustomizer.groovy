@@ -32,9 +32,7 @@ public class JettyServletHstsCustomizer implements JettyServerCustomizer {
      * @return true if SSL is enabled, false otherwise
      */
     public static boolean checkSSL(HttpConfiguration httpConfig) {
-        int securePort = httpConfig.getSecurePort()
-        boolean isSslEnabled = (securePort > 0)
-        return isSslEnabled
+        return (httpConfig.getSecurePort() > 0)
     }
 
     JettyServletHstsCustomizer( long stsMaxAgeSeconds, Boolean stsIncludeSubdomains) {
