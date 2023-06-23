@@ -12,7 +12,7 @@ import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 /**
  * Validates jetty configuration to avoid disallowed http methods and paths
  */
-class BanConfigCustomizer implements JettyServerCustomizer {
+class BanHttpMethodCustomizer implements JettyServerCustomizer {
 
     @Override
     void customize(Server server) {
@@ -33,10 +33,6 @@ class BanHttpCustomizer implements HttpConfiguration.Customizer {
      * Banned http methods
      */
     final List<HttpMethod> banMethods
-    /**
-     * Banned path
-     */
-    final String banPath = "/"
 
     BanHttpCustomizer(List<HttpMethod> methods) {
         this.banMethods = methods
@@ -45,8 +41,7 @@ class BanHttpCustomizer implements HttpConfiguration.Customizer {
     @Override
     void customize(Connector connector, HttpConfiguration channelConfig, Request request) {
         HttpMethod currentMethod = HttpMethod.fromString(request.method)
-        String currentPath = request.pathInfo
-        if (banMethods.contains(currentMethod) && currentPath == banPath) {
+        if (banMethods.contains(currentMethod)) {
             request.handled = true
             request.response.status = HttpStatus.METHOD_NOT_ALLOWED_405
         }
