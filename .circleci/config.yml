@@ -389,6 +389,11 @@ jobs:
   twistlock-scan-image:
     <<: *defaults
     machine: true
+    parameters:
+      continue:
+        description: Continue if check fails
+        type: string
+        default: 'false'
 
     steps:
       - checkout
@@ -401,7 +406,7 @@ jobs:
           name: Scan Image
           command: |
             source .circleci/circle-shim.sh
-            twistlock_scan
+            bash -c "twistlock_scan" || << parameters.continue >>
       - store_artifacts:
           path: ~/repo/twistlock_scan_result.json
       - store_test_results:
@@ -811,6 +816,26 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
+      - twistlock-scan-image:
+          name: Twistlock Scan
+          requires: *stage-build
+          continue: 'false'
+          context:
+            - tl_scan_context
+            - slack-secrets
+          <<: *slack-fail-post-step
+          filters:
+            branches: { only: main }
+      - twistlock-scan-image:
+          name: Twistlock Scan Report
+          requires: *stage-build
+          continue: 'true'
+          context:
+            - tl_scan_context
+            - slack-secrets
+          <<: *slack-fail-post-step
+          filters:
+            branches: { ignore: main }
       - build_and_publish:
           name: Package and Release
           requires: *stage-build

@@ -118,6 +118,7 @@ import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
@@ -545,7 +546,9 @@ beans={
     }
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
-    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobXmlFormat(JobXMLFormat){
+        jobXmlValueListDelimiter = application.config.getProperty('rundeck.jobsImport.xmlValueListDelimiter', String)
+    }
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
     }
@@ -909,5 +912,6 @@ beans={
     pluginMetaDataProvider(GormPluginMetaDataProvider)
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
+    logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
 
 }

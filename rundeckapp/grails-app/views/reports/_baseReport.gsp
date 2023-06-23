@@ -82,7 +82,7 @@
             <g:set var="hasJobArgs" value="${rpt?.jcJobId && execution && execution.argString}"/>
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${hasJobArgs?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
-                params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
+                params="[project:execution?execution.project:rpt.project?:params.project]"
                     title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
