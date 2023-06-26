@@ -27,14 +27,8 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
-        return createCriteria().list(max: (max!=0)?max:null) {
-            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            isNotNull( 'e.jobUuid')
-            eq("jobUuid", jobUuid)
-            projections {
-                distinct('e.jobUuid')
-            }
-        }*.toJobDataSummary()
+        return parentListScheduledExecutionUuid(jobUuid, max)
+                .collect { id -> ScheduledExecution.findByUuid(id).toJobDataSummary() }
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){

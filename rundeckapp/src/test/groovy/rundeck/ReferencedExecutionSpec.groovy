@@ -302,20 +302,16 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
         def re2 = new ReferencedExecution(jobUuid: se.uuid,execution: exec2).save()
 
         when:
-<<<<<<< HEAD
         List l = ReferencedExecution.parentJobSummaries(se.uuid, max)
-=======
-        List l = ReferencedExecution.parentListScheduledExecutionUuid(se.uuid, max)
->>>>>>> 65980006ae (Incorporate reference execution spi changes)
 
         then:
         l.size() == sizeList
-        l.collect {s-> "${s.groupPath}/${s.jobName} - null".toString()} == result
+        l.collect {s-> s.toString()} == result
 
         where:
         max  | sizeList | result
-        0    | 2        | ["11111", "22222"]
-        1    | 1        | ["11111"]
-        2    | 2        | ["11111", "22222"]
+        0    | 2        | ["testgroup/test2 - null", "testgroup/test3 - null"]
+        1    | 1        | ["testgroup/test2 - null"]
+        2    | 2        | ["testgroup/test2 - null", "testgroup/test3 - null"]
     }
 }

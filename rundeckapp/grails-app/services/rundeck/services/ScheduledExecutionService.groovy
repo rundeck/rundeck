@@ -4413,7 +4413,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def scmActionMenuOptions(
             String project = null,
             UserAndRolesAuthContext authContext = null,
-            ScheduledExecution scheduledExecution) {
+            JobData scheduledExecution) {
         def scmOptions = [:]
         if (scmService.projectHasConfiguredExportPlugin(project)) {
             def userRightsToExport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project) as Map<String, Object>
@@ -4421,7 +4421,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def exportModel = [:]
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
-                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.getOptionKey(), scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid))
+                exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.getOptionKey(), scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.uuid))
                 scmOptions << exportModel
             }
         }

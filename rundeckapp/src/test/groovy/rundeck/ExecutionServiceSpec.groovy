@@ -282,6 +282,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         given:
         ScheduledExecution scheduledExecution = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'Temp/adHoc',
                 project: 'AProject',
                 groupPath: 'some/where',

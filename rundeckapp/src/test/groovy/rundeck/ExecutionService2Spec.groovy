@@ -523,6 +523,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
         ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
+            isFrameworkProjectDisabled(_) {
+                false
+            }
             getServerUUID(1..1){
                 null
             }

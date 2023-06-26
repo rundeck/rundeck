@@ -1,8 +1,10 @@
 package rundeck.data.util
 
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.job.option.OptionData
 
+@CompileStatic
 class JobOptionUtil {
     /**
      * Create a map of option name to value given an input argline.

@@ -1,10 +1,12 @@
 package rundeck.data.util
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import groovy.transform.CompileStatic
 import org.quartz.JobKey;
 import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.data.job.JobReferenceImpl;
 
+@CompileStatic
 class JobDataUtil {
 
     static String getExtId(JobData jobData) {
@@ -63,7 +65,7 @@ class JobDataUtil {
     }
 
     static boolean hasSecureOptions(JobData job) {
-        return !job.optionsSet ? false : job.optionSet?.any {
+        return !job.optionSet ? false : job.optionSet?.any {
             it.secureInput || it.secureExposed
         }
     }

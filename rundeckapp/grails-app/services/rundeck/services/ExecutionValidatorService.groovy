@@ -64,14 +64,14 @@ class ExecutionValidatorService implements ExecutionValidator {
     }
 
     if (maxExecutions > 0) {
-      synchronized (syncForJob(jobReference.id)) {
+      synchronized (syncForJob(jobReference.uuid)) {
         //find any currently running executions for this job, and if so, throw exception
         def found = Execution.createCriteria().get {
           projections {
             count()
           }
           isNull('dateCompleted')
-          eq('jobUuid', jobReference.id)
+          eq('jobUuid', jobReference.uuid)
           isNotNull('dateStarted')
           if (withRetry) {
             ne('id', prevRetryId)
@@ -97,7 +97,7 @@ class ExecutionValidatorService implements ExecutionValidator {
         jobName: se.jobName,
         groupPath: se.groupPath,
         serverUUID: se.serverNodeUUID,
-        hasSecureOptions: se.hasSecureOptions(),
+        hasSecureOptions: JobDataUtil.hasSecureOptions(se),
         multipleExecutions: se.multipleExecutions,
         maxMultipleExecutions: se.maxMultipleExecutions?.isInteger() ? Integer.parseInt(se.maxMultipleExecutions) : null
 

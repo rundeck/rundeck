@@ -2145,7 +2145,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(ScheduledExecution scheduledExecution, AuthContext authContext, Map params) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(JobData scheduledExecution, AuthContext authContext, Map params) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
 
@@ -3907,8 +3907,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
             }
             if(!jitem.ignoreNotifications) {
-                def scheduledExecution = ScheduledExecution.get(id)
-
                 if (averageDuration > 0 && duration > averageDuration) {
                     avgDurationExceeded(uuid, [
                             execution: execution,

@@ -495,10 +495,12 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 getJobDataMap() >> datamap
                 getKey() >> ajobKey
             }
-
-            1 * es.executeAsyncBegin(_) >>
-                    new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
         }
+        1 * es.executeAsyncBegin(_) >>
+                new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
+
         given: "trigger has scheduleArgs"
         1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
 
