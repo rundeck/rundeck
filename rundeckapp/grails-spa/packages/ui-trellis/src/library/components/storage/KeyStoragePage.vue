@@ -1,52 +1,23 @@
 <template>
+  <ui-socket section="edit-key-storage-providers" location="viewKeys">
   <div>
-    <div class="vue-tabs">
-      <div class="nav-tabs-navigation">
-        <div class="nav-tabs-wrapper">
-          <ul class="nav nav-tabs" id="job_edit_tabs">
-            <li v-for="tab in tabs" :key="tab.id" :class="{ 'active': activeTab === tab.id }">
-              <a href="#" @click.prevent="activeTab = tab.id">
-                {{ tab.name }}
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Key Tab -->
-      <div v-show="activeTab === 'keys'">
-        <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :created-key="selectedKey" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
-        <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
-          <key-storage-edit :project="this.project" :root-path="rootPath" :upload-setting="uploadSetting" :storage-filter="storageFilter" @keyCreated="updateSelectedKey"  @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
-        </modal>
-      </div>
-
-      <!-- Configure Tab -->
-      <div v-show="activeTab === 'configure'">
-        <key-storage-plguin-configuration
-            :configPrefix="configPrefix"
-            service-name="Storage"
-            :edit-mode="true"
-            :help="$t('help')"
-            project=""
-            :edit-button-text="$t('Edit Storage Plugins')"
-            :mode-toggle="false"
-        >
-        </key-storage-plguin-configuration>
-      </div>
-    </div>
+    <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :createdKey="selectedKey" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
+    <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
+      <key-storage-edit :project="this.project" :root-path="rootPath" :uploadSetting="uploadSetting" :storage-filter="storageFilter" @keyCreated="updateSelectedKey"  @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing"></key-storage-edit>
+    </modal>
   </div>
+  </ui-socket>
 </template>
 
 <script lang="ts">
 import KeyStorageView from "./KeyStorageView.vue";
 import KeyStorageEdit from "./KeyStorageEdit.vue";
-import KeyStoragePlguinConfiguration from "./KeyStoragePlguinConfiguration.vue";
 import Vue from "vue";
+import UiSocket from "../../../../build/pack/src/library/components/utils/UiSocket.vue";
 
 export default Vue.extend({
   name: "KeyStoragePage",
-  components: {KeyStorageEdit, KeyStorageView, KeyStoragePlguinConfiguration},
+  components: {UiSocket, KeyStorageEdit, KeyStorageView},
   props: [
     'readOnly',
     'allowUpload',
