@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -34,6 +35,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.async.Promises
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
@@ -55,6 +57,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.ScheduledExecution
 import rundeck.data.util.JobDataUtil
 
 import java.security.MessageDigest
@@ -76,7 +79,7 @@ public class NotificationService implements ApplicationContextAware{
     static final String POST = "post"
     static final String GET = "get"
 
-    def defaultThreadTO = 120000
+    Long defaultThreadTO = 120000L
     def grailsLinkGenerator
 
     ApplicationContext applicationContext
@@ -90,8 +93,8 @@ public class NotificationService implements ApplicationContextAware{
     def executionService
     def workflowService
     OrchestratorPluginService orchestratorPluginService
-    def featureService
-    def configurationService
+    FeatureService featureService
+    ConfigurationService configurationService
     UserDataProvider userDataProvider
     RdJobService rdJobService
 
@@ -167,18 +170,18 @@ public class NotificationService implements ApplicationContextAware{
         result
     }
 
+    @GrailsCompileStatic
     @Transactional
-    void asyncTriggerJobNotification(String trigger, schedUuid, Map content){
+    void asyncTriggerJobNotification(String trigger, String schedUuid, Map content){
         if(trigger && schedUuid){
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
                 def notificationTask = Promises.task {
-                    JobData jobData = rdJobService.getJobByIdOrUuid(schedId)
-                    //ScheduledExecution.withNewTransaction {
-                        //ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                    ScheduledExecution.withNewTransaction {
+                        JobData jobData = rdJobService.getJobByIdOrUuid(schedUuid)
                         if(null != jobData) {
                             triggerJobNotification(trigger, jobData, content)
                         }
-                    //}
+                    }
                 }
                 try{
                     notificationTask.get(configurationService.getLong("notification.threadTimeOut", defaultThreadTO), TimeUnit.MILLISECONDS)
@@ -187,13 +190,12 @@ public class NotificationService implements ApplicationContextAware{
                     notificationTask.cancel(true)
                 }
             }else{
-                //ScheduledExecution.withNewTransaction {
-                    //ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
-                    def job = rdJobService.getJobByUuid(schedId)
+                ScheduledExecution.withNewTransaction {
+                    def job = rdJobService.getJobByUuid(schedUuid)
                     if(null != job){
                         triggerJobNotification(trigger, job, content)
                     }
-                //}
+                }
             }
 
         }
