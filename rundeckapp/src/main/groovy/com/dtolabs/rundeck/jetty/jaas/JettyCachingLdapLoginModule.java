@@ -663,7 +663,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         try {
             byte[] cookie = null;
-            LdapContext dirContextAux = new InitialLdapContext(getEnvironment(), null);
+            LdapContext dirContextAux = (LdapContext) dirContext.lookup(_providerUrl);
             Control[] pageControls = new Control[]{new PagedResultsControl(rolesPerPage, Control.CRITICAL)};
             dirContextAux.setRequestControls(pageControls);
 
@@ -1215,9 +1215,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (_bindPassword != null) {
             env.put(Context.SECURITY_CREDENTIALS, _bindPassword);
         }
-        if (_nestedGroups) {
-            env.put(Context.REFERRAL, "follow");
-        }
+
         env.put("com.sun.jndi.ldap.read.timeout", Long.toString(_timeoutRead));
         env.put("com.sun.jndi.ldap.connect.timeout", Long.toString(_timeoutConnect));
 
