@@ -2161,6 +2161,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Abandon the transient ScheduledExecution entity instance.
         execution.scheduledExecution = null
+        execution.jobUuid = null
 
         if(execution.workflow){
             if(!execution.workflow.save(flush:true)){
