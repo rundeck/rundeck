@@ -255,4 +255,58 @@ class ProjectNodeSupportSpec extends Specification {
 
 
     }
+
+    def "read plugin configs with extra 2"() {
+
+        given:
+        def prefix = "xyz"
+        def props = [
+                (prefix + '.1.type')    : 'provider1',
+                (prefix + '.1.config.a'): 'b',
+                (prefix + '.1.config.c'): 'd',
+                (prefix + '.1.q')       : 't',
+                (prefix + '.1.r')       : 'v',
+                (prefix + '.1.z.y.a')       : 'config1',
+                (prefix + '.1.z.y.b')   : 'config2',
+                (prefix + '.1.r')       : 'v',
+                (prefix + '.2.type')    : 'provider2',
+                (prefix + '.2.config.x'): 'y',
+                (prefix + '.2.config.z'): 'w',
+
+        ]
+        def svc = "asdf"
+        when:
+
+        def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
+        then:
+        result.size() == 2
+        result[0].service == svc
+        result[0].provider == 'provider1'
+        result[0].configuration == [
+                a: 'b',
+                c: 'd'
+        ]
+        result[0].extra == [
+                q: 't',
+                r: 'v',
+                z: [
+                    y: [
+                            a: 'config1',
+                            b: 'config2',
+                    ]
+                ]
+
+            ]
+
+        result[1].service == svc
+        result[1].provider == 'provider2'
+        result[1].configuration == [
+                x: 'y',
+                z: 'w'
+        ]
+        result[1].extra == [:]
+
+
+    }
+
 }

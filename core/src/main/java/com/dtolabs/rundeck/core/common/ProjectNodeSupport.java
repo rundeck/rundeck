@@ -650,15 +650,26 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             String propPrefix = prefix + "." + count + ".";
             serializeProp(prefix, projProps, count, config);
             if (extra && config.getExtra() != null && config.getExtra().size() > 0) {
-                for (String s : config.getExtra().keySet()) {
-                    if (!"type".equalsIgnoreCase(s) && !s.startsWith("config.")) {
-                        projProps.setProperty(propPrefix + s, config.getExtra().get(s).toString());
-                    }
-                }
+                Properties extraProperties = parseExtraProperties(propPrefix, config.getExtra());
+                projProps.putAll(extraProperties);
             }
             count++;
         }
         return projProps;
+    }
+
+    public static Properties parseExtraProperties(String propPrefix , Map<String, Object> extra){
+        Properties extraProps = new Properties();
+
+        for (String s : extra.keySet()) {
+            if(extra.get(s) instanceof Map){
+                Properties subprops = parseExtraProperties(propPrefix+s+".", (Map)extra.get(s));
+                extraProps.putAll(subprops);
+            }else{
+                extraProps.setProperty(propPrefix + s, extra.get(s).toString());
+            }
+        }
+        return extraProps;
     }
 
     /**
@@ -772,14 +783,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                     }
                 }
                 if (extra) {
+                    Map<String, Object> extraConfig = new HashMap<>();
                     //list all extra props
                     for (String s : props.keySet()) {
                         if (s.startsWith(prefix + ".")) {
                             String suffix = s.substring(prefix.length() + 1);
                             if (!"type".equalsIgnoreCase(suffix) && !suffix.startsWith("config.")) {
-                                extraData.put(suffix, props.get(s));
+                                extraConfig.put(suffix, props.get(s));
                             }
                         }
+                    }
+
+                    Map<String, Object> extraMap = createExtraProperties(extraConfig );
+                    if(extraMap.size()>0){
+                        extraData.putAll(extraMap);
                     }
                 }
                 list.add(new SimplePluginConfiguration(serviceName, providerType, configProps, extraData));
@@ -789,6 +806,38 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             i++;
         }
         return list;
+    }
+
+    public static Map<String, Object> createExtraProperties(final Map<String, Object> extraProps){
+        Map<String, Object> extraMap = new HashMap<>();
+
+        for (String key : extraProps.keySet()) {
+            String[] paths = key.split("\\.");
+            Map<String, Object> nestedMap = new HashMap<>();
+
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                if (i < paths.length-1) {
+                    Map<String, Object> newMap = new HashMap<>();
+                    if(i==0){
+                        extraMap.putIfAbsent(path, newMap);
+                        nestedMap = (Map)extraMap.get(path);
+                    }else{
+                        nestedMap.putIfAbsent(path, newMap);
+                        nestedMap = (Map)nestedMap.get(path);
+                    }
+
+                } else {
+                    if(i==0){
+                        extraMap.putIfAbsent(path, extraProps.get(key));
+                    }else{
+                        nestedMap.put(path, extraProps.get(key));
+                    }
+
+                }
+            }
+        }
+        return extraMap;
     }
 
 
