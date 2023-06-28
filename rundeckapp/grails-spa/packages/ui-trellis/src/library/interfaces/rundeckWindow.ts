@@ -21,8 +21,8 @@ export interface RundeckContext {
     navbar: {
         items: Array<NavItem>
     }
-    rootStore: RootStore,
-    locale?: string,
+    rootStore: RootStore
+    locale?: string
     language?: string
 }
 
