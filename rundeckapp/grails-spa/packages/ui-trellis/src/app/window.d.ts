@@ -1,4 +1,4 @@
-import {RundeckContext} from '@/library'
+import { RundeckContext } from '../library/interfaces/rundeckWindow'
 
 declare global {
     interface Window {

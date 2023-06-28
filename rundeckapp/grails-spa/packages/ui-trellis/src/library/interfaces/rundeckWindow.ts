@@ -21,7 +21,9 @@ export interface RundeckContext {
     navbar: {
         items: Array<NavItem>
     }
-    rootStore: RootStore
+    rootStore: RootStore,
+    locale?: string,
+    language?: string
 }
 
 export interface RundeckToken {
