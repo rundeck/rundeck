@@ -2770,6 +2770,14 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.uuid=null
                 //set session new workflow
                 WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                if(newScheduledExecution.options){
+                    def editopts = [:]
+
+                    newScheduledExecution.options.each {Option opt ->
+                        editopts[opt.name] = opt.createClone()
+                    }
+                    EditOptsController.getSessionOptions(session,null,editopts)
+                }
                 def model = scheduledExecutionService.prepareCreateEditJob(params, newScheduledExecution , AuthConstants.ACTION_CREATE, authContext)
                 model["jobComponentValues"] = imported.associations
                 model["iscopy"] = true
