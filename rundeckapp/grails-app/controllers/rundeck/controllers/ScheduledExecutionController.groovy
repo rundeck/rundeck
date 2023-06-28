@@ -2779,8 +2779,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                     EditOptsController.getSessionOptions(session,null,editopts)
                 }
                 def model = scheduledExecutionService.prepareCreateEditJob(params, newScheduledExecution , AuthConstants.ACTION_CREATE, authContext)
-                model["jobComponentValues"] = imported.associations
-                model["iscopy"] = true
+                def jobComponentValues=rundeckJobDefinitionManager.getImportedJobDefinitionComponentValues(imported)
+                model["jobComponentValues"] = jobComponentValues
 
                 return render(
                     view: 'create',
