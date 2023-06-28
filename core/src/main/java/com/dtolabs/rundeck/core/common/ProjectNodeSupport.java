@@ -651,7 +651,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             serializeProp(prefix, projProps, count, config);
             if (extra && config.getExtra() != null && config.getExtra().size() > 0) {
                 Properties extraProperties = parseExtraProperties(propPrefix, config.getExtra());
-                projProps.putAll(extraProperties);
+                extraProperties.forEach((key, value) -> {
+                    if(!projProps.containsKey(key)){
+                        projProps.put(key, value);
+                    }
+                });
             }
             count++;
         }

@@ -198,11 +198,12 @@ class ProjectNodeSupportSpec extends Specification {
             def result = ProjectNodeSupport.serializePluginConfigurations(prefix, configs, true)
         then:
             result
-            result.size() == 8
+            result.size() == 9
             result == [
                     (prefix + '.1.type')    : 'provider1',
                     (prefix + '.1.config.a'): 'b',
                     (prefix + '.1.config.c'): 'd',
+                    (prefix + '.1.config.blah'): 'alsonot',
                     (prefix + '.1.q')       : 't',
                     (prefix + '.1.r')       : 'v',
                     (prefix + '.2.type')    : 'provider2',
