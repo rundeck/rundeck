@@ -731,7 +731,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             } while (cookie != null);
             dirContextAux.close();
         } catch (NamingException | IOException e) {
-            e.printStackTrace();
+            LOG.error("Error: {0}", e);
         }
         return roleMemberOfMap;
     }
