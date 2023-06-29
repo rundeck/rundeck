@@ -13,7 +13,7 @@
 import KeyStorageView from "./KeyStorageView.vue";
 import KeyStorageEdit from "./KeyStorageEdit.vue";
 import Vue from "vue";
-import UiSocket from "../../../../build/pack/src/library/components/utils/UiSocket.vue";
+import UiSocket from "../utils/UiSocket.vue";
 
 export default Vue.extend({
   name: "KeyStoragePage",
