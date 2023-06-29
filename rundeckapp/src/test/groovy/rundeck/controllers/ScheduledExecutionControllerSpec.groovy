@@ -2722,6 +2722,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _*authorizeProjectResource(_, _, _, _) >> true
                 _*getAuthContextForSubjectAndProject(_, _) >> authContext
             }
+            controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+                1 * getImportedJobDefinitionComponentValues(!null)>>[input:'values']
+            }
 
             request.method = 'POST'
             params.project='anuncle'
@@ -2744,7 +2747,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             !request.warn
             !flash.error
             view == '/scheduledExecution/create'
-            model.jobComponentValues==[test:'values']
+            model.jobComponentValues==[input:'values']
             //job project set to upload parameter
             job.project=='anuncle'
 
