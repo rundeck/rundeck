@@ -24,11 +24,13 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.fasterxml.jackson.core.JsonParseException
-import com.google.gson.Gson
 import grails.gorm.DetachedCriteria
-import groovy.json.JsonOutput
-import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
+import rundeck.data.job.RdNodeConfig
+import rundeck.data.validation.shared.SharedExecutionConstraints
+import rundeck.data.validation.shared.SharedNodeConfigConstraints
+import rundeck.data.validation.shared.SharedProjectNameConstraints
+import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
@@ -37,6 +39,8 @@ import rundeck.services.execution.ExecutionReferenceImpl
 */
 class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionData {
     ScheduledExecution scheduledExecution
+    String uuid = UUID.randomUUID().toString()
+    String jobUuid
     Date dateStarted
     Date dateCompleted
     String status
@@ -51,7 +55,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Integer retryAttempt=0
     Boolean willRetry=false
     Execution retryExecution
-    Orchestrator orchestrator;
+    Orchestrator orchestrator
     String userRoleList
     String serverNodeUUID
     Integer nodeThreadcount=1
@@ -64,64 +68,21 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
     static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged']
     static constraints = {
-        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
+        importFrom SharedExecutionConstraints
+        importFrom SharedNodeConfigConstraints
+        importFrom SharedServerNodeUuidConstraints
+        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{ val, Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
                 return 'job.project.mismatch.error'
             }
         })
         logFileStorageRequest(nullable:true)
         workflow(nullable:true)
-        argString(nullable:true)
-        dateStarted(nullable:true)
-        dateCompleted(nullable:true)
-        status(nullable:true)
-        outputfilepath(nullable:true)
         scheduledExecution(nullable:true)
-        loglevel(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
-        nodeKeepgoing(nullable:true)
-        doNodedispatch(nullable:true)
-        nodeThreadcount(nullable:true)
-        nodeRankOrderAscending(nullable: true)
-        nodeRankAttribute(nullable: true)
-        orchestrator(nullable: true);
-        failedNodeList(nullable:true, blank:true)
-        succeededNodeList(nullable:true, blank:true)
-        abortedby(nullable:true, blank:true)
-        serverNodeUUID(maxSize: 36, size:36..36, blank: true, nullable: true, validator: { val, obj ->
-            if (null == val) return true;
-            try { return null!= UUID.fromString(val) } catch (IllegalArgumentException e) {
-                return false
-            }
-        })
-        timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,matches: /^\d+$/)
-        timedOut(nullable: true)
-        executionType(nullable: true, maxSize: 30)
-        retryAttempt(nullable: true)
+        orchestrator(nullable: true)
         retryExecution(nullable: true)
-        willRetry(nullable: true)
-        nodeFilterEditable(nullable: true)
-        userRoleList(nullable: true)
-        retryDelay(nullable:true)
-        successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
         retryPrevId(nullable: true)
-        excludeFilterUncheck(nullable: true)
         extraMetadata(nullable: true)
     }
 
@@ -203,6 +164,45 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
     }
 
+    @Override
+    Serializable getRetryExecutionId() {
+        return retryExecution?.id
+    }
+
+    @Override
+    Serializable getLogFileStorageRequestId() {
+        return logFileStorageRequest?.id
+    }
+
+    RdNodeConfig getNodeConfig() {
+        new RdNodeConfig(
+                nodeInclude : nodeInclude,
+                nodeExclude : nodeExclude,
+                nodeIncludeName : nodeIncludeName,
+                nodeExcludeName : nodeExcludeName,
+                nodeIncludeTags : nodeIncludeTags,
+                nodeExcludeTags : nodeExcludeTags,
+                nodeIncludeOsName : nodeIncludeOsName,
+                nodeExcludeOsName : nodeExcludeOsName,
+                nodeIncludeOsFamily : nodeIncludeOsFamily,
+                nodeExcludeOsFamily : nodeExcludeOsFamily,
+                nodeIncludeOsArch : nodeIncludeOsArch,
+                nodeExcludeOsArch : nodeExcludeOsArch,
+                nodeIncludeOsVersion : nodeIncludeOsVersion,
+                nodeExcludeOsVersion : nodeExcludeOsVersion,
+                nodeExcludePrecedence : nodeExcludePrecedence,
+                successOnEmptyNodeFilter: successOnEmptyNodeFilter,
+                filter: filter,
+                filterExclude: filterExclude,
+                excludeFilterUncheck: excludeFilterUncheck,
+                nodeKeepgoing : nodeKeepgoing,
+                doNodedispatch : doNodedispatch,
+                nodeRankAttribute : nodeRankAttribute,
+                nodeRankOrderAscending : nodeRankOrderAscending,
+                nodeFilterEditable : nodeFilterEditable,
+                nodeThreadcount : nodeThreadcount
+        )
+    }
 
     public String toString() {
         return "Workflow execution: ${workflow}"
