@@ -118,6 +118,7 @@ import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
@@ -166,6 +167,7 @@ import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
+import rundeckapp.init.servlet.JettyServletHstsCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -545,7 +547,9 @@ beans={
     }
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
-    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobXmlFormat(JobXMLFormat){
+        jobXmlValueListDelimiter = application.config.getProperty('rundeck.jobsImport.xmlValueListDelimiter', String)
+    }
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
     }
@@ -861,9 +865,12 @@ beans={
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
-
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
+
+    def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
+    def stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
+    jettyServletHstsCustomizer(JettyServletHstsCustomizer,stsMaxAgeSeconds,stsIncludeSubdomains)
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')
@@ -909,5 +916,6 @@ beans={
     pluginMetaDataProvider(GormPluginMetaDataProvider)
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
+    logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
 
 }

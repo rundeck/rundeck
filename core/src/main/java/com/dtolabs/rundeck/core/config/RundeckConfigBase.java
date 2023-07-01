@@ -59,6 +59,14 @@ public class RundeckConfigBase {
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
+    JobsImport jobsImport;
+
+    @Data public static class JobsImport{
+        XmlValueListDelimiter xmlValueListDelimiter;
+        @Data public static class XmlValueListDelimiter{
+            String xmlValueListDelimiter;
+        }
+    }
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
@@ -319,6 +327,9 @@ public class RundeckConfigBase {
         @Data
         public static class Servlet {
             Map<String,Object> initParams;
+            Integer stsMaxAgeSeconds;
+            Boolean stsIncludeSubdomains;
+
         }
     }
 
@@ -396,7 +407,7 @@ public class RundeckConfigBase {
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
-
+        Debug debug = new Debug();
 
 
         @Data
@@ -409,6 +420,11 @@ public class RundeckConfigBase {
         @Data
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
+        }
+
+        @Data
+        public static class Debug {
+            Boolean showTracesOnResponse = false;
         }
     }
 
@@ -615,6 +631,7 @@ public class RundeckConfigBase {
         @Data
         public static class Job {
             Description description;
+
         }
         @Data
         public static class Description {

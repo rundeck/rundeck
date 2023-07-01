@@ -83,6 +83,7 @@ export class DockerClusterManager implements IClusterManager {
 export class ClusterFactory {
     static async CreateCluster(dir: string, config: IConfig): Promise<IClusterManager> {
         // TODO: Support non-docker clusters
+        console.log(`Creating cluster from ${Path.resolve(dir)}`)
         return new DockerClusterManager(dir, config)
     }
 }

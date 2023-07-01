@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig;
 import com.fasterxml.jackson.databind.annotation.JsonAppend;
+import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -101,6 +102,11 @@ public class Validator {
                         "errors=" + errors ;
             }
         }
+    }
+    @Data
+    public static class ReportSet{
+        private final boolean valid;
+        private final Map<String, Validator.Report> validations;
     }
 
     /**

@@ -35,6 +35,7 @@ import rundeck.codecs.JobsXMLCodec
 class JobXMLFormat implements JobFormat, ApplicationContextAware {
     final String format = 'xml'
     ApplicationContext applicationContext
+    String jobXmlValueListDelimiter = ""
 
     /**
      * Convert Xmap Map to Canonical Job Map
@@ -43,7 +44,7 @@ class JobXMLFormat implements JobFormat, ApplicationContextAware {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     Map convertXmapToJobMap(Map inputXmap) throws JobDefinitionException {
-        def oMap = JobsXMLCodec.convertXMapToJobMap(inputXmap)
+        def oMap = JobsXMLCodec.convertXMapToJobMap(inputXmap,jobXmlValueListDelimiter)
         applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
             def vMap = jobImport.importXMap(inputXmap, oMap)
             if (vMap) {
