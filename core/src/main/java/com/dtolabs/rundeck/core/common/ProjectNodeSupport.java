@@ -472,11 +472,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         CloseableProvider<ResourceModelSource> sourceForConfiguration ;
 
         if (null == nodeSourceLoader) {
-            sourceForConfiguration =
-                resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
+            sourceForConfiguration = resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
         } else {
             try {
-                sourceForConfiguration = nodeSourceLoader.getSourceForConfiguration(projectConfig.getName(), new SourceDefinitionImpl(type,configuration,extraConfiguration,ident,index) );
+                NodeSourceLoaderConfig nodeSourceLoaderConfig = nodeSourceLoader.getSourceForConfiguration(projectConfig.getName(),
+                                                                             new SourceDefinitionImpl(type,configuration,extraConfiguration,ident,index)
+                );
+                sourceForConfiguration = nodeSourceLoaderConfig.getCloseableProvider();
             } catch (Throwable e) {
                 throw new ExecutionServiceException(e, "Could not create node source: " + e.getMessage());
             }

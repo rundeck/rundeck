@@ -5,7 +5,5 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 
 public interface NodeSourceLoader {
 
-    CloseableProvider<ResourceModelSource> getSourceForConfiguration(String project, SourceDefinition sourceDefinition);
-
-
+    NodeSourceLoaderConfig getSourceForConfiguration(String project, SourceDefinition sourceDefinition);
 }
