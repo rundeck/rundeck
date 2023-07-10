@@ -288,3 +288,19 @@ logger.liquibase.name = liquibase
 logger.liquibase.level = info
 logger.liquibase.additivity = false
 logger.liquibase.appenderRef.stdout.ref = STDOUT
+
+appender.analytics.type = RollingFile
+appender.analytics.name = analytics
+appender.analytics.fileName = ${baseDir}/rundeck.analytics.log
+appender.analytics.append = true
+appender.analytics.bufferedIO = true
+appender.analytics.filePattern = ${baseDir}/rundeck.analytics.log.%d{yyyy-MM-dd}.gz
+appender.analytics.layout.type = PatternLayout
+appender.analytics.layout.pattern = ${prefix} [%t] - %m%n
+appender.analytics.policies.type = Policies
+appender.analytics.policies.time.type = TimeBasedTriggeringPolicy
+appender.analytics.policies.time.interval = 1
+
+logger.analytics.name = rundeckpro.analytics.AnalyticsEventListener
+logger.analytics.level = info
+logger.analytics.appenderRef.analytics.ref = analytics

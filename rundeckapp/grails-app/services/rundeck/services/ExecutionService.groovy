@@ -1147,17 +1147,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
+            def listenersList = [
+                    contextmanager,
+                    executionListener, //manages context for logging
+                    wfEventListener, //emits state change events to log
+                    execStateListener, //updates WF execution state model
+                    logOutFlusher, //flushes stdout output after node steps
+                    logErrFlusher, //flush stderr output after node steps
+                    /*new EchoExecListener() */
+            ]
+            try {
+                Class<?> clazz = Class.forName("rundeckpro.analytics.WorkflowExecutionAnalyticsListenerImpl")
+                def analyticsListener = clazz.newInstance()
+                listenersList.add(analyticsListener as WorkflowExecutionListener)
+            }catch (ClassNotFoundException e){}
+
             def multiListener = MultiWorkflowExecutionListener.create(
                     executionListener, //delegate for ExecutionListener
-                    [
-                            contextmanager,
-                            executionListener, //manages context for logging
-                            wfEventListener, //emits state change events to log
-                            execStateListener, //updates WF execution state model
-                            logOutFlusher, //flushes stdout output after node steps
-                            logErrFlusher, //flush stderr output after node steps
-                            /*new EchoExecListener() */
-                    ]
+                    listenersList
             )
 
             def secureOptionNodeDeferred = [:]
