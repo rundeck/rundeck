@@ -3510,7 +3510,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!workflow.commands || workflow.commands.size() < 1) {
             return null
         }
-        def name = (workflow.strategy == WorkflowExecutionItem.STEP_FIRST) ? SequentialWorkflowStrategy.PROVIDER_NAME : workflow.strategy
+        def name = (workflow.strategy.equalsIgnoreCase(WorkflowExecutionItem.STEP_FIRST)) ? SequentialWorkflowStrategy.PROVIDER_NAME : workflow.strategy
         //validate input values wrt to property definitions
 
         def pluginConfigFactory = frameworkService.pluginConfigFactory(configmap, projectProps)

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -5892,6 +5893,96 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     }
 
+}
+def "validate workflow strategy from job import"(){
+
+    given:
+    def enabled=false
+    def serverUUID = null
+    def uuid=serverUUID?:UUID.randomUUID().toString()
+    def projectMock = Mock(IRundeckProject) {
+        getProjectProperties() >> [:]
+    }
+    service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+        authorizeProjectJobAll(*_)>>true
+        authorizeProjectResourceAll(*_)>>true
+        authorizeProjectResourceAny(*_)>>true
+        authorizeProjectJobAny(_,_,['update'],_)>>true
+        getAuthContextWithProject(_,_)>>{args->
+            return args[0]
+        }
+    }
+    service.frameworkService=Mock(FrameworkService){
+        existsFrameworkProject('AProject')>>true
+        existsFrameworkProject('BProject')>>true
+        isClusterModeEnabled()>>enabled
+        getServerUUID()>>uuid
+        getRundeckFramework()>>Mock(Framework){
+            getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
+                getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+            }
+        }
+        pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+            create(_,_) >> Mock(PropertyResolver)
+        }
+        getFrameworkProject(_) >> projectMock
+    }
+    service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+        determineExecNode(*_)>>{args->
+            return uuid
+        }
+    }
+
+    service.executionServiceBean=Mock(ExecutionService){
+        executionsAreActive()>>false
+    }
+    service.pluginService=Mock(PluginService){
+        1 *  validatePlugin(
+                plugiName,
+                _,
+                _,
+                PropertyScope.Instance,
+                null
+        ) >> null
+    }
+
+    service.executionUtilService=Mock(ExecutionUtilService){
+        createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+    }
+    service.quartzScheduler = Mock(Scheduler)
+    service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+    service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+        updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
+        validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
+    }
+    service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+    Map params = [:]
+    Map validationMap = [:]
+
+    def se = new ScheduledExecution(createJobParams(
+            workflow: new Workflow(strategy: strategy,
+                    commands: [
+                            new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)
+                    ]
+            )
+    )
+    )
+
+    when:
+    def results = service.validateDefinitionWFStrategy(se,params,validationMap)
+
+
+    then:
+    results == validation
+
+    where:
+    strategy         | plugiName           | validation
+    "step-first"     | "sequential"        | false
+    "sequential"     | "sequential"        | false
+    "node-first"     | "node-first"        | false
+    "ruleset"        | "ruleset"           | false
+    "parallel"       | "parallel"          | false
 }
 
 @CompileStatic
