@@ -26,7 +26,7 @@
         }
         item.title=(exec?exec.executionState:report.status=='succeed'?'SUCCEEDED':'FAILED')
         if(report.executionId){
-            item.link=createLink(controller:'execution', action:'show',params:[id:report.executionId,project:report.ctxProject], absolute: true)
+            item.link=createLink(controller:'execution', action:'show',params:[id:report.executionId,project:report.project], absolute: true)
         }
         if(report.reportId){
             item.title+=": "+ report.reportId

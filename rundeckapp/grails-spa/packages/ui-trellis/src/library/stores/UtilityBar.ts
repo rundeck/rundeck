@@ -1,3 +1,4 @@
+import {NavItem} from './NavBar'
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
 import { action, computed, observable } from 'mobx'
@@ -10,7 +11,7 @@ export class UtilityBar {
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         if (window._rundeck.navbar) {
-            window._rundeck.navbar.items.forEach(i => {
+            window._rundeck.navbar.items.forEach((i:NavItem) => {
                 this.items.push({...i, visible: true, container: i.container || 'root'})
             })
         }

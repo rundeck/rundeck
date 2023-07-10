@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectInfo
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -58,6 +59,7 @@ import org.rundeck.core.auth.app.NamedAuthRequestUtil
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 
 import rundeck.AuthToken
@@ -79,7 +81,6 @@ import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
-import rundeck.services.data.ProjectDataService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
@@ -158,9 +159,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -204,9 +202,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -1319,18 +1314,19 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = 'desc'
         def prj = new Project(name: 'proj', description: description).save(flush: true)
+        def projinfo = Mock(IProjectInfo) {
+            getDescription() >> description
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projinfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
         GormProjectDataProvider provider = new GormProjectDataProvider()
-
-        controller.projectService = Mock(ProjectService){
-            findProjectByName(_) >>  prj
-        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1358,10 +1354,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1382,8 +1375,12 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     new Project(name: 'proj').save(flush: true)
+        def projInfo = Mock(IProjectInfo) {
+            getDescription() >> null
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projInfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
@@ -1399,10 +1396,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
-        1 * controller.projectService.findProjectByName('proj') >> Mock(RdProject)
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
-        0 * controller.projectService.update(_,_)
         description == response.json.projects[0].description
     }
 
@@ -1419,10 +1414,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
 
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
@@ -1850,10 +1842,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -2310,9 +2299,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -2357,9 +2343,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
@@ -2408,9 +2391,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,true) >> [new Date()]
@@ -2880,6 +2860,18 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             'apiLogstorageListIncompleteExecutions' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
             'systemConfig'                          | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
             'systemInfo'                            | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+    }
+
+    @Unroll
+    def "RdAuthorizeJob required for endpoint #endpoint authorize #access"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeJob)
+        then:
+            result.value() == access
+        where:
+            endpoint                                | access
+            'apiJobDetail'                          | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+            'apiJobForecast'                        | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
     }
 
     @Unroll

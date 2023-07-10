@@ -60,6 +60,7 @@ import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -82,6 +83,8 @@ class ProjectController extends ControllerBase{
     ProjectService projectService
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
+    ConfigurationService configurationService
+
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -821,6 +824,15 @@ Authorization required: `create` for resource type `project`
                             format: respFormat
                     ])
         }
+        def disabled = frameworkService.isFrameworkProjectDisabled(project)
+        if (disabled) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.project.disabled',
+                    args: [project],
+                    format: respFormat
+            ])
+        }
         def exists = frameworkService.existsFrameworkProject(project)
         if (exists) {
             return apiService.renderErrorFormat(response, [
@@ -881,14 +893,23 @@ Authorization required: `create` for resource type `project`
             description = """Delete an existing projects on the server.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
-            parameters = @Parameter(
-                    name = 'project',
-                    in = ParameterIn.PATH,
-                    description = 'Project Name',
-                    allowEmptyValue = false,
-                    required = true,
-                    schema = @Schema(implementation = String.class)
-            )
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'deferred',
+                            in = ParameterIn.QUERY,
+                            description = 'Deferred Delete. Since: v45',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
+                    )]
     )
     @Tags(
             [
@@ -907,7 +928,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
-    @GrailsCompileStatic
+
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def apiProjectDelete(){
         if (!apiService.requireApi(request, response)) {
@@ -916,11 +937,19 @@ Authorization required: `delete` access for `project` resource type or `admin` o
         def authorizing = authorizingProject
         def project1 = authorizing.resource
 
+        Boolean deferred = false
+
+        if (request.api_version >= ApiVersions.V45) {
+            deferred = params.getBoolean("deferred",
+                    configurationService.getBoolean("projectService.deferredProjectDelete", true))
+        }
+
         ProjectService.DeleteResponse result = projectService.deleteProject(
             project1,
             frameworkService.getRundeckFramework(),
             authorizing.authContext,
-            authorizing.authContext.username
+            authorizing.authContext.username,
+            deferred
         )
         if (!result.success) {
             return apiService.renderErrorFormat(

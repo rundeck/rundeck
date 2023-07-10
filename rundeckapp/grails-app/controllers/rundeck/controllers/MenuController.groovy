@@ -64,6 +64,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
@@ -2398,8 +2399,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
-            def prj = projectService.findProjectByName(project.name)
-            def description = prj?.description
+            
+            def description = project.info?.description
+            
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
             }
@@ -2856,6 +2858,7 @@ Since: V18''',
     /**
      * API: get job info: /api/18/job/{id}/info
      */
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobDetail() {
         if (!apiService.requireApi(request, response, ApiVersions.V18)) {
             return
@@ -2867,30 +2870,21 @@ Since: V18''',
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
-        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-        )) {
-            return apiService.renderErrorXml(
-                    response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : 'api.error.item.unauthorized',
-                            args  : ['Read', 'Job ID', params.id]
-                    ]
-            )
-        }
+
         if (!(response.format in ['all', 'xml', 'json'])) {
-            return apiService.renderErrorXml(
+            return apiService.renderErrorFormat(
                     response,
                     [
                             status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -2985,6 +2979,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
         ]
     )
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobForecast() {
         if (!apiService.requireApi(request, response, ApiVersions.V31)) {
             return
@@ -2996,30 +2991,21 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
 
+        if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.project.disabled',
+                    args: [scheduledExecution.project],
+                    format: response.format
+            ])
+        }
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
-        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-        )) {
-            return apiService.renderErrorXml(
-                    response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : 'api.error.item.unauthorized',
-                            args  : ['Read', 'Job ID', params.id]
-                    ]
-            )
-        }
+
         if (!(response.format in ['all', 'xml', 'json'])) {
-            return apiService.renderErrorXml(
+            return apiService.renderErrorFormat(
                     response,
                     [
                             status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,

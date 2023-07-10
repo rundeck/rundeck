@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# use api V44
+API_VERSION=44
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh

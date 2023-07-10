@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.server.projects;
 import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import org.rundeck.app.data.model.v1.project.RdProject;
 import rundeck.services.ProjectManagerService;
 
 import java.io.IOException;
@@ -34,22 +35,22 @@ public class RundeckProject implements IRundeckProject{
     private IRundeckProjectConfig projectConfig;
     private IProjectInfo info;
     private IProjectNodesFactory nodesFactory;
-    private final String name;
+    private final RdProject projectData;
 
     public RundeckProject(
-            final String name,
+            final RdProject projectData,
             final IRundeckProjectConfig projectConfig,
             final ProjectManagerService projectService
     )
     {
-        this.name = name;
+        this.projectData = projectData;
         this.projectConfig = projectConfig;
         this.projectService = projectService;
 
     }
 
     public String getName(){
-        return name;
+        return projectData.getName();
     }
 
     public String getProperty(final String property) {
@@ -145,7 +146,7 @@ public class RundeckProject implements IRundeckProject{
 
     public IRundeckProjectConfig getProjectConfig() {
         if (null == projectConfig) {
-            this.projectConfig = projectService.loadProjectConfig(this.name);
+            this.projectConfig = projectService.loadProjectConfig(this.getName());
         }
         return projectConfig;
     }
@@ -169,5 +170,10 @@ public class RundeckProject implements IRundeckProject{
 
     public void setNodesFactory(IProjectNodesFactory nodesFactory) {
         this.nodesFactory = nodesFactory;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return !RdProject.State.DISABLED.equals(projectData.getState());
     }
 }

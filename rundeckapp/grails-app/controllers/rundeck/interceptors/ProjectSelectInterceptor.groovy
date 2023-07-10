@@ -94,6 +94,16 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
+            if (frameworkService.isFrameworkProjectDisabled(selected)) {
+                response.setStatus(409)
+                request.title= 'Disabled'
+                request.errorCode= 'project.disabled'
+                request.errorArgs= [params.project]
+                params.project=null
+                render(view: '/common/error')
+                AA_TimerInterceptor.afterRequest(request, response, session)
+                return false
+            }
             if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextEvaluator.authResourceForProject(selected),

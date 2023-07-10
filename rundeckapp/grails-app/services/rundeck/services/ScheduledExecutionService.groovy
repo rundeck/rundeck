@@ -1071,6 +1071,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ]
             return [error: err,success: false]
         }
+        if (frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            def err = [
+                    message: lookupMessage( "api.error.project.disabled",  [scheduledExecution.project]),
+                    errorCode: 'api.error.project.disabled',
+                    id: jobid
+            ]
+            return [error: err,success: false]
+        }
 
         //extend auth context using project-specific authorization
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextWithProject(original, scheduledExecution.project)
@@ -1428,18 +1436,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * Schedule a temp job to execute immediately.
      */
     Map scheduleTempJob(AuthContext authContext, Execution e) {
+
         if(!executionService.getExecutionsAreActive()){
-            def msg=g.message(code:'disabled.execution.run')
+            def msg=lookupMessageError('disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if(!isProjectExecutionEnabled(e.project)){
-            def msg=g.message(code:'project.execution.disabled')
+            def msg=lookupMessageError('project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if (!e.hasExecutionEnabled()) {
-            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            def msg=lookupMessageError('scheduleExecution.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -1452,7 +1461,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         [
                             'isTempExecution': 'true',
                             'executionId': e.id.toString(),
-                            'authContext': authContext
+                            'authContext': authContext,
+                            'project': e.project    
                         ]
                     )
                 )
@@ -1477,6 +1487,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @NotTransactional
     Map createJobDetailMap(ScheduledExecution se) {
         Map data = [:]
+        data.put("project", se.project)
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
@@ -1956,6 +1967,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             logJobChange(changeinfo+[extraInfo: extraInfo],scheduledExecution.properties)
         }
 
+        if(frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
+            return [success           : false,
+                    scheduledExecution: scheduledExecution,
+                    message           : lookupMessage('api.error.project.disabled', [scheduledExecution.project]),
+                    status            : 409,
+                    errorCode         : 'api.error.project.disabled']
+        }
 
         def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
         def oldJobName = scheduledExecution.generateJobScheduledName()

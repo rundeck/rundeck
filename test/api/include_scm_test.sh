@@ -4,6 +4,8 @@
 #/   Common functions for scm tests
 #/ 
 
+# use api V44
+API_VERSION=44
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}

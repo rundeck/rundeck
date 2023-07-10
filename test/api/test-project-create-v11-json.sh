@@ -57,7 +57,6 @@ if [ 0 != $? ] ; then
 fi
 
 
-
 rm $DIR/proj_create.post.json
 rm $DIR/curl.out
 

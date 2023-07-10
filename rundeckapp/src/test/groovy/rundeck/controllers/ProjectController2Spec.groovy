@@ -729,6 +729,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         controller.frameworkService=Mock(FrameworkService)
 
         1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
+        1 * controller.frameworkService.isFrameworkProjectDisabled('test1')>>false
 
 
         (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]
