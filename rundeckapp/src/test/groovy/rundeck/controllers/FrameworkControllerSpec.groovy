@@ -726,6 +726,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            1 * fwkService.discoverScopedConfiguration(_, 'project.plugin')
             0 * fwkService._(*_)
     }
     def "save project plugin groups"() {
@@ -776,6 +777,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            1 * fwkService.discoverScopedConfiguration(_, 'project.plugin')
             0 * fwkService._(*_)
             1 * controller.pluginGroupPasswordFieldsService.reset()
             (expected?1:0) * controller.pluginGroupPasswordFieldsService.untrack([[config: [type: 'aplugin', props: [a:'b', 'c':null]], type: 'aplugin', index: 0]],_)
