@@ -2199,7 +2199,7 @@ key2=value'''
             providers.each { String provider, Map<String, String> providerConfig ->
                 def desc = pluginDescriptions.find { it.name == provider }
                 if (desc) {
-                    def validation = pluginService.validatePluginConfig(svcName, provider, providerConfig, null)
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
                     if (!validation.valid) {
                         Validator.Report report = validation.report
                         errors << (
@@ -2493,7 +2493,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             providers.each { String provider, Map<String, String> providerConfig ->
                 def desc = pluginDescriptions.find { it.name == provider }
                 if (desc) {
-                    def validation = pluginService.validatePluginConfig(svcName, provider, providerConfig, null)
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
                     if (!validation.valid) {
                         Validator.Report report = validation.report
                         errors << (

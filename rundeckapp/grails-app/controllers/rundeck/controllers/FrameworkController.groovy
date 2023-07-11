@@ -1188,7 +1188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if (!desc) {
                         return null
                     }
-                    def validation = pluginService.validatePluginConfig(svcName, provider, config, null)
+                    def validation = frameworkService.validateDescription(desc, "", config)
                     if (!validation.valid) {
                         Validator.Report report = validation.report
                         errors << (
@@ -1475,7 +1475,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 providers.each { String provider, Map<String, String> config ->
                     def desc = pluginDescriptions.find { it.name == provider }
                     if (desc) {
-                        def validation = pluginService.validatePluginConfig(svcName, provider, config, null)
+                        def validation = frameworkService.validateDescription(desc, "", config)
                         if (!validation.valid) {
                             Validator.Report report = validation.report
                             errors << (
