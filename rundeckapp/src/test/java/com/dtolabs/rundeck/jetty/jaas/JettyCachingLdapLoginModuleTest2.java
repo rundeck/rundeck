@@ -463,6 +463,13 @@ public class JettyCachingLdapLoginModuleTest2 {
                 eq(module._roleMemberFilter),
                 any(SearchControls.class)
             )).thenReturn(allRolesSearchResults);
+
+            when(rootContext.search(
+                    eq(module._roleBaseDn),
+                    eq(module._roleMemberFilter),
+                    any(SearchControls.class)
+            )).thenReturn(allRolesSearchResults);
+
             when(allRolesSearchResults.nextElement()).thenReturn(
                 role1SearchResult,
                 role2SearchResult,
