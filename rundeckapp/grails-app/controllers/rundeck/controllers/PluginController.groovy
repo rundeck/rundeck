@@ -312,6 +312,12 @@ Since: v33
             if (dynamicProps) {
                 terseDesc.dynamicProps = dynamicProps
             }
+
+            def dynamicDefaults = pluginService.
+                    getDynamicDefaults(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+            if (dynamicDefaults) {
+                terseDesc.dynamicDefaults = dynamicDefaults
+            }
         }
 
         render(terseDesc as JSON)

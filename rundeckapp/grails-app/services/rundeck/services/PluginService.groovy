@@ -214,6 +214,41 @@ class PluginService implements ResourceFormats, PluginConfigureService, PluginSe
         return null
     }
 
+    /**
+     * load the dynamic select values for properties from the plugin, or null
+     * @param serviceName
+     * @param type
+     * @param project
+     * @param services
+     * @return
+     */
+    def Map<String, Object> getDynamicDefaults(
+        IFramework rundeckFramework,
+        String serviceName,
+        String type,
+        String project,
+        Services services
+    ) {
+
+        PropertyRetriever retriever = PropertyResolverFactory.instanceRetriever([:])
+        PropertyRetriever projectRetriever = PropertyResolverFactory.instanceRetriever(rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties())
+        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,projectRetriever,rundeckFramework.getPropertyRetriever())
+        def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
+
+        def instance=plugin?.instance
+        if(!(instance instanceof DynamicProperties)){
+            return null
+        }
+
+        try{
+            return instance.dynamicDefaults(plugin.configuration, services)
+        }catch(Exception e){
+            log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
+        }
+
+        return null
+    }
+
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
         if (rundeckPluginRegistry.isFrameworkDependentPluginType(type)) {
             return rundeckPluginRegistry.getFrameworkDependentPluggableService(
