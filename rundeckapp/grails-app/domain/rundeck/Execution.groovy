@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.util.XmlParserUtil
 import com.fasterxml.jackson.core.JsonParseException
 import grails.gorm.DetachedCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
+import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
+import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.validation.shared.SharedExecutionConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
@@ -510,6 +512,20 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     void beforeUpdate() {
         serverNodeUUIDChanged = this.isDirty('serverNodeUUID')
+    }
+
+    ExecutionDataSummary toSummary() {
+        return new RdExecutionDataSummary(
+                uuid: this.uuid,
+                jobUuid: this.jobUuid,
+                project: this.project,
+                status: this.status,
+                executionType: this.executionType,
+                executionState: this.executionState,
+                dateStarted: this.dateStarted,
+                dateCompleted: this.dateCompleted,
+                serverNodeUUID: this.serverNodeUUID
+        )
     }
 }
 

@@ -6,13 +6,14 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdWorkflow
 import rundeck.data.job.RdWorkflowStep
 
 class WorkflowUpdater {
 
     static void updateWorkflow(Workflow wkf, RdWorkflow rdw) {
-        if(!wkf) return
+        if(!wkf || !rdw) return
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy
@@ -34,7 +35,7 @@ class WorkflowUpdater {
     }
 
     static WorkflowStep createWorkflowStep(RdWorkflowStep step) {
-        if(step.pluginType == "builtin-jobref") return new JobExec()
+        if(step.pluginType == WorkflowStepConstants.TYPE_JOB_REF) return new JobExec()
         else if(step.pluginType.startsWith("builtin-")) return new CommandExec()
         return new PluginStep()
     }

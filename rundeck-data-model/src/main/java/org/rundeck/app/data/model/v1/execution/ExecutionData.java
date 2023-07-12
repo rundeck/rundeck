@@ -7,6 +7,7 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public interface ExecutionData {
     String getUuid();
@@ -28,7 +29,6 @@ public interface ExecutionData {
     String getAbortedby();
     String getExecutionType();
     String getServerNodeUUID();
-    String getExtraMetadata();
     Integer getRetryAttempt();
     Integer getNodeThreadcount();
     Serializable getRetryExecutionId();
@@ -41,9 +41,11 @@ public interface ExecutionData {
     NodeConfig getNodeConfig();
     WorkflowData getWorkflow();
     OrchestratorData getOrchestrator();
+    Map<String,Object> getExtraMetadataMap();
 
     //transient methods
     String getExecutionState();
     boolean isServerNodeUUIDChanged();
     boolean statusSucceeded();
+
 }

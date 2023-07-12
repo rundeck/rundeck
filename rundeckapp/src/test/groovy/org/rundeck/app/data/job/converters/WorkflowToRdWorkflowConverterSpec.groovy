@@ -10,7 +10,6 @@ import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdWorkflow
 import rundeck.data.job.RdWorkflowStep
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class WorkflowToRdWorkflowConverterSpec extends Specification implements DataTest {
 
@@ -37,7 +36,7 @@ class WorkflowToRdWorkflowConverterSpec extends Specification implements DataTes
         RdWorkflowStep step3 = new RdWorkflowStep()
         step3.pluginType = "custom-plugin"
         step3.nodeStep = true
-        step3.configuration = [plugincfg:"val1"]
+        step3.configuration = [configuration:[plugincfg:"val1"]]
         rdw.steps = [step1, step2, step3]
 
         when:
@@ -56,7 +55,7 @@ class WorkflowToRdWorkflowConverterSpec extends Specification implements DataTes
         wkf.commands[0].jobGroup == step1.configuration.jobref.group
         wkf.commands[0].uuid == step1.configuration.jobref.uuid
         wkf.commands[1].adhocRemoteString == step2.configuration.exec
-        wkf.commands[2].configuration.plugincfg == step3.configuration.plugincfg
+        wkf.commands[2].configuration.plugincfg == step3.configuration.configuration.plugincfg
     }
 
     def "test createWorkflowStep method"() {
@@ -71,20 +70,52 @@ class WorkflowToRdWorkflowConverterSpec extends Specification implements DataTes
         step3 instanceof PluginStep
     }
 
-//    @Unroll
-//    def "test updateWorkflowStep method for #stepType"() {
-//        given:
-//        WorkflowStep step
-//        RdWorkflowStep rdstep = new RdWorkflowStep()
-//        rdstep.configuration = [key1: "value1", key2: "value2"]
-//
-//        when:
-//        WorkflowUpdater.updateWorkflowStep(step, rdstep)
-//
-//        then:
-//        step.configuration == rdstep.configuration
-//
-//        where:
-//        stepType << [JobExec, CommandExec, PluginStep]
-//    }
+    def "test updateWorkflowStep method for JobExec"() {
+        given:
+        def step = new JobExec()
+        RdWorkflowStep rdstep = new RdWorkflowStep()
+        rdstep.pluginType = WorkflowStepConstants.TYPE_JOB_REF
+        def cfg = [jobref:[uuid: "uuid-goes-here",name:"job1",project:"project1",group:"grp1"]]
+        rdstep.configuration = cfg
+
+        when:
+        WorkflowUpdater.updateWorkflowStep(step, rdstep)
+
+        then:
+        step.uuid == cfg.jobref.uuid
+        step.jobName == cfg.jobref.name
+        step.jobGroup == cfg.jobref.group
+        step.jobProject == cfg.jobref.project
+    }
+
+    def "test updateWorkflowStep method for PluginStep"() {
+        given:
+        def step = new PluginStep()
+        RdWorkflowStep rdstep = new RdWorkflowStep()
+        rdstep.pluginType = "wf-plugin"
+        def cfg = [configuration:[key1: "val1",key2:"val2"]]
+        rdstep.configuration = cfg
+
+        when:
+        WorkflowUpdater.updateWorkflowStep(step, rdstep)
+
+        then:
+        step.pluginType == "wf-plugin"
+        step.configuration == cfg.configuration
+    }
+
+    def "test updateWorkflowStep method for CommandExec"() {
+        given:
+        def step = new CommandExec()
+        RdWorkflowStep rdstep = new RdWorkflowStep()
+        rdstep.pluginType = WorkflowStepConstants.TYPE_COMMAND
+        def cfg = [exec: "echo hello"]
+        rdstep.configuration = cfg
+
+        when:
+        WorkflowUpdater.updateWorkflowStep(step, rdstep)
+
+        then:
+        step.adhocRemoteString == cfg.exec
+    }
 }

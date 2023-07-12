@@ -1,5 +1,6 @@
 package org.rundeck.app.data.job.converters
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import rundeck.Execution
 import rundeck.data.execution.RdExecution
 
@@ -17,6 +18,8 @@ class ExecutionToRdExecutionConverter {
         re.argString = e.argString
         re.user = e.user
         re.timeout = e.timeout
+        re.retryAttempt = e.retryAttempt
+        re.willRetry = e.willRetry
         re.retry = e.retry
         re.retryDelay = e.retryDelay
         re.userRoles = e.userRoles
@@ -29,7 +32,7 @@ class ExecutionToRdExecutionConverter {
         re.retryExecutionId = e.retryExecutionId as Long
         re.retryOriginalId = e.retryOriginalId
         re.retryPrevId = e.retryPrevId
-        re.extraMetadata = e.extraMetadata
+        re.extraMetadataMap = e.extraMetadataMap
         re.abortedby = e.abortedby
         re.cancelled = e.cancelled
         re.timedOut = e.timedOut

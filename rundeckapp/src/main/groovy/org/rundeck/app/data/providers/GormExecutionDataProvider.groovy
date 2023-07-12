@@ -9,6 +9,8 @@ import org.rundeck.app.data.job.converters.ExecutionFromRdExecutionUpdater
 import org.rundeck.app.data.job.converters.ExecutionToRdExecutionConverter
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.execution.ExecutionData
+import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
+import org.rundeck.app.data.model.v1.page.Pageable
 import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
@@ -70,6 +72,11 @@ class GormExecutionDataProvider implements ExecutionDataProvider {
             result.error = "Failed to delete execution."
         }
         return result
+    }
+
+    @Override
+    List<ExecutionDataSummary> findAllExecutionsByJob(String jobUuid, Pageable pageable) {
+        return Execution.findAllByJobUuid(jobUuid, [offset: pageable.offset, max: pageable.max, sort: 'dateStarted', order:'desc'])*.toSummary()
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)

@@ -104,7 +104,7 @@ class PluginStep extends WorkflowStep{
     static void updateFromMap(PluginStep ce, Map data) {
         ce.nodeStep=data.nodeStep
         ce.type=data.type
-        ce.setConfiguration(data)
+        ce.setConfiguration(data.configuration)
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description=data.description?.toString()

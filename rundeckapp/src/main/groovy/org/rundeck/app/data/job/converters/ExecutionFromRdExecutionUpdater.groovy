@@ -41,7 +41,7 @@ class ExecutionFromRdExecutionUpdater {
         }
         e.retryOriginalId = re.retryOriginalId
         e.retryPrevId = re.retryPrevId
-        e.extraMetadata = re.extraMetadata
+        e.setExtraMetadataMap(re.extraMetadataMap)
         e.abortedby = re.abortedby
         e.cancelled = re.cancelled
         e.timedOut = re.timedOut
@@ -62,6 +62,7 @@ class ExecutionFromRdExecutionUpdater {
     }
 
     static void updateNodeConfig(Execution e, RdNodeConfig nodeConfig) {
+        if(!nodeConfig) return
         e.nodeInclude = nodeConfig.nodeInclude
         e.nodeIncludeName = nodeConfig.nodeIncludeName
         e.nodeIncludeTags = nodeConfig.nodeIncludeTags

@@ -13,7 +13,7 @@ import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints
 import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 
-@JsonIgnoreProperties(["errors"])
+@JsonIgnoreProperties(["errors","executionState"])
 class RdExecution implements ExecutionData, Validateable {
     String uuid = UUID.randomUUID().toString()
     String jobUuid
@@ -44,7 +44,7 @@ class RdExecution implements ExecutionData, Validateable {
     Long retryExecutionId
     Long retryOriginalId
     Long retryPrevId
-    String extraMetadata
+    Map<String, Object> extraMetadataMap
 
     RdWorkflow workflow
     RdOrchestrator orchestrator
@@ -59,11 +59,12 @@ class RdExecution implements ExecutionData, Validateable {
         importFrom SharedNodeConfigConstraints
         logFileStorageRequestId(nullable:true)
         workflow(nullable:true)
+        nodeConfig(nullable: true)
         orchestrator(nullable: true)
         retryExecutionId(nullable: true)
         retryOriginalId(nullable: true)
         retryPrevId(nullable: true)
-        extraMetadata(nullable: true)
+        extraMetadataMap(nullable: true)
     }
 
     @Override
