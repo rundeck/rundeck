@@ -97,6 +97,24 @@ public interface JobDefinitionManager<J> {
      */
     List<ImportedJob<J>> decodeXml(File file) throws JobDefinitionException;
 
+
+    /**
+     * Serialize imported list as format
+     *
+     * @param format  format
+     * @param options options
+     * @param list    job list
+     */
+    void exportImportedAs(String format, List<ImportedJob<J>> list, JobFormat.Options options, Writer writer);
+
+    /**
+     * Serialize imported list as format
+     *
+     * @param format format
+     * @param list   job list
+     */
+    void exportImportedAs(String format, List<ImportedJob<J>> list, Writer writer);
+
     /**
      * Serialize job list as format
      *
@@ -104,6 +122,14 @@ public interface JobDefinitionManager<J> {
      * @param list   job list
      */
     void exportAs(String format, List<J> list, JobFormat.Options options, Writer writer);
+
+    /**
+     * Serialize imported list as format
+     *
+     * @param format format
+     * @param list   job list
+     */
+    String exportImportedAs(String format, List<ImportedJob<J>> list);
 
     /**
      * Serialize job list as format
