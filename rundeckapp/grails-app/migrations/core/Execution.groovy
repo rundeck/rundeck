@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import liquibase.statement.core.UpdateStatement
 
 databaseChangeLog = {
@@ -175,6 +176,22 @@ databaseChangeLog = {
         }
 
     }
+
+    changeSet(author: "rundeckdev", id: "4.x-add-uuid-and-job-uuid-indexes") {
+        preConditions(onFail: "MARK_RAN"){
+            not {
+                indexExists(indexName: "execution_uuid_idx", tableName: "execution")
+                indexExists(indexName: "execution_job_uuid_idx", tableName: "execution")
+            }
+        }
+        createIndex(indexName: "execution_uuid_idx", tableName: "execution") {
+            column(name: "uuid")
+        }
+        createIndex(indexName: "execution_job_uuid_idx", tableName: "execution") {
+            column(name: "job_uuid")
+        }
+    }
+
     changeSet(author: "rundeckdev", id: "4.x-populate-job-uuid") {
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "execution")
