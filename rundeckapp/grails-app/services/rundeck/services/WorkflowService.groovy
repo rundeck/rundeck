@@ -112,7 +112,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         File tempFile
         if (activeStates[eid]) {
             tempFile = Files.createTempFile("WorkflowService-storage-${eid}", ".json").toFile()
-            persistExecutionStateCheckpoint(eid, activeStates[eid], tempFile)
+            persistExecutionState(eid, activeStates[eid], tempFile)
             return new ProducedExecutionFile(
                     localFile: tempFile,
                     fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS
@@ -263,12 +263,16 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = getStateFileForExecution(execution)
-        chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
-            ExecutionState executionState, Date timestamp, List<String> nodeSet ->
-                if (executionState.completedState) {
-                    persistExecutionStateFinal(execution.id, state, outfile)
+        chain << new WorkflowStateListenerAction(
+                onWorkflowExecutionStateChanged: { ExecutionState executionState, Date timestamp, List<String> nodeSet ->
+                    if (executionState.completedState) {
+                        persistExecutionState(execution.id, state, outfile, true)
+                    }
+                },
+                onStepStateChanged: { StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp ->
+                    persistExecutionState(execution.id, state, outfile)
                 }
-        })
+        )
         if (Environment.getCurrent() == Environment.DEVELOPMENT) {
             chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
                 ExecutionState executionState, Date timestamp, List<String> nodeSet ->
@@ -298,14 +302,12 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, false)
     }
 
-    def persistExecutionStateCheckpoint(Long id, WorkflowState state, File file) {
+    void persistExecutionState(Long id, WorkflowState state, File file, boolean finalState = false) {
         Map data = serializeStateJson(id, state, file)
-    }
-
-    def persistExecutionStateFinal(Long id, WorkflowState state, File file) {
-        Map data = serializeStateJson(id, state, file)
-        stateCache.put(id, data)
-        activeStates.remove(id)
+        if(finalState){
+            stateCache.put(id, data)
+            activeStates.remove(id)
+        }
         log.debug("${id}: execution state.json persisted to file.")
     }
 
