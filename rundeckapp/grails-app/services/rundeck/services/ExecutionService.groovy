@@ -165,6 +165,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ExecReportDataProvider execReportDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
+    def analyticsPluginLoaderService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1166,7 +1167,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     executionListener, //delegate for ExecutionListener
                     listenersList
             )
-
+            def plugin = analyticsPluginLoaderService.getAnalyticsListener("WorkflowExecutionAnalytics", null)
             def secureOptionNodeDeferred = [:]
             if(scheduledExecution) {
                 if(!extraParamsExposed){
