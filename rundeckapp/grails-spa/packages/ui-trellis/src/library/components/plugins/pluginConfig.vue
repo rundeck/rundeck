@@ -47,11 +47,18 @@
         <span class="text-warning" v-if="validation && !validation.valid">
           <i class="fas fa-exclamation-circle"></i> {{validationWarningText}}
         </span>
+
+
                 <span v-for="prop in props" :key="prop.name" class="configprop">
 
             <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)"/>
+              </span>
 
-        </span>
+              <p>
+                <div class="col-sm-12" >
+                  <slot name="extraProperties"></slot>
+                </div>
+              </p>
             </div>
             <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
                 <div class="form-group">

@@ -64,13 +64,15 @@
               :validation-warning-text="$t('Validation errors')"
               @input="configUpdated"
             >
-              <div slot="extraProperties" class="row" v-if="mode==='edit'">
+              <div slot="extraProperties" class="row">
                 <ui-socket section="resources-extra-attributes" location="plugin-config" :event-bus="eventBus" :socket-data="{
               type: plugin.entry.type,
               index: index,
-              config: plugin.extra.config
+              config: plugin.extra.config,
+              mode: editFocus===(index) ? plugin.create?'create':'edit':'show'
             }"/>
               </div>
+
               <div slot="extra" class="row" v-if="mode==='edit'">
                 <div class="col-xs-12 col-sm-12">
                   <span v-if="editFocus===-1">
