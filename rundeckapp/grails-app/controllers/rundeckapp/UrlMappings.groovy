@@ -44,7 +44,7 @@ class UrlMappings {
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
 
         "/api/$api_version/incubator/execution/$id?"(controller: 'rdExecution') {
-            action = [GET: 'get', POST: 'save', DELETE: 'delete']
+            action = [GET: 'get', DELETE: 'delete']
         }
         "/api/$api_version/incubator/executions/$id"(controller: 'rdExecution', action: "listForJob")
 

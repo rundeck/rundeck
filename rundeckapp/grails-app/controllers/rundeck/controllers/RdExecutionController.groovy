@@ -42,32 +42,6 @@ class RdExecutionController extends ControllerBase {
         }
     }
 
-    @GrailsCompileStatic
-    def save() {
-        response.contentType = "application/json;utf-8"
-
-        try {
-            RdExecution execution = mapper.readValue(request.inputStream, RdExecution)
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject((Subject)session.getAttribute("subject"))
-            if (!rundeckAuthContextProcessor.authorizeProjectResourceAny(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    [AuthConstants.ACTION_RUN, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
-                    execution.project
-            )) {
-                throw new UnauthorizedAccess(AuthConstants.ACTION_RUN, AuthConstants.TYPE_JOB, execution.uuid)
-            }
-            render mapper.writeValueAsString(rdExecutionService.saveExecutionData(execution))
-        } catch(JsonMappingException ife) {
-            response.status = 400
-            render mapper.writeValueAsString([error: ife.message])
-        } catch(DataValidationException dvex) {
-            response.status = 400
-            render mapper.writeValueAsString(new ValidationResponse().createFrom(messageSource, dvex.target))
-        }
-    }
-
-
     def delete() {
         response.contentType = "application/json;utf-8"
         def e = rdExecutionService.getExecutionByUuid(params.id)

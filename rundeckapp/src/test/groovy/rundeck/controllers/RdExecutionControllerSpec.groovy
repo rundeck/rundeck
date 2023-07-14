@@ -30,52 +30,6 @@ class RdExecutionControllerSpec extends Specification implements ControllerUnitT
         response.status == 200
     }
 
-    def "test save method - valid execution"() {
-        given:
-        def execution = new RdExecution()
-        request.json = execution
-
-        when:
-        controller.save()
-
-        then:
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAny(_, _, _, _) >> true
-        1 * controller.rdExecutionService.saveExecutionData(_) >> execution
-        response.contentType == "application/json;utf-8"
-        response.status == 200
-        response.contentAsString
-    }
-
-    def "test save method - invalid format"() {
-        given:
-        request.json = [invalid:"data"]
-
-        when:
-        controller.save()
-
-        then:
-        response.contentType == "application/json;utf-8"
-        response.status == 400
-
-    }
-
-    def "test save method - data validation exception"() {
-        given:
-        def execution = new RdExecution() // Create a dummy execution for testing
-        request.json = execution
-
-        when:
-        controller.save()
-
-        then:
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAny(_, _, _, _) >> true
-        1 * controller.rdExecutionService.saveExecutionData(_) >> { throw new DataValidationException(execution)}
-        response.contentType == "application/json;utf-8"
-        response.status == 400
-    }
-
     def "test delete method"() {
         given:
         def executionId = "123"
