@@ -52,6 +52,10 @@ class ScriptExecUtilSpec extends Specification {
     }
 
     def "interrupt local command should kill subprocess"() {
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            // skip test on Windows
+            return
+        }
 
         when:
         Map<String, String> envMap = [:]
