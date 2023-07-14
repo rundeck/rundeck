@@ -64,13 +64,15 @@
               :validation-warning-text="$t('Validation errors')"
               @input="configUpdated"
             >
-              <div slot="extraProperties" class="row" v-if="mode==='edit'">
+              <div slot="extraProperties" class="row">
                 <ui-socket section="resources-extra-attributes" location="plugin-config" :event-bus="eventBus" :socket-data="{
               type: plugin.entry.type,
               index: index,
-              config: plugin.extra.config
+              config: plugin.extra.config,
+              mode: editFocus===(index) ? plugin.create?'create':'edit':'show'
             }"/>
               </div>
+
               <div slot="extra" class="row" v-if="mode==='edit'">
                 <div class="col-xs-12 col-sm-12">
                   <span v-if="editFocus===-1">
@@ -212,105 +214,105 @@ interface PluginExtraConfig{
   extraConfig: any;
 }
 export default Vue.extend({
-  "name": "App",
-  "components": {
-    UiSocket,
+  name: "App",
+  components: {
     PluginInfo,
     PluginConfig,
-    Expandable
+    Expandable,
+    UiSocket,
   },
-  "data"() {
+  data() {
     return {
-      "loaded": false,
-      "modified": false,
-      "mode": this.editMode ? "edit" : "show",
-      "project": "",
-      "rdBase": "",
-      "cancelUrl": "",
-      "pluginConfigs": [] as ProjectPluginConfigEntry[],
-      "removedPluginConfigs": [] as ProjectPluginConfigEntry[],
-      "configOrig": [] as any[],
-      "rundeckContext": {} as RundeckContext,
-      "modalAddOpen": false,
-      "pluginProviders": [],
-      "pluginLabels": {},
-      "editFocus": -1,
-      "errors": [] as string[],
-      "pluginStorageAccess": [] as any[]
+      loaded: false,
+      modified: false,
+      mode: this.editMode ? "edit" : "show",
+      project: "",
+      rdBase: "",
+      cancelUrl: "",
+      pluginConfigs: [] as ProjectPluginConfigEntry[],
+      removedPluginConfigs: [] as ProjectPluginConfigEntry[],
+      configOrig: [] as any[],
+      rundeckContext: {} as RundeckContext,
+      modalAddOpen: false,
+      pluginProviders: [],
+      pluginLabels: {},
+      editFocus: -1,
+      errors: [] as string[],
+      pluginStorageAccess: [] as any[]
     };
   },
-  "props": {
-    "editMode": {
-      "type": Boolean,
-      "default": false
+  props: {
+    editMode: {
+      type: Boolean,
+      default: false
     },
-    "modeToggle": {
-      "type": Boolean,
-      "default": true
+    modeToggle: {
+      type: Boolean,
+      default: true
     },
-    "showEmpty": {
-      "type": Boolean,
-      "default": true
+    showEmpty: {
+      type: Boolean,
+      default: true
     },
-    "serviceName": String,
-    "title": {
-      "required": false,
-      "type": String
+    serviceName: String,
+    title: {
+      required: false,
+      type: String
     },
-    "configPrefix": String,
-    "additionalProps": { "required": false, "type": Object },
-    "help": { "required": false, "type": String },
-    "editButtonText": { "required": false, "type": String },
+    configPrefix: String,
+    additionalProps: { required: false, type: Object },
+    help: { required: false, type: String },
+    editButtonText: { required: false, type: String },
     "eventBus": { "type": Vue, "required": false }
   },
-  "methods": {
-    "notifyError"(msg: string, args: any[]) {
+  methods: {
+    notifyError(msg: string, args: any[]) {
       Notification.notify({
-        "type": "danger",
-        "title": "An Error Occurred",
-        "content": msg,
-        "duration": 0
+        type: "danger",
+        title: "An Error Occurred",
+        content: msg,
+        duration: 0
       });
     },
 
-    "notifySuccess"(title: string, msg: string) {
+    notifySuccess(title: string, msg: string) {
       Notification.notify({
-        "type": "success",
-        "title": title,
-        "content": msg,
-        "duration": 5000
+        type: "success",
+        title: title,
+        content: msg,
+        duration: 5000
       });
     },
-    "createConfigEntry"(entry: any, origIndex: number): ProjectPluginConfigEntry {
+    createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
       return {
-        "extra": { "config": Object.assign({}, entry.extra) },
-        "entry": { "type": entry.type, "config": Object.assign({}, entry.config) },
-        "origIndex": origIndex
+        extra: { config: Object.assign({}, entry.extra) },
+        entry: { type: entry.type, config: Object.assign({}, entry.config) },
+        origIndex: origIndex
       } as ProjectPluginConfigEntry;
     },
 
-    "serializeConfigEntry"(entry: ProjectPluginConfigEntry): any {
+    serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
       return {
-        "extra": Object.assign({}, entry.extra.config),
-        "type": entry.entry.type,
-        "config": Object.assign({}, entry.entry.config),
-        "origIndex": entry.origIndex
+        extra: Object.assign({}, entry.extra.config),
+        type: entry.entry.type,
+        config: Object.assign({}, entry.entry.config),
+        origIndex: entry.origIndex
       };
     },
-    "addPlugin"(provider: string) {
+    addPlugin(provider: string) {
       this.modalAddOpen = false;
       this.pluginConfigs.push({
-        "entry": { "type": provider, "config": {} },
-        "extra": { "config": {} },
-        "create": true
+        entry: { type: provider, config: {} },
+        extra: { config: {} },
+        create: true
       } as ProjectPluginConfigEntry);
 
       this.setFocus(this.pluginConfigs.length - 1);
     },
-    "setFocus"(focus: number) {
+    setFocus(focus: number) {
       this.editFocus = focus;
     },
-    async "savePlugin"(plugin: ProjectPluginConfigEntry, index: number) {
+    async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       //validate
       const validation: PluginValidation = await pluginService.validatePluginConfig(
         this.serviceName,
@@ -327,7 +329,7 @@ export default Vue.extend({
       this.setPluginConfigsModified();
       this.setFocus(-1);
     },
-    "removePlugin"(plugin: ProjectPluginConfigEntry, index: string) {
+    removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
       const found = this.pluginConfigs.indexOf(plugin);
       this.pluginConfigs.splice(found, 1);
       if (!plugin.create) {
@@ -340,7 +342,7 @@ export default Vue.extend({
       this.setFocus(-1);
     },
 
-    "movePlugin"(index: number, plugin: ProjectPluginConfigEntry, shift: number) {
+    movePlugin(index: number, plugin: ProjectPluginConfigEntry, shift: number) {
       const found = this.pluginConfigs.indexOf(plugin);
       const item = this.pluginConfigs.splice(found, 1)[0];
       const newindex = found + shift;
@@ -348,12 +350,12 @@ export default Vue.extend({
       this.setPluginConfigsModified();
       this.editFocus = -1;
     },
-    "didSave"(success: boolean) {
+    didSave(success: boolean) {
       if (this.modeToggle) {
         this.mode = "show";
       }
     },
-    async "savePlugins"() {
+    async savePlugins() {
       try {
         const result = await this.saveProjectPluginConfig(
           this.project,
@@ -376,22 +378,22 @@ export default Vue.extend({
         this.notifyError(error.message, []);
       }
     },
-    async "loadProjectPluginConfig"(
+    async loadProjectPluginConfig(
       project: string,
       configPrefix: string,
       serviceName: string
     ) {
       const response = await axios({
-        "method": "get",
-        "headers": { "x-rundeck-ajax": true },
-        "url": `${this.rdBase}framework/projectPluginsAjax`,
-        "params": {
-          "project": `${window._rundeck.projectName}`,
-          "configPrefix": this.configPrefix,
-          "serviceName": this.serviceName,
-          "format": "json"
+        method: "get",
+        headers: { "x-rundeck-ajax": true },
+        url: `${this.rdBase}framework/projectPluginsAjax`,
+        params: {
+          project: `${window._rundeck.projectName}`,
+          configPrefix: this.configPrefix,
+          serviceName: this.serviceName,
+          format: "json"
         },
-        "withCredentials": true
+        withCredentials: true
       });
       if (!response || response.status < 200 || response.status >= 300) {
         throw new Error(
@@ -404,7 +406,7 @@ export default Vue.extend({
         return response.data.plugins;
       }
     },
-    async "saveProjectPluginConfig"(
+    async saveProjectPluginConfig(
       project: string,
       configPrefix: string,
       serviceName: string,
@@ -413,22 +415,22 @@ export default Vue.extend({
     ) {
 
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        "pathTemplate": `/framework/saveProjectPluginsAjax`,
-        "baseUrl": this.rdBase,
-        "method": "POST",
-        "queryParameters": {
-          "project": `${window._rundeck.projectName}`,
-          "configPrefix": this.configPrefix,
-          "serviceName": this.serviceName
+        pathTemplate: `/framework/saveProjectPluginsAjax`,
+        baseUrl: this.rdBase,
+        method: "POST",
+        queryParameters: {
+          project: `${window._rundeck.projectName}`,
+          configPrefix: this.configPrefix,
+          serviceName: this.serviceName
         },
-        "body": {
-          "plugins": data.map(this.serializeConfigEntry),
-          "removedPlugins": removedData.map(this.serializeConfigEntry)
+        body: {
+          plugins: data.map(this.serializeConfigEntry),
+          removedPlugins: removedData.map(this.serializeConfigEntry)
         }
       });
 
       if (resp && resp.status >= 200 && resp.status < 300) {
-        return { "success": true, "data": resp.parsedBody };
+        return { success: true, data: resp.parsedBody };
       }
       if (resp && resp.status == 422) {
         //look for validation
@@ -440,13 +442,13 @@ export default Vue.extend({
             this.pluginConfigs.forEach((plugin, index) => {
               if (reports[`${index}`] !== undefined) {
                 plugin.validation = {
-                  "valid": false,
-                  "errors": reports[`${index}`]
+                  valid: false,
+                  errors: reports[`${index}`]
                 };
               }
             });
           }
-          return { "success": false };
+          return { success: false };
         }
       }
       throw new Error(
@@ -455,38 +457,38 @@ export default Vue.extend({
         }`
       );
     },
-    "cancelAction"() {
+    cancelAction() {
       this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
       this.pluginConfigsModifiedReset();
       this.didSave(false);
     },
-    "setPluginConfigsModified"() {
+    setPluginConfigsModified() {
       this.modified = true;
       this.$emit("modified");
       this.notifyPluginConfigs();
     },
-    "pluginConfigsModified"() {
+    pluginConfigsModified() {
       if (this.loaded) {
         this.setPluginConfigsModified();
       }
     },
-    "pluginConfigsModifiedReset"() {
+    pluginConfigsModifiedReset() {
       this.modified = false;
       this.removedPluginConfigs = []
       this.$emit("reset");
       this.notifyPluginConfigs();
     },
-    "notifyPluginConfigs"(){
+    notifyPluginConfigs(){
       this.$emit("plugin-configs-data",this.pluginConfigs);
     },
-    "configUpdated"() {
+    configUpdated() {
       this.pluginConfigsModified();
     },
-    "hasKeyStorageAccess"(provider: any){
+    hasKeyStorageAccess(provider: any){
       this.pluginStorageAccess.push(provider)
       this.$emit('plugin-storage-access',[provider])
     },
-    "cleanStorageAccess"(plugin: any){
+    cleanStorageAccess(plugin: any){
       const pluginStorageAccess = [] as any[];
       this.pluginStorageAccess.forEach((pluginAccess:any)=>{
         if(pluginAccess !== plugin.entry.type){
@@ -504,9 +506,8 @@ export default Vue.extend({
       }
     }
   },
-  "mounted"() {
+  mounted() {
     this.rundeckContext = getRundeckContext();
-
     const self = this;
     this.notifyPluginConfigs();
     if (
