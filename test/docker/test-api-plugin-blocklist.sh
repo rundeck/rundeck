@@ -12,6 +12,7 @@
   # Different compose files used for different environments
  export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-plugin-blocklist.yaml}
  export SETUP_TEST_PROJECT=test
+ DEBUG_RD_SERVER=${DEBUG_RD_SERVER:-''}
 
  if [ -f rundeck-launcher.war ] ; then
   mv rundeck-launcher.war dockers/rundeck/data/
@@ -33,6 +34,7 @@
 
 
  # run docker
+ echo "Running compose file: $(pwd)/${DOCKER_COMPOSE_SPEC}"
  docker-compose -f $DOCKER_COMPOSE_SPEC up -d
 
  echo "up completed, running tests..."
@@ -43,13 +45,17 @@
  	bash scripts/run-plugin-blocklist-api-tests.sh api_test blocklist-*.sh
 
  EC=$?
- echo "run_tests.sh finished with: $EC"
 
  docker-compose -f $DOCKER_COMPOSE_SPEC logs
 
- # Stop and clean all
- docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
+ if [ "$DEBUG_RD_SERVER" != true ] ; then
+   # Stop and clean all
+   docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 
- rm -rf dockers/rundeck/api_test/src dockers/rundeck/api_test/api
+   rm -rf dockers/rundeck/api_test/src dockers/rundeck/api_test/api
+ else
+   echo "Skipping Containers removal for debug..."
+ fi
 
+ echo "run_tests.sh finished with: $EC"
  exit $EC

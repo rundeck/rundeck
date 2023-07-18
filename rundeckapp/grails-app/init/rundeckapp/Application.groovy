@@ -129,7 +129,26 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
+        removeGORMdbCreateProperty(environment)
     }
+
+    /**
+     * It sets dataSource.dbCreate as 'none', always
+     * @param environment
+     * @return void
+     */
+    void removeGORMdbCreateProperty(final Environment environment){
+        if(environment && environment.propertySources){
+            environment.propertySources.each{
+                if(it.containsProperty("dataSource.dbCreate")){
+                    if(it.source && it.source instanceof Properties){
+                        it.source.'dataSource.dbCreate' = 'none'
+                    }
+                }
+            }
+        }
+    }
+
 
     @Override
     void doWithApplicationContext() {

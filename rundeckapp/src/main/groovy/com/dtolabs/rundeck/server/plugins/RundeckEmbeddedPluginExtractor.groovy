@@ -80,8 +80,12 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
             pluginList.findAll {
                 !rundeckPluginBlocklist.isPluginFilePresent(it.fileName)
             }.each { PluginFileManifest pluginmf ->
+                if (pluginmf.fileName.endsWith(".groovy")) {
+                    //skip groovy plugins
+                    return
+                }
                 try {
-                    if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
+                    if (installPlugin(pluginTargetDir, loader, pluginmf, false)) {
                         result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
                     } else {
                         result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
@@ -91,41 +95,8 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                     result.success = false
                     result.errors << "Failed extracting bundled plugin ${pluginmf}: ${e}"
                 }
-                if (pluginmf.fileName.endsWith(".groovy")) {
-                    //initialize groovy plugin as spring bean if it does not exist
-                    def bean = loadGroovyScriptPluginBean(new File(pluginTargetDir, pluginmf.fileName))
-                    result.logs << "Loaded groovy plugin ${pluginmf.fileName} as ${bean.class} ${bean}"
-                }
             }
         }
-
-        return result
-    }
-
-    def loadGroovyScriptPluginBean(File file) {
-        String beanName = file.name.replace('.groovy', '')
-        def testBean
-        try {
-            testBean = applicationContext.getBean(beanName)
-            log.debug("Groovy plugin bean already exists in main context: $beanName: $testBean")
-        } catch (NoSuchBeanDefinitionException e) {
-            log.debug("Bean not found: $beanName")
-        }
-        if (testBean) {
-            return testBean
-        }
-
-        def builder = new BeanBuilder(applicationContext)
-        builder.beans {
-            xmlns lang: 'http://www.springframework.org/schema/lang'
-            lang.groovy(id: beanName, 'script-source': file.toURI().toString(), 'customizer-ref': 'pluginCustomizer')
-        }
-
-        def context = builder.createApplicationContext()
-        def result = context.getBean(beanName)
-
-        log.debug("Loaded groovy plugin bean; type: ${result.class} ${result}")
-        rundeckPluginRegistry.registerDynamicPluginBean(beanName, context)
 
         return result
     }

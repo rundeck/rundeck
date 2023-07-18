@@ -167,6 +167,7 @@ import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
+import rundeckapp.init.servlet.JettyServletHstsCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -864,9 +865,12 @@ beans={
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
-
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
+
+    def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
+    def stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
+    jettyServletHstsCustomizer(JettyServletHstsCustomizer,stsMaxAgeSeconds,stsIncludeSubdomains)
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')

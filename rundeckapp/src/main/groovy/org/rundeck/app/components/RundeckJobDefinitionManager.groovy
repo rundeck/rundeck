@@ -215,11 +215,22 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
         }
         return null
     }
-    Map<String,Map> getJobDefinitionComponentValues(ScheduledExecution job){
-        Map<String,Map> jobComponentValues=[:]
-        jobDefinitionComponents?.each{name,comp->
-            if(comp.inputProperties){
-                jobComponentValues[name]=comp.getInputPropertyValues(job,null)
+
+    Map<String, Map> getJobDefinitionComponentValues(ScheduledExecution job) {
+        Map<String, Map> jobComponentValues = [:]
+        jobDefinitionComponents?.each { name, comp ->
+            if (comp.inputProperties) {
+                jobComponentValues[name] = comp.getInputPropertyValues(job, null)
+            }
+        }
+        jobComponentValues
+    }
+
+    Map<String, Map> getImportedJobDefinitionComponentValues(ImportedJob<ScheduledExecution> importedJob) {
+        Map<String, Map> jobComponentValues = [:]
+        jobDefinitionComponents?.each { name, comp ->
+            if (comp.inputProperties) {
+                jobComponentValues[name] = comp.getInputPropertyValues(importedJob.job, importedJob.associations[name])
             }
         }
         jobComponentValues
@@ -276,6 +287,21 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
         }
         return oMap
     }
+    /**
+     * Create canonical map from a imported defintion
+     * @param imported
+     * @return
+     */
+    Map jobToMap(ImportedJob<ScheduledExecution> imported) {
+        def oMap = imported.job.toMap()
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent export ->
+            def vMap = export.exportCanonicalMap(oMap, imported.associations[name])
+            if (vMap) {
+                oMap = vMap
+            }
+        }
+        return oMap
+    }
 
     /**
      * Convert canonical map to Xmap
@@ -317,12 +343,30 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
     }
 
     @Override
+    String exportImportedAs(String format, List<ImportedJob<ScheduledExecution>> list) {
+        def writer = new StringWriter()
+        exportImportedAs(format, list, writer)
+        return writer.toString()
+    }
+
+    @Override
     void exportAs(String format, List<ScheduledExecution> list, Writer writer) {
         exportAs(format, list, JobFormat.defaultOptions(), writer)
     }
 
     @Override
+    void exportImportedAs(String format, List<ImportedJob<ScheduledExecution>> list, Writer writer) {
+        exportImportedAs(format, list, JobFormat.defaultOptions(), writer)
+    }
+
+    @Override
     void exportAs(String format, List<ScheduledExecution> list, JobFormat.Options options, Writer writer) {
+        def mapList = list.collect { jobToMap(it) }
+        getFormat(format).encode(mapList, options, writer)
+    }
+
+    @Override
+    void exportImportedAs(String format, List<ImportedJob<ScheduledExecution>> list, JobFormat.Options options, Writer writer) {
         def mapList = list.collect { jobToMap(it) }
         getFormat(format).encode(mapList, options, writer)
     }

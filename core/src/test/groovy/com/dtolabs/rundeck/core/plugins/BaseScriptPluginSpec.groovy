@@ -406,6 +406,78 @@ class BaseScriptPluginSpec extends Specification {
 
     }
 
+    @Unroll
+    def "key storage value not found and return original value"() {
+        given:
+        def node = new NodeEntryImpl('anode')
+
+        def pluginMeta = [
+                (BaseScriptPlugin.SETTING_MERGE_ENVIRONMENT): false,
+                config                                      :
+                        [
+                                [
+                                        type            : 'String',
+                                        name            : 'c',
+                                        renderingOptions: [
+                                                (StringRenderingConstants.VALUE_CONVERSION_KEY)        : 'STORAGE_PATH_AUTOMATIC_READ',
+                                                (StringRenderingConstants.VALUE_CONVERSION_FAILURE_KEY): StringRenderingConstants.VALUE_CONVERSION_FAILURE_SKIP,
+                                        ]
+                                ]
+                        ]
+        ]
+        File tempFile = File.createTempFile("test", "zip");
+        tempFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> pluginMeta
+            getArchiveFile() >> tempFile
+            getScriptFile() >> tempFile
+            getContentsBasedir() >> basedir
+        }
+        String[] emptyArray = []
+
+        ScriptExecHelper helper = Mock(ScriptExecHelper) {
+            1 * createScriptArgs(_, null, _, null, false, _) >> emptyArray
+        }
+
+        def storageTree = Mock(StorageTree)
+
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+
+        plugin.scriptExecHelper = helper
+        PluginStepContext context = Mock(PluginStepContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext([:])
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+
+                getStorageTree() >> storageTree
+            }
+        }
+
+        def config = [a: 'b', c: 'somevalue']
+
+        when:
+        def result = plugin.runPluginScript(context, null, null, framework, config)
+
+        then:
+        1 * plugin.scriptExecHelper.runLocalCommand(_, {
+            it.RD_CONFIG_A == 'b' && it.RD_CONFIG_C == 'somevalue'
+        }, _, null, null
+        ) >> 0
+
+        1 * storageTree.getResource(_) >> {
+            throw new StorageException("Not found", StorageException.Event.READ, PathUtil.asPath('somevalue'))
+        }
+
+    }
+
     def "create secret bundle"() {
         given:
         def node = new NodeEntryImpl('anode')

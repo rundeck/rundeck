@@ -7,7 +7,8 @@ export function getRundeckContext() {
 }
 
 export function getAppLinks() {
-    return window.appLinks
+    //@ts-ignore
+    return window.appLinks as AppLinks
 }
 
 export function getSynchronizerToken() {
