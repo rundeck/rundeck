@@ -105,10 +105,7 @@ class ProjectNodeSupportSpec extends Specification {
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework,framework)
         def sourceService = ResourceModelSourceService.getInstanceForFramework(framework,framework)
 
-        def factory = { SourceDefinition defe ->
-            sourceService.getCloseableSourceForConfiguration(defe.type, defe.properties)
-        }
-        def support = new ProjectNodeSupport(config, generatorService, sourceService, factory)
+        def support = new ProjectNodeSupport(config, generatorService, sourceService, null)
 
         when:
 
@@ -308,6 +305,38 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].extra == [:]
 
 
+    }
+
+
+    def "load listResourceModelConfigurations"(){
+        given:
+        def prefix = "resources.source"
+        def props = [
+                (prefix + '.1.type')    : 'provider1',
+                (prefix + '.1.config.a'): 'b',
+                (prefix + '.1.config.c'): 'd',
+                (prefix + '.1.z.y.a')       : 'config1',
+                (prefix + '.1.z.y.b')   : 'config2',
+                (prefix + '.2.type')    : 'provider2',
+                (prefix + '.2.config.x'): 'y',
+                (prefix + '.2.config.z'): 'w',
+
+        ]
+        Properties properties = new Properties()
+        properties.putAll(props)
+
+
+        when:
+        def result = ProjectNodeSupport.listResourceModelConfigurations(properties)
+
+        then:
+        result!=null
+        result[0].type == "provider1"
+        result[0].props == ['a':'b','c':'d']
+        result[0].extraProps == ['z.y.a':'config1','z.y.b':'config2']
+        result[1].type == "provider2"
+        result[1].props == ['x':'y','z':'w']
+        result[1].extraProps == null
     }
 
 }

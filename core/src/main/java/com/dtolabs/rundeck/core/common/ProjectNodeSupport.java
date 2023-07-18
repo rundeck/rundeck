@@ -64,7 +64,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @param NodeSourceLoader factory for closeable model source provider
+     * @param nodeSourceLoader model source provider
      */
     public ProjectNodeSupport(
         final IRundeckProjectConfig projectConfig,
@@ -650,7 +650,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         for (String s : extra.keySet()) {
             if(extra.get(s) instanceof Map){
-                Properties subprops = generateExtraProperties(propPrefix+"extra." + s +".", (Map)extra.get(s));
+                Properties subprops = generateExtraProperties(propPrefix + s +".", (Map)extra.get(s));
                 extraProps.putAll(subprops);
             }else{
                 extraProps.setProperty(propPrefix + s, extra.get(s).toString());
@@ -681,10 +681,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
-                final int extraLen = (prefix + ".extra.").length();
+                final int extraLen = (prefix+".").length();
                 for (final Object o : props.keySet()) {
                     final String key = (String) o;
-                    if (key.startsWith(prefix + ".extra.")) {
+                    if (key.startsWith(prefix) && !key.startsWith(prefix + ".config.") && !key.startsWith(prefix + ".type")) {
                         extraConfigProps.setProperty(key.substring(extraLen), props.getProperty(key));
                     }
                 }
@@ -784,8 +784,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                     for (String s : props.keySet()) {
                         if (s.startsWith(prefix + ".")) {
                             String suffix = s.substring(prefix.length() + 1);
-                            if (!"type".equalsIgnoreCase(suffix) && suffix.startsWith("extra.")) {
-                                extraConfig.put(suffix.replace("extra.",""), props.get(s));
+                            if (!"type".equalsIgnoreCase(suffix) && !suffix.startsWith("config.")) {
+                                extraConfig.put(suffix, props.get(s));
                             }
                         }
                     }
