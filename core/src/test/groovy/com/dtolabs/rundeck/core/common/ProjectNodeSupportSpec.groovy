@@ -336,7 +336,7 @@ class ProjectNodeSupportSpec extends Specification {
         result[0].extraProps == ['z.y.a':'config1','z.y.b':'config2']
         result[1].type == "provider2"
         result[1].props == ['x':'y','z':'w']
-        result[1].extraProps == null
+        result[1].extraProps == [:]
     }
 
 }
