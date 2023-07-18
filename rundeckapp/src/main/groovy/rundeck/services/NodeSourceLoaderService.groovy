@@ -10,7 +10,6 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.spi.Services
-import org.springframework.beans.factory.annotation.Autowired
 
 class NodeSourceLoaderService implements NodeSourceLoader{
 

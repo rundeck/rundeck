@@ -70,9 +70,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def AsyncListenableTaskExecutor nodeTaskExecutor
     def Services rundeckSpiBaseServicesProvider
 
-    @Qualifier("nodeSourceLoaderService")
-    @Autowired
-    NodeSourceLoader nodeSourceLoaderService
+    def nodeSourceLoaderService
 
     @Override
     Map<String, String> getCategories() {
