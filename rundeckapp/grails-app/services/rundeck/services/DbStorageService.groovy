@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import org.apache.el.util.ExceptionUtils
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
 import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
@@ -44,7 +43,6 @@ import java.util.regex.Pattern
  */
 class DbStorageService implements NamespacedStorage{
     static transactional = false
-    static final String DATA_LENGTH_VALIDATION_STRING = 'Data too long for column \'data\''
     StorageDataProvider storageDataProvider
 
 
@@ -262,14 +260,8 @@ class DbStorageService implements NamespacedStorage{
                     }
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {
-                    String exceptionMessage = ''
-                    def cause = org.apache.commons.lang3.exception.ExceptionUtils.getRootCause(e).message
-                    if( cause.contains(DATA_LENGTH_VALIDATION_STRING) ){
-                        exceptionMessage = "The content of the node resource is too big, try to split into multiple files."
-                    }else{
-                        exceptionMessage = "Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " + e.getMessage()
-                    }
-                    throw new StorageException(exceptionMessage,
+                    throw new StorageException("Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " +
+                            e.getMessage(),
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)
                 }
