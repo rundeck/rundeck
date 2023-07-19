@@ -233,8 +233,8 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         where:
         isenabled | expectedCount
         'true'    | 1
-        //'false'   | 3
-        //null      | 1
+        'false'   | 3
+        null      | 1
     }
 
     @Unroll
