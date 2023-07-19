@@ -314,14 +314,14 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     @Unroll
     def "renderApiProjectXml hasConfig #hasConfig vers #vers"() {
         given:
-            Properties projProps = new Properties(
+            Map projProps =
                 [
                     'project.description': 'a description',
                     'project.label'      : 'a label',
                     "test.property"      : "value1",
                     "test.property2"     : "value2"
                 ]
-            )
+
             def configDate = new Date()
             def rdProject = Mock(IRundeckProject) {
                 _ * getName() >> 'test1'
@@ -353,10 +353,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
             (seeConfig?4:0)== response.config.property.size()
 
-            response.config.property[0].'@key'.text() == (seeConfig?'test.property':'')
-            response.config.property[0].'@value'.text() == (seeConfig?'value1':'')
-            response.config.property[1].'@key'.text() == (seeConfig?'test.property2':'')
-            response.config.property[1].'@value'.text() == (seeConfig?'value2':'')
+            response.config.property[2].'@key'.text() == (seeConfig?'test.property':'')
+            response.config.property[2].'@value'.text() == (seeConfig?'value1':'')
+            response.config.property[3].'@key'.text() == (seeConfig?'test.property2':'')
+            response.config.property[3].'@value'.text() == (seeConfig?'value2':'')
 
             response.label.size()==seeLabel
 
@@ -729,6 +729,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         controller.frameworkService=Mock(FrameworkService)
 
         1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
+        1 * controller.frameworkService.isFrameworkProjectDisabled('test1')>>false
 
 
         (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]

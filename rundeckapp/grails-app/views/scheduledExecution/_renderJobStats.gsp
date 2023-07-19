@@ -13,20 +13,21 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
+<%@ page import="org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider; rundeck.Execution" %>
 <%@ page import="rundeck.ReferencedExecution; rundeck.Execution" %>
+<g:set var="referencedExecutionDataProvider" bean="${org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider}"/>
 <g:set var="lastrun"
        value="${scheduledExecution.id ? Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution, [max: 1, sort: 'dateStarted', order: 'desc']) : null}"/>
 <g:set var="reflastrun"
-       value="${scheduledExecution.id ? ReferencedExecution.findByScheduledExecution(scheduledExecution, [max: 1]) : null}"/>
+       value="${scheduledExecution.id ? referencedExecutionDataProvider.findByJobUuid(scheduledExecution.uuid) : null}"/>
 <g:set var="successcount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
 <g:set var="refsuccesscount"
-       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
+       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded') : 0}"/>
 <g:set var="execCount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="refexecCount"
-       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
+       value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid) : 0}"/>
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 <g:render template="/scheduledExecution/showStats"
           model="[scheduledExecution: scheduledExecution, lastrun: lastrun ? lastrun : null, successrate: successrate,reflastrun: reflastrun ? reflastrun : null]"/>

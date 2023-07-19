@@ -168,7 +168,7 @@ class ExecutionJob implements InterruptableJob {
                 wasTimeout,
                 initMap.temp,
                 statusString,
-                initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
+                initMap.scheduledExecutionId,
                 initMap,
                 result?.execmap
         )
@@ -190,7 +190,7 @@ class ExecutionJob implements InterruptableJob {
         boolean temp
         long executionId
         ScheduledExecution scheduledExecution
-        long scheduledExecutionId
+        String scheduledExecutionId
         ExecutionService executionService
         ExecutionUtilService executionUtilService
         FrameworkService frameworkService
@@ -211,6 +211,7 @@ class ExecutionJob implements InterruptableJob {
         def initMap = new RunContext()
         initMap.temp = "true" == jobDataMap.get("isTempExecution")
         def executionId = jobDataMap.get("executionId")
+        String project = jobDataMap.get("project")
         if (initMap.temp) {
             //temp execution, means no associated ScheduledExecution object
             if (!executionId) {
@@ -226,15 +227,17 @@ class ExecutionJob implements InterruptableJob {
             if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
-            initMap.scheduledExecutionId = initMap.scheduledExecution.id
+            initMap.scheduledExecutionId = initMap.scheduledExecution.uuid
         }
 
+        FrameworkService frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
         initMap.executionService = requireEntry(jobDataMap, "executionService", ExecutionService)
         initMap.executionUtilService = requireEntry(jobDataMap, "executionUtilService", ExecutionUtilService)
-        initMap.frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
         initMap.authContextProvider = requireEntry(jobDataMap, "authContextProvider", AuthContextProvider)
         initMap.jobSchedulesService = requireEntry(jobDataMap, "jobSchedulesService", JobSchedulesService)
         initMap.jobSchedulerService = requireEntry(jobDataMap, "jobSchedulerService", JobSchedulerService)
+        initMap.frameworkService = frameworkService
+        initMap.framework = frameworkService.rundeckFramework
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
         }
@@ -246,8 +249,6 @@ class ExecutionJob implements InterruptableJob {
                 throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
             }
             initMap.execution.refresh()
-            FrameworkService frameworkService = initMap.frameworkService
-            initMap.framework = frameworkService.rundeckFramework
             initMap.authContext=requireEntry(jobDataMap,'authContext',UserAndRolesAuthContext)
         }else if(executionId){
             //a job execution invoked by a user
@@ -285,8 +286,6 @@ class ExecutionJob implements InterruptableJob {
                         DataContextUtils.addContext("option", jobArguments, null))
                 initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
             }
-            FrameworkService frameworkService = initMap.frameworkService
-            initMap.framework = frameworkService.rundeckFramework
             initMap.authContext = requireEntry(jobDataMap, 'authContext', UserAndRolesAuthContext)
         }else{
             //a scheduled job that was triggered
@@ -313,22 +312,19 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
 
-            FrameworkService frameworkService = initMap.frameworkService
-            def project = initMap.scheduledExecution.project
             def fwProject = frameworkService.getFrameworkProject(project)
             def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
             def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
             def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')
             def isProjectScheduledEnabled = ((!disableSe)||disableSe.toLowerCase()!='true')
+            def isProjectEnabled = !frameworkService.isFrameworkProjectDisabled(project)
 
-            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled)){
+            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled && isProjectEnabled)){
                 initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
                 context.getScheduler().deleteJob(context.jobDetail.key)
                 return initMap
             }
 
-
-            initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = initMap.authContextProvider.getAuthContextForUserAndRolesAndProject(
                     initMap.scheduledExecution.user,
@@ -389,7 +385,7 @@ class ExecutionJob implements InterruptableJob {
         long jobAverageDuration=0
         if(runContext.scheduledExecution){
             ScheduledExecution.withTransaction {
-                jobAverageDuration = runContext.scheduledExecution.averageDuration?:0
+                jobAverageDuration = runContext.executionService.getAverageDuration(runContext.scheduledExecutionId)?:0
             }
         }
 
@@ -419,7 +415,7 @@ class ExecutionJob implements InterruptableJob {
                         execmap.execution.status=ExecutionService.AVERAGE_DURATION_EXCEEDED
                     }
                     runContext.executionService.avgDurationExceeded(
-                            execmap.scheduledExecution.id,
+                            execmap.scheduledExecution.uuid,
                             [
                                     execution: execmap.execution,
                                     context:context
@@ -556,7 +552,7 @@ class ExecutionJob implements InterruptableJob {
         boolean timedOut,
         boolean isTemp,
         String statusString,
-        long scheduledExecutionId = -1,
+        String scheduledExecutionId,
         RunContext initMap,
         ExecutionService.AsyncStarted execmap
     )
@@ -591,7 +587,7 @@ class ExecutionJob implements InterruptableJob {
         ]
         Closure action={
             executionService.saveExecutionState(
-                    scheduledExecutionId > 0 ? scheduledExecutionId : null,
+                    scheduledExecutionId,
                     execution.id,
                     resultMap,
                     execmap,
@@ -648,12 +644,12 @@ class ExecutionJob implements InterruptableJob {
         return execution
     }
 
-    @CompileStatic
+
     def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
-        def ScheduledExecution se=null
-        se = ScheduledExecution.get(Long.parseLong(seid))
-        if(se){
+        def se=null
+        se = ScheduledExecution.findByUuid(seid)
+        if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }
 

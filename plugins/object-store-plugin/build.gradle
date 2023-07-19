@@ -2,6 +2,8 @@ plugins {
     id 'groovy'
 }
 
+apply from: "../../gradle/java-version.gradle"
+
 ext.pluginClassNames='org.rundeck.plugin.objectstore.ObjectStorePlugin'
 ext.pluginName = 'Object Store Plugin'
 ext.pluginDescription = 'Stores data in an Amazon S3 compliant object store'
@@ -20,11 +22,12 @@ dependencies {
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
     pluginLibs("io.minio:minio:7.1.0") {
         exclude(group: 'com.fasterxml.jackson.core')
+        exclude(group: 'com.google.guava', module: 'guava')
     }
 
     // Use the awesome Spock testing and specification framework
     testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
-    testImplementation "com.squareup.okhttp3:mockwebserver:3.11.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "org.testcontainers:testcontainers:1.16.0"
 }
 

@@ -32,7 +32,7 @@ public interface ProjectManager {
     Collection<IRundeckProject> listFrameworkProjects();
 
     /**
-     * List the project names
+     * List all the project names
      * @return
      */
     Collection<String> listFrameworkProjectNames();
@@ -90,4 +90,29 @@ public interface ProjectManager {
      * @throws IllegalArgumentException if the project already exists
      */
     IRundeckProject createFrameworkProjectStrict(String projectName, Properties properties);
+
+    /**
+     * Disables a project so it becomes unavailable without deleting it.
+     * @param projectName name of the project.
+     */
+    void disableFrameworkProject(String projectName);
+
+    /**
+     * Enables a previously disabled project.
+     * @param projectName name of the project.
+     */
+    void enableFrameworkProject(String projectName);
+
+    /**
+     * @return true if the project exists and is disabled. false otherwise.
+     */
+    boolean isFrameworkProjectDisabled(String projectName);
+
+    /**
+     * Gets the project description
+     * 
+     * @param projectName Project name identifier
+     * @return The description if any. null otherwise.
+     */
+    String getProjectDescription(String projectName);
 }

@@ -28,14 +28,14 @@ import com.google.gson.Gson
 import grails.gorm.DetachedCriteria
 import groovy.json.JsonOutput
 import org.grails.datastore.mapping.query.api.BuildableCriteria
+import org.rundeck.app.data.model.v1.execution.ExecutionData
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
 /**
 * Execution
 */
-class Execution extends ExecutionContext implements EmbeddedJsonData {
-
+class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionData {
     ScheduledExecution scheduledExecution
     Date dateStarted
     Date dateCompleted

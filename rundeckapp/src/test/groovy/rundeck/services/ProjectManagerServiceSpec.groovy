@@ -727,7 +727,10 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
     void "merge project properties"(){
         given:
-        RundeckProject rundeckProject = new RundeckProject("project", null, service)
+        def projectData = Mock(RdProject) {
+            getName() >> "project"
+        }
+        RundeckProject rundeckProject = new RundeckProject(projectData, null, service)
         RundeckProjectDataProvider providerMock = Mock(RundeckProjectDataProvider){
             findByName("project") >> Mock(RdProject)
         }

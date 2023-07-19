@@ -82,6 +82,8 @@ databaseChangeLog = {
         property name: "varchar3072.type", global: "true", value: "VARCHAR(3072)", dbms: "mysql,postgresql,mssql,h2,mariadb"
         property name: "varchar3072.type", global: "true", value: "VARCHAR2(3072 CHAR)", dbms: "oracle"
 
+        property name: "catalogName", global: "true", value: '${database.defaultCatalogName}'
+
         include file: 'core/HibernateIndex.groovy'
         include file: 'core/AuthToken.groovy'
         include file: 'core/BaseReport.groovy'
@@ -115,4 +117,5 @@ databaseChangeLog = {
         include file: 'core/WorkflowWorkflowStepPrimaryKey.groovy'
         include file: 'core/OptionRemoveValues.groovy'
         include file: 'core/DBChangelogPrimaryKey.groovy'
+        include file: 'core/BaseReportSpi.groovy'
 }

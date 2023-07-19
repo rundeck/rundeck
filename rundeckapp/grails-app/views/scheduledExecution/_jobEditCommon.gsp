@@ -1,4 +1,4 @@
-<asset:javascript src="jquery.autocomplete.min.js"/>
+<asset:javascript src="vendor/jquery.autocomplete.min.js"/>
 <asset:javascript src="leavePageConfirm.js"/>
 <asset:javascript src="jobEditPage_bundle.js"/>
 <asset:javascript src="util/markdeep.js"/>

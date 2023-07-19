@@ -84,6 +84,28 @@ class ApiController extends ControllerBase{
             featureQuery         : ['GET'],
             featureQueryAll      : ['GET']
     ]
+
+    @Get('/')
+    @Operation(
+        method = 'GET',
+        summary = 'Get API Information',
+        description = '''Return basic information about the Rundeck API.
+
+Includes current latest API Version, and base API URL.''',
+        tags = ['general'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'API Information',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "apiversion": 44,
+  "href": "http://localhost:4441/api/44"
+}''')
+            )
+        )
+    )
     def info () {
         respond((Object) [
                 apiversion: ApiVersions.API_CURRENT_VERSION,
@@ -238,8 +260,8 @@ class ApiController extends ControllerBase{
                     name='featureName',
                     in = ParameterIn.PATH,
                     description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
-                    allowEmptyValue = true,
-                    required = false,
+                    allowEmptyValue = false,
+                    required = true,
                     schema = @Schema(
                             type='string'
                     )
@@ -554,7 +576,7 @@ Since: v11
                 schema = @Schema(oneOf = [CreateToken, CreateTokenStringRoles]),
                 examples = [
                     @ExampleObject(
-                        name='list of roles',
+                        name='list-of-roles',
                         summary = "Using a list of roles",
                         value = '''{
                                   "user": "alice",
@@ -567,7 +589,7 @@ Since: v11
                                 }'''
                     ),
                     @ExampleObject(
-                        name = 'string roles',
+                        name = 'string-roles',
                         summary = "Using a comma-separated string for roles",
                         value = '''{
                               "user": "alice",

@@ -270,6 +270,7 @@ rundeck:
         default:
             max: 20
     projectService:
+        deferredProjectDelete: true
         projectExportCache:
             spec: "expireAfterAccess=30m"
     projectManagerService:
@@ -335,7 +336,7 @@ server:
             persistent: false
             cookie:
                 http-only: true
-                same-site: "Strict"
+                same-site: "Lax"
             tracking-modes: 'cookie'
 rundeck:
     web:

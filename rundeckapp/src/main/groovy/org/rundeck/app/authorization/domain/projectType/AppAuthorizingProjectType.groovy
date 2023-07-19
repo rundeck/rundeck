@@ -20,7 +20,7 @@ import javax.security.auth.Subject
 class AppAuthorizingProjectType extends BaseAuthorizingIdResource<Singleton, ProjectTypeIdentifier>
     implements AuthorizingProjectType {
     final String resourceTypeName = 'Project Resource'
-    final boolean authContextWithProject = false
+    final boolean authContextWithProject = true
 
     @Override
     protected AuthResource getAuthResource(final Singleton resource) {
@@ -45,7 +45,7 @@ class AppAuthorizingProjectType extends BaseAuthorizingIdResource<Singleton, Pro
     @Override
     protected AuthResource getAuthResource() throws NotFound {
         return AuthorizationUtil.authResource(
-            AuthResource.Context.System,
+            AuthResource.Context.Project,
             AuthorizationUtil.resourceType(identifier.type)
         )
     }

@@ -1,8 +1,7 @@
 import { client } from '../../services/rundeckClient'
 
 import {
-  getRundeckContext,
-  RundeckContext
+  getRundeckContext
 } from "../../../library"
 
 export interface NodeSourceResources {

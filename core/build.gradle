@@ -36,6 +36,9 @@ description = 'The Rundeck Core API project'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean'
 apply plugin: "groovy"
+
+apply from: "../gradle/java-version.gradle"
+
 configurations {
      provided
 }
@@ -54,7 +57,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
 
-    api ('com.google.guava:guava:26.0-jre') {
+    api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
@@ -98,8 +101,8 @@ dependencies {
 
     implementation ("org.apache.httpcomponents:httpcore:4.4.16")
 
-    compileOnly "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 
@@ -108,7 +111,7 @@ dependencies {
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 
 
@@ -127,10 +130,14 @@ buildConfig {
     buildConfigField('String', 'GIT_COMMIT', "\"${project.gitCommit}\"")
     buildConfigField('String', 'GIT_BRANCH', "\"${project.gitBranch}\"")
     buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
-    buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
     buildConfigField('String', 'BUILD_NUM', "\"${buildNum}\"")
     buildConfigField('String', 'BUILD_IDENT', "\"${version + '-' + buildNum}\"")
-
+    // Only add date if in CI mode to avoid UP-TO-DATE and build cache misses
+    if (System.env.CI) {
+        buildConfigField('String', 'BUILD_DATE', "\"${new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())}\"")
+    } else {
+        buildConfigField('String', 'BUILD_DATE', "\"1970-01-01T00:00:00-00\"")
+    }
 }
 
 def archiveName = project.name

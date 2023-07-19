@@ -1,14 +1,8 @@
 package org.rundeck.app.data.model.v1.execution;
 
-import org.rundeck.app.data.model.v1.job.JobData;
-import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequest;
-
 import java.io.Serializable;
 
-public interface Execution {
-    Serializable getId();
-    Serializable getJobId();
-    String getUuid();
+public interface ExecutionData {
     String getProject();
     String getStatus();
     String getOutputfilepath();
@@ -23,10 +17,9 @@ public interface Execution {
     Integer getNodeThreadcount();
     Serializable getRetryOriginalId();
     Serializable getRetryPrevId();
-    Serializable getRetryExecutionId();
-    Serializable getLogFileStorageRequestId();
-    Boolean isCancelled();
-    Boolean isTimedOut();
-    Boolean isWillRetry();
-    Boolean isServerNodeUUIDChanged();
+    boolean isCancelled();
+    Boolean getTimedOut();
+    Boolean getWillRetry();
+    boolean isServerNodeUUIDChanged();
+    String getNodeInclude();
 }

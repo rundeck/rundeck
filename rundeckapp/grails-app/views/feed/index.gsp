@@ -21,12 +21,12 @@
 --%><g:set var="item" value="[:]"/><%--
 --%><%
         def exec
-        if (report.jcExecId) {
-            exec = Execution.get(Long.parseLong(report.jcExecId))
+        if (report.executionId) {
+            exec = Execution.get(report.executionId)
         }
         item.title=(exec?exec.executionState:report.status=='succeed'?'SUCCEEDED':'FAILED')
-        if(report.jcExecId){
-            item.link=createLink(controller:'execution', action:'show',params:[id:report.jcExecId,project:report.ctxProject], absolute: true)
+        if(report.executionId){
+            item.link=createLink(controller:'execution', action:'show',params:[id:report.executionId,project:report.project], absolute: true)
         }
         if(report.reportId){
             item.title+=": "+ report.reportId

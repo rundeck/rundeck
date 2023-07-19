@@ -31,6 +31,8 @@ apply plugin: 'idea'
 // apply plugin: 'maven'
 apply plugin: 'groovy'
 
+apply from: "../../gradle/java-version.gradle"
+
 dependencies {
 	implementation project(":core")
 

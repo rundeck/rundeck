@@ -27,7 +27,7 @@
 
     <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
-    <asset:javascript src="jquery.autocomplete.min.js"/>
+    <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>

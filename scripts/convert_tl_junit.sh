@@ -39,7 +39,7 @@ END
       # iterate over vulnerabilities with the right severity
       # then emit testcase xml element for each one
       jq -a ".results[0].vulnerabilities | map(select(.severity == \"$sev\"))" < "$IN"  |
-        jq -r 'map("<testcase classname=\"" + (.id | @html) + "\" name=\"" + (.packageName | @html) + "\">\n<failure message=\"cvss: " + (.cvss?|tostring|@html) + " vector: " + (.vector?|@html) + "\"/>\n<system-out>\n" +  (.packageName|@html) +" version: " + (.packageVersion|@html) + ", ref: "+ (.link|@html) + "\n</system-out>\n<system-err>\n" + (.description|@html) + "\n</system-err>\n</testcase>\n") | .[]'
+        jq -r 'map("<testcase classname=\"" + (.id | @html) + "\" name=\"" + (.packageName | @html) + "\" file=\"" + (.packagePath | @html) + "\">\n<failure message=\"cvss: " + (.cvss?|tostring|@html) + " vector: " + (.vector?|@html) + "\"/>\n<system-out>\n" +  (.packageName|@html) +" version: " + (.packageVersion|@html) + ", ref: "+ (.link|@html) + "\n</system-out>\n<system-err>\n" + (.description|@html) + "\n</system-err>\n</testcase>\n") | .[]'
       cat <<END
 </testsuite>
 END

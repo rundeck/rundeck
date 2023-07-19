@@ -17,26 +17,31 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.report.RdExecReport
 
 
-class ExecReport extends BaseReport{
+class ExecReport extends BaseReport implements RdExecReport{
 
+    @Deprecated
     String ctxCommand
+    @Deprecated
     String ctxController
     Long executionId
-    String jcJobId
+    String jobId
     Boolean adhocExecution
     String adhocScript
     String abortedByUser
     String succeededNodeList
     String failedNodeList
     String filterApplied
+    String jobUuid
 
     static mapping = {
         adhocScript type: 'text'
         filterApplied type: 'text'
         succeededNodeList type: 'text'
         failedNodeList type: 'text'
+        jobId column: 'jc_job_id'
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'executionId', 'jcJobId']
             index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']
@@ -48,25 +53,27 @@ class ExecReport extends BaseReport{
         adhocExecution(nullable:true)
         ctxCommand(nullable:true,blank:true)
         ctxController(nullable:true,blank:true)
-        jcJobId(nullable:true,blank:true)
+        jobId(nullable:true,blank:true)
         executionId(nullable:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
         succeededNodeList(nullable:true,blank:true)
         failedNodeList(nullable:true,blank:true)
         filterApplied(nullable:true,blank:true)
+        jobUuid(nullable:true)
 
     }
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
             'executionId',
-            'jcJobId',
+            'jobId',
             'adhocExecution',
             'adhocScript',
             'abortedByUser',
             'succeededNodeList',
             'failedNodeList',
-            'filterApplied'
+            'filterApplied',
+            'jobUuid'
     ]
     def Map toMap(){
         def map = this.properties.subMap(exportProps)
@@ -111,14 +118,14 @@ class ExecReport extends BaseReport{
             "timedout" : ismissed ? "missed" : "fail"
         return fromMap([
                 executionId: exec.id,
-                jcJobId: exec.scheduledExecution?.id,
+                jobId: exec.scheduledExecution?.id,
                 adhocExecution: null==exec.scheduledExecution,
                 adhocScript: adhocScript,
                 abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
                 node:"${successCount}/${failedCount}/${totalCount}",
                 title: adhocScript?adhocScript:summary,
                 status: status,
-                ctxProject: exec.project,
+                project: exec.project,
                 reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
                 author: exec.user,
                 message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : ismissed ? "Job missed execution at: ${exec.dateStarted}" : 'Job failed'),
@@ -127,7 +134,8 @@ class ExecReport extends BaseReport{
                 actionType: status,
                 failedNodeList: failedList,
                 succeededNodeList: succeededList,
-                filterApplied: exec.filter
+                filterApplied: exec.filter,
+                jobUuid: exec.scheduledExecution?.uuid
         ])
     }
     static ExecReport fromMap(Map map) {
@@ -145,9 +153,10 @@ class ExecReport extends BaseReport{
         ret
     }
 
-    static void deleteByCtxProject(String project) {
+    static void deleteByProject(String project) {
         ExecReport.where {
-            ctxProject == project
+            project == project
         }.deleteAll()
     }
+
 }

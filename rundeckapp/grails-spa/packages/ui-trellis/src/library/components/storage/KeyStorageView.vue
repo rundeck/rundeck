@@ -62,7 +62,7 @@
 
       <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
         <i class="glyphicon glyphicon-time"></i>
-        {{$t('loading.text')}}
+        {{ "Loading..." }}
       </div>
       <table class="table table-hover table-condensed" v-else>
         <tbody>
@@ -279,7 +279,7 @@ export default Vue.extend({
         const response = await getRundeckContext().rundeckClient.projectList();
 
         this.linksTitle = 'Projects';
-        this.jumpLinks = response.map((v) => {
+        this.jumpLinks = response.map((v:any) => {
           return { name: v.name, path: 'keys/project/' + v.name };
         });
       } catch (error) {
@@ -580,31 +580,8 @@ export default Vue.extend({
       this.path = path;
       this.inputPath = path;
 
-      this.checkParentDir(path)
-
       this.loadUpPath();
       this.loadKeys();
-    },
-    checkParentDir(path: any) {
-      const rundeckContext = getRundeckContext();
-      const fullPath = this.absolutePath(path);
-
-      const getPath = this.calcBrowsePath(path)
-      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
-        if (result.resources != null) {
-          const keys = result.resources.filter((resource: any) => resource.path.indexOf(fullPath) >= 0);
-          if (keys.length == 0) {
-            this.invalid = true
-            this.errorMsg = 'invalid path';
-          }
-        } else {
-          this.invalid = true
-          this.errorMsg = 'invalid path';
-        }
-      }).catch((err: Error) => {
-        this.invalid = true
-        this.errorMsg = `Failed to change parent directory. Error: ${err.message}`;
-      });
     },
     showUpPath() {
       if (this.upPath != this.rootPath) {

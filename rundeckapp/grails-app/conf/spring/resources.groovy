@@ -54,6 +54,8 @@ import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
+import com.dtolabs.rundeck.core.storage.service.PluggableStoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.core.utils.cache.FileCache
@@ -78,6 +80,7 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import com.dtolabs.rundeck.server.plugins.storage.FileStoragePlugin
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
@@ -106,16 +109,19 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
-import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
@@ -161,6 +167,7 @@ import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
+import rundeckapp.init.servlet.JettyServletHstsCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -531,7 +538,7 @@ beans={
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
-    storagePluginProviderService(StoragePluginProviderService) {
+    storagePluginProviderService(StoragePluginProviderService, [(FileStoragePlugin.PROVIDER_NAME): FileStoragePlugin.class]) {
         pluggableStoragePluginProviderService = ref('pluggableStoragePluginProviderService')
     }
 
@@ -540,7 +547,9 @@ beans={
     }
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
-    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobXmlFormat(JobXMLFormat){
+        jobXmlValueListDelimiter = application.config.getProperty('rundeck.jobsImport.xmlValueListDelimiter', String)
+    }
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
     }
@@ -613,7 +622,7 @@ beans={
     rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
         storageTree = ref('rundeckStorageTree')
         updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, true)
+        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
         basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
     }
 
@@ -856,9 +865,12 @@ beans={
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
-
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
+
+    def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
+    def stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
+    jettyServletHstsCustomizer(JettyServletHstsCustomizer,stsMaxAgeSeconds,stsIncludeSubdomains)
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')
@@ -898,8 +910,12 @@ beans={
     projectDataProvider(GormProjectDataProvider)
     storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
+    execReportDataProvider(GormExecReportDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
     pluginMetaDataProvider(GormPluginMetaDataProvider)
+    referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
+    jobStatsDataProvider(GormJobStatsDataProvider)
+    logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
 
 }

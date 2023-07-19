@@ -7,6 +7,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
 version "0.1"
 group "grails.rundeck.data.shared"
 
@@ -25,6 +29,8 @@ configurations {
         extendsFrom developmentOnly
     }
 }
+
+apply from: "../gradle/java-version.gradle"
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")

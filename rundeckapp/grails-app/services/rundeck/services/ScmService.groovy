@@ -68,6 +68,10 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
+import java.util.function.Function
+import java.util.function.Predicate
+
+
 /**
  * Manages scm integration
  */
@@ -1159,6 +1163,60 @@ class ScmService {
     }
 
     /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param auth: UserAndRolesAuthContext object from the controller
+     * @param integration: import, export, etc.
+     * @return [true/false , message]
+     */
+    @CompileStatic
+    def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
+        def hasAccess = true;
+        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess] as LinkedHashMap<String, Boolean>)
+        if( null == auth || null == integration ){
+            return defaultResponse;
+        }
+        def ctx = scmOperationContext(auth, project)
+        if( ctx ){
+            switch(integration){
+                case IMPORT:
+                    def plugin = getLoadedImportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
+                    }
+                    return defaultResponse
+                    break;
+                case EXPORT:
+                    def plugin = getLoadedExportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
+                    }
+                    return defaultResponse
+                    break;
+                default:
+                    return defaultResponse
+            }
+        }
+        return defaultResponse
+    }
+
+    /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param userAuthenticated: a boolean which will be a decisive parameter to return an unauthorized message or not.
+     * @return [true/false , message]
+     */
+    Function<LinkedHashMap<String, Boolean>, LinkedHashMap<Boolean, String>> scmAuthenticationResponse = integrationAndAccess -> {
+        def integration = integrationAndAccess.integration
+        def access = integrationAndAccess.access
+        def responsePrefix = "[SCM - ${integration}]"
+        def unauthorizedMessage = "${responsePrefix} User don't have access to the configured key or password yet."
+        def authorizedMessage = "${responsePrefix} User has access to the configured key or password."
+        if( access ){
+            return [ hasAccess: access, message: authorizedMessage ]
+        }
+        return [ hasAccess: access, message: unauthorizedMessage ]
+    }
+
+    /**
      * Return a map of status for jobs
      * @param jobs
      * @return
@@ -1589,6 +1647,24 @@ class ScmService {
 
             // synch commit info to exported commit data
             checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
+        }
+    }
+
+    enum ScmOptionsForJobActionDropdown{
+        SCM_EXPORT_ENABLED("scmExportEnabled"),
+        SCM_EXPORT_STATUS("scmExportStatus"),
+        SCM_EXPORT_RENAMED_PATH("scmExportRenamedPath"),
+        SCM_IMPORT_ENABLED("scmImportEnabled"),
+        SCM_IMPORT_STATUS("scmImportStatus")
+
+        String optionKey
+
+        ScmOptionsForJobActionDropdown(String optionKey){
+            this.optionKey = optionKey
+        }
+
+        String getOptionKey(){
+            return optionKey
         }
     }
 

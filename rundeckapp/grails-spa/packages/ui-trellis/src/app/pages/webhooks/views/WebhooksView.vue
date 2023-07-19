@@ -193,7 +193,6 @@ if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
   rdBase = window._rundeck.rdBase;
   apiVersion = window._rundeck.apiVersion
 }
-var proPluginList = window.PRO_WEBHOOK_COMPONENTS ? window.PRO_WEBHOOK_COMPONENTS : []
 var projectName = window._rundeck ? window._rundeck.projectName : undefined
 
 var _i18n = i18n

@@ -32,6 +32,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
@@ -513,7 +514,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
             controller.executionService = Mock(ExecutionService) {
                 1 * getExecutionsAreActive() >> true
-                1 * createExecutionAndPrep(_, _) >> exec
+                1 * createExecutionAndPrep(_, _, _) >> exec
             }
 
 
@@ -552,7 +553,10 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
+        
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
@@ -591,7 +595,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
+            return exec
             return exec
         }
         controller.executionService = eServiceControl.proxyInstance()
@@ -640,7 +645,10 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
+        
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
@@ -678,7 +686,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep {params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
             return exec
         }
         controller.executionService = eServiceControl.proxyInstance()
@@ -758,7 +766,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
             assert null!=exec.save()
-            eServiceControl.demand.createExecutionAndPrep { params, user ->
+            eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
                 return exec
             }
             sec.executionService = eServiceControl.proxyInstance()
@@ -1147,7 +1155,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
             assert 'testuser' == user
             exec
         }
@@ -1284,6 +1292,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1319,7 +1330,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1376,6 +1387,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1411,7 +1425,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1462,6 +1476,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1496,7 +1513,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1545,6 +1562,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1577,7 +1597,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1626,6 +1646,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1661,7 +1684,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1715,6 +1738,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1750,7 +1776,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
 
             exec
         }
@@ -1798,6 +1824,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
+            false
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
@@ -1833,8 +1862,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         )
         assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anotheruser' == user
+        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
+            assert 'anotheruser' == params.user
             exec
         }
         sec.executionService = eServiceControl.proxyInstance()
@@ -1936,9 +1965,12 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 1 * authorizeProjectJobAny(_,se,['read', 'view'],'project1')>>true
                 0 * _(*_)
             }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
+            getRefExecCountStats('testUUID'){jobUuid -> 1}
+            getRefExecCountStats('testUUID'){jobUuid -> 1}
             isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}

@@ -42,6 +42,8 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -653,6 +655,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     def "show job retry failed exec id filter nodes"(){
         given:
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
@@ -808,6 +811,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -873,7 +877,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 it[2]<<"format: $format"
             }
         }
-
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
@@ -1592,6 +1596,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        
 
 
 
@@ -1638,6 +1644,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1693,6 +1700,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1805,6 +1813,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.fileUploadService = Mock(FileUploadService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1905,12 +1915,15 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            getRefExecCountStats(_)>>refTotal
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -1976,7 +1989,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: jobuuid,execution: exec).save()
         }
 
 
@@ -2009,6 +2022,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2079,7 +2094,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: "uuid",execution: exec).save()
         }
 
 
@@ -2111,6 +2126,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2355,6 +2372,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2432,6 +2451,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2513,6 +2534,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2599,6 +2622,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
 
@@ -2669,6 +2694,62 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             job.project=='anuncle'
             model.nextExecutions!=null
             model.nextExecutions.size()==1
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
+    @Unroll
+    def "upload job file via create form #type"() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
+            def authContext = Mock(UserAndRolesAuthContext)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[test:'values'])
+                        ]
+                ]
+                1 * prepareCreateEditJob(_, job , AuthConstants.ACTION_CREATE, authContext)>>[:]
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                _*authorizeProjectResource(_, _, _, _) >> true
+                _*getAuthContextForSubjectAndProject(_, _) >> authContext
+            }
+            controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+                1 * getImportedJobDefinitionComponentValues(!null)>>[input:'values']
+            }
+
+            request.method = 'POST'
+            params.project='anuncle'
+            setupFormTokens(params)
+        when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
+            controller.create()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/create'
+            model.jobComponentValues==[input:'values']
+            //job project set to upload parameter
+            job.project=='anuncle'
 
         where:
             type<<['params','multipart','multipartreq']
@@ -2937,6 +3018,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3021,6 +3104,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3105,6 +3190,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3186,6 +3273,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3291,6 +3380,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job"
@@ -3374,6 +3465,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job and request has ajax header"
@@ -3446,6 +3539,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             listPlugins() >> []
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         given: "params for job and request has ajax header"
@@ -3847,6 +3942,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectJobAll(_, se, [AuthConstants.ACTION_READ], 'project1')>>true
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * isFrameworkProjectDisabled(_) >> false
             }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             params.id='testUUID'
@@ -4408,6 +4506,4 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         result.error == "the filter \$..* return a list, please use another filter"
 
     }
-
-
 }

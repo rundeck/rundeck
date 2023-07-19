@@ -614,6 +614,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxySecretB
         return JschSecretBundleUtil.createBundle(context,node);
     }
 
+    @Override
+    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
+        return JschSecretBundleUtil.getSecretsPath(context, node);
+    }
+
     static ExtractFailure extractJschFailure(final INodeEntry node,
                                              final long commandTimeout,
                                              final long connectionTimeout,

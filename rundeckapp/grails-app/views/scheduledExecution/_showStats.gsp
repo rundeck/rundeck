@@ -49,7 +49,8 @@
 
 
         <div class="col-xs-12 col-sm-4 job-stats-item">
-            <g:set var="avgduration" value="${scheduledExecution.getAverageDuration()}"/>
+            <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
+            <g:set var="avgduration" value="${executionService.getAverageDuration(scheduledExecution.uuid)}"/>
 
 
             <span class="job-stats-value" data-avgduration="${avgduration}">

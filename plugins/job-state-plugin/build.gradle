@@ -22,6 +22,9 @@ ext.pluginClassNames = 'org.rundeck.plugin.jobstate.JobStateWorkflowStep'
 ext.pluginName = 'Job State Conditional'
 ext.pluginDescription = 'Evaluate state of another Job'
 apply plugin: 'groovy'
+
+apply from: "../../gradle/java-version.gradle"
+
 dependencies{
 
     testImplementation 'junit:junit:4.8.1',
