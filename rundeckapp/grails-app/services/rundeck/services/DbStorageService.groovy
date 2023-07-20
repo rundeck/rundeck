@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
 import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
@@ -261,9 +260,8 @@ class DbStorageService implements NamespacedStorage{
                     }
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {
-                    def cause = ExceptionUtils.getRootCause(e)
                     throw new StorageException("Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " +
-                            e.message,
+                            e.getMessage(),
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)
                 }
