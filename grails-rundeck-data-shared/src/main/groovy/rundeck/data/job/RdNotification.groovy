@@ -15,4 +15,14 @@ class RdNotification implements NotificationData, Validateable {
     static constraints = {
         importFrom(SharedNotificationConstraints)
     }
+
+    //match methods on Notification that convert legacy formats
+    Map<String,Object> mailConfiguration() {
+        return configuration;
+    }
+
+    //match methods on Notification that convert legacy formats
+    Map<String,Object> urlConfiguration() {
+        return configuration;
+    }
 }

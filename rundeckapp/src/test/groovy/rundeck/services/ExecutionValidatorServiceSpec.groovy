@@ -40,7 +40,7 @@ class ExecutionValidatorServiceSpec extends Specification implements ServiceUnit
   private static void createExecutions(ScheduledExecution se, int n) {
     for (i in 0..<n) {
       def exec = new Execution(
-          scheduledExecution:se,
+          jobUuid:se.uuid,
           dateStarted : new Date(),
           dateCompleted: null,
           user: 'userB',

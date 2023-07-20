@@ -43,7 +43,7 @@ import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import rundeck.Execution
 import rundeck.commandObjects.RdUserCommandObject
 import rundeck.data.paging.RdPageable

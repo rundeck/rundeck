@@ -41,6 +41,7 @@ class ReportService  {
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
+    RdJobService rdJobService
 
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
@@ -277,7 +278,7 @@ class ReportService  {
                     or {
                         exists(new DetachedCriteria(ReferencedExecution, "re").build {
                             projections { property 're.execution.id' }
-                            eq('re.scheduledExecution.id', se.id)
+                            eq('re.jobUuid', se.uuid)
                             eqProperty('re.execution.id', 'this.executionId')
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
@@ -286,7 +287,7 @@ class ReportService  {
                                 }
                             }
                         })
-                        eq('jobId', String.valueOf(se.id))
+                        eq('jobId', se.uuid)
                         and{
                             jobfilters.each { key, val ->
                                 if (query["${key}Filter"] == 'null') {
@@ -420,12 +421,9 @@ class ReportService  {
 
         def se
         if(query?.jobIdFilter) {
-            se = ScheduledExecution.findByUuid(query.jobIdFilter)
-            if(!se && query.jobIdFilter.isNumber()) {
-                se = ScheduledExecution.get(query.jobIdFilter)
-            }
+            se = rdJobService.getJobByIdOrUuid(query.jobIdFilter)
             if(se) {
-                query.jobIdFilter = se.id.toString()
+                query.jobIdFilter = se.id
             }
         }
 

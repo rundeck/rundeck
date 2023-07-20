@@ -41,7 +41,7 @@ test_metrics_metrics(){
     VAL=$(jq -r '.counters | length'  "${file}" )
     [ "$VAL" -gt 0 ] || fail "Expected > 0 for .counters in $file but was $VAL"
     assert_json_value '8' '.meters | length'  "${file}"
-    assert_json_value '26' '.timers | length'  "${file}"
+    assert_json_value '17' '.timers | keys | map(select(. == ["org.rundeck.app.authorization.TimedAuthContextEvaluator.authorizeProjectJobAll","org.rundeck.app.authorization.TimedAuthContextEvaluator.authorizeProjectResource","org.rundeck.app.authorization.TimedAuthContextEvaluator.authorizeProjectResourceAny","org.rundeck.app.authorization.TimedAuthContextEvaluator.authorizeProjectResources","org.rundeck.app.authorization.TimedAuthContextEvaluator.filterAuthorizedProjectExecutionsAll","rundeck.api.requests.requestTimer","rundeck.controllers.MenuController.apiExecutionsRunningv14.queryQueue","rundeck.controllers.ReportsController.apiHistory.getExecutionReports","rundeck.quartzjobs.ExecutionJob.executionTimer","rundeck.services.AuthorizationService.getSystemAuthorization","rundeck.services.AuthorizationService.systemAuthorization.evaluateSetTimer","rundeck.services.AuthorizationService.systemAuthorization.evaluateTimer","rundeck.services.ExecutionService.runJobReference","rundeck.services.FrameworkService.filterNodeSet","rundeck.services.NodeService.project.APIImportAndCleanHistoryTest.loadNodes","rundeck.services.NodeService.project.test.loadNodes","rundeck.web.requests.requestTimer"][])) | length'  "${file}"
 
     test_succeed
 

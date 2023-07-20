@@ -16,7 +16,6 @@ public interface OptionData {
     String getDateFormat();
     URL getRealValuesUrl();
     String getLabel();
-
     String getRegex();
     String getValuesList();
     String getValuesListDelimiter();

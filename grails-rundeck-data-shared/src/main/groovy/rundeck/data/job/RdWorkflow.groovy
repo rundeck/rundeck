@@ -15,6 +15,7 @@ import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFact
 
 @JsonIgnoreProperties(["errors"])
 class RdWorkflow implements WorkflowData, Validateable {
+
     Integer threadcount=1;
     Boolean keepgoing=false;
     List<RdWorkflowStep> steps;

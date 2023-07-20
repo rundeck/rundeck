@@ -10,10 +10,17 @@ import grails.validation.Validateable
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData
+
+import grails.util.Holders
+import grails.validation.Validateable
+import org.rundeck.app.data.model.v1.job.JobData
+
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.execlifecycle.ExecutionLifecyclePluginValidator
 import rundeck.data.validation.validators.jobargs.JobArgStringValidator
+import rundeck.data.validation.validators.jobcomponent.JobComponentValidator
 import rundeck.data.validation.validators.joboptions.JobOptionDataValidator
 import rundeck.data.validation.validators.notification.EmailNotificationValidator
 import rundeck.data.validation.validators.notification.PluginNotificationValidator
@@ -59,8 +66,24 @@ class RdJob implements JobData, Validateable {
     RdSchedule schedule
     RdOrchestrator orchestrator
     Map<String, Object> pluginConfigMap = [:]
+
     Map<String, RdJobComponentData> components = [:]
 
+    static nestedvalidator = { val, obj, errors ->
+        if (!val) return
+        if (!val.validate()) {
+            val.errors.allErrors.each { err ->
+                def fieldName = err.arguments ? err.arguments[0] : err.properties['field']
+                if (fieldName) {
+                    String errorCode = "${propertyName}.${err.code}"
+                    if (val.hasProperty(fieldName)) {
+                        errorCode = "${propertyName}.${err.arguments[0]}.${err.code}"
+                    }
+                    errors.rejectValue("${propertyName}.${err.properties['field']}", errorCode, err.arguments, "Invalid value for {0}")
+                }
+            }
+        }
+    }
     static constraints = {
         importFrom SharedProjectNameConstraints
         importFrom SharedJobConstraints
@@ -92,13 +115,9 @@ class RdJob implements JobData, Validateable {
             }
             new WorkflowStrategyValidator(Holders.grailsApplication.mainContext.getBean(FrameworkServiceCapabilities)).validate(obj, errors)
         })
+
         notificationSet(validator: { val, obj, errors ->
-            val.eachWithIndex { notif, idx ->
-                String propPath = "notificationSet[${idx}]"
-                if(!notif.validate()) {
-                    ValidatorUtils.processErrors(propPath, notif, errors)
-                    return
-                }
+            val.each { notif ->
                 Validator nvalidator
                 if(notif.type == NotificationConstants.EMAIL_NOTIFICATION_TYPE) nvalidator = new EmailNotificationValidator()
                 else if(notif.type == NotificationConstants.WEBHOOK_NOTIFICATION_TYPE) nvalidator = new UrlNotificationValidator()
@@ -135,4 +154,15 @@ class RdJob implements JobData, Validateable {
         }
     }
 
+    String generateJobScheduledName() {
+        return JobDataUtil.generateJobScheduledName(this)
+    }
+
+    String generateJobGroupName() {
+        return JobDataUtil.generateJobGroupName(this)
+    }
+
+    String generateCrontabExression() {
+        return JobDataUtil.generateCrontabExpression(this)
+    }
 }

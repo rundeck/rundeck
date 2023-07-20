@@ -25,11 +25,12 @@ import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageUtil
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.data.DataUtil
+import rundeck.data.storage.AuthorizedKeyStorageTreeProvider
 
 /**
  * Service layer access to the authorized storage
  */
-class StorageService {
+class StorageService implements AuthorizedKeyStorageTreeProvider {
     AuthStorageTree authRundeckStorageTree
     AuthStorageContextProvider rundeckKeyStorageContextProvider
 

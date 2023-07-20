@@ -1,7 +1,7 @@
 package org.rundeck.app.data.job.schedule
 
 import org.rundeck.app.data.model.v1.job.JobData
-import rundeck.services.JobRevReferenceImpl
+import rundeck.data.job.JobRevReferenceImpl
 
 class DefaultJobDataChangeDetector implements JobDataChangeDetector {
 
@@ -19,11 +19,15 @@ class DefaultJobDataChangeDetector implements JobDataChangeDetector {
 
     @Override
     boolean schedulingWasChanged(JobData newJob) {
-        return originalCron != DefaultCrontabExpressionGenerator.generateCrontab(newJob) ||
-                originalSchedule != newJob.scheduleEnabled ||
+        return  originalSchedule != newJob.scheduleEnabled ||
                 originalExecution != newJob.executionEnabled ||
                 originalTz != newJob.timeZone ||
                 localScheduled != newJob.scheduled ||
+                crontabIsDifferent(newJob) ||
                 wasRenamed(newJob)
+    }
+
+    boolean crontabIsDifferent(JobData newJob) {
+        return originalCron != DefaultCrontabExpressionGenerator.generateCrontab(newJob)
     }
 }

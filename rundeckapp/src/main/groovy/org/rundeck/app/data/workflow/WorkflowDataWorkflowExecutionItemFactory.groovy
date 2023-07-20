@@ -17,7 +17,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
      * Create an WorkflowExecutionItem instance for the given WorkflowData,
      * suitable for the ExecutionService layer
      */
-    WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow) {
+    WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, String parentProject = null) {
         if (!workflow.steps || workflow.steps.size() < 1) {
             throw new Exception("Workflow is empty")
         }
@@ -26,7 +26,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
                 workflow.steps.collect {
                     itemForWFCmdItem(
                             it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null) : null,
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null, parentProject) : null,
                     )
                 },
                 workflow.threadcount,
@@ -38,11 +38,11 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         return item
     }
 
-    static StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null) throws FileNotFoundException {
+    static StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null, final String parentProject=null) throws FileNotFoundException {
         if(WorkflowStepConstants.LIST_COMMAND_TYPES.contains(step.pluginType)){
             createStepForCommandType(step, handler)
         }else if (step.pluginType == WorkflowStepConstants.TYPE_JOB_REF) {
-            createStepForJobRefType(step, handler)
+            createStepForJobRefType(step, handler, parentProject)
         }else {
             createStepForPluginType(step)
         }
@@ -129,7 +129,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         }
     }
 
-    static StepExecutionItem createStepForJobRefType(WorkflowStepData step, final StepExecutionItem handler=null) {
+    static StepExecutionItem createStepForJobRefType(WorkflowStepData step, final StepExecutionItem handler=null, final String parentProject=null) {
 
         final String[] args
         if (null != step.configuration.jobref.args) {
@@ -145,20 +145,20 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
                 !!step.nodeStep,
                 handler,
                 !!step.keepgoingOnSuccess,
-                step.configuration.nodeFilter?:null,
-                step.configuration.nodeThreadcount!=null && step.configuration.nodeThreadcount>=1?step.configuration.nodeThreadcount:null,
-                step.configuration.nodeKeepgoing,
-                step.configuration.nodeRankAttribute,
-                step.configuration.nodeRankOrderAscending,
-                step.description,
-                step.configuration.nodeIntersect,
-                step.configuration.jobref.jobProject,
-                step.configuration.jobref.failOnDisable,
-                step.configuration.jobref.importOptions,
-                step.configuration.jobref.uuid,
-                step.configuration.jobref.useName,
-                step.configuration.jobref.ignoreNotifications,
-                step.configuration.jobref.childNodes
+                (String)(step.configuration.nodeFilter?:null),
+                (Integer)(step.configuration.nodeThreadcount!=null && step.configuration.nodeThreadcount>=1?step.configuration.nodeThreadcount:null),
+                (Boolean)step.configuration.nodeKeepgoing,
+                (String)step.configuration.nodeRankAttribute,
+                (Boolean)step.configuration.nodeRankOrderAscending,
+                (String)step.description,
+                (Boolean)step.configuration.nodeIntersect,
+                (String)(step.configuration.jobref.jobProject ?: parentProject),
+                (Boolean)step.configuration.jobref.failOnDisable,
+                (Boolean)step.configuration.jobref.importOptions,
+                (String)step.configuration.jobref.uuid,
+                (Boolean)step.configuration.jobref.useName,
+                (Boolean)step.configuration.jobref.ignoreNotifications,
+                (Boolean)step.configuration.jobref.childNodes
         )
     }
 

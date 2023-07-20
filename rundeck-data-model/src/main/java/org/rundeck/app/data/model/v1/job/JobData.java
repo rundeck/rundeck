@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 public interface JobData {
+
     String getUuid();
     String getJobName();
     String getDescription();
@@ -55,4 +56,5 @@ public interface JobData {
      * @return
      */
     Map<String, JobComponentData> getComponents();
+
 }

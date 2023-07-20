@@ -3,8 +3,8 @@ package org.rundeck.app.authorization
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.common.INodeSet
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.Execution
-import rundeck.ScheduledExecution
 
 import java.util.function.Function
 
@@ -14,7 +14,7 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
      * @param se
      * @return
      */
-    def Map authResourceForJob(ScheduledExecution se)
+    def Map authResourceForJob(JobData se)
 
     /**
      * Return true if the user is authorized to configure the project
@@ -66,7 +66,7 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
      */
     boolean authorizeProjectJobAny(
         AuthContext authContext,
-        ScheduledExecution job,
+        JobData job,
         Collection<String> actions,
         String project
     )
@@ -80,10 +80,10 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
      * @return true/false
      */
     boolean authorizeProjectJobAll(
-        AuthContext authContext,
-        ScheduledExecution job,
-        Collection<String> actions,
-        String project
+            AuthContext authContext,
+            JobData job,
+            Collection<String> actions,
+            String project
     )
 
     /**

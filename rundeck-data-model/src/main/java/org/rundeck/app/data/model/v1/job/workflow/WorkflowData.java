@@ -36,4 +36,5 @@ public interface WorkflowData {
      * @return
      */
     Map<String,Object> getPluginConfigMap();
+
 }

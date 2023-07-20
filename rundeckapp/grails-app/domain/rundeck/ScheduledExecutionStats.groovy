@@ -10,13 +10,21 @@ class ScheduledExecutionStats implements RdJobStats {
 
     long _version = 0
 
-//    static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {
         version false
         _version column: 'version'
         content type: 'text'
+    }
+
+    static ScheduledExecutionStats getOrCreate(String jobUuid) {
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        if(!stats) {
+            stats = new ScheduledExecutionStats(jobUuid: jobUuid, contentMap: [execCount: 0, totalTime: -1, refExecCount: 0])
+            stats.save()
+        }
+        return stats
     }
 
     public Map getContentMap() {

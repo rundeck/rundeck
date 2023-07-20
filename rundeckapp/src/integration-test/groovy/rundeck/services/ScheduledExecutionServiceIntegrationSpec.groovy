@@ -9,11 +9,14 @@ import org.quartz.JobDetail
 import org.quartz.Scheduler
 import org.quartz.SimpleTrigger
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormJobDataProvider
+import org.rundeck.app.data.providers.GormJobQueryProvider
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.data.execution.ExecutionOptionProcessor
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -79,13 +82,15 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 workflow: workflow,
                 scheduled: false
         ).save(flush: true, failOnError: true)
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(se.uuid) >> se
+        }
         // Create an execution with a scheduled time +1 day
         def startTime   = new Date()
         startTime       = startTime.plus(1)
 
         def e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: project,
@@ -96,10 +101,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 dateStarted: startTime
         ).save(flush: true, failOnError: true)
 
-        se.executions = [e]
         se.save(flush: true, failOnError: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getAllScheduled(_) >> [se]
+            getAllScheduled(_,_) >> [se]
             getSchedulesJobToClaim(_,_,_,_,_) >> [se]
         }
 
@@ -113,7 +117,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
 
         then:
-        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        2 * service.executionServiceBean.getExecutionsAreActive() >> true
         jobUuid in results
         // This job should have been claimed by the node
         results[jobUuid].job.jobName == 'viridian'
@@ -155,7 +159,6 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                     scheduled: false
                 )
         ).save(flush: true, failOnError: true)
-
         def se2 = new ScheduledExecution(
                 createJobParams(
                     jobName: 'amaranth',
@@ -174,7 +177,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         startTime       = startTime.plus(1)
 
         def e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: project,
@@ -184,11 +187,14 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(flush: true)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(se.uuid) >> se
+        }
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getAllScheduled(_) >> [se]
+            getAllScheduled(_,_) >> [se]
             isScheduled(se.uuid) >> se.scheduled
             isScheduled(se2.uuid) >> se2.scheduled
             getSchedulesJobToClaim(_,_,_,_,_) >> [se, se2]
@@ -203,7 +209,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
 
         then:
-        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        2 * service.executionServiceBean.getExecutionsAreActive() >> true
         // Both jobs should've been claimed
         jobUuid in results
         jobUuid2 in results
@@ -254,7 +260,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         startTime       = startTime.plus(1)
 
         def e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: project,
@@ -266,12 +272,15 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 dateCompleted: null
         ).save(flush: true)
 
-        se.executions = [e]
+        //se.executions = [e]
         se.save(flush: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(TEST_UUID2, TEST_UUID1, false, project, null, false)
         }
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(se.uuid) >> se
+        }
+        service.executionOptionProcessor = new ExecutionOptionProcessor()
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
@@ -331,7 +340,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         startTime       = startTime.plus(1)
 
         def e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: project,
@@ -342,10 +351,13 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 dateStarted: startTime
         ).save(failOnError: true)
 
-        se.executions = [e]
+        //se.executions = [e]
         se.save(flush: true, failOnError: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(TEST_UUID2, TEST_UUID1, false, project, null, false)
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(se.uuid) >> se
         }
 
         when:
@@ -397,12 +409,14 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 				options: [new Option(name: 'foo', defaultValue: 'bar', enforced: false,
 							secureInput: true, secureExposed: true, required: true)]
         ).save(failOnError: true)
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(se.uuid) >> se
+        }
         def startTime   = new Date()
         startTime       = startTime.plus(2)
 
         def e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: project,
@@ -413,10 +427,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 dateStarted: startTime
         ).save(failOnError: true)
 
-        se.executions = [e]
+       // se.executions = [e]
         se.save(flush: true, failOnError: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(TEST_UUID2, TEST_UUID1, false, project, null,false)
         }
 
 
@@ -543,6 +557,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             ScheduledExecution job4 = new ScheduledExecution(
                 createJobParams(jobName: 'blue5', project: 'AProject2', scheduled: false, uuid:uuids.e)
             ).save()
+            service.rdJobService = Mock(RdJobService) {
+                getJobDataProvider() >> new GormJobDataProvider()
+            }
         when:
             def resultList = service.getSchedulesJobToClaim(servers.target, fromServer?servers[fromServer]:null, isSelectAll, isProject, isJobids?isJobids.collect{uuids[it]}:null,isScheduledIgnore)
 
@@ -609,7 +626,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             ).save()
             Date startTime = new Date() + 2
             Execution e = new Execution(
-                scheduledExecution: job5,
+                jobUuid: job5.uuid,
                 argString: '-test args',
                 user: 'testuser',
                 project: 'AProject3',
@@ -619,7 +636,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime
             ).save(flush: true, failOnError: true)
-            job5.executions = [e]
+            //job5.executions = [e]
+            service.rdJobService = Mock(RdJobService) {
+                getJobDataProvider() >> new GormJobDataProvider()
+            }
         when:
             def resultList = service.getSchedulesJobToClaim(servers.target, fromServer?servers[fromServer]:null, isSelectAll, isProject, isJobids?isJobids.collect{uuids[it]}:null,isScheduledIgnore)
 
@@ -680,7 +700,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             isScheduled(job3.uuid) >> job3.scheduled
             isScheduled(job3x.uuid) >> job3x.scheduled
             isScheduled(job4.uuid) >> job4.scheduled
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetserverUUID, null, true, null, null)
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(targetserverUUID, null, true, null, null, false)
         }
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
@@ -728,7 +748,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def jobs = [job1, job2, job3, job4, job5]
         Date startTime = new Date() + 2
         Execution e = new Execution(
-            scheduledExecution: job5,
+            jobUuid: job5.uuid,
             argString: '-test args',
             user: 'testuser',
             project: 'AProject2',
@@ -748,9 +768,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             isScheduled(job3.uuid) >> job3.scheduled
             isScheduled(job4.uuid) >> job4.scheduled
             isScheduled(job5.uuid) >> false
-            getSchedulesJobToClaim(_,_,_,_,_) >> {
-                return service.getSchedulesJobToClaim(targetserverUUID, null, true, null, null)
-            }
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(targetserverUUID, null, true, null, null, false)
         }
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
@@ -786,7 +804,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             new ScheduledExecution(createJobParams(it)).save()
         }
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetServerUUID, null, true, targetProject, null)
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(targetServerUUID, null, true, targetProject, null, false)
         }
         when:
         def resultMap = service.claimScheduledJobs(targetServerUUID, null, true, targetProject)
@@ -821,9 +839,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null)
         ).save()
         String jid = job1.id.toString()
-        ScheduledExecution.metaClass.static.refresh = {-> throw new StaleObjectStateException("scheduleExecution", "")}
+        ScheduledExecution.metaClass.static.save = {-> throw new StaleObjectStateException("scheduleExecution", "")}
         service.jobSchedulesService = Mock(JobSchedulesService){
-            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetserverUUID, null, false, null, null)
+            isScheduled(job1.uuid) >> true
+            getSchedulesJobToClaim(_,_,_,_,_) >> new GormJobDataProvider().getScheduledJobsToClaim(targetserverUUID, null, false, null, null, false)
         }
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)

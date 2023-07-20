@@ -2,9 +2,11 @@ package rundeck.controllers
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.exception.DataValidationException
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
@@ -27,7 +29,7 @@ class RdJobController extends ControllerBase {
 
     def get() {
         response.contentType = "application/json;utf-8"
-        def job = rdJobService.getJobByIdOrUuid(params.id)
+        def job = rdJobService.convertToRdJob(rdJobService.getJobByIdOrUuid(params.id))
         if(job) {
             render mapper.writeValueAsString(job)
         } else {
@@ -42,7 +44,7 @@ class RdJobController extends ControllerBase {
 
         try {
             RdJob job = mapper.readValue(request.inputStream, RdJob)
-            render mapper.writeValueAsString(rdJobService.saveJob(job))
+            render mapper.writeValueAsString(rdJobService.convertToRdJob(rdJobService.saveJob(job)))
         } catch(InvalidFormatException ife) {
             response.status = 400
             render mapper.writeValueAsString([error: ife.message])

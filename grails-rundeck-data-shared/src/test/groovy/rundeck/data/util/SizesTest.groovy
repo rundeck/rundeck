@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.rundeck.util
+package rundeck.data.util
 
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.concurrent.TimeUnit
 
-import static org.rundeck.util.Sizes.parseFileSize
+import static Sizes.parseFileSize
 
 /**
  * @author greg

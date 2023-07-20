@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.options;
 
+import java.util.Map;
+
 public interface RemoteJsonOptionRetriever {
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.

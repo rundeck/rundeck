@@ -10,7 +10,7 @@ class DefaultCrontabExpressionGenerator implements CrontabExpressionGenerator {
                 jobData.schedule?.hour?jobData.schedule?.hour:'0',
                 jobData.schedule?.dayOfMonth?jobData.schedule?.dayOfMonth?.toUpperCase():'?',
                 jobData.schedule?.month?jobData.schedule?.month?.toUpperCase():'*',
-                jobData.schedule?.dayOfMonth=='?'?jobData.schedule?.dayOfWeek?.toUpperCase():'?',
+                (!jobData.schedule?.dayOfMonth || jobData.schedule?.dayOfMonth=='?')?(jobData.schedule?.dayOfWeek?.toUpperCase()?:"*"):'?',
                 jobData.schedule?.year?jobData.schedule?.year:'*'].join(" ")
     }
 

@@ -21,8 +21,7 @@ import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
-import grails.validation.Validateable
-import rundeck.ScheduledExecution
+import org.rundeck.app.data.model.v1.job.JobData
 
 /**
  * Resource view used by /project/jobs listing, and /job/[id]/info, and /scheduler
@@ -94,8 +93,8 @@ class JobInfo {
 //    ]
 //    renders as: <map><entry key="a">b</entry></map>
 
-    static JobInfo from(ScheduledExecution se, href, permalink, Map extra = [:]) {
-        new JobInfo([id             : se.extid,
+    static JobInfo from(JobData se, href, permalink, Map extra = [:]) {
+        new JobInfo([id             : se.uuid,
                      name           : (se.jobName),
                      group          : (se.groupPath),
                      project        : (se.project),
