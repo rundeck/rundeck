@@ -263,7 +263,7 @@ class DbStorageService implements NamespacedStorage{
                 } catch (DataAccessException e) {
                     def cause = ExceptionUtils.getRootCause(e)
                     throw new StorageException("Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " +
-                            cause.message,
+                            e.message,
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)
                 }

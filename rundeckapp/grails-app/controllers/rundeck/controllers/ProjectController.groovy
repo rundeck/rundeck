@@ -482,13 +482,13 @@ class ProjectController extends ControllerBase{
      * */
     @CompileStatic
     private String hintErrorCause(Throwable t){
-        final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
+        final SIZE_CONSTRAINT_VIOLATION_STRING = 'org.springframework.dao.InvalidDataAccessResourceUsageException'
         final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "The content of the node resource definitions could be too big to store it on the database, try to split it into multiple files before importing it."
         def cause = ExceptionUtils.getRootCause(t).message
         if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
             return SIZE_CONSTRAINT_VIOLATION_MESSAGE
         }
-        return null
+        return ''
     }
 
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
