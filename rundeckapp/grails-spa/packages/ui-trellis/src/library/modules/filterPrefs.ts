@@ -1,5 +1,6 @@
 // import _ from 'lodash'
 import axios from 'axios'
+import {getAppLinks} from '../rundeckService'
 import Tokens from './tokens'
 import Generators from './generators'
 
@@ -8,7 +9,7 @@ import {RundeckToken} from '../interfaces/rundeckWindow'
 export const setFilterPref = (key: any, value: any) => {
   return new Promise((resolve) => {
     Tokens.getUIAjaxTokens().then((uiToken) => {
-      Generators.generateUrl(window.appLinks.userAddFilterPref, {
+      Generators.generateUrl(getAppLinks().userAddFilterPref, {
         filterpref: `${key}=${value}`
       }).then((url) => {
         axios.post(url, {}, {
@@ -30,7 +31,7 @@ export const setFilterPref = (key: any, value: any) => {
 export const unsetFilterPref = (key: string) => {
   return new Promise((resolve) => {
     Tokens.getUIAjaxTokens().then((uiToken) => {
-      Generators.generateUrl(window.appLinks.userAddFilterPref, {
+      Generators.generateUrl(getAppLinks().userAddFilterPref, {
         filterpref: `${key}=!`
       }).then((url) => {
         axios.post(url, {}, {
@@ -53,7 +54,7 @@ export const unsetFilterPref = (key: string) => {
 export const getAvailableFilterPrefs = () => {
   return new Promise((resolve) => {
     Tokens.getUIAjaxTokens().then((uiToken) => {
-      Generators.generateUrl(window.appLinks.userAddFilterPref, {
+      Generators.generateUrl(getAppLinks().userAddFilterPref, {
         filterpref: `dummy=!`
       }).then((url) => {
         axios.post(url, {}, {

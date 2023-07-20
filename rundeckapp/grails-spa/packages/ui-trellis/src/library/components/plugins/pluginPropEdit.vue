@@ -9,7 +9,7 @@
             :id="`${rkey}prop_`+pindex"
             value="true"
             v-model="currentValue"
-            v-if="!readOnly"
+            v-if="!renderReadOnly"
           >
           <label :for="`${rkey}prop_`+pindex">{{prop.title}}</label>
         </div>
@@ -29,7 +29,7 @@
             value="true"
             v-model="currentValue"
 
-            v-if="!readOnly"
+            v-if="!renderReadOnly"
           >
             <input
                 type="radio"
@@ -75,7 +75,7 @@
           v-model="currentValue"
           :id="`${rkey}prop_`+pindex"
           class="form-control input-sm"
-          v-if="!readOnly"
+          v-if="!renderReadOnly"
         >
           <option v-if="!prop.required" value>--None Selected--</option>
           <option
@@ -109,7 +109,7 @@
             size="100"
             type="text"
             class="form-control input-sm"
-            v-if="!readOnly"
+            v-if="!renderReadOnly"
           >
           <input
               :name="`${rkey}prop_`+pindex"
@@ -123,7 +123,7 @@
           >
         </div>
         <div class="col-sm-5">
-          <select class="form-control input-sm" v-model="currentValue" v-if="!readOnly">
+          <select class="form-control input-sm" v-model="currentValue" v-if="!renderReadOnly">
             <option
                 v-for="opt in prop.allowed"
                 v-bind:value="opt"
@@ -152,7 +152,7 @@
                 v-model="currentValue"
                 :value="opt"
                 :id="`${rkey}opt_`+pindex+'_'+oindex"
-                v-if="!readOnly"
+                v-if="!renderReadOnly"
               >
               <input
                   type="checkbox"
@@ -177,7 +177,7 @@
           size="100"
           type="number"
           class="form-control input-sm"
-          v-if="['Integer','Long'].indexOf(prop.type)>=0 && !readOnly"
+          v-if="['Integer','Long'].indexOf(prop.type)>=0 && !renderReadOnly"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
           <textarea
@@ -188,7 +188,7 @@
             cols="100"
             class="form-control input-sm"
             v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-            v-if="!readOnly"
+            v-if="!renderReadOnly"
           ></textarea>
           <textarea
               :name="`${rkey}prop_`+pindex"
@@ -206,15 +206,15 @@
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
             :lang="prop.options['codeSyntaxMode']"
-            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true' && !readOnly"
+            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true' && !renderReadOnly"
             :id="`${rkey}prop_`+pindex"
             height="200"
             width="100%"
-            :read-only="readOnly"
+            :read-only="renderReadOnly"
           />
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">
-          <div v-if="!readOnly">
+          <div v-if="!renderReadOnly">
             <input
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
@@ -267,7 +267,7 @@
           type="text"
           class="form-control input-sm"
           :disabled="true"
-          v-else-if="readOnly"
+          v-else-if="renderReadOnly"
         >
           <input
           :name="`${rkey}prop_`+pindex"
@@ -320,7 +320,7 @@
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                               :allow-upload="true"
                               :value="keyPath"
-                              :read-only="readOnly"/>
+                              :read-only="renderReadOnly"/>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -463,7 +463,8 @@ export default Vue.extend({
       jobName: '',
       keyPath:'',
       jobContext: [] as any,
-      aceEditorEnabled: false
+      aceEditorEnabled: false,
+      renderReadOnly:false
     }
   },
   watch:{
@@ -473,6 +474,9 @@ export default Vue.extend({
     },
     value:function(newval){
       this.currentValue = newval
+    },
+    readOnly:function(newval){
+        this.renderReadOnly= newval || (this.prop.options && this.prop.options['displayType']==='READONLY')
     }
   },
   computed:{
@@ -514,6 +518,9 @@ export default Vue.extend({
     if(this.prop.options && this.prop.options['displayType']==='CODE'){
       this.aceEditorEnabled = true
     }
+
+    this.renderReadOnly= this.readOnly || (this.prop.options && this.prop.options['displayType']==='READONLY')
+
   }
 })
 </script>

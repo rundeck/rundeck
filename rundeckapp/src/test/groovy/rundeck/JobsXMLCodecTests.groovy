@@ -6863,6 +6863,58 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
+    public void "import a job from xml where valueListDelimiter was modified using an jobXmlValueListDelimiter"() {
+
+        given: "a job with 3 values and a wrong valueListDelimiter"
+        Map job
+
+
+        def linkedHashMap = new LinkedHashMap([
+                context           : [
+                        options: [
+                                preserveOrder: true,
+                                option       : [
+                                        delimiter            : '#',
+                                        enforcedvalues       : true,
+                                        multivalueAllSelected: true,
+                                        multivalued          : true,
+                                        name                 : 'OPTION',
+                                        required             : true,
+                                        value                : '/opt/rundeck/server/logs/#/opt/rundeck/server/logs/validations/#/opt/rundeck/options/F5/tokens/',
+                                        values               : '/opt/rundeck/server/logs/,/opt/rundeck/server/logs/validations/,/opt/rundeck/options/F5/tokens/',
+                                        valuesListDelimiter  : ' '
+                                ]
+                        ]
+                ],
+                description       : 'test descrip',
+                executionEnabled  : true,
+                loglevel          : 'INFO',
+                name              : 'test job 1',
+                nodeFilterEditable: false,
+                scheduleEnabled   : true,
+                sequence          : [
+                        keepgoing: true,
+                        strategy : 'node-first',
+                        command  : [
+                                jobref: [
+                                        group: '/some/path',
+                                        name : 'a Job'
+                                ]
+                        ]
+                ]
+        ])
+
+
+
+        when: "the job is imported using a ( , ) as jobXmlValueListDelimiter"
+        job = JobsXMLCodec.convertXMapToJobMap(linkedHashMap, ",")
+
+
+        then: "job should keep same options values quantity as the original xml"
+        job.options.getAt("OPTION").getAt("values").size() == 3
+    }
+
 
 
 

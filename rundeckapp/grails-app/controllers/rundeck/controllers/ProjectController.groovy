@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
@@ -62,6 +63,7 @@ import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
@@ -79,6 +81,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
+    PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
 
@@ -2189,6 +2192,33 @@ key2=value'''
         }
         Properties currentProps = project.getProjectProperties() as Properties
 
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(configProps, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
 
         if(!result.success){
@@ -2454,7 +2484,35 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+        Properties projProp = new Properties([(key_): value_])
+
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
+        def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){
             return apiService.renderErrorFormat(response, [

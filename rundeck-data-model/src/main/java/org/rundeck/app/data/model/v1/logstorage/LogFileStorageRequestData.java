@@ -3,7 +3,7 @@ package org.rundeck.app.data.model.v1.logstorage;
 import java.io.Serializable;
 import java.util.Date;
 
-public interface LogFileStorageRequest {
+public interface LogFileStorageRequestData {
     Serializable getId();
     Serializable getExecutionId();
     String getPluginName();

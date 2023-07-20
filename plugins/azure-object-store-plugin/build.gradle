@@ -24,9 +24,11 @@ dependencies {
     pluginLibs (group: 'com.microsoft.azure', name: 'azure', version: '1.41.4'){
         exclude group: "com.fasterxml.jackson.core"
         exclude group: 'net.minidev', module: 'json-smart'
+        exclude group: 'com.google.guava', module: 'guava'
     }
     pluginLibs (group: 'com.microsoft.azure', name: 'azure-storage', version: '8.6.6') {
         exclude group: "com.fasterxml.jackson.core"
+        exclude group: 'com.google.guava', module: 'guava'
     }
 
     // Use the awesome Spock testing and specification framework

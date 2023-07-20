@@ -2698,6 +2698,62 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         where:
             type<<['params','multipart','multipartreq']
     }
+    @Unroll
+    def "upload job file via create form #type"() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
+            def authContext = Mock(UserAndRolesAuthContext)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[test:'values'])
+                        ]
+                ]
+                1 * prepareCreateEditJob(_, job , AuthConstants.ACTION_CREATE, authContext)>>[:]
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                _*authorizeProjectResource(_, _, _, _) >> true
+                _*getAuthContextForSubjectAndProject(_, _) >> authContext
+            }
+            controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+                1 * getImportedJobDefinitionComponentValues(!null)>>[input:'values']
+            }
+
+            request.method = 'POST'
+            params.project='anuncle'
+            setupFormTokens(params)
+        when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
+            controller.create()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/create'
+            model.jobComponentValues==[input:'values']
+            //job project set to upload parameter
+            job.project=='anuncle'
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
 
     @Unroll
     def "upload job file error from parse result "() {
