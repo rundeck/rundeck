@@ -159,14 +159,15 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
 
                     final Object blankIfUnexpandedValue = itemmeta.get(CONFIG_BLANK_IF_UNEXPANDED);
-                    final boolean blankIfUnexpanded;
-                    if (blankIfUnexpandedValue instanceof Boolean) {
-                        blankIfUnexpanded = (Boolean) blankIfUnexpandedValue;
-                    } else {
-                        blankIfUnexpanded = blankIfUnexpandedValue instanceof String && Boolean.parseBoolean((String) blankIfUnexpandedValue);
+                    if (blankIfUnexpandedValue != null) {
+                        final boolean blankIfUnexpanded;
+                        if (blankIfUnexpandedValue instanceof Boolean) {
+                            blankIfUnexpanded = (Boolean) blankIfUnexpandedValue;
+                        } else {
+                            blankIfUnexpanded = blankIfUnexpandedValue instanceof String && Boolean.parseBoolean((String) blankIfUnexpandedValue);
+                        }
+                        pbuild.blankIfUnexpandable(blankIfUnexpanded);
                     }
-
-                    pbuild.blankIfUnexpandable(blankIfUnexpanded);
 
 
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
