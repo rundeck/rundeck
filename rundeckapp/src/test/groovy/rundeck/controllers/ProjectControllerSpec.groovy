@@ -2106,7 +2106,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         where:
         exceptionString                      |     flashWarning
-        'Data too long for column \'data\''  |     "The content of the node resource definitions could be too big to store it on the database, try to split it into multiple files before importing it."
+        'Data too long for column \'data\''  |     "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
         'Other exception'                    |     null
 
     }
