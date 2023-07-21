@@ -23,18 +23,33 @@ import spock.lang.Specification
 
 
 class ScriptUserGroupSourceSpec extends Specification {
+    def isPosixSystem() {
+        def osName = System.getProperty("os.name").toLowerCase()
+        return !(osName.contains("win") || osName.contains("mac") || osName.contains("sunos"))
+    }
+
     def "GetGroups"() {
         when:
 
         TestScriptUserGroupSourceProvider testProvider = new TestScriptUserGroupSourceProvider()
-        testProvider.scriptFile = File.createTempFile("user","groups")
-        testProvider.scriptFile.setExecutable(true,true)
         testProvider.archiveFile = File.createTempFile("user","archive")
         testProvider.contentsBaseDir = File.createTempDir()
-        testProvider.scriptFile << """echo "==START_GROUPS=="
+        if (isPosixSystem()) {
+            testProvider.scriptFile = File.createTempFile("user","groups")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """echo "==START_GROUPS=="
                                     echo "group1"
                                     echo "group2"
                                     echo "==END_GROUPS==" """
+        } else {
+            testProvider.scriptFile = File.createTempFile("option",".bat")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """@echo off
+                                    echo ==START_GROUPS==
+                                    echo group1
+                                    echo group2
+                                    echo ==END_GROUPS=="""
+        }
         ScriptUserGroupSource scriptOptionValues = new ScriptUserGroupSource(testProvider, Stub(ServiceProviderLoader))
         def result = scriptOptionValues.getGroups("test",[:])
 
@@ -49,14 +64,23 @@ class ScriptUserGroupSourceSpec extends Specification {
         when:
 
         TestScriptUserGroupSourceProvider testProvider = new TestScriptUserGroupSourceProvider()
-        testProvider.scriptFile = File.createTempFile("user","groups")
-        testProvider.scriptFile.setExecutable(true,true)
         testProvider.archiveFile = File.createTempFile("user","archive")
         testProvider.contentsBaseDir = File.createTempDir()
         testProvider.scriptArgs = "\${session.username}"
-        testProvider.scriptFile << """echo "==START_GROUPS=="
+        if (isPosixSystem()) {
+            testProvider.scriptFile = File.createTempFile("user","groups")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """echo "==START_GROUPS=="
                                     echo "\$1"
                                     echo "==END_GROUPS==" """
+        } else {
+            testProvider.scriptFile = File.createTempFile("option",".bat")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """@echo off
+                                    echo ==START_GROUPS==
+                                    echo %1
+                                    echo ==END_GROUPS=="""
+        }
         ScriptUserGroupSource scriptOptionValues = new ScriptUserGroupSource(testProvider, Stub(ServiceProviderLoader))
         def result = scriptOptionValues.getGroups("test",[:])
 

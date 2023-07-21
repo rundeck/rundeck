@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -64,6 +63,11 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         super.tearDown();
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
+    }
+
+    public boolean isPosixSystem() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return !(osName.contains("win") || osName.contains("mac") || osName.contains("sunos"));
     }
 
     public void testConfigureProperties() throws Exception {
@@ -314,8 +318,13 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             nodes = fileNodesProvider.getNodes();
             fail();
         } catch (ResourceModelSourceException e) {
-            assertTrue(e.getMessage()
+            if (isPosixSystem()) {
+                assertTrue(e.getMessage()
                         .contains("File does not exist: src/test/resources/com/dtolabs/rundeck/core/common/test-DNE.xml"));
+            } else {
+                assertTrue(e.getMessage()
+                        .contains("File does not exist: src\\test\\resources\\com\\dtolabs\\rundeck\\core\\common\\test-DNE.xml"));
+            }
         }
 
     }
