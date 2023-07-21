@@ -483,7 +483,7 @@ class ProjectController extends ControllerBase{
     @CompileStatic
     private String hintErrorCause(Throwable t){
         final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
-        final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "The content of the node resource definitions could be too big to store it on the database, try to split it into multiple files before importing it."
+        final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
         def cause = ExceptionUtils.getRootCause(t).message
         if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
             return SIZE_CONSTRAINT_VIOLATION_MESSAGE
