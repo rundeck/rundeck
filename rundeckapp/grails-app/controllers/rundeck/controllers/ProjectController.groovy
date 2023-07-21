@@ -57,7 +57,6 @@ import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
-import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -204,6 +203,16 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
         params.instance = params.url
+
+        if(params.importWebhooks == 'true') {
+            if (archiveParams.importComponents != null) {
+                archiveParams.importComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.importComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = (String) params.whkRegenAuthTokens
+        }
+
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
@@ -228,16 +237,11 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
 
-        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         def token = projectService.exportProjectToInstanceAsync(
             project1,
             framework,
             authorizing.authContext.username,
-            options,
-            archiveParams.targetproject,
-            archiveParams.apitoken,
-            archiveParams.url,
-            archiveParams.preserveuuid,
+            archiveParams,
             authorizing.authContext
         )
         return redirect(action: 'exportWait',
@@ -3062,6 +3066,7 @@ If false, do not import the project configuration (default).''', schema = @Schem
 If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
 If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importComponents ', required = false, in = ParameterIn.QUERY, description = '''It imports components''', schema = @Schema(implementation = String.class)),
                     @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
 If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'whkRegenAuthTokens', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, always regenerate the auth tokens associated with the webhook. 
@@ -3140,6 +3145,7 @@ Note: `other_errors` included since API v35""",
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+
         if(archiveParams.hasErrors()){
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
@@ -3148,6 +3154,9 @@ Note: `other_errors` included since API v35""",
                     format:respFormat
             ])
         }
+
+        archiveParams.setMapParamsFromSerializedMap(['importComponents': params.get('importComponents'), 'importOpts': params.get('importOpts')] as Map<String, String>)
+
         def framework = frameworkService.rundeckFramework
 
         AuthContext appContext = systemAuthContext

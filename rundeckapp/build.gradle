@@ -79,6 +79,13 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
+    pluginLibs
+
+    //declare implementation to extend from pluginLibs so it inherits the dependencies
+    implementation {
+        extendsFrom pluginLibs
+    }
+
     implementation.exclude module: "spring-boot-starter-tomcat"
     implementation.exclude module: "spring-boot-cli"
 
@@ -103,6 +110,12 @@ sourceSets {
 dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
+    pluginLibs("org.rundeck.api:rd-api-client:2.0.5"){
+        exclude group: 'javax.xml.bind'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.dataformat'
+        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
+    }
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
