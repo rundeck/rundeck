@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.PluginLogger
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import org.spockframework.util.Assert
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -21,11 +22,12 @@ class AbstractDescribableScriptPluginSpec extends Specification{
     def instanceData
     def localDataContext
     def pluginMetaData
+    def metadata
 
 
     def setup() {
         framework = AbstractBaseTest.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
+        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME) as FrameworkProject
         instanceData =  [
                 'password' : 'key/path/some.pass',
                 'example' : 'this is an example',
@@ -55,7 +57,28 @@ class AbstractDescribableScriptPluginSpec extends Specification{
                                         type            : 'String',
                                         name            : 'debug',
                                         scope           : PropertyScope.Instance
+                                ]
+                        ]
+        ]
+
+        metadata = [
+                config                                      :
+                        [
+                                [
+                                        type            : 'String',
+                                        name            : 'script',
+                                        title           : 'script',
+                                        description     : 'the shell script',
+                                        required        : true,
+                                        renderingOptions: ['displayType' : 'CODE', 'codeSyntaxMode' : 'SH']
                                 ],
+                                [
+                                        type            : 'String',
+                                        name            : 'arguments',
+                                        title           : 'Arguments',
+                                        description     : 'optional command line arguments',
+                                        required        : false
+                                ]
                         ]
         ]
     }
@@ -90,6 +113,12 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         def getPluginProperties(ExecutionContext context, Map<String, Object> instanceData, Map<String, Map<String, String>> localDataContext,String serviceName){
             DescriptionBuilder builder = DescriptionBuilder.builder()
             createDescription(provider, isAllowCustomProperties(), isUseConventionalPropertiesMapping(), builder)
+            return builder.build()
+        }
+
+        def getPluginProperties2(){
+            DescriptionBuilder builder = DescriptionBuilder.builder()
+            createDescription(provider, isAllowCustomProperties(), false, builder)
             return builder.build()
         }
     }
@@ -216,5 +245,37 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         result!=null
         result.properties.get(0).hasProperty("blankIfUnexpandable")
 
+    }
+
+    @Unroll
+    def "check description contains blankIfUnexpanded field with true value"() {
+        given:
+        File basedir = File.createTempFile("test", "dir")
+        basedir.deleteOnExit()
+
+        def pluginMeta = Mock(PluginMeta){
+            getRundeckPluginVersion() >> "2.0"
+        }
+
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'testProperties'
+            getMetadata() >> metadata
+            getPluginMeta() >> pluginMeta
+            getContentsBasedir() >> basedir
+        }
+        def plugin = new TestScriptPlugin(provider, framework)
+
+        when:
+        def properties = plugin.getPluginProperties2()
+
+        def result = false
+        for (property in properties.properties) {
+            if (property.getName() == "script" || property.getName() == "arguments") {
+                result = property.blankIfUnexpandable
+            }
+        }
+
+        then:
+        assert result
     }
 }
