@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import grails.validation.Validateable
 import groovy.transform.ToString
 import rundeck.services.ArchiveOptions
+import grails.databinding.BindUsing
 
 /**
  * ProjectArchiveParams is ...
@@ -44,6 +45,12 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable,
     Boolean exportReadmes
     Boolean exportAcls
     Boolean exportScm
+
+    @BindUsing({ obj, source ->
+        if(source['importComponents'] instanceof String)
+            return obj.asJsonMap(source['importComponents'] as String)
+        return source['importComponents']
+    })
     Map<String, Boolean> importComponents
     Map<String, Map<String, String>> importOpts
     Map<String, Boolean> exportComponents
