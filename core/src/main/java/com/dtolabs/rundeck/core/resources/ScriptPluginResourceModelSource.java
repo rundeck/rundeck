@@ -124,7 +124,12 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         Description description = this.factory.getDescription();
         DataContext dataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
         StorageTree storageTree = services.getService(KeyStorageTree.class);
-        return ScriptResourceUtil.generateBundle(description, dataContext, storageTree, configuration, logger );
+
+        try{
+            return ScriptResourceUtil.generateBundle(description, dataContext, storageTree, configuration, logger );
+        }catch (Exception e){
+            throw new RuntimeException("Storage Unauthorized access. The following keys have : " + e.getMessage());
+        }
     }
 
     @Override

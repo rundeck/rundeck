@@ -418,7 +418,7 @@ class ScriptResourceUtil {
                     r.getContents().writeContent(byteArrayOutputStream);
                     bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
                 } catch (IOException iex) {
-                    logger.error(String.format("IOException Unable to add secret value to secret bundle for: %s",propValue));
+                    throw new RuntimeException(String.format("IOException Unable to add secret value to secret bundle for: %s",propValue));
                 }
             }
         }
