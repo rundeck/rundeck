@@ -8,5 +8,7 @@ public interface NodeSourceLoaderConfig {
 
     CloseableProvider<ResourceModelSource> getCloseableProvider();
 
-    Services getServices();
+    default Services getServices(){
+        return null;
+    };
 }
