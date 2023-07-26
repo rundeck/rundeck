@@ -22,7 +22,6 @@ import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 import java.util.stream.Collectors
-import java.util.stream.IntStream
 
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
