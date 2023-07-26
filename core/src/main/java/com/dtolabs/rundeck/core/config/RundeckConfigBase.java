@@ -437,6 +437,7 @@ public class RundeckConfigBase {
         Boolean useHMacRequestTokens;
         Boolean syncLdapUser;
         String requiredRole;
+        String requiredRoles;
         String jaasRolePrefix;
         Boolean syncOauthUser = Boolean.valueOf(false);
 

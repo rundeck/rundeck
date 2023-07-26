@@ -22,6 +22,7 @@ import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 import java.util.stream.Collectors
+import java.util.stream.IntStream
 
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
@@ -126,10 +127,19 @@ class SetUserInterceptor {
                 return false
             }
         }
-        def requiredRole = configurationService.getString("security.requiredRole","")
-        if(!requiredRole.isEmpty()) {
-            if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
-                log.error("User ${request.remoteUser} must have role: ${requiredRole} to log in.")
+        def requiredRoles = getRequiredRolesFromProps()
+        def allowedRoles = [] as List<String>
+        if( requiredRoles.size() ){
+            def requestRoles = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
+            requiredRoles.forEach {
+                requestRoles.forEach {group ->
+                    if( it == group.getName() ){
+                        allowedRoles << group
+                    }
+                }
+            }
+            if( !allowedRoles.size() ){
+                log.error("User ${request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
@@ -273,6 +283,27 @@ class SetUserInterceptor {
         .setUuid(token)
         .setCreator(owner)
         .setOwnerName(owner)
+    }
+
+    /**
+     * Get the required roles to authenticate with Rundeck's Server
+     * from properties if there's any, and return a list with them.
+     *
+     * */
+    @CompileStatic
+    private List<String> getRequiredRolesFromProps(){
+        def rolesFromProps = [] as List<String>
+        def requiredSingularRole = configurationService.getString("security.requiredRole","")
+        if( requiredSingularRole ){
+            rolesFromProps << requiredSingularRole
+        }
+        def requiredPluralRoles = configurationService.getString("security.requiredRoles","")
+        if( requiredPluralRoles ){
+            List<String> allowedHostnames = requiredPluralRoles.split(",").collect( it -> it.trim())
+            allowedHostnames.stream().filter {position -> !position.isEmpty()}
+            .forEach {rolesFromProps << it}
+        }
+        return rolesFromProps
     }
 
 }
