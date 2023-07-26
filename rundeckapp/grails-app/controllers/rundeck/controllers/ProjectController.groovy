@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -457,7 +458,11 @@ class ProjectController extends ControllerBase{
                 }
                 flash.warn=warning.join(",")
                 }catch( Exception e ){
+                    def hint = hintErrorCause(e)
                     flash.error="There was some errors in the import process: [ ${e.getMessage()} ]"
+                    if( hint.length() ){
+                        flash.warn=hint
+                    }
                 }
 
                 return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
@@ -466,6 +471,24 @@ class ProjectController extends ControllerBase{
             flash.error = g.message(code:'request.error.invalidtoken.message')
             return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
+    }
+
+    /**
+     * Give a hint based on the error message in the exception thrown during the import
+     *
+     * @param Throwable - The exception thrown
+     * @return String - null if is not supported yet, a message if it is.
+     *
+     * */
+    @CompileStatic
+    private String hintErrorCause(Throwable t){
+        final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
+        final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
+        def cause = ExceptionUtils.getRootCause(t).message
+        if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
+            return SIZE_CONSTRAINT_VIOLATION_MESSAGE
+        }
+        return ''
     }
 
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
