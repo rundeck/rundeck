@@ -128,7 +128,11 @@ class ExecutionJob implements InterruptableJob {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}", es)
                 throw es
             }
-        }catch(Throwable t){
+        }catch(ScheduledExecutionDeletedException sede){
+            log.error("ScheduledExecution not found on DB: ${sede.message?sede.message:'no message'}",sede)
+            throw sede
+        }
+        catch(Throwable t){
             markStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
@@ -223,7 +227,7 @@ class ExecutionJob implements InterruptableJob {
                 initMap.executionId = executionId
             }
         } else {
-            initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
+            initMap.scheduledExecution = fetchScheduledExecution(jobDataMap, context)
             if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
@@ -645,16 +649,17 @@ class ExecutionJob implements InterruptableJob {
     }
 
 
-    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
+    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap, JobExecutionContext context) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
         def se=null
-        se = ScheduledExecution.findByUuid(seid)
+        se = ScheduledExecution.findByUUID(seid).find()
         if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }
 
         if (!se) {
-            throw new RuntimeException("failed to lookup scheduledException object from job data map: id: ${seid}")
+            context.getScheduler().deleteJob(context.jobDetail.key)
+            throw new ScheduledExecutionDeletedException("Failed to lookup scheduledException object from job data map: id: ${seid} , job will be unscheduled")
         }
         if (! se instanceof ScheduledExecution) {
             throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())
