@@ -25,14 +25,22 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
+import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
 import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree;
+import org.rundeck.app.spi.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -41,7 +49,7 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginResourceModelSource implements ResourceModelSource, Configurable {
+class ScriptPluginResourceModelSource implements ResourceModelSource, Configurable, ProxySecretBundleCreator {
     static        Logger               logger = LoggerFactory.getLogger(ScriptPluginResourceModelSource.class.getName());
     final         ScriptPluginProvider provider;
     final private Framework            framework;
@@ -102,6 +110,26 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         executionDataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
         executionDataContext.get("plugin").putAll(factory.createPluginData());
         executionDataContext.put("config", configData);
+    }
+
+    @Override
+    public List<String> listSecretsPathResourceModel(Map<String, Object> configuration) {
+        Description description = this.factory.getDescription();
+        DataContext dataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
+        return ScriptResourceUtil.generateListStoragePath(description, dataContext, configuration);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundleResourceModel(Services services, Map<String, Object> configuration) {
+        Description description = this.factory.getDescription();
+        DataContext dataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
+        StorageTree storageTree = services.getService(KeyStorageTree.class);
+
+        try{
+            return ScriptResourceUtil.generateBundle(description, dataContext, storageTree, configuration, logger );
+        }catch (Exception e){
+            throw new RuntimeException("Storage Unauthorized access. The following keys have : " + e.getMessage());
+        }
     }
 
     @Override
