@@ -536,6 +536,7 @@ jobs:
             cd test/selenium
             nvm use v16.18.0
             echo 'export PATH=${PWD}/node_modules/chromedriver/bin:${PATH}' >> $BASH_ENV
+            sudo rm /usr/local/bin/chromedriver
             npm run bootstrap
             bin/deck test -s selenium \
             -u http://localhost:4440 \
