@@ -117,6 +117,8 @@ import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -4041,15 +4043,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 */
 
                 rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                sqlProjection 'sum(extract(EPOCH from (date_completed - date_started))) as durationSum',
                     'durationSum',
-                    StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
+                    StandardBasicTypes.LONG
+                sqlProjection 'min(extract(EPOCH from (date_completed - date_started))) as durationMin',
                     'durationMin',
-                    StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
+                    StandardBasicTypes.LONG
+                sqlProjection 'max(extract(EPOCH from (date_completed - date_started))) as durationMax',
                     'durationMax',
-                    StandardBasicTypes.TIME
+                    StandardBasicTypes.LONG
 
             }
         }
@@ -4069,9 +4071,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
         long totalCount = metricsData?.count ? metricsData.count : 0
 
-        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
-        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
-        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
+        Long maxDuration = sqlTimeToMillis(epochToTime(metricsData?.durationMax))
+        Long minDuration = sqlTimeToMillis(epochToTime(metricsData?.durationMin))
+        Long durationSum = sqlTimeToMillis(epochToTime(metricsData?.durationSum))
         double avgDuration = totalCount != 0 ? (durationSum / totalCount) : 0
 
         // Build response
@@ -4085,6 +4087,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ]
         ]
 
+    }
+
+    /**
+     * Parse Unix time to java.sql.Time
+     *
+     * @param epoch - Long : The result of the query
+     * @return a new instance of Time
+     *
+     * */
+    @CompileStatic
+    private Time epochToTime(Long epoch){
+        Date date = new Date(epoch * 1000L)
+        return new Time(date.getTime())
     }
 
     private def queryExecutionMetricsOnMemory(ExecutionQuery query){
