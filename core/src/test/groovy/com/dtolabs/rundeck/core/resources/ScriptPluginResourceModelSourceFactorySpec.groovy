@@ -164,6 +164,74 @@ class ScriptPluginResourceModelSourceFactorySpec  extends Specification{
 
     }
 
+    def "disable key conversion"(){
+
+        given:
+
+        def storageTree = Mock(KeyStorageTree){
+            getResource(_) >> {throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, new PathUtil.PathImpl("test"))}
+        }
+
+        Services services = Mock(Services){
+            getService(KeyStorageTree.class) >> storageTree
+        }
+
+        Properties configuration = new Properties()
+        configuration.put("project",PROJECT_NAME)
+        configuration.put("token","keys/token")
+        configuration.put(ScriptPluginResourceModelSourceFactory.DISABLE_CONTENT_CONVERSION, true)
+
+        TestScriptResourceModel resourceModelProvider = new TestScriptResourceModel()
+        resourceModelProvider.name = "test-script-resource-model"
+        resourceModelProvider.service = "ResourceModel"
+        resourceModelProvider.metadata = ["resource-format":"yaml", "config": [
+                [
+                        "name":"token",
+                        "type":"String",
+                        "title":"Token",
+                        "renderingOptions": [
+                                "selectionAccessor" : "STORAGE_PATH",
+                                "storage-path-root" : "keys",
+                                "valueConversion" : "STORAGE_PATH_AUTOMATIC_READ"
+                        ]
+                ]
+        ]
+        ]
+
+        File archiveFile = File.createTempFile("test-script-resource-model", "tmp");
+        archiveFile.deleteOnExit();
+        resourceModelProvider.setArchiveFile(archiveFile);
+        final File scriptFile = File.createTempFile("test-scriptfile", "tmp");
+        scriptFile.deleteOnExit();
+        resourceModelProvider.setScriptFile(scriptFile);
+        final File baseDir = File.createTempFile("test-basedir", "tmp");
+        baseDir.deleteOnExit();
+        resourceModelProvider.contentsBaseDir = baseDir
+        resourceModelProvider.scriptArgs = ""
+
+        List<Map<String, Object>> providers = [
+                [
+                        "name":"test-script-resource-model",
+                        "title":"test",
+                ]
+        ]
+        PluginMeta pluginMeta = new PluginMeta()
+        pluginMeta.setRundeckPluginVersion("1.2")
+        pluginMeta.setProviders(providers)
+        resourceModelProvider.pluginMeta = pluginMeta
+
+        ScriptPluginResourceModelSourceFactory pluginFactory = new ScriptPluginResourceModelSourceFactory(resourceModelProvider, framework)
+
+        when:
+        def resource = pluginFactory.createResourceModelSource(services, configuration)
+
+        then:
+        resource !=null
+        resource.configuration.getProperty("token") != null
+        resource.configuration.getProperty("token") == "keys/token"
+
+    }
+
     class TestScriptResourceModel implements ScriptPluginProvider{
         File scriptFile
         File archiveFile
