@@ -512,6 +512,7 @@ jobs:
             wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update
+            sudo apt-get -y remove google-chrome-stable
             sudo apt-get -y install dpkg
             sudo apt-get -y install xmlstarlet google-chrome-stable
       - checkout
