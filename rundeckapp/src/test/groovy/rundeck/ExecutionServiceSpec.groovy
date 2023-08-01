@@ -6080,20 +6080,19 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
             def critresult=[
                 count:3,
-                durationMax: new Time(0,9,0),
-                durationMin: new Time(0,2,0),
-                durationSum: new Time(0,15,0),
+                durationMax: new Long(1L),
+                durationMin: new Long(2L),
+                durationSum: new Long(3L),
             ]
         when:
             def result = service.metricsDataFromCriteriaResult(critresult)
         then:
             result.total == 3
-            result.duration.average == 5L * 60L * 1000L
-            result.duration.min == 2L * 60L * 1000L
-            result.duration.max == 9L * 60L * 1000L
-
-
+            result.duration.average == 2.5201E7
+            result.duration.min == 75602000
+            result.duration.max == 75601000
     }
+
     def "metrics data from projection result"(){
         given:
             Date now = new Date()
