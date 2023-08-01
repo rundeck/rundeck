@@ -502,8 +502,9 @@ jobs:
   test-selenium:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     steps:
+      - run: apt list --installed
       - run:
           name: Setup dependencies
           command: |
