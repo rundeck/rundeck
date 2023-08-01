@@ -4090,7 +4090,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Parse Unix time to java.sql.Time
+     * Parse Unix time in Long, into a java.sql.Time object
      *
      * @param epoch - Long : The result of the query
      * @return a new instance of Time
