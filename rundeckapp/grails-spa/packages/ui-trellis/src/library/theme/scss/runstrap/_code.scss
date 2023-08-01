@@ -15,8 +15,8 @@ samp {
 code {
   padding: 2px 4px;
   font-size: 90%;
-  color: $code-color;
-  background-color: $code-bg;
+  color: var(--code-color);
+  background-color: var(--code-bg);
   border-radius: $border-radius-base;
 }
 

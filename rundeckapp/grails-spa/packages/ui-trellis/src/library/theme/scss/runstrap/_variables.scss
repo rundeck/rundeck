@@ -1045,8 +1045,6 @@ $close-text-shadow:           0 1px 0 #fff !default;
 //
 //##
 
-$code-color:                  #c7254e !default;
-$code-bg:                     #f9f2f4 !default;
 
 $kbd-color:                   #fff !default;
 $kbd-bg:                      #333 !default;
@@ -1057,6 +1055,15 @@ $pre-border-color:            #ccc !default;
 $pre-scrollable-max-height:   340px !default;
 
 
+:root {
+  --code-color: var(--red-600);
+  --code-bg: var(--grey-200);
+}
+
+*[data-color-theme="dark"] {
+  --code-color: var(--red-100);
+  --code-bg: var(--grey-500);
+}
 //== Type
 //
 //##

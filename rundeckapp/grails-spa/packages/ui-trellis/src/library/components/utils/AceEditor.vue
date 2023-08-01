@@ -66,6 +66,8 @@ import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/mode-xml'
 import 'ace-builds/src-noconflict/mode-yaml'
 import 'ace-builds/src-noconflict/theme-chrome'
+import 'ace-builds/src-noconflict/theme-tomorrow_night'
+import 'ace-builds/src-noconflict/theme-tomorrow_night_eighties'
 
 export default Vue.extend({
   name: 'ace-editor',
