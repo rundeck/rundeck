@@ -18,7 +18,7 @@ abstract class Base extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
-    static final String DOCKER_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ?: "rundeck/rundeck:SNAPSHOT"
+    static final String DOCKER_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ?: "rundeck/rundeck"
     private static ClientProvider CLIENT_PROVIDER
 
 
