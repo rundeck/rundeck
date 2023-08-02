@@ -1,8 +1,6 @@
 package org.rundeck.app.data.job.converters
 
 import grails.testing.gorm.DataTest
-import liquibase.pro.packaged.C
-import liquibase.pro.packaged.W
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
