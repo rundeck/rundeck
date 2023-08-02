@@ -433,6 +433,11 @@ jobs:
       - checkout
       - install-java
       - restore-gradle-cache
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/circle-shim.sh
+            pull_rundeck
       - run: ./gradlew --no-daemon :api-tests:check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
