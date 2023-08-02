@@ -11,12 +11,14 @@ import grails.testing.mixin.integration.Integration
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.quartz.Scheduler
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
+import rundeck.services.ScheduledExecutionDeletedException
 import rundeck.services.execution.ThresholdValue
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -416,15 +418,24 @@ class ExecutionJobIntegrationSpec extends Specification {
 
     def testInitializeNotFoundJob() {
         given:
-            ExecutionJob job = new ExecutionJob()
             def contextMock = new JobDataMap([scheduledExecutionId: '1'])
+            def quartzScheduler = Mock(Scheduler){
+                1 * deleteJob(_) >> void
+            }
+            def context = Mock(JobExecutionContext) {
+                1 * getJobDetail() >> Mock(JobDetail) {
+                    getJobDataMap() >> contextMock
+                }
+                1 * getScheduler() >> quartzScheduler
+            }
+            ExecutionJob job = new ExecutionJob()
 
         when:
 
-            job.initialize(null, contextMock)
+            job.initialize(context, contextMock)
         then:
-            RuntimeException e = thrown()
-            e.message.contains("failed to lookup scheduledException object from job data map")
+            ScheduledExecutionDeletedException e = thrown()
+            e.message == "Failed to lookup scheduledException object from job data map: id: 1 , job will be unscheduled"
 
     }
 
