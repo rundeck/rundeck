@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Delegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,24 +58,24 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         new HashSet<>();
     private ResourceFormatGeneratorService                                         resourceFormatGeneratorService;
     private ResourceModelSourceService                                             resourceModelSourceService;
-    private Function<SourceDefinition, CloseableProvider<ResourceModelSource>>     factoryFunction;
+    private NodeSourceLoader     nodeSourceLoader;
     private boolean                                                                sourcesOpened;
 
     /**
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @param factoryFunction factory for closeable model source provider
+     * @param nodeSourceLoader model source provider
      */
     public ProjectNodeSupport(
         final IRundeckProjectConfig projectConfig,
         final ResourceFormatGeneratorService resourceFormatGeneratorService,
         final ResourceModelSourceService resourceModelSourceService,
-        final Function<SourceDefinition, CloseableProvider<ResourceModelSource>> factoryFunction
+        final NodeSourceLoader     nodeSourceLoader
     ) {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
-        this.factoryFunction = factoryFunction;
+        this.nodeSourceLoader = nodeSourceLoader;
         this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
     /**
@@ -279,12 +277,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         for (final Map<String, Object> map : list) {
             final String providerType = (String) map.get("type");
             final Properties props = (Properties) map.get("props");
+            final Properties extraProps = (Properties) map.get("extraProps");
 
             logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
             try {
                 nodesSourceList.add(
                         loadResourceModelSource(
-                                providerType, props, shouldCacheForType(providerType),
+                                providerType, props,extraProps, shouldCacheForType(providerType),
                                 i + ".source",
                                 i
                         )
@@ -433,25 +432,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return resourceFormatGeneratorService;
     }
 
-    /**
-     * A source definition
-     */
-    public static interface SourceDefinition{
-        String getType();
-        Properties getProperties();
-        String getIdent();
-        int getIndex();
-    }
-    @Data
-    static class SourceDefinitionImpl implements SourceDefinition{
-        private final String type;
-        private final Properties properties;
-        private final String ident;
-        private final int index;
-    }
-    private Function<SourceDefinition, CloseableProvider<ResourceModelSource>> getFactoryFunction() {
-        return factoryFunction;
-    }
 
     interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
         int getIndex();
@@ -480,6 +460,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private LoadedResourceModelSource loadResourceModelSource(
             String type,
             Properties configuration,
+            Properties extraConfiguration,
             boolean useCache,
             String ident,
             int index
@@ -488,14 +469,16 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         configuration.put("project", projectConfig.getName());
 
-        CloseableProvider<ResourceModelSource> sourceForConfiguration;
+        CloseableProvider<ResourceModelSource> sourceForConfiguration ;
 
-        if (null == factoryFunction) {
-            sourceForConfiguration =
-                resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
+        if (null == nodeSourceLoader) {
+            sourceForConfiguration = resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
         } else {
             try {
-                sourceForConfiguration = getFactoryFunction().apply(new SourceDefinitionImpl(type,configuration,ident,index));
+                NodeSourceLoaderConfig nodeSourceLoaderConfig = nodeSourceLoader.getSourceForConfiguration(projectConfig.getName(),
+                                                                             new SourceDefinitionImpl(type,configuration,extraConfiguration,ident,index)
+                );
+                sourceForConfiguration = nodeSourceLoaderConfig.getCloseableProvider();
             } catch (Throwable e) {
                 throw new ExecutionServiceException(e, "Could not create node source: " + e.getMessage());
             }
@@ -650,15 +633,30 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             String propPrefix = prefix + "." + count + ".";
             serializeProp(prefix, projProps, count, config);
             if (extra && config.getExtra() != null && config.getExtra().size() > 0) {
-                for (String s : config.getExtra().keySet()) {
-                    if (!"type".equalsIgnoreCase(s) && !s.startsWith("config.")) {
-                        projProps.setProperty(propPrefix + s, config.getExtra().get(s).toString());
+                Properties extraProperties = generateExtraProperties(propPrefix, config.getExtra());
+                extraProperties.forEach((key, value) -> {
+                    if(!projProps.containsKey(key)){
+                        projProps.put(key, value);
                     }
-                }
+                });
             }
             count++;
         }
         return projProps;
+    }
+
+    public static Properties generateExtraProperties(String propPrefix , Map<String, Object> extra){
+        Properties extraProps = new Properties();
+
+        for (String s : extra.keySet()) {
+            if(extra.get(s) instanceof Map){
+                Properties subprops = generateExtraProperties(propPrefix + s +".", (Map)extra.get(s));
+                extraProps.putAll(subprops);
+            }else{
+                extraProps.setProperty(propPrefix + s, extra.get(s).toString());
+            }
+        }
+        return extraProps;
     }
 
     /**
@@ -675,6 +673,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (props.containsKey(prefix + ".type")) {
                 final String providerType = props.getProperty(prefix + ".type");
                 final Properties configProps = new Properties();
+                final Properties extraConfigProps = new Properties();
                 final int len = (prefix + ".config.").length();
                 for (final Object o : props.keySet()) {
                     final String key = (String) o;
@@ -682,9 +681,17 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
+                final int extraLen = (prefix+".").length();
+                for (final Object o : props.keySet()) {
+                    final String key = (String) o;
+                    if (key.startsWith(prefix) && !key.startsWith(prefix + ".config.") && !key.startsWith(prefix + ".type")) {
+                        extraConfigProps.setProperty(key.substring(extraLen), props.getProperty(key));
+                    }
+                }
                 final HashMap<String, Object> map = new HashMap<>();
                 map.put("type", providerType);
                 map.put("props", configProps);
+                map.put("extraProps", extraConfigProps);
                 list.add(map);
             } else {
                 done = true;
@@ -772,14 +779,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                     }
                 }
                 if (extra) {
+                    Map<String, Object> extraConfig = new HashMap<>();
                     //list all extra props
                     for (String s : props.keySet()) {
                         if (s.startsWith(prefix + ".")) {
                             String suffix = s.substring(prefix.length() + 1);
                             if (!"type".equalsIgnoreCase(suffix) && !suffix.startsWith("config.")) {
-                                extraData.put(suffix, props.get(s));
+                                extraConfig.put(suffix, props.get(s));
                             }
                         }
+                    }
+
+                    Map<String, Object> extraMap = createMapExtraProperties(extraConfig );
+                    if(extraMap.size()>0){
+                        extraData.putAll(extraMap);
                     }
                 }
                 list.add(new SimplePluginConfiguration(serviceName, providerType, configProps, extraData));
@@ -789,6 +802,38 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             i++;
         }
         return list;
+    }
+
+    public static Map<String, Object> createMapExtraProperties(final Map<String, Object> extraProps){
+        Map<String, Object> extraMap = new HashMap<>();
+
+        for (String key : extraProps.keySet()) {
+            String[] paths = key.split("\\.");
+            Map<String, Object> nestedMap = new HashMap<>();
+
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                if (i < paths.length-1) {
+                    Map<String, Object> newMap = new HashMap<>();
+                    if(i==0){
+                        extraMap.putIfAbsent(path, newMap);
+                        nestedMap = (Map)extraMap.get(path);
+                    }else{
+                        nestedMap.putIfAbsent(path, newMap);
+                        nestedMap = (Map)nestedMap.get(path);
+                    }
+
+                } else {
+                    if(i==0){
+                        extraMap.putIfAbsent(path, extraProps.get(key));
+                    }else{
+                        nestedMap.put(path, extraProps.get(key));
+                    }
+
+                }
+            }
+        }
+        return extraMap;
     }
 
 

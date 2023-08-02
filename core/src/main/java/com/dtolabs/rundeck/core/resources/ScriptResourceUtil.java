@@ -18,17 +18,29 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
+import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
+import org.rundeck.storage.api.Resource;
 import org.slf4j.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -365,5 +377,51 @@ class ScriptResourceUtil {
             return envarr;
         }
 
+    }
+
+    public static List<String> generateListStoragePath(Description pluginDesc, DataContext dataContext, Map<String, Object> configuration){
+        List<String> listStoragePath = new ArrayList<>();
+
+        Map<String, Object> expanded =
+                DataContextUtils.replaceDataReferences(
+                        configuration,
+                        dataContext
+                );
+
+        Map<String, String> data = MapData.toStringStringMap(expanded);
+        for (Property property : pluginDesc.getProperties()) {
+            String name = property.getName();
+            String propValue = data.get(name);
+            if (null == propValue) {
+                continue;
+            }
+            Map<String, Object> renderingOptions = property.getRenderingOptions();
+            if (renderingOptions != null) {
+                Object conversion = renderingOptions.get(StringRenderingConstants.VALUE_CONVERSION_KEY);
+                if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
+                    listStoragePath.add(propValue);
+                }
+            }
+        }
+        return listStoragePath;
+    }
+
+    public static SecretBundle generateBundle(Description pluginDesc, DataContext dataContext, StorageTree storageTree, Map<String, Object> configuration, Logger logger){
+
+        List<String> listStoragePaths = generateListStoragePath(pluginDesc, dataContext, configuration);
+        DefaultSecretBundle bundle = new DefaultSecretBundle();
+
+        for (String propValue : listStoragePaths) {
+            Resource<ResourceMeta> r = storageTree.getResource(propValue);
+            if(r != null) {
+                try( ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()){
+                    r.getContents().writeContent(byteArrayOutputStream);
+                    bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
+                } catch (IOException iex) {
+                    throw new RuntimeException(String.format("IOException Unable to add secret value to secret bundle for: %s",propValue));
+                }
+            }
+        }
+        return bundle;
     }
 }

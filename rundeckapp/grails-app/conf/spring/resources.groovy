@@ -156,6 +156,7 @@ import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
 import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
+import rundeck.services.NodeSourceLoaderService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
 import rundeck.services.audit.AuditEventsService
@@ -416,6 +417,14 @@ beans={
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
     }
+
+    nodeSourceLoaderService(NodeSourceLoaderService){
+        frameworkService = ref('frameworkService')
+        pluginService=ref('pluginService')
+        projectManagerService = ref('projectManagerService')
+        rundeckSpiBaseServicesProvider = ref('rundeckSpiBaseServicesProvider')
+    }
+
 
     executionValidatorService(ExecutionValidatorService)
 

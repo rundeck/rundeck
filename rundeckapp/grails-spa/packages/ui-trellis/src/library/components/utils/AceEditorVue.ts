@@ -26,12 +26,14 @@ export default Vue.extend({
         lang: String,
         softWrap: Boolean,
         theme: String,
+        darkTheme: String,
         options: Object,
     },
     data () {
         return {
             editor: undefined as undefined | ace.Ace.Editor,
-            contentBackup: ""
+            contentBackup: "",
+            observer: undefined as undefined | MutationObserver
         }
     },
     watch: {
@@ -67,7 +69,7 @@ export default Vue.extend({
     },
     mounted: function() {
         const lang = this.lang || 'text'
-        const theme = this.theme || 'chrome'
+        const theme = this.getTheme()
 
         require('ace-builds/src-noconflict/ext-emmet')
 
@@ -93,12 +95,45 @@ export default Vue.extend({
 
         if (this.options)
             editor.setOptions(this.options)
+        this.observeDarkMode()
     },
     beforeDestroy: function() {
         this.editor!.destroy()
         this.editor!.container.remove()
+        this.observer?.disconnect()
     },
     methods: {
+        /**
+         * Observe the dark mode and update the theme for the editor
+         */
+        observeDarkMode(){
+            const query = matchMedia('(prefers-color-scheme: dark)');
+
+            const changeHandler = () => {
+                this.editor!.setTheme(this.resolveTheme(this.getTheme()));
+            };
+
+            // Support for Safari <14
+            if (typeof query.addEventListener == "function")
+                query.addEventListener('change', changeHandler);
+            else
+                query.addListener(changeHandler);
+
+            this.observer = new MutationObserver(changeHandler)
+            this.observer.observe(document.documentElement, {attributes: true})
+        },
+
+        /**
+         * Get the theme to use based on whether it is dark mode or not
+         */
+        getTheme(){
+            let theme = document.documentElement.dataset.colorTheme || 'light';
+
+            if (theme == 'system')
+                theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+            return theme == 'dark' ? (this.darkTheme||'tomorrow_night_eighties') : (this.theme||'chrome');
+        },
         px(value: string): string {
             if (/^\d*$/.test(value))
                 return `${value}px`

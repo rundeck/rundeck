@@ -259,14 +259,27 @@
                           class="">${g.message(code:'job.toggle.scm.menu.'+status)}</a>
                     </li>
                     </g:if>
+                    <!-- ko foreach: actionLinks() -->
+                    <li>
+                      <a href="#"
+                         data-bind="attr:{href: $data.href}">
+                        <!-- ko if: $data.iconcss -->
+                        <i data-bind="css: $data.iconcss"></i>
+                        <!-- /ko -->
+                        <span data-bind="text: $data.text"></span>
+                      </a>
+                    </li>
+                    <!-- /ko -->
                   </ul>
           
                 </div>
-           
-                 <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="btn btn-primary">
+
+                <ui-socket class="vue-ui-socket" section="job-list-page" location="action-buttons">
+                  <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="btn btn-primary">
                     <i class="glyphicon glyphicon-plus"></i>
                     <g:message code="new.job.button.label" />
                   </g:link>
+                </ui-socket>
               </div>
             </div>
           </g:if>
@@ -482,6 +495,7 @@
             </g:form>
             <g:if test="${!jobgroups}">
               <div class="presentation">
+                <ui-socket class="vue-ui-socket" section="job-list-page" location="empty-state">
                 <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                   <g:link controller="scheduledExecution" action="create"
                     params="[project: params.project ?: request.project]"
@@ -494,6 +508,7 @@
                     <g:message code="job.upload.button.title" />
                   </g:link>
                 </auth:resourceAllowed>
+                </ui-socket>
               </div>
             </g:if>
             <g:timerStart key="tail"/>

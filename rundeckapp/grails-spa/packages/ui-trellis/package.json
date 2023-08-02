@@ -36,7 +36,7 @@
     "@iconfu/svg-inject": "^1.2.3",
     "@popperjs/core": "^2.8.4",
     "@rundeck/client": "^0.2.5",
-    "ace-builds": "^1.4.12",
+    "ace-builds": "^1.23.4",
     "axios": "^0.21.3",
     "core-js": "^3.6.5",
     "markdown-it-vue": "^1.1.6",
@@ -99,7 +99,7 @@
   },
   "peerDependencies": {
     "@rundeck/client": "^0.2.5",
-    "ace-builds": "^1.4.12",
+    "ace-builds": "^1.23.4",
     "mobx": "^5.15.4",
     "mobx-utils": "^5.6.1",
     "mobx-vue": "^2.0.11",

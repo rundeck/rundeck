@@ -75,6 +75,19 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
     }
 
     @Override
+    public Map<String, Object> dynamicDefaults(
+            final Map<String, Object> projectAndFrameworkValues,
+            final Services services
+    )
+    {
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicDefaults(projectAndFrameworkValues, services);
+        }
+
+        return null;
+    }
+
+    @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
             final Describable desc = (Describable) plugin;

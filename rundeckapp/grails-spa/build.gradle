@@ -53,7 +53,7 @@ tasks.register("runNpmBuild", NpmTask) {
     inputs.dir 'packages/ui-trellis/src/app'
 
     outputs.dir(file("$spaBuildDir"))
-    outputs.cacheIf { true }
+    outputs.cacheIf { false }
 
     def npmCommand = System.env.CI ?
       'ci:app:build' :
