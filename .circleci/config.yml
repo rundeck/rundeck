@@ -438,7 +438,10 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             pull_rundeck
-      - run: ./gradlew --no-daemon :api-tests:check --stacktrace --info --parallel --build-cache
+      - run:
+          command: ./gradlew --no-daemon :api-tests:check --stacktrace --info --parallel --build-cache
+          env:
+            TEST_RUNDECK_IMAGE: rundeck/rundeck:latest
       - collect-gradle-tests
 
   test-openapi:
