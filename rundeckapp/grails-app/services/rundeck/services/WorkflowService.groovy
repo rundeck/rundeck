@@ -387,7 +387,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
 
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
-        if (statemap) {
+        if (statemap && !configurationService.getBoolean("clusterMode.enabled", false)) {
             statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly,stepStates)
             return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionFileState.AVAILABLE)
         }
