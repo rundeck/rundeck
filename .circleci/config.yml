@@ -415,7 +415,7 @@ jobs:
   test-gradle:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     steps:
       - checkout
       - install-node
@@ -482,7 +482,7 @@ jobs:
   test-docker-machine:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     parameters:
       command:
         description: Command that will execute the docker tests
@@ -561,7 +561,7 @@ jobs:
   test-deps:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     parameters:
       continue:
         description: Continue if check fails
@@ -581,7 +581,7 @@ jobs:
   build_and_publish:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     resource_class: large
 
     parameters:
@@ -607,7 +607,7 @@ jobs:
   packaging_test:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     resource_class: large
     steps:
       - install-packages
