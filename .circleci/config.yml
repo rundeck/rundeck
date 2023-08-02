@@ -422,7 +422,18 @@ jobs:
       - install-node
       - install-java
       - restore-gradle-cache
-      - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
+      - run: SKIP_RD_API_TESTS=true ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
+      - collect-gradle-tests
+
+  test-gradle-api:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - checkout
+      - install-java
+      - restore-gradle-cache
+      - run: ./gradlew --no-daemon :api-tests:check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
   test-openapi:
@@ -758,6 +769,13 @@ workflows:
             - slack-secrets
           <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      - test-gradle-api:
+          <<: *filter-no-tags
+          name: New API Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: SSL Test
@@ -920,6 +938,13 @@ workflows:
             - slack-secrets
           <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      - test-gradle-api:
+          <<: *filter-no-tags
+          name: New API Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: SSL Test
