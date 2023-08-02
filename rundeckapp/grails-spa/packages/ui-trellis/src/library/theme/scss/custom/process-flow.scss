@@ -9,7 +9,7 @@ div {
 
       li {
         margin-left: 20px;
-        border: 1px solid #cfcfca;
+        border: 1px solid var(--list-item-border-color);
         padding: 10px !important;
         margin-bottom: 10px;
         border-radius: 5px;
