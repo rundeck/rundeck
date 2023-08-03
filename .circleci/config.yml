@@ -73,6 +73,7 @@ orbs:
   node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
+  browser-tools: circleci/browser-tools@1.4.3
 
 defaults: &defaults
   working_directory: ~/repo
@@ -505,17 +506,17 @@ jobs:
       image: ubuntu-2004:2023.07.1
     steps:
       - run: apt list --installed
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - run:
           name: Setup dependencies
           command: |
             sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
             wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-            echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update
-            sudo apt-get -y remove google-chrome-stable
             sudo apt-get -y install dpkg
-            sudo apt-get -y install xmlstarlet google-chrome-stable
+            sudo apt-get -y install xmlstarlet
       - checkout
       - install-java
       - aws-cli/install:
