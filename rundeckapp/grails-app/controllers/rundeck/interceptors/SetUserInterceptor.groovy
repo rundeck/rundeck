@@ -21,6 +21,7 @@ import webhooks.Webhook
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
+import java.util.function.Function
 import java.util.stream.Collectors
 
 class SetUserInterceptor {
@@ -127,17 +128,14 @@ class SetUserInterceptor {
             }
         }
         def requiredRoles = getRequiredRolesFromProps()
-        def allowedRoles = [] as List<String>
         if( requiredRoles.size() ){
-            def requestRoles = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
-            requiredRoles.forEach {
-                requestRoles.forEach {group ->
-                    if( it == group.getName() ){
-                        allowedRoles << group
-                    }
-                }
-            }
-            if( !allowedRoles.size() ){
+            def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
+            def requestRoles = requestGroups.stream()
+            .map{it.getName()}
+            .collect(Collectors.toList()) as List<String>
+            def matchedRoles = new ArrayList<String>(requiredRoles);
+            matchedRoles.retainAll(requestRoles)
+            if( !matchedRoles.size() ){
                 log.error("User ${request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
