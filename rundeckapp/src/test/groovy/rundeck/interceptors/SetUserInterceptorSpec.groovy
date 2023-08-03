@@ -171,9 +171,11 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         commaSeparatedUserRoles | groups           | userAllowed | code
         "admin"                 |["admin", "user"] | true        | null
         "user"                  |["admin", "user"] | true        | null
-        "admin,user"            |["admin"]         | true        | null
+        "user    "              |["admin", "user"] | true        | null
+        "    user    "          |["admin", "user"] | true        | null
+        "admin, user"           |["admin"]         | true        | null
         "admin,user"            |["admin", "user"] | true        | null
-        "admin,user"            |["allowed"]       | false       | 'user.not.allowed'
+        "admin,user,other"      |["allowed"]       | false       | 'user.not.allowed'
         "admin,user"            |["anyOfThem"]     | false       | 'user.not.allowed'
 
     }

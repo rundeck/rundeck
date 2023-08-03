@@ -129,10 +129,10 @@ class SetUserInterceptor {
         def requiredRoles = getRequiredRolesFromProps()
         if( requiredRoles.size() ){
             def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
-            def requestRoles = requestGroups.stream()
+            List<String> requestRoles = requestGroups.stream()
             .map{it.getName()}
-            .collect(Collectors.toList()) as List<String>
-            def matchedRoles = new ArrayList<String>(requiredRoles);
+            .collect(Collectors.toList())
+            List<String> matchedRoles = new ArrayList<>(requiredRoles)
             matchedRoles.retainAll(requestRoles)
             if( !matchedRoles.size() ){
                 log.error("User ${request.remoteUser} must have an allowed role to log in.")
@@ -288,12 +288,10 @@ class SetUserInterceptor {
      * */
     @CompileStatic
     private List<String> getRequiredRolesFromProps(){
-        def rolesFromProps = [] as List<String>
-        def requiredRoles = configurationService.getString("security.requiredRole","")
+        List<String> rolesFromProps = []
+        String requiredRoles = configurationService.getString("security.requiredRole","")
         if( requiredRoles ){
-            List<String> allowedHostnames = requiredRoles.split(",").collect( it -> it.trim())
-            allowedHostnames.stream().filter {position -> !position.isEmpty()}
-                    .forEach {rolesFromProps << it}
+            rolesFromProps = requiredRoles.split(",").collect( it -> it.trim())
         }
         return rolesFromProps
     }
