@@ -153,8 +153,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         }
 
         interceptor.configurationService = Mock(ConfigurationService) {
-             getString("security.requiredRole","")>>soleRequiredRole
-             getString("security.requiredRoles","")>>commaSeparatedUserRoles
+             getString("security.requiredRole","")>>commaSeparatedUserRoles
         }
 
         when:
@@ -169,14 +168,13 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         flash.loginErrorCode==code
 
         where:
-        soleRequiredRole | commaSeparatedUserRoles | groups           | userAllowed | code
-        ''               | ""                      |["admin", "user"] | true        | null
-        'admin'          | ""                      |["admin", "user"] | true        | null
-        'user'           | ""                      |["admin"]         | false       | 'user.not.allowed'
-        ''               | "admin,user"            |["admin"]         | true        | null
-        ''               | "admin,user"            |["admin", "user"] | true        | null
-        'allowed'        | "admin,user"            |["allowed"]       | true        | null
-        'allowed'        | "admin,user"            |["anyOfThem"]     | false       | 'user.not.allowed'
+        commaSeparatedUserRoles | groups           | userAllowed | code
+        "admin"                 |["admin", "user"] | true        | null
+        "user"                  |["admin", "user"] | true        | null
+        "admin,user"            |["admin"]         | true        | null
+        "admin,user"            |["admin", "user"] | true        | null
+        "admin,user"            |["allowed"]       | false       | 'user.not.allowed'
+        "admin,user"            |["anyOfThem"]     | false       | 'user.not.allowed'
 
     }
 

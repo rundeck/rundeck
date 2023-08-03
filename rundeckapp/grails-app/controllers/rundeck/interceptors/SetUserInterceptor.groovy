@@ -289,15 +289,11 @@ class SetUserInterceptor {
     @CompileStatic
     private List<String> getRequiredRolesFromProps(){
         def rolesFromProps = [] as List<String>
-        def requiredSingularRole = configurationService.getString("security.requiredRole","")
-        if( requiredSingularRole ){
-            rolesFromProps << requiredSingularRole
-        }
-        def requiredPluralRoles = configurationService.getString("security.requiredRoles","")
-        if( requiredPluralRoles ){
-            List<String> allowedHostnames = requiredPluralRoles.split(",").collect( it -> it.trim())
+        def requiredRoles = configurationService.getString("security.requiredRole","")
+        if( requiredRoles ){
+            List<String> allowedHostnames = requiredRoles.split(",").collect( it -> it.trim())
             allowedHostnames.stream().filter {position -> !position.isEmpty()}
-            .forEach {rolesFromProps << it}
+                    .forEach {rolesFromProps << it}
         }
         return rolesFromProps
     }
