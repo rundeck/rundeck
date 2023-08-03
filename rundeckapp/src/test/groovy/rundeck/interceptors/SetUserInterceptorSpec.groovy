@@ -9,10 +9,8 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
-import rundeck.GormEventStoreServiceSpec
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
@@ -127,6 +125,58 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "enter"      | "auser"  | ["grp1", "enter"] | true     | null
         ""           | "auser"  | ["grp1"]          | true     | null
 
+
+    }
+
+    def "Require a list of roles for login if set in properties"() {
+        setup:
+        defineBeans {
+            rundeckConfig(RundeckConfig)
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+
+        }
+        GroovyMock(ConfigurationService, global: true)
+
+        mockCodec(URIComponentCodec)
+        mockCodec(HTMLContentCodec)
+        mockCodec(HTMLAttributeCodec)
+        mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
+
+        def userServiceMock = Mock(UserService) {
+            getUserGroupSourcePluginRoles("User") >> { groups }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+             getString("security.requiredRole","")>>commaSeparatedUserRoles
+        }
+
+        when:
+        interceptor.userService = userServiceMock
+
+        interceptor.request.userPrincipal = new Username("User")
+        interceptor.request.remoteUser = "User"
+        boolean allowed = interceptor.before()
+
+        then:
+        allowed == userAllowed
+        flash.loginErrorCode==code
+
+        where:
+        commaSeparatedUserRoles | groups           | userAllowed | code
+        "admin"                 |["admin", "user"] | true        | null
+        "user"                  |["admin", "user"] | true        | null
+        "user    "              |["admin", "user"] | true        | null
+        "    user    "          |["admin", "user"] | true        | null
+        "admin, user"           |["admin"]         | true        | null
+        "admin,user"            |["admin", "user"] | true        | null
+        "admin,user,other"      |["allowed"]       | false       | 'user.not.allowed'
+        "admin,user"            |["anyOfThem"]     | false       | 'user.not.allowed'
 
     }
 
