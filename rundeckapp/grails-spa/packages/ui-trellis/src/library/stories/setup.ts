@@ -65,7 +65,6 @@ w.appLinks = {
     project_name: "",
     reportsDeleteFilterAjax: "/reports/deleteFilterAjax",
     reportsEventsAjax: "/reports/eventsAjax",
-    reportsEventsFragment: "/reports/eventsFragment",
     reportsListFiltersAjax: "/reports/listFiltersAjax",
     reportsSaveFilterAjax: "/reports/saveFilterAjax",
     scheduledExecutionActionMenuFragment: "/scheduledExecution/actionMenuFragment",

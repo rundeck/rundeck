@@ -43,9 +43,10 @@ import java.util.stream.Collectors;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPlugin implements
+public class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPlugin implements
     ResourceModelSourceFactory {
     public static final String RESOURCE_FORMAT_PROP = "resource-format";
+    public static final String DISABLE_CONTENT_CONVERSION = "disableContentConversion";
 
     final String format;
 
@@ -104,11 +105,20 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
 
         Description pluginDesc = getDescription();
 
-        loadContentConversionPropertyValues(
-                data,
-                context,
-                pluginDesc.getProperties()
-        );
+        boolean disableContentConversion = false;
+
+        if(configuration.containsKey(DISABLE_CONTENT_CONVERSION)){
+            disableContentConversion = (Boolean)configuration.get(DISABLE_CONTENT_CONVERSION);
+        }
+
+        if(!disableContentConversion){
+            loadContentConversionPropertyValues(
+                    data,
+                    context,
+                    pluginDesc.getProperties()
+            );
+        }
+
 
         Properties properties = new Properties();
         properties.putAll(data);

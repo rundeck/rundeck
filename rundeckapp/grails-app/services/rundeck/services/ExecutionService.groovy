@@ -1147,17 +1147,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
+            def listenersList = [
+                    contextmanager,
+                    executionListener, //manages context for logging
+                    wfEventListener, //emits state change events to log
+                    execStateListener, //updates WF execution state model
+                    logOutFlusher, //flushes stdout output after node steps
+                    logErrFlusher, //flush stderr output after node steps
+                    /*new EchoExecListener() */
+            ]
             def multiListener = MultiWorkflowExecutionListener.create(
                     executionListener, //delegate for ExecutionListener
-                    [
-                            contextmanager,
-                            executionListener, //manages context for logging
-                            wfEventListener, //emits state change events to log
-                            execStateListener, //updates WF execution state model
-                            logOutFlusher, //flushes stdout output after node steps
-                            logErrFlusher, //flush stderr output after node steps
-                            /*new EchoExecListener() */
-                    ]
+                    loadAdditionalListeners(listenersList)
             )
 
             def secureOptionNodeDeferred = [:]
@@ -1285,6 +1286,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return scheduledExecution?.logOutputThresholdAction
     }
 
+    private List<WorkflowExecutionListener> loadAdditionalListeners(List<WorkflowExecutionListener> listeners){
+        ServiceLoader<WorkflowExecutionListener> additionalListeners = ServiceLoader.load(
+                WorkflowExecutionListener
+        )
+        additionalListeners.each {
+            listeners.add(it)
+        }
+        return listeners
+    }
     /**
      * Return true if password can be read
      * @param authContext

@@ -502,8 +502,9 @@ jobs:
   test-selenium:
     <<: *defaults
     machine:
-      image: ubuntu-2004:202201-02
+      image: ubuntu-2004:2023.07.1
     steps:
+      - run: apt list --installed
       - run:
           name: Setup dependencies
           command: |
@@ -512,6 +513,7 @@ jobs:
             wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update
+            sudo apt-get -y remove google-chrome-stable
             sudo apt-get -y install dpkg
             sudo apt-get -y install xmlstarlet google-chrome-stable
       - checkout
@@ -533,6 +535,8 @@ jobs:
             source .circleci/circle-shim.sh
             cd test/selenium
             nvm use v16.18.0
+            echo 'export PATH=${PWD}/node_modules/chromedriver/bin:${PATH}' >> $BASH_ENV
+            sudo rm /usr/local/bin/chromedriver
             npm run bootstrap
             bin/deck test -s selenium \
             -u http://localhost:4440 \

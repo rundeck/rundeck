@@ -9,6 +9,7 @@
     :edit-button-text="$t('Edit Node Sources')"
     :edit-mode="editMode"
     :mode-toggle="modeToggle"
+    :event-bus="eventBus"
   >
     <div slot="item-extra" slot-scope="{plugin,mode}">
       <div

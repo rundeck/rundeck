@@ -335,21 +335,7 @@ class ReportsController extends ControllerBase{
             }
         }
     }
-    def eventsFragment(ExecQuery query) {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_EVENT,
-            AuthConstants.ACTION_READ,
-            params.project
-        ), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
-            return
-        }
-        def results = index_old(query)
-        results.params=params
-        return results
-    }
     def eventsAjax(ExecQuery query){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
