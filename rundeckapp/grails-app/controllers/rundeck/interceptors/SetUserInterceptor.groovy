@@ -21,7 +21,6 @@ import webhooks.Webhook
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
-import java.util.function.Function
 import java.util.stream.Collectors
 
 class SetUserInterceptor {
