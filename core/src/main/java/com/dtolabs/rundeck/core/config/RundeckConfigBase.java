@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -75,7 +76,8 @@ public class RundeckConfigBase {
     }
 
     @Data public static class RundeckProjectConfig{
-        ProjectConfigDefaults dafault;
+
+        ProjectConfigDefaults defaults;
         @Data public static class ProjectConfigDefaults{
             String nodeExecutor;
             String fileCopier;
@@ -84,7 +86,6 @@ public class RundeckConfigBase {
         @Data public static class ProjectKeypath{
             Boolean enabled;
         }
-
     }
 
     @Data
