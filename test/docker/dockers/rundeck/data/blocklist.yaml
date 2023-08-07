@@ -9,8 +9,10 @@ fileNameEntries:
 providerNameEntries:
   NodeExecutor:
     - local
+    - sshj-ssh
   FileCopier:
     - sshj-scp
+    - script-copy
   WorkflowNodeStep:
     - nixy-waitfor-local-ping
     - nixy-waitfor-local-port-open
