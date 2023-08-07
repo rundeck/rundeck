@@ -1029,7 +1029,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         final defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
-        final defaultFileCopy = configurationService.getString("project.defaults.filecopier", "sshj-scp")
+        final defaultFileCopy = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
         boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services

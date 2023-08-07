@@ -100,7 +100,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");
             //set attribute
             test1.setAttributes(new HashMap<String, String>());
-            test1.getAttributes().put(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "jsch-scp");
+            test1.getAttributes().put(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "sshj-scp");
 
             final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
