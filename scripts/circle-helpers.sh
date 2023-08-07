@@ -219,7 +219,8 @@ twistlock_scan() {
     elif [[ "${CIRCLE_BRANCH}" = "main" ]] ; then
         export RUNDECK_IMAGE_TAG="rundeck/rundeck:SNAPSHOT"
     else
-        export RUNDECK_IMAGE_TAG="rundeck/ci:$CIRCLE_BRANCH"
+        IMG_TAG=$(echo $CIRCLE_BRANCH | tr '/' '-')
+        export RUNDECK_IMAGE_TAG="rundeck/ci:$IMG_TAG"
     fi
 
     echo "==> Scan Image: $RUNDECK_IMAGE_TAG"

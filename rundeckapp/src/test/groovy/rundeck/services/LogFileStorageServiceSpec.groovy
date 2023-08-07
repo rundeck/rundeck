@@ -1347,7 +1347,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         count == 1
     }
 
-    def "countIncompleteStorageRequests"() {
+    def "count IncompleteStorageRequests"() {
         given:
         def serveruuid = 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
         service.frameworkService = Mock(FrameworkService){

@@ -17,6 +17,7 @@ package com.dtolabs.rundeck.core.execution.proxy;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import org.rundeck.app.spi.Services;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,10 @@ public interface ProxySecretBundleCreator {
         return null;
     }
 
+    default SecretBundle prepareSecretBundleResourceModel(Services services, Map<String, Object> configuration){
+        return null;
+    }
+
 
     default List<String> listSecretsPath(ExecutionContext context, INodeEntry node){
         return null;
@@ -46,4 +51,9 @@ public interface ProxySecretBundleCreator {
     default List<String> listSecretsPathWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
         return null;
     }
+
+    default List<String> listSecretsPathResourceModel(Map<String, Object> configuration){
+        return null;
+    }
+
 }

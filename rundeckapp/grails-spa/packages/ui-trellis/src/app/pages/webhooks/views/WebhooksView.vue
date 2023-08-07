@@ -378,12 +378,7 @@ export default observer(Vue.extend({
         this.setValidation(true)
         this.dirty = false
         await this.rootStore.webhooks.refresh(this.projectName)
- 
-        const currentHooks = this.rootStore.webhooks.webhooksByUuid._data
-        const curHooksArrMap = Array.from(currentHooks.values());
-        const curHookByUUID = curHooksArrMap[curHooksArrMap.length - 1].value.uuid;
-  
-        this.select(this.rootStore.webhooks.webhooksByUuid.get(curHookByUUID))
+        this.select(webhook)
       }
     },
     handleCancel() {

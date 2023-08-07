@@ -14,7 +14,6 @@ export interface AppLinks {
     executionCancelExecution: string
     executionMarkExecutionIncomplete: string
     tailExecutionOutput: string
-    reportsEventsFragment: string
     executionAjaxExecState: string
     executionAjaxExecNodeState: string
     frameworkViewResourceModelConfig: string

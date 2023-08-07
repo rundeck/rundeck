@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncListenableTaskExecutor
@@ -42,6 +41,7 @@ import spock.lang.Unroll
  */
 class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeService> {
     private static final String RESOURCE_TMP_DIR = '/tmp/rundeckNodeServiceSpec'
+
     def "get nodes project DNE"() {
         given:
         service.frameworkService = Mock(FrameworkService)
@@ -85,16 +85,27 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         )
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
         def modelSource = Mock(ResourceModelSource)
-        service.pluginService = Mock(PluginService)
-        service.projectManagerService=Mock(ProjectManagerService)
-        service.rundeckSpiBaseServicesProvider = Mock(Services)
+
+        def frameWorkService = Mock(FrameworkService)
+        def pluginService = Mock(PluginService)
+        def nodeSourceLoaderService =  new NodeSourceLoaderService()
+        def projectManagerService = Mock(ProjectManagerService)
+
+        nodeSourceLoaderService.pluginService = pluginService
+        nodeSourceLoaderService.frameworkService = frameWorkService
+        nodeSourceLoaderService.projectManagerService = projectManagerService
+        nodeSourceLoaderService.rundeckSpiBaseServicesProvider = Mock(Services)
+
+        service.nodeSourceLoaderService = nodeSourceLoaderService
+        service.frameworkService = frameWorkService
+
         when:
         def result = service.getNodes('test1')
         def nodes1 = result.getNodeSet()
 
 
         then:
-        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+        frameWorkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 loadProjectConfig('test1') >> projConfig
@@ -103,12 +114,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 0 * getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(modelSource)
             }
         }
-        1 * service.projectManagerService.getNonAuthorizingProjectServicesForPlugin('test1','ResourceModelSource','file')
-        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+        1 * projectManagerService.getNonAuthorizingProjectServicesForPlugin('test1','ResourceModelSource','file')
+        1 * pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
             1 * retainConfigurePluginByName('file', _, _, _) >>
             new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
         }
-        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        0 * pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
         1 * modelSourceFactory.createResourceModelSource(_,_) >> modelSource
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
@@ -141,7 +152,6 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     @Unroll
     def "get nodes when project cache #isenabled"(String isenabled, int expectedCount) {
         given:
-        service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService) {
             getCacheEnabledFor('nodeService', 'nodeCache', true) >> true
         }
@@ -167,10 +177,23 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         def modelSource = Mock(ResourceModelSource)
         def cacheModelsource = Mock(ResourceModelSource)
 
-        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+        def frameWorkService = Mock(FrameworkService)
+        def pluginService = Mock(PluginService)
+        def nodeSourceLoaderService =  new NodeSourceLoaderService()
+        def projectManagerService = Mock(ProjectManagerService)
+
+        nodeSourceLoaderService.pluginService = pluginService
+        nodeSourceLoaderService.frameworkService = frameWorkService
+        nodeSourceLoaderService.projectManagerService = projectManagerService
+        nodeSourceLoaderService.rundeckSpiBaseServicesProvider = Mock(Services)
+
+        service.nodeSourceLoaderService = nodeSourceLoaderService
+        service.frameworkService = frameWorkService
+
+        frameWorkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
-                1 * loadProjectConfig('test1') >> projConfig
+                2 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
                 _ * getCloseableSourceForConfiguration('file', {args->
@@ -178,15 +201,14 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 }) >> Closeables.closeableProvider(cacheModelsource)
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
-                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+                _ * getGeneratorForFormat('resourcexml')>>Mock(ResourceFormatGenerator){
 
                 }
             }
         }
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
-        service.pluginService = Mock(PluginService)
-        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
-        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+        0 * pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
             1 * retainConfigurePluginByName('file', _, _, _) >>
             new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
         }
@@ -194,8 +216,6 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
             args['file']=='/tmp/test.xml'
         }) >> modelSource
 
-        service.projectManagerService=Mock(ProjectManagerService)
-        service.rundeckSpiBaseServicesProvider = Mock(Services)
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()
@@ -262,7 +282,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 }) >> cacheModelsource
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
-                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+                _ * getGeneratorForFormat('resourcexml')>>Mock(ResourceFormatGenerator){
 
                 }
             }
@@ -326,11 +346,26 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         )
         def modelSource = Mock(ResourceModelSource)
         def cacheModelsource = Mock(ResourceModelSource)
+        def modelSourceFactory = Mock(ResourceModelSourceFactory)
 
-        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+        def frameWorkService = Mock(FrameworkService)
+        def pluginService = Mock(PluginService)
+        def nodeSourceLoaderService =  new NodeSourceLoaderService()
+        def projectManagerService = Mock(ProjectManagerService)
+
+        nodeSourceLoaderService.pluginService = pluginService
+        nodeSourceLoaderService.frameworkService = frameWorkService
+        nodeSourceLoaderService.projectManagerService = projectManagerService
+        nodeSourceLoaderService.rundeckSpiBaseServicesProvider = Mock(Services)
+
+        service.nodeSourceLoaderService = nodeSourceLoaderService
+        service.frameworkService = frameWorkService
+
+
+        frameWorkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
-                1 * loadProjectConfig('test1') >> projConfig
+                loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
                 _ * getSourceForConfiguration(
@@ -345,29 +380,38 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 ) >> cacheModelsource
             }
             getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
-                _ * getGeneratorForFormat('xml') >> Mock(ResourceFormatGenerator) {
+                _ * getGeneratorForFormat('resourcexml') >> Mock(ResourceFormatGenerator) {
 
                 }
             }
         }
+
+        pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+            retainConfigurePluginByName('file', _, _, _) >>
+                    new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
+        }
+        modelSourceFactory.createResourceModelSource(_,{args->
+            args['file']=='/tmp/test.xml'
+        }) >> modelSource
+
         when:
         def result1 = service.getNodes('test1')
 
         then:
         //cached first-run
         if (expectAsynch) {
-            result1.nodes == null
+            assert result1.nodes.nodeNames as List == []
         } else {
-            result1.nodes != null
-            null != result1.nodes.getNode('bnode')
-            result1.nodes.nodeNames as List == ['bnode']
+            assert result1.nodes != null
+            assert null != result1.nodes.getNode('bnode')
+            assert result1.nodes.nodeNames as List == ['bnode']
         }
 
         result1.doCache == true
         (expectAsynch ? 1 : 0) * service.nodeTaskExecutor.execute(_) >> { args ->
             //no op. do not call closure, simulates delay in loading nodes
         }
-        0 * modelSource.getNodes() >> sourceNodes
+        (expectAsynch ? 0 : 1) * modelSource.getNodes() >> sourceNodes
         1 * cacheModelsource.getNodes() >> preloadedNodes
 
         where:
@@ -384,7 +428,6 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     def "get nodes with project cache without preload with forced synchronous behavior"( ) {
         given:
         service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
-        service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService) {
             getCacheEnabledFor('nodeService', 'nodeCache', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> false
@@ -412,10 +455,23 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
         def cacheModelsource = Mock(ResourceModelSource)
 
-        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+        def frameWorkService = Mock(FrameworkService)
+        def pluginService = Mock(PluginService)
+        def nodeSourceLoaderService =  new NodeSourceLoaderService()
+        def projectManagerService = Mock(ProjectManagerService)
+
+        nodeSourceLoaderService.pluginService = pluginService
+        nodeSourceLoaderService.frameworkService = frameWorkService
+        nodeSourceLoaderService.projectManagerService = projectManagerService
+        nodeSourceLoaderService.rundeckSpiBaseServicesProvider = Mock(Services)
+
+        service.nodeSourceLoaderService = nodeSourceLoaderService
+        service.frameworkService = frameWorkService
+
+        frameWorkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
-                1 * loadProjectConfig('test1') >> projConfig
+                2 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
 
@@ -424,14 +480,13 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 }) >> cacheModelsource
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
-                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+                _ * getGeneratorForFormat('resourcexml')>>Mock(ResourceFormatGenerator){
 
                 }
             }
         }
-        service.pluginService = Mock(PluginService)
-        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
-        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+        0 * pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
             1 * retainConfigurePluginByName('file', _, _, _) >>
             new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
         }
@@ -439,8 +494,6 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
             args['file']=='/tmp/test.xml'
         }) >> modelSource
 
-        service.projectManagerService=Mock(ProjectManagerService)
-        service.rundeckSpiBaseServicesProvider = Mock(Services)
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()
@@ -505,7 +558,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 }) >> cacheModelsource
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
-                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+                _ * getGeneratorForFormat('resourcexml')>>Mock(ResourceFormatGenerator){
 
                 }
             }
