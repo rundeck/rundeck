@@ -1,207 +1,206 @@
 <template>
-<div>
-  <div class="alert alert-warning" v-if="errorMsg!==''">
-    <span>{{errorMsg}}</span>
-  </div>
+  <div>
+    <div class="alert alert-warning" v-if="errorMsg!==''">
+      <span>{{errorMsg}}</span>
+    </div>
 
-  <div class="card">
-    <div class="card-content">
-  <div class="row text-info ">
-    <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
-      <div class="input-group">
-        <div class="input-group-addon bg-3" v-if="staticRoot">
-          <span>{{rootPath}}</span>
-        </div>
-        <input type="text" class="form-control bg-2" style="padding-left:18px;"
-               v-model="inputPath" @keyup.enter="loadDirInputPath()"
-               :disabled="readOnly"
-               placeholder="Enter a path"/>
-        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
-          <button
-              type="button"
-              class="btn btn-default dropdown-toggle"
-              @click="toggleDropdown"
-              :aria-expanded="isDropdownOpen"
-          >
-            <span>{{ linksTitle }}</span>
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
-            <li v-for="link in jumpLinks" :key="link.path">
-              <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
-            </li>
-          </ul>
+    <div class="card">
+      <div class="card-content">
+    <div class="row text-info ">
+      <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
+        <div class="input-group">
+          <div class="input-group-addon bg-3" v-if="staticRoot">
+            <span>{{rootPath}}</span>
+          </div>
+          <input type="text" class="form-control bg-2" style="padding-left:18px;"
+                v-model="inputPath" @keyup.enter="loadDirInputPath()"
+                placeholder="Enter a path"/>
+          <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+            <button
+                type="button"
+                class="btn btn-default dropdown-toggle"
+                @click="toggleDropdown"
+                :aria-expanded="isDropdownOpen"
+            >
+              <span>{{ linksTitle }}</span>
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
+              <li v-for="link in jumpLinks" :key="link.path">
+                <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row keySelector">
-    <div class="col-sm-12">
-      <div class="keySelector-button-group" style="margin-bottom:1em;">
-        <button type="button" class="btn btn-sm btn-default"
-                @click="loadDir(upPath)" :disabled="upPath===''">
-          <i class="glyphicon glyphicon-folder-open"></i>
-          <i class="glyphicon glyphicon-arrow-up"></i>
-          <span>{{showUpPath()}}</span>
-        </button>
-        <button @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
-          <i class="glyphicon glyphicon-plus"></i>
-          Add or Upload a Key
-        </button>
+    <div class="row keySelector">
+      <div class="col-sm-12">
+        <div class="keySelector-button-group" style="margin-bottom:1em;">
+          <button type="button" class="btn btn-sm btn-default"
+                  @click="loadDir(upPath)" :disabled="upPath===''">
+            <i class="glyphicon glyphicon-folder-open"></i>
+            <i class="glyphicon glyphicon-arrow-up"></i>
+            <span>{{showUpPath()}}</span>
+          </button>
+          <button v-if="!readOnly"  @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
+            <i class="glyphicon glyphicon-plus"></i>
+            Add or Upload a Key
+          </button>
 
-        <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
-                v-if="this.allowUpload===true && this.isSelectedKey===true">
-          <i class="glyphicon glyphicon-pencil"></i>
-          Overwrite Key
-        </button>
-        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey">
-                <i class="glyphicon glyphicon-trash"></i>
-                {{"Delete"}}</button>
-      </div>
+          <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
+                  v-if="this.allowUpload===true && this.isSelectedKey===true && !readOnly">
+            <i class="glyphicon glyphicon-pencil"></i>
+            Overwrite Key
+          </button>
+          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey && !readOnly">
+                  <i class="glyphicon glyphicon-trash"></i>
+                  {{"Delete"}}</button>
+        </div>
 
 
-      <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
-        <i class="glyphicon glyphicon-time"></i>
-        {{ "Loading..." }}
-      </div>
-      <table class="table table-hover table-condensed" v-else>
-        <tbody>
-        <tr>
-          <td colspan="2" class="text-strong">
-            <span v-if="files.length<1">No keys</span>
-            <span v-if="files.length>0">
-              <span>{{files.length}}</span>
-              keys
-            </span>
-          </td>
-        </tr>
-        </tbody>
-        <tbody>
-        <tr v-for="key in files" :class="[selectedKey && key.path=== selectedKey.path ? selectedClass : '','action']"
-            :key="key.name" @click="selectKey(key)">
-          <td>
-            <i :class="[key.path=== selectedKey.path ? 'glyphicon glyphicon-ok' :'glyphicon glyphicon-unchecked']"></i>
+        <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
+          <i class="glyphicon glyphicon-time"></i>
+          {{ "Loading..." }}
+        </div>
+        <table class="table table-hover table-condensed" v-else>
+          <tbody>
+          <tr>
+            <td colspan="2" class="text-strong">
+              <span v-if="files.length<1">No keys</span>
+              <span v-if="files.length>0">
+                <span>{{files.length}}</span>
+                keys
+              </span>
+            </td>
+          </tr>
+          </tbody>
+          <tbody>
+          <tr v-for="key in files" :class="[selectedKey && key.path=== selectedKey.path ? selectedClass : '','action']"
+              :key="key.name" @click="selectKey(key)">
+            <td>
+              <i :class="[key.path=== selectedKey.path ? 'glyphicon glyphicon-ok' :'glyphicon glyphicon-unchecked']"></i>
 
-            <span v-if="isPrivateKey(key)"
-                  title="This path contains a private key that can be used for remote node execution.">
-                                  <i class="glyphicon glyphicon-lock"></i>
-                                </span>
-            <span v-if="isPublicKey(key)">
-                                  <i class="glyphicon glyphicon-eye-open"></i>
-                                </span>
-            <span v-if="isPassword(key)"
-                  title="This path contains a password that can be used for remote node execution.">
-                                  <i class="glyphicon glyphicon-lock"></i>
-                                </span>
-            <span>{{key.name}}</span>
-          </td>
-          <td class="text-strong">
-            <span class="pull-right">
               <span v-if="isPrivateKey(key)"
                     title="This path contains a private key that can be used for remote node execution.">
-                Private Key
-              </span>
+                                    <i class="glyphicon glyphicon-lock"></i>
+                                  </span>
               <span v-if="isPublicKey(key)">
-                Public Key
-              </span>
+                                    <i class="glyphicon glyphicon-eye-open"></i>
+                                  </span>
               <span v-if="isPassword(key)"
                     title="This path contains a password that can be used for remote node execution.">
-                Password
+                                    <i class="glyphicon glyphicon-lock"></i>
+                                  </span>
+              <span>{{key.name}}</span>
+            </td>
+            <td class="text-strong">
+              <span class="pull-right">
+                <span v-if="isPrivateKey(key)"
+                      title="This path contains a private key that can be used for remote node execution.">
+                  Private Key
+                </span>
+                <span v-if="isPublicKey(key)">
+                  Public Key
+                </span>
+                <span v-if="isPassword(key)"
+                      title="This path contains a password that can be used for remote node execution.">
+                  Password
+                </span>
               </span>
+            </td>
+          </tr>
+          </tbody>
+
+          <tbody v-if="notFound()===true">
+          <tr>
+            <td colspan="2">
+                <span class="text-strong">Nothing found at this path.
+                </span>
+            </td>
+          </tr>
+          </tbody>
+          <tbody>
+          <tr v-for="directory in directories" :key="directory.name">
+            <td class="action" @click="loadDir(directory.path)" colspan="2">
+              <i class="glyphicon glyphicon-arrow-down"></i>
+              <i class="glyphicon glyphicon-folder-close"></i>
+              <span>{{dirNameString(directory.path)}}</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <modal v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
+      <div class="modal-body">
+        <p>{{"Really delete the selected key at this path?"}} </p>
+
+        <p>
+          <strong class="text-info"> {{this.selectedKey.path}}</strong>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" @click="confirmDeleteKey" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
+        <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
+      </div>
+    </modal>
+    <div class="row" v-if="isSelectedKey">
+      <div class="col-sm-12">
+        <div class="well">
+          <div>
+            Storage path:
+            <code class="text-success">{{selectedKey.path}}</code>
+            <a href="#" data-bind="attr: { href: selectedPathUrl() }">
+              <i class="glyphicon glyphicon-link"></i>
+            </a>
+          </div>
+          <div v-if="createdTime()!==''">
+            <div>
+              Created:
+              <span class="timeabs text-strong">
+                                      {{createdTime() | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
+                                  </span>
+
+              <span v-if="createdUsername()!==''">
+                                      by:
+                                      <span class="text-strong">{{createdUsername()}}</span>
+                                  </span>
+
+            </div>
+          </div>
+          <div v-if="wasModified()!==''">
+            <div>
+              Modified:
+              <span class="timeago text-strong">
+                                      {{modifiedTimeAgoText()| duration('humanize') }} ago
+                                  </span>
+
+              <span v-if="modifiedUsername()!==''">
+                                  by:
+                                  <span class="text-strong">{{modifiedUsername()}}</span>
+                                </span>
+            </div>
+          </div>
+          <div v-if="this.selectedKey && isPublicKey(this.selectedKey)" class="pull-right">
+            <span>
+              <a :href="downloadUrl()">
+                    <i class="glyphicon glyphicon-download"></i>
+                    {{"Download"}}</a>
             </span>
-          </td>
-        </tr>
-        </tbody>
-
-        <tbody v-if="notFound()===true">
-        <tr>
-          <td colspan="2">
-              <span class="text-strong">Nothing found at this path.
-              </span>
-          </td>
-        </tr>
-        </tbody>
-        <tbody>
-        <tr v-for="directory in directories" :key="directory.name">
-          <td class="action" @click="loadDir(directory.path)" colspan="2">
-            <i class="glyphicon glyphicon-arrow-down"></i>
-            <i class="glyphicon glyphicon-folder-close"></i>
-            <span>{{dirNameString(directory.path)}}</span>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <modal v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
-    <div class="modal-body">
-      <p>{{"Really delete the selected key at this path?"}} </p>
-
-      <p>
-        <strong class="text-info"> {{this.selectedKey.path}}</strong>
-      </p>
-    </div>
-    <div class="modal-footer">
-      <button type="button" @click="confirmDeleteKey" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
-      <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
-    </div>
-  </modal>
-  <div class="row" v-if="isSelectedKey">
-    <div class="col-sm-12">
-      <div class="well">
-        <div>
-          Storage path:
-          <code class="text-success">{{selectedKey.path}}</code>
-          <a href="#" data-bind="attr: { href: selectedPathUrl() }">
-            <i class="glyphicon glyphicon-link"></i>
-          </a>
-        </div>
-        <div v-if="createdTime()!==''">
-          <div>
-            Created:
-            <span class="timeabs text-strong">
-                                    {{createdTime() | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
-                                </span>
-
-            <span v-if="createdUsername()!==''">
-                                    by:
-                                    <span class="text-strong">{{createdUsername()}}</span>
-                                </span>
-
           </div>
-        </div>
-        <div v-if="wasModified()!==''">
-          <div>
-            Modified:
-            <span class="timeago text-strong">
-                                    {{modifiedTimeAgoText()| duration('humanize') }} ago
-                                </span>
-
-            <span v-if="modifiedUsername()!==''">
-                                by:
-                                <span class="text-strong">{{modifiedUsername()}}</span>
-                              </span>
-          </div>
-        </div>
-        <div v-if="this.selectedKey && isPublicKey(this.selectedKey)" class="pull-right">
-          <span>
-            <a :href="downloadUrl()">
-                  <i class="glyphicon glyphicon-download"></i>
-                  {{"Download"}}</a>
-          </span>
         </div>
       </div>
     </div>
-  </div>
+      </div>
+      <div class="card-footer">
+        <hr>
+        <span class="text-info">
+            {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
+        </span>
+      </div>
     </div>
-    <div class="card-footer">
-      <hr>
-      <span class="text-info">
-          {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
-      </span>
-    </div>
   </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -210,7 +209,6 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
-import axios from "axios";
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -220,7 +218,8 @@ export default Vue.extend({
     value: String,
     storageFilter: String,
     rootPath: String,
-    createdKey: {}
+    createdKey: {},
+    runnerId: String
   } ,
   data() {
     return {
@@ -258,6 +257,10 @@ export default Vue.extend({
       if(newValue !== null){
         this.selectKey(newValue)
       }
+    },
+    runnerId: function(newValue: string) {
+      console.log("===> should load keys for runner: ", newValue)
+      this.loadKeys()
     }
   },
   computed: {
@@ -635,7 +638,7 @@ export default Vue.extend({
 </script>
 
 <style>
-  .keySelector span {
+   .keySelector span {
         content: " ";
         margin: 0 2px;
     }
@@ -650,7 +653,11 @@ export default Vue.extend({
         margin: 0 2px;
     }
 
-    label-key {
+    .label-key {
         vertical-align: middle
+    }
+
+    .input-group-addon {
+      color: var(--font-color)
     }
 </style>
