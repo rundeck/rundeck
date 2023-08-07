@@ -64,7 +64,10 @@ export class ExecutionOutput {
     constructor(id: string, client: RundeckClient) {
         Object.assign(this, { id, client })
         this.entriesbyNodeCtx = new ObservableGroupMap(this.entries, (e) => {
-            return `${e.node}:${e.stepctx ? JobWorkflow.cleanContextId(e.stepctx) : ''}`
+            let ctx = (e.stepctx === null) || (e.stepctx === undefined) ? '' : JobWorkflow.cleanContextId(e.stepctx)
+            let parsedCtx = ctx ? JobWorkflow.parseContextId(ctx) : null
+            let parentCtx =  (parsedCtx === null)  ? '' : parsedCtx[0]
+            return `${e.node}:${parentCtx}`
         })
         this.entriesByNode = new ObservableGroupMap(this.entries, (e) => `${e.node}`)
     }
@@ -82,8 +85,11 @@ export class ExecutionOutput {
      **/
     getEntriesFiltered(node?: string, stepCtx?: string) {
         if(node){
-            if (stepCtx)
-                return this.entriesbyNodeCtx.get(`${node}:${JobWorkflow.cleanContextId(stepCtx)}`)
+            if (stepCtx) {
+                const ctxArr = JobWorkflow.parseContextId(stepCtx)
+                let ctxStr = (ctxArr !== null && ctxArr.length > 0)? ctxArr[0] : ''
+                return this.entriesbyNodeCtx.get(`${node}:${JobWorkflow.cleanContextId(ctxStr)}`)
+            }
             else
                 return this.entriesByNode.get(node)
         } else
