@@ -578,7 +578,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
         def description = properties.get('project.description')
         String defaultExecutor = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
-        String defaultFileCopier = configurationService.getString("project.defaults.filecopier", "sshj-scp")
+        String defaultFileCopier = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
         boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         Map<String, String> projectDefaults = ['service.NodeExecutor.default.provider':defaultExecutor,
                                                'service.FileCopier.default.provider':defaultFileCopier,

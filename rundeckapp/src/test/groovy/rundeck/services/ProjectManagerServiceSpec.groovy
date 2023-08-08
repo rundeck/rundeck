@@ -295,6 +295,10 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
         service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
         when:
 
         def result = service.createFrameworkProject('test1',props)
@@ -367,6 +371,10 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
         when:
 
         def result = service.createFrameworkProjectStrict('test1',props)
@@ -1093,6 +1101,10 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         }
         service.rundeckNodeService = Mock(NodeService)
         service.projectCache = Mock(LoadingCache)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
         service.projectDataProvider=Mock(RundeckProjectDataProvider){
             1 * findByName('test1')
             1 * create({
