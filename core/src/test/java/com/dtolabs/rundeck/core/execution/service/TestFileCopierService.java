@@ -72,8 +72,6 @@ public class TestFileCopierService extends AbstractBaseTest {
         super.tearDown();
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
-
-
     }
 
     public void testGetProviderForNode() throws Exception {
@@ -84,7 +82,16 @@ public class TestFileCopierService extends AbstractBaseTest {
                 .thenAnswer(new Answer<FileCopier>() {
                     public FileCopier answer(final InvocationOnMock invocation) throws Throwable {
                         final NodeEntryImpl arg = (NodeEntryImpl) invocation.getArguments()[0];
-                        if (!arg.getNodename().equals(getFrameworkInstance().getFrameworkNodeHostname()) || !(arg.getAttributes().get(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE).equals("local"))) {
+                        boolean isNodeNameValid = arg.getNodename() != null &&
+                                !arg.getNodename().equals(getFrameworkInstance().getFrameworkNodeHostname());
+                        
+                        String localNodeAttribute = arg.getAttributes() != null ?
+                                arg.getAttributes().get(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE) :
+                                null;
+                        boolean isLocalNodeAttributeValid = !"local".equals(localNodeAttribute);
+
+                        boolean isNonLocalProvide = isNodeNameValid && isLocalNodeAttributeValid;
+                        if (isNonLocalProvide) {
                             return new DummyFileCopier();
                         } else {
                             return new LocalFileCopier(getFrameworkInstance());
