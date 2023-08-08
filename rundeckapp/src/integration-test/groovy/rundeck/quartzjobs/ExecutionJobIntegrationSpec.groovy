@@ -680,6 +680,73 @@ class ExecutionJobIntegrationSpec extends Specification {
             0 * mockes.saveExecutionState(*_)
             0 * jobSchedulerServiceMock.afterExecution(_,_,_)
     }
+
+    def "Timeout value expands when the job is triggered vy a schedule"() {
+        given:
+        ScheduledExecution se = setupJob()
+        se.user = 'test'
+        se.userRoleList = 'a,b'
+        se.save()
+        Execution e = new Execution(
+                project: "AProject",
+                user: 'bob',
+                argString: args,
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                timeout: SEtimeout,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                )
+        ).save()
+        ExecutionJob job = new ExecutionJob()
+        def mockes = Mock(ExecutionService)
+        def mockeus = Mock(ExecutionUtilService)
+        def mockfs = Mock(FrameworkService)
+        def jobSchedulesServiceMock = Mock(JobSchedulesService)
+        def jobSchedulerServiceMock = Mock(JobSchedulerService)
+        1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+        1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+
+        def proj = Mock(IRundeckProject) {
+            2 * getProjectProperties() >> [:]
+        }
+        1 * mockfs.getFrameworkProject(_) >> proj
+        IFramework fwk = Mock(IFramework)
+        1 * mockfs.getRundeckFramework() >> fwk
+        def mockAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+        }
+
+        def authProvider = Mock(AuthContextProvider)
+        1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+
+        def contextMock = new JobDataMap(
+                scheduledExecutionId: se.uuid,
+                frameworkService: mockfs,
+                executionService: mockes,
+                executionUtilService: mockeus,
+                authContext: mockAuth,
+                jobSchedulesService: jobSchedulesServiceMock,
+                jobSchedulerService: jobSchedulerServiceMock,
+                authContextProvider: authProvider,
+        )
+        when:
+        def contextMap = job.initialize(null, contextMock)
+
+        then:
+        contextMap !==null
+
+        where:
+        SEtimeout            |  args           | resultTimeout
+        '${option.timeout}'  |  '-timeout 5'   | 5
+        '${option.timeout}'  |  '-timeout 2'   | 2
+        '5'                  |  ''             | 5
+
+    }
+
     def "execute beforeExecution proceed value continues"() {
         given:
             ScheduledExecution se = setupJob()

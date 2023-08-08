@@ -347,7 +347,7 @@ class ExecutionJob implements InterruptableJob {
     }
 
     @CompileStatic
-    long expandTimeout(RunContext initMap){
+    private long expandTimeout(RunContext initMap){
         def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
         def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
                 DataContextUtils.addContext("option", jobArguments, null))
