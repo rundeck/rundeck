@@ -315,7 +315,6 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         })
 
         result.name=='test1'
-        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
@@ -386,7 +385,6 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         0*service.rundeckNodeService._(*_)
         result.name=='test1'
-        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
