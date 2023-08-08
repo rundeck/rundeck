@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node
 
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.DataContext
+import com.dtolabs.rundeck.core.data.MultiDataContextImpl
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
@@ -26,6 +28,8 @@ import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.RuntimePropertyResolverTest
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
@@ -96,6 +100,8 @@ class NodeStepPluginAdapterSpec extends Specification {
         String nodeStepType
 
         String label
+
+        boolean keepgoingOnSuccess
     }
 
     def "expand config vars uses blank for unexpanded"() {
@@ -106,6 +112,9 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> Mock(IFramework) {
+                getPropertyRetriever() >> Mock(PropertyRetriever)
+            }
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
@@ -153,6 +162,9 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> Mock(IFramework) {
+                getPropertyRetriever() >> Mock(PropertyRetriever)
+            }
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
@@ -201,6 +213,9 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> Mock(IFramework) {
+                getPropertyRetriever() >> Mock(PropertyRetriever)
+            }
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
@@ -245,6 +260,9 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> Mock(IFramework) {
+                getPropertyRetriever() >> Mock(PropertyRetriever)
+            }
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
@@ -271,5 +289,64 @@ class NodeStepPluginAdapterSpec extends Specification {
         wrap.test == "123456"
     }
 
+    static class mapRetriever implements PropertyRetriever {
+        private Map<String, String> map;
+
+        mapRetriever(Map<String, String> map) {
+            this.map = map;
+        }
+
+        @Override
+        String getProperty(String name) {
+            return map.get(name);
+        }
+    }
+
+    def "check expanding values according to blankIfUnexpanded field with propertie in true"() {
+
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getIFramework() >> Mock(IFramework) {
+                getPropertyRetriever() >> new mapRetriever(['rundeck.plugins.nixy-local-script.blank': isBlank])
+            }
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestPlugin(
+                impl: plugin,
+                description: DescriptionBuilder.builder()
+                        .name('localhost')
+                        .property(PropertyBuilder.builder().string('script').blankIfUnexpandable(false).build())
+                        .build()
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: inputconfig,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+
+        when:
+        def result = adapter.createConfig(context, item, node)
+
+        then:
+        result == expect
+
+        where:
+        inputconfig = [script: 'echo \"step1: ${option.myData1}\"\necho \"step2: ${option.myData2}\"\necho \"step3: ${option.myData3}\"']
+
+        isBlank | data | expect
+        'false'   | [:] | ['script': 'echo \"step1: ${option.myData1}\"\necho \"step2: ${option.myData2}\"\necho \"step3: ${option.myData3}\"']
+        'true'    | ['myData1': 'chickens', 'myData2': ''] | ['script': 'echo \"step1: chickens\"\necho "step2: \"\necho "step3: \"']
+    }
 
 }

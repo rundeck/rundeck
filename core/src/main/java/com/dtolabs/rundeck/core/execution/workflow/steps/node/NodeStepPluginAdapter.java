@@ -186,9 +186,11 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         Description description = getDescription();
         Map<String,Boolean> blankIfUnexMap = new HashMap<>();
         boolean blankIfUnexpandedScriptValue = Boolean.parseBoolean(context.getIFramework().getPropertyRetriever().getProperty("rundeck.plugins.nixy-local-script.blank"));
+        boolean blankIfUnexpandedArgumentValue = Boolean.parseBoolean(context.getIFramework().getPropertyRetriever().getProperty("rundeck.plugins.nixy-local-script-arguments.blank"));
         if(description != null) {
             description.getProperties().forEach(p -> {
-                if (blankIfUnexpandedScriptValue && p.getName().equals("script")) blankIfUnexMap.put(p.getName(), Boolean.TRUE);
+                if ((blankIfUnexpandedScriptValue && p.getName().equals("script")) || (blankIfUnexpandedArgumentValue && p.getName().equals("arguments")))
+                    blankIfUnexMap.put(p.getName(), Boolean.TRUE);
                 else if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
                 else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
             });
