@@ -16,10 +16,12 @@
 package org.rundeck.plugin.azureobjectstore
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob.CloudBlobClient
@@ -37,6 +39,7 @@ class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements Stora
     @PluginProperty(title = "Storage Account", description = "Azure Storage Account")
     private String storageAccount;
     @PluginProperty(title = "Access Key", description = "Azure Storage Access Key")
+    @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = "PASSWORD")
     private String accessKey;
     @PluginProperty(title = "Endpoint Protocol", description = "Default Endpoint Protocol: http or https ", defaultValue = "http")
     private String defaultEndpointProtocol
