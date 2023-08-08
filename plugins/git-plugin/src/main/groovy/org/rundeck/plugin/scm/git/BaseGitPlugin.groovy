@@ -292,8 +292,6 @@ class BaseGitPlugin {
             agit.repository.config.save()
         }
 
-        agit?.getRepository()?.close()
-        agit?.close()
         return update
     }
     /**
@@ -304,7 +302,6 @@ class BaseGitPlugin {
         def agit = git1 ?: git
 
         def branchConfig = new BranchConfig(agit.repository.config, branch)
-        agit.close()
         return branchConfig.getRemoteTrackingBranch()
     }
 
@@ -599,9 +596,6 @@ class BaseGitPlugin {
             }
             git = agit
             repo = arepo
-            arepo.close()
-            agit.getRepository().close()
-            agit.close()
         } else {
             performClone(base, url, context, integration)
         }
