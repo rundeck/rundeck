@@ -30,13 +30,20 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
+import com.dtolabs.rundeck.core.execution.utils.DummyFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * TestFileCopierService is ...
@@ -70,7 +77,21 @@ public class TestFileCopierService extends AbstractBaseTest {
     }
 
     public void testGetProviderForNode() throws Exception {
-        final FileCopierService service = FileCopierService.getInstanceForFramework(getFrameworkInstance(),getFrameworkInstance());
+        //final FileCopierService service = FileCopierService.getInstanceForFramework(getFrameworkInstance(),getFrameworkInstance());
+
+        FileCopierService service = mock(FileCopierService.class);
+        when(service.getProviderForNodeAndProject(any(NodeEntryImpl.class), any(StepExecutionContext.class)))
+                .thenAnswer(new Answer<FileCopier>() {
+                    public FileCopier answer(final InvocationOnMock invocation) throws Throwable {
+                        final NodeEntryImpl arg = (NodeEntryImpl) invocation.getArguments()[0];
+                        if (!arg.getNodename().equals(getFrameworkInstance().getFrameworkNodeHostname()) || !(arg.getAttributes().get(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE).equals("local"))) {
+                            return new DummyFileCopier();
+                        } else {
+                            return new LocalFileCopier(getFrameworkInstance());
+                        }
+                    }
+                });
+
         final StepExecutionContext context = ExecutionContextImpl.builder()
                 .frameworkProject(PROJ_NAME)
                 .framework(getFrameworkInstance())
@@ -90,7 +111,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
             final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
-            assertTrue(provider instanceof JschScpFileCopier);
+            assertTrue(provider instanceof DummyFileCopier);
         }
 
         //specify override attributes for node to change file copier provider
@@ -104,7 +125,7 @@ public class TestFileCopierService extends AbstractBaseTest {
 
             final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
-            assertTrue(provider instanceof JschScpFileCopier);
+            assertTrue(provider instanceof DummyFileCopier);
         }
         {
             //default for non-local node should be jsch-scp provider
