@@ -585,8 +585,6 @@ class BaseGitPluginSpec extends Specification {
 
     }
 
-
-
     //Signed Jar classes cannot be directly mocked. Hence.....
     static abstract class RepositoryMock extends Repository {
         protected RepositoryMock(final BaseRepositoryBuilder options) {
