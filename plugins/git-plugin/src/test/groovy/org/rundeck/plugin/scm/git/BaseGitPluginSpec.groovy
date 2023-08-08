@@ -419,6 +419,8 @@ class BaseGitPluginSpec extends Specification {
         update.localName == 'refs/remotes/origin/master'
         update.oldObjectId == commit1
         update.newObjectId == commit
+        0 * base.git.getRepository().close()
+        0 * base.git.close()
     }
 
 
@@ -582,6 +584,8 @@ class BaseGitPluginSpec extends Specification {
         'keys/grantedAccess'  | 'keys/notGrantedAccess' | null                    | false
 
     }
+
+
 
     //Signed Jar classes cannot be directly mocked. Hence.....
     static abstract class RepositoryMock extends Repository {
