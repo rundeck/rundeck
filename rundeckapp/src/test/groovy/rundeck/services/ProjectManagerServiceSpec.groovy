@@ -315,6 +315,10 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         })
 
         result.name=='test1'
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
@@ -384,6 +388,11 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         0*service.rundeckNodeService.getNodes('test1')
 
         0*service.rundeckNodeService._(*_)
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+
         result.name=='test1'
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')

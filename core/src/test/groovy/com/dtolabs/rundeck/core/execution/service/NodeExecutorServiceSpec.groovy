@@ -72,7 +72,7 @@ class NodeExecutorServiceSpec extends Specification {
 
     }
 
-    def "test use local node executor when it is local node and executor is specified as something else"() {
+    def "test use dummy node executor when it is local node and executor is specified as something else"() {
 
         given:
 
@@ -105,7 +105,7 @@ class NodeExecutorServiceSpec extends Specification {
 
     }
 
-    def "test use local node executor when it is not local node and executor is specified as something else"() {
+    def "test use local node executor when it is not local node and executor is specified as local"() {
 
         given:
 
