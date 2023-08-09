@@ -405,7 +405,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
-            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+            getProjectConfigReloaded('AProject') >> Mock(IRundeckProject) {
                 getProjectProperties() >> [:]
             }
         }
@@ -786,7 +786,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
-            getFrameworkProject('AProject')>>Mock(IRundeckProject){
+            getProjectConfigReloaded('AProject')>>Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
         }

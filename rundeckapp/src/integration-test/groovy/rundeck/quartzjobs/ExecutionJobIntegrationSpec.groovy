@@ -463,7 +463,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
             }
-            1 * mockfs.getFrameworkProject(_) >> proj
+            1 * mockfs.getProjectConfigReloaded(_) >> proj
             IFramework fwk = Mock(IFramework)
             1 * mockfs.getRundeckFramework() >> fwk
             def mockAuth = Mock(UserAndRolesAuthContext) {
@@ -647,7 +647,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
             }
-            1 * mockfs.getFrameworkProject(_) >> proj
+            1 * mockfs.getProjectConfigReloaded(_) >> proj
             IFramework fwk = Mock(IFramework)
             1 * mockfs.getRundeckFramework() >> fwk
             def mockAuth = Mock(UserAndRolesAuthContext) {
@@ -711,7 +711,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
             }
-            1 * mockfs.getFrameworkProject(_) >> proj
+            1 * mockfs.getProjectConfigReloaded(_) >> proj
             IFramework fwk = Mock(IFramework)
             1 * mockfs.getRundeckFramework() >> fwk
             def mockAuth = Mock(UserAndRolesAuthContext) {
