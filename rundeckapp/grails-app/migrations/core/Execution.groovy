@@ -191,32 +191,4 @@ databaseChangeLog = {
             column(name: "job_uuid")
         }
     }
-
-    changeSet(author: "rundeckdev", id: "4.x-populate-job-uuid") {
-        preConditions(onFail: "MARK_RAN") {
-            tableExists(tableName: "execution")
-            tableExists(tableName: "scheduled_execution")
-        }
-        sql("update execution set job_uuid = (select scheduled_execution.uuid from scheduled_execution where scheduled_execution.id = execution.scheduled_execution_id) where job_uuid is null")
-    }
-    changeSet(author: "rundeckuser (generated)", failOnError:"true", id: "all-executions-have-uuids") {
-        preConditions(onFail: 'MARK_RAN') {
-            columnExists(tableName: "execution", columnName: 'uuid')
-        }
-        grailsChange {
-            change {
-                def updates = []
-                sql.eachRow("select id from execution") {
-
-                    updates.add(new UpdateStatement(null,null,"execution")
-                            .addNewColumnValue("uuid",UUID.randomUUID().toString())
-                            .setWhereClause("id = '${it.id}'"))
-                }
-
-                sqlStatements(updates)
-            }
-            rollback {
-            }
-        }
-    }
 }
