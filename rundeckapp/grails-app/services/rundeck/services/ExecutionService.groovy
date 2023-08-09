@@ -3004,6 +3004,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
         execution.properties = props
+        if(!execution.uuid) {
+            execution.uuid = UUID.randomUUID().toString()
+        }
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }
@@ -3013,6 +3016,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (schedId) {
             scheduledExecution = ScheduledExecution.findByUuid(schedId)
+            if(!execution.jobUuid) execution.jobUuid = scheduledExecution.uuid
         }
 
         //check the final status of succeeded nodes
