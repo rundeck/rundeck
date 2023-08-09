@@ -319,6 +319,134 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         result.getProjectProperties().get("resources.source.1.type") == "local"
         result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
         result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+        result.getProjectProperties().get("project.ssh-keypath") == null
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "create project with props, local ssh key enabled"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                    { InputStream is ->
+                        def tprops = new Properties()
+                        tprops.load(is)
+                        tprops['abc'] == 'def'
+                    },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+            getBoolean("project.defaults.sshKeypath.enabled", false) >> true
+        }
+        when:
+
+        def result = service.createFrameworkProject('test1',props)
+
+        then:
+        1*service.projectCache.invalidate('test1')
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        0*service.rundeckNodeService.getNodes('test1')
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
+            it.project=='test1'
+            it.props.abc=='def'
+            it.props.'project.name'=='test1'
+            it.changedKeys.containsAll(it.props.keySet())
+        })
+
+        result.name=='test1'
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+        result.getProjectProperties().containsKey("project.ssh-keypath")
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "create project with props, set JSCH as default node executor and file copier"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                    { InputStream is ->
+                        def tprops = new Properties()
+                        tprops.load(is)
+                        tprops['abc'] == 'def'
+                    },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "jsch-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "jsch-scp"
+        }
+        when:
+
+        def result = service.createFrameworkProject('test1',props)
+
+        then:
+        1*service.projectCache.invalidate('test1')
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        0*service.rundeckNodeService.getNodes('test1')
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
+            it.project=='test1'
+            it.props.abc=='def'
+            it.props.'project.name'=='test1'
+            it.changedKeys.containsAll(it.props.keySet())
+        })
+
+        result.name=='test1'
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "jsch-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "jsch-scp"
+        result.getProjectProperties().get("project.ssh-keypath") == null
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
