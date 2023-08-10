@@ -419,6 +419,8 @@ class BaseGitPluginSpec extends Specification {
         update.localName == 'refs/remotes/origin/master'
         update.oldObjectId == commit1
         update.newObjectId == commit
+        0 * base.git.getRepository().close()
+        0 * base.git.close()
     }
 
 

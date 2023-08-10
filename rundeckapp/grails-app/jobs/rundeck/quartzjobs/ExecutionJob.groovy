@@ -312,7 +312,7 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
 
-            def fwProject = frameworkService.getFrameworkProject(project)
+            def fwProject = frameworkService.getProjectConfigReloaded(project)
             def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
             def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
             def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')

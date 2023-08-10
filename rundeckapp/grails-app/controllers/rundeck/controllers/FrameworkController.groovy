@@ -844,8 +844,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopy = configurationService.getString("project.defaults.filecopier", "sshj-scp")
 
         if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
             def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
@@ -1028,8 +1028,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
         }
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        final defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        final defaultFileCopy = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services
 
@@ -1043,8 +1044,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
             defaultNodeExec:defaultNodeExec,
-            nodeexecconfig: ['keypath': sshkeypath],
-            fcopyconfig: ['keypath': sshkeypath],
+            nodeexecconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
+            fcopyconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
             defaultFileCopy: defaultFileCopy,
             pluginGroupConfig: pluginGroupConfig,
             nodeExecDescriptions: nodeexecdescriptions,
