@@ -1,6 +1,7 @@
 package com.rundeck.plugin
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -469,6 +470,7 @@ class UpdateModeProjectService implements ProjectConfigurable {
 
         frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
         if(reschedule){
+            frameworkService.notifyProjectSchedulingChange(project, isExecutionDisabledNow, isScheduleDisabledNow, active)
             if(active){
                 scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
             }else{

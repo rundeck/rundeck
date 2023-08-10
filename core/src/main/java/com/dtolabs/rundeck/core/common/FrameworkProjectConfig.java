@@ -180,16 +180,10 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
                 newProps.setProperty("resources.source.1.type", "local");
             }
             if (null == properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
-                newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");
+                newProps.setProperty("service.NodeExecutor.default.provider", "sshj-ssh");
             }
             if (null == properties || !properties.containsKey("service.FileCopier.default.provider")) {
-                newProps.setProperty("service.FileCopier.default.provider", "jsch-scp");
-            }
-            if (null == properties || !properties.containsKey("project.ssh-keypath")) {
-                newProps.setProperty("project.ssh-keypath", new File(
-                        System.getProperty("user.home"),
-                        ".ssh/id_rsa"
-                ).getAbsolutePath());
+                newProps.setProperty("service.FileCopier.default.provider", "sshj-ssh");
             }
             if (null == properties || !properties.containsKey("project.ssh-authentication")) {
                 newProps.setProperty("project.ssh-authentication", "privateKey");

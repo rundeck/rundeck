@@ -57,7 +57,7 @@ public class NodeExecutorService
     public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "node-executor";
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
     public static final String DEFAULT_LOCAL_PROVIDER = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
-    public static final String DEFAULT_REMOTE_PROVIDER = JschNodeExecutor.SERVICE_PROVIDER_TYPE;
+    public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
     private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS ;
 
     static {
