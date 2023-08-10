@@ -282,9 +282,7 @@ class ExecutionJob implements InterruptableJob {
             }
             def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
             if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
-                def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
-                        DataContextUtils.addContext("option", jobArguments, null))
-                initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
+                initMap.timeout = expandTimeout(initMap)
             }
             initMap.authContext = requireEntry(jobDataMap, 'authContext', UserAndRolesAuthContext)
         }else{
@@ -338,6 +336,9 @@ class ExecutionJob implements InterruptableJob {
                 inputMap.argString = triggerData
             }
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
+            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
+                initMap.timeout = expandTimeout(initMap)
+            }
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
@@ -345,6 +346,13 @@ class ExecutionJob implements InterruptableJob {
         return initMap
     }
 
+    @CompileStatic
+    private long expandTimeout(RunContext initMap){
+        def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
+        def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
+                DataContextUtils.addContext("option", jobArguments, null))
+        return timeout ? Sizes.parseTimeDuration(timeout) : -1
+    }
 
     @CompileStatic
     static class RunResult{
