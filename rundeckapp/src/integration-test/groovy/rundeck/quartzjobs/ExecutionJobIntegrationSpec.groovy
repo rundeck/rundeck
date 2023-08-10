@@ -681,7 +681,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             0 * jobSchedulerServiceMock.afterExecution(_,_,_)
     }
 
-    def "Timeout value expands when the job is triggered vy a schedule"() {
+    def "Timeout value expands when the job is triggered by a schedule"() {
         given:
         ScheduledExecution se = setupJob()
         se.user = 'test'
@@ -741,9 +741,11 @@ class ExecutionJobIntegrationSpec extends Specification {
 
         where:
         SEtimeout            |  args           | resultTimeout
+        '5'                  |  ''             | 5
         '${option.timeout}'  |  '-timeout 5'   | 5
         '${option.timeout}'  |  '-timeout 2'   | 2
-        '5'                  |  ''             | 5
+        '${option.timeout}'  |  '-timeout 0'   | 0
+        '${option.timeout}'  |  'null'         | null
 
     }
 
