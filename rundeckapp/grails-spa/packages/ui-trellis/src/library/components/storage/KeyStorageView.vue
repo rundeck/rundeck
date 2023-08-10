@@ -109,7 +109,7 @@
                     title="This path contains a password that can be used for remote node execution.">
                                     <i class="glyphicon glyphicon-lock"></i>
                                   </span>
-              <span>{{key.name}}</span>
+              <span>{{key.name}}</span><span v-if="key.expired">{{"[CACHE EXPIRED]"}}</span>
             </td>
             <td class="text-strong">
               <span class="pull-right">
@@ -162,7 +162,7 @@
         <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
       </div>
     </modal>
-    <div class="row" v-if="isSelectedKey">
+    <div class="row" v-if="isSelectedKey && selectedKey.type === 'file'">
       <div class="col-sm-12">
         <div class="well">
           <div>
@@ -204,6 +204,13 @@
               <a :href="downloadUrl()">
                     <i class="glyphicon glyphicon-download"></i>
                     {{"Download"}}</a>
+            </span>
+          </div>
+          <div v-if="this.selectedKey && this.selectedKey.expired" class="pull-right">
+            <span>
+              <a :href="'javascript:void(0)'" @click="loadKeys(selectedKey)">
+                    <i class="glyphicon glyphicon-download"></i>
+                    {{"Refresh Expired Key"}}</a>
             </span>
           </div>
         </div>
@@ -380,7 +387,7 @@ export default Vue.extend({
 
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
-
+      
       rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
@@ -588,7 +595,12 @@ export default Vue.extend({
       this.uploadErrors = {} as any;
     },
     loadDirInputPath() {
-      this.loadDir(this.rootPath + "/" + this.inputPath)
+      if(this.isRunner) {
+        console.log("==> load inputPath: ", this.inputPath)
+        this.loadDir(this.inputPath)
+      } else {
+        this.loadDir(this.rootPath + "/" + this.inputPath)
+      }
     },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
@@ -611,36 +623,55 @@ export default Vue.extend({
     },
     loadUpPath() {
       let upPath = '';
-      if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
-        if (this.path.indexOf('/') >= 0) {
-          upPath = this.parentDirString(this.path);
-        } else {
-          upPath = this.rootPath;
-        }
+      if(this.isRunner) {
+        // upPath is the path without trailing part
+        if(!this.path) this.path = ""
 
-        if (upPath != this.rootPath) {
-          this.upPath = this.absolutePath(upPath);
-        } else {
-          this.upPath = this.rootPath;
-        }
+        const lastIndexOfSlash = this.path.lastIndexOf("/")
+        if(lastIndexOfSlash >= 0)
+          this.upPath = this.path.substring(0, lastIndexOfSlash)
+        else
+          this.upPath = ""
+
+        console.log("==> upPath is: ", this.upPath)
       } else {
-        this.upPath = upPath;
+        if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
+                if (this.path.indexOf('/') >= 0) {
+                  upPath = this.parentDirString(this.path);
+                } else {
+                  upPath = this.rootPath;
+                }
+
+                if (upPath != this.rootPath) {
+                  this.upPath = this.absolutePath(upPath);
+                } else {
+                  this.upPath = this.rootPath;
+                }
+              } else {
+                this.upPath = upPath;
+              }
       }
     },
     absolutePath(relpath: any) {
+      if(this.isRunner) {
+        return "/" + relpath
+      }
+
       if (this.staticRoot === false) {
         return relpath;
       }
       return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
-      console.log("===> load Directory path: ", selectedPath)
+      
 
       this.isDropdownOpen=false
       this.clean();
       let path = '';
 
       if(this.isRunner) {
+        console.log("===> load Directory path: ", selectedPath)
+
         path = selectedPath
       } else {
         if (selectedPath != null) {
@@ -657,6 +688,10 @@ export default Vue.extend({
       this.loadKeys();
     },
     showUpPath() {
+      if(this.isRunner) {
+        return this.upPath
+      }
+
       if (this.upPath != this.rootPath) {
         return this.relativePath(this.upPath);
       } else {
