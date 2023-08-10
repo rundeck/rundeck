@@ -15,7 +15,7 @@
           <input type="text" class="form-control bg-2" style="padding-left:18px;"
                 v-model="inputPath" @keyup.enter="loadDirInputPath()"
                 placeholder="Enter a path"/>
-          <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+          <div v-if="!this.isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
             <button
                 type="button"
                 class="btn btn-default dropdown-toggle"
@@ -31,6 +31,16 @@
               </li>
             </ul>
           </div>
+          <div v-if="isRunner" class="input-group-btn">
+            <button
+                type="button"
+                class="btn btn-default"
+                @click="loadDir()"
+            >
+              <span>{{ "Reload" }}</span>
+            </button>
+
+          </div>
         </div>
       </div>
     </div>
@@ -43,7 +53,7 @@
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span>{{showUpPath()}}</span>
           </button>
-          <button v-if="!readOnly"  @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
+          <button v-if="!readOnly || this.allowUpload===true"  @click="actionUpload()" class="btn btn-sm btn-cta">
             <i class="glyphicon glyphicon-plus"></i>
             Add or Upload a Key
           </button>
@@ -60,8 +70,15 @@
 
 
         <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
-          <i class="glyphicon glyphicon-time"></i>
-          {{ "Loading..." }}
+          <i class="glyphicon glyphicon-time">{{ "Loading..." }}</i>
+          <div v-if="isRunner">
+            <span v-if="countDownLimit > 0">
+              Reload from the remote Runner in {{ this.countDownLimit }} seconds
+            </span>
+            <span v-if="countDownLimit === 0">
+              Reload
+            </span>
+          </div>
         </div>
         <table class="table table-hover table-condensed" v-else>
           <tbody>
@@ -209,6 +226,7 @@ import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import Vue from "vue"
+ 
 
 export default Vue.extend({
   name: "KeyStorageView",
@@ -246,6 +264,7 @@ export default Vue.extend({
       linksTitle: '',
       projectList: [],
       jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
+      countDownLimit: 0
     }
   },
   mounted() {
@@ -258,8 +277,11 @@ export default Vue.extend({
         this.selectKey(newValue)
       }
     },
-    runnerId: function(newValue: string) {
-      console.log("===> should load keys for runner: ", newValue)
+    rootPath: function(newValue: string) {
+      // Reset current path when rootPath changed. 
+      this.path = ''
+      this.inputPath = ''
+      this.selectedKey = {}
       this.loadKeys()
     }
   },
@@ -267,6 +289,9 @@ export default Vue.extend({
     isProject(): boolean {
       return this.rootPath.startsWith("keys/project");
     },
+    isRunner(): boolean {
+      return this.rootPath.startsWith('keys/runner')
+    }
   },
   methods: {
     downloadUrl(): string {
@@ -315,11 +340,37 @@ export default Vue.extend({
     },
     calcBrowsePath(path: string){
       let browse=path
+
+      if(this.isRunner) {
+      return path
+      }
+
       if (this.rootPath != 'keys/' && this.rootPath != 'keys') {
         browse = (this.rootPath) + "/" + path
         browse = browse.substring(5)
       }
       return browse
+    },
+    countDown(selectedKey?: any) {
+      if(this.countDownLimit > 0) return
+
+      this.countDownLimit = 5
+
+      // @ts-ignore
+      const countDownTimer = setInterval(() => {
+        this.countDownLimit--;
+
+        if(this.countDownLimit <= 0) {
+          // @ts-ignore
+          clearInterval(countDownTimer);
+          const delayExec = setTimeout(() => { 
+            this.loadKeys(selectedKey) 
+            clearTimeout(delayExec)
+          }, 600) // Delay 600ms to execute to give better user experience.
+          
+        }
+            
+      },1000);
     },
     loadKeys(selectedKey?: any) {
       if(selectedKey) {
@@ -329,9 +380,16 @@ export default Vue.extend({
 
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
+
       rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
+
+        if(result.cacheStatus === 'LOADING') {
+          this.loading = true
+          this.countDown(selectedKey)
+          return
+        } 
 
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
@@ -453,20 +511,21 @@ export default Vue.extend({
       }
     },
     isPrivateKey(key: any) {
-      return key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'private';
+      return key && key.meta && key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'private';
 
     },
     isPublicKey(key: any) {
-      return key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'public';
+      return key && key.meta && key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'public';
 
     },
     isPassword(key: any) {
-      return key.meta["Rundeck-data-type"] === 'password';
+      return key && key.meta && key.meta["Rundeck-data-type"] === 'password';
     },
     notFound() {
       return false;
     },
     selectKey(key: any) {
+      console.log("==> select key: ", key)
       if (this.selectedKey.path === key.path && this.isSelectedKey==false) {
         this.isSelectedKey = true
       }
@@ -535,6 +594,8 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
 
       rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
+        console.log(result)
+
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
@@ -573,15 +634,24 @@ export default Vue.extend({
       return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
+      console.log("===> load Directory path: ", selectedPath)
+
       this.isDropdownOpen=false
       this.clean();
       let path = '';
-      if (selectedPath != null) {
-        path = this.relativePath(selectedPath);
+
+      if(this.isRunner) {
+        path = selectedPath
+      } else {
+        if (selectedPath != null) {
+          path = this.relativePath(selectedPath);
+        }
       }
 
       this.path = path;
       this.inputPath = path;
+
+      console.log("===> set Directory path: ", this.path)
 
       this.loadUpPath();
       this.loadKeys();
