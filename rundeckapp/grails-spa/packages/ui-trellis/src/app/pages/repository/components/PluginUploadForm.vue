@@ -25,10 +25,11 @@
   </div>
 </template>
 <script>
-import { mapState, mapActions } from "vuex";
+import { defineComponent } from 'vue'
+import { mapActions } from "vuex";
 import axios from "axios";
 import {client} from "../../../../library/modules/rundeckClient"
-export default {
+export default defineComponent({
   name: "UploadPluginForm",
   computed: {
     fileName() {
@@ -40,16 +41,17 @@ export default {
     }
   },
   methods: {
+    ...mapActions('overlay', ['openOverlay', 'closeOverlay']),
     submitFiles() {
       // Initialize the form data and iteate over any
       // file sent over appending the files to the form data.
       let formData = new FormData();
-      for (var i = 0; i < this.files.length; i++) {
+      for (let i = 0; i < this.files.length; i++) {
         let file = this.files[i];
 
         formData.append("pluginFile", file);
       }
-      this.$store.dispatch("overlay/openOverlay", {
+      this.openOverlay({
         loadingMessage: "Installing",
         loadingSpinner: true
       });
@@ -66,7 +68,7 @@ export default {
         url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
         withCredentials: true
       }).then(response => {
-        this.$store.dispatch("overlay/openOverlay");
+        this.closeOverlay();
         client.token = response.headers['x-rundeck-token-key'] || client.token
         client.uri = response.headers['x-rundeck-token-uri'] || client.uri
         if (response.data.err) {
@@ -81,7 +83,7 @@ export default {
           });
         }
       }).catch(result=>{
-        this.$store.dispatch("overlay/openOverlay");
+        this.closeOverlay();
         let message=result.message
         if(result.response && result.response.data && result.response.data.message){
           message=result.response.data.message
@@ -102,7 +104,7 @@ export default {
     };
   },
   created() {}
-};
+})
 </script>
 <style lang="scss" scoped>
 /* input [type = file]
@@ -178,7 +180,6 @@ input[type="file"] {
     &:before {
       color: #333333;
       background-color: #e6e6e6;
-      color: #333333;
       text-decoration: none;
       background-position: 0 -15px;
       transition: background-position 0.2s ease-out;

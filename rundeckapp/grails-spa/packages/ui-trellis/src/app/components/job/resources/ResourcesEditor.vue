@@ -342,13 +342,11 @@
 </template>
 <script lang="ts">
 import OrchestratorEditor from '../../../components/job/resources/OrchestratorEditor.vue'
-import UiSocket from '../../../../library/components/utils/UiSocket.vue'
 import {_genUrl} from '../../../utilities/genUrl'
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop, Watch} from 'vue-property-decorator'
+import { defineComponent, ref } from 'vue'
+import type { PropType } from "vue"
 import NodeFilterInput from './NodeFilterInput.vue'
 import NodeFilterResults from './NodeFilterResults.vue'
 
@@ -356,56 +354,83 @@ import {
   getRundeckContext,
   getAppLinks
 } from '../../../../library'
+import UiSocket from "../../../../library/components/utils/UiSocket.vue";
 
-@Component({components: {OrchestratorEditor, InlineValidationErrors, NodeFilterInput, NodeFilterResults, UiSocket}})
-export default class ResourcesEditor extends Vue {
-  @Prop({required: true})
-  value: any
-
-  @Prop({required: true})
-  eventBus!: Vue
-
-  labelColClass = 'col-sm-2 control-label'
-  fieldColSize = 'col-sm-10'
-
-  modelData: any = {doNodedispatch: false, orchestrator: {type: null, config: {}}}
-
-  nodeSummary: any = {}
-
-  async mounted() {
-    this.modelData = Object.assign({}, this.value)
-    await this.loadNodeSummary()
-  }
-
-  async loadNodeSummary() {
-    let result = await axios.get(_genUrl(getAppLinks().frameworkNodeSummaryAjax, {}))
-    if (result.status >= 200 && result.status < 300) {
-      this.nodeSummary = result.data
+export default defineComponent({
+  name: 'ResourcesEditor',
+  components: {
+    OrchestratorEditor,
+    InlineValidationErrors,
+    NodeFilterInput,
+    NodeFilterResults,
+    UiSocket,
+  },
+  props: {
+    modelValue: {
+      type: Object as PropType<any>,
+      required: true,
+    },
+    eventBus: {
+      type: Object as PropType<any>,
+      required: true,
+    },
+  },
+  emits: ['update:modelValue'],
+  computed: {
+    labelColClass() {
+      return 'col-sm-2 control-label'
+    },
+    fieldColSize() {
+      return 'col-sm-10'
     }
-  }
-
-  handleFilterExcludeClick(val: any) {
-    this.handleFilterClick({filterExclude: val.filter, filterNameExclude: val.filterName})
-  }
-
-  handleFilterClick(val: any) {
-    if (val.filter) {
-      Vue.set(this.modelData, 'filter', val.filter)
+  },
+  setup() {
+    const modelData = ref<any>({doNodedispatch: false, orchestrator: {type: null, config: {}}})
+    const nodeSummary = ref<any>({})
+    return {
+      modelData,
+      nodeSummary,
     }
-    if (val.filterName) {
-      Vue.set(this.modelData, 'filterName', val.filterName)
+  },
+  methods: {
+    async loadNodeSummary() {
+      let result = await axios.get(_genUrl(getAppLinks().frameworkNodeSummaryAjax, {}))
+      if (result.status >= 200 && result.status < 300) {
+        this.nodeSummary = result.data
+      }
+    },
+    handleFilterExcludeClick(val: any) {
+      this.handleFilterClick({filterExclude: val.filter, filterNameExclude: val.filterName})
+    },
+    handleFilterClick(val: any) {
+      if (val.filter) {
+        this.modelData.filter = val.filter
+      }
+      if (val.filterName) {
+        this.modelData.filterName = val.filterName
+      }
+      if (val.filterExclude) {
+        this.modelData.filterExclude = val.filterExclude
+      }
+      if (val.filterNameExclude) {
+        this.modelData.filterNameExclude = val.filterNameExclude
+      }
+    },
+    async onMount() {
+      this.modelData = Object.assign({}, this.modelValue)
+      await this.loadNodeSummary()
     }
-    if (val.filterExclude) {
-      Vue.set(this.modelData, 'filterExclude', val.filterExclude)
+  },
+  mounted() {
+    this.onMount()
+  },
+  watch: {
+    modelData: {
+      handler() {
+        this.$emit('update:modelValue', this.modelData)
+      },
+      deep: true,
     }
-    if (val.filterNameExclude) {
-      Vue.set(this.modelData, 'filterNameExclude', val.filterNameExclude)
-    }
-  }
-
-  @Watch('modelData', {deep: true})
-  wasChanged() {
-    this.$emit('input', this.modelData)
-  }
-}
+  },
+})
 </script>

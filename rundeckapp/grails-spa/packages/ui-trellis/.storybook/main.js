@@ -3,18 +3,10 @@ const webpack = require('webpack')
 const path = require('path');
 
 module.exports = {
+    typescript: {
+        check: false,
+    },
     addons: [
-        {
-            name: '@storybook/preset-typescript',
-            options: {
-                framework: 'vue',
-                forkTsCheckerWebpackPluginOptions: {
-                    compilerOptions: {
-                        experimentalDecorators: true
-                    }
-                }
-            }
-        },
         {
             name: '@storybook/addon-docs',
             options: {
@@ -27,10 +19,24 @@ module.exports = {
         },
        // '@storybook/addon-knobs',
         'storybook-dark-mode',
+        {
+            name: "@storybook/addon-styling",
+            options: {
+                scssBuildRule: {
+                    test: /\.scss$/,
+                    use: [
+                        {loader: 'vue-style-loader'},
+                        {loader: 'css-loader', options: {sourceMap: true}},
+                        {loader: 'postcss-loader', options: {sourceMap: true, postcssOptions: { plugins: [require('autoprefixer')]}}},
+                        {loader: 'sass-loader', options: {sourceMap: true}},
+                    ],
+                }
+            }
+        },
         '@storybook/addon-backgrounds'
     ],
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
-
+    staticDirs: ['../public','../theme','../tests/data'],
     webpackFinal: (config) => {
         const vueLoader = config.module.rules.find(r => String(r.test) == String(/\.vue$/))
         vueLoader.options.compilerOptions = {
@@ -55,29 +61,12 @@ module.exports = {
                 },
             }],
         },
-        {
-            test: /\.less$/,
-            use: [
-            'style-loader',
-            {loader: 'css-loader', options: {sourceMap: true}},
-            {loader: 'postcss-loader', options: {sourceMap: true, plugins: [require('autoprefixer')]}},
-            {loader: 'less-loader',
-            options: {
-                sourceMap: true,
-                lessOptions: {
-                    javascriptEnabled: true
-                }
-            }}]
-        },
-        {
-            test: /\.scss$/,
-            use: [
-              {loader: 'vue-style-loader'},
-              {loader: 'css-loader', options: {sourceMap: true}},
-              {loader: 'postcss-loader', options: {sourceMap: true, plugins: [require('autoprefixer')] }},
-              {loader: 'sass-loader', options: {sourceMap: true}},
-            ],
-        });
+            {
+                test: /\.(ts|js)x?$/,
+                include: /uiv/,
+                use: { loader: "babel-loader" },
+            },
+        );
 
         config.plugins.unshift(new webpack.NormalModuleReplacementPlugin( /index.less/, function(resource) {
             if (resource.resource) {

@@ -16,7 +16,8 @@
     "skipLibCheck": true,
     "types": [
       "webpack-env",
-      "@types/jest"
+      "jest",
+      "node"
     ],
     "paths": {
       "@": [

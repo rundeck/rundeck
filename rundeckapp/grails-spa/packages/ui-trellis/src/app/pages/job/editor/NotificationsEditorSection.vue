@@ -1,17 +1,17 @@
 <template>
   <div >
-    <notifications-editor :notification-data="notificationData" :event-bus="eventBus" v-if="notificationData" @changed="changed"/>
+    <notifications-editor :notification-data="notificationData" v-if="notificationData" @changed="changed"/>
     <json-embed :output-data="updatedData.notifications" field-name="jobNotificationsJson"/>
   </div>
 </template>
 
 <script>
+import * as _ from 'lodash'
 import NotificationsEditor from '../../../components/job/notifications/NotificationsEditor.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
 import {
   getRundeckContext,
-  RundeckContext
 } from "../../../../library"
 
 export default {
@@ -40,8 +40,8 @@ export default {
     }
   },
   async mounted () {
-     if(window._rundeck && window._rundeck.data){
-        this.notificationData = window._rundeck.data.notificationData
+     if(getRundeckContext() && getRundeckContext().data){
+        this.notificationData = getRundeckContext().data.notificationData
         this.updatedData=this.notificationData
       }
   }

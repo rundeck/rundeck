@@ -482,12 +482,12 @@ th {
 
 // VGT TABLE
 
-@import 'vue-good-table/src/styles/style.scss';
+@import '~vue-good-table-next/dist/vue-good-table-next.css';
 
 
 
 
-.vgt-responsive {
+div.vgt-responsive {
     width: 100%;
     overflow-x: inherit;
     position: relative;

@@ -1,17 +1,18 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from "@storybook/vue3"
 import {addons} from '@storybook/addons'
 
 import '../../../stories/setup'
 
-import Tabs from './Tabs'
-import Tab from './Tab'
+import Tabs from './Tabs.vue'
+import Tab from './Tab.vue'
 import TabContent from './TabContent.vue'
 
 export default {
-    title: 'Containers/Tabs'
-}
+    title: 'Containers/Tabs',
+    component: Tab,
+} as Meta<typeof Tab>
 
-function setupStory(vue: Vue) {
+function setupStory(vue) {
     const el = vue.$el as any
     el.parentNode.style.height = '100vh'
     el.parentNode.style.overflow = 'hidden'
@@ -20,21 +21,21 @@ function setupStory(vue: Vue) {
     document.body.style.overflow = 'hidden'
 }
 
-export const tabs = () => {
+export const tabs: StoryFn<typeof Tab> = (args) => {
     const chan = addons.getChannel()
 
-    return Vue.extend({
+    return {
+        setup() {
+            return { args }
+        },
         template: `
-        <Tabs class="card" v-bind="$props" style="padding: 20px;">
+        <Tabs class="card" v-bind="args" style="padding: 20px;">
             <Tab :index="0" title="Tab"><TabContent>Foo Content</TabContent></Tab>
             <Tab :index="1" title="Tab Bar"><TabContent><input type="text"/></TabContent></Tab>
             <Tab :index="2" title="Tab Baz">Baz Content</Tab>
             <Tab :index="3" title="Tab Batch Processing">Batch Content</Tab>
         </Tabs>`,
         components: {Tabs, Tab, TabContent},
-        props: {
-            type: {default: 'standard'}
-        },
         mounted() {
             setupStory(this)
         },
@@ -43,16 +44,22 @@ export const tabs = () => {
                 chan.emit('checked',val)
             }
         }
-    })
+    }
+}
+tabs.args = {
+    type: 'standard'
 }
 
-export const cardTabs = () => {
+export const cardTabs = (args) => {
     const chan = addons.getChannel()
 
-    return Vue.extend({
+    return {
+        setup() {
+            return { args }
+        },
         template: `
         <div class="card" style="border-width: 0.1em;">
-        <Tabs v-bind="$props">
+        <Tabs v-bind="args">
             <Tab :index="0" title="Tab"><TabContent>Foo Content</TabContent></Tab>
             <Tab :index="1" title="Tab Bar"><TabContent><input type="text"/></TabContent></Tab>
             <Tab :index="2" title="Tab Baz">Baz Content</Tab>
@@ -60,9 +67,6 @@ export const cardTabs = () => {
         </Tabs>
         </div>`,
         components: {Tabs, Tab, TabContent},
-        props: {
-            type: {default:  'card'}
-        },
         mounted() {
             setupStory(this)
         },
@@ -71,5 +75,8 @@ export const cardTabs = () => {
                 chan.emit('checked', val)
             }
         }
-    })
+    }
+}
+cardTabs.args = {
+    type: 'card',
 }

@@ -39,31 +39,33 @@
             <!-- bulk edit controls -->
             <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete" class="spacing-x">
                 <span v-if="bulkEditMode" >
-                  <i18n path="bulk.selected.count">
+                  <span>
+                    {{ $t("bulk.selected.count") }}
                     <strong>{{bulkSelectedIds.length}}</strong>
-                  </i18n>
+                  </span>
                   <span class="btn btn-default btn-xs   " @click="bulkEditSelectAll">
-                      <i18n path="select.all"/>
+                      {{$t('select.all')}}
                   </span>
                   <span class="btn btn-default btn-xs   "
                         @click="showBulkEditCleanSelections=true">
-                      <i18n path="select.none"/>
+                      {{$t('select.none')}}
                   </span>
 
                   <btn size="xs" type="danger" class="btn-fill"
+                       data-test-id="activity-list-delete-selected-executions"
                         :disabled="bulkSelectedIds.length<1"
                         @click="showBulkEditConfirm=true">
-                      <i18n path="delete.selected.executions"/>
+                      {{$t('delete.selected.executions')}}
                   </btn>
                   <span class="btn btn-default btn-xs"
                         @click="bulkEditMode=false"
                         >
-                      <i18n path="cancel.bulk.delete"/>
+                      {{$t('cancel.bulk.delete')}}
                   </span>
               </span>
 
 
-              <btn size="xs" type="default" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
+              <btn size="xs" type="default" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true" data-test-id="activity-list-bulk-delete">
                   {{$t('bulk.delete')}}
               </btn>
             </span>
@@ -74,42 +76,48 @@
     <!-- Bulk edit modals -->
     <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')" append-to-body>
 
-      <i18n tag="p" path="clearselected.confirm.text">
+      <p>
+          {{ $t("clearselected.confirm.text")}}
         <strong>{{bulkSelectedIds.length}}</strong>
-      </i18n>
+      </p>
 
-      <div slot="footer">
-        <btn data-dismiss="modal" @click="showBulkEditCleanSelections=false">{{$t('cancel')}}</btn>
-        <button type="submit"
-                class="btn btn-default  "
-                data-dismiss="modal"
-                @click="bulkEditDeselectAll">
-            {{$t('Only shown executions')}}
-        </button>
-        <button class="btn btn-danger "
-                data-dismiss="modal"
-                @click="bulkEditDeselectAllPages">
-            {{$t('all')}}
-        </button>
-      </div>
+      <template v-slot:footer>
+        <div>
+          <btn data-dismiss="modal" @click="showBulkEditCleanSelections=false">{{$t('cancel')}}</btn>
+          <button type="submit"
+                  class="btn btn-default  "
+                  data-dismiss="modal"
+                  @click="bulkEditDeselectAll">
+              {{$t('Only shown executions')}}
+          </button>
+          <button class="btn btn-danger "
+                  data-dismiss="modal"
+                  @click="bulkEditDeselectAllPages">
+              {{$t('all')}}
+          </button>
+        </div>
+      </template>
     </modal>
 
     <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')" append-to-body>
-      <i18n tag="p" path="delete.confirm.text">
-        <strong>{{bulkSelectedIds.length}}</strong>
-        <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
-      </i18n>
+      <p>
+          {{ $t("delete.confirm.text")}}
+          <strong>{{bulkSelectedIds.length}}</strong>
+          <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
+      </p>
 
-      <div slot="footer">
-          <btn @click="showBulkEditConfirm=false">
-              {{$t('cancel')}}
-          </btn>
-          <btn type="danger"
-                @click="performBulkDelete"
-                data-dismiss="modal">
-              {{$t('Delete Selected')}}
-          </btn>
-      </div>
+      <template v-slot:footer>
+        <div>
+            <btn @click="showBulkEditConfirm=false">
+                {{$t('cancel')}}
+            </btn>
+            <btn type="danger"
+                  @click="performBulkDelete"
+                  data-dismiss="modal">
+                {{$t('Delete Selected')}}
+            </btn>
+        </div>
+      </template>
     </modal>
 
     <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" append-to-body>
@@ -125,9 +133,8 @@
                     v-if="bulkEditResults && bulkEditResults.requestCount > 0"
                         class="text-info">
 
-                        <i18n path="bulkresult.attempted.text" tag="p" >
+                          {{ $t("bulkresult.attempted.text")}}
                           <strong >{{bulkEditResults.requestCount}}</strong>
-                        </i18n>
 
                     </p>
                     <p
@@ -135,17 +142,14 @@
                         class="text-success">
 
 
-                        <i18n path="bulkresult.success.text" tag="p" >
+                          {{ $t("bulkresult.success.text")}}
                           <strong >{{bulkEditResults.successCount}}</strong>
-                        </i18n>
                     </p>
                     <p
                       v-if="bulkEditResults && bulkEditResults.failedCount > 0"
                             class="text-warning">
-
-                        <i18n path="bulkresult.failed.text" tag="p" >
+                          {{$t("bulkresult.failed.text")}}
                           <strong >{{bulkEditResults.failedCount}}</strong>
-                        </i18n>
                     </p>
                     <div v-if="bulkEditResults && bulkEditResults.failures && bulkEditResults.failures.length > 0">
                         <ul v-for="(message,ndx) in bulkEditResults.failures" :key="ndx">
@@ -158,9 +162,11 @@
                     </div>
 
                 </div>
-              <div slot="footer">
-                <btn @click="showBulkEditResults=false">{{$t('close')}}</btn>
-              </div>
+              <template v-slot:footer>
+                <div>
+                  <btn @click="showBulkEditResults=false">{{$t('close')}}</btn>
+                </div>
+              </template>
     </modal>
     <div class="card-content-full-width">
     <table class=" table table-hover table-condensed " >
@@ -193,13 +199,13 @@
                 <td class="right date " v-tooltip.bottom="runningStatusTooltip(exec)">
                     <span v-if="exec.dateStarted.date" >
                         <i class=" ">
-                            {{exec.dateStarted.date | moment(momentJobFormat)}}
+                            {{momentJobFormatDate(exec.dateStarted.date)}}
                         </i>
                         <i class="timerel text-muted" v-if="isRecentCalendarDate(exec.dateStarted.date)">
-                            {{exec.dateStarted.date | moment('calendar',null)}}
+                            {{momentCalendarFormat(exec.dateStarted.date)}}
                         </i>
                         <i class="timerel text-muted" v-else>
-                            {{exec.dateStarted.date | moment('from','now')}}
+                            {{momentFromNow(exec.dateStarted.date)}}
                         </i>
                     </span>
                 </td>
@@ -211,7 +217,7 @@
                 </td>
 
                 <td class="  user text-right " style="white-space: nowrap;">
-                    <em><i18n path="by" default="by"/></em>
+                    <em>{{$t('by')}}</em>
                     {{exec.user}}
                 </td>
 
@@ -271,13 +277,13 @@
             }">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
-                        {{rpt.dateCompleted | moment(momentJobFormat)}}
+                        {{momentJobFormatDate(rpt.dateCompleted)}}
                     </span>
                     <span class="timerel text-muted" v-if="isRecentCalendarDate(rpt.dateCompleted)">
-                        {{rpt.dateCompleted | moment('calendar',null)}}
+                        {{momentCalendarFormat(rpt.dateCompleted)}}
                     </span>
                     <span class="timerel text-muted" v-else>
-                        {{rpt.dateCompleted | moment('from','now')}}
+                        {{momentFromNow(rpt.dateCompleted)}}
                     </span>
                 </span>
             </td>
@@ -291,7 +297,7 @@
                 <span class="duration" v-else>{{formatDurationMomentHumanize(rpt.duration)}}</span>
             </td>
             <td class="  user text-right " style="white-space: nowrap;">
-                <em><i18n path="by" default="by"/></em>
+                <em>{{$t('by')}}</em>
                 {{rpt.user}}
             </td>
             <td class="eventtitle " :class="{job:rpt.jobId,adhoc:!rpt.jobId}" >
@@ -367,15 +373,15 @@
 
 <script lang="ts">
 import axios from 'axios'
-import Vue from 'vue'
-import moment from 'moment'
+import {defineComponent} from 'vue'
+import moment, {MomentInput} from 'moment'
 import OffsetPagination from '../../../library/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
 import {getRundeckContext} from "../../../library"
 import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
-import {clearTimeout, setTimeout} from 'timers';
 import * as DOMPurify from 'dompurify';
+import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 
 /**
  * Generate a URL
@@ -415,7 +421,7 @@ function nodeStats(node: string) {
     return info
 }
 
-export default Vue.extend({
+export default defineComponent({
   name: 'ActivityList',
   components:{
     OffsetPagination,
@@ -431,7 +437,7 @@ export default Vue.extend({
       activityPageHref:'',
       sinceUpdatedUrl:'',
       reports:[],
-      running: null as null|any,
+      running: null as null | { executions: any[], paging: any },
       lastDate:-1,
       pagination:{
         offset:0,
@@ -485,6 +491,15 @@ export default Vue.extend({
     }
   },
   methods: {
+    momentFromNow(val: MomentInput) {
+        return DateTimeFormatters.formatFromNow(val)
+    },
+    momentCalendarFormat(val:MomentInput) {
+        return DateTimeFormatters.formatCalendar(val)
+    },
+    momentJobFormatDate(val: MomentInput) {
+      return DateTimeFormatters.formatDate(val,this.momentJobFormat)
+    },
     purify(text:string) {
       return DOMPurify.sanitize(text);
     },
@@ -533,18 +548,18 @@ export default Vue.extend({
     },
     runningStatusTooltip(exec:Execution){
       if(exec.status?.toString() === 'queued') {
-        return (this as any).$t('job.execution.queued')
+        return this.$t('job.execution.queued')
       }else
         if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
-        return (this as any).$t('job.execution.starting.0',[this.runningStartedDisplay(exec.dateStarted.date)])
+        return this.$t('job.execution.starting.0',[this.runningStartedDisplay(exec.dateStarted.date)])
       }else if(exec.dateStarted && exec.dateStarted.date){
         const startmo=moment(exec.dateStarted.date)
         if(exec.job && exec.job.averageDuration){
           const expected = startmo.clone()
           expected.add(exec.job.averageDuration,'ms')
-          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])
+          return this.$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])
         }
-        return (this as any).$t('info.started.0',[startmo.fromNow()])
+        return this.$t('info.started.0',[startmo.fromNow()])
       }
       return ''
     },
@@ -729,7 +744,7 @@ export default Vue.extend({
           })
           this.running = { executions, paging: response.data.paging }
           this.loadingRunning = false
-          this.eventBus.$emit('activity-nowrunning-count', executions.length)
+          this.eventBus.emit('activity-nowrunning-count', executions.length)
 
       }catch(error){
         this.disableRefresh = !this.disableRefresh;
@@ -765,7 +780,7 @@ export default Vue.extend({
             rpt.node = nodeStats(rpt.node)
             return rpt
           })
-          this.eventBus&&this.eventBus.$emit('activity-query-result',response.data)
+          this.eventBus&&this.eventBus.emit('activity-query-result',response.data)
         }
       }catch(error){
         this.loading=false

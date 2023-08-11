@@ -8,14 +8,13 @@
 </template>
 
 <script>
-import projectDescription from './components/description'
-import projectReadme from './components/projectReadme'
-import activitySummary from './components/activitySummary'
-import activityList from '../../components/activity/activityList'
+import projectDescription from './components/description.vue'
+import projectReadme from './components/projectReadme.vue'
+import activitySummary from './components/activitySummary.vue'
+import activityList from '../../components/activity/activityList.vue'
 
 import {
   getRundeckContext,
-  RundeckContext
 } from "../../../library"
 
 export default {

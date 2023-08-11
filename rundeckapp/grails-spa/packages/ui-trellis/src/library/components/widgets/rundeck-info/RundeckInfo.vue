@@ -36,14 +36,8 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Observer } from 'mobx-vue'
-import {Component, Prop} from 'vue-property-decorator'
 
-import {VersionInfo, ServerInfo, AppInfo} from '../../../stores/System'
-import { Release } from '../../../stores/Releases'
-
-import {getRundeckContext, url} from '../../../rundeckService'
+import { url} from '../../../rundeckService'
 
 import RundeckLogo from '../../svg/RundeckLogo.vue'
 import PagerdutyLogo from '../../svg/PagerdutyLogo.vue'
@@ -52,37 +46,40 @@ import Copyright from '../../version/Copyright.vue'
 import RundeckVersion from '../../version/RundeckVersionDisplay.vue'
 import VersionDisplay from '../../version/VersionIconNameDisplay.vue'
 import ServerDisplay from '../../version/ServerDisplay.vue'
+import {defineComponent} from "vue";
+import {AppInfo, ServerInfo, VersionInfo} from "../../../stores/System";
+import type {PropType} from "vue";
+import {Release} from "../../../stores/Releases";
 
-@Observer
-@Component({components: {
-    ServerDisplay,
-    VersionDisplay,
-    RundeckVersion,
-    RundeckLogo,
-    PagerdutyLogo,
-    Copyright
-}})
-export default class RundeckInfoWidget extends Vue {
-    @Prop()
-    version!: VersionInfo
-
-    @Prop()
-    latest!: Release
-
-    @Prop()
-    server!: ServerInfo
-
-    @Prop()
-    appInfo!: AppInfo
-
-    async mounted() {
-        const context = getRundeckContext()
+export default defineComponent({
+    name:"RundeckInfo",
+    components: {
+        RundeckLogo, PagerdutyLogo, Copyright, RundeckVersion, VersionDisplay, ServerDisplay
+    },
+    props: {
+        version: {
+            type: Object as PropType<VersionInfo>,
+            required: true
+        },
+        latest: {
+            type: Object as PropType<Release>,
+            required: true
+        },
+        server: {
+            type: Object as PropType<ServerInfo>,
+            required: true
+        },
+        appInfo: {
+            type: Object as PropType<AppInfo>,
+            required: true
+        }
+    },
+    methods: {
+        welcomeUrl() {
+            return url('menu/welcome').toString()
+        }
     }
-
-    welcomeUrl() {
-        return url('menu/welcome').toString()
-    }
-}
+})
 </script>
 
 <style scoped lang="scss">

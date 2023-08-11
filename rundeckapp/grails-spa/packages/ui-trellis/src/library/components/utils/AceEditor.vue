@@ -40,9 +40,9 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-import Ace from './AceEditorVue'
+import Ace from './AceEditorVue.vue'
 
 import 'ace-builds/src-noconflict/ext-language_tools'
 import 'ace-builds/src-noconflict/mode-batchfile'
@@ -69,12 +69,12 @@ import 'ace-builds/src-noconflict/theme-chrome'
 import 'ace-builds/src-noconflict/theme-tomorrow_night'
 import 'ace-builds/src-noconflict/theme-tomorrow_night_eighties'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'ace-editor',
   components: {Ace},
   props: {
     identifier: String,
-    value: String,
+    modelValue: String,
     height: String,
     width: String,
     lang: String,
@@ -83,9 +83,10 @@ export default Vue.extend({
     softWrapControl: Boolean,
     readOnly: Boolean
   },
+  emits: ['update:modelValue'],
   data () {
     return {
-      valueInternal: this.value || '',
+      valueInternal: this.modelValue || '',
       modeInternal: this.lang || 'text',
       wrapInternal: false,
       localAce: null,
@@ -115,9 +116,9 @@ export default Vue.extend({
   },
   watch: {
     valueInternal (newValue, oldValue) {
-      this.$emit('input', newValue)
+      this.$emit('update:modelValue', newValue)
     },
-    value (newValue, oldValue) {
+    modelValue (newValue, oldValue) {
       this.valueInternal = newValue
     },
     lang (newValue, oldValue) {

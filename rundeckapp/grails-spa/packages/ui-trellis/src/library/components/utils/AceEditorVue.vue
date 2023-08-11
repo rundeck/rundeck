@@ -1,26 +1,21 @@
-import Vue from 'vue'
+<template>
+    <div ref="root" :id="identifier" :style="styleCss"></div>
+</template>
+<script lang="ts">
+import {defineComponent} from 'vue'
 
 import * as ace from 'ace-builds'
-import { VNode } from 'vue/types/umd'
 
 /**
  * Ace Vue wrapper
  */
-export default Vue.extend({
-    render: function(h): VNode {
-        const height = this.height ? this.px(this.height) : '100%'
-        const width = this.width ? this.px(this.width) : '100%'
-
-        return h('div', {
-            attrs: {
-                style: `height: ${height}; width: ${width};`,
-                id: this.identifier,
-            }
-        })
-    },
+export default defineComponent({
     props: {
         identifier: String,
-        value: String,
+        modelValue: {
+          type: String,
+          required: true,
+        },
         height: String,
         width: String,
         lang: String,
@@ -29,6 +24,7 @@ export default Vue.extend({
         darkTheme: String,
         options: Object,
     },
+    emits: ['init', 'update:modelValue'],
     data () {
         return {
             editor: undefined as undefined | ace.Ace.Editor,
@@ -37,7 +33,7 @@ export default Vue.extend({
         }
     },
     watch: {
-        value: function(val): void {
+        modelValue: function(val): void {
             if (this.contentBackup !== val) {
                 // @ts-ignore
                 this.editor!.session.setValue(val,1)
@@ -82,14 +78,14 @@ export default Vue.extend({
         editor.getSession().setMode(this.resolveLang(lang))
         editor.setTheme(this.resolveTheme(theme))
 
-        if (this.value)
-            editor.setValue(this.value, 1)
+        if (this.modelValue)
+            editor.setValue(this.modelValue, 1)
         
-        this.contentBackup = this.value
+        this.contentBackup = this.modelValue
         
         editor.on('change', () => {
             const content = editor.getValue()
-            this.$emit('input', content)
+            this.$emit('update:modelValue', content)
             this.contentBackup = content
         })
 
@@ -101,6 +97,14 @@ export default Vue.extend({
         this.editor!.destroy()
         this.editor!.container.remove()
         this.observer?.disconnect()
+    },
+    computed: {
+        styleCss() {
+            let style = {height:"100%",width:"100%"}
+            if(this.height) style.height = this.px(this.height)
+            if(this.width) style.width = this.px(this.width)
+            return style
+        }
     },
     methods: {
         /**
@@ -148,3 +152,4 @@ export default Vue.extend({
         }
     }
 })
+</script>

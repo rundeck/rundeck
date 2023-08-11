@@ -15,12 +15,13 @@
   </edit-project-node-source-file>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import {getRundeckContext} from '../../../library'
+import {defineComponent, PropType} from 'vue'
+import {EventBus, getRundeckContext} from '../../../library'
 import {NodeSource} from '../../../library/stores/NodeSourceFile'
 import EditProjectNodeSourceFile from './EditProjectNodeSourceFile.vue'
 
-export default Vue.extend({
+export default defineComponent({
+  name: 'EditProjectNodeSourcePage',
   inject: ['nodeSourceFile'],
   components: {EditProjectNodeSourceFile},
   props: {
@@ -33,7 +34,7 @@ export default Vue.extend({
       required: true,
     },
     eventBus: {
-      type: Object,
+      type: Object as PropType<typeof EventBus>,
       required: true
     }
   },
@@ -60,7 +61,7 @@ export default Vue.extend({
   },
   methods: {
     handleCancel() {
-      this.eventBus.$emit('page-reset', 'nodes')
+      this.eventBus.emit('page-reset', 'nodes')
       window.location = this.nextPageUrl
     },
     async handleSave(newVal) {
@@ -72,7 +73,7 @@ export default Vue.extend({
       this.saving = true
       try {
         let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText)
-        this.eventBus.$emit('page-reset', 'nodes')
+        this.eventBus.emit('page-reset', 'nodes')
         this.$notify('Content Saved')
         window.location = this.nextPageUrl
       } catch (e) {
@@ -98,9 +99,9 @@ export default Vue.extend({
     acceptContent(newVal) {
       if (newVal && typeof (newVal.content) === 'string' && this.nodesText !== newVal.content) {
         this.nodesText = newVal.content
-        this.eventBus.$emit('node-source-file-content-loaded', this.nodesText)
+        this.eventBus.emit('node-source-file-content-loaded', this.nodesText)
         if (this.inited) {
-          this.eventBus.$emit('page-modified', 'nodes')
+          this.eventBus.emit('page-modified', 'nodes')
         }
       }
     }
@@ -110,14 +111,14 @@ export default Vue.extend({
     if (this.index >= 0) {
       this.nodeSourceFile.index = this.index
       await this.nodeSourceFile.load()
-      this.eventBus.$emit('node-source-file-loaded', this.nodeSourceFile)
+      this.eventBus.emit('node-source-file-loaded', this.nodeSourceFile)
       this.nodeSource = this.nodeSourceFile.nodeSource
     }
-    this.eventBus.$on('node-source-file-set-content', this.acceptContent)
+    this.eventBus.on('node-source-file-set-content', this.acceptContent)
     if (this.nodeSource && this.nodeSource.resources.writeable && this.modelFormat) {
       await this.nodeSourceFile.retrieveSourceContent()
       this.acceptContent({content: this.nodeSourceFile.content})
-      this.eventBus.$emit('node-source-file-content-inited', this.nodesText)
+      this.eventBus.emit('node-source-file-content-inited', this.nodesText)
       this.inited = true
     }
   }

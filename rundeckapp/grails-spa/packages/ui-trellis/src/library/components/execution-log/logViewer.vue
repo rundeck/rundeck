@@ -1,8 +1,8 @@
 <template>
-  <div class="execution-log"
-    :class="[`execution-log--${colorTheme()}`]"
+  <div class="execution-log" ref="root"
+    :class="[`execution-log--${colorTheme}`]"
   >
-    <rd-drawer
+    <RdDrawer
         title="Settings"
         placement="left"
         :mask="false"
@@ -10,7 +10,7 @@
         :closable="true"
         :get-container="false"
         :wrap-style="{ position: 'absolute' }"
-        @close="() => {settingsVisible = false}"
+        @close="closeSettings"
     >
       <form style="padding: 10px;">
         <div class="form-group">
@@ -50,28 +50,31 @@
           <label for="logview_stats">Display Stats</label>
         </div>
         <ui-socket section="execution-log-viewer" location="settings"
-                   :event-bus="eventBus"/>
+                   :event-bus="eventBus"
+        />
       </form>
-    </rd-drawer>
+    </RdDrawer>
     <div 
       ref="scroller"
-      class="execution-log__scroller" v-bind:class="{
-      'execution-log--no-transition': this.logLines > 1000,
-      'ansicolor-on': this.settings.ansiColor
-    }">
+      class="execution-log__scroller"
+      :class="{
+        'execution-log--no-transition': logLines > 1000,
+        'ansicolor-on': settings.ansiColor
+      }"
+    >
       <div ref="log">
         <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
           <btn-group>
-            <btn size="xs" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
+            <btn size="xs" @click="toggleSettings">
               <i class="fas fa-cog"/>Settings
             </btn>
-            <btn size="xs" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+            <btn size="xs" @click="toggleFollow">
               <i :class="[followIcon]"/>Follow
             </btn>
           </btn-group>
           <transition name="fade">
             <div class="execution-log__progress-bar" v-if="showProgress">
-              <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}"/>
+              <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="toggleProgressBar"/>
             </div>
           </transition>
         </div>
@@ -83,30 +86,28 @@
         <div class="execution-log__warning" v-if="errorMessage">
           <h4>{{errorMessage}}</h4>
         </div>
-        <div class="execution-log__warning" v-if="completed && logLines == 0">
+        <div class="execution-log__warning" v-if="completed && logLines === 0">
           <h5>No output</h5>
         </div>
       </div>
     </div>
     <div class="stats" v-if="settings.stats">
-      <span>Following:{{follow}} Lines:{{logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
+      <span>Following:{{mfollow}} Lines:{{logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import {CancellationTokenSource, CancellationToken} from 'prex'
+import {CancelToken} from '@esfx/canceltoken'
 
-import {ExecutionLog, EnrichedExecutionOutput} from '../../utilities/ExecutionLogConsumer'
-import {Component, Prop, Watch, Vue, Inject} from 'vue-property-decorator'
-import { ComponentOptions } from 'vue'
+import { defineComponent } from 'vue'
 import {LogBuilder} from './logBuilder'
-import { RootStore } from '../../stores/RootStore'
 import RdDrawer from '../containers/drawer/Drawer.vue'
-import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
-import { Observer } from 'mobx-vue'
+import {logviewerui} from '../../stores/ExecutionOutput'
 import UiSocket from "../utils/UiSocket.vue";
-import {getRundeckContext} from "../../rundeckService";
+import { EventBus } from '../../utilities/vueEventBus'
+import { Btn, BtnGroup, ProgressBar } from 'uiv'
+import {PropType} from "vue";
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
@@ -121,245 +122,234 @@ interface IEventViewerSettings {
   lineWrap: boolean
 }
 
-@Observer
-@Component({
-  components: {
-    UiSocket,
-    'rd-drawer': RdDrawer,
-  }
-})
-export default class LogViewer extends Vue {
-    @Prop()
-    executionId!: number
-
-    @Prop()
-    node?: string
-
-    @Prop()
-    stepCtx?: string
-
-    @Prop({default: true})
-    showStats!: boolean
-
-    @Prop({default: true})
-    showSettings!: boolean
-
-    @Prop({default: false})
-    follow!: boolean
-
-    @Prop()
-    jumpToLine?: number
-
-    @Prop({default: 'dark'})
-    theme?: string
-
-    @Prop({default: 3145728})
-    maxLogSize!: number
-
-    @Prop()
-    trimOutput!: number
-
-    @Prop()
-    config?: IEventViewerSettings
-
-    @Prop({default: true})
-    useUserSettings!: boolean
-
-    @Inject({default: undefined})
-    private readonly executionLogViewerFactory?: (execId: string) => Promise<ExecutionLog>
-
-    @Inject()
-    private readonly rootStore!: RootStore
-  
-    themes = [
-      {label: 'Rundeck Theme', value: 'rundeck'},
-      {label: 'Light', value: 'light'},
-      {label: 'Dark', value: 'dark'},
-      {label: 'None', value: 'none'}
-    ]
-
-    scrollTolerance = 5
-
-    batchSize = 200
-
-    totalTime = 0
-
-    progress = 0
-
-    private settings: IEventViewerSettings = {
-      theme: 'rundeck',
-      stats: false,
-      timestamps: false,
-      command: true,
-      gutter: true,
-      ansiColor: true,
-      nodeBadge: true,
-      lineWrap: true
-    }
-    
-    eventBus!: Vue
-
-    @Watch('settings', {deep: true})
-    private handleUserConfigChange(newVal: any, oldVal: any) {
-      if (this.useUserSettings && this.settingsVisible)
-        this.saveConfig()
-    }
-
-    @Watch('settingsChange', {deep: true})
-    private handleSettingsChange(newVal: IEventViewerSettings, oldVal: IEventViewerSettings) {
-      const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap', 'command']
-
-      for (const prop of updatableProps) {
-        if (newVal[prop] != oldVal[prop]) {
-          this.$options.vues.forEach(v => v[prop] = newVal[prop])
+export default defineComponent({
+    name:"LogViewer",
+    components: {
+      UiSocket,
+      RdDrawer,
+      Btn,
+      BtnGroup,
+      ProgressBar,
+    },
+    props: {
+        executionId: {
+            type: String,
+            required: true
+        },
+        node : {
+            type: String,
+            required: false
+        },
+        stepCtx: {
+            type: String,
+            required: false
+        },
+        showStats : {
+            type: Boolean,
+            required: false,
+            default: true
+        },
+        showSettings: {
+            type: Boolean,
+            required: false,
+            default: true
+        },
+        follow : {
+            type: Boolean,
+            required: false,
+            default: false
+        },
+        jumpToLine : {
+            type: Number,
+            required: false
+        },
+        theme : {
+            type: String,
+            required: false,
+            default: 'dark'
+        },
+        maxLogSize : {
+            type: Number,
+            required: false,
+            default:  3145728
+        },
+        trimOutput : {
+            type: Number,
+            required: false
+        },
+        config: {
+            type: Object as PropType<IEventViewerSettings>,
+            required: false
+        },
+        useUserSettings : {
+            type: Boolean,
+            required: false,
+            default: true
+        },
+    },
+    data() {
+        return {
+            logviewerui,
+            rootStore: window._rundeck.rootStore,
+            eventBus : window._rundeck.eventBus as typeof EventBus,
+            themes : [
+                {label: 'Rundeck Theme', value: 'rundeck'},
+                {label: 'Light', value: 'light'},
+                {label: 'Dark', value: 'dark'},
+                {label: 'None', value: 'none'}
+            ],
+            settings :{
+                theme: 'rundeck',
+                stats: false,
+                timestamps: false,
+                command: true,
+                gutter: true,
+                ansiColor: true,
+                nodeBadge: true,
+                lineWrap: true
+            },
+            consumeLogs :true,
+            completed :false,
+            errorMessage : '',
+            execCompleted : true,
+            settingsVisible : false,
+            overSize : false,
+            jumped : false,
+            mfollow : this.follow,
+            viewer : null,
+            logBuilder : null,
+            logEntries : [],
+            scrollCount :0,
+            startTime :0,
+            logSize : 0,
+            logLines : 0,
+            resp : null,
+            populateLogsProm : null,
+            cancelProgress : null,
+            nextProgress : 0,
+            scrollTolerance : 5,
+            batchSize : 200,
+            totalTime : 0,
+            progress : 0,
+            selected : null,
+            selectedLineIdx : null,
+            percentLoaded : 0,
+            options: {vues:[]}
         }
-      }
+    },
+    computed: {
+        settingsChange() {
+            return Object.assign({}, this.settings)
+        },
+        followIcon() {
+            return this.mfollow ? 'fas fa-eye' : 'fas fa-eye-slash'
+        },
+        barProgress() {
+            return this.execCompleted ? this.progress : 100
+        },
+        progressType() {
+            return this.consumeLogs ? 'info' : 'warning'
+        },
+        progressText() {
+            const loadingText = `${this.barProgress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+            const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
 
-      this.logBuilder.updateProps({
-        node: this.node,
-        stepCtx: this.stepCtx,
-        nodeIcon: this.settings.nodeBadge,
-        maxLines: 20000,
-        command: {
-          visible: this.settings.command
+            return this.execCompleted ? loadingText : runningText
         },
-        time: {
-          visible: this.settings.timestamps
+        showProgress() {
+            return (!this.completed || !this.execCompleted)
         },
-        gutter: {
-          visible: this.settings.gutter
+        colorTheme() {
+            if (this.settings.theme == 'rundeck')
+                return this.rootStore.theme.theme
+            else
+                return this.settings.theme
         },
-        content: {
-          lineWrap: this.settings.lineWrap
+    },
+    watch: {
+        settings: {
+            handler(newVal: any, oldVal: any) {
+              if (this.useUserSettings && this.settingsVisible) {
+                  this.saveConfig()
+              }
+            },
+            deep: true
+        },
+        settingsChange: {
+            handler(newVal: IEventViewerSettings, oldVal: IEventViewerSettings) {
+              const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap', 'command']
+              for (const prop of updatableProps) {
+                  if (newVal[prop] != oldVal[prop]) {
+                      this.options.vues.forEach(v => v[prop] = newVal[prop])
+                  }
+              }
+
+              if(!this.logBuilder) return
+
+              this.logBuilder.updateProps({
+                  node: this.node,
+                  stepCtx: this.stepCtx,
+                  nodeIcon: this.settings.nodeBadge,
+                  maxLines: 20000,
+                  command: {
+                      visible: this.settings.command
+                  },
+                  time: {
+                      visible: this.settings.timestamps
+                  },
+                  gutter: {
+                      visible: this.settings.gutter
+                  },
+                  content: {
+                      lineWrap: this.settings.lineWrap
+                  }
+              })
+            },
+            deep: true
+        },
+        logSize(val: number, oldVal: number) {
+            if (val > this.maxLogSize) {
+                this.overSize = true
+                this.nextProgress = 100
+                this.completed = true
+            }
+        },
+        consumeLogs(val: boolean, oldVal: boolean) {
+            if(val)
+                this.updateProgress()
+            else if(this.cancelProgress)
+                this.cancelProgress.cancel()
+
+            if(val && !this.populateLogsProm) {
+                this.populateLogsProm = this.populateLogs()
+            }
         }
-      })
-    }
-
-    private consumeLogs: boolean = true
-
-    private completed = false
-
-    private errorMessage = ''
-
-    private execCompleted = true
-
-    private settingsVisible = false
-
-    private overSize = false
-
-    private jumped = false
-
-    private viewer!: ExecutionOutput
-
-    private logBuilder!: LogBuilder
-
-    private logEntries: Array<{log?: string, id: number}> = []
-
-    private scrollCount = 0
-
-    private startTime = 0
-
-    private logSize = 0
-
-    private logLines = 0
-
-    private resp?: Promise<ExecutionOutputEntry[]>
-
-    private populateLogsProm?: Promise<void>
-
-    private cancelProgress?: CancellationTokenSource
-
-    private nextProgress = 0
-
-    private selected: any
-
-    private percentLoaded: number = 0
-
-    $options!: ComponentOptions<Vue> & {
-      vues: any[]
-    }
-  
-    get settingsChange() {
-      return Object.assign({}, this.settings)
-    }
-
-    get followIcon() {
-      return this.follow ? 'fas fa-eye' : 'fas fa-eye-slash'
-    }
-
-    get barProgress() {
-      return this.execCompleted ? this.progress : 100
-    }
-
-    get progressType() {
-      return this.consumeLogs ? 'info' : 'warning'
-    }
-
-    get progressText() {
-      const loadingText = `${this.barProgress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
-      const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
-
-      return this.execCompleted ? loadingText : runningText
-    }
-
-    get showProgress(): boolean {
-      return (!this.completed || !this.execCompleted)
-    }
-    
-
-    @Watch('logSize')
-    checkForOversize(val: number, oldVal: number) {
-      if (val > this.maxLogSize) {
-        this.overSize = true
-        this.nextProgress = 100
-        this.completed = true
-      }
-    }
-
-    @Watch('consumeLogs')
-    toggleConsumeLogs(val: boolean, oldVal: boolean) {
-      if(val)
-        this.updateProgress()
-      else if(this.cancelProgress)
-        this.cancelProgress.cancel()
-
-      if(val && !this.populateLogsProm) {
-        this.populateLogsProm = this.populateLogs()
-      }
-    }
-
-    created() {
-      /* Get event bus*/
-      this.eventBus = getRundeckContext().eventBus
-      /** Load here so theme does not change afer visible */
-      this.loadConfig()
-    }
-
+    },
+    beforeMount() {
+        this.loadConfig()
+    },
     async mounted() {
-        this.$options.vues = []
+        this.options.vues = []
 
-        const scroller = this.$refs["scroller"] as HTMLElement
-        const log = this.$refs["log"] as HTMLElement
+        this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId)
 
-        this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
-
-        this.logBuilder = new LogBuilder(this.viewer, log, this.eventBus,{
-          node: this.node,
-          stepCtx: this.stepCtx,
-          nodeIcon: this.settings.nodeBadge,
-          maxLines: 20000,
-          command: {
-            visible: this.settings.command
-          },
-          time: {
-            visible: this.settings.timestamps
-          },
-          gutter: {
-            visible: this.settings.gutter
-          },
-          content: {
-            lineWrap: this.settings.lineWrap
-          }
+        this.logBuilder = new LogBuilder(this.viewer, this.$refs['log'], this.eventBus,{
+            node: this.node,
+            stepCtx: this.stepCtx,
+            nodeIcon: this.settings.nodeBadge,
+            maxLines: 20000,
+            command: {
+                visible: this.settings.command
+            },
+            time: {
+                visible: this.settings.timestamps
+            },
+            gutter: {
+                visible: this.settings.gutter
+            },
+            content: {
+                lineWrap: this.settings.lineWrap
+            }
         })
 
         this.logBuilder.onNewLines(this.handleNewLine)
@@ -369,210 +359,182 @@ export default class LogViewer extends Vue {
 
         this.updateProgress()
 
-        const {viewer} = this
-        await viewer.init()
+        await this.viewer.init()
 
-        this.execCompleted = viewer.execCompleted
-        this.follow = !viewer.execCompleted
+        this.execCompleted = this.viewer.execCompleted
+        this.mfollow = !this.viewer.execCompleted
 
-        if (viewer.execCompleted && viewer.size > this.maxLogSize) {
-          this.logSize = viewer.size
-          this.nextProgress = 0
-          this.updateProgress(100)
-          return
+        if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
+            this.logSize = this.viewer.size
+            this.nextProgress = 0
+            this.updateProgress(100)
+            return
         }
 
         this.populateLogsProm = this.populateLogs()
-    }
+    },
+    methods: {
+        loadConfig() {
+            if (this.useUserSettings) {
+                const _settings = localStorage.getItem(CONFIG_STORAGE_KEY)
 
-    private loadConfig() {
-      if (this.useUserSettings) {
-        const settings = localStorage.getItem(CONFIG_STORAGE_KEY)
-
-        if (settings) {
-          try {
-            const config = JSON.parse(settings)
-            Object.assign(this.settings, config)
-          } catch (e) {
-            localStorage.removeItem(CONFIG_STORAGE_KEY)
-          }
-        }
-      }
-
-      Object.assign(this.settings, this.config || {})
-    }
-
-    private saveConfig() {
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
-    }
-
-    /**
-     * Allows us to prevent scrolling unless a certain amount of "resistence" is produced
-     */
-    private addScrollBlocker() {
-        const scroller = this.$refs["scroller"] as HTMLElement
-        scroller.addEventListener('wheel', (ev: UIEvent) => {
-            this.scrollCount++
-
-            if (this.follow) {
-                ev.preventDefault()
-                ev.returnValue = false
+                if (_settings) {
+                    try {
+                        const config = JSON.parse(_settings)
+                        Object.assign(this.settings, config)
+                    } catch (e) {
+                        localStorage.removeItem(CONFIG_STORAGE_KEY)
+                    }
+                }
             }
 
-            if (this.scrollCount > this.scrollTolerance)
-                this.follow = false
-        }, {passive: false})
-    }
+            Object.assign(this.settings, this.config || {})
+        },
+        saveConfig() {
+            localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
+        },
+        addScrollBlocker() {
+            /**
+             * Allows us to prevent scrolling unless a certain amount of "resistence" is produced
+             */
+            const _scroller = this.$refs['scroller'] as HTMLElement
+            _scroller.addEventListener('wheel', (ev: UIEvent) => {
+                this.scrollCount++
 
-    private handleExecutionLogResp() {
-      if (!this.trimOutput) return
+                if (this.mfollow) {
+                    ev.preventDefault()
+                    ev.returnValue = false
+                }
 
-      if (this.viewer.offset > this.trimOutput) {
-        const removeSize = this.logBuilder.dropChunk()
-        for (let x = 0; x < removeSize; x++) {
-          const scapeGoat = this.$options.vues.shift()
-        }
-      }
-    }
+                if (this.scrollCount > this.scrollTolerance)
+                    this.mfollow = false
+            }, {passive: false})
+        },
+        handleExecutionLogResp() {
+            if (!this.trimOutput) return
 
-    private updateProgress(delay: number = 0) {
-      if (this.cancelProgress)
-        this.cancelProgress.cancel()
+            if (this.viewer.offset > this.trimOutput) {
+                const removeSize = this.logBuilder.dropChunk()
+                for (let x = 0; x < removeSize; x++) {
+                    const scapeGoat = this.options.vues.shift()
+                }
+            }
+        },
+        updateProgress(delay: number = 0) {
+            if (this.cancelProgress)
+                this.cancelProgress.cancel()
 
-      this.cancelProgress = new CancellationTokenSource();
+            this.cancelProgress = CancelToken.source();
 
-      (async (cancel: CancellationToken) => {
-        const update = () => {this.progress = this.nextProgress}
-        setTimeout(update, delay)
-        while(!cancel.cancellationRequested) {
-          await new Promise((res, rej) => {setTimeout(res, 1000)})
-          if (this.progress == 100)
-            this.cancelProgress?.cancel()
-          update()
-        }
-      })(this.cancelProgress.token)
-    }
+            (async (cancel: CancelToken) => {
+                const update = () => {this.progress = this.nextProgress}
+                setTimeout(update, delay)
+                while(!cancel.signaled) {
+                    await new Promise((res, rej) => {setTimeout(res, 1000)})
+                    if (this.progress == 100)
+                        this.cancelProgress?.cancel()
+                    update()
+                }
+            })(this.cancelProgress.token)
+        },
+        scrollToLine(n: number | string) {
+            const _scroller = this.$refs['scroller'] as HTMLElement
 
-    scrollToLine(n: number | string) {
-        const scroller = this.$refs["scroller"] as HTMLElement
+            const target = this.options.vues[Number(n)-1]._container
+            let parent = target.parentNode
 
-        const target = this.$options.vues[Number(n)-1].$el
-        let parent = target.parentNode
+            let offset = target.offsetTop
 
-        let offset = target.offsetTop
-
-        // Traverse to root and accumulate offset
-        while (parent != scroller) {
-          offset += parent.offsetTop
-          parent = parent.parentNode
-        }
-
-        scroller.scrollTop = offset - 24 // Insure under stick header
-    }
-
-    /**
-     * Handle line select events from the log entries and re-emit.
-     * Emits a line-deselect if the event is for the currently selected line.
-     */
-    private handleLineSelect(e: any) {
-      if (this.overSize) {
-        alert('Line-linking is not supported for over-sized logs')
-        return
-      }
-
-      const line = this.$options.vues[e-1]
-
-      if (this.selected) {
-        this.selected.selected = false
-      }
-
-      if (this.selected === line) {
-        this.selected = undefined
-        this.$emit('line-deselect', e)
-        return
-      }
-
-      line.selected = true
-      this.selected = line
-
-      this.$emit('line-select', e)
-    }
-
-    private handleNewLine(entries: Array<any>) {
-      for (const vue of entries) {
-        // @ts-ignore
-        const selected = vue.logEntry.lineNumber == this.jumpToLine
-        vue.$on('line-select', this.handleLineSelect)
-        if (selected) {
-          this.selected = vue
-          vue.selected = true
-        }
-      }
-
-      this.$options.vues.push(...entries)
-
-      if (this.jumpToLine && this.jumpToLine <= this.$options.vues.length && !this.jumped) {
-        this.follow = false
-        this.scrollToLine(this.jumpToLine)
-        this.jumped = true
-      }
-
-      if (this.follow) {
-        this.scrollToLine(this.$options.vues.length)
-      }
-    }
-
-    private handleJump(e: string) {
-        this.scrollToLine(this.jumpToLine || 0)
-    }
-
-    private handleJumpToEnd() {
-        this.scrollToLine(this.$options.vues.length)
-    }
-
-    private handleJumpToStart() {
-        this.scrollToLine(1)
-    }
-
-    private async populateLogs() {
-        while(this.consumeLogs) {
-            if (!this.resp)
-              this.resp = this.viewer.getOutput(this.batchSize)
-            const res = await this.resp
-            this.resp = undefined
-
-            if (!this.viewer.completed) {
-              this.resp = this.viewer.getOutput(this.batchSize)
-              await new Promise<void>((res, rej) => setTimeout(() => {res()},0))
+            // Traverse to root and accumulate offset
+            while (parent != _scroller) {
+                offset += parent.offsetTop
+                parent = parent.parentNode
             }
 
-            this.execCompleted = this.viewer.execCompleted
-            this.completed = this.viewer.completed
+            _scroller.scrollTop = offset - 24 // Insure under stick header
+        },
+        handleLineSelect(idx: number) {
+            if (this.overSize) {
+                alert('Line-linking is not supported for over-sized logs')
+                return
+            }
 
-            this.nextProgress = Math.round(this.viewer.percentLoaded)
+            if(this.selectedLineIdx === idx) {
+                this.selectedLineIdx = null
+                this.logviewerui.deselectLine()
+            } else {
+                this.logviewerui.setSelectedLine(idx)
+            }
 
-            if (this.viewer.error)
-              this.errorMessage = this.viewer.error
+        },
+        toggleSettings(e) {
+            this.settingsVisible = !this.settingsVisible
+            e.target.blur()
+        },
+        toggleFollow(e) {
+            this.mfollow = !this.mfollow
+            e.target.blur()
+        },
+        closeSettings() {
+            this.settingsVisible = false
+        },
+        toggleProgressBar() {
+            this.consumeLogs = !this.consumeLogs
+        },
+        handleNewLine(entries: Array<any>) {
+            this.options.vues.push(...entries)
 
-            this.logSize = this.viewer.offset
-            this.logLines = this.viewer.entries.length
-            this.handleExecutionLogResp()
+            if (this.jumpToLine && this.jumpToLine <= this.options.vues.length && !this.jumped) {
+                this.mfollow = false
+                this.scrollToLine(this.jumpToLine)
+                this.jumped = true
+            }
 
-            if (this.viewer.completed)
-                break
+            if (this.mfollow) {
+                this.scrollToLine(this.options.vues.length)
+            }
+        },
+        handleJump(e: string) {
+            this.scrollToLine(this.jumpToLine || 0)
+        },
+        handleJumpToEnd() {
+            this.scrollToLine(this.options.vues.length)
+        },
+        handleJumpToStart() {
+            this.scrollToLine(1)
+        },
+        async populateLogs() {
+            while(this.consumeLogs) {
+                if (!this.resp)
+                    this.resp = this.viewer.getOutput(this.batchSize)
+                const res = await this.resp
+                this.resp = undefined
+
+                if (!this.viewer.completed) {
+                    this.resp = this.viewer.getOutput(this.batchSize)
+                    await new Promise<void>((res, rej) => setTimeout(() => {res()},0))
+                }
+
+                this.execCompleted = this.viewer.execCompleted
+                this.completed = this.viewer.completed
+
+                this.nextProgress = Math.round(this.viewer.percentLoaded)
+
+                if (this.viewer.error)
+                    this.errorMessage = this.viewer.error
+
+                this.logSize = this.viewer.offset
+                this.logLines = this.viewer.entries.length
+                this.handleExecutionLogResp()
+
+                if (this.viewer.completed)
+                    break
+            }
+            this.totalTime = Date.now() - this.startTime
+            this.populateLogsProm = undefined
         }
-        this.totalTime = Date.now() - this.startTime
-        this.populateLogsProm = undefined
     }
-
-    colorTheme() {
-      if (this.settings.theme == 'rundeck')
-        return this.rootStore.theme.theme
-      else
-        return this.settings.theme
-
-    }
-}
+})
 </script>
 
 <style lang="scss">
@@ -607,7 +569,7 @@ export default class LogViewer extends Vue {
 .fade-enter-active, .fade-leave-active {
   transition: opacity .5s;
 }
-.fade-enter, .fade-leave-to * {
+.fade-enter-from, .fade-leave-to * {
   opacity: 0;
 }
 

@@ -30,10 +30,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { mapActions } from "vuex";
 
-export default {
+export default defineComponent({
   name: "FacetFilters",
 
   data() {
@@ -49,7 +50,7 @@ export default {
   methods: {
     ...mapActions(["setSupportTypeFilter"])
   }
-};
+})
 </script>
 <style lang="scss" scoped>
 .support-filters {

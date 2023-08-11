@@ -2,11 +2,11 @@
   <div>
     <!-- -->
     <modal v-model="openModal" ref="modal" append-to-body>
-        <span slot="title">Search</span>
+        <template v-slot:title><span>Search</span></template>
         <div class="row">
           <div class="col-xs-12">
             <div class="form-group" style="padding-top:10px">
-              <span class="prompt">{{ $t("message.pageUsersSummary")}}</span>
+              <span class="prompt">{{ $t("message_pageUsersSummary")}}</span>
             </div>
           </div>
         </div>
@@ -21,7 +21,7 @@
                   <input
                     type="text"
                     class="form-control"
-                    :placeholder="$t( 'message.pageFilterLogin')"
+                    :placeholder="$t( 'message_pageFilterLogin')"
                     v-model="loginFilter"
                   />
                 </div>
@@ -31,7 +31,7 @@
                   <input
                     type="text"
                     class="form-control"
-                    :placeholder="$t( 'message.pageFilterSessionID')"
+                    :placeholder="$t( 'message_pageFilterSessionID')"
                     v-model="sessionIdFilter"
                   />
                 </div>
@@ -44,7 +44,7 @@
                   <input
                     type="text"
                     class="form-control"
-                    :placeholder="$t( 'message.pageFilterHostName')"
+                    :placeholder="$t( 'message_pageFilterHostName')"
                     v-model="hostNameFilter"
                   />
                 </div>
@@ -53,24 +53,26 @@
             <button style="display:none;" type="submit">Submit</button>
           </form>
         </div>
-        <div slot="footer">
-          <btn @click="openModal=false">Cancel</btn>
-          <btn type="cta" @click="loadUsersList(0)">{{ $t("message.pageFilterBtnSearch")}}</btn>
-        </div>
+        <template v-slot:footer>
+          <div>
+            <btn @click="openModal=false">Cancel</btn>
+            <btn type="cta" @click="loadUsersList(0)">{{ $t("message_pageFilterBtnSearch")}}</btn>
+          </div>
+        </template>
     </modal>
 
-    <p class="help-block">{{ $t('message.userSummary.desc')}}</p>
+    <p class="help-block">{{ $t('message_userSummary.desc')}}</p>
     <!-- -->
     <section id="userProfilePage" class="section-space">
               <div class="row">
                 <div :class="{'col-sm-8':showLoginStatus, 'col-sm-10': !showLoginStatus}">
                   <section class="section-space-bottom">
                     <span>
-                      {{ $t("message.pageUsersTotalFounds")}}
+                      {{ $t("message_pageUsersTotalFounds")}}
                       <span
-                        v-if="!loading && this.pagination.total>=0"
+                        v-if="!loading && pagination.total>=0"
                         class="text-info"
-                      >{{this.pagination.total}}</span>
+                      >{{pagination.total}}</span>
                       <b class="fas fa-circle-notch fa-spin text-info" v-if="loading"></b>
                     </span>
                     <span style="margin-left: 10px;">
@@ -97,7 +99,7 @@
                       v-model="loggedOnly"
                       @change="loadUsersList(0)"
                     />
-                    <label for="loggedOnly">{{ $t("message.pageUserLoggedOnly")}}</label>
+                    <label for="loggedOnly">{{ $t("message_pageUserLoggedOnly")}}</label>
                   </span>
                 </div>
                 <div class="col-sm-2">
@@ -109,7 +111,7 @@
                       v-model="includeExec"
                       @change="loadUsersList(0)"
                     />
-                    <label for="includeExec">{{ $t("message.paramIncludeExecTitle")}}</label>
+                    <label for="includeExec">{{ $t("message_paramIncludeExecTitle")}}</label>
                   </span>
                 </div>
               </div>
@@ -119,22 +121,22 @@
                   <table class="table table-condensed table-striped">
                     <tbody>
                       <tr>
-                        <th class="table-header">{{ $t("message.pageUsersLoginLabel")}}</th>
-                        <th class="table-header">{{ $t("message.domainUserEmailLabel")}}</th>
-                        <th class="table-header">{{ $t("message.domainUserFirstNameLabel")}}</th>
-                        <th class="table-header">{{ $t("message.domainUserLastNameLabel")}}</th>
-                        <th class="table-header">{{ $t("message.pageUsersCreatedLabel")}}</th>
-                        <th class="table-header">{{ $t("message.pageUsersUpdatedLabel")}}</th>
+                        <th class="table-header">{{ $t("message_pageUsersLoginLabel")}}</th>
+                        <th class="table-header">{{ $t("message_domainUserEmailLabel")}}</th>
+                        <th class="table-header">{{ $t("message_domainUserFirstNameLabel")}}</th>
+                        <th class="table-header">{{ $t("message_domainUserLastNameLabel")}}</th>
+                        <th class="table-header">{{ $t("message_pageUsersCreatedLabel")}}</th>
+                        <th class="table-header">{{ $t("message_pageUsersUpdatedLabel")}}</th>
                         <th
                           v-if="includeExec"
                           class="table-header"
-                        >{{ $t("message.pageUsersLastjobLabel")}}</th>
+                        >{{ $t("message_pageUsersLastjobLabel")}}</th>
                         <th class="table-header">
-                          {{ $t("message.pageUsersTokensLabel")}}
+                          {{ $t("message_pageUsersTokensLabel")}}
                           <span
                             class="has_tooltip text-strong"
                             data-placement="bottom"
-                            :data-original-title="$t('message.pageUsersTokensHelp')"
+                            :data-original-title="$t('message_pageUsersTokensHelp')"
                           >
                             <i class="glyphicon glyphicon-question-sign"></i>
                           </span>
@@ -142,13 +144,13 @@
                         <th
                           class="table-header"
                           v-if="sessionIdEnabled"
-                        >{{ $t("message.pageUsersSessionIDLabel")}}</th>
-                        <th class="table-header">{{ $t("message.pageUsersHostNameLabel")}}</th>
-                        <th class="table-header">{{ $t("message.pageUsersLastLoginInTimeLabel")}}</th>
+                        >{{ $t("message_pageUsersSessionIDLabel")}}</th>
+                        <th class="table-header">{{ $t("message_pageUsersHostNameLabel")}}</th>
+                        <th class="table-header">{{ $t("message_pageUsersLastLoginInTimeLabel")}}</th>
                         <th
                           class="table-header"
                           v-if="showLoginStatus"
-                        >{{ $t("message.pageUsersLoggedStatus")}}</th>
+                        >{{ $t("message_pageUsersLoggedStatus")}}</th>
                       </tr>
 
                       <tr v-for="(user, index) in users" :key="index">
@@ -164,69 +166,69 @@
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td v-if="user.firstName">{{user.firstName}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td v-if="user.lastName">{{user.lastName}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
-                        <td v-if="user.created">{{user.created | moment("MM/DD/YYYY hh:mm a")}}</td>
+                        <td v-if="user.created">{{formatDateFull(user.created)}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td
                           v-if="user.updated"
                           :class="user.updated===user.created?'text-muted ':''"
-                        >{{user.updated | moment("MM/DD/YYYY hh:mm a")}}</td>
+                        >{{formatDateFull(user.updated)}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td
                           v-if="includeExec && user.lastJob"
-                        >{{user.lastJob | moment("MM/DD/YYYY hh:mm a")}}</td>
+                        >{{formatDateFull(user.lastJob)}}</td>
                         <td v-else-if="includeExec">
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNone")}}</span>
+                          >{{ $t("message_pageUserNone")}}</span>
                         </td>
                         <td v-if="user.tokens > 0">{{user.tokens}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNone")}}</span>
+                          >{{ $t("message_pageUserNone")}}</span>
                         </td>
                         <td v-if="user.lastSessionId && sessionIdEnabled">{{user.lastSessionId}}</td>
                         <td v-else-if="sessionIdEnabled">
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td v-if="user.lastHostName">{{user.lastHostName}}</td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td v-if="user.loggedInTime">
-                          {{user.loggedInTime | moment("MM/DD/YYYY hh:mm a")}}
-                          {{user.loggedInTime | moment('from','now')}}
+                          {{formatDateFull(user.loggedInTime)}}
+                          {{formatFromNow(user.loggedInTime)}}
                         </td>
                         <td v-else>
                           <span
                             class="text-muted small text-uppercase"
-                          >{{ $t("message.pageUserNotSet")}}</span>
+                          >{{ $t("message_pageUserNotSet")}}</span>
                         </td>
                         <td v-if="showLoginStatus">
                           <login-status
@@ -253,8 +255,9 @@
 
 <script>
 import axios from "axios";
-import OffsetPagination from "../../../../library/components/utils/OffsetPagination";
-import LoginStatus from "./LoginStatus";
+import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
+import LoginStatus from "./LoginStatus.vue";
+import { formatFromNow, formatDateFull } from "../../../utilities/DateTimeFormatters";
 
 export default {
   name: "UserSummary",
@@ -285,6 +288,12 @@ export default {
     };
   },
   methods: {
+    formatDateFull(date) {
+      return formatDateFull(date);
+    },
+    formatFromNow(date) {
+      return formatFromNow(date);
+    },
     changePageOffset(offset) {
       if (this.loading) {
         return;
@@ -354,13 +363,13 @@ export default {
     if (window._rundeck && window._rundeck.rdBase) {
       this.rdBase = window._rundeck.rdBase;
       this.setSummaryPageConfig();
-      window._rundeck.eventBus.$on('refresh-user-summary',() => {
+      window._rundeck.eventBus.on('refresh-user-summary',() => {
         this.loadUsersList(0)
       })
     }
   },
-  beforeDestroy() {
-    window._rundeck.eventBus.$off('refresh-user-summary')
+  beforeUnmount() {
+    window._rundeck.eventBus.off('refresh-user-summary')
   }
 };
 </script>
