@@ -32,6 +32,7 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
+import rundeck.services.ScheduledExecutionDeletedException
 import spock.lang.Specification
 
 import java.sql.Timestamp
@@ -48,18 +49,22 @@ class ExecutionJobSpec extends Specification implements DataTest {
         given:
         def datamap = new JobDataMap([scheduledExecutionId: '123'])
         ExecutionJob job = new ExecutionJob()
+        def quartzScheduler = Mock(Scheduler){
+            1 * deleteJob(_) >> void
+        }
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
                 getJobDataMap() >> datamap
             }
+            1 * getScheduler() >> quartzScheduler
         }
 
         when:
         job.execute(context)
 
         then:
-        RuntimeException e = thrown()
-        e.message == 'failed to lookup scheduledException object from job data map: id: 123'
+        ScheduledExecutionDeletedException e = thrown()
+        e.message == "Failed to lookup scheduledException object from job data map: id: 123 , job will be unscheduled"
     }
 
     def "execute retrieves execution id"() {
