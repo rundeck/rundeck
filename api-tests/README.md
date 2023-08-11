@@ -5,12 +5,18 @@ runs Spock based API tests.
 
 ## Running against a docker image
 
-This runs the tests against the `rundeck/rundeck:SNAPSHOT` docker image by default.
+This runs the tests against the `rundeck/rundeck` docker image by default.
 ```
 ./gradlew :api-tests:apiTest
 ```
 
-You can set the env var `TEST_RUNDECK_IMAGE` to change the image used.
+Env vars to control docker image usage:
+
+- `TEST_RUNDECK_IMAGE`: The docker image to use (default: `rundeck/rundeck`)
+- `TEST_RUNDECK_CONTAINER_PORT`: The port to expose on the host (e.g. 8080) (default: `4440`)
+- `TEST_RUNDECK_CONTAINER_CONTEXT`: The context path to use for the container (e.g. `/rundeck`). Must start with `/`. (
+  default: blank)
+- `TEST_RUNDECK_CONTAINER_TOKEN`: The API token to use for authentication. (default: `admintoken`)
 
 ## Running against external URL
 
