@@ -360,13 +360,11 @@ export default Vue.extend({
     },
     countDown(selectedKey?: any) {
       if(this.countDownLimit > 0) return
-
       this.countDownLimit = 5
-
       // @ts-ignore
       const countDownTimer = setInterval(() => {
         this.countDownLimit--;
-
+        
         if(this.countDownLimit <= 0) {
           // @ts-ignore
           clearInterval(countDownTimer);
@@ -374,7 +372,6 @@ export default Vue.extend({
             this.loadKeys(selectedKey) 
             clearTimeout(delayExec)
           }, 600) // Delay 600ms to execute to give better user experience.
-          
         }
             
       },1000);
@@ -625,15 +622,15 @@ export default Vue.extend({
       let upPath = '';
       if(this.isRunner) {
         // upPath is the path without trailing part
-        if(!this.path) this.path = ""
-
-        const lastIndexOfSlash = this.path.lastIndexOf("/")
-        if(lastIndexOfSlash >= 0)
-          this.upPath = this.path.substring(0, lastIndexOfSlash)
-        else
+        if(!this.path) 
           this.upPath = ""
-
-        console.log("==> upPath is: ", this.upPath)
+        else {
+          const lastIndexOfSlash = this.path.lastIndexOf("/")
+          if(lastIndexOfSlash >= 0)
+            this.upPath = this.path.substring(0, lastIndexOfSlash)
+          else
+            this.upPath = ""
+        } 
       } else {
         if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
                 if (this.path.indexOf('/') >= 0) {
@@ -663,8 +660,6 @@ export default Vue.extend({
       return this.rootPath + "/" + relpath;
     },
     loadDir(selectedPath: any) {
-      
-
       this.isDropdownOpen=false
       this.clean();
       let path = '';
