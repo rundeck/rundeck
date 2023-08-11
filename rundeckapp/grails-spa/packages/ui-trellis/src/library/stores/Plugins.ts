@@ -1,43 +1,54 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
-import { observable, IObservableArray } from 'mobx'
-import {ObservableGroupMap, actionAsync, task, asyncAction} from 'mobx-utils'
 
 import { Serial } from '../utilities/Async'
 
 export class PluginStore {
-    @observable plugins: IObservableArray<Plugin> = observable.array()
+    plugins: Plugin[] = []
 
-    @observable.shallow pluginsByService: ObservableGroupMap<string, Plugin>
-    @observable.shallow pluginsById: ObservableGroupMap<string, Plugin>
+    pluginsByService: { [key: string]: Plugin[]} = {}
+    pluginsById: { [key: string]: Plugin[]} = {}
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
-        this.pluginsByService = new ObservableGroupMap(this.plugins, (p) => `${p.service}`)
-        this.pluginsById = new ObservableGroupMap(this.plugins, (p) => p.name)
     }
 
     @Serial
-    @actionAsync
     async load(service?: string): Promise<void> {
-        const plugins = await task(this.client.apiRequest({
+        const plugins = await this.client.apiRequest({
             pathTemplate: 'api/40/plugin/list',
             queryParameters: {
                 service
             },
             method: 'GET'
-        }))
+        })
 
         plugins.parsedBody.forEach((p: any) => {
-            if (this.pluginsById.has(p.name))
+            if (this.pluginsById[p.name])
                 return
             else
                 this.plugins.push(p)
         });
+        this._refreshPluginGroups()
         return void(0)
     }
 
-    getServicePlugins(service: string) {
-        return this.pluginsByService.get(service)?.sort((a, b) => a.title.localeCompare(b.title)) || []
+    _refreshPluginGroups() {
+        this.pluginsByService = this.plugins.reduce((r, p) => {
+            const svcKey = `${p.service}`
+            r[svcKey] = r[svcKey] || []
+            r[svcKey].push(p)
+            return r
+        }, Object.create(null))
+        this.pluginsById = this.plugins.reduce((r, p) => {
+            const svcKey = p.name
+            r[svcKey] = r[svcKey] || []
+            r[svcKey].push(p)
+            return r
+        }, Object.create(null))
+    }
+
+    getServicePlugins(service: string): Plugin[] {
+        return this.pluginsByService[service]?.sort((a, b) => a.title.localeCompare(b.title)) || []
     }
 }
 

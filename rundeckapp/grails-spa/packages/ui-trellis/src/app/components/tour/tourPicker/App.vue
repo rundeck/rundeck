@@ -5,7 +5,7 @@
     </a> -->
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal" appendToBody>
-        <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
+        <div v-for="(tourLoader, tIndex) in tours" v-bind:key="tIndex">
           <div class="panel panel-default" style="padding-bottom:1px;">
             <div class="panel-heading">
               <strong>{{tourLoader.loader}}</strong>
@@ -14,8 +14,8 @@
               <a
                 class="list-group-item"
                 href="#"
-                v-for="tour in tourLoader.tours"
-                v-bind:key="tour.$index"
+                v-for="(tour, index) in tourLoader.tours"
+                v-bind:key="index"
                 @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)"
               >
                 {{tour.name}}
@@ -24,23 +24,36 @@
             </div>
           </div>
         </div>
-        <div slot="footer">
-          <btn @click="tourSelectionModal=false">Close</btn>
-        </div>
+        <template v-slot:footer>
+          <div>
+            <btn @click="tourSelectionModal=false">Close</btn>
+          </div>
+        </template>
       </modal>
     </section>
   </li>
 </template>
 
 <script lang='ts'>
-  import Vue from "vue";
+import {defineComponent} from "vue";
   import Trellis, { getRundeckContext } from "../../../../library";
   import TourServices from "../services";
   import { RootStore } from '../../../../library/stores/RootStore';
 
   const context = getRundeckContext();
 
-  export default Vue.extend({
+  interface Tour {
+    name: string
+    author: string
+    provider: string
+  }
+  interface TourLoader {
+    tours: Tour[]
+    provider: string
+    loader: string
+  }
+
+  export default defineComponent({
     inject: ['rootStore'],
     name: "TourPicker",
     props: ["eventBus"],
@@ -48,7 +61,7 @@
       return {
         hasActiveTour: false,
         tourSelectionModal: false,
-        tours: [] as any[]
+        tours: [] as TourLoader[]
       };
     },
     mounted() {
@@ -76,7 +89,7 @@
                 `${context.rdBase}project/${tour.project}/home`
               );
             } else {
-              this.eventBus.$emit("tourSelected", tour);
+              this.eventBus.emit("tourSelected", tour);
 
               this.tourSelectionModal = false;
             }
@@ -99,13 +112,13 @@
     },
     beforeMount() {
       if (window._rundeck) {
-        window._rundeck.eventBus.$on('refresh-tours',() => {
+        window._rundeck.eventBus.on('refresh-tours',() => {
           this.loadTours();
         });
       }
     },
     beforeDestroy() {
-      window._rundeck.eventBus.$off('refresh-tours');
+      window._rundeck.eventBus.off('refresh-tours');
     }
   });
 </script>

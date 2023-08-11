@@ -1,17 +1,16 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from "@storybook/vue3"
 
 import NavBar from './NavBar.vue'
 
-import {NavItem, NavLink} from '../../stores/NavBar'
+import { NavLink} from '../../stores/NavBar'
 import {RootStore} from '../../stores/RootStore'
 
-import {observable} from 'mobx'
-
 export default {
-    title: 'Navigation Bar'
-}
+    title: 'Navigation Bar',
+    component: NavBar
+} as Meta<typeof NavBar>
 
-export const navBar = () => {
+export const navBar: StoryFn<typeof NavBar> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
     rootStore.navBar.addItems([
@@ -148,8 +147,9 @@ export const navBar = () => {
             "visible": true,
         }
     ] as Array<NavLink>)
+    window._rundeck.rootStore = rootStore
     
-    return Vue.extend({
+    return {
         components: { NavBar },
         template: '<div id="section-navbar" style="width: 65px; height: 100%;overflow: hidden;"><NavBar /></div>',
         mounted: function() {
@@ -162,5 +162,5 @@ export const navBar = () => {
         provide: () => ({
             rootStore: rootStore,
         })
-    })
+    }
 }

@@ -1,8 +1,3 @@
-import { autorun, observable } from "mobx";
-
-import {RundeckClient} from '@rundeck/client'
-import {RootStore} from './RootStore'
-
 export enum Theme {
     system = "system",
     dark = "dark",
@@ -21,9 +16,9 @@ interface UserPreferences {
 const THEME_USER_PREFERENCES_KEY = 'theme-user-preferences'
 
 export class ThemeStore {
-    @observable userPreferences: UserPreferences = {theme: Theme.system}
-    @observable theme!: Theme
-    @observable prefersColorScheme!: PrefersColorScheme 
+    userPreferences: UserPreferences = {theme: Theme.system}
+    theme!: Theme
+    prefersColorScheme!: PrefersColorScheme
 
     themeMediaQuery: MediaQueryList
 

@@ -1,38 +1,39 @@
 import {RootStore} from './RootStore'
 import { HttpOperationResponse } from '@azure/ms-rest-js/es/lib/httpOperationResponse'
-import { action, computed, flow, observable, IObservableArray } from 'mobx'
-import { ObservableGroupMap, actionAsync, task } from 'mobx-utils'
 import { v4 as uuidv4 } from 'uuid'
 
 import {RundeckClient} from '@rundeck/client'
 
 import {ServiceType, Plugin} from './Plugins'
+import {reactive} from "vue";
 
+export const webhookui = reactive({
+    activeTab: 0,
+    setActiveTab(idx:number) {
+        this.activeTab = idx
+    }
+})
 
 export class WebhookStore {
-    @observable webhooks: IObservableArray<Webhook> = observable.array([])
-    @observable webhooksByUuid = new Map<string, Webhook>()
-    @observable.shallow webhooksByProject: ObservableGroupMap<string, Webhook>
+    webhooks: Webhook[] = []
+    webhooksByUuid = new Map<string, Webhook>()
 
-    @observable loaded = new Map<string, boolean>()
+    loaded = new Map<string, boolean>()
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
-        this.webhooksByProject = new ObservableGroupMap(this.webhooks, w => w.project)
     }
 
-    @actionAsync
     async load(project: string): Promise<void> {
         if (this.loaded.get(project))
             return
 
-        await task(this.refresh(project))
+        await this.refresh(project)
 
         this.loaded.set(project, true)
     }
 
-    @actionAsync
     async refresh(project: string): Promise<void> {
-        const [_, resp] = await task(Promise.all([
+        const [_, resp] = await Promise.all([
             this.root.plugins.load(ServiceType.WebhookEvent),
             this.client.apiRequest({
                 method: 'GET',
@@ -40,7 +41,7 @@ export class WebhookStore {
                 pathParameters: {
                     project: project
                 }
-            })]))
+            })])
 
         resp.parsedBody.forEach((json: any) => {
             return this.addFromApi(json)
@@ -50,7 +51,7 @@ export class WebhookStore {
     remove(webhook: Webhook) {
         const stored = this.webhooksByUuid.get(webhook.uuid)
         if (stored) {
-            this.webhooks.remove(stored)
+            this.webhooks.splice(this.webhooks.indexOf(stored), 1)
             this.webhooksByUuid.delete(webhook.uuid)
         }
     }
@@ -72,7 +73,7 @@ export class WebhookStore {
         return clone
     }
 
-    webhooksForProject(project: string) {
+    webhooksForProject(project: string): Webhook[] {
         return this.webhooks.filter( wh => wh.project == project) || []
     }
 
@@ -130,7 +131,6 @@ export class WebhookStore {
                 webhookId: webhook.id.toString()
             }
         })
-
         if (resp.status == 200) {
             this.remove(webhook)
         }
@@ -140,23 +140,23 @@ export class WebhookStore {
 }
 
 export class Webhook {
-    @observable uuid: string = uuidv4()
-    @observable id!: string
-    @observable authToken!: string
-    @observable enabled!: boolean
-    @observable name!: string
-    @observable creator!: string
-    @observable.ref config: any = {}
-    @observable project!: string
-    @observable roles!: string
-    @observable user!: string
-    @observable useAuth!: boolean
-    @observable regenAuth!: boolean
-    @observable authString!: string
-    @observable eventPluginName!: string
-    @observable eventPlugin?: Plugin
+     uuid: string = uuidv4()
+     id!: string
+     authToken!: string
+     enabled!: boolean
+     name!: string
+     creator!: string
+     config: any = {}
+     project!: string
+     roles!: string
+     user!: string
+     useAuth!: boolean
+     regenAuth!: boolean
+     authString!: string
+     eventPluginName!: string
+     eventPlugin?: Plugin
 
-    @observable new = true
+     new = true
 
     constructor(readonly store: WebhookStore) {}
 

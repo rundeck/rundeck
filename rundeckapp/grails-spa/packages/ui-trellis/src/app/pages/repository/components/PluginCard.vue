@@ -140,15 +140,6 @@ export default {
         plugin: this.result
       });
     }
-  },
-  filters: {
-    shorten: function(value) {
-      if (value.length > 200) {
-        return value.substr(0, 140) + "... click to read more";
-      } else {
-        return value;
-      }
-    }
   }
 };
 </script>

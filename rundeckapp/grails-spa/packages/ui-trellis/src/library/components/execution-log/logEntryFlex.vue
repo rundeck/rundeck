@@ -1,5 +1,5 @@
 <template>
-    <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
+    <div class="execution-log__line" data-test-id="log-entry-flex-execution-log-line" v-bind:class="{'execution-log__line--selected': selected}">
         <div v-if="displayGutter" class="execution-log__gutter" v-on:click="lineSelect"
             v-bind:class="{
                 'execution-log__gutter--slim': (timestamps && !command)
@@ -23,76 +23,92 @@
               logEntry: this.logEntry
             }"/>
             <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="logEntry.node" /></span>
-            <span v-if="logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="logEntry.logHtml"/>
-            <span v-if="!logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{logEntry.log}}</span
+            <span v-if="logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="logEntry.logHtml" data-test-id="log-entry-content-text"/>
+            <span v-if="!logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" data-test-id="log-entry-content-text">{{logEntry.log}}</span
         ></div
     ></div>
 </template>
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
-import {Component, Prop} from 'vue-property-decorator'
+import { defineComponent} from 'vue'
 import UiSocket from '../utils/UiSocket.vue'
 import {IBuilderOpts} from "./logBuilder"
+import { EventBus } from '../../utilities/vueEventBus';
+import type {PropType} from "vue";
+import {logviewerui} from "../../stores/ExecutionOutput";
 
-@Component({components: {UiSocket}})
-export default class Flex extends Vue {
-    @Prop({required: false})
-    readonly eventBus!: Vue
-  
-    @Prop({default: false})
-    selected!: boolean
-
-    @Prop({required: true})
-    config!: IBuilderOpts
-
-    @Prop({required: false, default: undefined})
-    prevEntry!: any
-
-    @Prop({required: true})
-    logEntry!: any
-
-    get timestamps() {
-      return (this.config.time?.visible) ? this.config.time.visible : false
-    }
-  
-    get command() {
-      return (this.config.command?.visible) ? this.config.command.visible : false
-    }
-  
-    get gutter() {
-      return (this.config.gutter?.visible) ? this.config.gutter.visible : false
-    }
-  
-    get nodeBadge() {
-      return (this.config.nodeIcon) ? this.config.nodeIcon : false
-    }
-  
-    get lineWrap() {
-      return (this.config.content?.lineWrap) ? this.config.content.lineWrap : false
-    }
-  
-    get displayNodeBadge() {
-        return this.config.nodeIcon && (this.prevEntry == undefined || this.logEntry.node != this.prevEntry.node)
-    }
-
-    get displayGutter() {
-        return this.config.gutter?.visible && (this.config.time?.visible || this.config.command?.visible)
-    }
-
-    lineSelect() {
-        this.$emit('line-select', this.logEntry.lineNumber)
-    }
-
+export default defineComponent({
+    name:"EntryFlex",
+    components: {
+        UiSocket
+    },
+    props: {
+        eventBus: {
+            type: Object as PropType<typeof EventBus>,
+            required: false
+        },
+        config: {
+          type: Object as PropType<IBuilderOpts>,
+          required: true
+        },
+        prevEntry: {
+            type: Object,
+            required: false
+        },
+        logEntry: {
+            type: Object,
+            required: true
+        }
+    },
+    data: function() {
+        return {
+            logviewerui,
+            cfg : this.config
+        }
+    },
+    computed: {
+        selected() {
+            return this.logviewerui.selectedLine === this.logEntry.lineNumber
+        },
+        timestamps() {
+            return (this.cfg.time?.visible) ? this.cfg.time.visible : false
+        },
+        command() {
+            return (this.cfg.command?.visible) ? this.cfg.command.visible : false
+        },
+        gutter() {
+            return (this.cfg.gutter?.visible) ? this.cfg.gutter.visible : false
+        },
+        nodeBadge() {
+            return (this.cfg.nodeIcon) ? this.cfg.nodeIcon : false
+        },
+        lineWrap() {
+            return (this.cfg.content?.lineWrap) ? this.cfg.content.lineWrap : false
+        },
+        displayNodeBadge() {
+            return this.cfg.nodeIcon && (this.prevEntry == undefined || this.logEntry.node != this.prevEntry.node)
+        },
+        displayGutter() {
+            return this.cfg.gutter?.visible && (this.cfg.time?.visible || this.cfg.command?.visible)
+        }
+    },
+    methods: {
+        lineSelect() {
+            if(this.logviewerui.selectedLine === this.logEntry.lineNumber) {
+                this.logviewerui.deselectLine()
+            } else {
+                this.logviewerui.setSelectedLine(this.logEntry.lineNumber)
+            }
+        },
+        handleSettingsChanged(newSettings: any) {
+            Object.assign(this.cfg, newSettings);
+        }
+    },
     beforeMount() {
-      this.eventBus.$on("execution-log-settings-changed", this.handleSettingsChanged)
+        this.eventBus.on("execution-log-settings-changed", this.handleSettingsChanged)
     }
 
-    private handleSettingsChanged(newSettings: any) {
-      Object.assign(this.config, newSettings);
-    }
-
-}
+})
 </script>
 
 <style lang="scss" scoped>

@@ -18,8 +18,8 @@
 
 </template>
 <script lang="ts">
-import Vue from "vue";
-import {getRundeckContext} from "../../../library";
+import {PropType, defineComponent} from "vue";
+import {EventBus, getRundeckContext} from "../../../library";
 import {RundeckBrowser} from "../../../library";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
 import ProjectPluginGroups from "./ProjectPluginGroups.vue";
@@ -39,7 +39,7 @@ interface ProjectPluginConfigEntry {
   origIndex?: number;
   modified: boolean;
 }
-export default Vue.extend({
+export default defineComponent({
   name: "App",
   components: {
     ProjectPluginGroups,
@@ -54,7 +54,7 @@ export default Vue.extend({
       type: Boolean,
       default: true
     },
-    eventBus: { type: Vue, required: false },
+    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
     configPrefix:String,
     project: String,
   },

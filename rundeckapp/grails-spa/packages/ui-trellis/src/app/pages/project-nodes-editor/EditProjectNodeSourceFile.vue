@@ -18,7 +18,7 @@
                     <p class="form-control-static">
                         <span v-if="provider">
                             <plugin-config mode="title" service-name="ResourceModelSource" :provider="provider">
-                                <span slot="titlePrefix">{{ index }}. </span>
+                                <template v-slot:titlePrefix>{{ index }}. </template>
                             </plugin-config>
                         </span>
                         <span v-else>
@@ -86,19 +86,17 @@
 
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
-
-Vue.use(VueI18n)
+import {defineComponent, PropType} from 'vue'
 import PluginConfig from '../../../library/components/plugins/pluginConfig.vue'
 import AceEditor from '../../../library/components/utils/AceEditor.vue'
 import UiSocket from '../../../library/components/utils/UiSocket.vue'
 import PageConfirm from '../../../library/components/utils/PageConfirm.vue'
+import {EventBus} from "../../../library";
 
-export default Vue.extend({
+export default defineComponent({
   components: {PluginConfig, AceEditor, UiSocket, PageConfirm},
   props: {
-    eventBus: {type: Vue, required: true},
+    eventBus: {type: Object as PropType<typeof EventBus>, required: true},
     index: {type: Number, required: true},
     sourceDesc: {type: String, default: '', required: false},
     fileFormat: {type: String, default: '', required: false},
@@ -107,6 +105,7 @@ export default Vue.extend({
     errorMessage: {type: String, default: ''},
     saving: {type: Boolean, default: false}
   },
+  emits: ['cancel', 'save'],
   data() {
     return {
       valueInternal: '',
@@ -122,7 +121,7 @@ export default Vue.extend({
       this.valueInternal = newVal
     },
     valueInternal(newVal) {
-      this.eventBus.$emit('node-source-file-set-content', {content: newVal})
+      this.eventBus.emit('node-source-file-set-content', {content: newVal})
     }
   }
 })

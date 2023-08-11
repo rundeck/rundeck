@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import { createStore } from 'vuex'
 
 import {
   repositories
@@ -13,9 +12,8 @@ import {
 import {
   modal
 } from './modal.module.js'
-Vue.use(Vuex)
 
-export default new Vuex.Store({
+export const store = createStore({
   modules: {
     plugins,
     repositories,

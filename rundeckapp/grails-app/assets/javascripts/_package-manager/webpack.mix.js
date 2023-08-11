@@ -12,6 +12,6 @@ mix
     .copy('node_modules/knockout-mapping/dist/knockout.mapping.min.js', '../vendor/knockout-mapping.js')
     .copy('node_modules/perfect-scrollbar/dist/perfect-scrollbar.min.js', '../vendor/perfect-scrollbar.js')
     .copy('node_modules/perfect-scrollbar/css/perfect-scrollbar.css', '../vendor/perfect-scrollbar.css')
-    .copy('node_modules/vue/dist/vue.js', '../vendor/vue.js')
-    .copy('node_modules/vue/dist/vue.min.js', '../vendor/vue.min.js')
+    .copy('node_modules/vue/dist/vue.global.js', '../vendor/vue.global.js')
+    .copy('node_modules/vue/dist/vue.global.prod.js', '../vendor/vue.global.prod.js')
     .combine(['../bootstrap_3_4_2.js', './popover-default.js'], '../vendor/bootstrap/bootstrap.js');

@@ -133,11 +133,12 @@
               <span class="detail"><g:message code="never" /></span>
           </span>
       </g:elseif>
-    <ui-socket class="vue-ui-socket"
-        section="job-show-job-info"
-        location="badges"
-        socket-data="${g.enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}"
+      <div class="vue-ui-socket">
+        <ui-socket section="job-show-job-info"
+                   location="badges"
+                   :socket-data="${g.enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}"
         ></ui-socket>
+      </div>
   </section>
 
     <section class="section-space">

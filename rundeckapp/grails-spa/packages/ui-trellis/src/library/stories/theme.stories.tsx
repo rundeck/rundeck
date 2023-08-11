@@ -1,10 +1,9 @@
-import Vue from 'vue'
 
 export default {
     title: 'Class Components'
 }
 
-export const typography = () => (Vue.extend({
+export const typography = () => ({
     render(h) {
         return (
             <div>
@@ -29,7 +28,7 @@ export const typography = () => (Vue.extend({
 
                 <h1 class="text-info">Text</h1>
                 <div>Just some text</div>
-                <div><strong domPropsInnerHTML="&lt;strong&gt;Text is bold.&lt;/strong&gt;"></strong></div>
+                <div><strong v-html="&lt;strong&gt;Text is bold.&lt;/strong&gt;"></strong></div>
                 <div class="text-strong">.text-strong Text is bold.</div>
                 <div class="text-primary">Text primary</div>
                 <div class="text-muted">.text-muted is ??</div>
@@ -56,8 +55,8 @@ export const typography = () => (Vue.extend({
             </div>
         )
     }
-}))
-export const labels = () => (Vue.extend({
+})
+export const labels = () => ({
   render(h) {
     return (
       <div>
@@ -72,8 +71,8 @@ export const labels = () => (Vue.extend({
       </div>
     )
   }
-}))
-export const buttons = () => (Vue.extend({
+})
+export const buttons = () => ({
     render(h) {
         return (
             <div style="max-width: 800px; margin-top: 10px;background-color: pink;">
@@ -157,8 +156,8 @@ export const buttons = () => (Vue.extend({
             
         )
     }
-}))
-export const table = () => (Vue.extend({
+})
+export const table = () => ({
   props: {
     rowStyle: {
       default:  'table-bordered'
@@ -276,10 +275,10 @@ export const table = () => (Vue.extend({
               </table>
             </div>
         `
-}))
+})
 
 
-export const pagination = () => (Vue.extend({
+export const pagination = () => ({
     render(h) {
         return (
             <ul data-v-06f48450="" class="pagination pagination-sm">
@@ -293,9 +292,9 @@ export const pagination = () => (Vue.extend({
                     <a data-v-06f48450="" href="#" title="Page 2" class="page_nav_btn">2</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 3" class="page_nav_btn">3</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 4" class="page_nav_btn">4</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 5" class="page_nav_btn">5</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 6" class="page_nav_btn">6</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 7" class="page_nav_btn">7</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Page 8" class="page_nav_btn">8</a></li><li data-v-06f48450="" class=""><a data-v-06f48450="" href="#" title="Next Page" class="page_nav_btn"><i data-v-06f48450="" class="glyphicon glyphicon-arrow-right"></i></a></li></ul>
         )
     }
-}))
+})
 
-export const cards = () => (Vue.extend({
+export const cards = () => ({
     render(h) {
         return (
             <div style="padding: 20px; max-width: 500px" class="content">
@@ -320,9 +319,9 @@ export const cards = () => (Vue.extend({
             </div>
         )
     }
-}))
+})
 
-export const tabs = () => (Vue.extend({
+export const tabs = () => ({
     render(h) {
         return (
             <div class="vue-tabs">
@@ -338,10 +337,10 @@ export const tabs = () => (Vue.extend({
             </div>
         )
     }
-}))
+})
 
 
-export const inputs = () => (Vue.extend({
+export const inputs = () => ({
     render(h) {
         return (
             <div>
@@ -405,10 +404,10 @@ export const inputs = () => (Vue.extend({
             </div>
         )
     }
-}))
+})
 
 
-export const panels = () => (Vue.extend({
+export const panels = () => ({
     render(h) {
         return (
             <div class="content">
@@ -452,9 +451,9 @@ export const panels = () => (Vue.extend({
         )
     }
 
-}))
+})
 
-export const layouts = () => (Vue.extend({
+export const layouts = () => ({
     render(h) {
         return (
             <section class="layout-base">
@@ -475,4 +474,4 @@ export const layouts = () => (Vue.extend({
         )
     }
 
-}))
+})
