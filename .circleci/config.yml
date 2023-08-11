@@ -444,6 +444,42 @@ jobs:
             TEST_RUNDECK_IMAGE: rundeck/rundeck:latest
       - collect-gradle-tests
 
+  test-gradle-api-tomcat:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+
+    parameters:
+      tomcat-vers:
+        description: Tomcat image tag
+        type: string
+    steps:
+      - checkout
+      - install-java
+      - restore-gradle-cache
+      - attach_workspace:
+          at: artifacts
+      - run:
+          command: |
+            # build tomcat image using war
+            WAR=$(find artifacts -name '*.war')
+            cp $WAR dockers/tomcat/data/rundeck-launcher.war
+            rdeck_dock_img_dir='test/docker/dockers/tomcat'
+            echo "Building Docker image from: $(pwd)/${rdeck_dock_img_dir}"
+            TOMCAT_TAG=<< parameters.tomcat-vers >>
+            docker build \
+              -t rd-tomcat:$TOMCAT_TAG \
+              --build-arg TOMCAT_TAG=$TOMCAT_TAG \
+              "$rdeck_dock_img_dir"
+      - run:
+          command: ./gradlew :api-tests:test --no-daemon --stacktrace --info --parallel --no-build-cache
+          env:
+            TEST_RUNDECK_IMAGE: rd-tomcat:<< parameters.tomcat-vers >>
+            TEST_RUNDECK_CONTAINER_TOKEN: letmein99
+            TEST_RUNDECK_CONTAINER_PORT: 8080
+            TEST_RUNDECK_CONTAINER_CONTEXT: rundeck
+      - collect-gradle-tests
+
   test-openapi:
     <<: *defaults
     executor: gradle-docker
@@ -781,6 +817,22 @@ workflows:
           <<: *filter-no-tags
           name: New API Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-api-tomcat:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 8
+          requires: *stage-build
+          tomcat-vers: 8-jdk11
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-api-tomcat:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 9
+          requires: *stage-build
+          tomcat-vers: 9-jdk11
           context:
             - slack-secrets
           <<: *slack-fail-post-step
