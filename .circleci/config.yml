@@ -91,7 +91,7 @@ executors:
         default: --no-daemon --max-workers 2 -x check publishToMavenLocal --stacktrace --info --parallel
 
     docker:
-      - image: rundeck/ci@sha256:ef1db4074daaea2882aaaea390604cb92488289549207211d3ef7cbbaedcdf65
+      - image: cimg/node:16.18.1
 
     resource_class: << parameters.resourceClass >>
 
@@ -103,6 +103,7 @@ executors:
       GRADLE_OPTS: -Xmx1024m -XX:MaxPermSize=192m -Xss50m
       _JAVA_OPTIONS: "-Xmx1024m -Xms200m -Xss50m"
       BASH_ENV: ~/.bash_profile
+      JAVA_HOME: /usr/lib/jvm/zulu11
 
 commands:
   collect-gradle-tests:
@@ -281,7 +282,7 @@ commands:
     parameters:
       version:
         type: string
-        default: 'v16.13.0'
+        default: 'v16.18.1'
     steps:
       - run:
           name: Install Node
@@ -289,21 +290,39 @@ commands:
             test -f ~/.circlerc && source ~/.circlerc || true
             export NODE_VERSION=<< parameters.version >>
             export BASH_ENV=$HOME/.bash_profile
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install $NODE_VERSION
             nvm alias default $NODE_VERSION
             echo 'nvm use default &>/dev/null' >> "$BASH_ENV"
 
   install-java:
-    description: Install Java via SDKman
+    description: Install Java
     steps:
       - run:
           name: Install Java
           command: |
+            sudo apt-get install gnupg ca-certificates curl
+            curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
+            echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
             sudo apt-get update
-            sudo apt-get install -y openjdk-11-jdk
-            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+            sudo apt-get install -y zulu11-jdk-headless
+            sudo update-alternatives --set java /usr/lib/jvm/zulu11/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/zulu11/bin/javac
             sudo apt-get install -y groovy
+#
+#  install-java:
+#    description: Install Java
+#    steps:
+#      - run:
+#          name: Install Java
+#          command: |
+#            sudo apt-get update
+#            sudo apt-get install -y openjdk-11-jdk
+#            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+#            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+#            sudo apt-get install -y groovy
 
 jobs:
   build:
@@ -317,15 +336,18 @@ jobs:
 
     steps:
       - checkout
-      - install-node
+#      - install-node
       - restore-gradle-cache
       - install-java
+      - aws-cli/install:
+          skip-install-check: false
       - setup_remote_docker:
           docker_layer_caching: true
           version: 20.10.14
       - run:
           name: Build
           command: |
+            env
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh build
       - run:
@@ -521,8 +543,7 @@ jobs:
       - install-java
       - aws-cli/install:
           skip-install-check: false
-      - install-node:
-          version: v16.18.0
+      - install-node
       - run:
           name: Fetch Artifacts
           command: |
