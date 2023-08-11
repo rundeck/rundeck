@@ -11,7 +11,6 @@ import JsonEmbed from './JsonEmbed.vue'
 
 import {
   getRundeckContext,
-  RundeckContext
 } from "../../../../library"
 
 export default {
@@ -35,11 +34,12 @@ export default {
     }
   },
   async mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      this.rdBase = window._rundeck.rdBase
-      this.project = window._rundeck.projectName
-      if(window._rundeck && window._rundeck.data){
-        this.schedulesData = window._rundeck.data.schedulesData
+    const rundeck = getRundeckContext()
+    if (rundeck && rundeck.rdBase && rundeck.projectName) {
+      this.rdBase = rundeck.rdBase
+      this.project = rundeck.projectName
+      if(rundeck && rundeck.data){
+        this.schedulesData = rundeck.data.schedulesData
         this.updatedData = Object.assign({}, this.schedulesData)
       }
     }

@@ -11,7 +11,7 @@
         {{$t('Filters')}}
         <span class="caret"></span>
       </span>
-      <template slot="dropdown">
+      <template v-slot:dropdown>
 
         <li v-if="query && query.filterName">
           <a role="button"  @click="deleteFilter" >
@@ -35,11 +35,11 @@
 
   </span>
 </template>
-<script>
-import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "../../../library";
+<script lang="ts">
+import { defineComponent } from "vue";
+import { getRundeckContext } from "../../../library";
 
-export default {
+export default defineComponent({
   props: ["query", "hasQuery","eventBus"],
   data() {
     return {
@@ -52,6 +52,7 @@ export default {
       filters: []
     };
   },
+  emits: ['select_filter'],
   methods: {
     async loadFilters() {
       const client = getRundeckContext().rundeckClient;
@@ -158,9 +159,12 @@ export default {
       this.filterDeleteUrl = window._rundeck.data["filterDeleteUrl"];
       this.loadFilters();
     }
-    this.eventBus && this.eventBus.$on('invoke-save-filter',this.saveFilterPrompt)
+    this.eventBus && this.eventBus.on('invoke-save-filter',this.saveFilterPrompt)
+  },
+  beforeUnmount() {
+    this.eventBus && this.eventBus.off('invoke-save-filter')
   }
-};
+})
 </script>
 <style lang="scss">
 .modal-footer .btn-primary{

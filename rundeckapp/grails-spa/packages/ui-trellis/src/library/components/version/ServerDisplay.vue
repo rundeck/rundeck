@@ -1,6 +1,6 @@
 <template>
     <span :title="title">
-        <span :style="{color}" class="rundeck-server-uuid" :data-server-uuid="uuid">
+        <span :style="{color}" class="rundeck-server-uuid" :data-server-uuid="uuid" data-test-id="server-display-uuid">
             <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
             <span v-if="showId">{{ uuidShort }}</span>
         </span>
@@ -9,12 +9,12 @@
 </template>
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
+import {defineComponent, PropType} from 'vue'
 
 import {ServerInfo} from '../../stores/System'
 import { RundeckVersion } from '../../utilities/RundeckVersion'
 
-export default Vue.extend({
+export default defineComponent({
     props: {
         glyphicon: String,
         uuid: String,

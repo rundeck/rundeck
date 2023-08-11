@@ -8,9 +8,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-export default Vue.extend({
+export default defineComponent({
     data(){
         return  {
             display: false,
@@ -36,7 +36,7 @@ export default Vue.extend({
 
         document.body.addEventListener('click', this.handleBodyClick)
     },
-    beforeDestroy() {
+    beforeUnmount() {
         const drawer = this.$refs['drawer'] as HTMLElement
         document.body.removeEventListener('click', this.handleBodyClick)
         drawer.remove()
@@ -59,7 +59,7 @@ export default Vue.extend({
         },
         setDrawerVisibility() {
             (<HTMLElement>this.$el).parentElement!.className = this.display ? 'navbar__item-container active' : 'navbar__item-container';
-            (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
+            this.$refs['drawer'].style.display = this.display ? 'inherit' : 'none'
         }
     }
 })

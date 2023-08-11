@@ -177,7 +177,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         Webhook created = Webhook.findByName("test")
 
         then:
-        result == [msg:"Saved webhook"]
+        result.msg == "Saved webhook"
+        result.uuid
         created.name == "test"
         created.project == "Test"
         created.enabled == true
@@ -528,7 +529,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.saveHook(mockUserAuth, [id: 1, uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", user: "webhookUser", roles: "webhook,test", eventPlugin: "log-webhook-event", "config": ["cfg1": "val1"]])
 
         then:
-        result == [msg: "Saved webhook"]
+        result.msg == "Saved webhook"
+        result.uuid
 
     }
 
@@ -558,7 +560,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def whPersisted = Webhook.findByUuid("2c2d614b-34f5-4f52-969a-9c6a90fb8b75")
 
         then:
-        result == [msg: "Saved webhook"]
+        result.msg == "Saved webhook"
         whPersisted.name == "test-change-name"
     }
 

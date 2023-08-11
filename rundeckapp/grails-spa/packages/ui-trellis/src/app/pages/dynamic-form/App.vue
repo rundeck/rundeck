@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import DynamicFormPluginProp from "../../../library/components/plugins/DynamicFormPluginProp";
+import DynamicFormPluginProp from "../../../library/components/plugins/DynamicFormPluginProp.vue";
 
 export default {
   name: 'App',

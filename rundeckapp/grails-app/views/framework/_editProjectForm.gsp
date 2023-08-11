@@ -340,16 +340,16 @@
 
     <div class=" form-group spacing-lg">
         <div class="col-sm-12">
-            <plugin-set-config
-                    class="project-config-plugins-vue"
-                    :event-bus="EventBus"
-                    service-name="PluginGroup"
-                    :mode-toggle="false"
-                    :config-list="[]"
-                    config-prefix="pluginValues.PluginGroup."
-                    @modified="EventBus.$emit('page-modified','Plugins')"
-                    @reset="EventBus.$emit('page-reset','Plugins')"
-            ></plugin-set-config>
+            <div class="project-config-plugins-vue">
+                <plugin-set-config :event-bus="EventBus"
+                                   service-name="PluginGroup"
+                                   :mode-toggle="false"
+                                   :config-list="[]"
+                                   config-prefix="pluginValues.PluginGroup."
+                                   @modified="EventBus.emit('page-modified','Plugins')"
+                                   @reset="EventBus.emit('page-reset','Plugins')"
+                ></plugin-set-config>
+            </div>
         </div>
     </div>
 </div>

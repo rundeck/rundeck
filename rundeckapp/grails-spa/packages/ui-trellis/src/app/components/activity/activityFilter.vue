@@ -2,13 +2,13 @@
   <span>
     <dropdown v-if="query.recentFilter!=='-' && displayOpts.showRecentFilter">
       <span class="dropdown-toggle text-info cursor-pointer mr-2">
-        <i18n :path="'period.label.'+period.name" />
+        {{ $t(`period.label.${period.name}`)}}
         <span class="caret"></span>
       </span>
-      <template slot="dropdown">
+      <template v-slot:dropdown>
         <li v-for="perobj in periods" :key="perobj.name">
           <a role="button" @click="changePeriod(perobj)">
-            <i18n :path="'period.label.'+perobj.name" />
+              {{ $t(`period.label.${perobj.name}`)}}
             <span v-if="period.name===perobj.name">√</span>
           </a>
         </li>
@@ -25,7 +25,7 @@
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
           <li v-for="qname in queryParamsList" :key="qname">
-            <i18n :path="'jobquery.title.'+qname" />:
+              {{ $t(`jobquery.title.${qname}`) }}:
             <code class="queryval">{{query[qname]}}</code>
           </li>
         </ul>
@@ -55,7 +55,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="jobIdFilter" class="sr-only">
-                  <i18n path="jobquery.title.jobFilter" />
+                    {{ $t('jobquery.title.jobFilter') }}
                 </label>
                 <input
                   type="text"
@@ -69,7 +69,7 @@
 
               <div class="form-group" v-if="query.jobIdFilter">
                 <label for="jobIdFilter" class="sr-only">
-                  <i18n path="jobquery.title.jobIdFilter" />
+                  {{ $t("jobquery.title.jobIdFilter") }}
                 </label>
                 <input
                   type="text"
@@ -83,7 +83,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="userFilter" class="sr-only">
-                  <i18n path="jobquery.title.userFilter" />
+                    {{ $t("jobquery.title.userFilter") }}
                 </label>
                 <input
                   type="text"
@@ -97,7 +97,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="execnodeFilter" class="sr-only">
-                  <i18n path="jobquery.title.filter" />
+                    {{ $t("jobquery.title.filter") }}
                 </label>
                 <input
                   type="text"
@@ -113,7 +113,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="titleFilter" class="sr-only">
-                  <i18n path="jobquery.title.titleFilter" />
+                    {{ $t("jobquery.title.titleFilter") }}
                 </label>
                 <input
                   type="text"
@@ -127,7 +127,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="statFilter" class="sr-only">
-                  <i18n path="jobquery.title.statFilter" />
+                    {{ $t("jobquery.title.statFilter") }}
                 </label>
                 <select
                   name="statFilter"
@@ -147,7 +147,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="recentFilter" class="sr-only">
-                  <i18n path="jobquery.title.recentFilter" />
+                    {{ $t("jobquery.title.recentFilter") }}
                 </label>
                 <span class="radiolist">
                   <select name="recentFilter" v-model="query.recentFilter" class="form-control">
@@ -168,7 +168,7 @@
           </div>
         </div>
       </div>
-      <template slot="footer">
+      <template v-slot:footer>
         <btn @click="filterOpen=false">{{$t('cancel')}}</btn>
         <btn @click="search" type="primary" class="btn btn-primary">{{$t('search')}}</btn>
         <btn @click="saveFilter" type="default" class="btn-default pull-right">
@@ -180,17 +180,20 @@
   </span>
 </template>
 <script>
+import { defineComponent } from 'vue'
 import DateTimePicker from "./dateTimePicker.vue";
 import DateFilter from "./dateFilter.vue";
 import SavedFilters from "./savedFilters.vue";
 
-export default {
+export default defineComponent({
+  name: 'ActivityFilter',
   components: {
     DateTimePicker,
     DateFilter,
     SavedFilters
   },
   props: ["eventBus", "value", "eventBus", "opts"],
+  emit: ["update:modelValue"],
   data() {
     return {
       displayOpts: {
@@ -288,7 +291,7 @@ export default {
       this.hasQuery = isquery;
     },
     updated() {
-      this.$emit("input", this.query);
+      this.$emit("update:modelValue", this.query);
     },
     search() {
       this.checkQueryIsPresent();
@@ -340,7 +343,7 @@ export default {
       // where the saving of a filter (giving it a name) didn't actually
       // save the filter itself, just the name
       setTimeout(() => {
-        this.eventBus.$emit("invoke-save-filter");
+        this.eventBus.emit("invoke-save-filter");
         this.didSearch = true;
         this.filterOpen = false;
       }, 500);
@@ -354,7 +357,7 @@ export default {
       if (
         this.query.recentFilter &&
         this.period &&
-        this.query.recentFilter != this.period.params.recentFilter
+        this.query.recentFilter !== this.period.params.recentFilter
       ) {
         const p = this.periods.find(
           v => v.params.recentFilter === this.query.recentFilter
@@ -401,7 +404,7 @@ export default {
     Object.assign(this.displayOpts, this.opts);
     this.reset();
   }
-};
+})
 </script>
 <style lang="scss" scoped>
 .query-params-summary {

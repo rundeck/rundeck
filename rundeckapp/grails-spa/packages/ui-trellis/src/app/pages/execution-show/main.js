@@ -1,37 +1,19 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
+import {createApp} from 'vue'
+import VueCookies from "vue-cookies";
+import * as uiv from 'uiv'
 
 import { getRundeckContext } from '../../../library'
 import LogViewer from '../../../library/components/execution-log/logViewer.vue'
-import uivLang from '../../../library/utilities/uivi18n'
-
 import './nodeView'
+import {initI18n} from "../../utilities/i18n"
 
 const VIEWER_CLASS = 'execution-log-viewer'
 
 const rootStore = getRundeckContext().rootStore
 
 let MOUNTED = false
-
-let locale = window._rundeck.locale || 'en_US'
-let lang = window._rundeck.language || 'en'
-
-// include any i18n injected in the page by the app
-let messages =
-    {
-      [locale]: Object.assign(
-        {},
-        uivLang[locale] || uivLang[lang] || {},
-        window.Messages
-      )
-    }
-Vue.config.productionTip = false
-
-// Vue.use(VueI18n)
-// Vue.use(VueCookies)
-// Vue.use(uiv)
 
 const els = document.body.getElementsByClassName(VIEWER_CLASS)
 
@@ -78,13 +60,7 @@ window.onhashchange = () => {
 
 function mount(e) {
   // Create VueI18n instance with options
-  const i18n = new VueI18n({
-    silentTranslationWarn: true,
-    locale: locale, // set locale
-    messages // set locale messages,
-
-  })
-  /* eslint-disable no-new */
+  const i18n = initI18n()
 
   let jumpToLine
   const line = window.location.hash.split('L')[1]
@@ -98,36 +74,34 @@ function mount(e) {
    * */
   const template = `\
   <LogViewer
-    v-if="this.$el.parentNode.display != 'none'"
     executionId="${e.dataset.executionId}"
-    jumpToLine="${jumpToLine || null}"
+    :jumpToLine="${jumpToLine || null}"
     ref="viewer"
-    trimOutput="${e.dataset.trimOutput}"
+    ${e.dataset.trimOutput ? `trimOutput="${e.dataset.trimOutput}"` : ""}
   />
   `
 
-  const vue = new Vue({
-    el: e,
-    i18n,
+  const vue = createApp({
+    name:"LogViewerApp",
     components: {LogViewer},
     template: template,
-    mounted() {
-      this.$refs.viewer.$on('line-select', (e) => this.$emit('line-select', e))
-      this.$refs.viewer.$on('line-deselect', e => this.$emit('line-deselect', e))
-    },
     provide: {
       rootStore
     }
   })
+  vue.use(VueCookies)
+  vue.use(uiv)
+  vue.use(i18n)
+  vue.mount(e)
 
   /** Puts line number in url HASH */
-  vue.$on('line-select', (e) => {
+  window._rundeck.eventBus.on('line-select', (e) => {
     const hash = window.location.hash
     window.location.hash = `${hash.split('L')[0]}L${e}`
   })
 
   /** Removes line number from url hash */
-  vue.$on('line-deselect', (e) => {
+  window._rundeck.eventBus.on('line-deselect', (e) => {
     const newHash = `${window.location.hash.split('L')[0]}`
 
     const panel = document.getElementById('section-main')

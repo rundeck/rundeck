@@ -10,37 +10,40 @@
   </span>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import {cssForIcon, styleForIcon, glyphiconForName} from '../../../utilities/nodeUi'
-import Component from 'vue-class-component'
-import {Prop} from 'vue-property-decorator'
 
-@Component
-export default class NodeIcon extends Vue {
-
-  @Prop({required: true})
-  node!: {}
-  @Prop({required: false, default: 'fas fa-hdd'})
-  defaultIconCss!: string
-
-  cssForIcon(attrs: any) {
-    return cssForIcon(attrs)
-  }
-
-  styleForIcon(attrs: any) {
-    return styleForIcon(attrs)
-  }
-
-  glyphiconForName(attrs: any) {
-    return glyphiconForName(attrs)
-  }
-
-  get iconCss(): string {
-    if (!this.defaultIconCss) {
-      return 'far fa-circle'
+export default defineComponent({
+  name: 'NodeIcon',
+  props: {
+    node: {
+      type: Object,
+      required: true,
+    },
+    defaultIconCss: {
+      type: Object,
+      required: false,
+      default: 'fas fa-hdd',
+    },
+  },
+  computed: {
+    iconCss(): string {
+      if (!this.defaultIconCss) {
+        return 'far fa-circle'
+      }
+      return this.defaultIconCss
     }
-    return this.defaultIconCss
+  },
+  methods: {
+    cssForIcon(attrs: any) {
+      return cssForIcon(attrs)
+    },
+    styleForIcon(attrs: any) {
+      return styleForIcon(attrs)
+    },
+    glyphiconForName(attrs: any) {
+      return glyphiconForName(attrs)
+    },
   }
-
-}
+})
 </script>

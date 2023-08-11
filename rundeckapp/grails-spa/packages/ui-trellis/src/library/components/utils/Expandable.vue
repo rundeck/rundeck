@@ -13,28 +13,31 @@
     </details>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import {Collapse} from 'uiv'
-import { Component, Prop } from "vue-property-decorator"
-
-@Component({components:{Collapse}})
-export default class Expandable extends Vue {
-  @Prop({
-    type: Object as () => {open: boolean, iconOpen: string, iconClosed: string, linkCss: string},
-      default: () => {
-        return {open: false}
-      }
-  })
-  options!: any
-
-  open: boolean = !!this.options.open
-  linkCss: string =this.options.linkCss || ''
-
-  css: string=this.options.css || ''
-
-  get detailsCss (): string[] {
-      return ['more-info','details-reset',this.css]
-  }
-}
+import { defineComponent} from 'vue'
+export default defineComponent({
+    name:"Expandable",
+    props: {
+        options: {
+            type: Object as () => { open: boolean, iconOpen: string, iconClosed: string, linkCss: string, css: string },
+            default: {
+                open: false,
+                linkCss: '',
+                css: ''
+            }
+        }
+    },
+    data() {
+        return {
+            open: this.options.open,
+            linkCss: this.options.linkCss,
+            css: this.options.css
+        }
+    },
+    computed: {
+        detailsCss() {
+            return ['more-info','details-reset',this.css]
+        }
+    }
+})
 
 </script>

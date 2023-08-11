@@ -1,7 +1,7 @@
 <template>
   <div class="repository">
     <div class="repo-header">
-      <a style="display:block;" @click="toggleVisiblity">
+      <a style="display:block;" @click="toggleVisibility">
         <h3 class="repo-title">{{repo.repositoryName}} Repository</h3>
         <div class="visibility-toggle pull-right">
           <i v-show="visible" class="fas fa-sort-up fa-2x" title="Hide"></i>
@@ -13,8 +13,8 @@
       <div class="repo-meta">
         <span
           v-if="type === 'search'"
-        >{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} found in this repo that match the search term</span>
-        <span v-else>{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} in repo</span>
+        >{{repo.results.length}} {{ plural('plugin', repo.results.length)}} found in this repo that match the search term</span>
+        <span v-else>{{repo.results.length}} {{ plural('plugin', repo.results.length)}} in repo</span>
       </div>
       <div class="artifact-grid row row-flex row-flex-wrap " :class="repo.repositoryName">
         <PluginCard
@@ -30,10 +30,10 @@
 </template>
 
 <script>
-import PluginCard from "./PluginCard";
-import { mapState } from "vuex";
+import { defineComponent } from 'vue'
+import PluginCard from "./PluginCard.vue";
 
-export default {
+export default defineComponent({
   name: "RepositoryRow",
   props: ["repo", "type"],
   components: {
@@ -46,11 +46,15 @@ export default {
   },
   watch: {},
   methods: {
-    toggleVisiblity() {
+    toggleVisibility() {
       this.visible = !this.visible;
+    },
+    plural(val, num) {
+        if(num === 1) return val
+        return `${val}s`
     }
   }
-};
+})
 </script>
 
 <style lang="scss" scoped>
