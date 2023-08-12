@@ -440,7 +440,7 @@ jobs:
             pull_rundeck
       - run:
           command: ./gradlew :api-tests:test --no-daemon --stacktrace --info --parallel --no-build-cache
-          env:
+          environment:
             TEST_RUNDECK_IMAGE: rundeck/rundeck:latest
       - collect-gradle-tests
 
@@ -473,7 +473,7 @@ jobs:
               "$TOMCAT_DIR"
       - run:
           command: ./gradlew :api-tests:test --no-daemon --stacktrace --info --parallel --no-build-cache
-          env:
+          environment:
             TEST_RUNDECK_IMAGE: rd-tomcat:<< parameters.tomcat-vers >>
             TEST_RUNDECK_CONTAINER_TOKEN: letmein99
             TEST_RUNDECK_CONTAINER_PORT: 8080
