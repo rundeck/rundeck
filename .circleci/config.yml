@@ -462,15 +462,15 @@ jobs:
       - run:
           command: |
             # build tomcat image using war
+            TOMCAT_DIR='test/docker/dockers/tomcat'
             WAR=$(find artifacts -name '*.war')
-            cp $WAR dockers/tomcat/data/rundeck-launcher.war
-            rdeck_dock_img_dir='test/docker/dockers/tomcat'
-            echo "Building Docker image from: $(pwd)/${rdeck_dock_img_dir}"
+            cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
+            echo "Building Docker image from: $(pwd)/${TOMCAT_DIR}"
             TOMCAT_TAG=<< parameters.tomcat-vers >>
             docker build \
               -t rd-tomcat:$TOMCAT_TAG \
               --build-arg TOMCAT_TAG=$TOMCAT_TAG \
-              "$rdeck_dock_img_dir"
+              "$TOMCAT_DIR"
       - run:
           command: ./gradlew :api-tests:test --no-daemon --stacktrace --info --parallel --no-build-cache
           env:
