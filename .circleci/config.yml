@@ -477,7 +477,7 @@ jobs:
             TEST_RUNDECK_IMAGE: rd-tomcat:<< parameters.tomcat-vers >>
             TEST_RUNDECK_CONTAINER_TOKEN: letmein99
             TEST_RUNDECK_CONTAINER_PORT: 8080
-            TEST_RUNDECK_CONTAINER_CONTEXT: rundeck
+            TEST_RUNDECK_CONTAINER_CONTEXT: /rundeck
       - collect-gradle-tests
 
   test-openapi:
