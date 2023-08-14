@@ -529,7 +529,6 @@ export default Vue.extend({
       return false;
     },
     selectKey(key: any) {
-      console.log("==> select key: ", key)
       if (this.selectedKey.path === key.path && this.isSelectedKey==false) {
         this.isSelectedKey = true
       }
@@ -593,7 +592,6 @@ export default Vue.extend({
     },
     loadDirInputPath() {
       if(this.isRunner) {
-        console.log("==> load inputPath: ", this.inputPath)
         this.loadDir(this.inputPath)
       } else {
         this.loadDir(this.rootPath + "/" + this.inputPath)
@@ -603,8 +601,6 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
 
       rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
-        console.log(result)
-
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
@@ -665,8 +661,6 @@ export default Vue.extend({
       let path = '';
 
       if(this.isRunner) {
-        console.log("===> load Directory path: ", selectedPath)
-
         path = selectedPath
       } else {
         if (selectedPath != null) {
@@ -676,8 +670,6 @@ export default Vue.extend({
 
       this.path = path;
       this.inputPath = path;
-
-      console.log("===> set Directory path: ", this.path)
 
       this.loadUpPath();
       this.loadKeys();
