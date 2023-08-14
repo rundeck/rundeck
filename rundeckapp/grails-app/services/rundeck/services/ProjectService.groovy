@@ -1373,7 +1373,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     authContext,
                                     project.name,
                                     importerstemp[importer.name],
-                                    options.importOpts[importer.name]
+                                    options.importOpts?options.importOpts[importer.name]:[:]
                             )
                             if (result) {
                                 importerErrors[importer.name] = result
