@@ -242,6 +242,8 @@
         </section>
     </g:if>
 
+    <div id="section-content-wrap">
+    <ui-socket section="main-content" location="before" class="vue-ui-socket" tag="div"></ui-socket>
     <section id="section-content">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
@@ -281,6 +283,8 @@
         <g:layoutBody/>
     %{--        <g:render template="/common/footer"/>--}%
     </section>
+    <ui-socket section="main-content" location="after" class="vue-ui-socket" tag="div"></ui-socket>
+    </div>
 </section>
 
 <section id="section-header" style="background-color: red;">

@@ -262,7 +262,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected boolean _nestedGroups;
 
-    protected boolean _allGroups = false;
+    protected boolean _allGroups = true;
 
     /**
      * timeout for LDAP read
