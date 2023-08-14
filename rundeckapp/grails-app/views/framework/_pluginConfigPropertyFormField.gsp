@@ -333,7 +333,10 @@
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
         <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
         <ui-socket class="vue-ui-socket"
-                   section="plugin-runner-key-selector" location="main">
+                   section="plugin-runner-key-selector" location="main"
+                   :event-bus="eventBus"
+                   :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}' }"
+        >
             <a class="btn btn-sm btn-default obs-select-storage-path"
                     data-toggle="modal"
                     href="#storagebrowse"

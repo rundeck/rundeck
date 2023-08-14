@@ -414,7 +414,7 @@ export default Vue.extend({
             }
 
             if (resource.type === 'file') {
-              if (this.storageFilter != null) {
+              if (this.storageFilter != null && this.storageFilter !== '') {
                 if (this.allowedResource(resource.meta)) {
                   this.files.push(resource);
                 }
