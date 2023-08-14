@@ -768,9 +768,9 @@ function _wfisavenew(formelem) {
   }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 
-function isRenderDashboard(){
+function isRenderDashboard(scheduledExecutionId){
   jQuery.ajax({
-    type: 'POST',
+    type: 'GET',
     data: { scheduledExecutionId: scheduledExecutionId },
     url: _genUrl('/project/edit/renderdashboard'),
     success: function (resp, status, jqxhr) {
@@ -783,7 +783,7 @@ function isRenderDashboard(){
 }
 
 function _loadDashboard(scheduledExecutionId) {
-  isRenderDashboard()
+  isRenderDashboard(scheduledExecutionId)
   let seUuid = scheduledExecutionId
   if( !scheduledExecutionId ){
     let uuid = jQuery('#stepsDashboard_container').data('SeUuid');
