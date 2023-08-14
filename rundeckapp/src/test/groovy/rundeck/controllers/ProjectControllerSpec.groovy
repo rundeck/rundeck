@@ -2316,16 +2316,15 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 getName()>>'aproject'
             }
         }
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
-            opts.executionsOnly == false &&
-                    opts.all == true &&
-                    opts.jobs == true &&
-                    opts.executions == true &&
-                    opts.configs == true &&
-                    opts.readmes == true &&
-                    opts.acls == true
-        },_,_,_,preserveuuid?:false,_
-        ) >> 'dummytoken'
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ProjectArchiveParams opts ->
+                    opts.exportAll == true &&
+                    opts.exportJobs == true &&
+                    opts.exportExecutions == true &&
+                    opts.exportConfigs == true &&
+                    opts.exportReadmes == true &&
+                    opts.exportAcls == true &&
+                    opts.preserveuuid == preserveuuid
+        }, _ ) >> 'dummytoken'
         1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
@@ -2415,17 +2414,16 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         }
 
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
-            opts.executionsOnly == false &&
-                    opts.all == true &&
-                    opts.jobs == true &&
-                    opts.executions == true &&
-                    opts.configs == true &&
-                    opts.readmes == true &&
-                    opts.acls == true &&
-                    opts.scm == true
-        },_,_,_,preserveuuid?:false,_
-        ) >> 'dummytoken'
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ProjectArchiveParams opts ->
+            opts.exportAll == true &&
+                    opts.exportJobs == true &&
+                    opts.exportExecutions == true &&
+                    opts.exportConfigs == true &&
+                    opts.exportReadmes == true &&
+                    opts.exportAcls == true &&
+                    opts.exportScm == true &&
+                    opts.preserveuuid == preserveuuid
+        }, _ ) >> 'dummytoken'
         1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
