@@ -132,24 +132,23 @@
                     <p
                     v-if="bulkEditResults && bulkEditResults.requestCount > 0"
                         class="text-info">
-
-                          {{ $t("bulkresult.attempted.text")}}
-                          <strong >{{bulkEditResults.requestCount}}</strong>
-
+                      <i18n-t keypath="bulkresult.attempted.text" tag="p" >
+                        <strong >{{bulkEditResults.requestCount}}</strong>
+                      </i18n-t>
                     </p>
                     <p
                     v-if="bulkEditResults && bulkEditResults.successCount > 0"
                         class="text-success">
-
-
-                          {{ $t("bulkresult.success.text")}}
-                          <strong >{{bulkEditResults.successCount}}</strong>
+                      <i18n-t keypath="bulkresult.success.text" tag="p" >
+                        <strong >{{bulkEditResults.successCount}}</strong>
+                      </i18n-t>
                     </p>
                     <p
                       v-if="bulkEditResults && bulkEditResults.failedCount > 0"
                             class="text-warning">
-                          {{$t("bulkresult.failed.text")}}
-                          <strong >{{bulkEditResults.failedCount}}</strong>
+                      <i18n-t keypath="bulkresult.failed.text" tag="p" >
+                        <strong >{{bulkEditResults.failedCount}}</strong>
+                      </i18n-t>
                     </p>
                     <div v-if="bulkEditResults && bulkEditResults.failures && bulkEditResults.failures.length > 0">
                         <ul v-for="(message,ndx) in bulkEditResults.failures" :key="ndx">
