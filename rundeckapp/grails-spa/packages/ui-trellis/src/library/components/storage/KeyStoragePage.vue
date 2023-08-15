@@ -22,7 +22,7 @@ export default defineComponent({
   props: [
     'readOnly',
     'allowUpload',
-    'value',
+    'modelValue',
     'storageFilter',
     'project'
   ],
