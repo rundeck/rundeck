@@ -93,7 +93,7 @@ export default defineComponent({
             editor.setOptions(this.options)
         this.observeDarkMode()
     },
-    beforeDestroy: function() {
+    beforeUnmount: function() {
         this.editor!.destroy()
         this.editor!.container.remove()
         this.observer?.disconnect()
