@@ -38,6 +38,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { getRundeckContext } from "../../../library";
+import {  MessageBox } from 'uiv';
 
 export default defineComponent({
   props: ["query", "hasQuery","eventBus"],
@@ -49,7 +50,10 @@ export default defineComponent({
       filterSaveUrl: "",
       filterDeleteUrl: "",
       loadError: "",
-      filters: []
+      filters: [],
+      promptTitle: this.$t('Save Filter'),
+      promptContent: this.$t("filter.save.name.prompt"),
+      promptError: this.$t("filter.save.validation.name.blank" ),
     };
   },
   emits: ['select_filter'],
@@ -132,20 +136,19 @@ export default defineComponent({
       }
     },
     saveFilterPrompt() {
-      this.$prompt({
-        title: this.$t("Save Filter"),
-        content: this.$t("filter.save.name.prompt"),
-        // A simple input validator
-        // returns the err msg (not valid) or null (valid)
+      MessageBox.prompt({
+        title: this.promptTitle,
+        content: this.promptContent,
         validator(value) {
-          return /.+/.test(value) ? null : this.$t('filter.save.validation.name.blank');
+          return /.+/.test(value) ? null : this.promptError;
         }
       })
         .then(value => {
           console.log("save value", value);
           this.doSaveFilter(value);
         })
-        .catch(() => {
+        .catch((e) => {
+          console.log(e);
           //this.$notify("Save canceled.");
         });
     }
