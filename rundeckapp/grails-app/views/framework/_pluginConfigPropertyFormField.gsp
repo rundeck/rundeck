@@ -329,18 +329,22 @@
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">
-        <div class="${valueColTypeSplit20}">
         %{-- selector for accessible storage --}%
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
         <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
-        <a class="btn btn-sm btn-default obs-select-storage-path"
-                data-toggle="modal"
-                href="#storagebrowse"
-                data-storage-root="${enc(attr:storageRoot)}"
-                data-storage-filter="${enc(attr:storageFilter)}"
-                data-field="#${enc(attr:fieldid)}"
-        ><g:message code="select" /> <i class="glyphicon glyphicon-folder-open"></i></a>
-        </div>
+        <ui-socket class="vue-ui-socket"
+                   section="plugin-runner-key-selector" location="main"
+                   :event-bus="eventBus"
+                   :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}' }"
+        >
+            <a class="btn btn-sm btn-default obs-select-storage-path"
+                    data-toggle="modal"
+                    href="#storagebrowse"
+                    data-storage-root="${enc(attr:storageRoot)}"
+                    data-storage-filter="${enc(attr:storageFilter)}"
+                    data-field="#${enc(attr:fieldid)}"
+            ><g:message code="select" /> <i class="glyphicon glyphicon-folder-open"></i></a>
+        </ui-socket>
     </g:if>
 </g:else>
 <g:set var="helpColType" value="${outofscope?valueColType:offsetColType}"/>
