@@ -15,7 +15,7 @@
           <input type="text" class="form-control bg-2" style="padding-left:18px;"
                 v-model="inputPath" @keyup.enter="loadDirInputPath()"
                 placeholder="Enter a path"/>
-          <div v-if="!isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+          <div v-if="!this.isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
             <button
                 type="button"
                 class="btn btn-default dropdown-toggle"
@@ -35,7 +35,7 @@
             <button
                 type="button"
                 class="btn btn-default"
-                @click="loadDir"
+                @click="loadDir()"
             >
               <span>{{ "Reload" }}</span>
             </button>
@@ -53,17 +53,16 @@
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span>{{showUpPath()}}</span>
           </button>
-          <button v-if="!readOnly || allowUpload===true"  @click="actionUpload" class="btn btn-sm btn-cta">
+          <button v-if="!readOnly || this.allowUpload===true"  @click="actionUpload()" class="btn btn-sm btn-cta">
             <i class="glyphicon glyphicon-plus"></i>
             Add or Upload a Key
           </button>
-
-          <button @click="actionUploadModify" class="btn btn-sm btn-warning"
-                  v-if="allowUpload===true && isSelectedKey===true && !readOnly">
+          <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
+                  v-if="this.allowUpload===true && this.isSelectedKey===true && !readOnly">
             <i class="glyphicon glyphicon-pencil"></i>
             Overwrite Key
           </button>
-          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="selectedKey && selectedKey.path && isSelectedKey && !readOnly">
+          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey && !readOnly">
                   <i class="glyphicon glyphicon-trash"></i>
                   {{"Delete"}}</button>
         </div>
@@ -73,14 +72,14 @@
           <i class="glyphicon glyphicon-time">{{ "Loading..." }}</i>
           <div v-if="isRunner">
             <span v-if="countDownLimit > 0">
-              Reload from the remote Runner in {{ countDownLimit }} seconds
+              Reload from the remote Runner in {{ this.countDownLimit }} seconds
             </span>
             <span v-if="countDownLimit === 0">
               Reload
             </span>
           </div>
         </div>
-        <table class="table table-hover table-condensed" v-if="!loading">
+        <table class="table table-hover table-condensed" v-else>
           <tbody>
           <tr>
             <td colspan="2" class="text-strong">
@@ -183,7 +182,6 @@
                 by:
                 <span class="text-strong">{{createdUsername()}}</span>
               </span>
-
             </div>
           </div>
           <div v-if="wasModified()!==''">
@@ -390,16 +388,14 @@ export default defineComponent({
       // @ts-ignore
       const countDownTimer = setInterval(() => {
         this.countDownLimit--;
-
         if(this.countDownLimit <= 0) {
           // @ts-ignore
           clearInterval(countDownTimer);
-          const delayExec = setTimeout(() => {
-            this.loadKeys(selectedKey)
+          const delayExec = setTimeout(() => { 
+            this.loadKeys(selectedKey) 
             clearTimeout(delayExec)
           }, 600) // Delay 600ms to execute to give better user experience.
         }
-
       },1000);
     },
     loadKeys(selectedKey?: any) {
