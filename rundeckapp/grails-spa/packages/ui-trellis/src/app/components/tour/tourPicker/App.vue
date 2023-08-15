@@ -117,7 +117,7 @@ import {defineComponent} from "vue";
         });
       }
     },
-    beforeDestroy() {
+    beforeUnmount() {
       window._rundeck.eventBus.off('refresh-tours');
     }
   });
