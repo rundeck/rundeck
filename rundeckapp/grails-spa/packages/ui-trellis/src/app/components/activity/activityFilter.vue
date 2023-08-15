@@ -34,10 +34,10 @@
     </btn>
 
     <saved-filters
-      :query="value"
+      :query="modelValue"
       :has-query="hasQuery"
       @select_filter="selectFilter($event)"
-      v-if="value && displayOpts.showSavedFilters"
+      v-if="modelValue && displayOpts.showSavedFilters"
       :event-bus="eventBus"
     ></saved-filters>
 
@@ -192,7 +192,7 @@ export default defineComponent({
     DateFilter,
     SavedFilters
   },
-  props: ["eventBus", "value", "eventBus", "opts"],
+  props: ["eventBus", "modelValue", "eventBus", "opts"],
   emit: ["update:modelValue"],
   data() {
     return {
@@ -321,7 +321,7 @@ export default defineComponent({
       this.filterOpen = false;
     },
     reset() {
-      this.query = Object.assign({}, this.value);
+      this.query = Object.assign({}, this.modelValue);
       this.DateFilters.forEach(element => {
         element.filter.datetime = this.query[element.name];
         element.filter.enabled = !!element.filter.datetime;
@@ -374,7 +374,7 @@ export default defineComponent({
         this.updateSelectedPeriod();
       }
     },
-    value: {
+    modelValue: {
       handler(newValue, oldValue) {
         this.reset();
       },
