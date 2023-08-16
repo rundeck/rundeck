@@ -99,6 +99,7 @@ describe('job', () => {
 
         // save the job
         const save = await jobCreatePage.saveButton()
+        await new Promise(f => setTimeout(f, 1000))
         await save.click()
 
     })
