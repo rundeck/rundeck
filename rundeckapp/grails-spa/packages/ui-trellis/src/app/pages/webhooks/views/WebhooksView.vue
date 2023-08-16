@@ -365,7 +365,7 @@ export default defineComponent({
         this.dirty = false
         await this.webhookStore.refresh(this.projectName)
 
-        this.select(this.webhooStore.webhooksByUuid.get(data.uuid), showAuthString)
+        this.select(this.webhookStore.webhooksByUuid.get(data.uuid), showAuthString)
       }
     },
     handleCancel() {
