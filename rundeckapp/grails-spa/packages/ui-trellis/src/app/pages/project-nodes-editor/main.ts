@@ -18,7 +18,7 @@ context.rootStore.ui.addItems([{
     name: 'ProjectNodesEditorWidget',
     data: function(){
       return {
-        EventBus: context.eventBus,
+        eventBus: context.eventBus,
         index:-1,
         nextPageUrl:''
       }
@@ -27,7 +27,7 @@ context.rootStore.ui.addItems([{
     components: {
       EditProjectNodeSourcePage
     },
-    template:`<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :event-bus="EventBus" v-if="index>=0"/>`,
+    template:`<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :eventBus="eventBus" v-if="index>=0"/>`,
     mounted(){
       const context = getRundeckContext()
 
