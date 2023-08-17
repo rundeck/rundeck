@@ -25,7 +25,9 @@
                  @click="selectTab(i)"
                  @keydown="(ev) => handleKeypress(ev, tab)"
             >
+              <div class="rdtabs__tab-inner">
                 {{ tab.props?.title }}
+              </div>
             </div>
             <div :class="{'rdtabs__rightendcap': true, 'rdtabs__tab-component': true}"><div class="rdtabs__tab-inner"/></div>
           </div>
