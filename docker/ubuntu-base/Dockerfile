@@ -4,7 +4,7 @@ FROM golang:1.20.7 as remco
 ENV REMCO_VERSION=0.12.4
 
 RUN go install github.com/HeavyHorst/remco/cmd/remco@v$REMCO_VERSION
-
+RUN remco --version
 
 # Build base container
 ######################
@@ -51,8 +51,6 @@ RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}
 
 # Install Remco
 COPY --from=remco /go/bin/remco /usr/local/bin/remco
-RUN chmod +x /usr/local/bin/remco
-
 
 USER rundeck
 
