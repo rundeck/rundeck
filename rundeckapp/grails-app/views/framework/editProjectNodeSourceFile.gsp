@@ -81,7 +81,7 @@
           </g:if>
           <g:else>
             <div class="vue-ui-socket">
-              <ui-socket section="edit-project-node-source-file" location="main"/>
+              <ui-socket section="edit-project-node-source-file" location="main" :event-bus="EventBus"/>
             </div>
           </g:else>
       </div>

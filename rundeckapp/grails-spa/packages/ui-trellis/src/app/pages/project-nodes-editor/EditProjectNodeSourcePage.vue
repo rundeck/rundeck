@@ -6,7 +6,7 @@
     :source-desc="nodeSource.resources.description"
     :file-format="modelFormat"
     :value="nodesText"
-    :event-bus="eventBus"
+    :eventBus="eventBus"
     :error-message="errorMessage"
     @cancel="handleCancel"
     @save="handleSave"
