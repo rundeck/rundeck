@@ -4,7 +4,6 @@ FROM golang:1.20.7 as remco
 ENV REMCO_VERSION=0.12.4
 
 RUN go install github.com/HeavyHorst/remco/cmd/remco@v$REMCO_VERSION
-RUN remco --version
 
 # Build base container
 ######################
