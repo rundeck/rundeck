@@ -304,7 +304,7 @@ export default Vue.extend({
       return this.rootPath.startsWith("keys/project");
     },
     isRunner(): boolean {
-      return this.rootPath.startsWith('keys/runner')
+      return this.rootPath.startsWith('runner:')
     }
   },
   methods: {
@@ -687,7 +687,6 @@ export default Vue.extend({
 
       this.loadUpPath();
 
-      console.log("===> reload path: ", this.path)
       this.loadKeys(path, forceRefresh);
     },
     showUpPath() {
