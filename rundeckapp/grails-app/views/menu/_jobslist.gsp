@@ -204,12 +204,12 @@
                                 </g:elseif>
                             </span>
                             </g:if>
-                                <div class="vue-ui-socket">
+                                <span class="vue-ui-socket">
                                     <ui-socket section="job-list-job-name"
                                                location="badges"
                                                :socket-data="${g.enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}">
                                     </ui-socket>
-                                </div>
+                                </span>
                             </div>
                         </div>
                         </g:else>
