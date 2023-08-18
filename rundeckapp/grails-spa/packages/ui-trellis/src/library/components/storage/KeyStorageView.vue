@@ -35,7 +35,7 @@
             <button
                 type="button"
                 class="btn btn-default"
-                @click="loadDir()"
+                @click="loadDir(path, true)"
             >
               <span>{{ "Reload" }}</span>
             </button>
@@ -271,12 +271,19 @@ export default Vue.extend({
       linksTitle: '',
       projectList: [],
       jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
-      countDownLimit: 0
+      countDownLimit: 0,
+      countDownInterval: 0
     }
   },
   mounted() {
     this.loadKeys()
     this.loadProjectNames()
+  },
+  destroyed() {
+    if(this.countDownInterval > 0) {
+      clearInterval(this.countDownInterval)
+      this.countDownInterval = 0
+    }
   },
   watch : {
     createdKey : function (newValue, oldValue) {
@@ -297,7 +304,7 @@ export default Vue.extend({
       return this.rootPath.startsWith("keys/project");
     },
     isRunner(): boolean {
-      return this.rootPath.startsWith('keys/runner')
+      return this.rootPath.startsWith('runner:')
     }
   },
   methods: {
@@ -362,12 +369,14 @@ export default Vue.extend({
       if(this.countDownLimit > 0) return
       this.countDownLimit = 5
       // @ts-ignore
-      const countDownTimer = setInterval(() => {
+      this.countDownInterval = setInterval(() => {
         this.countDownLimit--;
         
         if(this.countDownLimit <= 0) {
           // @ts-ignore
-          clearInterval(countDownTimer);
+          clearInterval(this.countDownInterval);
+          this.countDownInterval = 0
+
           const delayExec = setTimeout(() => { 
             this.loadKeys(selectedKey) 
             clearTimeout(delayExec)
@@ -376,7 +385,7 @@ export default Vue.extend({
             
       },1000);
     },
-    loadKeys(selectedKey?: any) {
+    loadKeys(selectedKey?: any, forceRefresh?: boolean) {
       if(selectedKey) {
         this.selectedKey = selectedKey
       }
@@ -385,7 +394,12 @@ export default Vue.extend({
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
       
-      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
+
+      const requestOptions = {
+        queryParameters: forceRefresh? { refresh: "true" } : { }
+      }
+
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath, requestOptions).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -655,7 +669,7 @@ export default Vue.extend({
       }
       return this.rootPath + "/" + relpath;
     },
-    loadDir(selectedPath: any) {
+    loadDir(selectedPath: any, forceRefresh?: boolean) {
       this.isDropdownOpen=false
       this.clean();
       let path = '';
@@ -672,7 +686,8 @@ export default Vue.extend({
       this.inputPath = path;
 
       this.loadUpPath();
-      this.loadKeys();
+
+      this.loadKeys(path, forceRefresh);
     },
     showUpPath() {
       if(this.isRunner) {
