@@ -62,7 +62,7 @@
         'ansicolor-on': settings.ansiColor
       }"
     >
-      <div ref="log">
+      <div ref="log" class="execution-log__scroller-item-container">
         <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
           <btn-group>
             <btn size="xs" @click="toggleSettings">
@@ -89,6 +89,23 @@
         <div class="execution-log__warning" v-if="completed && logLines === 0">
           <h5>No output</h5>
         </div>
+        <LogNodeChunk ref="logEntryChunk"
+                      class="execution-log__node-chunk"
+                      :key="logLines"
+                      :event-bus="eventBus"
+                      :selected-line="selectedLineIdx"
+                      :node="node"
+                      :step-ctx="stepCtx"
+                      :node-icon="settings.nodeBadge"
+                      :max-line="2000"
+                      :command="settings.command"
+                      :time="settings.timestamps"
+                      :gutter="settings.gutter"
+                      :line-wrap="settings.lineWrap"
+                      :entries="entries"
+                      @line-select="handleLineSelect"
+        />
+
       </div>
     </div>
     <div class="stats" v-if="settings.stats">
@@ -101,13 +118,14 @@
 import {CancelToken} from '@esfx/canceltoken'
 
 import { defineComponent } from 'vue'
-import {LogBuilder} from './logBuilder'
 import RdDrawer from '../containers/drawer/Drawer.vue'
-import {logviewerui} from '../../stores/ExecutionOutput'
 import UiSocket from "../utils/UiSocket.vue";
 import { EventBus } from '../../utilities/vueEventBus'
 import { Btn, BtnGroup, ProgressBar } from 'uiv'
-import {PropType} from "vue";
+import {App, PropType} from "vue";
+import LogNodeChunk from "./LogNodeChunk.vue";
+import {ExecutionOutputEntry} from "../../stores/ExecutionOutput";
+import {autorun, IObservableArray} from "mobx";
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
@@ -123,417 +141,372 @@ interface IEventViewerSettings {
 }
 
 export default defineComponent({
-    name:"LogViewer",
-    components: {
-      UiSocket,
-      RdDrawer,
-      Btn,
-      BtnGroup,
-      ProgressBar,
+  name: "LogViewer",
+  components: {
+    LogNodeChunk,
+    UiSocket,
+    RdDrawer,
+    Btn,
+    BtnGroup,
+    ProgressBar,
+  },
+  props: {
+    executionId: {
+      type: String,
+      required: true
     },
-    props: {
-        executionId: {
-            type: String,
-            required: true
-        },
-        node : {
-            type: String,
-            required: false
-        },
-        stepCtx: {
-            type: String,
-            required: false
-        },
-        showStats : {
-            type: Boolean,
-            required: false,
-            default: true
-        },
-        showSettings: {
-            type: Boolean,
-            required: false,
-            default: true
-        },
-        follow : {
-            type: Boolean,
-            required: false,
-            default: false
-        },
-        jumpToLine : {
-            type: Number,
-            required: false
-        },
-        theme : {
-            type: String,
-            required: false,
-            default: 'dark'
-        },
-        maxLogSize : {
-            type: Number,
-            required: false,
-            default:  3145728
-        },
-        trimOutput : {
-            type: Number,
-            required: false
-        },
-        config: {
-            type: Object as PropType<IEventViewerSettings>,
-            required: false
-        },
-        useUserSettings : {
-            type: Boolean,
-            required: false,
-            default: true
-        },
+    node: {
+      type: String,
+      required: false
     },
-    data() {
-        return {
-            logviewerui,
-            rootStore: window._rundeck.rootStore,
-            eventBus : window._rundeck.eventBus as typeof EventBus,
-            themes : [
-                {label: 'Rundeck Theme', value: 'rundeck'},
-                {label: 'Light', value: 'light'},
-                {label: 'Dark', value: 'dark'},
-                {label: 'None', value: 'none'}
-            ],
-            settings :{
-                theme: 'rundeck',
-                stats: false,
-                timestamps: false,
-                command: true,
-                gutter: true,
-                ansiColor: true,
-                nodeBadge: true,
-                lineWrap: true
-            },
-            consumeLogs :true,
-            completed :false,
-            errorMessage : '',
-            execCompleted : true,
-            settingsVisible : false,
-            overSize : false,
-            jumped : false,
-            mfollow : this.follow,
-            viewer : null,
-            logBuilder : null,
-            logEntries : [],
-            scrollCount :0,
-            startTime :0,
-            logSize : 0,
-            logLines : 0,
-            resp : null,
-            populateLogsProm : null,
-            cancelProgress : null,
-            nextProgress : 0,
-            scrollTolerance : 5,
-            batchSize : 200,
-            totalTime : 0,
-            progress : 0,
-            selected : null,
-            selectedLineIdx : null,
-            percentLoaded : 0,
-            options: {vues:[]}
+    stepCtx: {
+      type: String,
+      required: false
+    },
+    showStats: {
+      type: Boolean,
+      required: false,
+      default: true
+    },
+    showSettings: {
+      type: Boolean,
+      required: false,
+      default: true
+    },
+    follow: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    jumpToLine: {
+      type: Number,
+      required: false
+    },
+    theme: {
+      type: String,
+      required: false,
+      default: 'dark'
+    },
+    maxLogSize: {
+      type: Number,
+      required: false,
+      default: 3145728
+    },
+    trimOutput: {
+      type: Number,
+      required: false
+    },
+    config: {
+      type: Object as PropType<IEventViewerSettings>,
+      required: false
+    },
+    useUserSettings: {
+      type: Boolean,
+      required: false,
+      default: true
+    },
+  },
+  emits: ['line-select', 'line-deselect'],
+  data() {
+    return {
+      rootStore: window._rundeck.rootStore,
+      eventBus: window._rundeck.eventBus as typeof EventBus,
+      themes: [
+        {label: 'Rundeck Theme', value: 'rundeck'},
+        {label: 'Light', value: 'light'},
+        {label: 'Dark', value: 'dark'},
+        {label: 'None', value: 'none'}
+      ],
+      settings: {
+        theme: 'rundeck',
+        stats: false,
+        timestamps: false,
+        command: true,
+        gutter: true,
+        ansiColor: true,
+        nodeBadge: true,
+        lineWrap: true
+      },
+      consumeLogs: true,
+      completed: false,
+      errorMessage: '',
+      execCompleted: true,
+      settingsVisible: false,
+      overSize: false,
+      jumped: false,
+      mfollow: this.follow,
+      viewer: null,
+      logBuilder: null,
+      logEntries: [],
+      scrollCount: 0,
+      startTime: 0,
+      logSize: 0,
+      logLines: 0,
+      resp: null,
+      populateLogsProm: null,
+      cancelProgress: null,
+      nextProgress: 0,
+      scrollTolerance: 5,
+      batchSize: 200,
+      totalTime: 0,
+      progress: 0,
+      selected: null,
+      selectedLineIdx: null,
+      percentLoaded: 0,
+      entries: this.viewer?.getEntriesFiltered(this.node, this.stepCtx)
+    }
+  },
+  computed: {
+    settingsChange() {
+      return Object.assign({}, this.settings)
+    },
+    followIcon() {
+      return this.mfollow ? 'fas fa-eye' : 'fas fa-eye-slash'
+    },
+    barProgress() {
+      return this.execCompleted ? this.progress : 100
+    },
+    progressType() {
+      return this.consumeLogs ? 'info' : 'warning'
+    },
+    progressText() {
+      const loadingText = `${this.barProgress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+      const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
+
+      return this.execCompleted ? loadingText : runningText
+    },
+    showProgress() {
+      return (!this.completed || !this.execCompleted)
+    },
+    colorTheme() {
+      if (this.settings.theme == 'rundeck') {
+        return this.rootStore.theme.theme
+      }
+      return this.settings.theme
+    },
+  },
+  watch: {
+    settings: {
+      handler() {
+        if (this.useUserSettings && this.settingsVisible) {
+          this.saveConfig()
         }
+      },
+      deep: true
     },
-    computed: {
-        settingsChange() {
-            return Object.assign({}, this.settings)
-        },
-        followIcon() {
-            return this.mfollow ? 'fas fa-eye' : 'fas fa-eye-slash'
-        },
-        barProgress() {
-            return this.execCompleted ? this.progress : 100
-        },
-        progressType() {
-            return this.consumeLogs ? 'info' : 'warning'
-        },
-        progressText() {
-            const loadingText = `${this.barProgress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
-            const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
-
-            return this.execCompleted ? loadingText : runningText
-        },
-        showProgress() {
-            return (!this.completed || !this.execCompleted)
-        },
-        colorTheme() {
-            if (this.settings.theme == 'rundeck')
-                return this.rootStore.theme.theme
-            else
-                return this.settings.theme
-        },
+    logSize(val: number) {
+      if (val > this.maxLogSize) {
+        this.overSize = true
+        this.nextProgress = 100
+        this.completed = true
+      }
     },
-    watch: {
-        settings: {
-            handler(newVal: any, oldVal: any) {
-              if (this.useUserSettings && this.settingsVisible) {
-                  this.saveConfig()
-              }
-            },
-            deep: true
-        },
-        settingsChange: {
-            handler(newVal: IEventViewerSettings, oldVal: IEventViewerSettings) {
-              const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap', 'command']
-              for (const prop of updatableProps) {
-                  if (newVal[prop] != oldVal[prop]) {
-                      this.options.vues.forEach(v => v[prop] = newVal[prop])
-                  }
-              }
-
-              if(!this.logBuilder) return
-
-              this.logBuilder.updateProps({
-                  node: this.node,
-                  stepCtx: this.stepCtx,
-                  nodeIcon: this.settings.nodeBadge,
-                  maxLines: 20000,
-                  command: {
-                      visible: this.settings.command
-                  },
-                  time: {
-                      visible: this.settings.timestamps
-                  },
-                  gutter: {
-                      visible: this.settings.gutter
-                  },
-                  content: {
-                      lineWrap: this.settings.lineWrap
-                  }
-              })
-            },
-            deep: true
-        },
-        logSize(val: number, oldVal: number) {
-            if (val > this.maxLogSize) {
-                this.overSize = true
-                this.nextProgress = 100
-                this.completed = true
-            }
-        },
-        consumeLogs(val: boolean, oldVal: boolean) {
-            if(val)
-                this.updateProgress()
-            else if(this.cancelProgress)
-                this.cancelProgress.cancel()
-
-            if(val && !this.populateLogsProm) {
-                this.populateLogsProm = this.populateLogs()
-            }
-        }
-    },
-    beforeMount() {
-        this.loadConfig()
-    },
-    async mounted() {
-        this.options.vues = []
-
-        this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId)
-
-        this.logBuilder = new LogBuilder(this.viewer, this.$refs['log'], this.eventBus,{
-            node: this.node,
-            stepCtx: this.stepCtx,
-            nodeIcon: this.settings.nodeBadge,
-            maxLines: 20000,
-            command: {
-                visible: this.settings.command
-            },
-            time: {
-                visible: this.settings.timestamps
-            },
-            gutter: {
-                visible: this.settings.gutter
-            },
-            content: {
-                lineWrap: this.settings.lineWrap
-            }
-        })
-
-        this.logBuilder.onNewLines(this.handleNewLine)
-
-        this.startTime = Date.now()
-        this.addScrollBlocker()
-
+    consumeLogs(val: boolean) {
+      if (val)
         this.updateProgress()
+      else if (this.cancelProgress)
+        this.cancelProgress.cancel()
 
-        await this.viewer.init()
+      if (val && !this.populateLogsProm) {
+        this.populateLogsProm = this.populateLogs()
+      }
+    },
+  },
+  beforeMount() {
+    this.loadConfig()
+  },
+  async mounted() {
+    this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId)
+
+    this.startTime = Date.now()
+    this.addScrollBlocker()
+
+    this.updateProgress()
+
+    await this.viewer.init()
+
+    this.execCompleted = this.viewer.execCompleted
+    this.mfollow = !this.viewer.execCompleted
+
+    if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
+      this.logSize = this.viewer.size
+      this.nextProgress = 0
+      this.updateProgress(100)
+      return
+    }
+
+    this.populateLogsProm = this.populateLogs()
+    this.observeFiltered(() => this.viewer.getEntriesFiltered(this.node, this.stepCtx))
+  },
+  methods: {
+    loadConfig() {
+      if (this.useUserSettings) {
+        const _settings = localStorage.getItem(CONFIG_STORAGE_KEY)
+
+        if (_settings) {
+          try {
+            const config = JSON.parse(_settings)
+            Object.assign(this.settings, config)
+          } catch (e) {
+            localStorage.removeItem(CONFIG_STORAGE_KEY)
+          }
+        }
+      }
+
+      Object.assign(this.settings, this.config || {})
+    },
+    saveConfig() {
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
+    },
+    addScrollBlocker() {
+      /**
+       * Allows us to prevent scrolling unless a certain amount of "resistence" is produced
+       */
+      const _scroller = this.$refs['scroller'] as HTMLElement
+      _scroller.addEventListener('wheel', (ev: UIEvent) => {
+        this.scrollCount++
+
+        if (this.mfollow) {
+          ev.preventDefault()
+          ev.returnValue = false
+        }
+
+        if (this.scrollCount > this.scrollTolerance)
+          this.mfollow = false
+      }, {passive: false})
+    },
+    handleExecutionLogResp() {
+      if (!this.trimOutput) return
+    },
+    updateProgress(delay: number = 0) {
+      if (this.cancelProgress)
+        this.cancelProgress.cancel()
+
+      this.cancelProgress = CancelToken.source();
+
+      (async (cancel: CancelToken) => {
+        const update = () => {
+          this.progress = this.nextProgress
+        }
+        setTimeout(update, delay)
+        while (!cancel.signaled) {
+          await new Promise((res, rej) => {
+            setTimeout(res, 1000)
+          })
+          if (this.progress == 100)
+            this.cancelProgress?.cancel()
+          update()
+        }
+      })(this.cancelProgress.token)
+    },
+    scrollToLine(n: number | string) {
+      const _scroller = this.$refs['scroller'] as HTMLElement
+      this.$refs['logEntryChunk'].scrollToLine(Number(n));
+      const target = this.$refs['logEntryChunk']._container
+
+      let parent = target.parentNode
+
+      let offset = target.offsetTop
+
+      // Traverse to root and accumulate offset
+      while (parent != _scroller) {
+        offset += parent.offsetTop
+        parent = parent.parentNode
+      }
+
+      _scroller.scrollTop = offset - 24 // Insure under stick header
+    },
+    handleLineSelect(idx: number) {
+      if (this.overSize) {
+        alert('Line-linking is not supported for over-sized logs')
+        return
+      }
+      if (this.selectedLineIdx === idx) {
+        this.selectedLineIdx = undefined
+        this.$emit('line-deselect', idx)
+        this.eventBus.emit('line-deselect', idx)
+        return
+      }
+      this.selectedLineIdx = idx
+      this.$emit('line-select', idx)
+      this.eventBus.emit('line-select', idx)
+
+    },
+    toggleSettings(e) {
+      this.settingsVisible = !this.settingsVisible
+      e.target.blur()
+    },
+    toggleFollow(e) {
+      this.mfollow = !this.mfollow
+      e.target.blur()
+    },
+    closeSettings() {
+      this.settingsVisible = false
+    },
+    toggleProgressBar() {
+      this.consumeLogs = !this.consumeLogs
+    },
+    handleNewLine(entries: Array<App<Element>>) {
+      if (this.jumpToLine && this.jumpToLine <= this.entries.length && !this.jumped) {
+        this.mfollow = false
+        this.scrollToLine(this.jumpToLine)
+        this.jumped = true
+      }
+
+      if (this.mfollow) {
+        this.scrollToLine(this.entries.length)
+      }
+    },
+    handleJump(e: string) {
+      this.scrollToLine(this.jumpToLine || 0)
+    },
+    handleJumpToEnd() {
+      this.scrollToLine(this.entries.length)
+    },
+    handleJumpToStart() {
+      this.scrollToLine(1)
+    },
+    async populateLogs() {
+      while (this.consumeLogs) {
+        if (!this.resp)
+          this.resp = this.viewer.getOutput(this.batchSize)
+        const res = await this.resp
+        this.resp = undefined
+
+        if (!this.viewer.completed) {
+          this.resp = this.viewer.getOutput(this.batchSize)
+          await new Promise<void>((res, rej) => setTimeout(() => {
+            res()
+          }, 0))
+        }
 
         this.execCompleted = this.viewer.execCompleted
-        this.mfollow = !this.viewer.execCompleted
+        this.completed = this.viewer.completed
 
-        if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
-            this.logSize = this.viewer.size
-            this.nextProgress = 0
-            this.updateProgress(100)
-            return
-        }
+        this.nextProgress = Math.round(this.viewer.percentLoaded)
 
-        this.populateLogsProm = this.populateLogs()
+        if (this.viewer.error)
+          this.errorMessage = this.viewer.error
+
+        this.logSize = this.viewer.offset
+        this.logLines = this.viewer.entries.length
+        this.handleExecutionLogResp()
+
+        if (this.viewer.completed)
+          break
+      }
+      this.totalTime = Date.now() - this.startTime
+      this.populateLogsProm = undefined
     },
-    methods: {
-        loadConfig() {
-            if (this.useUserSettings) {
-                const _settings = localStorage.getItem(CONFIG_STORAGE_KEY)
-
-                if (_settings) {
-                    try {
-                        const config = JSON.parse(_settings)
-                        Object.assign(this.settings, config)
-                    } catch (e) {
-                        localStorage.removeItem(CONFIG_STORAGE_KEY)
-                    }
-                }
-            }
-
-            Object.assign(this.settings, this.config || {})
-        },
-        saveConfig() {
-            localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
-        },
-        addScrollBlocker() {
-            /**
-             * Allows us to prevent scrolling unless a certain amount of "resistence" is produced
-             */
-            const _scroller = this.$refs['scroller'] as HTMLElement
-            _scroller.addEventListener('wheel', (ev: UIEvent) => {
-                this.scrollCount++
-
-                if (this.mfollow) {
-                    ev.preventDefault()
-                    ev.returnValue = false
-                }
-
-                if (this.scrollCount > this.scrollTolerance)
-                    this.mfollow = false
-            }, {passive: false})
-        },
-        handleExecutionLogResp() {
-            if (!this.trimOutput) return
-
-            if (this.viewer.offset > this.trimOutput) {
-                const removeSize = this.logBuilder.dropChunk()
-                for (let x = 0; x < removeSize; x++) {
-                    const scapeGoat = this.options.vues.shift()
-                }
-            }
-        },
-        updateProgress(delay: number = 0) {
-            if (this.cancelProgress)
-                this.cancelProgress.cancel()
-
-            this.cancelProgress = CancelToken.source();
-
-            (async (cancel: CancelToken) => {
-                const update = () => {this.progress = this.nextProgress}
-                setTimeout(update, delay)
-                while(!cancel.signaled) {
-                    await new Promise((res, rej) => {setTimeout(res, 1000)})
-                    if (this.progress == 100)
-                        this.cancelProgress?.cancel()
-                    update()
-                }
-            })(this.cancelProgress.token)
-        },
-        scrollToLine(n: number | string) {
-            const _scroller = this.$refs['scroller'] as HTMLElement
-
-            const target = this.options.vues[Number(n)-1]._container
-            let parent = target.parentNode
-
-            let offset = target.offsetTop
-
-            // Traverse to root and accumulate offset
-            while (parent != _scroller) {
-                offset += parent.offsetTop
-                parent = parent.parentNode
-            }
-
-            _scroller.scrollTop = offset - 24 // Insure under stick header
-        },
-        handleLineSelect(idx: number) {
-            if (this.overSize) {
-                alert('Line-linking is not supported for over-sized logs')
-                return
-            }
-
-            if(this.selectedLineIdx === idx) {
-                this.selectedLineIdx = null
-                this.logviewerui.deselectLine()
-            } else {
-                this.logviewerui.setSelectedLine(idx)
-            }
-
-        },
-        toggleSettings(e) {
-            this.settingsVisible = !this.settingsVisible
-            e.target.blur()
-        },
-        toggleFollow(e) {
-            this.mfollow = !this.mfollow
-            e.target.blur()
-        },
-        closeSettings() {
-            this.settingsVisible = false
-        },
-        toggleProgressBar() {
-            this.consumeLogs = !this.consumeLogs
-        },
-        handleNewLine(entries: Array<any>) {
-            this.options.vues.push(...entries)
-
-            if (this.jumpToLine && this.jumpToLine <= this.options.vues.length && !this.jumped) {
-                this.mfollow = false
-                this.scrollToLine(this.jumpToLine)
-                this.jumped = true
-            }
-
-            if (this.mfollow) {
-                this.scrollToLine(this.options.vues.length)
-            }
-        },
-        handleJump(e: string) {
-            this.scrollToLine(this.jumpToLine || 0)
-        },
-        handleJumpToEnd() {
-            this.scrollToLine(this.options.vues.length)
-        },
-        handleJumpToStart() {
-            this.scrollToLine(1)
-        },
-        async populateLogs() {
-            while(this.consumeLogs) {
-                if (!this.resp)
-                    this.resp = this.viewer.getOutput(this.batchSize)
-                const res = await this.resp
-                this.resp = undefined
-
-                if (!this.viewer.completed) {
-                    this.resp = this.viewer.getOutput(this.batchSize)
-                    await new Promise<void>((res, rej) => setTimeout(() => {res()},0))
-                }
-
-                this.execCompleted = this.viewer.execCompleted
-                this.completed = this.viewer.completed
-
-                this.nextProgress = Math.round(this.viewer.percentLoaded)
-
-                if (this.viewer.error)
-                    this.errorMessage = this.viewer.error
-
-                this.logSize = this.viewer.offset
-                this.logLines = this.viewer.entries.length
-                this.handleExecutionLogResp()
-
-                if (this.viewer.completed)
-                    break
-            }
-            this.totalTime = Date.now() - this.startTime
-            this.populateLogsProm = undefined
-        }
+    observeFiltered(lookupFunc: () => IObservableArray<ExecutionOutputEntry> | undefined) {
+      autorun((reaction) => {
+        const output = lookupFunc()
+        if (!output) return
+        reaction.dispose()
+        this.entries = output
+      })
     }
+  }
 })
 </script>
 
@@ -583,6 +556,10 @@ export default defineComponent({
 
 .execution-log__node-chunk {
   contain: layout;
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .execution-log__chunk {
@@ -634,6 +611,14 @@ export default defineComponent({
   // will-change: transform;
   width: 100%;
   flex: 1;
+}
+.execution-log__scroller-item-container{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
 }
 
 .execution-log__warning {

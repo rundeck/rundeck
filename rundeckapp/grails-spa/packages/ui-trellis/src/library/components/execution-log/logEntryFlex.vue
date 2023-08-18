@@ -1,9 +1,11 @@
 <template>
-    <div class="execution-log__line" data-test-id="log-entry-flex-execution-log-line" v-bind:class="{'execution-log__line--selected': selected}">
-        <div v-if="displayGutter" class="execution-log__gutter" v-on:click="lineSelect"
-            v-bind:class="{
+    <div class="execution-log__line" data-test-id="log-entry-flex-execution-log-line" v-bind:class="{'execution-log__line--selected': selected}" :title="title">
+        <div v-if="displayGutter"
+             class="execution-log__gutter"
+             @click="onLineSelect"
+             :class="{
                 'execution-log__gutter--slim': (timestamps && !command)
-            }"
+             }"
         >
             <span class="gutter line-number">
                 <span class="execution-log_gutter-entry" :pseudo-content="timestamps ? logEntry.time : ''" />
@@ -19,8 +21,8 @@
             }]"
         >
             <ui-socket section="execution-log-line" location="badges" :event-bus="eventBus" :socket-data="{
-              prevEntry: this.prevEntry,
-              logEntry: this.logEntry
+              prevEntry,
+              logEntry
             }"/>
             <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="logEntry.node" /></span>
             <span v-if="logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="logEntry.logHtml" data-test-id="log-entry-content-text"/>
@@ -35,7 +37,7 @@ import UiSocket from '../utils/UiSocket.vue'
 import {IBuilderOpts} from "./logBuilder"
 import { EventBus } from '../../utilities/vueEventBus';
 import type {PropType} from "vue";
-import {logviewerui} from "../../stores/ExecutionOutput";
+import {ExecutionOutputEntry} from "../../stores/ExecutionOutput";
 
 export default defineComponent({
     name:"EntryFlex",
@@ -43,6 +45,10 @@ export default defineComponent({
         UiSocket
     },
     props: {
+        title: {
+            type: String,
+            required: false
+        },
         eventBus: {
             type: Object as PropType<typeof EventBus>,
             required: false
@@ -52,24 +58,25 @@ export default defineComponent({
           required: true
         },
         prevEntry: {
-            type: Object,
+            type: Object as PropType<ExecutionOutputEntry>,
             required: false
         },
         logEntry: {
-            type: Object,
+            type: Object as PropType<ExecutionOutputEntry>,
             required: true
-        }
+        },
+        selected: {
+            type: Boolean,
+            default: false
+        },
     },
+    emits: ['line-select'],
     data: function() {
         return {
-            logviewerui,
             cfg : this.config
         }
     },
     computed: {
-        selected() {
-            return this.logviewerui.selectedLine === this.logEntry.lineNumber
-        },
         timestamps() {
             return (this.cfg.time?.visible) ? this.cfg.time.visible : false
         },
@@ -93,12 +100,8 @@ export default defineComponent({
         }
     },
     methods: {
-        lineSelect() {
-            if(this.logviewerui.selectedLine === this.logEntry.lineNumber) {
-                this.logviewerui.deselectLine()
-            } else {
-                this.logviewerui.setSelectedLine(this.logEntry.lineNumber)
-            }
+        onLineSelect() {
+            this.$emit('line-select', this.logEntry.lineNumber)
         },
         handleSettingsChanged(newSettings: any) {
             Object.assign(this.cfg, newSettings);
@@ -130,6 +133,7 @@ export default defineComponent({
     display: flex;
     align-items: center;
     min-width: 0;
+    cursor: pointer;
 
     & i {
         margin-left: 0.5em;
