@@ -43,7 +43,7 @@
              >
 
              <a href="#" class="" :title="'Choose this job: '+job.id"
-                   @click="selectedJob=job">
+                   @click="selectJob(job)">
                  <i class="glyphicon glyphicon-book"></i>
                  {{job.name}}
              </a>
@@ -143,7 +143,12 @@ export default defineComponent({
           this.jobs.forEach(job => this.jobTree.insert(job))
         })
       }
-    }
+    },
+    selectJob(job: Job) {
+      this.selectedJob = job
+      this.$emit('update:modelValue', this.selectedJob.id)
+      this.modalOpen = false
+    },
   },
   mounted() {
     if(window._rundeck.projectName) {
@@ -157,10 +162,6 @@ export default defineComponent({
     },
     filterType() {
       this.onProjectOrFilterTypeChange()
-    },
-    selectedJob() {
-      this.modalOpen = false
-      this.$emit('update:modelValue', this.selectedJob ? this.selectedJob.id : '')
     },
   },
 })
