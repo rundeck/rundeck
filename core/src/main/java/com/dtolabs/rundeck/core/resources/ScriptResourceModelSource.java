@@ -54,11 +54,6 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_INTERPRETER_ARGS_QUOTED = "argsQuoted";
 
     public static final String CONFIG_FORMAT = "format";
-    public static final PropertyValidator FILE_VALIDATOR = new PropertyValidator() {
-        public boolean isValid(String value) throws ValidationException {
-            return new File(value).isFile();
-        }
-    };
 
     static Description createDescription(final List<String> formats) {
         return DescriptionBuilder.builder()
@@ -78,7 +73,6 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
                           .title("Script File Path")
                           .description("Path to script file to execute")
                           .required(true)
-                          .validator(FILE_VALIDATOR)
                           .build()
             )
             .property(PropertyBuilder.builder()
