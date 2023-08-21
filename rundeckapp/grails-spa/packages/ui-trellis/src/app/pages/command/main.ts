@@ -8,7 +8,7 @@ const eventBus = window._rundeck.eventBus
 const rootStore = new RootStore(window._rundeck.rundeckClient)
 
 eventBus.on('ko-adhoc-running', (data: any) => {
-    const elm = document.querySelector('#runcontent > .executionshow')
+    const elm = document.querySelector('#runcontent > .execution-show-log') as HTMLElement
 
     const template = `\
     <LogViewer
@@ -36,21 +36,21 @@ eventBus.on('ko-adhoc-running', (data: any) => {
         template: template,
         computed: {
             displayViewer() {
-                return this.$el?.parentNode.display != 'none'
+                return elm.style.display != 'none'
             }
         },
         provide: {
             rootStore
         }
     }, {
-        showSettings: true,
-        config: {default: () => ({
-                gutter: true,
-                command: false,
-                nodeBadge: true,
-                timestamps: true,
-                stats: false,
-            })}
+        showSettings: false,
+        config: {
+            gutter: true,
+            command: false,
+            nodeBadge: true,
+            timestamps: true,
+            stats: false,
+        }
     })
     vue.mount(elm)
 })

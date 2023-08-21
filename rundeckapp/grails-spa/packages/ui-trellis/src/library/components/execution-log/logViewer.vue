@@ -103,7 +103,10 @@
                       :gutter="settings.gutter"
                       :line-wrap="settings.lineWrap"
                       :entries="entries"
+                      :jump-to-line="jumpToLine"
+                      :jumped="jumped"
                       @line-select="handleLineSelect"
+                      @jumped="jumped = true"
         />
 
       </div>
@@ -253,7 +256,7 @@ export default defineComponent({
       selected: null,
       selectedLineIdx: null,
       percentLoaded: 0,
-      entries: this.viewer?.getEntriesFiltered(this.node, this.stepCtx)
+      entries: []
     }
   },
   computed: {
@@ -335,8 +338,9 @@ export default defineComponent({
       return
     }
 
-    this.populateLogsProm = this.populateLogs()
+    this.populateLogsProm = await this.populateLogs()
     this.observeFiltered(() => this.viewer.getEntriesFiltered(this.node, this.stepCtx))
+    this.entries = this.viewer?.getEntriesFiltered(this.node, this.stepCtx)
   },
   methods: {
     loadConfig() {
@@ -446,17 +450,6 @@ export default defineComponent({
     toggleProgressBar() {
       this.consumeLogs = !this.consumeLogs
     },
-    handleNewLine(entries: Array<App<Element>>) {
-      if (this.jumpToLine && this.jumpToLine <= this.entries.length && !this.jumped) {
-        this.mfollow = false
-        this.scrollToLine(this.jumpToLine)
-        this.jumped = true
-      }
-
-      if (this.mfollow) {
-        this.scrollToLine(this.entries.length)
-      }
-    },
     handleJump(e: string) {
       this.scrollToLine(this.jumpToLine || 0)
     },
@@ -504,6 +497,10 @@ export default defineComponent({
         if (!output) return
         reaction.dispose()
         this.entries = output
+
+        if (this.mfollow) {
+          this.scrollToLine(this.entries.length)
+        }
       })
     }
   }
