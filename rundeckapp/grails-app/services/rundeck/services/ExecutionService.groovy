@@ -4054,8 +4054,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Returns a list of criterias to be applied in runtime query to extract metric's resultset from db.
      *
-     * Tha main goal is to support the query in all the supported DB's, so each criteria will be
-     * executed in order to extract the result set w/o throwing a exception.
+     * Tha main goal is to support the query in all supported DB's, so each criteria will be
+     * executed until it gets the result set and not an exception in 'queryExecutionMetricsByCriteria'.
      *
      * @param query - ExecutionQuery object
      *
