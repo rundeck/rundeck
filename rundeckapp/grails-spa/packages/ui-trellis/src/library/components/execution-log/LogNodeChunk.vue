@@ -5,6 +5,8 @@
                      :key="nodeChunkKey"
                      class="scroller execution-log__chunk"
                      key-field="lineNumber"
+                     ref="scroller"
+                     @resize="scrollToLine(jumpToLine)"
     >
       <template v-slot="{ item, index, active}">
         <DynamicScrollerItem :item="item"
@@ -12,8 +14,7 @@
                              :active="active"
                              :size-dependencies="[item.log, item.logHtml]"
         >
-          <LogEntryFlex ref="entryRefs"
-                        :eventBus="eventBus"
+          <LogEntryFlex :eventBus="eventBus"
                         :key="index"
                         :title="entryTitle(item)"
                         :selected="selectedLine === (index + 1)"
@@ -89,8 +90,20 @@ export default defineComponent({
       type: Array as PropType<ExecutionOutputEntry[]>,
       required: false
     },
+    jumpToLine: {
+      type: Number,
+      default: 0,
+    },
+    jumped: {
+      type: Boolean,
+      default: false,
+    },
+    follow: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ['line-select'],
+  emits: ['line-select', 'jumped'],
   computed: {
     opts() {
       return {
@@ -167,10 +180,15 @@ export default defineComponent({
     onSelectLine(index: number) {
       this.$emit('line-select', index)
     },
-    scrollToLine(index: number) {
-      const entry = this.$refs['entryRefs'][index]
-      if (entry) {
-        entry.scrollIntoView({behavior: 'smooth', block: 'center'})
+    scrollToLine(jumpToLine: number) {
+      if (jumpToLine && jumpToLine <= this.entries.length && !this.jumped) {
+        this.$emit('line-select', jumpToLine)
+        this.$refs.scroller.scrollToItem(jumpToLine-1)
+        this.$emit('jumped')
+        return
+      }
+      if (this.follow) {
+        this.$refs.scroller.scrollToBottom()
       }
     },
   },
