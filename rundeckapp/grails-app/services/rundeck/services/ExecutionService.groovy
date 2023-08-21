@@ -4029,6 +4029,37 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     }
 
+    /**
+     * Input map contains count: long, durationMax: Time, durationMin: Time, durationSum: Time
+     * @param metricsData
+     * @return
+     */
+    Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
+
+        def formattedMetrics = formatMetrics(metricsData)
+
+        // Build response
+        return [
+            total   : formattedMetrics.totalCount,
+
+            duration: [
+                average: formattedMetrics.avgDuration,
+                max    : formattedMetrics.maxDuration,
+                min    : formattedMetrics.minDuration
+            ]
+        ]
+
+    }
+
+    /**
+     * Returns a list of criterias to be applied in runtime query to extract metric's resultset from db.
+     *
+     * Tha main goal is to support the query in all the supported DB's, so each criteria will be
+     * executed in order to extract the result set w/o throwing a exception.
+     *
+     * @param query - ExecutionQuery object
+     *
+     * */
     List<Closure> getCriteriaScenarios(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
         def metricCriteriaA = {
@@ -4076,27 +4107,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Input map contains count: long, durationMax: Time, durationMin: Time, durationSum: Time
-     * @param metricsData
-     * @return
-     */
-    Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
-
-        def formattedMetrics = formatMetrics(metricsData)
-
-        // Build response
-        return [
-            total   : formattedMetrics.totalCount,
-
-            duration: [
-                average: formattedMetrics.avgDuration,
-                max    : formattedMetrics.maxDuration,
-                min    : formattedMetrics.minDuration
-            ]
-        ]
-
-    }
-
+     * Apply format according to the format of query's result.
+     *
+     * @param metricsData - resultset extracted from the db.
+     *
+     * */
     private Map<String,Object> formatMetrics(Map<String,Object> metricsData){
 
         def totalCount = metricsData?.count ? metricsData.count : 0
