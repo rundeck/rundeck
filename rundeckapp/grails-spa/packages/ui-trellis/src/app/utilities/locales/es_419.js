@@ -191,6 +191,7 @@ const messages = {
     "count.nodes.matched": "{0} {1} Matched",
     "count.nodes.shown": "{0} nodes shown.",
     "delete.this.filter.confirm": "¿Seguro que quieres borrar este filtro?",
+    "enter.a.node.filter": "Introduzca un filtro de nodo",
     "execute.locally": "Ejecutar localmente",
     "execution.page.show.tab.Nodes.title": "Nodes",
     "execution.show.mode.Log.title": "Salida de registo",
@@ -255,6 +256,7 @@ const messages = {
         "Unit will be seconds if it is not specified.\n\n" +
         "Can include option value references like `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
     "scheduledExecution.property.orchestrator.label": "Orchestrator",
+    "scheduledExecution.property.orchestrator.description": "Esto se puede utilizar para controlar el orden y el momento en que se procesan los nodos.",
     "scheduledExecution.property.retry.delay.description": "El tiempo entre una ejecución fallida y el reintento. Tiempo en segundos, " +
         "o especifique unidades: \"120m\", \"2h\", \"3d\".  Deje en blanco o 0 para indicar que no hay demora. Puede incluir valor de opción " +
         "referencias como \"{'$'}{'{'}option{'.'}delay{'}'}\".",

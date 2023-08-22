@@ -191,6 +191,7 @@ const messages = {
     "count.nodes.matched": "{0} {1} Matched",
     "count.nodes.shown": "{0} nodes shown.",
     "delete.this.filter.confirm": "Really delete this filter?",
+    "enter.a.node.filter": "\u30ce\u30fc\u30c9\u30d5\u30a3\u30eb\u30bf\u3092\u5165\u529b\u3059\u308b\u304b\u3001.*\u3067\u3059\u3079\u3066\u306e\u30ce\u30fc\u30c9\u3092\u9078\u629e",
     "execute.locally": "\u30ed\u30fc\u30ab\u30eb\u3067\u5b9f\u884c",
     "execution.page.show.tab.Nodes.title": "Nodes",
     "execution.show.mode.Log.title": "\u30ed\u30b0\u51fa\u529b",
@@ -255,6 +256,7 @@ const messages = {
         "Unit will be seconds if it is not specified.\n\n" +
         "Can include option value references like `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
     "scheduledExecution.property.orchestrator.label": "\u30aa\u30fc\u30b1\u30b9\u30c8\u30ec\u30fc\u30bf",
+    "scheduledExecution.property.orchestrator.description": "\u9806\u5e8f\u3092\u5236\u5fa1\u306b\u4f7f\u3046\u3002This can be used to control the order and timing in which nodes are processed",
     "scheduledExecution.property.retry.delay.description": "The time between the failed execution and the retry. Time in seconds, " +
         "or specify time units: \"120m\", \"2h\", \"3d\".  Use blank or 0 to indicate no delay. Can include option value " +
         "references like \"{'$'}{'{'}option{'.'}delay{'}'}\".",
