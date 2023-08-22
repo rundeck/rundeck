@@ -351,7 +351,6 @@ import NodeFilterInput from './NodeFilterInput.vue'
 import NodeFilterResults from './NodeFilterResults.vue'
 
 import {
-  getRundeckContext,
   getAppLinks
 } from '../../../../library'
 import UiSocket from "../../../../library/components/utils/UiSocket.vue";
@@ -417,7 +416,11 @@ export default defineComponent({
       }
     },
     async onMount() {
-      this.modelData = Object.assign({}, this.modelValue)
+      this.modelData = {
+        ...this.modelValue,
+        filter: this.modelValue.filter || '',
+        filterExclude: this.modelValue.filterExclude || '',
+      }
       await this.loadNodeSummary()
     }
   },

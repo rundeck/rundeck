@@ -191,6 +191,7 @@ const messages = {
     "count.nodes.matched": "{0} {1} Correspondido",
     "count.nodes.shown": "{0} n\u00f3s mostrados.",
     "delete.this.filter.confirm": "Really delete this filter?",
+    "enter.a.node.filter": "Insira um filtro de n\u00f3 ou .* Para todos os n\u00f3s",
     "execute.locally": "Executar localmente",
     "execution.page.show.tab.Nodes.title": "Nodes",
     "execution.show.mode.Log.title": "Sa\u00edda de Log",
@@ -254,6 +255,7 @@ const messages = {
         "Tempo em segundos, se voc\u00ea n\u00e3o especificar unidades de tempo " +
         "Pode incluir refer\u00eancias de valor de op\u00e7\u00e3o como {'$'}{'{'}option{'.'}avgDurationThreshold{'}'}.",
     "scheduledExecution.property.orchestrator.label": "Orquestrador",
+    "scheduledExecution.property.orchestrator.description": "Isso pode ser usado para controlar a ordem e o momento em que os n\u00f3s s\u00e3o processados",
     "scheduledExecution.property.retry.description": "N\u00famero m\u00e1ximo de vezes para repetir a execu\u00e7\u00e3o quando esta job \u00e9 invocada diretamente. A repeti\u00e7\u00e3o ocorrer\u00e1 se o jpb falhar ou expirar, mas n\u00e3o se for manualmente eliminado. Pode usar uma refer\u00eancia de valor de op\u00e7\u00e3o como \"{'$'}{'{'}option{'.'}retry{'}'}\".",
     "scheduledExecution.property.retry.delay.description": "O tempo entre a falha na execu\u00e7\u00e3o e a nova tentativa. Tempo em segundos, " +
         "ou especifique unidades de tempo: \"120m\", \"2h\", \"3d\". Use em branco ou 0 para indicar nenhum atraso. Pode incluir valor da op\u00e7\u00e3o " +

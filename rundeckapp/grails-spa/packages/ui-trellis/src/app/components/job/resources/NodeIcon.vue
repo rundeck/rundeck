@@ -21,7 +21,7 @@ export default defineComponent({
       required: true,
     },
     defaultIconCss: {
-      type: Object,
+      type: String,
       required: false,
       default: 'fas fa-hdd',
     },

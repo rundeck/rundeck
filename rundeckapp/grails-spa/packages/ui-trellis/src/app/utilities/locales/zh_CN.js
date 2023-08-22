@@ -191,6 +191,7 @@ const messages = {
     "count.nodes.matched": "{0} {1} Matched",
     "count.nodes.shown": "{0} nodes shown.",
     "delete.this.filter.confirm": "Really delete this filter?",
+    "enter.a.node.filter": "\u8F93\u5165\u8282\u70B9\u8FC7\u6EE4\u6761\u4EF6(.*\u5339\u914D\u6240\u6709\u8282\u70B9)",
     "execute.locally": "\u672C\u5730\u8282\u70B9",
     "execution.page.show.tab.Nodes.title": "Nodes",
     "execution.show.mode.Log.title": "\u65E5\u5FD7",
@@ -254,6 +255,7 @@ const messages = {
         "Unit will be seconds if it is not specified.\n\n" +
         "Can include option value references like `{'$'}{'{'}option.avgDurationThreshold{'}'}`.",
     "scheduledExecution.property.orchestrator.label": "Orchestrator",
+    "scheduledExecution.property.orchestrator.description": "This can be used to control the order and timing in which nodes are processed",
     "scheduledExecution.property.retry.delay.description": "The time between the failed execution and the retry. Time in seconds, " +
         "or specify time units: \"120m\", \"2h\", \"3d\".  Use blank or 0 to indicate no delay. Can include option value " +
         "references like \"{'$'}{'{'}option{'.'}delay{'}'}\".",
