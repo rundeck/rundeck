@@ -41,6 +41,7 @@
                             :disabled="!(dirty || curHook.new)"
                             type="cta"
                             style="margin-left: 5px;font-weight: 800;"
+                            data-test-id="webhooks-view-save-btn"
                             @click="handleSave"
                     >{{ $t('message_webhookSaveBtn') }}</btn>
                   </div>
