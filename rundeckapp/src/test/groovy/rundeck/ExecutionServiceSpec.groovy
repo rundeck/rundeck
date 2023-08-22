@@ -6089,8 +6089,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         result.total == 3
         result.duration.average == 1000L
-        result.duration.min == 75602000L
-        result.duration.max == 75601000L
+        result.duration.min == 2000L
+        result.duration.max == 1000L
     }
 
     def "metrics data from projection result"(){
