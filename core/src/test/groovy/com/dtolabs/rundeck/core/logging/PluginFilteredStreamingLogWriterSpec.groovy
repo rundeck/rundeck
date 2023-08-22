@@ -256,9 +256,9 @@ class PluginFilteredStreamingLogWriterSpec extends Specification {
         writer.close()
 
         then:
-        1 * plugin1.complete(!null)
-        1 * plugin2.complete(!null)
-        1 * plugin3.complete(!null)
+        1 * plugin1.complete({ it.executionContext==context })
+        1 * plugin2.complete({ it.executionContext==context })
+        1 * plugin3.complete({ it.executionContext==context })
 
     }
 }
