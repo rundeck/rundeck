@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.util.*;
@@ -56,7 +57,8 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                 directLogger,
                 context.getDataContextObject(),
                 context.getPrivateDataContextObject(),
-                context.getSharedDataContext()
+                context.getSharedDataContext(),
+                context
         );
     }
 
@@ -252,41 +254,20 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
     }
 
     private static class MyLoggingContext implements PluginLoggingContext {
-        SharedOutputContext outputContext;
+        @Getter SharedOutputContext outputContext;
         ExecutionLogger logger;
-        DataContext dataContext;
-        DataContext privateDataContext;
-        MultiDataContext<ContextView, DataContext> sharedDataContext;
-
-        /**
-         * Return data context set
-         *
-         * @return map of data contexts keyed by name
-         */
-        public DataContext getDataContext() {
-            return dataContext;
-        }
-
-        /**
-         * @return the scoped context data keyed by scope
-         */
-        public MultiDataContext<ContextView, DataContext> getSharedDataContext() {
-            return sharedDataContext;
-        }
-
-        /**
-         * @return the data context in the private scope
-         */
-        public DataContext getPrivateDataContext() {
-            return privateDataContext;
-        }
+        @Getter DataContext dataContext;
+        @Getter DataContext privateDataContext;
+        @Getter MultiDataContext<ContextView, DataContext> sharedDataContext;
+        @Getter ExecutionContext executionContext;
 
         MyLoggingContext(
                 final SharedOutputContext outputContext,
                 final ExecutionLogger logger,
                 final DataContext dataContext,
                 final DataContext privateDataContext,
-                final MultiDataContext<ContextView, DataContext> sharedDataContext
+                final MultiDataContext<ContextView, DataContext> sharedDataContext,
+                ExecutionContext executionContext
         )
         {
             this.outputContext = outputContext;
@@ -294,6 +275,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.dataContext = dataContext;
             this.privateDataContext = privateDataContext;
             this.sharedDataContext = sharedDataContext;
+            this.executionContext=executionContext;
         }
 
         @Override
@@ -311,10 +293,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             logger.event(eventType, message, eventMeta);
         }
 
-        @Override
-        public SharedOutputContext getOutputContext() {
-            return outputContext;
-        }
     }
 
     void addPlugin(final LogFilterPlugin plugin) {
