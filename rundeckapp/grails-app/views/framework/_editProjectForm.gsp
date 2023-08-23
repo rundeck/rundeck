@@ -249,7 +249,7 @@
                                 <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                                 <i class="rdicon icon-small plugin"></i>
                                 <!-- /ko -->
-                                <span data-bind="text: title"></span>
+                                <span data-test-id="node-executor-selected" data-bind="text: title"></span>
                                 </span>
                             </span>
                         </span>
