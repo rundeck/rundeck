@@ -17,7 +17,7 @@ module.exports = {
                 },
             },
         },
-       // '@storybook/addon-knobs',
+       '@storybook/addon-controls',
         'storybook-dark-mode',
         {
             name: "@storybook/addon-styling",
@@ -38,12 +38,12 @@ module.exports = {
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
     staticDirs: ['../public','../theme','../tests/data'],
     webpackFinal: (config) => {
-        const vueLoader = config.module.rules.find(r => String(r.test) == String(/\.vue$/))
+        const vueLoader = config.module.rules.find(r => String(r.test) === String(/\.vue$/))
         vueLoader.options.compilerOptions = {
             preserveWhitespace: false
         }
 
-        const cssLoader = config.module.rules.find(r => String(r.test) == String(/\.css$/))
+        const cssLoader = config.module.rules.find(r => String(r.test) === String(/\.css$/))
         cssLoader.use[1].options.sourceMap = true
 
         config.optimization.splitChunks = false
