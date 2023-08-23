@@ -245,7 +245,7 @@ dependencies {
     runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
-    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:12.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.3.8'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
