@@ -3,6 +3,11 @@ const webpack = require('webpack')
 const path = require('path');
 
 module.exports = {
+    framework: {
+        name: '@storybook/vue3-webpack5',
+        options: {},
+    },
+
     typescript: {
         check: false,
     },
@@ -36,7 +41,8 @@ module.exports = {
         '@storybook/addon-backgrounds'
     ],
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
-    staticDirs: ['../public','../theme','../tests/data'],
+    staticDirs: ['../public','../src/library/theme','../tests/data'],
+
     webpackFinal: (config) => {
         const vueLoader = config.module.rules.find(r => String(r.test) === String(/\.vue$/))
         vueLoader.options.compilerOptions = {
@@ -77,5 +83,9 @@ module.exports = {
         return {
             ...config,
         };
+    },
+
+    docs: {
+        autodocs: true
     }
 }
