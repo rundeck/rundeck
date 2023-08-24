@@ -147,6 +147,7 @@
                     :webhook="curHook"
                     :pluginConfig="curHook.config"
                     :errors="errors"
+                    @update:pluginConfig="onUpdatePluginConfig"
                     @change="input"></component>
                 </div>
               </div>
@@ -252,6 +253,9 @@ export default defineComponent({
     },
     input() {
       this.dirty = true
+    },
+    onUpdatePluginConfig(config) {
+      this.selectedPlugin.config = config
     },
     toggleUrl(hookId, show) {
       if(show) document.getElementById("whc-" + hookId).style.display = "block";
@@ -394,6 +398,7 @@ export default defineComponent({
           this.curHook = null
           this.selectedPlugin = null
           this.setMessage("Deleted!")
+          this.dirty = false
         }
       }).catch(err => {
         this.setError("Failed to delete! " + err)
