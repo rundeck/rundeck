@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.logging
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionLogger
+import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -256,9 +257,46 @@ class PluginFilteredStreamingLogWriterSpec extends Specification {
         writer.close()
 
         then:
-        1 * plugin1.complete({ it.executionContext==context })
-        1 * plugin2.complete({ it.executionContext==context })
-        1 * plugin3.complete({ it.executionContext==context })
+        1 * plugin1.complete({ it.executionContext==context },null)
+        1 * plugin2.complete({ it.executionContext==context },null)
+        1 * plugin3.complete({ it.executionContext==context },null)
 
+    }
+
+    @Unroll
+    def "finish completes all plugins with status"() {
+        given:
+        def sink = Mock(StreamingLogWriter)
+        def context = Mock(ExecutionContext)
+        def logger = Mock(ExecutionLogger)
+        def writer = new PluginFilteredStreamingLogWriter(sink, context, logger)
+
+
+        LogFilterPlugin plugin1 = Mock(LogFilterPlugin)
+        LogFilterPlugin plugin2 = Mock(LogFilterPlugin)
+        LogFilterPlugin plugin3 = Mock(LogFilterPlugin)
+
+
+        writer.addPlugin(plugin1)
+        writer.addPlugin(plugin2)
+        writer.addPlugin(plugin3)
+
+        when:
+        writer.finish(result)
+
+        then:
+        1 * plugin1.complete({ it.executionContext==context },result)
+        1 * plugin2.complete({ it.executionContext==context },result)
+        1 * plugin3.complete({ it.executionContext==context },result)
+
+        where:
+            result <<[
+                null,
+                new Finished(success:true),
+                new Finished(success:false)
+            ]
+    }
+    static class Finished implements StatusResult{
+        boolean success
     }
 }
