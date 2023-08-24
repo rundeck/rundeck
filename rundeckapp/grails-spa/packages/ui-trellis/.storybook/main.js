@@ -17,7 +17,9 @@ module.exports = {
                 },
             },
         },
-       '@storybook/addon-controls',
+        "@storybook/addon-links",
+        "@storybook/addon-essentials",
+        "@storybook/addon-interactions",
         'storybook-dark-mode',
         {
             name: "@storybook/addon-styling",
@@ -35,9 +37,10 @@ module.exports = {
         },
         '@storybook/addon-backgrounds'
     ],
+    "framework": "@storybook/vue3",
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
-    staticDirs: ['../public','../theme','../tests/data'],
-    webpackFinal: (config) => {
+    staticDirs: ['../public','../src/library/theme','../tests/data'],
+    async webpackFinal(config, { configType }) {
         const vueLoader = config.module.rules.find(r => String(r.test) === String(/\.vue$/))
         vueLoader.options.compilerOptions = {
             preserveWhitespace: false
@@ -66,6 +69,11 @@ module.exports = {
                 include: /uiv/,
                 use: { loader: "babel-loader" },
             },
+            {
+                test: /\.mjs$/,
+                include: /node_modules/,
+                type: 'javascript/auto',
+            }
         );
 
         config.plugins.unshift(new webpack.NormalModuleReplacementPlugin( /index.less/, function(resource) {
