@@ -2153,6 +2153,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Abandon the transient ScheduledExecution entity instance.
         execution.scheduledExecution = null
+        execution.jobUuid = null
 
         if(execution.workflow){
             if(!execution.workflow.save(flush:true)){
@@ -2566,6 +2567,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         execution.scheduledExecution=se
+        execution.jobUuid=se.uuid
 
         // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
         if(!beforeExecutionResult?.isSuccessful() && beforeExecutionResult?.isTriggeredByJobEvent(JobPreExecutionEvent)) {
@@ -3002,6 +3004,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
         execution.properties = props
+        if(!execution.uuid) {
+            execution.uuid = UUID.randomUUID().toString()
+        }
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }
@@ -3011,6 +3016,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (schedId) {
             scheduledExecution = ScheduledExecution.findByUuid(schedId)
+            if(!execution.jobUuid) execution.jobUuid = scheduledExecution.uuid
         }
 
         //check the final status of succeeded nodes
