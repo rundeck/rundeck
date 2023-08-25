@@ -1,5 +1,4 @@
 <template>
-  <div>
     <span
         :class="descriptionCss"
         v-if="showDescription"
@@ -13,7 +12,7 @@
         v-if="showDescription && showExtended && extraDescription"
     >
       <summary>
-        More...
+        {{ $t('more') }}
         <span class="more-indicator-verbiage more-info-icon">
           <i class="glyphicon glyphicon-chevron-right" />
         </span>
@@ -24,7 +23,6 @@
 
       {{ extraDescription }}
     </details>
-  </div>
 </template>
 
 <script lang="ts">
@@ -72,7 +70,7 @@ export default defineComponent({
       if (desc && desc.indexOf("\n") > 0) {
         return desc.substring(desc.indexOf("\n") + 1);
       }
-      return null;
+      return '';
     },
   },
 })
