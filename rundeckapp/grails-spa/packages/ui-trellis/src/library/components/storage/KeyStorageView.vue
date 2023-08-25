@@ -35,7 +35,7 @@
             <button
                 type="button"
                 class="btn btn-default"
-                @click="loadDir(path, true)"
+                @click="loadDir"
             >
               <span>{{ "Reload" }}</span>
             </button>
@@ -53,13 +53,12 @@
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span>{{showUpPath()}}</span>
           </button>
-          <button v-if="!readOnly || allowUpload===true"  @click="actionUpload" class="btn btn-sm btn-cta">
+          <button v-if="!readOnly || allowUpload===true"  @click="actionUpload()" class="btn btn-sm btn-cta">
             <i class="glyphicon glyphicon-plus"></i>
             Add or Upload a Key
           </button>
-
-          <button @click="actionUploadModify" class="btn btn-sm btn-warning"
-                  v-if="allowUpload===true && isSelectedKey===true && !readOnly">
+          <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
+                  v-if="allowUpload===true && this.isSelectedKey===true && !readOnly">
             <i class="glyphicon glyphicon-pencil"></i>
             Overwrite Key
           </button>
@@ -80,7 +79,7 @@
             </span>
           </div>
         </div>
-        <table class="table table-hover table-condensed" v-if="!loading">
+        <table class="table table-hover table-condensed" v-else>
           <tbody>
           <tr>
             <td colspan="2" class="text-strong">
@@ -183,7 +182,6 @@
                 by:
                 <span class="text-strong">{{createdUsername()}}</span>
               </span>
-
             </div>
           </div>
           <div v-if="wasModified()!==''">
@@ -272,19 +270,12 @@ export default defineComponent({
       linksTitle: '',
       projectList: [],
       jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
-      countDownLimit: 0,
-      countDownInterval: 0
+      countDownLimit: 0
     }
   },
   mounted() {
     this.loadKeys()
     this.loadProjectNames()
-  },
-  unmounted() {
-    if(this.countDownInterval > 0) {
-      clearInterval(this.countDownInterval)
-      this.countDownInterval = 0
-    }
   },
   watch : {
     createdKey : function (newValue) {
@@ -330,7 +321,7 @@ export default defineComponent({
       return value;
     },
     isRunner(): boolean {
-      return this.rootPath.startsWith('runner:')
+      return this.rootPath.startsWith('keys/runner')
     }
   },
   methods: {
@@ -395,23 +386,19 @@ export default defineComponent({
       if(this.countDownLimit > 0) return
       this.countDownLimit = 5
       // @ts-ignore
-      this.countDownInterval = setInterval(() => {
+      const countDownTimer = setInterval(() => {
         this.countDownLimit--;
-
         if(this.countDownLimit <= 0) {
           // @ts-ignore
-          clearInterval(this.countDownInterval);
-          this.countDownInterval = 0
-
-          const delayExec = setTimeout(() => {
-            this.loadKeys(selectedKey)
+          clearInterval(countDownTimer);
+          const delayExec = setTimeout(() => { 
+            this.loadKeys(selectedKey) 
             clearTimeout(delayExec)
           }, 600) // Delay 600ms to execute to give better user experience.
         }
-
       },1000);
     },
-    loadKeys(selectedKey?: any, forceRefresh?: boolean) {
+    loadKeys(selectedKey?: any) {
       if(selectedKey) {
         this.selectedKey = selectedKey
       }
@@ -419,13 +406,8 @@ export default defineComponent({
 
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
-      
 
-      const requestOptions = {
-        queryParameters: forceRefresh? { refresh: "true" } : { }
-      }
-
-      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath, requestOptions).then((result: any) => {
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
         this.directories = [];
         this.files = [];
 
@@ -676,7 +658,7 @@ export default defineComponent({
       }
       return this.rootPath + "/" + relpath;
     },
-    loadDir(selectedPath: any, forceRefresh?: boolean) {
+    loadDir(selectedPath: any) {
       this.isDropdownOpen=false
       this.clean();
       let path = '';
@@ -693,8 +675,7 @@ export default defineComponent({
       this.inputPath = path;
 
       this.loadUpPath();
-
-      this.loadKeys(path, forceRefresh);
+      this.loadKeys();
     },
     showUpPath() {
       if(this.isRunner) {
