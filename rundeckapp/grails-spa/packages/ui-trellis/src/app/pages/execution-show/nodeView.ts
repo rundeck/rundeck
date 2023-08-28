@@ -11,8 +11,6 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     const execId = nodeStep.flow.executionId()
     const stepCtxToRender = nodeStep.substepctx
     const stepCtxToSelect = nodeStep.stepCtx
-    console.log('Stepctx reveived in vue view')
-    console.log(stepCtxToRender)
     const node = nodeStep.node.name
 
     let query = [
@@ -20,13 +18,10 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
         stepCtxToSelect ? `[data-stepctx="${stepCtxToSelect}"]` : undefined
     ].filter(e => e).join('')
 
-    console.log("L23 vue")
     const div = document.createElement("div")
     const elm = document.querySelector(query)!
-    console.log("L26 vue")
     elm.appendChild(div)
 
-    console.log("L29 vue")
     const template = `\
     <LogViewer
         class="wfnodestep"
@@ -57,8 +52,6 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
             })}
         },
     })
-
-    console.log("L61 vue")
 
     /** Update the KO code when this views output starts showing up */
     const execOutput = rootStore.executionOutputStore.createOrGet(execId)

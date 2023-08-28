@@ -81,8 +81,6 @@ export class ExecutionOutput {
      * If no node filter given, all entries are returned
      **/
     getEntriesFiltered(node?: string, stepCtx?: string) {
-        console.log("Entries in vue")
-        console.log(this.entriesbyNodeCtx)
         if(node){
             if (stepCtx)
                 return this.entriesbyNodeCtx.get(`${node}:${JobWorkflow.cleanContextId(stepCtx)}`)

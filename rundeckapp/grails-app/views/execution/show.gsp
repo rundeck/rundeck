@@ -1029,16 +1029,6 @@ search
     </span>
     <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
   </script>
-  <script type="text/html" id="step-info-path-links">
-    %{-- Display the full step path with icon and identity --}%
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': stepinfo.stepctx }"></i>
-    </span>
-    <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
-  </script>
   <script type="text/html" id="step-info-parent-path">
     %{-- Display the full step path with icon and identity --}%
 
@@ -1047,16 +1037,6 @@ search
             <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
         </span>
         <g:icon name="menu-right" css="text-strong"/>
-    </span>
-  </script>
-  <script type="text/html" id="step-info-parent-path-links">
-    %{-- Display the full step path with icon and identity --}%
-
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': stepinfo.stepctx }"></i>
     </span>
   </script>
 
