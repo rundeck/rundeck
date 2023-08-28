@@ -11,7 +11,7 @@
 *.iml
 /db/
 /lib/
-/bin/
+**/bin/
 **/node_modules
 **/build
 **/*/build
