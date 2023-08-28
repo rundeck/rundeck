@@ -117,85 +117,76 @@
       <div  data-bind="visible: expanded" >
           <div data-bind="foreach: steps">
               <div data-bind="if: !$data.parameterizedStep()">
-              <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
-              <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
-                  <div class="row action" data-bind="click: $root.toggleOutputForNodeStep,
-                                 event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
-                      <div class="col-sm-3 " >
-                          <div class="stepident action col-inset"
-                                data-bind="
-                                attr: { 'data-execstate': executionState },
-                                css: { 'auto-caret-container': followingOutput(), active: followingOutput() }
-                                ">
-                              <i class="auto-caret text-muted"></i>
+                <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
+                    <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
+                      <div class="row action" data-bind="event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
+                          <div class="col-sm-3 " >
+                              <div class="stepident action col-inset" data-bind="attr: { 'data-execstate': executionState }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() }">
+                                  <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': $data.stepctx[0], 'title': $data.stepctx[0] }"></i>
+                                  <span data-bind="text: $data.stepctx[0] + '.'"></span>
+                                  <feature:disabled name="workflowDynamicStepSummaryGUI">
+                                      <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                                      <span data-bind="text: stepinfo().stepident"></span>
+                                  </feature:disabled>
+                                  <feature:enabled name="workflowDynamicStepSummaryGUI">
+                                      <span data-bind="visible: hovering() || followingOutput() ">
+                                          <span data-bind="foreach: subSteps">
+                                              <span data-bind="template: { name: 'step-info-simple-link', data:$data.stepinfo, as: 'stepinfo' }"></span>
+                                              <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': $data.stepctx, 'title': $data.stepctx }"></i>
+                                          </span>
+                                      </span>
+                                      <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+                                  </feature:enabled>
 
-                              <feature:disabled name="workflowDynamicStepSummaryGUI">
-                                  <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
-                                  <span data-bind="text: stepinfo().stepident"></span>
-                              </feature:disabled>
-                              <feature:enabled name="workflowDynamicStepSummaryGUI">
-                                  <span data-bind="visible: hovering() || followingOutput() ">
-                                      %{--<span data-bind="if: followingOutput()">--}%
-                                      <span data-bind="template: { name: 'step-info-parent-path-links', data:stepinfo, as: 'stepinfo' }"></span>
-                                      %{--</span>--}%
-                                      %{--<span data-bind="if: !followingOutput()">--}%
-                                      %{--<span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>--}%
-                                      %{--</span>--}%
+                              </div>
+                          </div>
+
+                          <div class=" col-sm-2">
+                              <span class="execstate execstatedisplay " data-bind="attr: {
+                                   'data-execstate': executionState,
+                                   'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' )
+                               }"></span>
+                          </div>
+
+
+                          <div class="col-sm-2 col-sm-offset-3">
+                              <span class="execstart info time" data-bind="text: startTimeFormat('h:mm:ss a')"></span>
+                          </div>
+
+                          <div class="col-sm-2">
+                              <span class="execend  info time" data-bind="text: durationSimple()"></span>
+                          </div>
+
+                      </div>
+                      <div data-bind="if: followingOutput">
+                      <div class="row " data-bind="visible: followingOutput">
+                          <div class="col-sm-12 wfnodeoutput exec-output -view-opt--node-inset-disabled" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
+
+                          </div>
+                      </div>
+                      <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
+                          <div class="col-sm-12">
+                              <div class="padded">
+                                  <span class="text-secondary">
+                                      <i class="fas fa-spinner fa-pulse"></i>
+                                      <em><g:message code="loading" /></em>
                                   </span>
-
-                                  <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
-                              </feature:enabled>
-
+                              </div>
                           </div>
                       </div>
-
-                      <div class=" col-sm-2">
-                          <span class="execstate execstatedisplay " data-bind="attr: {
-                               'data-execstate': executionState,
-                               'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' )
-                           }"></span>
-                      </div>
-
-
-                      <div class="col-sm-2 col-sm-offset-3">
-                          <span class="execstart info time" data-bind="text: startTimeFormat('h:mm:ss a')"></span>
-                      </div>
-
-                      <div class="col-sm-2">
-                          <span class="execend  info time" data-bind="text: durationSimple()"></span>
-                      </div>
-
-                  </div>
-
-                  <div data-bind="if: followingOutput">
-                  <div class="row " data-bind="visible: followingOutput">
-                      <div class="col-sm-12 wfnodeoutput exec-output -view-opt--node-inset-disabled" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
-
-                      </div>
-                  </div>
-                  <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
-                      <div class="col-sm-12">
-                          <div class="padded">
-                              <span class="text-secondary">
-                                  <i class="fas fa-spinner fa-pulse"></i>
-                                  <em><g:message code="loading" /></em>
-                              </span>
+                      <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
+                          <div class="col-sm-12">
+                              <div class="padded">
+                                  <span class="text-secondary">
+                                      <i class="glyphicon glyphicon-info-sign"></i>
+                                      <em><g:message code="no.output" /></em>
+                                  </span>
+                              </div>
                           </div>
                       </div>
-                  </div>
-                  <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
-                      <div class="col-sm-12">
-                          <div class="padded">
-                              <span class="text-secondary">
-                                  <i class="glyphicon glyphicon-info-sign"></i>
-                                  <em><g:message code="no.output" /></em>
-                              </span>
-                          </div>
                       </div>
-                  </div>
-                  </div>
-              </div>
-              </div>
+                    </div>
+                </div>
               </div>
           </div>
 

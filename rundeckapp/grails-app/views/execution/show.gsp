@@ -1035,8 +1035,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-strong"/>
-
+        <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': stepinfo.stepctx }"></i>
     </span>
     <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
   </script>
@@ -1057,7 +1056,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-strong"/>
+        <i class="auto-caret text-muted" data-bind="click: $root.toggleOutputForNodeStep, attr: { 'arrow-stepctx': stepinfo.stepctx }"></i>
     </span>
   </script>
 

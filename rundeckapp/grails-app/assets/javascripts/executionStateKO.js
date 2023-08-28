@@ -78,6 +78,10 @@ function JobWorkflow(multi,workflow,id){
 function WorkflowStepInfo(multiworkflow,stepctx,data){
     "use strict";
     var self = this;
+    console.log(":::::::::::Creating WorkflowStepInfo with (stepctx, data)")
+    console.log(stepctx)
+    console.log(data)
+    console.log(":::::::::FINISHED STEPINFO MSGS")
     /**
      * The MultiWorkflow
      */
@@ -196,6 +200,12 @@ function WorkflowStepInfo(multiworkflow,stepctx,data){
         }
         return null;
     });
+
+    self.printSelf = function (){
+        console.log(self)
+        return "balalala"
+    }
+
     /**
      * Step number
      */
@@ -604,10 +614,18 @@ function MultiWorkflow(workflowInfo,data){
  */
 function RDNodeStep(data, node, flow){
     var self = this;
+
+    console.log("::::::::::CREATING RD NODE STEP (data,node,flow)")
+    console.log(data)
+    console.log(node)
+    console.log(flow)
+    console.log("::::::::::::::::::::::::::finished creating nodestep msgs")
+
     self.node = node;
     self.flow = flow;
     self.stepctx = data.stepctx;
     self.stepinfo=ko.observable(flow.multiWorkflow.getStepInfoForStepctx(data.stepctx));
+    self.subSteps = ko.observableArray([]).extend({ rateLimit: 200 });
     self.type = ko.observable(flow.workflow.contextType(data.stepctx));
     self.stepident = ko.observable(flow.workflow.renderContextString(data.stepctx));
     self.stepctxdesc = ko.observable("Workflow Step: " + data.stepctx);
@@ -644,6 +662,57 @@ function RDNodeStep(data, node, flow){
     self.durationSimple=ko.pureComputed(function(){
         return MomentUtil.formatDurationSimple(self.durationCalc());
     });
+    self.loadSubStepInfos = function (ctx){
+        console.log(`LOADING STEP INFOS FOR STEPCONTEXT: ${ctx}`)
+        let ctxArr = RDWorkflow.parseContextId(ctx)
+        let arrSize = ctxArr.length
+        console.log(ctxArr)
+        let infosArr = []
+        for (let i = 1; i < arrSize; i++){
+            let subCtx = ctxArr.slice(0,i)
+            let subStepInfo = flow.multiWorkflow.getStepInfoForStepctx(RDWorkflow.createContextId(subCtx))
+
+            console.log("subctx,substepinfo----")
+            console.log(subCtx)
+            console.log(subStepInfo)
+            infosArr.push(subStepInfo)
+            console.log("-------------------------")
+        }
+
+        console.log(infosArr)
+        console.log("FINISH LOADING STEPINFOS")
+        return infosArr
+    }
+
+    self.loadSubSteps = function (data, node, flow){
+        let ctxArr = RDWorkflow.parseContextId(data.stepctx)
+        let arrSize = ctxArr.length
+        let stepsArr = []
+        for (let i = 2; i <= arrSize; i++){
+            let subCtx = ctxArr.slice(0,i)
+            data.isSubStep = true
+            data.stepctx = RDWorkflow.createContextId(subCtx)
+            console.log(`subctx----index: ${i}`)
+            console.log(data.stepctx)
+            let subStep = new RDNodeStep(data, node, flow)//flow.multiWorkflow.getStepInfoForStepctx(RDWorkflow.createContextId(subCtx))
+
+
+            console.log("subStep----")
+            console.log(subStep)
+            stepsArr.push(subStep)
+            console.log("-------------------------")
+        }
+
+        console.log(stepsArr)
+        console.log("FINISH LOADING STEPINFOS")
+        return stepsArr
+    }
+
+    if(!data.isSubStep) {
+        self.subSteps.push(...self.loadSubSteps(data, node, flow))
+        console.log(`substepsInfoslength for stepctx: ${self.stepctx}`)
+        console.log(self.subSteps().length)
+    }
 }
 /**
  * Return true if state B should be used instead of a
@@ -718,11 +787,13 @@ function RDNode(name, steps,flow){
     //date string indicating last updated
     self.lastUpdated=ko.observable(null);
     self.findStepForCtx=function(stepctx){
-
-        var found=ko.utils.arrayFilter(self.steps(),function(e){
-            return e.stepctx==stepctx;
+        console.log("finding step for ctx in steps array:")
+        console.log(self.steps())
+        let found=ko.utils.arrayFilter(self.steps(),function(e){
+            return e.stepctx.startsWith(stepctx)
         });
-        if(found && found.length==1){
+        console.log(found)
+        if(found && found.length > 0){
             return found[0];
         }
         return null;
@@ -839,6 +910,7 @@ function RDNode(name, steps,flow){
         }
     };
     self.currentStepFromData=function(data){
+        console.log("currentStepFromData")
         self.currentStep(new RDNodeStep(data, self, self.flow));
     };
     self.updateSummary=function(nodesummary){
@@ -862,9 +934,13 @@ function RDNode(name, steps,flow){
      * @param steps
      */
     self.loadData=function(data){
+        console.log("updating steps from loadData func")
         self.dedupeSteps(data.steps);
         self.updateSummary(data.summary);
         self.updateSteps(data.steps);
+
+        console.log("Resulting steps for node")
+        console.log(self.steps())
     };
     self.dedupeSteps=function(steps) {
         var seen = []
@@ -883,10 +959,12 @@ function RDNode(name, steps,flow){
         })
     };
     self.updateSteps=function(steps){
+        console.log("updateSteps")
         ko.mapping.fromJS({steps: steps}, mapping, this);
         self.summarize();
     };
     if(steps){
+        console.log("updating steps from RDNode func")
         self.updateSteps(steps);
     }
 }
@@ -1138,27 +1216,41 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
             self.followingControl=null;
         }
     };
-    self.showOutput= function (nodestep) {
+    self.showOutput= function (nodestep, substepCtx) {
         /** Kick the event out to Vue Land and let the new viewer handle display */
-        if (nodestep.executionState() !== 'NOT_STARTED')
+        if (nodestep.executionState() !== 'NOT_STARTED') {
+            nodestep.substepctx = substepCtx
             window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
-        else
+        }else
             nodestep.outputLineCount(0)
     }
 
     self.toggleOutputForNodeStep = function (nodestep,callback) {
+
+        console.log(`::::::::::.Toggling output for node step ctx: ${nodestep.stepctx}`)
+        console.log("callback event")
+        console.log(callback)
+        if(typeof(callback)!=='function')
+            console.log(callback.currentTarget.getAttribute('arrow-stepctx'))
+        console.log("nodestep:")
+        console.log(nodestep)
+        console.log("::::::::::END Toggle msgs:::::::::::::::")
         self.stopShowingOutput();
         //toggle following output for selected nodestep
         var node = nodestep.node;
-        var stepctx=RDWorkflow.cleanContextId(nodestep.stepctx);
-        //
+        var substepCtx = (typeof(callback)=='function')? RDWorkflow.cleanContextId(nodestep.stepctx) : callback.currentTarget.getAttribute('arrow-stepctx');
+        nodestep = node.findStepForCtx(substepCtx);
+        console.log("NodeStep in toggle signal")
+        console.log(nodestep)
         var postload=function(){
             node.expanded(true);
             //find correct nodestep given the context string, strip of parameters
-            var nodestep=node.findStepForCtx(stepctx);
+            //var nodestep=node.findStepForCtx(substepCtx);
             if(!nodestep){
-                throw "failed to find step for context: "+stepctx +" and node: "+node.name;
+                throw "failed to find step for context: "+substepCtx +" and node: "+node.name;
             }
+            console.log("NodeStep to set followingoutput to true")
+            console.log(nodestep)
             nodestep.followingOutput(true);
             ko.utils.arrayForEach(self.nodes(), function (n) {
                 ko.utils.arrayForEach(n.steps(), function (step) {
@@ -1168,17 +1260,20 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
                     }
                 });
             });
-            var ctrl = self.showOutput(nodestep);
+            var ctrl = self.showOutput(nodestep, substepCtx);
             self.followingStep(nodestep);
             self.followingControl=ctrl;
             if(typeof(callback)=='function'){callback();}
         };
         if(!node.expanded() && !nodestep.followingOutput()){
+            console.log("not expanded not following")
             //need to load the step states for the node before showing the output
             return self.loadStateForNode(node).then(postload);
         }else if(!nodestep.followingOutput()){
+            console.log("expanded but not following")
             postload();
         }else{
+            console.log("expanded and following")
             nodestep.followingOutput(false);
             self.followingStep(null);
         }
@@ -1328,16 +1423,31 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
             }
             var nodea = self.findNode(node);
 
+            console.log("::::::::FOR NODE")
+            console.log(node)
+            console.log(nodea)
+            console.log("------------------------------")
+
             if (nodea && nodesteps) {
+                console.log(":::::updating Steps(steps)")
+                console.log(nodesteps)
+                console.log(":::::Finish updating message")
                 nodea.updateSteps(nodesteps);
             } else if(nodea) {
+                console.log(":::::UPDATING summary(summary)")
+                console.log(nodeSummary)
+                console.log(":::::Finish updating message")
                 nodea.updateSummary(nodeSummary);
             } else {
+                console.log(":::::CREATING RDNode from updateNodes(steps)")
+                console.log(nodesteps)
+                console.log(":::::Finish creating message")
                 var rdNode = new RDNode(node, nodesteps, self);
                 rdNode.updateSummary(nodeSummary);
                 self.nodes.push(rdNode);
                 self.nodeIndex[rdNode.name]=rdNode;
             }
+            console.log("::::::::FINISHED FOR NODE MSG")
         }
     };
 
@@ -1347,9 +1457,11 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
             url:_genUrl(self.nodeStateUpdateUrl,{node:node.name}),
             dataType:'json',
             success: function (data,status,jqxhr) {
+                console.log("NodeFlowViewModel.loadStateForNode with ajaxExecNodeState ...(data)")
                 if(data.error){
                     obj.errorMessage( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
                 }else{
+                    console.log(data)
                     node.loadData(data);
                 }
             },

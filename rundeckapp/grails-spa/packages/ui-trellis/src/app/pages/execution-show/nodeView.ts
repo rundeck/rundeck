@@ -9,25 +9,31 @@ const rootStore = getRundeckContext().rootStore
 
 window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     const execId = nodeStep.flow.executionId()
-    const stepCtx = nodeStep.stepctx
+    const stepCtxToRender = nodeStep.substepctx
+    const stepCtxToSelect = nodeStep.stepCtx
+    console.log('Stepctx reveived in vue view')
+    console.log(stepCtxToRender)
     const node = nodeStep.node.name
 
     let query = [
         `.wfnodeoutput[data-node="${nodeStep.node.name}"]`,
-        stepCtx ? `[data-stepctx="${stepCtx}"]` : undefined
+        stepCtxToSelect ? `[data-stepctx="${stepCtxToSelect}"]` : undefined
     ].filter(e => e).join('')
 
+    console.log("L23 vue")
     const div = document.createElement("div")
     const elm = document.querySelector(query)!
+    console.log("L26 vue")
     elm.appendChild(div)
 
+    console.log("L29 vue")
     const template = `\
     <LogViewer
         class="wfnodestep"
         v-if="this.$el.parentNode.display != 'none'"
         executionId="${execId}"
         node="${node}"
-        stepCtx="${stepCtx}"
+        stepCtx="${stepCtxToRender}"
         :showSettings="false"
         ref="viewer"
         :config="config"
@@ -52,10 +58,12 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
         },
     })
 
+    console.log("L61 vue")
+
     /** Update the KO code when this views output starts showing up */
     const execOutput = rootStore.executionOutputStore.createOrGet(execId)
     autorun((reaction) => {
-        const entries = execOutput.getEntriesFiltered(node, stepCtx)
+        const entries = execOutput.getEntriesFiltered(node, stepCtxToRender)
 
         if (!entries || entries.length == 0) {
             /** There was no output so we update KO and remove the viewer */
