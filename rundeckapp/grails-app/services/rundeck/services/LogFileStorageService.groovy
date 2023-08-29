@@ -75,7 +75,6 @@ import java.util.function.Supplier
  * "storageRequests" blocking queue for storage requests
  * "retrievalRequests" blocking queue for retrieval requests
  */
-@Transactional
 class LogFileStorageService
         implements
                 InitializingBean,
@@ -270,20 +269,22 @@ class LogFileStorageService
 
             def files=[:]
             log.debug("Partial: Storage request [ID#${task.id}]: for types: $typelist")
-            Execution execution = Execution.get(execId)
+            Execution.withNewSession {
+                Execution execution = Execution.get(execId)
 
-            files = getExecutionFiles(execution, typelist, true)
-            try {
-                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files, true)
-                success = didsucceed
-                if(success){
-                    log.debug("Partial: Storage request [ID#${task.id}]: succeeded")
-                }else{
-                    log.debug("Failure: Partial: Storage request [ID#${task.id}]: ${failuremap}")
+                files = getExecutionFiles(execution, typelist, true)
+                try {
+                    def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files, true)
+                    success = didsucceed
+                    if (success) {
+                        log.debug("Partial: Storage request [ID#${task.id}]: succeeded")
+                    } else {
+                        log.debug("Failure: Partial: Storage request [ID#${task.id}]: ${failuremap}")
+                    }
+                } catch (IOException | ExecutionFileStorageException e) {
+                    success = false
+                    log.error("Failure: Partial: Storage request [ID#${task.id}]: ${e.message}", e)
                 }
-            } catch (IOException | ExecutionFileStorageException e) {
-                success = false
-                log.error("Failure: Partial: Storage request [ID#${task.id}]: ${e.message}", e)
             }
             return
         }
@@ -701,28 +702,30 @@ class LogFileStorageService
         log.debug("dequeueIncompleteLogStorage, processing ${taskId}")
         Long invalidId
         String serverUuid
-        LogFileStorageRequestData request = logFileStorageRequestProvider.get(taskId)
-        Execution e = Execution.get(request.executionId)
-        if (!frameworkService.existsFrameworkProject(e.project)) {
-            log.error(
-                "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
-            )
-            invalidId = request.id
-            serverUuid = e.serverNodeUUID
-            return
-        }
-        log.debug("re-queueing incomplete log storage request for execution ${e.id}")
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
-        if (null != plugin && pluginSupportsStorage(plugin)) {
-            //re-queue storage request immediately, pass -1 to skip counter increment
-            storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
-        } else {
-            log.error(
-                    "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
-            )
-        }
-        if (invalidId != null) {
-            cleanupIncompleteLogStorage(serverUuid, invalidId)
+        Execution.withNewSession {
+            LogFileStorageRequestData request = logFileStorageRequestProvider.get(taskId)
+            Execution e = Execution.get(request.executionId)
+            if (!frameworkService.existsFrameworkProject(e.project)) {
+                log.error(
+                        "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
+                )
+                invalidId = request.id
+                serverUuid = e.serverNodeUUID
+                return
+            }
+            log.debug("re-queueing incomplete log storage request for execution ${e.id}")
+            def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
+            if (null != plugin && pluginSupportsStorage(plugin)) {
+                //re-queue storage request immediately, pass -1 to skip counter increment
+                storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
+            } else {
+                log.error(
+                        "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
+                )
+            }
+            if (invalidId != null) {
+                cleanupIncompleteLogStorage(serverUuid, invalidId)
+            }
         }
     }
     /**
