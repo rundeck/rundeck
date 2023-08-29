@@ -22,10 +22,10 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
+        <asset:javascript src="vendor/vue.global.js"/>
     </g:if>
     <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
+        <asset:javascript src="vendor/vue.global.prod.js"/>
     </g:else>
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
@@ -243,7 +243,9 @@
     </g:if>
 
     <div id="section-content-wrap">
-    <ui-socket section="main-content" location="before" class="vue-ui-socket" tag="div"></ui-socket>
+        <div class="vue-ui-socket">
+            <ui-socket section="main-content" location="before" tag="div"></ui-socket>
+        </div>
     <section id="section-content">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
@@ -283,7 +285,9 @@
         <g:layoutBody/>
     %{--        <g:render template="/common/footer"/>--}%
     </section>
-    <ui-socket section="main-content" location="after" class="vue-ui-socket" tag="div"></ui-socket>
+        <div class="vue-ui-socket">
+            <ui-socket section="main-content" location="after" tag="div"></ui-socket>
+        </div>
     </div>
 </section>
 

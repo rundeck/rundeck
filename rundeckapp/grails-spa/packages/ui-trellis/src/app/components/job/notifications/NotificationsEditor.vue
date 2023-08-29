@@ -5,7 +5,7 @@
       Notifications can be triggered by different events during the Job Execution.
     </div>
     <div >
-      <undo-redo :event-bus="this"/>
+      <undo-redo :event-bus="eventBus"/>
 
       <div v-if="notifications.length < 1" >
         <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
@@ -45,24 +45,25 @@
                   </div>
 
                   <popover :title="$t('scheduledExecution.property.notifyAvgDurationThreshold.label')" target="#jobAvgInfoBtn">
-                    <template slot="popover">
-                      <markdown-it-vue class="markdown-body" :content="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"/>
+                    <template v-slot:popover>
+                      <VMarkdownView class="markdown-body" :content="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"/>
                     </template>
                   </popover>
 
                 </div>
               </div>
             </div>
-            <div v-for="(notif,i) in getNotificationsForTrigger(trigger)" v-if="getNotificationsForTrigger(trigger)" class="list-group-item flex-container flex-justify-start">
+            <template v-if="getNotificationsForTrigger(trigger)">
+            <div v-for="(notif,i) in getNotificationsForTrigger(trigger)" class="list-group-item flex-container flex-justify-start">
               <div style="margin-right:10px;">
                 <dropdown ref="dropdown" append-to-body>
                   <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
                     <span class="caret"></span>
                   </btn>
-                  <template slot="dropdown">
+                  <template v-slot:dropdown>
                     <li @click="doCopyNotification(notif)">
                       <a role="button">
-                        {{$t('Duplicate...')}}
+                        {{$t('duplicate')}}...
                       </a>
                     </li>
                     <li role="separator" class="divider"></li>
@@ -92,8 +93,9 @@
               <btn type="default" size="sm" @click="doEditNotification(notif)">Edit</btn>
 
             </div>
-          </div>
+            </template>
 
+          </div>
         </div>
       </div>
     </div>
@@ -120,7 +122,7 @@
                   Select a Trigger
                 </span>
               </btn>
-              <template slot="dropdown">
+              <template v-slot:dropdown>
                 <li v-for="trigger in notifyTypes"
                     @click="setEditNotificationTrigger(trigger)"
                     :data-trigger="trigger"
@@ -162,7 +164,7 @@
                   Select a Notification
                   </span>
                 </btn>
-                <template slot="dropdown">
+                <template v-slot:dropdown>
                   <li v-for="plugin in sortedProviders" :key="plugin.name">
                     <a role="button"
                        @click="setEditNotificationType(plugin.name)"
@@ -211,7 +213,8 @@
 
       </div>
 
-      <div slot="footer">
+      <template v-slot:footer>
+      <div>
         <btn @click="cancelEditNotification" id="job-notifications-edit-modal-btn-cancel">{{ $t('Cancel') }}</btn>
         &nbsp;
         <btn @click="saveNotification"
@@ -226,15 +229,14 @@
           {{ editError }}
         </span>
       </div>
+      </template>
     </modal>
   </div>
 </template>
 <script>
-
-
+import { defineComponent } from 'vue'
 import {
   getRundeckContext,
-  RundeckContext
 } from "../../../../library"
 
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
@@ -242,12 +244,13 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import pluginService from "../../../../library/modules/pluginService";
 import ExtendedDescription from "../../../../library/components/utils/ExtendedDescription.vue";
 import UndoRedo from "../../util/UndoRedo.vue"
-import Vue from 'vue'
+import {VMarkdownView} from "vue3-markdown";
 
-export default {
+export default defineComponent({
   name: 'NotificationsEditor',
-  props: ['eventBus', 'notificationData'],
-  components: {PluginInfo,PluginConfig,ExtendedDescription,UndoRedo},
+  props: ['notificationData'],
+  components: {PluginInfo,PluginConfig,ExtendedDescription,UndoRedo, VMarkdownView},
+  emits: ['changed'],
   data () {
     return {
       notifyAvgDurationThreshold:null,
@@ -276,7 +279,8 @@ export default {
       editModal:false,
       autocompleteCallback: {
         type: Function
-      }
+      },
+      eventBus: getRundeckContext().eventBus
     }
   },
   computed:{
@@ -331,7 +335,7 @@ export default {
     async doDelete(index){
       let oldval = this.doClone(this.notifications[index])
       await this.operationDelete(index)
-      this.$emit(
+      this.eventBus.emit(
           "change",
           {
             index: index,
@@ -345,7 +349,7 @@ export default {
       await this.operationCreate(value)
       let value1 = this.doClone(value)
       let index = this.notifications.length - 1
-      this.$emit(
+      this.eventBus.emit(
           "change",
           {
             index: index,
@@ -359,7 +363,7 @@ export default {
       let oldval = this.doClone(this.notifications[index])
       await this.operationModify(index,value)
       let clone = this.doClone(value)
-      this.$emit("change",{
+      this.eventBus.emit("change",{
         index: index,
         value: clone,
         orig: oldval,
@@ -450,9 +454,11 @@ export default {
       return this.notifications.findIndex(s=>s.trigger===trigger)>=0
     },
     doUndo(change){
+        console.log("do undo")
       this.perform(change.undo, {index:change.index,value:change.orig||change.value})
     },
     doRedo(change){
+        console.log("do redo")
       this.perform(change.operation,change)
     },
     async perform(operation,change){
@@ -468,8 +474,11 @@ export default {
     },
   },
   watch:{
-    notifications(){
-      this.$emit('changed',this.notifications)
+    notifications: {
+      handler() {
+        this.$emit('changed', this.notifications)
+      },
+      deep: true,
     }
   },
   async mounted () {
@@ -477,8 +486,8 @@ export default {
 
     this.notifications = [].concat(this.notificationData.notifications || [])
     this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
-    this.$on("undo",this.doUndo)
-    this.$on("redo",this.doRedo)
+    this.eventBus.on("undo",this.doUndo)
+    this.eventBus.on("redo",this.doRedo)
     pluginService
         .getPluginProvidersForService('Notification')
         .then(data => {
@@ -487,8 +496,12 @@ export default {
             this.pluginLabels = data.labels;
           }
         });
+  },
+  beforeUnmount() {
+      this.eventBus.off("undo")
+      this.eventBus.off("redo")
   }
-}
+})
 </script>
 <style lang="scss" scoped>
 .list-group-item {

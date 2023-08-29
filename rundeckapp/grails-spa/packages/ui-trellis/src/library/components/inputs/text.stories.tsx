@@ -1,12 +1,8 @@
-import Vue from 'vue'
-import { addons } from '@storybook/addons'
-
-
 export default {
     title: 'Inputs/Text'
 }
 
-export const InputTextHorizontal = () => (Vue.extend({
+export const InputTextHorizontal = () => ({
     render(h) {
         return (
             <div class="input-text--horizontal">
@@ -20,4 +16,4 @@ export const InputTextHorizontal = () => (Vue.extend({
             </div>
         )
     }
-}))
+})

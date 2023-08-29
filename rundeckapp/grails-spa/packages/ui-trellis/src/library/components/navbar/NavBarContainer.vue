@@ -1,18 +1,20 @@
 <template>
-    <li :id="item.id" class="navbar__item-container" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
+    <li :id="item.id" class="navbar__item-container" :class="{'navbar__item--active': item.active}">
         <div class="navbar__item-spacer"></div>
         <NavBarDrawer>
+            <template v-slot:default>
             <a :href="item.link">
-                <i style="" :class="item.class"/>
+                <i style="" :class="item.class"></i>
                 <div>{{label}}</div>
             </a>
-            <template slot="content">
+            </template>
+            <template v-slot:content>
                 <ul 
                     :class="{
-                        'navbar__container--icons': item.style == 'icon',
-                        'navbar__container--list': item.style == 'list'
+                        'navbar__container--icons': item.style === 'icon',
+                        'navbar__container--list': item.style === 'list'
                     }">
-                <NavBarItem v-for="entry in navBar.containerItems(item.id)" :item="entry" :key="entry.id" :itemStyle="item.style" />
+                <NavBarItem v-for="entry in getNavBarContainerItems(item.id)" :item="entry" :key="entry.id" :itemStyle="item.style" />
                 </ul>
             </template>
         </NavBarDrawer>
@@ -20,40 +22,39 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
+import type {PropType} from "vue";
 
-import {NavItem, NavBar, NavContainer} from '../../stores/NavBar'
+import {NavBar, NavContainer, NavItem} from '../../stores/NavBar'
 
 import NavBarItem from './NavBarItem.vue'
-import {Component, Inject, Prop} from 'vue-property-decorator'
-import { Observer } from 'mobx-vue'
-import { RootStore } from '../../stores/RootStore'
 
 import NavBarDrawer from './NavBarDrawer.vue'
 
-@Observer
-@Component({components: {NavBarItem, NavBarDrawer}})
-export default class NavBarContainer extends Vue {
-    @Inject()
-    rootStore!: RootStore
-
-    navBar!: NavBar
-
-    @Prop()
-    item!: NavContainer
-
-    created() {
-        this.navBar = this.rootStore.navBar
+export default defineComponent({
+    name:"NavBarContainer",
+    components: {
+        NavBarItem, NavBarDrawer
+    },
+    props: {
+        item: Object as PropType<NavContainer>
+    },
+    data() {
+        return {
+            navBar: window._rundeck.rootStore.navBar
+        }
+    },
+    computed: {
+        label() {
+            return this.item.label!.toUpperCase()
+        },
+    },
+    methods: {
+      getNavBarContainerItems(itemId) {
+          return this.navBar.containerItems(itemId)
+      }
     }
-
-    body() { 
-        return document.body
-    }
-
-    get label(): string {
-        return this.item!.label!.toUpperCase()
-    }
-}
+})
 </script>
 
 <style lang="scss" scoped>

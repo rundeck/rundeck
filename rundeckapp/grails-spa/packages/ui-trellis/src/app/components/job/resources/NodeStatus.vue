@@ -12,20 +12,27 @@
 </template>
 <script lang="ts">
 import {glyphiconForName, statusIconStyle, statusIconCss} from '../../../utilities/nodeUi'
+import { defineComponent } from "vue"
 
-export default {
+export default defineComponent({
   name: 'node-status',
   props: {
-    node: {},
-    showText: false,
+    node: {
+      type: Object,
+      default: () => {}
+    },
+    showText: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
-
   methods: {
     statusIconCss,
     statusIconStyle,
     glyphiconForName
   }
-}
+})
 </script>
 <style lang="scss" scoped>
 .node-status-icon + .node-status-text{
