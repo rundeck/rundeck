@@ -1,3 +1,6 @@
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import liquibase.statement.core.UpdateStatement
+
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-4") {
@@ -157,6 +160,35 @@ databaseChangeLog = {
 
         createIndex(indexName: "execution_workflow_id_idx", tableName: "execution", unique: false) {
             column(name: "workflow_id")
+        }
+    }
+
+    changeSet(author: "rundeckdev", id: "4.x-add-uuid-and-job-uuid") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "execution", columnName: 'uuid')
+                columnExists(tableName: "execution", columnName: 'job_uuid')
+            }
+        }
+        addColumn(tableName: "execution") {
+            column(name: 'job_uuid', type: '${varchar255.type}')
+            column(name: 'uuid', type: '${varchar255.type}')
+        }
+
+    }
+
+    changeSet(author: "rundeckdev", id: "4.x-add-uuid-and-job-uuid-indexes") {
+        preConditions(onFail: "MARK_RAN"){
+            not {
+                indexExists(indexName: "execution_uuid_idx", tableName: "execution")
+                indexExists(indexName: "execution_job_uuid_idx", tableName: "execution")
+            }
+        }
+        createIndex(indexName: "execution_uuid_idx", tableName: "execution") {
+            column(name: "uuid")
+        }
+        createIndex(indexName: "execution_job_uuid_idx", tableName: "execution") {
+            column(name: "job_uuid")
         }
     }
 }

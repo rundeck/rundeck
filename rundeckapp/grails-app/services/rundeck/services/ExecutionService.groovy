@@ -2153,6 +2153,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Abandon the transient ScheduledExecution entity instance.
         execution.scheduledExecution = null
+        execution.jobUuid = null
 
         if(execution.workflow){
             if(!execution.workflow.save(flush:true)){
@@ -2566,6 +2567,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         execution.scheduledExecution=se
+        execution.jobUuid=se.uuid
 
         // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
         if(!beforeExecutionResult?.isSuccessful() && beforeExecutionResult?.isTriggeredByJobEvent(JobPreExecutionEvent)) {
@@ -3002,6 +3004,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
         execution.properties = props
+        if(!execution.uuid) {
+            execution.uuid = UUID.randomUUID().toString()
+        }
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }
@@ -3011,6 +3016,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (schedId) {
             scheduledExecution = ScheduledExecution.findByUuid(schedId)
+            if(!execution.jobUuid) execution.jobUuid = scheduledExecution.uuid
         }
 
         //check the final status of succeeded nodes
@@ -4011,52 +4017,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private def queryExecutionMetricsByCriteria(ExecutionQuery query){
-        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
-        def metricCriteria = {
 
-            // Run main query criteria
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                /* Group by Calculated Status */
-//                groupProperty("state") // state field added as formula on Execution.groovy
-//                property("state", "state")
-
-/*
-                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
-                sqlProjection "CASE " +
-                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
-                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
-                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
-                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
-                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
-                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
-                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
-                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
-                    'estado',
-                    StandardBasicTypes.STRING
-*/
-
-                rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
-                    'durationSum',
-                    StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
-                    'durationMin',
-                    StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
-                    'durationMax',
-                    StandardBasicTypes.TIME
-
+        List<Closure> metricsCriterias = getCriteriaScenarios(query)
+        def metricsData = [:]
+        for (Closure c : metricsCriterias) {
+            try {
+                metricsData = Execution.createCriteria().get(c)
+                log.debug("Resultset extracted.")
+                break;
+            } catch (Exception ignored) {
+                log.debug("Cannot obtain resultset from criteria's function, attempting other criteria.")
             }
         }
-
-        // get data and calculate
-        def metricsData = Execution.createCriteria().get(metricCriteria)
-
         return metricsDataFromCriteriaResult(metricsData)
 
     }
@@ -4067,24 +4039,118 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
-        long totalCount = metricsData?.count ? metricsData.count : 0
 
-        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
-        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
-        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
-        double avgDuration = totalCount != 0 ? (durationSum / totalCount) : 0
+        def formattedMetrics = formatMetrics(metricsData)
 
         // Build response
         return [
-            total   : totalCount,
+            total   : formattedMetrics.totalCount,
 
             duration: [
-                average: avgDuration,
-                max    : maxDuration,
-                min    : minDuration
+                average: formattedMetrics.avgDuration,
+                max    : formattedMetrics.maxDuration,
+                min    : formattedMetrics.minDuration
             ]
         ]
 
+    }
+
+    /**
+     * Returns a list of criterias to be applied in runtime query to extract metric's resultset from db.
+     *
+     * Tha main goal is to support the query in all supported DB's, so each criteria will be
+     * executed until it gets the result set and not an exception in 'queryExecutionMetricsByCriteria'.
+     *
+     * @param query - ExecutionQuery object
+     *
+     * */
+    List<Closure> getCriteriaScenarios(ExecutionQuery query){
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+        def metricCriteriaA = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.TIME
+                sqlProjection 'min(date_completed - date_started) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.TIME
+                sqlProjection 'max(date_completed - date_started) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.TIME
+
+            }
+        }
+        def metricCriteriaB = {
+            // Run main query criteria
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(extract(EPOCH from (date_completed - date_started))) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(extract(EPOCH from (date_completed - date_started))) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(extract(EPOCH from (date_completed - date_started))) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+    }
+
+    /**
+     * Apply format according to the format of query's result.
+     *
+     * @param metricsData - resultset extracted from the db.
+     *
+     * */
+    private Map<String,Object> formatMetrics(Map<String,Object> metricsData){
+
+        def totalCount = metricsData?.count ? metricsData.count : 0
+        def maxDuration = metricsData?.durationMax ? metricsData.durationMax : 0
+        def minDuration = metricsData?.durationMin ? metricsData.durationMin : 0
+        def durationSum = metricsData?.durationSum ? metricsData.durationSum : 0
+
+        if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
+            maxDuration = epochToTime(metricsData?.durationMax)
+            minDuration = epochToTime(metricsData?.durationMin)
+            durationSum = epochToTime(metricsData?.durationSum)
+        }
+
+        def avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
+
+        return [
+                totalCount: totalCount,
+                maxDuration: sqlTimeToMillis(maxDuration),
+                minDuration: sqlTimeToMillis(minDuration),
+                avgDuration: avgDuration
+        ]
+
+    }
+
+    /**
+     * Parse Unix time in Long, into a java.sql.Time object
+     *
+     * @param epoch - Long : The result of the query
+     * @return a new instance of Time
+     *
+     * */
+    @CompileStatic
+    private Time epochToTime(Long epoch){
+        Date date = new Date(epoch * 1000L)
+        return new Time(date.getTime())
     }
 
     private def queryExecutionMetricsOnMemory(ExecutionQuery query){
