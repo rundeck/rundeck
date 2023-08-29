@@ -1,6 +1,6 @@
 <template>
   <div >
-    <ui-socket section="resources-editor" location="top" :event-bus="eventBus" />
+    <ui-socket section="resources-editor" location="top" :event-bus="eventBus" :root-store="rootStore"/>
     <resources-editor v-model="updatedData" :event-bus="eventBus" v-if="updatedData"/>
     <json-embed :output-data="updatedData" field-name="resourcesJsonData"/>
   </div>

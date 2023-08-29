@@ -217,9 +217,13 @@ export class ExecutionOutputEntry {
     logHtml?: string
     level?: string
     stepctx?: string
+    stepType?: string
+    stepLabel?: string
+    path?: string
     node?: string
     lineNumber!: number
     meta!: object
+    selected?: boolean
 
     renderedStep?: RenderedStepList
 

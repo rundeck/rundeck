@@ -1,5 +1,4 @@
-import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '../../../library'
-import { EventBus } from '../../../library'
+import {getRundeckContext, getSynchronizerToken, RundeckBrowser, EventBus } from '../../../library'
 
 import { RootStore } from '../../../library/stores/RootStore'
 

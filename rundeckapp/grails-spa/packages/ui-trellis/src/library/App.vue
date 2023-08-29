@@ -2,7 +2,7 @@
   <div id="app">
 
  
-    <copybox/>
+    <copybox content=""/>
   </div>
 </template>
 

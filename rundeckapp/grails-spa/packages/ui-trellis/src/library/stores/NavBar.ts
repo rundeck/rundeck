@@ -15,6 +15,7 @@ export class NavBar {
         class: 'fas fa-ellipsis-h',
         label: 'More',
         visible: false,
+        active: false
     }
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
@@ -83,6 +84,8 @@ export interface NavItem {
     group?: string
     visible: boolean
     type: string
+    active?: boolean
+    link?: string
 }
 
 export interface NavLink extends NavItem {

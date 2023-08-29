@@ -287,7 +287,7 @@
                    v-model="currentValue"
                    autocompleteKey="$"
         >
-          <template #item="{ items, select, highlight }">
+          <template #item="{ items, select, highlight }: { items: any[], select: Function, highlight: Function }">
             <li
                 v-for="(item, index) in items"
                 :key="item.name"

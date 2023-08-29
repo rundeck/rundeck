@@ -6,7 +6,7 @@
 <script lang="ts">
 import {defineComponent, PropType} from 'vue'
 
-import {UtilityItem} from '../../stores/UtilityBar'
+import {UtilityActionItem, UtilityItem, UtilityWidgetItem} from '../../stores/UtilityBar'
 
 import UtilActionItem from './UtilityActionItem.vue'
 import UtilWidgetItem from './UtilityWidgetItem.vue'

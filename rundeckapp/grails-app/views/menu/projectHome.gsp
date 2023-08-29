@@ -31,7 +31,6 @@
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
-    <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
                 context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
@@ -63,6 +62,7 @@
     }
     </style>
     <asset:javascript src="menu/projectHome.js"/>
+    <g:loadEntryAssets entry="pages/project-dashboard" />
 </head>
 
 <body>
@@ -104,7 +104,7 @@
     </div>
 
   </div>
-  <asset:javascript src="static/pages/project-dashboard.js"/>
+    <g:loadEntryAssets entry="pages/project-dashboard" />
 </div>
 </div>
 </body>

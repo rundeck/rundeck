@@ -1,14 +1,20 @@
 package rundeck.interceptors
 
+import asset.pipeline.grails.AssetMethodTagLib
+import asset.pipeline.grails.AssetProcessorService
+import asset.pipeline.grails.AssetsTagLib
+import asset.pipeline.grails.LinkGenerator
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import groovy.json.JsonSlurper
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import rundeck.AssetsEntrypointTagLib
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
 import rundeck.User
@@ -94,6 +100,17 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
         mockTagLib(ConfigTagLib)
+        mockTagLib(AssetsTagLib)
+        final def assetMethodTagLibMock = mockTagLib(AssetMethodTagLib)
+        def assetProcessorService = new AssetProcessorService()
+        assetProcessorService.grailsApplication   = grailsApplication
+        assetProcessorService.grailsLinkGenerator = new LinkGenerator("http://localhost:8080")
+        assetMethodTagLibMock.assetProcessorService = assetProcessorService
+        grailsApplication.config.grails.serverURL = "http://localhost:8080"
+        def assetsEntrypointTagLibMock = mockTagLib(AssetsEntrypointTagLib)
+        assetsEntrypointTagLibMock.jsonSlurper = Mock(JsonSlurper) {
+            parse(_) >> ["entryPoints": [:]]
+        }
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }

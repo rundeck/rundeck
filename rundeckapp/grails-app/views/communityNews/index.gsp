@@ -19,9 +19,6 @@
 
     <meta name="layout" content="base"/>
     <title><g:appTitle/></title>
-    <!-- VUE CSS MODULES -->
-    <asset:stylesheet href="static/css/pages/community-news.css"/>
-    <!-- /VUE CSS MODULES -->
 </head>
 
 <body>
@@ -29,7 +26,7 @@
 <div id="layoutBody">
   <div id="community-news-vue"></div>
   <!-- VUE JS MODULES -->
-  <asset:javascript src="static/pages/community-news.js"/>
+  <g:loadEntryAssets entry="pages/community-news"  />
   <!-- /VUE JS MODULES -->
 </div>
 </div>

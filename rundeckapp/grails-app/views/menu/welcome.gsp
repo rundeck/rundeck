@@ -28,7 +28,7 @@ Time: 12:54 PM
   <meta name="layout" content="base"/>
   <meta name="tabpage" content="home"/>
   <title><g:appTitle/><g:message code="page.welcome.title.suffix"/></title>
-  <asset:javascript src="static/pages/login.js"/>
+  <g:loadEntryAssets entry="pages/login" />
   <style media="screen">
     .card-footer .table{
       margin-bottom: 0;
@@ -53,7 +53,7 @@ Time: 12:54 PM
               <h3 >UNSUPPORTED SOFTWARE. NO WARRANTY.</h3>
             </div>
             <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
-            <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+            <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="onSvgLoaded(this)"/>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
               <g:link controller="menu" action="index" class="btn btn-lg btn-primary">
@@ -71,5 +71,13 @@ Time: 12:54 PM
   </div>
 </div>
 </div>
+<script type="application/javascript">
+  function onSvgLoaded(image) {
+    if (typeof SVGInject !== 'undefined') {
+      return SVGInject(image)
+    }
+    window.addEventListener('load', function() { SVGInject(image) })
+  }
+</script>
 </body>
 </html>

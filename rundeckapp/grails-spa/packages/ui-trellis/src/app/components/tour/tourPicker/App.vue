@@ -47,6 +47,7 @@ import {defineComponent} from "vue";
     author: string
     provider: string
   }
+
   interface TourLoader {
     tours: Tour[]
     provider: string

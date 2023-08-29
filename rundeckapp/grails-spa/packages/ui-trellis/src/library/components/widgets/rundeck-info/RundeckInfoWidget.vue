@@ -10,17 +10,28 @@
 
 <script lang="ts">
 import {defineComponent} from 'vue'
+import type {PropType} from "vue"
 import InfoDisplay from './RundeckInfo.vue'
+import {SystemStore} from "../../../stores/System"
+import {Releases} from "../../../stores/Releases"
 
 export default defineComponent({
     name:"RundeckInfoWidget",
+    props: {
+      system: {
+        type: Object as PropType<SystemStore>,
+        required: true,
+      },
+      releases: {
+        type: Object as PropType<Releases>,
+        required: true,
+      },
+    },
     components: {
         InfoDisplay
     },
     data() {
         return {
-            system: window._rundeck.rootStore.system,
-            releases: window._rundeck.rootStore.releases,
             loaded: false
         }
     },

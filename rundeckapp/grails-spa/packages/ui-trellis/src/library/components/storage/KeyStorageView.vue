@@ -129,7 +129,7 @@
           </tr>
           </tbody>
 
-          <tbody v-if="notFound()===true">
+          <tbody v-if="notFound===true">
           <tr>
             <td colspan="2">
                 <span class="text-strong">Nothing found at this path.
@@ -186,7 +186,7 @@
 
             </div>
           </div>
-          <div v-if="wasModified()!==''">
+          <div v-if="!wasModified()">
             <div>
               Modified:
               <span class="timeago text-strong">
@@ -231,6 +231,7 @@
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
 import {defineComponent} from "vue"
+
 import KeyType from "../../types/KeyType";
 import InputType from "../../types/InputType";
 import { formatHumanizedDuration, formatKeyStorageDate } from "../../utilities/DateTimeFormatters";
@@ -331,7 +332,10 @@ export default defineComponent({
     },
     isRunner(): boolean {
       return this.rootPath.startsWith('runner:')
-    }
+    },
+    notFound(): boolean {
+      return false;
+    },
   },
   methods: {
     downloadUrl(): string {
@@ -419,7 +423,7 @@ export default defineComponent({
 
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
-      
+
 
       const requestOptions = {
         queryParameters: forceRefresh? { refresh: "true" } : { }
@@ -545,9 +549,6 @@ export default defineComponent({
     },
     isPassword(key: any) {
       return key && key.meta && key.meta["Rundeck-data-type"] === 'password';
-    },
-    notFound() {
-      return false;
     },
     selectKey(key: any) {
       if (this.selectedKey.path === key.path && this.isSelectedKey==false) {

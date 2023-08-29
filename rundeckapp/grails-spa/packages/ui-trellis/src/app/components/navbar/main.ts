@@ -21,15 +21,17 @@ rootStore.utilityBar.addItems([
       "id": "utility-edition",
       "container": "root",
       "group": "left",
-      "class": rootStore.system.appInfo.logocss+" app-logo",
+      "class": rootStore.system.appInfo.logocss + " app-logo",
       "label": rootStore.system.appInfo.title.toUpperCase(),
       "visible": true,
       widget: markRaw({
         name: 'RundeckInfoWidgetItem',
         components: {RundeckInfoWidget},
-        template: `<RundeckInfoWidget/>`,
+        data() { return { rootStore }},
+        template: `
+          <RundeckInfoWidget :system="rootStore.system" :releases="rootStore.releases"/>`,
         provide: {
-          rootStore
+            rootStore
         }
       })
   },
@@ -58,7 +60,9 @@ rootStore.utilityBar.addItems([
       "class": "fas fa-question-circle fas-xs",
       "label": "Help",
       "visible": true,
-      "action": () => {window.open(appLinks.help, "_blank")}
+      "action": () => {
+          window.open(appLinks.help, "_blank")
+      }
   }
 ] as Array<UtilityActionItem>)
 
@@ -68,7 +72,8 @@ function initNav() {
     const vue = createApp({
         name:"NavigationBarApp",
         components: {NavigationBar},
-        template: `<NavigationBar />`,
+        data() { return { rootStore }},
+        template: `<NavigationBar :nav-bar="rootStore.navBar" />`,
         provide: {
           rootStore
         }
@@ -82,7 +87,8 @@ function initUtil() {
   const vue = createApp({
       name:"UtilityBarApp",
       components: {UtilityBar},
-      template: `<UtilityBar />`,
+      data() { return { rootStore }},
+      template: `<UtilityBar :utility-bar="rootStore.utilityBar"/>`,
       provide: {
         rootStore
       }

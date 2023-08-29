@@ -381,7 +381,7 @@ export default defineComponent({
     },
     fieldColSize() {
       return 'col-sm-10'
-    }
+    },
   },
   setup() {
     const modelData = ref<any>({doNodedispatch: false, orchestrator: {type: null, config: {}}})

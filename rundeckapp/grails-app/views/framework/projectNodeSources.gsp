@@ -51,8 +51,8 @@
         });
   </g:javascript>
   <!-- VUE JS MODULES -->
-  <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />
-  <asset:stylesheet href="static/css/pages/project-nodes-config.css" />
+  <g:loadEntryAssets entry="components/central" />
+  <g:loadEntryAssets entry="pages/project-nodes-config" />
   <!-- /VUE JS MODULES -->
 </head>
 

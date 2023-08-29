@@ -11,8 +11,6 @@ import {initI18n} from "../../utilities/i18n"
 
 const VIEWER_CLASS = 'execution-log-viewer'
 
-const rootStore = getRundeckContext().rootStore
-
 let MOUNTED = false
 
 const els = document.body.getElementsByClassName(VIEWER_CLASS)
@@ -59,6 +57,7 @@ window.onhashchange = () => {
 }
 
 function mount(e) {
+  const rootStore = getRundeckContext().rootStore
   // Create VueI18n instance with options
   const i18n = initI18n()
 
@@ -77,6 +76,7 @@ function mount(e) {
     executionId="${e.dataset.executionId}"
     :jumpToLine="${jumpToLine || null}"
     ref="viewer"
+    :root-store="rootStore"
     ${e.dataset.trimOutput ? `trimOutput="${e.dataset.trimOutput}"` : ""}
   />
   `
@@ -85,6 +85,9 @@ function mount(e) {
     name:"LogViewerApp",
     components: {LogViewer},
     template: template,
+    data() {
+      return { rootStore }
+    },
     provide: {
       rootStore
     }

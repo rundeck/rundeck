@@ -34,8 +34,6 @@
 
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <asset:stylesheet href="static/css/pages/project-nodes-editor.css"/>
-    <asset:javascript src="static/pages/project-nodes-editor.js" defer="defer"/>
     <g:embedJSON data="${[index:index,nextPageUrl:g.createLink(controller: 'framework',
                                                            action: 'projectNodeSources',
                                                            params: [project: project],absolute:true)]}"
@@ -61,6 +59,7 @@
         }
         jQuery(init);
     </g:javascript>
+    <g:loadEntryAssets entry="pages/project-nodes-editor" />
 </head>
 
 <body>

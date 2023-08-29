@@ -45,7 +45,6 @@
     code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 
-      <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
       <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -411,7 +410,8 @@ search
       </g:javascript>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
-      <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+    <g:loadEntryAssets entry="pages/project-activity" />
+    <g:loadEntryAssets entry="pages/project-dashboard" />
 </head>
 <body>
 

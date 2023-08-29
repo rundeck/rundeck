@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+      "baseUrl": ".",
+      "sourceMap": true,
+      "strict": true,
+      "moduleResolution": "node",
+      "experimentalDecorators": true,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "declaration": true,
+      "jsx": "preserve",
+      "allowSyntheticDefaultImports": true
+   },
+    "paths": {
+      "@": [
+        "./src"
+      ]
+    },
+   "include": [
+      "main.ts"
+        // "./src/library/**/*",
+        // "tests/**/*.ts",
+        // "tests/**/*.tsx"
+   ]
+}

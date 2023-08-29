@@ -26,8 +26,8 @@ export default defineComponent({
             type: String as PropType<'icon' | 'list'>
         },
         item: {
-          type: Object as PropType<NavItem>,
-          required: true,
+            type: Object as PropType<NavItem>,
+            required: true,
         }
     },
     computed: {

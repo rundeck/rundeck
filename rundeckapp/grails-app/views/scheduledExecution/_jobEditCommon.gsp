@@ -5,8 +5,7 @@
 <asset:javascript src="util/yellowfade.js"/>
 <asset:javascript src="util/tab-router.js"/>
 <g:jsMessages code="page.unsaved.changes"/>
-<asset:javascript src="static/pages/job/editor.js" defer="defer"/>
-<asset:stylesheet src="static/css/pages/job/editor.css" />
+<g:loadEntryAssets entry="pages/job/editor" />
 <g:jsMessages code="
     yes,
     no,

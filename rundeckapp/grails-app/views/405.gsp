@@ -27,8 +27,6 @@
   <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
-  %{-- Core theme styles from ui-trellis --}%
-  <asset:stylesheet href="static/css/components/theme.css"/>
 
   <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
     <asset:javascript src="vendor/vue.js"/>
@@ -36,9 +34,9 @@
   <g:else>
     <asset:javascript src="vendor/vue.min.js"/>
   </g:else>
-  <asset:javascript src="static/js/chunk-common.js"/>
-  <asset:javascript src="static/js/chunk-vendors.js"/>
-  <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
+  %{-- Core theme styles from ui-trellis --}%
+  <g:loadEntryAssets entry="components/theme"/>
+  <g:loadEntryAssets entry="components/server-identity" />
   <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->

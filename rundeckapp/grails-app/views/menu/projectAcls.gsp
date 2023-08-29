@@ -67,7 +67,7 @@
     <title><g:message code="page.title.project.access.control.0" args="${[projectLabel]}"/></title>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/components/ko-paginator.js"/>
+    <g:loadEntryAssets entry="components/ko-paginator" />
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>

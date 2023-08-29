@@ -5,7 +5,8 @@
 
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
-    <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
+    <g:loadEntryAssets entry="components/central" />
+    <g:loadEntryAssets entry="pages/dynamic-form" />
     <title>%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -

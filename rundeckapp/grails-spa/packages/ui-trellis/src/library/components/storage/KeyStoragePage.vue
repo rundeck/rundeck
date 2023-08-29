@@ -1,5 +1,5 @@
 <template>
-  <ui-socket section="edit-key-storage-providers" location="viewKeys">
+  <ui-socket section="edit-key-storage-providers" location="viewKeys" :root-store="rootStore">
   <div>
     <key-storage-view ref="keyStorageViewRef" v-if="ready" :project="project" :createdKey="selectedKey" :root-path="rootPath" :read-only="readOnly" :allow-upload="allowUpload" :value="path" @openEditor="openEditor"></key-storage-view>
     <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" auto-focus append-to-body :footer="false">
@@ -64,6 +64,9 @@ export default defineComponent({
     },
   },
   computed: {
+    rootStore() {
+      return getRundeckContext().rootStore
+    },
     rootPath(): string {
       return this.project ? "keys/project/" + this.project : "keys"
     }
