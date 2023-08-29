@@ -61,9 +61,11 @@
                   :node-filter="filter.filter"
                   @nodefilterclick="handleNodefilter"
               >
-              <span slot="suffix" v-if="selectedFilterName===filter.name">
-                <i class="fa fa-check"></i>
-              </span>
+                <template v-slot:suffix v-if="selectedFilterName===filter.name">
+                  <span>
+                    <i class="fa fa-check"></i>
+                  </span>
+                </template>
               </node-filter-link>
             </li>
           </template>
@@ -89,7 +91,7 @@
         </btn>
       </div>
       <popover target="#filterSearchHelpBtn" trigger="focus" placement="bottom" v-if="helpButton">
-        <template slot="popover">
+        <template v-slot:popover>
           <div class="help-block">
             <strong>{{ $t('select.nodes.by.name') }}:</strong>
             <p>
@@ -146,10 +148,12 @@
         </div>
 
       </div>
-      <div slot="footer">
-        <btn @click="saveFilterModal=false">{{$t('button.action.Cancel')}}</btn>
-        <btn type="primary" @click="saveFilter">{{ $t('save.filter.ellipsis') }}</btn>
-      </div>
+      <template v-slot:footer>
+        <div>
+          <btn @click="saveFilterModal=false">{{$t('button.action.Cancel')}}</btn>
+          <btn type="primary" @click="saveFilter">{{ $t('save.filter.ellipsis') }}</btn>
+        </div>
+      </template>
     </modal>
     <modal v-model="deleteFilterModal" :title="$t('delete.saved.node.filter')">
 
@@ -176,10 +180,12 @@
         </div>
 
       </div>
-      <div slot="footer">
-        <btn @click="deleteFilterModal=false">{{$t('no')}}</btn>
-        <btn type="danger" @click="deleteFilter">{{$t('yes')}}</btn>
-      </div>
+      <template v-slot:footer>
+        <div>
+          <btn @click="deleteFilterModal=false">{{$t('no')}}</btn>
+          <btn type="danger" @click="deleteFilter">{{$t('yes')}}</btn>
+        </div>
+      </template>
     </modal>
   </div>
 </template>
@@ -187,9 +193,7 @@
 import {_genUrl} from '../../../utilities/genUrl'
 import {RundeckBrowser} from '@rundeck/client'
 import axios from 'axios'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop, Watch} from 'vue-property-decorator'
+import {defineComponent, PropType, ref } from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
 import {
   getAppLinks,
@@ -200,182 +204,217 @@ import Trellis from '../../../../library'
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
 
-@Component({components: {NodeFilterLink}})
-export default class NodeFilterInput extends Vue {
-  @Prop({required: true})
-  value!: string
-  @Prop({required: false, default: false})
-  showTitle!: boolean
-  @Prop({required: false, default: false})
-  autofocus!: boolean
-  @Prop({required: false, default: true})
-  helpButton!: boolean
-  @Prop({required: false, default: 'default'})
-  searchBtnType!: string
-  @Prop({required: false, default: ''})
-  filterName!: string
-  @Prop({required: false, default: 'filter'})
-  filterFieldName!: string
-  @Prop({required: false, default: ''})
-  queryFieldPlaceholderText!: string
-  @Prop({required: false, default: 'schedJobNodeFilter'})
-  filterFieldId!: string
-  /**
-   * if true, allow setting/removing default filter
-   */
-  @Prop({required: false, default: false})
-  allowFilterDefault!: boolean
-  @Prop({
-    required: false, default: () => {
-    }
-  })
-  nodeSummary!: any
-
-  outputValue: string = ''
-  selectedFilterName: string = ''
-  hideAll: boolean = false
-  saveFilterModal: boolean = false
-  saveFilterModalError: string = ''
-  newFilterName: string = ''
-  deleteFilterModal: boolean = false
-
-  get filterNameDisplay() {
-    return this.selectedFilterName === '.*' ? 'All Nodes' : this.selectedFilterName
-  }
-
-  selectedFilterLink(link: any) {
-
-  }
-
-  filterWithoutAll() {
-    if (this.outputValue === '.*' && this.hideAll) {
-      return ''
-    }
-    return this.outputValue
-  }
-
-  get canSaveFilter() {
-    return !this.selectedFilterName && this.filterWithoutAll()
-  }
-
-  async saveFilter() {
-    let result = await client.sendRequest({
-      method: 'POST',
-      url: _genUrl(
-          getAppLinks().frameworkStoreFilterAjax,
-          {
-            newFilterName: this.newFilterName,
-            isJobEdit: true,
-            filter: this.outputValue
-          })
-    })
-    if (result.status == 200) {
-      this.saveFilterModal = false
-      this.selectedFilterName = this.newFilterName
-      this.newFilterName = ''
-      this.$emit('filters-updated')
-    } else {
-      this.saveFilterModalError = 'Error saving filter: ' + result.status + ': ' + (result.parsedBody?.msg || 'Unknown error')
-    }
-  }
-
-  get canDeleteFilter() {
-    return this.selectedFilterName && this.selectedFilterName !== '.*'
-  }
-
-  async deleteFilter() {
-    let result = await client.sendRequest(
-        {
-          method: 'POST',
-          url: _genUrl(getAppLinks().frameworkDeleteNodeFilterAjax, {filtername: this.selectedFilterName})
-        }
-    )
-
-    if (result.status == 200) {
-      this.deleteFilterModal = false
-      this.selectedFilterName = ''
-      this.$emit('filters-updated')
-    }
-  }
-
-  get canSetDefaultFilter() {
-    return this.nodeSummary && this.allowFilterDefault && this.selectedFilterName && this.selectedFilterName !== this.nodeSummary.defaultFilter
-  }
-
-  async setDefaultFilter() {
-    let result = await Trellis.FilterPrefs.setFilterPref('nodes', this.selectedFilterName)
-
-    this.nodeSummary.defaultFilter = this.selectedFilterName
-  }
-
-  get canRemoveDefaultFilter() {
-    return this.nodeSummary && this.allowFilterDefault && !this.selectedFilterName && this.selectedFilterName === this.nodeSummary.defaultFilter
-  }
-
-  async removeDefaultFilter() {
-
-    let result = await Trellis.FilterPrefs.unsetFilterPref('nodes')
-
-    this.nodeSummary.defaultFilter = null
-  }
-
-  get matchedFilter() {
-    if (this.outputValue && this.nodeSummary.filters) {
-      let found = this.nodeSummary.filters.find((a: any) => a.filter === this.outputValue)
-      if (found) {
-        return found
-      }
-    }
-    return null
-  }
-
-  get selectedSavedFilter() {
-    if (this.selectedFilterName && this.nodeSummary.filters) {
-      let found = this.nodeSummary.filters.find((a: any) => a.name === this.selectedFilterName)
-      if (found) {
-        return found
-      }
-    }
-    return null
-  }
-
-  doSearch() {
-    if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
-      this.selectedFilterName = ''
-    }
-    this.$emit('input', this.outputValue)
-  }
-
-  handleNodefilter(val: any) {
-    if (val.filterName) {
-      this.selectedFilterName = val.filterName
-    } else {
-      this.selectedFilterName = ''
-    }
-    this.$emit('filter', val)
-  }
-
-  @Watch('value')
-  updateValue() {
-    this.outputValue = this.value
-    if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
-      this.selectedFilterName = ''
-    }
-  }
-
-  @Watch('filterName')
-  updateFilterName() {
-    this.selectedFilterName = this.filterName
-  }
-
-  @Watch('nodeSummary')
-  updatedNodeSummary() {
-  }
-
-  async mounted() {
-    this.updateValue()
-    this.updateFilterName()
-  }
-
+interface NodeSummary {
+  filters: any[]
+  defaultFilter: any
 }
+
+export default defineComponent({
+  name: 'NodeFilterInput',
+  components: {
+    NodeFilterLink,
+  },
+  props: {
+    modelValue: {
+      type: String,
+      required: true,
+    },
+    showTitle: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    autofocus: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    helpButton: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
+    searchBtnType: {
+      type: String,
+      required: false,
+      default: 'default',
+    },
+    filterName: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    filterFieldName: {
+      type: String,
+      required: false,
+      default: 'filter',
+    },
+    queryFieldPlaceholderText: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    filterFieldId: {
+      type: String,
+      required: false,
+      default: 'schedJobNodeFilter',
+    },
+    /**
+     * if true, allow setting/removing default filter
+     */
+    allowFilterDefault: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    nodeSummary: {
+      type: Object as PropType<NodeSummary>,
+      required: false,
+      default: () => {}
+    }
+  },
+  emits: ['filters-updated', 'filter', 'update:modelValue'],
+  setup() {
+    const outputValue = ref('')
+    const selectedFilterName = ref('')
+    const hideAll = ref(false)
+    const saveFilterModal = ref(false)
+    const saveFilterModalError = ref('')
+    const newFilterName = ref('')
+    const deleteFilterModal = ref(false)
+    return {
+      outputValue,
+      selectedFilterName,
+      hideAll,
+      saveFilterModal,
+      saveFilterModalError,
+      newFilterName,
+      deleteFilterModal,
+    }
+  },
+  computed: {
+    filterNameDisplay() {
+      return this.selectedFilterName === '.*' ? 'All Nodes' : this.selectedFilterName
+    },
+    canSaveFilter() {
+      return !this.selectedFilterName && this.filterWithoutAll()
+    },
+    canDeleteFilter() {
+      return this.selectedFilterName && this.selectedFilterName !== '.*'
+    },
+    canSetDefaultFilter() {
+      return this.nodeSummary && this.allowFilterDefault && this.selectedFilterName && this.selectedFilterName !== this.nodeSummary.defaultFilter
+    },
+    canRemoveDefaultFilter() {
+      return this.nodeSummary && this.allowFilterDefault && !this.selectedFilterName && this.selectedFilterName === this.nodeSummary.defaultFilter
+    },
+    matchedFilter() {
+      if (this.outputValue && this.nodeSummary.filters) {
+        let found = this.nodeSummary.filters.find((a: any) => a.filter === this.outputValue)
+        if (found) {
+          return found
+        }
+      }
+      return null
+    },
+    selectedSavedFilter() {
+      if (this.selectedFilterName && this.nodeSummary.filters) {
+        let found = this.nodeSummary.filters.find((a: any) => a.name === this.selectedFilterName)
+        if (found) {
+          return found
+        }
+      }
+      return null
+    },
+  },
+  methods: {
+    selectedFilterLink(link: any) {
+    },
+    filterWithoutAll() {
+      if (this.outputValue === '.*' && this.hideAll) {
+        return ''
+      }
+      return this.outputValue
+    },
+    async saveFilter() {
+      let result = await client.sendRequest({
+        method: 'POST',
+        url: _genUrl(
+            getAppLinks().frameworkStoreFilterAjax,
+            {
+              newFilterName: this.newFilterName,
+              isJobEdit: true,
+              filter: this.outputValue
+            })
+      })
+      if (result.status == 200) {
+        this.saveFilterModal = false
+        this.selectedFilterName = this.newFilterName
+        this.newFilterName = ''
+        this.$emit('filters-updated')
+      } else {
+        this.saveFilterModalError = 'Error saving filter: ' + result.status + ': ' + (result.parsedBody?.msg || 'Unknown error')
+      }
+    },
+    async deleteFilter() {
+      let result = await client.sendRequest(
+          {
+            method: 'POST',
+            url: _genUrl(getAppLinks().frameworkDeleteNodeFilterAjax, {filtername: this.selectedFilterName})
+          }
+      )
+
+      if (result.status == 200) {
+        this.deleteFilterModal = false
+        this.selectedFilterName = ''
+        this.$emit('filters-updated')
+      }
+    },
+    async setDefaultFilter() {
+      let result = await Trellis.FilterPrefs.setFilterPref('nodes', this.selectedFilterName)
+
+      this.nodeSummary.defaultFilter = this.selectedFilterName
+    },
+    async removeDefaultFilter() {
+      let result = await Trellis.FilterPrefs.unsetFilterPref('nodes')
+      this.nodeSummary.defaultFilter = null
+    },
+    doSearch() {
+      if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+        this.selectedFilterName = ''
+      }
+      this.$emit('update:modelValue', this.outputValue)
+    },
+    handleNodefilter(val: any) {
+      if (val.filterName) {
+        this.selectedFilterName = val.filterName
+      } else {
+        this.selectedFilterName = ''
+      }
+      this.$emit('filter', val)
+    },
+    async onMount() {
+      this.outputValue = this.modelValue
+      if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+        this.selectedFilterName = ''
+      }
+      this.selectedFilterName = this.filterName
+
+    }
+  },
+  watch: {
+    modelValue() {
+      this.outputValue = this.modelValue
+      if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+        this.selectedFilterName = ''
+      }
+    },
+    filterName() {
+      this.selectedFilterName = this.filterName
+    },
+  },
+  mounted() {
+    this.onMount();
+  },
+})
 </script>

@@ -4,9 +4,9 @@
   </div>
 </template>
 <script>
+import { defineComponent } from 'vue'
 
-
-export default {
+export default defineComponent({
   name: 'JsonEmbed',
   props: ['fieldName','outputData'],
   computed:{
@@ -14,5 +14,5 @@ export default {
       return JSON.stringify(this.outputData)
     }
   }
-}
+})
 </script>

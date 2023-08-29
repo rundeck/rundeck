@@ -1,22 +1,13 @@
 <template>
     <div id="utility-bar" class="utility-bar">
         <ul>
-            <template v-for="item in utilityBar.containerGroupItems('root', 'left')">
-                <UtilItem :item="item" :key="item.id" />
+            <template v-for="item in barContainerRootLeftItems" :key="item.id">
+                <UtilItem :item="item" />
             </template>
-            <!-- <li class="utility-bar__item" @click="handleClick">
-                <i class="fas fa-newspaper fas-xs"/>
-                <span>News</span>
-                <Popper v-if="open" :open="true">
-                    <div style="height: 200px; width: 200px" class="card">
-                        Foo
-                    </div>
-                </Popper>
-            </li> -->
         </ul>
         <ul style="flex-grow: 1; flex-direction: row-reverse;">
-            <template v-for="item in utilityBar.containerGroupItems('root', 'right')">
-                <UtilItem :item="item" :key="item.id" />
+            <template v-for="item in barContainerRootRightItems" :key="item.id" >
+                <UtilItem :item="item"/>
             </template>
         </ul>
     </div>
@@ -24,40 +15,35 @@
 
 
 <script lang="ts">
-import Vue from 'vue'
-import {Component, Inject} from 'vue-property-decorator'
-import {Observer} from 'mobx-vue'
-
-import {UtilityBar} from '../../stores/UtilityBar'
-import {RootStore} from '../../stores/RootStore'
-
-import Popper from './Popper.vue'
+import {defineComponent} from 'vue'
+import type {PropType} from "vue"
 import UtilItem from './UtilityBarItem.vue'
 
-@Observer
-@Component({components: {
-    Popper,
-    UtilItem
-}})
-export default class UtilBar extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    utilityBar!: UtilityBar
-
-    open = false
-
-    created() {
-        this.utilityBar = this.rootStore.utilityBar
+export default defineComponent({
+    name:"UtilityBar",
+    components: {
+        UtilItem
+    },
+    data() {
+        return {
+            open: false,
+            utilityBar: window._rundeck.rootStore.utilityBar
+        }
+    },
+    computed: {
+      barContainerRootLeftItems() {
+        return this.utilityBar.containerGroupItems('root', 'left')
+      },
+      barContainerRootRightItems() {
+        return this.utilityBar.containerGroupItems('root', 'right')
+      }
+    },
+    methods: {
+        handleClick() {
+            this.open = !this.open
+        }
     }
-
-    mounted() {
-    }
-
-    handleClick() {
-        this.open = !this.open
-    }
-}
+})
 </script>
 
 <style scoped lang="scss">

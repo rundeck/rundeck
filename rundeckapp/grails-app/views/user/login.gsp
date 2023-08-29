@@ -35,10 +35,10 @@
   
 
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
+        <asset:javascript src="vendor/vue.global.js.js"/>
     </g:if>
     <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
+        <asset:javascript src="vendor/vue.global.prod.js"/>
     </g:else>
     <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
 

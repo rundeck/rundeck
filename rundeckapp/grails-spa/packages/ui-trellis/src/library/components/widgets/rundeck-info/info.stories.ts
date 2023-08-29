@@ -1,17 +1,17 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from "@storybook/vue3";
 
 import {RootStore} from '../../../stores/RootStore'
 import { ServerInfo, VersionInfo } from '../../../stores/System'
 import { Release } from '../../../stores/Releases'
 
 import RundeckInfo from './RundeckInfo.vue'
-import RundeckInfoWidget from './RundeckInfoWidget.vue'
 
 export default {
-    title: 'Widgets/Rundeck Info'
-}
+    title: 'Widgets/Rundeck Info',
+    component: RundeckInfo
+} as Meta<typeof RundeckInfo>
 
-export const infoDisplay = () => {
+export const infoDisplay: StoryFn<typeof RundeckInfo> = () => {
     console.log(window._rundeck.rundeckClient)
     const rootStore = new RootStore(window._rundeck.rundeckClient)
     const version = new VersionInfo()
@@ -33,7 +33,7 @@ export const infoDisplay = () => {
     latest.edition = 'Community'
     latest.date = new Date(Date.parse('2021-01-01'))
 
-    return Vue.extend({
+    return {
         template: `<RundeckInfo v-bind="$data"/>`,
         provide: {rootStore},
         components: {RundeckInfo},
@@ -41,16 +41,7 @@ export const infoDisplay = () => {
             version,
             latest,
             server,
+            appInfo: rootStore.system.appInfo
         })
-    })
-}
-
-export const infoWidget = () => {
-    const rootStore = new RootStore(window._rundeck.rundeckClient)
-
-    return Vue.extend({
-        template: `<RundeckInfoWidget v-bind="$data"/>`,
-        provide: {rootStore},
-        components: {RundeckInfoWidget}
-    })
+    }
 }

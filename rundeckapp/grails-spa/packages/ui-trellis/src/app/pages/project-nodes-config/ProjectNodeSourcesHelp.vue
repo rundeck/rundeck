@@ -11,9 +11,10 @@
           <form method="POST" :action="projectAclConfigPageUrl">
             <input type="hidden" name="fileText" :value="aclExample"/>
 
-          <i18n path="unauthorized.status.help.4" tag="p" >
+          <p>
+            {{$t('unauthorized.status.help.4')}}
             <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.link.title') }}</button>
-          </i18n>
+          </p>
           <details>
             <summary>{{$t('acl.example.summary')}}</summary>
             <pre>{{aclExample}}
@@ -26,9 +27,10 @@
           <input type="hidden" name="fileText" :value="systemAclExample"/>
           <input type="hidden" name="fileType" value="storage"/>
 
-          <i18n path="unauthorized.status.help.5" tag="p" >
+          <p>
+            {{$t('unauthorized.status.help.5')}}
             <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.system.link.title') }}</button>
-          </i18n>
+          </p>
           <details>
             <summary>{{$t('acl.example.summary')}}</summary>
             <pre>{{systemAclExample}}
@@ -44,13 +46,16 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "../../../library";
+import { defineComponent, PropType } from "vue";
+import { EventBus, getRundeckContext, RundeckContext } from "../../../library";
 
-export default Vue.extend({
+export default defineComponent({
   name: "ProjectNodeSourcesHelp",
   props:{
-    eventBus:{type:Vue,required:false}
+    eventBus:{
+      type:Object as PropType<typeof EventBus>,
+      required:false,
+    }
   },
   data(){
     return {
@@ -101,7 +106,7 @@ export default Vue.extend({
       "      allow: [read] \n" +
       "description: Allow access to key storage"
 
-    this.eventBus.$on('nodes-unauthorized',(count: number)=>{
+      this.eventBus&&this.eventBus.on('nodes-unauthorized',(count: number)=>{
       if(count>0){
         this.unauthorized=true;
       }else{

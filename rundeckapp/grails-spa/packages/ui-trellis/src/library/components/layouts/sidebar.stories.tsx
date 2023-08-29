@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import { addons } from '@storybook/addons'
 
 
@@ -6,7 +5,7 @@ export default {
     title: 'Layouts/Sidebars'
 }
 
-export const Sidebar = () => (Vue.extend({
+export const Sidebar = () => ({
     render(h) {
         return (
             <section class="layout-sidebar">
@@ -98,4 +97,4 @@ export const Sidebar = () => (Vue.extend({
             </section>
         )
     }
-}))
+})

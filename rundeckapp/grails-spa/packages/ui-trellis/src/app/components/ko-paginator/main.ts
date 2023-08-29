@@ -1,17 +1,16 @@
-import Vue from 'vue'
-
+import { createApp } from "vue"
 import Pagination from '../../../library/components/utils/Pagination.vue'
 
 const template = `
     <Pagination 
-        :value="activePage"
+        v-model="activePage"
         :totalPages="totalPages"
         @change="handlePageChange"
     />
     `
 
 /** Adapt KO Pager with Paginator wrapper */
-const koPaginator = Vue.extend({
+const KoPaginator = {
     template,
     components: {Pagination},
     props: ['pager'],
@@ -37,24 +36,22 @@ const koPaginator = Vue.extend({
             this.pager.setPage(page-1)
         }
     }
-})
+}
 
 const mounted = new Map<String, boolean>()
 
 /** Listen to events advertising pagination and mount to elements */
-window._rundeck.eventBus.$on('ko-pagination', (event: any) => {
+window._rundeck.eventBus.on('ko-pagination', (event: any) => {
     const {name, pager} = event
 
     if (!mounted.has(name)) {
         const elements = document.querySelectorAll(`[data-ko-pagination='${name}']`)
 
         for (const elm of elements) {
-            new koPaginator({
-                el: elm,
-                propsData: {
-                    pager
-                }
+            const app = createApp(KoPaginator,{
+                pager
             })
+            app.mount(elm)
         }
 
         mounted.set(name, true)

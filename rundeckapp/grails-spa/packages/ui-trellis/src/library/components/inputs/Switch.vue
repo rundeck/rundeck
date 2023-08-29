@@ -3,10 +3,10 @@
         class="switch"
         type="button"
         role="switch"
-        :aria-checked="value"
+        :aria-checked="modelValue"
         tabindex=0
         :class="{
-            'switch--checked': value,
+            'switch--checked': modelValue,
             'switch--disabled': disabled,
             'switch--contrast': contrast,
         }"
@@ -14,22 +14,22 @@
         @keypress.space="handleSelect">
         <input
             ref="input"
-            v-model="value"
-            v-on:input="$emit('input', $event.target.value)"
+            v-model="modelValue"
+            v-on:input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             type="checkbox"
             style="height: 0;width: 0;appearance: none;"/>
         <span 
             class="switch__slider"
-            :class="{'switch__slider--checked': value}"/>
+            :class="{'switch__slider--checked': modelValue}"/>
     </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
+import { defineComponent } from 'vue'
+export default defineComponent({
     name: 'rd-switch',
     props: {
-        value: {
+        modelValue: {
             type: Boolean,
             default: false
         },
@@ -42,9 +42,10 @@ export default Vue.extend({
             default: false
         }
     },
+    emits: ['update:modelValue'],
     methods: {
         handleSelect() {
-            this.$emit('input', !this.value)
+            this.$emit('update:modelValue', !this.modelValue)
         }
     }
 })

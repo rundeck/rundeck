@@ -15,7 +15,7 @@
           <input type="text" class="form-control bg-2" style="padding-left:18px;"
                 v-model="inputPath" @keyup.enter="loadDirInputPath()"
                 placeholder="Enter a path"/>
-          <div v-if="!this.isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+          <div v-if="!isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
             <button
                 type="button"
                 class="btn btn-default dropdown-toggle"
@@ -53,17 +53,17 @@
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span>{{showUpPath()}}</span>
           </button>
-          <button v-if="!readOnly || this.allowUpload===true"  @click="actionUpload()" class="btn btn-sm btn-cta">
+          <button v-if="!readOnly || allowUpload===true"  @click="actionUpload" class="btn btn-sm btn-cta">
             <i class="glyphicon glyphicon-plus"></i>
             Add or Upload a Key
           </button>
 
-          <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
-                  v-if="this.allowUpload===true && this.isSelectedKey===true && !readOnly">
+          <button @click="actionUploadModify" class="btn btn-sm btn-warning"
+                  v-if="allowUpload===true && isSelectedKey===true && !readOnly">
             <i class="glyphicon glyphicon-pencil"></i>
             Overwrite Key
           </button>
-          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey && !readOnly">
+          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="selectedKey && selectedKey.path && isSelectedKey && !readOnly">
                   <i class="glyphicon glyphicon-trash"></i>
                   {{"Delete"}}</button>
         </div>
@@ -73,14 +73,14 @@
           <i class="glyphicon glyphicon-time">{{ "Loading..." }}</i>
           <div v-if="isRunner">
             <span v-if="countDownLimit > 0">
-              Reload from the remote Runner in {{ this.countDownLimit }} seconds
+              Reload from the remote Runner in {{ countDownLimit }} seconds
             </span>
             <span v-if="countDownLimit === 0">
               Reload
             </span>
           </div>
         </div>
-        <table class="table table-hover table-condensed" v-else>
+        <table class="table table-hover table-condensed" v-if="!loading">
           <tbody>
           <tr>
             <td colspan="2" class="text-strong">
@@ -154,7 +154,7 @@
         <p>{{"Really delete the selected key at this path?"}} </p>
 
         <p>
-          <strong class="text-info"> {{this.selectedKey.path}}</strong>
+          <strong class="text-info"> {{selectedKey.path}}</strong>
         </p>
       </div>
       <div class="modal-footer">
@@ -172,17 +172,17 @@
               <i class="glyphicon glyphicon-link"></i>
             </a>
           </div>
-          <div v-if="createdTime()!==''">
+          <div v-if="createdTime!==''">
             <div>
               Created:
               <span class="timeabs text-strong">
-                                      {{createdTime() | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
-                                  </span>
+                {{ formatKeyStorageCreatedTime }}
+              </span>
 
               <span v-if="createdUsername()!==''">
-                                      by:
-                                      <span class="text-strong">{{createdUsername()}}</span>
-                                  </span>
+                by:
+                <span class="text-strong">{{createdUsername()}}</span>
+              </span>
 
             </div>
           </div>
@@ -190,23 +190,23 @@
             <div>
               Modified:
               <span class="timeago text-strong">
-                                      {{modifiedTimeAgoText()| duration('humanize') }} ago
-                                  </span>
+                {{ formatHumanizedModifiedTimeAgoDuration }} ago
+              </span>
 
               <span v-if="modifiedUsername()!==''">
-                                  by:
-                                  <span class="text-strong">{{modifiedUsername()}}</span>
-                                </span>
+                by:
+                <span class="text-strong">{{modifiedUsername()}}</span>
+              </span>
             </div>
           </div>
-          <div v-if="this.selectedKey && isPublicKey(this.selectedKey)" class="pull-right">
+          <div v-if="selectedKey && isPublicKey(selectedKey)" class="pull-right">
             <span>
               <a :href="downloadUrl()">
                     <i class="glyphicon glyphicon-download"></i>
                     {{"Download"}}</a>
             </span>
           </div>
-          <div v-if="this.selectedKey && this.selectedKey.expired" class="pull-right">
+          <div v-if="selectedKey && selectedKey.expired" class="pull-right">
             <span>
               <a :href="'javascript:void(0)'" @click="loadKeys(selectedKey)">
                     <i class="glyphicon glyphicon-download"></i>
@@ -228,24 +228,25 @@
 </template>
 
 <script lang="ts">
-import InputType from "./InputType"
-import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
-import Vue from "vue"
- 
+import {defineComponent} from "vue"
+import KeyType from "../../types/KeyType";
+import InputType from "../../types/InputType";
+import { formatHumanizedDuration, formatKeyStorageDate } from "../../utilities/DateTimeFormatters";
 
-export default Vue.extend({
+export default defineComponent({
   name: "KeyStorageView",
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
-    value: String,
+    modelValue: String,
     storageFilter: String,
     rootPath: String,
     createdKey: {},
     runnerId: String
   } ,
+  emits: ['update:modelValue','openEditor'],
   data() {
     return {
       errorMsg: '',
@@ -279,20 +280,20 @@ export default Vue.extend({
     this.loadKeys()
     this.loadProjectNames()
   },
-  destroyed() {
+  unmounted() {
     if(this.countDownInterval > 0) {
       clearInterval(this.countDownInterval)
       this.countDownInterval = 0
     }
   },
   watch : {
-    createdKey : function (newValue, oldValue) {
+    createdKey : function (newValue) {
       if(newValue !== null){
         this.selectKey(newValue)
       }
     },
     rootPath: function(newValue: string) {
-      // Reset current path when rootPath changed. 
+      // Reset current path when rootPath changed.
       this.path = ''
       this.inputPath = ''
       this.selectedKey = {}
@@ -300,8 +301,33 @@ export default Vue.extend({
     }
   },
   computed: {
+    formatKeyStorageCreatedTime() {
+      return formatKeyStorageDate(this.createdTime)
+    },
+    formatHumanizedModifiedTimeAgoDuration() {
+      return formatHumanizedDuration(this.modifiedTimeAgoText)
+    },
     isProject(): boolean {
-      return this.rootPath.startsWith("keys/project");
+      return this.rootPath?.startsWith("keys/project") || false;
+    },
+    createdTime() {
+      let value = '';
+      if (this.selectedKey != null &&
+          this.selectedKey.meta != null &&
+          this.selectedKey.meta['Rundeck-content-creation-time'] != null) {
+        value = this.selectedKey.meta['Rundeck-content-creation-time'];
+      }
+      return value;
+    },
+    modifiedTimeAgoText() {
+      let value = 0;
+      if (this.selectedKey != null &&
+          this.selectedKey.meta != null &&
+          this.selectedKey.meta['Rundeck-content-modify-time'] != null) {
+        const time = this.selectedKey.meta['Rundeck-content-modify-time'];
+        value = this.duration(time);
+      }
+      return value;
     },
     isRunner(): boolean {
       return this.rootPath.startsWith('runner:')
@@ -371,18 +397,18 @@ export default Vue.extend({
       // @ts-ignore
       this.countDownInterval = setInterval(() => {
         this.countDownLimit--;
-        
+
         if(this.countDownLimit <= 0) {
           // @ts-ignore
           clearInterval(this.countDownInterval);
           this.countDownInterval = 0
 
-          const delayExec = setTimeout(() => { 
-            this.loadKeys(selectedKey) 
+          const delayExec = setTimeout(() => {
+            this.loadKeys(selectedKey)
             clearTimeout(delayExec)
           }, 600) // Delay 600ms to execute to give better user experience.
         }
-            
+
       },1000);
     },
     loadKeys(selectedKey?: any, forceRefresh?: boolean) {
@@ -407,7 +433,7 @@ export default Vue.extend({
           this.loading = true
           this.countDown(selectedKey)
           return
-        } 
+        }
 
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
@@ -456,7 +482,7 @@ export default Vue.extend({
       });
     },
     allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split('=');
+      const filterArray = this.storageFilter?.split('=') || ["", ""];
       const key = filterArray[0];
       const value = filterArray[1];
       if (key == 'Rundeck-key-type') {
@@ -476,21 +502,11 @@ export default Vue.extend({
       return moment().diff(moment(start));
     },
     modifiedUsername() {
-      var value = '';
+      let value = '';
       if (this.selectedKey != null &&
           this.selectedKey.meta != null &&
           this.selectedKey.meta['Rundeck-auth-modified-username']) {
         return this.selectedKey.meta['Rundeck-auth-modified-username'];
-      }
-      return value;
-    },
-    modifiedTimeAgoText() {
-      var value = 0;
-      if (this.selectedKey != null &&
-          this.selectedKey.meta != null &&
-          this.selectedKey.meta['Rundeck-content-modify-time'] != null) {
-        var time = this.selectedKey.meta['Rundeck-content-modify-time'];
-        value = this.duration(time);
       }
       return value;
     },
@@ -509,15 +525,6 @@ export default Vue.extend({
           this.selectedKey.meta != null &&
           this.selectedKey.meta['Rundeck-auth-created-username'] != null) {
         return this.selectedKey.meta['Rundeck-auth-created-username'];
-      }
-      return value;
-    },
-    createdTime() {
-      var value = '';
-      if (this.selectedKey != null &&
-          this.selectedKey.meta != null &&
-          this.selectedKey.meta['Rundeck-content-creation-time'] != null) {
-        value = this.selectedKey.meta['Rundeck-content-creation-time'];
       }
       return value;
     },
@@ -555,7 +562,7 @@ export default Vue.extend({
         this.isSelectedKey = true;
       }
 
-      this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
+      this.$emit('update:modelValue', this.selectedKey ? this.selectedKey.path : '');
     },
     parentDirString(path: any) {
       if (null != path && path.lastIndexOf('/') >= 0) {
@@ -632,7 +639,7 @@ export default Vue.extend({
       let upPath = '';
       if(this.isRunner) {
         // upPath is the path without trailing part
-        if(!this.path) 
+        if(!this.path)
           this.upPath = ""
         else {
           const lastIndexOfSlash = this.path.lastIndexOf("/")
@@ -640,13 +647,13 @@ export default Vue.extend({
             this.upPath = this.path.substring(0, lastIndexOfSlash)
           else
             this.upPath = ""
-        } 
+        }
       } else {
         if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
                 if (this.path.indexOf('/') >= 0) {
                   upPath = this.parentDirString(this.path);
                 } else {
-                  upPath = this.rootPath;
+                  upPath = this.rootPath || '';
                 }
 
                 if (upPath != this.rootPath) {

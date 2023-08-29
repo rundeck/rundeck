@@ -1,12 +1,9 @@
-import Vue from 'vue'
-import { addons } from '@storybook/addons'
-
 
 export default {
     title: 'Layouts/Wizards'
 }
 
-export const Wizard = () => (Vue.extend({
+export const Wizard = () => ({
     render(h) {
         return (
             <div>
@@ -61,9 +58,9 @@ sd
             </div>
         )
     }
-}))
+})
 
-export const WizardWithTabs = () => (Vue.extend({
+export const WizardWithTabs = () => ({
     render(h) {
         return (
             <div>
@@ -101,4 +98,4 @@ export const WizardWithTabs = () => (Vue.extend({
             </div>
         )
     }
-}))
+})
