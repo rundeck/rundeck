@@ -23,15 +23,15 @@
         </li>
         <li :class="{disabled:!hasPreviousButton||disabled}">
           <a href="#"
-             @click.prevent="changePage(value-1)"
+             @click.prevent="changePage(modelValue-1)"
              title="Previous Page"
              :class="navigationClass">
             <slot name="prevPage"><i class="glyphicon glyphicon-arrow-left"></i></slot>
           </a>
         </li>
-        <li v-for="(page, index) in pageList" :key="page.page+'/'+index" :class="{[skipClass]:page.skip,active:page.page===value,disabled:disabled}">
+        <li v-for="(page, index) in pageList" :key="page.page+'/'+index" :class="{[skipClass]:page.skip,active:page.page===modelValue,disabled:disabled}">
           <span v-if="page.skip"><slot name="skip">&hellip;</slot></span>
-          <a v-else-if="page.page!==value"
+          <a v-else-if="page.page!==modelValue"
              href="#"
              @click.prevent="changePage(page.page)"
              :class="navigationClass"
@@ -42,7 +42,7 @@
         </li>
         <li :class="{disabled:!hasNextButton||disabled}">
           <a href="#"
-             @click.prevent="changePage(value+1)"
+             @click.prevent="changePage(modelValue+1)"
              :class="navigationClass"
              title="Next Page">
             <slot name="nextPage"><i class="glyphicon glyphicon-arrow-right"></i></slot>
@@ -53,120 +53,127 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-import {Component, Prop} from 'vue-property-decorator'
-
-@Component
-export default class Pagination extends Vue {
-  // name: 'pagination',
-  @Prop({required: true, default: 1})
-  value!: number
-
-  @Prop({
-    required: true,
-    validator(value: number): boolean {
-      return value >= 0
+  export default defineComponent({
+    name: 'Pagination',
+    props: {
+      modelValue: {
+        type: Number,
+        required: true,
+      },
+      totalPages: {
+        type: Number,
+        required: true,
+      },
+      disabled: {
+        type: Boolean,
+        required: false,
+        default: false,
+      },
+      navigationClass: {
+        type: String,
+        required: false,
+        default:'page_nav_btn',
+      },
+      navigationDisabledClass: {
+        type: String,
+        required: false,
+        default:'page_nav_btn_disabled',
+      },
+      currentPageClass: {
+        type: String,
+        required: false,
+        default: 'page_current',
+      },
+      skipClass: {
+        type: String,
+        required: false,
+        default: 'text-muted',
+      },
+      pagingWindowSize: {
+        type: Number,
+        required: false,
+        default: 7,
+      },
     },
-    default: 1
+    emits: ['update:modelValue', 'change'],
+    computed: {
+      maxPagesDisplay() {
+        return Math.min(this.totalPages, this.pagingWindowSize)
+      },
+      windowLeftPage() {
+        const leftNum = Math.floor(this.maxPagesDisplay / 2)
+        const windowLeft = this.modelValue - leftNum
+
+        const adjustL = windowLeft < 1 ? 1 - windowLeft : 0
+
+        return windowLeft + adjustL
+      },
+      windowRightPage() {
+        return this.windowLeftPage + (this.maxPagesDisplay - 1)
+      },
+      /**
+       * Create list of page links to display
+       */
+      pageList() {
+        const pages: any[] = []
+        let skipped = false
+        const curPage = this.modelValue
+
+        // creates sliding window of size pagingWindowSize
+
+
+        const totalPages1 = this.totalPages
+
+        // assume total pages >1 because we do not show paging otherwise
+        // and always show last page
+
+        const minPage = this.windowLeftPage
+        const maxPage = this.windowRightPage
+
+        // always add first page
+        pages.push({page: 1})
+
+        for (let i = 2; i < totalPages1; i++) {
+          let shouldSkip = false
+          if (i < minPage || i > maxPage) {
+            shouldSkip = true
+          }
+          if (!skipped && shouldSkip) {
+            skipped = true
+            pages.push({skip: true})
+            continue
+          } else if (skipped && !shouldSkip) {
+            skipped = false
+          }
+          if (!skipped) {
+            pages.push({page: i})
+          }
+        }
+
+        // always add last page
+        pages.push({page: totalPages1})
+
+        return pages
+      },
+      hasPreviousButton(): boolean {
+        return this.modelValue > 1
+      },
+      hasNextButton(): boolean {
+        return this.modelValue < this.totalPages
+      },
+    },
+    methods: {
+      changePage(page: number) {
+        if (!this.disabled && page > 0 && page <= this.totalPages && page !== this.modelValue) {
+          this.$emit('update:modelValue', page)
+          this.$emit('change', page)
+        }
+      },
+    },
   })
-  totalPages!: number
 
-  @Prop({default: false})
-  disabled!: boolean
-
-  @Prop({default: 'page_nav_btn'})
-  navigationClass!: string
-
-  @Prop({default: 'page_nav_btn_disabled'})
-  navigationDisabledClass!: string
-
-  @Prop({default: 'page_current'})
-  currentPageClass!: string
-
-  @Prop({default: 'text-muted'})
-  skipClass!: string
-
-  @Prop({default: 7})
-  pagingWindowSize!: number
-
-  changePage(page: number) {
-    if (!this.disabled && page > 0 && page <= this.totalPages && page !== this.value) {
-      this.$emit('input', page)
-      this.$emit('change', page)
-    }
-  }
-
-  get maxPagesDisplay() {
-    return Math.min(this.totalPages, this.pagingWindowSize)
-  }
-
-  get windowLeftPage() {
-    const leftNum = Math.floor(this.maxPagesDisplay / 2)
-    const windowLeft = this.value - leftNum
-
-    const adjustL = windowLeft < 1 ? 1 - windowLeft : 0
-
-    return windowLeft + adjustL
-  }
-
-  get windowRightPage() {
-    return this.windowLeftPage + (this.maxPagesDisplay - 1)
-  }
-
-  /**
-   * Create list of page links to display
-   */
-  get pageList() {
-    const pages: any[] = []
-    let skipped = false
-    const curPage = this.value
-
-    // creates sliding window of size pagingWindowSize
-
-
-    const totalPages1 = this.totalPages
-
-    // assume total pages >1 because we do not show paging otherwise
-    // and always show last page
-
-    const minPage = this.windowLeftPage
-    const maxPage = this.windowRightPage
-
-    // always add first page
-    pages.push({page: 1})
-
-    for (let i = 2; i < totalPages1; i++) {
-      let shouldSkip = false
-      if (i < minPage || i > maxPage) {
-        shouldSkip = true
-      }
-      if (!skipped && shouldSkip) {
-        skipped = true
-        pages.push({skip: true})
-        continue
-      } else if (skipped && !shouldSkip) {
-        skipped = false
-      }
-      if (!skipped) {
-        pages.push({page: i})
-      }
-    }
-
-    // always add last page
-    pages.push({page: totalPages1})
-
-    return pages
-  }
-
-  get hasPreviousButton(): boolean {
-    return this.value > 1
-  }
-
-  get hasNextButton(): boolean {
-    return this.value < this.totalPages
-  }
-}
 </script>
 <style scoped lang="scss">
 .pagination > li > a,

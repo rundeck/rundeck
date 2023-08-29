@@ -7,17 +7,17 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
 import {createPopper, Instance} from '@popperjs/core'
 
-export default Vue.extend({
+export default defineComponent({
     props: {
         open: {
             default: false
         }
     },
-
+    emits: ['close'],
     data(){
         return {
             parent: null as HTMLElement | null,
@@ -34,7 +34,7 @@ export default Vue.extend({
         this.pop()
     },
 
-    beforeDestroy() {
+    beforeUnmount() {
         document.removeEventListener('click', this.closeListener)
         const popper = this.$refs['popper'] as HTMLElement
         document.body.removeChild(popper)

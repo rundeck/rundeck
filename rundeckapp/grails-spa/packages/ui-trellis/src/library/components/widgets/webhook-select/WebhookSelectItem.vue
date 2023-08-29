@@ -6,26 +6,28 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
-import {Component, Inject, Prop} from 'vue-property-decorator'
-import {Observer} from 'mobx-vue'
-
 import { Webhook } from '../../../stores/Webhooks'
-
 import PluginInfo from '../../plugins/PluginInfo.vue'
+import {defineComponent} from "vue";
+import type {PropType} from "vue";
 
+export default defineComponent({
+    name:"WebhookSelectItem",
+    components: {
+        PluginInfo
+    },
+    props: {
+        webhook: {
+            type: Object as PropType<Webhook>,
+            required: true
+        }
+    }
+})
 
-@Observer
-@Component({components: {PluginInfo}})
-export default class PluginSelect extends Vue {
-    @Prop()
-    webhook!: Webhook
-}
 </script>
 
 <style scoped lang="scss">
-::v-deep .plugin-icon {
+:deep(.plugin-icon) {
     border-radius: 4px;
     height: 20px;
     width: 20px;

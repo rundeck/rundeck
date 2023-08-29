@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import {createApp} from 'vue'
 
 import { getRundeckContext, url } from '../../../library'
 
@@ -15,11 +15,12 @@ function init() {
     if (!el)
         return
 
-    const component = new Vue({
-        el,
+    const component = createApp({
+        name:"ProjectPickerApp",
         components: {ProjectPicker},
         provide: {rootStore},
         template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}"/>`
 
     })
+    component.mount(el)
 }

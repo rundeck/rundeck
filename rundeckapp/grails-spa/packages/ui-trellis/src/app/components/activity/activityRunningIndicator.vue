@@ -16,15 +16,15 @@
 
 <template>
 <span v-if="count>0" @click="clickAction">
-    <slot :count="count">{{count}}</slot>
+    <slot v-bind:count="count">{{count}}</slot>
 </span>
 </template>
 
 <script lang="ts">
 
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'ActivityRunningIndicator',
   components: {},
   props: [
@@ -41,11 +41,11 @@ export default Vue.extend({
       this.count = count
     },
     clickAction() {
-      this.eventBus.$emit('activity-nowrunning-click-action')
+      this.eventBus.emit('activity-nowrunning-click-action')
     }
   },
   mounted(): void {
-    this.eventBus.$on('activity-nowrunning-count', this.updateNowrunning)
+    this.eventBus.on('activity-nowrunning-count', this.updateNowrunning)
   }
 })
 </script>

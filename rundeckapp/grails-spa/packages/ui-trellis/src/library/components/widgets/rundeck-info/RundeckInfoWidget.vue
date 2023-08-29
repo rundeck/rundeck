@@ -9,45 +9,30 @@
 
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
-import { Observer } from 'mobx-vue'
-import {Component, Inject, Prop} from 'vue-property-decorator'
-
-import { RootStore } from '../../../stores/RootStore'
-import { Releases } from '../../../stores/Releases'
-import { SystemStore } from '../../../stores/System'
-
+import {defineComponent} from 'vue'
 import InfoDisplay from './RundeckInfo.vue'
 
-
-@Observer
-@Component({components: {
-    InfoDisplay
-}})
-export default class RundeckInfoWidget extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    system!: SystemStore
-
-    releases!: Releases
-
-    loaded = false
-
-    created() {
-        this.system = this.rootStore.system
-        this.releases = this.rootStore.releases
-    }
-
+export default defineComponent({
+    name:"RundeckInfoWidget",
+    components: {
+        InfoDisplay
+    },
+    data() {
+        return {
+            system: window._rundeck.rootStore.system,
+            releases: window._rundeck.rootStore.releases,
+            loaded: false
+        }
+    },
     async mounted() {
-        this.rootStore.releases.load()
+        await this.releases.load()
         try {
             await Promise.all([
-                this.rootStore.system.load(),
+                this.system.load(),
             ])
         } catch(e) {}
         this.loaded = true
     }
-}
+})
 
 </script>
