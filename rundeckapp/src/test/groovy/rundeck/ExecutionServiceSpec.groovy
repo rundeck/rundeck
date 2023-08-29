@@ -6078,6 +6078,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "metrics data from criteria result"(){
         given:
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             def critresult=[
                 count:3,
                 durationMax: new Long(1L),
