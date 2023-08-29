@@ -85,7 +85,7 @@ describe('projectExport', () => {
     await Promise.all(labels.map(label=>label.click()))
 
 
-    await driver.wait(elems.map(elem => until.elementIsSelected(elem)), 5000)
+    await ctx.driver.wait(elems.map(elem => until.elementIsSelected(elem)), 5000)
     
     let checked2 = await Promise.all(elems.map((elem)=>elem.getAttribute('checked')))
     expect(checked2.length).toBe(Checkboxes.length)
