@@ -19,7 +19,7 @@ import {CreateContext} from '@rundeck/testdeck/test/selenium'
 import {ProjectExportPage,Checkboxes,Radios} from 'pages/projectExport.page'
 import {LoginPage} from 'pages/login.page'
 
-import {until} from 'selenium-webdriver'
+import {sleep} from '@rundeck/testdeck/async/util'
 import '@rundeck/testdeck/test/rundeck'
 
 // We will initialize and cleanup in the before/after methods
