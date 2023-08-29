@@ -81,12 +81,11 @@ describe('projectExport', () => {
     expect(checked).toContain('true')
     expect(checked).not.toContain('false')
     expect(checked).not.toContain(null)
+
+    await sleep(3000)
+
     //click each label
     await Promise.all(labels.map(label=>label.click()))
-
-
-    await ctx.driver.wait(elems.map(elem => until.elementIsSelected(elem)), 5000)
-    
     let checked2 = await Promise.all(elems.map((elem)=>elem.getAttribute('checked')))
     expect(checked2.length).toBe(Checkboxes.length)
     expect(checked2).not.toContain('true')
