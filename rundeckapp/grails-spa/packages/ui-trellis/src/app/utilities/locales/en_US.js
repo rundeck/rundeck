@@ -339,6 +339,21 @@ const messages = {
     "project.nodes.edit.empty.description": "Note: No content was available.",
     "button.action.Cancel": "Cancel",
     "button.action.Save": "Save",
+    'job-edit-page': {
+        'nodes-tab-title': 'Nodes & Runners',
+        'node-dispatch-true-label': 'Dispatch to Nodes through Runner',
+        'node-dispatch-false-label': 'Run on Runner',
+        'section-title': 'Dispatch',
+        'section-title-help': 'Choose the Runner and its selected Nodes'
+    },
+    'job-exec-page': {
+        'nodes-tab-title': 'Runner/Nodes'
+    },
+    JobRunnerEdit: {
+        section: {
+            title: 'Runner Set'
+        }
+    },
 }
 
 export default messages;
