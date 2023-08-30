@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptNodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
@@ -67,6 +68,7 @@ public class NodeStepExecutionService
     static {
         Map<String, Class<? extends NodeStepExecutor>> map = new HashMap<>();
         map.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
+        map.put(ScriptNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptNodeStepExecutor.class);
         map.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
         map.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
@@ -138,6 +140,13 @@ public class NodeStepExecutionService
 
     public static boolean isRegistered(String provider){
         return PRESET_PROVIDERS.containsKey(provider);
+    }
+
+    public static boolean isRegistered(String provider, PluginBlocklist blocklist){
+        if(!blocklist.isPluginProviderPresent(SERVICE_NAME, provider)){
+            return isRegistered(provider);
+        }
+        return false;
     }
 
     public ChainedNodeStepPluginService getChainedNodeStepPluginService() {

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.PluginConfigureService
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.StepPlugin
 import groovy.transform.CompileStatic
+import org.rundeck.security.RundeckPluginBlocklist
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -50,6 +51,7 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     @Autowired PluginConfigureService pluginService
     @Autowired IFrameworkNodes rundeckNodeSupport
     @Autowired NodeProviderName nodeProviderName
+    @Autowired RundeckPluginBlocklist rundeckPluginBlocklist
     private Framework rundeckFramework
     private IExecutionProviders rundeckBaseFrameworkExecutionProviders
     ApplicationContext applicationContext
@@ -135,7 +137,7 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, String project)
         throws ExecutionServiceException {
         //predefined/registered from core classes
-        if (NodeStepExecutionService.isRegistered(item.nodeStepType)) {
+        if (NodeStepExecutionService.isRegistered(item.nodeStepType, rundeckPluginBlocklist)) {
             return frameworkProviders.getNodeStepExecutorForItem(item, project);
         }
         Map<String, Object> config = new HashMap<>()

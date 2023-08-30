@@ -205,6 +205,7 @@ class ExecutionUtilService {
                 } else {
                     args = new String[0];
                 }
+                //TODO: create a script node step item
                 return ExecutionItemFactory.createScriptFileItem(
                         cmd.getScriptInterpreter(),
                         cmd.getFileExtension(),
@@ -242,6 +243,7 @@ class ExecutionUtilService {
                             step.enabled
                     )
                 }else {
+                    //TODO: create a script-file node step item
                     return ExecutionItemFactory.createScriptFileItem(
                             cmd.getScriptInterpreter(),
                             cmd.getFileExtension(),
