@@ -1,0 +1,54 @@
+plugins {
+    id 'groovy'
+}
+
+apply from: "../../gradle/java-version.gradle"
+
+ext.pluginClassNames='org.rundeck.plugin.scriptnodestep.ScriptFileNodeStepPlugin,org.rundeck.plugin.scriptnodestep.ScriptURLNodeStepPlugin'
+ext.pluginName = 'Script Node Step Plugin'
+ext.pluginDescription = 'Runs a script file from path or remote URL on a node'
+
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    implementation {
+        extendsFrom pluginLibs
+    }
+}
+
+dependencies {
+    // Use the latest Groovy version for building this library
+    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation 'org.rundeck:rundeck-core:4.16.0-20230825'
+    pluginLibs group: 'com.esotericsoftware.yamlbeans', name: 'yamlbeans', version:'1.13'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+
