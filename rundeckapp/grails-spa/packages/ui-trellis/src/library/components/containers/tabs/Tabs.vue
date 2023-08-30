@@ -10,12 +10,12 @@
                   }"
           >
             <div class="rdtabs__tab-inner"/></div>
-            <div v-for="(tab, i) in $slots.default()"
+            <div v-for="(tab, i) in tabsWithTitles"
                  :key="tab.title"
                  :class="{
                   'rdtabs__tab': true,
                   'rdtabs__tab-component': true,
-                  'rdtabs__tab--active': i === activeTab,
+                  'rdtabs__tab--active': i === activeTab || tabsWithTitles.length === 1,
                   'rdtabs__tab-previous': i === (activeTab - 1)
                   }"
                  role="tab"
@@ -66,6 +66,12 @@ export default defineComponent({
         selectedIndex: computed(() => this.activeTab),
       }
     },
+    computed: {
+      tabsWithTitles() {
+        // this.$slots.default() isn't handling correctly its content when there's a slot with v-if
+        return this.$slots.default().filter((tab) => tab.props?.title)
+      }
+    },
     methods: {
         selectTab (i) {
             this.activeTab = i
@@ -77,7 +83,7 @@ export default defineComponent({
         },
     },
     mounted () {
-        this.selectTab(0)
+        this.selectTab(this.activeTab)
     },
 })
 </script>
