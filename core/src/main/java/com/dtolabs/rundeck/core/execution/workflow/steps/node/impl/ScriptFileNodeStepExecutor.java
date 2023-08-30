@@ -43,61 +43,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
-    public static final String SERVICE_IMPLEMENTATION_NAME = "script";
-    private Framework framework;
-    private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
+public class ScriptFileNodeStepExecutor extends ScriptNodeStepExecutor implements NodeStepExecutor {
+    public static final String SERVICE_IMPLEMENTATION_NAME = "script-file";
 
     public ScriptFileNodeStepExecutor(Framework framework) {
-        this.framework = framework;
-    }
-
-    public NodeStepResult executeNodeStep(
-            StepExecutionContext context,
-            NodeStepExecutionItem item,
-            INodeEntry node
-    )
-    throws NodeStepException
-    {
-        ScriptFileCommand command = (ScriptFileCommand) item;
-        boolean expandTokens = true;
-        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
-            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
-        }
-        if(null != command.getServerScriptFilePath()){
-            expandTokens = command.isExpandTokenInScriptFile();
-        }
-
-        String expandedVarsInURL = SharedDataContextUtils.replaceDataReferences(
-                command.getServerScriptFilePath(),
-                context.getSharedDataContext(),
-                //add node name to qualifier to read node-data first
-                ContextView.node(node.getNodename()),
-                ContextView::nodeStep,
-                DataContextUtils.replaceMissingOptionsWithBlank,
-                false,
-                false
-        );
-        return scriptUtils.executeScriptFile(
-                context,
-                node,
-                command.getScript(),
-                expandedVarsInURL,
-                command.getScriptAsStream(),
-                command.getFileExtension(),
-                command.getArgs(),
-                command.getScriptInterpreter(),
-                command.getInterpreterArgsQuoted(),
-                framework.getExecutionService(),
-                expandTokens
-        );
-    }
-
-    public ScriptFileNodeStepUtils getScriptUtils() {
-        return scriptUtils;
-    }
-
-    public void setScriptUtils(ScriptFileNodeStepUtils scriptUtils) {
-        this.scriptUtils = scriptUtils;
+        super(framework);
     }
 }
