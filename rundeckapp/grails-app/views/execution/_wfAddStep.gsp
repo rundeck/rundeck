@@ -83,18 +83,22 @@
                         <span class="text-strong"><g:message code="step.type.exec.title"/></span>
                         <span>- <g:message code="step.type.exec.description"/></span>
                     </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}','${message(code:'step.type.script.description')}')"
-                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
-                        <i class="rdicon icon-small script"></i>
-                        <span class="text-strong"><g:message code="step.type.script.title"/></span>
-                        <span>- <g:message code="step.type.script.description"/></span>
-                    </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}','${message(code:'step.type.scriptfile.description')}')"
-                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
-                        <i class="rdicon icon-small scriptfile"></i>
-                        <span class="text-strong"><g:message code="step.type.scriptfile.title"/></span>
-                        <span>- <g:message code="step.type.scriptfile.description"/></span>
-                    </a>
+                    <blocklist:pluginEnabled name="script" service="workflowNodeStep">
+                        <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}','${message(code:'step.type.script.description')}')"
+                           class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
+                            <i class="rdicon icon-small script"></i>
+                            <span class="text-strong"><g:message code="step.type.script.title"/></span>
+                            <span>- <g:message code="step.type.script.description"/></span>
+                        </a>
+                    </blocklist:pluginEnabled>
+                    <blocklist:pluginEnabled name="script-file" service="workflowNodeStep">
+                        <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}','${message(code:'step.type.scriptfile.description')}')"
+                           class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
+                            <i class="rdicon icon-small scriptfile"></i>
+                            <span class="text-strong"><g:message code="step.type.scriptfile.title"/></span>
+                            <span>- <g:message code="step.type.scriptfile.description"/></span>
+                        </a>
+                    </blocklist:pluginEnabled>
                     <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}','${message(code:'step.type.jobreference.nodestep.description')}')"
                        class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
                         <i class="glyphicon glyphicon-book"></i>
