@@ -247,12 +247,7 @@ class StateMapping {
         def map = [:]
         StepIdentifier ident = parent ? StateUtils.stepIdentifier(parent.context + state.stepIdentifier.context) :
             state.stepIdentifier
-        if (state.hasSubWorkflow()) {
-            map += [
-                    hasSubworkflow: state.hasSubWorkflow(),
-                    workflow: mapOf(state.subWorkflowState, ident, nodestates, allNodes)
-            ]
-        }
+
         if (state.nodeStateMap) {
             def nmap = [:]
             state.nodeStateMap.each { String node, StepState nstate ->
@@ -265,6 +260,12 @@ class StateMapping {
                 }
             }
             map += [nodeStates: nmap]
+        }
+        if (state.hasSubWorkflow()) {
+            map += [
+                    hasSubworkflow: state.hasSubWorkflow(),
+                    workflow: mapOf(state.subWorkflowState, ident, nodestates, allNodes)
+            ]
         }
         if (null != state.getParameterizedStateMap()) {
             def map1 = state.getParameterizedStateMap()
