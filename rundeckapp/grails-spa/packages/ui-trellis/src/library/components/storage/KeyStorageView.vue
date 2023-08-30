@@ -454,6 +454,7 @@ export default defineComponent({
             }
 
             if (resource.type === 'file') {
+
               if (this.storageFilter != null && this.storageFilter !== '') {
                 if (this.allowedResource(resource.meta)) {
                   this.files.push(resource);
@@ -475,6 +476,7 @@ export default defineComponent({
             }
           });
         }
+
         this.loading=false
       }).catch((err: Error) => {
         this.errorMsg = err.message
@@ -486,7 +488,7 @@ export default defineComponent({
       const key = filterArray[0];
       const value = filterArray[1];
       if (key == 'Rundeck-key-type') {
-        if (value === meta['rundeckKeyType']) {
+        if (value === meta['rundeckKeyType'] || value === meta['Rundeck-key-type']) {
           return true;
         }
       } else {
@@ -536,11 +538,18 @@ export default defineComponent({
       }
     },
     isPrivateKey(key: any) {
-      return key && key.meta && key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'private';
-
+      let keyType = key.meta['rundeckKeyType'];
+      if(keyType==null){
+        keyType = key.meta['Rundeck-key-type'];
+      }
+      return key && key.meta && keyType && keyType === 'private';
     },
     isPublicKey(key: any) {
-      return key && key.meta && key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'public';
+      let keyType = key.meta['rundeckKeyType'];
+      if(keyType==null){
+        keyType = key.meta['Rundeck-key-type'];
+      }
+      return key && key.meta && keyType && keyType === 'public';
 
     },
     isPassword(key: any) {
