@@ -252,11 +252,13 @@ class StateMapping {
             def nmap = [:]
             state.nodeStateMap.each { String node, StepState nstate ->
                 nmap[node] = mapOf(nstate)
-                def list = [stepctx: stepctxToString(parent, state.stepIdentifier)] + simpleMapOf(nstate)
-                if (!nodestates[node]) {
-                    nodestates[node] = [list]
-                } else {
-                    nodestates[node].add(list)
+                if(!parent) {
+                    def list = [stepctx: stepctxToString(parent, state.stepIdentifier)] + simpleMapOf(nstate)
+                    if (!nodestates[node]) {
+                        nodestates[node] = [list]
+                    } else {
+                        nodestates[node].add(list)
+                    }
                 }
             }
             map += [nodeStates: nmap]
