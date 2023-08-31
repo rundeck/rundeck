@@ -1,9 +1,9 @@
 <template>
   <div>
     <div v-show="error">
-      <h4>{{ $t("message.connectionError")}}</h4>
+      <h4>{{ $t("message_connectionError")}}</h4>
       <p>
-        {{ $t("message.refresh") }}
+        {{ $t("message_refresh") }}
         <a
           href="https://www.rundeck.com/community-updates"
           target="_blank"
@@ -23,7 +23,7 @@
               <h6
                 class="pub-date"
                 style="padding-bottom:.6em; color: #989898;"
-              >{{blog.publish_date | moment("MMMM Do YYYY hh:mm")}}</h6>
+              >{{DateTimeFormatters.formatPublishDate(blog.publish_date)}}</h6>
               <h3 class="blog-title">{{blog.title}}</h3>
             </div>
             <div>{{blog.meta_description}}</div>
@@ -40,7 +40,7 @@
           <a
             href="https://www.rundeck.com/community-updates"
             target="_blank"
-          >{{ $t("message.readMore")}}</a>
+          >{{ $t("message_readMore")}}</a>
         </div>
       </div>
     </div>
@@ -51,10 +51,17 @@
 </template>
 
 <script>
+import { defineComponent } from "vue";
 import axios from "axios";
+import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 
-export default {
+export default defineComponent({
   name: "CommunityNewsFeed",
+    computed: {
+        DateTimeFormatters() {
+            return DateTimeFormatters
+        }
+    },
   data() {
     return {
       showLoading: true,
@@ -92,7 +99,7 @@ export default {
         }
       );
   }
-};
+})
 </script>
 
 <style lang="scss" scoped>

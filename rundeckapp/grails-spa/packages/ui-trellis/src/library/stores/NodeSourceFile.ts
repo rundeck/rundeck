@@ -1,6 +1,6 @@
 import {observable} from 'mobx'
 import {RundeckClient} from '@rundeck/client'
-import {client} from '../../app/services/rundeckClient'
+import {client} from '../modules/rundeckClient'
 import Tokens from '../modules/tokens'
 import {getRundeckContext} from '../rundeckService'
 import {RootStore} from './RootStore'

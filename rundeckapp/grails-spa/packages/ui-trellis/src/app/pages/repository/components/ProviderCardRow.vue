@@ -19,7 +19,7 @@
         <span v-else>{{provider.name}}</span>
       </div>
     </td>
-    <td>{{provider.service | splitAtCapitalLetter}}</td>
+    <td>{{StringFormatters.splitAtCapitalLetter(provider.service)}}</td>
     <td>
       <div v-if="provider.author">Author: {{provider.author}}</div>
     </td>
@@ -42,6 +42,7 @@
 <script>
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
+import * as StringFormatters from "../../../utilities/StringFormatters";
 
 export default {
   name: "ProviderCard",
@@ -59,6 +60,9 @@ export default {
     }
   },
   computed: {
+      StringFormatters() {
+          return StringFormatters
+      },
     ...mapState("plugins", ["selectedServiceFacet"]),
     displayCard() {
       if (
@@ -69,14 +73,6 @@ export default {
       } else {
         return this.selectedServiceFacet === this.provider.service;
       }
-    }
-  },
-  filters: {
-    splitAtCapitalLetter: function(value) {
-      if (!value) return "";
-      value = value.toString();
-      if (value.match(/^[A-Z]+$/g)) return value;
-      return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
     }
   }
 };

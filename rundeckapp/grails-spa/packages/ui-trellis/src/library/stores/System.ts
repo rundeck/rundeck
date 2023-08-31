@@ -1,18 +1,17 @@
-import { action, computed, observable } from 'mobx'
-
 import {RundeckClient} from '@rundeck/client'
 
 import { RundeckVersion } from '../utilities/RundeckVersion'
 import { Serial } from '../utilities/Async'
 
 import {RootStore} from './RootStore'
+import {ref} from "vue";
 
 export class SystemStore {
-    @observable versionInfo: VersionInfo
-    @observable serverInfo?: ServerInfo
-    @observable appInfo: AppInfo
+    versionInfo: VersionInfo
+    serverInfo?: ServerInfo
+    appInfo: AppInfo
 
-    @observable loaded = false
+    loaded = ref<boolean>(false)
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         this.versionInfo = new VersionInfo()
@@ -30,7 +29,7 @@ export class SystemStore {
 
     @Serial
     async load() {
-        if (this.loaded)
+        if (this.loaded.value)
             return
 
         const resp = await this.client.systemInfoGet()
@@ -43,7 +42,7 @@ export class SystemStore {
             resp.system!.rundeckProperty!.node!,
             resp.system!.rundeckProperty!.serverUUID!)
 
-        this.loaded = true
+        this.loaded.value = true
     }
 }
 
@@ -53,14 +52,14 @@ export class AppInfo {
 }
 
 export class VersionInfo {
-    @observable full!: string
-    @observable number!: string
-    @observable tag!: string
-    @observable name!: string
-    @observable color!: string
-    @observable date!: Date
-    @observable icon!: string
-    @observable edition = 'Community'
+    full!: string
+    number!: string
+    tag!: string
+    name!: string
+    color!: string
+    date!: Date
+    icon!: string
+    edition = 'Community'
 
     constructor() {}
 

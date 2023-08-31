@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from '@storybook/vue3'
 
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
@@ -10,21 +10,21 @@ import {RootStore} from '../../stores/RootStore'
 import Skeleton from './Skeleton.vue'
 
 export default {
-    title: 'Skeleton'
-}
+    title: 'Skeleton',
+    component: Skeleton
+} as Meta<typeof Skeleton>
 
-export const list = () => {
+export const list: StoryFn<typeof Skeleton> = (args) => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    const loading =  true
-    
-    return Vue.extend({
-        template: `<Skeleton v-bind="$props"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
+    window._rundeck.rootStore = rootStore
+    return {
+        setup() {
+            return { args }
+        },
+        template: `<Skeleton v-bind="args"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
         provide: {rootStore},
         components: {Skeleton},
-        props: {
-            loading: { default: loading}
-        },
         mounted() {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
@@ -33,22 +33,24 @@ export const list = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
+}
+list.args = {
+    loading: true,
 }
 
-export const listWithAvatar = () => {
+export const listWithAvatar: StoryFn<typeof Skeleton> = (args) => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    const loading = true
-    
-    return Vue.extend({
-        template: `<Skeleton v-bind="$props"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
+    window._rundeck.rootStore = rootStore
+
+    return {
+        setup() {
+            return { args }
+        },
+        template: `<Skeleton v-bind="args"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
         provide: {rootStore},
         components: {Skeleton},
-        props: {
-            loading: { default: loading},
-            type: { default: 'avatar-list'}
-        },
         mounted() {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
@@ -57,5 +59,9 @@ export const listWithAvatar = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
+}
+listWithAvatar.args = {
+    loading: true,
+    type: 'avatar-list',
 }

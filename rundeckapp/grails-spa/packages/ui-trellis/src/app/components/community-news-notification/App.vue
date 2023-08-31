@@ -1,7 +1,7 @@
 <template>
   <div>
     <i class="far fa-newspaper" style="margin-right:5px;"></i>
-    <span>{{ $t("message.communityNews")}}</span>
+    <span>{{ $t("message_communityNews")}}</span>
     <span v-if="count > 0" class="newNotice">&nbsp;</span>
   </div>
 </template>
@@ -22,7 +22,6 @@ export default {
       count: 0
     };
   },
-  methods: {},
   mounted() {
     this.RundeckContext = getRundeckContext();
     let cookie = this.$cookies.get("communityNews");

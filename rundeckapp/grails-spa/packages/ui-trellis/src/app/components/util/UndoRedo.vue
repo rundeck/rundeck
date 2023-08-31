@@ -12,12 +12,13 @@
 </template>
 <script lang="ts">
 
-import Vue from "vue"
+import { PropType, defineComponent } from "vue"
+import { EventBus } from "../../../library"
 
-export default Vue.extend({
+export default defineComponent({
   name: "UndoRedo",
   props: {
-    'eventBus': Vue,
+    'eventBus': Object as PropType<typeof EventBus>,
     'ident': String,
     'max': Number
   },
@@ -37,6 +38,7 @@ export default Vue.extend({
   },
   methods: {
     addChange(val: any) {
+        console.log("add a change")
       if (this.index > 0) {
         this.stack.splice(0, this.index)
         this.index = 0
@@ -50,7 +52,7 @@ export default Vue.extend({
       let newindex = this.index + 1
       let change = this.stack[this.index]
       this.index = newindex
-      this.eventBus.$emit('undo', change)
+      this.eventBus.emit('undo', change)
     },
     doRedo() {
       if (this.index < 1) {
@@ -59,11 +61,14 @@ export default Vue.extend({
       let newindex = this.index - 1
       let change = this.stack[newindex]
       this.index = newindex
-      this.eventBus.$emit('redo', change)
+      this.eventBus.emit('redo', change)
     }
   },
   mounted() {
-    this.eventBus.$on('change', this.addChange)
+    this.eventBus.on('change', this.addChange)
+  },
+  beforeUnmount() {
+    this.eventBus.off('change')
   }
 })
 </script>

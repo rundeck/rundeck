@@ -6,49 +6,51 @@
   >
     <div class="sidebar-footer-line-item">
       <i class="fas fa-exclamation-circle"></i>
-      <span style="margin-left:5px">{{ $t("message.sidebarNotificationText")}}</span>
+      <span style="margin-left:5px">{{ $t("message_sidebarNotificationText")}}</span>
     </div>
     <modal
       v-model="showNotificationModal"
-      :title="$t('message.updateAvailable')"
+      :title="$t('message_updateAvailable')"
       append-to-body
       ref="modal"
     >
       <div>
-        <p>{{$t("message.updateHasBeenReleased")}}</p>
+        <p>{{$t("message_updateHasBeenReleased")}}</p>
         <p>
-          {{$t("message.installedVersion")}}
+          {{$t("message_installedVersion")}}
           <strong>{{installedVersion.stringVersion}}</strong>.
         </p>
         <p>
-          {{$t("message.currentVersion")}}
+          {{$t("message_currentVersion")}}
           <strong>{{currentReleaseVersion.stringVersion}}</strong>.
         </p>
-        <p>This version was released {{currentReleaseVersion.releaseDate | moment("M/D/YYYY")}}.</p>
+        <p>This version was released {{formatReleaseDate(currentReleaseVersion.releaseDate)}}.</p>
         <a
           v-if="isOSSVersion"
           href="https://docs.rundeck.com/downloads.html"
           target="_blank"
           style="margin-bottom:1em;"
           class="btn btn-default btn-block btn-success btn-fill"
-        >{{$t("message.getUpdate")}}</a>
+        >{{$t("message_getUpdate")}}</a>
         <a
           v-else
           href="https://download.rundeck.com"
           target="_blank"
           style="margin-bottom:1em;"
           class="btn btn-default btn-block btn-success btn-fill"
-        >{{$t("message.getUpdate")}}</a>
+        >{{$t("message_getUpdate")}}</a>
         <p>
           <a
             style="cursor:pointer;"
             @click="hideNotificationForThisVersion"
-          >{{$t("message.dismissMessage")}}</a>
+          >{{$t("message_dismissMessage")}}</a>
         </p>
       </div>
-      <div slot="footer">
-        <btn @click="showNotificationModal=false">{{$t("message.close")}}</btn>
-      </div>
+      <template v-slot:footer>
+        <div>
+          <btn @click="showNotificationModal=false">{{$t("message_close")}}</btn>
+        </div>
+      </template>
     </modal>
   </div>
 </template>
@@ -60,6 +62,7 @@ import Trellis, {
   getSynchronizerToken,
   RundeckBrowser
 } from "../../../library";
+import {formatReleaseDate} from "@/app/utilities/DateTimeFormatters";
 
 // import motd from '@/components/motd/motd'
 
@@ -89,6 +92,7 @@ export default {
     };
   },
   methods: {
+      formatReleaseDate,
     hideNotificationForThisVersion() {
       Trellis.FilterPrefs.setFilterPref(
         "hideVersionUpdateNotification",

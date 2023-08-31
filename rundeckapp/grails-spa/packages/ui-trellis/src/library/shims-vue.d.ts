@@ -1,11 +1,10 @@
 declare module '*.vue' {
-  import Vue from 'vue';
-  export default Vue;
+  import { defineComponent } from "vue";
+  const Component: ReturnType<typeof defineComponent>;
+  export default Component;
 }
 
 declare module 'vue2-ace-editor' {
 
 }
-declare module 'markdown-it-vue'{
-
-}
+declare module 'vue3-markdown';

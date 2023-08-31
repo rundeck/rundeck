@@ -49,9 +49,7 @@
 import NodeListEmbed from '../../job/resources/NodeListEmbed.vue'
 import {_genUrl} from '../../../utilities/genUrl'
 import axios from 'axios'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop, Watch} from 'vue-property-decorator'
+import { defineComponent, ref } from 'vue'
 
 import {
   getRundeckContext,
@@ -60,135 +58,174 @@ import {
 
 const rdBase = getRundeckContext().rdBase
 const project = getRundeckContext().projectName
-@Component({
-  components: {NodeListEmbed}
-})
-export default class NodeFilterResults extends Vue {
-  // @Prop({required: true})
-  // nodeFilterName!: string
-  @Prop({required: true})
-  nodeFilter!: string
-  @Prop({required: true})
-  nodeExcludeFilter!: string
-  @Prop({required: false, default: ''})
-  filterName!: string
-  @Prop({required: false, default: ''})
-  excludeFilterName!: string
 
-  @Prop({required: false, default: false})
-  excludeFilterUncheck!: boolean
-
-  paging = true
-  loaded = false
-  loading = false
-  total = 0
-  allcount = 0
-  pagingMax = 30
-  maxShown = 30
-  page = 0
-  emptyMode = 'all'
-  view = ''
-  error = ''
-  truncated = false
-  colkeys = []
-  nodeSet: any = {nodes: [], tagsummary: {}}
-
-  clear() {
-    this.page = 0
-    this.total = 0
-    this.error = ''
-    this.allcount = 0
-    this.truncated = false
-    this.colkeys = []
-    this.nodeSet = {nodeset: [], tagsummary: {}}
-  }
-
-  handleFilter(val: any) {
-    this.$emit('filter', val)
-  }
-
-  @Watch('nodeFilter')
-  @Watch('nodeExcludeFilter')
-  @Watch('excludeFilterUncheck')
-  async update() {
-    if (this.nodeFilter && this.emptyMode == 'blank') {
-      return
+export default defineComponent({
+  name: 'NodeFilterResults',
+  components: {
+    NodeListEmbed,
+  },
+  props: {
+    nodeFilter: {
+      type: String,
+      required: true,
+    },
+    nodeExcludeFilter: {
+      type: String,
+      required: false,
+    },
+    filterName: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    excludeFilterName: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    excludeFilterUncheck: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+  },
+  emits: ['filter'],
+  setup() {
+    const paging = ref(true)
+    const loaded = ref(false)
+    const loading = ref(false)
+    const total = ref(0)
+    const allcount = ref(0)
+    const pagingMax = ref(30)
+    const maxShown = ref(30)
+    const page = ref(0)
+    const emptyMode = ref('all')
+    const view = ref('')
+    const error = ref('')
+    const truncated = ref(false)
+    const colkeys = ref([])
+    const nodeSet= ref({nodes: [], tagsummary: {}})
+    return {
+      paging,
+      loaded,
+      loading,
+      total,
+      allcount,
+      pagingMax,
+      maxShown,
+      page,
+      emptyMode,
+      view,
+      error,
+      truncated,
+      colkeys,
+      nodeSet,
     }
-    var filterdata = this.filterName ? {filterName: this.filterName} : this.nodeFilter ? {filter: this.nodeFilter} : {}
-    var filterExcludedata = this.excludeFilterName ? {filterExcludeName: this.excludeFilterName} : this.nodeExcludeFilter ? {filterExclude: this.nodeExcludeFilter} : {}
-    var excludeFilterUncheck = this.excludeFilterUncheck
-    var page = this.page
-    var view = this.view ? this.view : 'table'
-    var basedata: any = {
-      view: view,
-      declarenone: true,
-      fullresults: true,
-      expanddetail: true,
-      inlinepaging: false,
-      // nodefilterLinkId: this.nodefilterLinkId,
-      excludeFilterUncheck: this.excludeFilterUncheck
-    }
-    if (this.paging) {
-      basedata.page = page
-      basedata.max = this.pagingMax
-      basedata.inlinepaging = true
-      if (page != 0) {
-        basedata.view = 'tableContent'
+  },
+  methods: {
+    clear() {
+      this.page = 0
+      this.total = 0
+      this.error = ''
+      this.allcount = 0
+      this.truncated = false
+      this.colkeys = []
+      this.nodeSet = {nodeset: [], tagsummary: {}}
+    },
+    handleFilter(val: any) {
+      this.$emit('filter', val)
+    },
+    async update() {
+      if (this.nodeFilter && this.emptyMode == 'blank') {
+        return
       }
-    }
-    if (this.maxShown) {
-      basedata.maxShown = this.maxShown
-    }
-    let params = Object.assign({}, basedata, filterdata, filterExcludedata)
-    if (this.emptyMode == 'localnode' && !this.nodeFilter) {
-      params.localNodeOnly = 'true'
-    } else if (this.emptyMode == 'blank' && !this.nodeFilter) {
-      this.clear()
-      return
-    }
-    params.nodeExcludePrecedence = 'true'
-    this.loading = true
+      var filterdata = this.filterName ? {filterName: this.filterName} : this.nodeFilter ? {filter: this.nodeFilter} : {}
+      var filterExcludedata = this.excludeFilterName ? {filterExcludeName: this.excludeFilterName} : this.nodeExcludeFilter ? {filterExclude: this.nodeExcludeFilter} : {}
+      var excludeFilterUncheck = this.excludeFilterUncheck
+      var page = this.page
+      var view = this.view ? this.view : 'table'
+      var basedata: any = {
+        view: view,
+        declarenone: true,
+        fullresults: true,
+        expanddetail: true,
+        inlinepaging: false,
+        // nodefilterLinkId: this.nodefilterLinkId,
+        excludeFilterUncheck: this.excludeFilterUncheck
+      }
+      if (this.paging) {
+        basedata.page = page
+        basedata.max = this.pagingMax
+        basedata.inlinepaging = true
+        if (page != 0) {
+          basedata.view = 'tableContent'
+        }
+      }
+      if (this.maxShown) {
+        basedata.maxShown = this.maxShown
+      }
+      let params = Object.assign({}, basedata, filterdata, filterExcludedata)
+      if (this.emptyMode == 'localnode' && !this.nodeFilter) {
+        params.localNodeOnly = 'true'
+      } else if (this.emptyMode == 'blank' && !this.nodeFilter) {
+        this.clear()
+        return
+      }
+      params.nodeExcludePrecedence = 'true'
+      this.loading = true
 
-    axios.request({
-      method: 'GET',
-      headers: {
-        'x-rundeck-ajax': 'true',
-      },
-      url: _genUrl(getAppLinks().frameworkNodesQueryAjax, params),
-    }).then(result => {
-      this.loading = false
-      if (result.status === 403) {
-        this.error = ('Not authorized')
-      } else if (result.status >= 300) {
-        if (result.data.message) {
+      axios.request({
+        method: 'GET',
+        headers: {
+          'x-rundeck-ajax': 'true',
+        },
+        url: _genUrl(getAppLinks().frameworkNodesQueryAjax, params),
+      }).then(result => {
+        this.loading = false
+        if (result.status === 403) {
+          this.error = ('Not authorized')
+        } else if (result.status >= 300) {
+          if (result.data.message) {
 
-          this.error = result.data.message
+            this.error = result.data.message
+          } else {
+            this.error = 'Error: ' + result.status
+          }
         } else {
-          this.error = 'Error: ' + result.status
+          this.loaded = true
+          let data = result.data
+          this.nodeSet = {
+            nodes: data.allnodes,
+            tagsummary: data.tagsummary
+          }
+          this.allcount = data.allcount
+          this.total = data.total
+          this.truncated = data.truncated
+          this.colkeys = data.colkeys
+          this.maxShown = data.max
         }
-      } else {
-        this.loaded = true
-        let data = result.data
-        this.nodeSet = {
-          nodes: data.allnodes,
-          tagsummary: data.tagsummary
-        }
-        this.allcount = data.allcount
-        this.total = data.total
-        this.truncated = data.truncated
-        this.colkeys = data.colkeys
-        this.maxShown = data.max
-      }
-    }).catch((err) => {
-      this.loading = false
-      console.log('Nodes Query: request failed: ' + err)
-      this.error = ('Nodes Query: request failed: ' + err)
-    })
-  }
-  async mounted(){
-      if(this.nodeFilter){
-          await this.update()
-      }
-  }
-}
+      }).catch((err) => {
+        this.loading = false
+        console.log('Nodes Query: request failed: ' + err)
+        this.error = ('Nodes Query: request failed: ' + err)
+      })
+    }
+  },
+  watch: {
+    nodeFilter() {
+      this.update();
+    },
+    nodeExcludeFilter() {
+      this.update();
+    },
+    excludeFilterUncheck() {
+      this.update();
+    },
+  },
+  mounted() {
+    if (this.nodeFilter) {
+      this.update()
+    }
+  },
+})
 </script>

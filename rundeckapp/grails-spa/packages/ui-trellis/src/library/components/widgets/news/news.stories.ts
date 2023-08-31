@@ -1,5 +1,4 @@
-import Vue from 'vue'
-
+import type {Meta, StoryFn} from '@storybook/vue3'
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
@@ -14,13 +13,14 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'Widgets/Community News'
-}
+    title: 'Widgets/Community News',
+    component: News,
+} as Meta<typeof News>
 
-export const pickerButtonNoLabel = () => {
+export const pickerButtonNoLabel: StoryFn<typeof News> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
     
-    return Vue.extend({
+    return {
         template: `<News v-bind="$data"/>`,
         provide: {rootStore},
         components: {News},
@@ -35,5 +35,5 @@ export const pickerButtonNoLabel = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
 }

@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import Overlay from "./components/Overlay";
+import Overlay from "./components/Overlay.vue";
 export default {
   name: "PluginApplication",
   components: {
