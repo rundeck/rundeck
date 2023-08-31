@@ -64,7 +64,8 @@ export class ExecutionOutput {
     constructor(id: string, client: RundeckClient) {
         Object.assign(this, { id, client })
         this.entriesbyNodeCtx = new ObservableGroupMap(this.entries, (e) => {
-            return `${e.node}:${e.stepctx ? JobWorkflow.cleanContextId(e.stepctx) : ''}`
+            let rootCtx = JobWorkflow.parseContextId(e.stepctx ? e.stepctx : '')
+            return `${e.node}:${rootCtx ? JobWorkflow.cleanContextId(rootCtx[0]) : ''}`
         })
         this.entriesByNode = new ObservableGroupMap(this.entries, (e) => `${e.node}`)
     }
