@@ -149,7 +149,7 @@
         </table>
       </div>
     </div>
-    <modal v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
+    <modal v-if="isConfirmingDeletion === true" v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
       <div class="modal-body">
         <p>{{"Really delete the selected key at this path?"}} </p>
 

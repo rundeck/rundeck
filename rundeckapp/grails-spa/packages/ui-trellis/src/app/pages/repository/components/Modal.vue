@@ -18,9 +18,10 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { mapState, mapActions } from "vuex";
 
-export default {
+export default defineComponent({
   name: "Modal",
   computed: {
     ...mapState("modal", ["modal"])
@@ -28,7 +29,7 @@ export default {
   methods: {
     ...mapActions("modal", ["closeModal"])
   }
-};
+});
 </script>
 <style lang="scss" scoped>
 </style>
