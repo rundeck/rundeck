@@ -151,6 +151,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
             validateImportedJob(_)>>new Validator.ReportSet(true,[:])
         }
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -909,6 +912,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.failed
         results.scheduledExecution.errors.hasFieldErrors('workflow')
         results.scheduledExecution.workflow.commands[0].errors.hasFieldErrors(fieldName)
+        results.validation.workflow != null
 
         where:
         cmd                                           | fieldName
@@ -1469,6 +1473,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             validateImportedJob(_)>>new Validator.ReportSet(true,[:])
         }
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         uuid
     }
 
