@@ -125,7 +125,8 @@
                             </span>
                             <span>-
                             <g:render template="/scheduledExecution/description"
-                                      model="[description: stepplugin.messageText(
+                                      model="[firstLineOnly:true,
+                                              description: stepplugin.messageText(
                                               service: 'WorkflowNodeStep',
                                               name: typedesc.name,
                                               code: 'plugin.description',
@@ -174,7 +175,8 @@
                             </span>
                             <span>-
                                 <g:render template="/scheduledExecution/description"
-                                          model="[description:
+                                          model="[firstLineOnly:true,
+                                                  description:
                                                           stepplugin.messageText(
                                                                   service: 'WorkflowStep',
                                                                   name: typedesc.name,
