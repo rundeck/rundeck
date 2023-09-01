@@ -160,7 +160,7 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
             throw new ExecutionServiceException("Could not load Node Step provider: ${item.nodeStepType}: not found")
         }
         NodeStepPlugin plugin = configured.instance
-        return NodeStepPluginAdapter.CONVERT_TO_NODE_STEP_EXECUTOR.convert(plugin)
+        return NodeStepPluginAdapter.CONVERT_TO_NODE_STEP_EXECUTOR.convert(plugin, plugin.blankIfUnexpanded())
     }
 
 
