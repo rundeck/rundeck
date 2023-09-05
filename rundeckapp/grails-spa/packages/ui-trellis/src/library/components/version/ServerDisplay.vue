@@ -37,7 +37,7 @@ export default defineComponent({
             if(!this.uuid){
               return ''
             }
-            return this.uuid.substr(0, 2)
+            return this.uuid.substring(0, 2)
         },
         title(): string {
             return `${this.glyphicon}-${this.uuidShort} / ${this.uuid}`
