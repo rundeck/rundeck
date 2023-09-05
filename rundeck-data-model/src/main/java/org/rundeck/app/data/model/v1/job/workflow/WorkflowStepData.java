@@ -50,4 +50,6 @@ public interface WorkflowStepData {
      * @return A map keyed by the plugin name, and the value being the configuration data for that plugin
      */
     Map<String,Object> getPluginConfig();
+
+    String summarize();
 }

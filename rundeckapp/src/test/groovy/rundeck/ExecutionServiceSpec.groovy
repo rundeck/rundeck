@@ -1,4 +1,7 @@
 package rundeck
+
+import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -25,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -6074,22 +6078,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "metrics data from criteria result"(){
         given:
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             def critresult=[
                 count:3,
-                durationMax: new Time(0,9,0),
-                durationMin: new Time(0,2,0),
-                durationSum: new Time(0,15,0),
+                durationMax: new Long(1L),
+                durationMin: new Long(2L),
+                durationSum: new Long(3L),
             ]
         when:
             def result = service.metricsDataFromCriteriaResult(critresult)
         then:
-            result.total == 3
-            result.duration.average == 5L * 60L * 1000L
-            result.duration.min == 2L * 60L * 1000L
-            result.duration.max == 9L * 60L * 1000L
-
-
+        result.total == 3
+        result.duration.average == 1000L
+        result.duration.min == 2000L
+        result.duration.max == 1000L
     }
+
     def "metrics data from projection result"(){
         given:
             Date now = new Date()
@@ -6114,5 +6118,42 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.duration.average == 5L * 60L * 1000L
             result.duration.min == 2L * 60L * 1000L
             result.duration.max == 9L * 60L * 1000L
+    }
+
+    def "load additional listener"(){
+        when:
+            def result = service.loadAdditionalListeners([])
+        then:
+            result.size() == 1
+            result[0].class.name == WorkflowExecutionListenerTest.class.name
+    }
+
+    def "should add additional listener to original listeners"() {
+        given:
+            def initialListeners = [
+                    new LogFlusher(),
+                    new LogFlusher()
+            ]
+        when:
+            def result = service.loadAdditionalListeners(initialListeners)
+        then:
+            result.size() == 3
+            result.containsAll(initialListeners)
+    }
+
+    def "should not fail if there is no additional listeners"() {
+        given:
+            ServiceLoader.metaClass.static.load = { Class clazz ->
+                return null
+            }
+            def initialListeners = [
+                    new LogFlusher(),
+                    new LogFlusher()
+            ]
+        when:
+            def result = service.loadAdditionalListeners(initialListeners)
+        then:
+            result.size() == 2
+            result.containsAll(initialListeners)
     }
 }

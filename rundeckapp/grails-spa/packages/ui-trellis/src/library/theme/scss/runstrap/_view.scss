@@ -63,6 +63,11 @@ body.view{
     overflow: hidden;
     background-color: var(--sidebar-background-color);
 }
+#section-content-wrap{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
 
 #section-content {
     display: flex;

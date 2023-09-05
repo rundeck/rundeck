@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -44,6 +45,7 @@ public class RundeckConfigBase {
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
+    RundeckProjectConfig project;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
@@ -57,6 +59,7 @@ public class RundeckConfigBase {
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
     ScmLoader scmLoader;
+    ScmConfig scm;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
     JobsImport jobsImport;
@@ -70,6 +73,19 @@ public class RundeckConfigBase {
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
+    }
+
+    @Data public static class RundeckProjectConfig{
+
+        ProjectConfigDefaults defaults;
+        @Data public static class ProjectConfigDefaults{
+            String nodeExecutor;
+            String fileCopier;
+            ProjectKeypath sshKeypath;
+        }
+        @Data public static class ProjectKeypath{
+            Boolean enabled;
+        }
     }
 
     @Data
@@ -705,6 +721,16 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckNotificationConfig {
         Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmConfig {
+        ScmStartup startup;
+    }
+
+    @Data
+    public static class ScmStartup{
+        boolean initDeferred;
     }
 
     @Data

@@ -2,20 +2,20 @@
   <div class="container-flex">
     <aside>
       <div class="flex--none bg-grey-100">
-        <span class="title"><i class="fas fa-plug"></i> {{ $t('message.webhookPageTitle') }}</span>
+        <span class="title"><i class="fas fa-plug"></i> {{ $t('message_webhookPageTitle') }}</span>
       </div>
       <div class="flex--grow navs">
         <div id="wh-list" class="px-3">
-          <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
+          <WebhookSelect :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
         </div>
       </div>
       <div class="flex--none bg-grey-100">
         <button
           type="button"
           class="btn btn-primary btn-full"
-          :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+          :class="{'btn-primary': isProjectLoaded && noWebhooksForProject && !curHook}"
           @click="handleAddNew">
-            <i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}
+            <i class="fas fa-plus-circle"/> {{ $t('message_webhookCreateBtn') }}
         </button>
       </div>
     </aside>
@@ -23,26 +23,27 @@
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
-                <WebhookTitle :webhook="this.curHook"/>
+                <WebhookTitle :webhook="curHook"/>
                 <div style="margin-left: auto;display: flex;align-items: center;">
                   <div><a
                           style="font-weight: 800;"
                           v-if="curHook.id"
                           @click="handleDelete"
-                          class="btn btn-danger">{{ $t('message.webhookDeleteBtn') }}</a>
+                          class="btn btn-danger">{{ $t('message_webhookDeleteBtn') }}</a>
                   </div>
                   <div>
                     <a
                             v-if="!curHook.id"
                             @click="handleCancel"
                             class="btn btn-md btn-default"
-                    >{{ $t('message.cancel') }}</a>
+                    >{{ $t('message_cancel') }}</a>
                     <btn
                             :disabled="!(dirty || curHook.new)"
                             type="cta"
                             style="margin-left: 5px;font-weight: 800;"
+                            data-test-id="webhooks-view-save-btn"
                             @click="handleSave"
-                    >{{ $t('message.webhookSaveBtn') }}</btn>
+                    >{{ $t('message_webhookSaveBtn') }}</btn>
                   </div>
                 </div>
           </div>
@@ -53,23 +54,23 @@
                 <div  class="form-group">
                   <div class="card card-accent">
                   <div class="card-content">
-                    <label>{{ $t('message.webhookPostUrlLabel') }}</label>
+                    <label>{{ $t('message_webhookPostUrlLabel') }}</label>
                     <div class="help-block">
-                      {{$t('message.webhookPostUrlHelp')}}
+                      {{$t('message_webhookPostUrlHelp')}}
                     </div>
                     <CopyBox style="max-width: 800px" v-if="!curHook.new" :content="postUrl()"/>
-                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message_webhookPostUrlPlaceholder')}}</span>
                   </div>
                   <div class="card-content">
-                    <label>{{ $t('message.webhookAuthLabel') }}</label>
-                    <div class="help-block"> {{$t('message.webhookGenerateSecretCheckboxHelp')}}</div>
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control" id="wh-authtoggle"><label for="wh-authtoggle">{{ $t('message.webhookGenerateSecurityLabel') }}</label></div>
+                    <label>{{ $t('message_webhookAuthLabel') }}</label>
+                    <div class="help-block"> {{$t('message_webhookGenerateSecretCheckboxHelp')}}</div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control" id="wh-authtoggle"><label for="wh-authtoggle">{{ $t('message_webhookGenerateSecurityLabel') }}</label></div>
                     <div v-if="showRegenButton">
                       <button class="btn btn-sm btn-default" @click="setRegenerate">Regenerate</button>
-                      <span v-if="curHook.regenAuth" style="color: var(--color-red); margin-left: 5px"> {{$t('message.webhookRegenClicked')}}</span>
+                      <span v-if="curHook.regenAuth" style="color: var(--color-red); margin-left: 5px"> {{$t('message_webhookRegenClicked')}}</span>
                     </div>
                     <div v-if="hkSecret" >
-                      <label style="color: var(--color-red); margin-top: 5px">{{$t('message.webhookSecretMessageHelp')}}</label>
+                      <label style="color: var(--color-red); margin-top: 5px">{{$t('message_webhookSecretMessageHelp')}}</label>
                       <CopyBox style="max-width: 800px" :content="hkSecret"/>
                     </div>
                   </div>
@@ -77,21 +78,21 @@
                 </div>
                 <div class="card">
                 <div class="card-content">
-                  <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
-                  <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
+                  <div class="form-group"><label>{{ $t('message_webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control" @change="input"></div>
+                  <div class="form-group"><label>{{ $t('message_webhookUserLabel') }}</label>
                     <input v-model="curHook.user" class="form-control" v-if="curHook.new">
                     <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
                     <div class="help-block">
-                      {{$t('message.webhookUserHelp')}}
+                      {{$t('message_webhookUserHelp')}}
                     </div>
                   </div>
-                  <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
+                  <div class="form-group"><label>{{ $t('message_webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control" @change="input">
                     <div class="help-block">
-                      {{$t('message.webhookRolesHelp')}}
+                      {{$t('message_webhookRolesHelp')}}
                     </div>
                   </div>
                   <div class="form-group">
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control" id="wh-enabled"><label for="wh-enabled">{{ $t('message.webhookEnabledLabel') }}</label></div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control" id="wh-enabled" @change="input"><label for="wh-enabled">{{ $t('message_webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
                 </div>
@@ -110,7 +111,7 @@
                           :show-description="false"
                           v-if="curHook.eventPlugin" />
                         <span v-else>
-                          {{$t('message.webhookPluginLabel')}}
+                          {{$t('message_webhookPluginLabel')}}
                         </span>
                         <span class="caret"></span>
                       </button>
@@ -146,6 +147,7 @@
                     :webhook="curHook"
                     :pluginConfig="curHook.config"
                     :errors="errors"
+                    @update:pluginConfig="onUpdatePluginConfig"
                     @change="input"></component>
                 </div>
               </div>
@@ -159,54 +161,23 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
-import i18n from '../i18n'
+import {defineComponent} from 'vue'
 import axios from 'axios'
-
-import {observable, autorun, reaction} from 'mobx'
-import {deepObserve} from 'mobx-utils'
-import {observer} from 'mobx-vue'
 
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue"
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue"
 
 import CopyBox from '../../../../library/components/containers/copybox/CopyBox.vue'
-import Tabs from '../../../../library/components/containers/tabs/Tabs'
-import Tab from '../../../../library/components/containers/tabs/Tab'
-import WebhookPicker from '../../../../library/components/widgets/webhook-select/WebhookSelect.vue'
+import Tabs from '../../../../library/components/containers/tabs/Tabs.vue'
+import Tab from '../../../../library/components/containers/tabs/Tab.vue'
+import WebhookSelect from '../../../../library/components/widgets/webhook-select/WebhookSelect.vue'
 import KeyStorageSelector from '../../../../library/components/plugins/KeyStorageSelector.vue'
 
-import {getServiceProviderDescription,
-  getPluginProvidersForService} from '../../../../library/modules/pluginService'
-
-import {ServiceType} from '../../../../library/stores/Plugins'
-
+import { getServiceProviderDescription } from '../../../../library/modules/pluginService'
 
 import WebhookTitle from '../components/WebhookTitle.vue'
 
-var rdBase = "http://localhost:4440"
-var apiVersion = "33"
-var curUser = ""
-var curUserRoles = ""
-if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
-  rdBase = window._rundeck.rdBase;
-  apiVersion = window._rundeck.apiVersion
-}
-var projectName = window._rundeck ? window._rundeck.projectName : undefined
-
-var _i18n = i18n
-var lang = window._rundeck.language
-var i18nInstance = new VueI18n({
-  messages: {
-    [lang]: {
-      ...(_i18n[lang] || i18n.en),
-      ...(window.Messages[lang])
-    }
-  }
-})
-
-export default observer(Vue.extend({
+export default defineComponent({
   name: "WebhooksView",
   components: {
     CopyBox,
@@ -214,12 +185,21 @@ export default observer(Vue.extend({
     PluginInfo,
     Tabs,
     Tab,
-    WebhookPicker,
+    WebhookSelect,
     WebhookTitle,
     KeyStorageSelector
   },
-  inject: ["rootStore"],
+  inject: ["rootStore", 'registerComponent'],
   data() {
+    const projectName = window._rundeck ? window._rundeck.projectName : undefined
+    let rdBase = "http://localhost:4440"
+    let apiVersion = "33"
+    const curUser = ""
+    const curUserRoles = ""
+    if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
+      rdBase = window._rundeck.rdBase;
+      apiVersion = window._rundeck.apiVersion
+    }
     return {
       webhooks: [],
       webhookPlugins: [],
@@ -233,20 +213,30 @@ export default observer(Vue.extend({
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       customConfigComponent: null,
       showPluginConfig: false,
-      projectName: projectName,
-      dirty: false
+      projectName,
+      dirty: false,
+      webhookStore: window._rundeck.rootStore.webhooks,
+      curUser,
+      curUserRoles,
+      rdBase,
     }
   },
   computed: {
     showRegenButton() {
       return !this.hkSecret && this.curHook.useAuth && !this.curHook.new && this.origUseAuthVal
-    }
+    },
+    isProjectLoaded() {
+        return this.webhookStore.loaded[this.projectName]
+    },
+    noWebhooksForProject() {
+        return this.webhookStore.webhooksForProject(this.projectName).length === 0
+    },
   },
   methods: {
     confirmAuthToggle() {
+      this.input()
       if(this.curHook.useAuth) {
-        var self = this
-        self.$confirm({
+        this.$confirm({
           title:"Confirm",
           content:"Are you sure you want to remove this webhook authorization string?"
         }).then(() => {
@@ -259,9 +249,13 @@ export default observer(Vue.extend({
     },
     setRegenerate() {
       this.curHook.regenAuth = true
+      this.input()
     },
     input() {
       this.dirty = true
+    },
+    onUpdatePluginConfig(config) {
+      this.selectedPlugin.config = config
     },
     toggleUrl(hookId, show) {
       if(show) document.getElementById("whc-" + hookId).style.display = "block";
@@ -294,9 +288,9 @@ export default observer(Vue.extend({
       this.popup.showing = false;
     },
     getHooks() {
-      this.ajax("get", `${rdBase}webhook/admin/editorData/${projectName}`).then(response => {
-        curUser = response.data.username
-        curUserRoles = response.data.roles
+      this.ajax("get", `${this.rdBase}webhook/admin/editorData/${this.projectName}`).then(response => {
+        this.curUser = response.data.username
+        this.curUserRoles = response.data.roles
         this.webhooks = response.data.hooks
         if (this.curHook) {
           this.curHook = this.webhooks.find(hk => hk.id === this.curHook.id)
@@ -311,21 +305,14 @@ export default observer(Vue.extend({
     handleSelect(selected) {
       this.cleanAction(() => this.select(selected))
     },
-    select(selected) {
-      if (!this.curHook || this.curHook.uuid !== selected.uuid) {
+    select(selected, showAuth) {
+      if (!this.curHook || !showAuth) {
           this.hkSecret = null
       }
-      this.curHook = this.rootStore.webhooks.clone(selected)
+      this.curHook = this.webhookStore.clone(selected)
       this.origUseAuthVal = this.curHook.useAuth
 
       this.dirty = false
-
-      reaction(() => {
-        return JSON.stringify(this.curHook.toApi())
-      }, (data) => {
-        this.dirty = true
-      })
-
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
@@ -359,15 +346,19 @@ export default observer(Vue.extend({
         return
       }
       webhook.config = this.selectedPlugin.config
+      let showAuthString = false
       let resp
-      if (webhook.new)
-        resp = await this.rootStore.webhooks.create(webhook)
-      else
-        resp = await this.rootStore.webhooks.save(webhook)
+      if (webhook.new) {
+          showAuthString = webhook.useAuth
+          resp = await this.webhookStore.create(webhook)
+      } else {
+          showAuthString = webhook.regenAuth
+          resp = await this.webhookStore.save(webhook)
+      }
 
       const data = resp.parsedBody
 
-      if (data?.err) {
+      if (!data || data.err) {
         this.setError("Failed to save!\n" + data.err)
         this.setValidation(false, data.errors)
       } else {
@@ -377,13 +368,9 @@ export default observer(Vue.extend({
         }
         this.setValidation(true)
         this.dirty = false
-        await this.rootStore.webhooks.refresh(this.projectName)
- 
-        const currentHooks = this.rootStore.webhooks.webhooksByUuid._data
-        const curHooksArrMap = Array.from(currentHooks.values());
-        const curHookByUUID = curHooksArrMap[curHooksArrMap.length - 1].value.uuid;
-  
-        this.select(this.rootStore.webhooks.webhooksByUuid.get(curHookByUUID))
+        await this.webhookStore.refresh(this.projectName)
+
+        this.select(this.webhookStore.webhooksByUuid.get(data.uuid), showAuthString)
       }
     },
     handleCancel() {
@@ -395,30 +382,30 @@ export default observer(Vue.extend({
       this.dirty = false
     },
     handleDelete() {
-      var self = this
-      self.$confirm({
+      this.$confirm({
         title:"Confirm",
         content:"Are you sure you want to delete this webhook?",
         okType:"danger"
       }).then(() => {
 
-        this.rootStore.webhooks.delete(this.curHook).then(response => {
+        this.webhookStore.delete(this.curHook).then(response => {
         const data = response.parsedBody
         if (data.err) {
           this.setError("Failed to delete! " + data.err)
-        } else if (response.status != 200) {
+        } else if (response.status !== 200) {
           this.setMessage('Failed')
         } else {
           this.curHook = null
           this.selectedPlugin = null
           this.setMessage("Deleted!")
+          this.dirty = false
         }
       }).catch(err => {
         this.setError("Failed to delete! " + err)
       })}).catch(() => {})
     },
     ajax(method, url, payload) {
-      var params = {
+      const params = {
         method: method,
         headers: {
           "x-rundeck-ajax": true
@@ -451,16 +438,16 @@ export default observer(Vue.extend({
       this.hkSecret = null
       this.showPluginConfig = false
       this.origUseAuthVal = false
-      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, useAuth: false, enabled: true, project: projectName, new: true, config: {}})
+      this.curHook = this.webhookStore.newFromApi({name: "New Hook", user: this.curUser, roles: this.curUserRoles, useAuth: false, enabled: true, project: this.projectName, new: true, config: {}})
       this.config = this.curHook.config
       this.dirty = true
     },
     loadProPlugins() {
-      if (window.ProWebhookComponents == undefined)
+      if (window.ProWebhookComponents === undefined)
         return
 
       for (let [k, comp] of Object.entries(window.ProWebhookComponents)) {
-        Vue.component(k, comp)
+        this.registerComponent(k, comp)
       }
     }
   },
@@ -469,7 +456,7 @@ export default observer(Vue.extend({
     await this.rootStore.plugins.load('WebhookEvent')
     this.webhookPlugins = this.rootStore.plugins.getServicePlugins('WebhookEvent')
   }
-}))
+})
 </script>
 
 
@@ -565,7 +552,7 @@ main{
     }
   }
 
-  ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
+  :deep([data-tabkey="webhook-header"]) > .rdtabs__tabheader {
     background-color: var(--background-color-accent-lvl2);
     border: none;
     padding: 0 2em;

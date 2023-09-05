@@ -338,5 +338,10 @@ class MockFrameworkService{
         projectList
     }
 
+    void notifyProjectSchedulingChange(String project, boolean oldDisableExec, boolean oldDisableSched, boolean isEnabled){
+
+    }
+
+
 }
 

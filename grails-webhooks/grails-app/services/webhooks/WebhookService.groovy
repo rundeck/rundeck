@@ -262,7 +262,7 @@ class WebhookService {
         }
 
         if(saveWebhookResponse.isSaved) {
-            def responsePayload = [msg: "Saved webhook"]
+            def responsePayload = [msg: "Saved webhook", uuid: saveWebhookResponse.webhook.uuid]
             if(generatedSecureString) responsePayload.generatedSecurityString = generatedSecureString
             return responsePayload
         } else {

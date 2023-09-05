@@ -157,18 +157,6 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
                     pbuild.required(required);
 
-
-                    final Object blankIfUnexpandedValue = itemmeta.get(CONFIG_BLANK_IF_UNEXPANDED);
-                    final boolean blankIfUnexpanded;
-                    if (blankIfUnexpandedValue instanceof Boolean) {
-                        blankIfUnexpanded = (Boolean) blankIfUnexpandedValue;
-                    } else {
-                        blankIfUnexpanded = blankIfUnexpandedValue instanceof String && Boolean.parseBoolean((String) blankIfUnexpandedValue);
-                    }
-
-                    pbuild.blankIfUnexpandable(blankIfUnexpanded);
-
-
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
 
                     pbuild.defaultValue(null != defObj ? defObj.toString() : null);
@@ -441,6 +429,8 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             filter = renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY).toString();
         }
         boolean clearValue = isValueConversionFailureRemove(renderingOptions);
+        boolean ignoreKeyPathConversion = isValueConversionFailureIgnore(renderingOptions);
+
         try {
             Resource<ResourceMeta> resource = storageTree.getResource(propValue);
             ResourceMeta contents = resource.getContents();
@@ -464,6 +454,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             contents.writeContent(byteArrayOutputStream);
             data.put(name, new String(byteArrayOutputStream.toByteArray()));
         } catch (StorageException | IOException e) {
+            if(ignoreKeyPathConversion){
+                return;
+            }
+
             if(clearValue) {
                 data.remove(name);
                 return;
@@ -518,6 +512,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         );
     }
 
+    private boolean isValueConversionFailureIgnore(final Map<String, Object> renderingOptions) {
+        return StringRenderingConstants.VALUE_CONVERSION_FAILURE_SKIP.equals(
+                renderingOptions.get(
+                        StringRenderingConstants.VALUE_CONVERSION_FAILURE_KEY
+                )
+        );
+    }
 
     @Override
     public Description getDescription() {

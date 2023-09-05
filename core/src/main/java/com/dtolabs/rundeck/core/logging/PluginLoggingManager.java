@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.logging;
 
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.util.function.Supplier;
@@ -38,10 +39,10 @@ public interface PluginLoggingManager {
     /**
      * End using the plugins
      */
-    void end();
+    void end(StatusResult result);
 
     /**
      * Run a function by wrapping the call with a begin/end using try/finally
      */
-    <T> T runWith(Supplier<T> supplier);
+    <T extends StatusResult> T runWith(Supplier<T> supplier);
 }

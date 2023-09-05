@@ -1,10 +1,10 @@
 import {RundeckBrowser} from '@rundeck/client'
 import { NavItem } from '../stores/NavBar'
-import Vue from 'vue'
 import { RootStore } from '../stores/RootStore'
+import { EventBus } from "../utilities/vueEventBus";
 
 export interface RundeckContext {
-    eventBus: Vue
+    eventBus: typeof EventBus
     rdBase: string
     apiVersion: string
     projectName: string

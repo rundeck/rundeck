@@ -15,54 +15,64 @@
   -->
 
 <template>
-  <div>
+    <div>
     <span v-if="error && isTitleMode" class="text-warning">
       {{error}}
     </span>
-    <pluginInfo
-      :show-title="inputShowTitle"
-      :show-icon="inputShowIcon"
-      :show-description="inputShowDescription"
-      :detail="detail"
-      v-if="isTitleMode && !error"
+        <pluginInfo
+            :show-title="inputShowTitle"
+            :show-icon="inputShowIcon"
+            :show-description="inputShowDescription"
+            :detail="detail"
+            v-if="isTitleMode && !error"
 
       >
       <slot name="titlePrefix"></slot>
-      <span slot="suffix"><slot name="titleSuffix"></slot></span>
-      </pluginInfo>
+      <template v-slot:suffix>
+        <slot name="titleSuffix"></slot>
+      </template>
+    </pluginInfo>
 
-    <div class="row" v-if="!isTitleMode">
-      <div v-if="inputShowIcon||inputShowTitle || inputShowDescription" class="col-xs-12 col-sm-12">
-        <p>
-          <pluginInfo
-          :show-title="inputShowTitle"
-          :show-icon="inputShowIcon"
-          :show-description="inputShowDescription"
-          :detail="detail"
+        <div class="row" v-if="!isTitleMode">
+            <div v-if="inputShowIcon||inputShowTitle || inputShowDescription" class="col-xs-12 col-sm-12">
+                <p>
+                    <pluginInfo
+                        :show-title="inputShowTitle"
+                        :show-icon="inputShowIcon"
+                        :show-description="inputShowDescription"
+                        :detail="detail"
 
-          />
-        </p>
-      </div>
-      <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
+                    />
+                </p>
+            </div>
+            <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
         <span class="text-warning" v-if="validation && !validation.valid">
           <i class="fas fa-exclamation-circle"></i> {{validationWarningText}}
         </span>
-        <span v-for="prop in props" :key="prop.name" class="configprop">
+            <span v-for="prop in props" :key="prop.name" class="configprop">
+              <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)"/>
+            </span>
+              <p>
+                <div class="col-sm-12" >
+                  <slot name="extraProperties"></slot>
+                </div>
+              </p>
+            </div>
+            <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
+                <div class="form-group">
+                  <div class="col-sm-12" >
+                    <slot name="extraProperties"></slot>
+                  </div>
+                </div>
+                <div v-for="(group,gindex) in groupedProperties" :key="group.name">
+                    <div v-if="!group.name"
+                         v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
 
-            <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)"/>
-
-        </span>
-      </div>
-      <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
-        <div v-for="(group,gindex) in groupedProperties" :key="group.name">
-            <div v-if="!group.name"
-                 v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
-
-                  <input type="hidden"
-                         :value="inputValues[prop.name]"
-                         :data-hidden-field-identity="prop.options['hidden_identity']"
-                         class="_config_prop_display_hidden"
-                         v-if="isPropHidden(prop)"/>
+                        <input type="hidden"
+                               :value="inputValues[prop.name]"
+                               :data-hidden-field-identity="prop.options['hidden_identity']"
+                               class="_config_prop_display_hidden"
+                               v-if="isPropHidden(prop)"/>
 
                   <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
                        :data-prop-name="prop.name"
@@ -77,12 +87,13 @@
                                         :rkey="'g_'+gindex+'_'+rkey"
                                         :readOnly="readOnly"
                                         :pindex="pindex"
+                                        :selector-data="propsComputedSelectorData"
                                         :autocompleteCallback="autocompleteCallback"/>
                   </div>
 
-            </div>
-            <details :open="!group.secondary" v-if="group.name" class="more-info details-reset">
-              <summary >
+                    </div>
+                    <details :open="!group.secondary" v-if="group.name" class="more-info details-reset">
+                        <summary >
                 <span class="row">
                   <span class="col-sm-2 control-label h5 header-reset">
                 {{group.name!=='-' ? group.name :"More"}}
@@ -90,8 +101,8 @@
                   <i class="less-indicator-verbiage more-info-icon glyphicon glyphicon-chevron-down"></i>
                   </span>
                 </span>
-              </summary>
-              <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+                        </summary>
+                        <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
 
                   <input type="hidden"
                          :value="inputValues[prop.name]"
@@ -110,6 +121,7 @@
                                         :readOnly="readOnly"
                                         :rkey="'g_'+gindex+'_'+rkey"
                                         :pindex="pindex"
+                                        :selector-data="propsComputedSelectorData"
                                         :autocompleteCallback="autocompleteCallback"/>
                   </div>
               </div>
@@ -123,11 +135,11 @@
 
 <style lang="scss">
 .configprop + .configprop:before {
-  content: ' ';
+    content: ' ';
 }
 </style>
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 
 import AceEditor from '../utils/AceEditor.vue'
 import Expandable from '../utils/Expandable.vue'
@@ -140,16 +152,16 @@ import {cleanConfigInput,convertArrayInput} from '../../modules/InputUtils'
 import {diff} from 'deep-object-diff'
 
 import {getPluginProvidersForService,
-  getServiceProviderDescription,
-  validatePluginConfig} from '../../modules/pluginService'
+    getServiceProviderDescription,
+    validatePluginConfig} from '../../modules/pluginService'
 
 interface PropGroup{
-  name?:string
-  secondary:boolean
-  props:any[],
+    name?:string
+    secondary:boolean
+    props:any[],
 }
 
-export default Vue.extend({
+export default defineComponent({
   name: 'PluginConfig',
   components: {
     Expandable,
@@ -166,7 +178,7 @@ export default Vue.extend({
     'showTitle',
     'showIcon',
     'showDescription',
-    'value',
+    'modelValue',
     'savedProps',
     'pluginConfig',
     'validation',
@@ -177,13 +189,14 @@ export default Vue.extend({
     'contextAutocomplete',
     'autocompleteCallback'
   ],
+  emits: ['update:modelValue','change','handleAutocomplete','hasKeyStorageAccess'],
   data () {
     return {
       props: [] as any[],
       detail: {},
       error: null as any|null,
       isReadOnly: this.readOnly!== null ? this.readOnly : false,
-      propsComputedSelectorData: {},
+      propsComputedSelectorData: {} as any,
       inputShowTitle: this.showTitle !== null ? this.showTitle : true,
       inputShowIcon: this.showIcon !== null ? this.showIcon : true,
       inputShowDescription: this.showDescription !== null ? this.showDescription : true,
@@ -198,7 +211,7 @@ export default Vue.extend({
   },
   methods: {
     setVal(target: any, prop: any, val: any) {
-      Vue.set(target, prop, val)
+      target[prop] = val
     },
     prepareInputs () {
       if (!this.isShowConfigForm) {
@@ -209,35 +222,35 @@ export default Vue.extend({
       if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === 'undefined') {
-            this.inputSaved[i] = this.value[i]
+            this.inputSaved[i] = this.modelValue[i]
           }
         }
       }
 
-      const config = this.value.config
+      const config = this.modelValue.config
 
       const modeCreate = this.isCreateMode
 
       // set up defaults and convert Options to array
       this.props.forEach((prop: any) => {
         if (config[prop.name]) {
-          Vue.set(this.inputValues, prop.name, config[prop.name])
+          this.inputValues[prop.name] = config[prop.name]
         }
         if (modeCreate && !this.inputValues[prop.name] && prop.defaultValue) {
-          Vue.set(this.inputValues, prop.name, prop.defaultValue)
+          this.inputValues[prop.name] = prop.defaultValue
         }
         if (prop.type === 'Options' && typeof this.inputValues[prop.name] === 'string') {
           // convert to array
-          Vue.set(this.inputValues, prop.name, this.inputValues[prop.name].split(/, */))
+          this.inputValues[prop.name] = this.inputValues[prop.name].split(/, */)
         } else if (prop.type === 'Options' && typeof this.inputValues[prop.name] === 'undefined') {
           // convert to array
-          Vue.set(this.inputValues, prop.name, [])
+          this.inputValues[prop.name] = []
         } else if (prop.type === 'Select' && typeof this.inputValues[prop.name] === 'undefined') {
           // select box should use blank string to preselect disabled option
-          Vue.set(this.inputValues, prop.name, '')
+          this.inputValues[prop.name] = ''
         } else if (prop.type === 'Boolean' && typeof this.inputValues[prop.name] === 'string') {
           // boolean should convert to boolean
-          Vue.set(this.inputValues, prop.name, this.inputValues[prop.name]==='true')
+          this.inputValues[prop.name] = this.inputValues[prop.name]==='true'
         }
         if(prop.options &&( prop.options['groupName']||prop.options['grouping'])){
           const gname=prop.options['groupName']||'-'
@@ -268,87 +281,90 @@ export default Vue.extend({
       if (prop.options && prop.options['selectionAccessor'] === 'PLUGIN_TYPE') {
         const serviceName = prop.options['selectionAdditional']
         getPluginProvidersForService(serviceName).then((data: any) => {
-          Vue.set(this.propsComputedSelectorData, prop.name, data.descriptions.map((provider: any) => {
+          this.propsComputedSelectorData[prop.name] = data.descriptions.map((provider: any) => {
             return {key: provider.title, value: provider.name, description: provider.description}
-          }))
+          })
         })
       }
     },
     loadPluginData(data: any) {
       this.props = data.props
 
-      this.props.forEach((prop: any) => {
-        if (data.dynamicProps && data.dynamicProps[prop.name]) {
-          prop.allowed = data.dynamicProps[prop.name]
-        }
-        if(prop.type === 'AutogenInstanceId'){
-          if(this.isCreateMode && prop.defaultValue === '') {
-            prop.defaultValue = Math.random().toString(36).slice(2)
-          } else if (!this.isCreateMode) {
-            prop.defaultValue = ''
-          }
-          prop.staticTextDefaultValue = prop.defaultValue
-        }
-      })
+            this.props.forEach((prop: any) => {
+                if (data.dynamicProps && data.dynamicProps[prop.name]) {
+                    prop.allowed = data.dynamicProps[prop.name]
+                }
+                if (data.dynamicDefaults && data.dynamicDefaults[prop.name]) {
+                    prop.defaultValue = data.dynamicDefaults[prop.name]
+                }
+                if(prop.type === 'AutogenInstanceId'){
+                    if(this.isCreateMode && prop.defaultValue === '') {
+                        prop.defaultValue = Math.random().toString(36).slice(2)
+                    } else if (!this.isCreateMode) {
+                        prop.defaultValue = ''
+                    }
+                    prop.staticTextDefaultValue = prop.defaultValue
+                }
+            })
 
-      this.detail = data
-      this.prepareInputs()
+            this.detail = data
+            this.prepareInputs()
 
-      let storageAccess = this.hasKeyStorageAccess();
-      if(storageAccess){
-        this.notifyHasKeyStorageAccess();
-      }
-    },
-    async loadProvider(provider: any) {
-      try{
-        const data:any = await getServiceProviderDescription(this.serviceName, provider)
-        if (data.props) {
-          this.loadPluginData(data)
-        }
-      }catch(e){
-        let message = 'Unknown Error'
-        if (e instanceof Error) message = e.message
-        this.error=message
-      }
-    },
-    isPropVisible(testProp: any): boolean {
-      // determine if property is visible based on required prop value
-      const requiredProp = testProp.options && testProp.options['requiredProperty']
-      const requiredVal = testProp.options && testProp.options['requiredValue']
-      if (requiredProp) {
-        if (!this.inputValues || !this.inputValues[requiredProp]) {
-          return false
-        }
-        if (requiredVal && (!this.inputValues || this.inputValues[requiredProp] !== requiredVal)) {
-          return false
-        }
-      }
-      return true
-    },
-    isPropHidden(testProp: any): boolean {
-      return testProp.options && testProp.options['displayType']==='HIDDEN'
-    },
-    isPropInScope(testProp: any): boolean {
-      // determine if property is visible in scope
-      const testScope = testProp.scope || this.defaultScope
-      const allowedScope = this.scope
-      if (!allowedScope || !testScope || testScope==='Unspecified') {
-        //no specific scope
-        return true
-      }else if(allowedScope==='Project' && (testScope.startsWith('Project'))){
-        return true
-      }else if(allowedScope==='Framework' && (testScope==='Framework' || testScope==='Project')){
-        return true
-      }else if(allowedScope==='Instance' && (testScope.startsWith('Instance'))){
-        return true
-      }
+            let storageAccess = this.hasKeyStorageAccess();
+            if(storageAccess){
+                this.notifyHasKeyStorageAccess();
+            }
+        },
+        async loadProvider(provider: any) {
+            try{
+                const data:any = await getServiceProviderDescription(this.serviceName, provider)
+                if (data.props) {
+                    this.loadPluginData(data)
+                }
+            }catch(e){
+                let message = 'Unknown Error'
+                if (e instanceof Error) message = e.message
+                this.error=message
+            }
+        },
+        isPropVisible(testProp: any): boolean {
+            // determine if property is visible based on required prop value
+            const requiredProp = testProp.options && testProp.options['requiredProperty']
+            const requiredVal = testProp.options && testProp.options['requiredValue']
+            if (requiredProp) {
+                if (!this.inputValues || !this.inputValues[requiredProp]) {
+                    return false
+                }
+                if (requiredVal && (!this.inputValues || this.inputValues[requiredProp] !== requiredVal)) {
+                    return false
+                }
+            }
+            return true
+        },
+        isPropHidden(testProp: any): boolean {
+            return testProp.options && testProp.options['displayType']==='HIDDEN'
+        },
+        isPropInScope(testProp: any): boolean {
+            // determine if property is visible in scope
+            const testScope = testProp.scope || this.defaultScope
+            const allowedScope = this.scope
+            if (!allowedScope || !testScope || testScope==='Unspecified') {
+                //no specific scope
+                return true
+            }else if(allowedScope==='Project' && (testScope.startsWith('Project'))){
+                return true
+            }else if(allowedScope==='Framework' && (testScope==='Framework' || testScope==='Project')){
+                return true
+            }else if(allowedScope==='Instance' && (testScope.startsWith('Instance'))){
+                return true
+            }
 
-      return false
-    },
-    isGroupedProp(testProp: any): boolean {
-      // determine if property is visible based on required prop value
-      const grouping = testProp.options && testProp.options['grouping']
-      const groupName = testProp.options && testProp.options['groupName']
+            return false
+        },
+        isGroupedProp(testProp: any): boolean {
+            // determine if property is visible based on required prop value
+            const grouping = testProp.options && testProp.options['grouping']
+            const groupName = testProp.options && testProp.options['groupName']
 
       return grouping || groupName
     },
@@ -370,8 +386,8 @@ export default Vue.extend({
     loadForMode(){
       if (this.serviceName && this.provider) {
         this.loadProvider(this.provider)
-      } else if (this.isShowConfigForm && this.serviceName && this.value && this.value.type) {
-        this.loadProvider(this.value.type)
+      } else if (this.isShowConfigForm && this.serviceName && this.modelValue && this.modelValue.type) {
+        this.loadProvider(this.modelValue.type)
       } else if (this.pluginConfig) {
         this.loadPluginData(this.pluginConfig)
       }
@@ -381,7 +397,7 @@ export default Vue.extend({
     inputValues: {
       handler (newValue, oldValue) {
         if (this.isShowConfigForm) {
-          this.$emit('input', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
+          this.$emit('update:modelValue', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
         }
       },
       deep: true
@@ -420,7 +436,7 @@ export default Vue.extend({
       this.props.forEach((prop: any) => {
         visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
         if (!visibility[prop.name]) {
-          Vue.delete(visibility, prop.name)
+          delete visibility[prop.name]
         }
       })
       return visibility
@@ -441,16 +457,16 @@ export default Vue.extend({
       const groups:PropGroup[] =[unnamed]
       const named : {[name:string]: PropGroup} = {}
 
-       this.props.forEach(prop => {
-         const name=prop.options && prop.options['groupName']
-         const secondary = prop.options && prop.options['grouping']
-         const inScope = this.isPropInScope(prop)
-         if(!inScope) {
-           return
-         }else if(!name && !secondary){
-            unnamed.props.push(prop)
-         }else{
-           let gname=name||'-'
+            this.props.forEach(prop => {
+                const name=prop.options && prop.options['groupName']
+                const secondary = prop.options && prop.options['grouping']
+                const inScope = this.isPropInScope(prop)
+                if(!inScope) {
+                    return
+                }else if(!name && !secondary){
+                    unnamed.props.push(prop)
+                }else{
+                    let gname=name||'-'
 
            if(!named[gname]){
              named[gname]={props:[prop],secondary:secondary,name:gname}
@@ -467,12 +483,12 @@ export default Vue.extend({
       return convertArrayInput(cleanConfigInput(this.exportInputs()))
     },
     computedConfig(): any {
-        if(this.value){
-            return Object.assign({}, this.value.config || {})
+        if(this.modelValue){
+            return Object.assign({}, this.modelValue.config || {})
         }else{
             return null
         }
-    }
+    },
   },
   beforeMount () {
     this.loadForMode()
@@ -481,7 +497,7 @@ export default Vue.extend({
 </script>
 <style lang="scss" scoped>
 .header-reset{
-  margin:0;
+    margin:0;
 }
 </style>
 

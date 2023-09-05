@@ -126,10 +126,16 @@ class SetUserInterceptor {
                 return false
             }
         }
-        def requiredRole = configurationService.getString("security.requiredRole","")
-        if(!requiredRole.isEmpty()) {
-            if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
-                log.error("User ${request.remoteUser} must have role: ${requiredRole} to log in.")
+        def requiredRoles = getRequiredRolesFromProps()
+        if( requiredRoles.size() ){
+            def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
+            List<String> requestRoles = requestGroups.stream()
+            .map{it.getName()}
+            .collect(Collectors.toList())
+            List<String> matchedRoles = new ArrayList<>(requiredRoles)
+            matchedRoles.retainAll(requestRoles)
+            if( !matchedRoles.size() ){
+                log.error("User ${request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
@@ -273,6 +279,21 @@ class SetUserInterceptor {
         .setUuid(token)
         .setCreator(owner)
         .setOwnerName(owner)
+    }
+
+    /**
+     * Get the required roles to authenticate with Rundeck's Server
+     * from properties if there's any, and return a list with them.
+     *
+     * */
+    @CompileStatic
+    private List<String> getRequiredRolesFromProps(){
+        List<String> rolesFromProps = []
+        String requiredRoles = configurationService.getString("security.requiredRole","")
+        if( requiredRoles ){
+            rolesFromProps = requiredRoles.split(",").collect( it -> it.trim())
+        }
+        return rolesFromProps
     }
 
 }

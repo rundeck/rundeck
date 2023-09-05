@@ -1,10 +1,11 @@
-import { RundeckContext } from '../library/interfaces/rundeckWindow'
+import {RundeckContext, AppLinks} from "../library";
+import {defineComponent} from "vue";
 
 declare global {
+    const Component: ReturnType<typeof defineComponent>;
     interface Window {
         _rundeck: RundeckContext
-        appLinks: {
-            [key:string]: string
-        }
+        appLinks: AppLinks
+        ProWebhookComponents: Component[]
     }
 }

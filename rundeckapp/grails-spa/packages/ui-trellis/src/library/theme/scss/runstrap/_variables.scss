@@ -1,3 +1,5 @@
+@use "sass:math";
+
 $bootstrap-sass-asset-helper: false !default;
 //
 // Variables
@@ -189,7 +191,7 @@ $line-height-general:          1.4em !default;
 $line-height:                 36px !default;
 $line-height-lg:              54px !default;
 
-$border-thin:                1.5px !default;
+$border-thin:                1px !default;
 $border-thick:               2px !default;
 
 $border-radius-top:        10px 10px 0 0 !default;
@@ -576,8 +578,8 @@ $container-lg:                 $container-large-desktop !default;
 $navbar-height:                    50px !default;
 $navbar-margin-bottom:             $line-height-computed !default;
 $navbar-border-radius:             $border-radius-base !default;
-$navbar-padding-horizontal:        floor(($grid-gutter-width / 2)) !default;
-$navbar-padding-vertical:          (($navbar-height - $line-height-computed) / 2) !default;
+$navbar-padding-horizontal:        floor(math.div($grid-gutter-width, 2)) !default;
+$navbar-padding-vertical:          math.div(($navbar-height - $line-height-computed), 2) !default;
 $navbar-collapse-max-height:       340px !default;
 
 $navbar-default-color:             #777 !default;
@@ -1045,8 +1047,6 @@ $close-text-shadow:           0 1px 0 #fff !default;
 //
 //##
 
-$code-color:                  #c7254e !default;
-$code-bg:                     #f9f2f4 !default;
 
 $kbd-color:                   #fff !default;
 $kbd-bg:                      #333 !default;
@@ -1057,6 +1057,15 @@ $pre-border-color:            #ccc !default;
 $pre-scrollable-max-height:   340px !default;
 
 
+:root {
+  --code-color: var(--red-600);
+  --code-bg: var(--grey-200);
+}
+
+*[data-color-theme="dark"] {
+  --code-color: var(--red-100);
+  --code-bg: var(--grey-500);
+}
 //== Type
 //
 //##

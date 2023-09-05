@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import {createApp, markRaw} from 'vue'
 
 import NavigationBar from '../../../library/components/navbar/NavBar.vue'
 import UtilityBar from '../../../library/components/utility-bar/UtilityBar.vue'
@@ -24,7 +24,8 @@ rootStore.utilityBar.addItems([
       "class": rootStore.system.appInfo.logocss+" app-logo",
       "label": rootStore.system.appInfo.title.toUpperCase(),
       "visible": true,
-      widget: Vue.extend({
+      widget: markRaw({
+        name: 'RundeckInfoWidgetItem',
         components: {RundeckInfoWidget},
         template: `<RundeckInfoWidget/>`,
         provide: {
@@ -40,7 +41,8 @@ rootStore.utilityBar.addItems([
       "class": "fas fa-sun fas-xs",
       // "label": "Theme",
       "visible": true,
-      widget: Vue.extend({
+      widget: markRaw({
+        name: 'ThemeSelectWidgetItem',
         components: {ThemeSelectWidget},
         template: `<ThemeSelectWidget/>`,
         provide: {
@@ -61,27 +63,29 @@ rootStore.utilityBar.addItems([
 ] as Array<UtilityActionItem>)
 
 function initNav() {
-    const elm = document.getElementById('navbar') as HTMLElement
+    const elm = document.getElementById('section-navbar') as HTMLElement
 
-    const vue = new Vue({
-        el: elm,
+    const vue = createApp({
+        name:"NavigationBarApp",
         components: {NavigationBar},
         template: `<NavigationBar />`,
         provide: {
           rootStore
         }
       })
+    vue.mount(elm)
 }
 
 function initUtil() {
   const elm = document.getElementById('utilityBar') as HTMLElement
 
-  const vue = new Vue({
-      el: elm,
+  const vue = createApp({
+      name:"UtilityBarApp",
       components: {UtilityBar},
       template: `<UtilityBar />`,
       provide: {
         rootStore
       }
     })
+    vue.mount(elm)
 }

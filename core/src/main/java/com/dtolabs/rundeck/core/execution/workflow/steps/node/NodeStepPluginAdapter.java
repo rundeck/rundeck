@@ -78,6 +78,15 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         return null;
     }
 
+    @Override
+    public Map<String, Object> dynamicDefaults(Map<String, Object> projectAndFrameworkValues, Services services){
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicDefaults(projectAndFrameworkValues, services);
+        }
+
+        return null;
+    }
+
     private NodeStepPlugin plugin;
 
     public NodeStepPluginAdapter(final NodeStepPlugin plugin) {
@@ -123,7 +132,12 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             this(ServiceNameConstants.WorkflowNodeStep, true);
         }
 
-        public NodeStepExecutor convert(final NodeStepPlugin plugin) {
+        public NodeStepExecutor convert(final NodeStepPlugin plugin, final boolean blankIfUnexpanded) {
+            return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
+        }
+
+        @Override
+        public NodeStepExecutor convert(NodeStepPlugin plugin) {
             return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
         }
     }

@@ -2058,6 +2058,58 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         flash.joberrors == "There was an error during the import project"
 
     }
+
+    def "If there's a hint, it displays to the user or not displays at all"(){
+        setup:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * project(_,_)>>Mock(AuthorizingProject){
+                1 * getResource()>>Stub(IRundeckProject){
+                    getName()>>'test'
+                }
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>> { throw new Exception(exceptionString) }
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
+            0 * _(*_)
+        }
+        session.subject= new Subject()
+        when:
+        setupFormTokens()
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        flash.warn == flashWarning
+
+        where:
+        exceptionString                      |     flashWarning
+        'Data too long for column \'data\''  |     "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
+        'Other exception'                    |     null
+
+    }
     
     def "When a exception is thrown during project's import process, the user is flashed with errors"(){
         setup:

@@ -2,27 +2,15 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 
 // Dependencies
-import Vue from 'vue'
-import * as uiv from 'uiv'
-import international from './i18n'
-import { getRundeckContext, getAppLinks, url } from '../../../library'
+import {defineComponent, markRaw} from 'vue'
+import { getRundeckContext, getAppLinks } from '../../../library'
 
 import News from '../../../library/components/widgets/news/News.vue'
 
-import VueCookies from 'vue-cookies'
 import moment from 'moment'
 // Component Files
-import VueI18n from 'vue-i18n'
 
-Vue.config.productionTip = false
-
-Vue.use(uiv)
-Vue.use(VueI18n)
-Vue.use(VueCookies)
-
-let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'
-let lang = window._rundeck.language || 'en'
 moment.locale(locale)
 
 const rootStore = getRundeckContext().rootStore
@@ -36,7 +24,8 @@ rootStore.utilityBar.addItems([
     class: "fas fa-newspaper",
     group: 'left',
     label: 'News',
-    widget: Vue.extend({
+    widget: markRaw(defineComponent({
+      app:"NewsApp",
       components: {News},
       provide: {rootStore},
       template: `<News @news:select-all="moreNews"/>`,
@@ -45,7 +34,7 @@ rootStore.utilityBar.addItems([
           window.open(links.communityNews, '_blank')
         }
       }
-    })
+    }))
   }
 ])
 

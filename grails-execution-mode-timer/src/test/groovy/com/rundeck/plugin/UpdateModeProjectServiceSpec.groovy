@@ -334,6 +334,7 @@ class UpdateModeProjectServiceSpec extends Specification implements ServiceUnitT
 
         def mockFrameworkService = new MockFrameworkService()
         mockFrameworkService.setRundeckProject(rundeckProject)
+        mockFrameworkService.notifyProjectSchedulingChange(project,executionLater,scheduleLater,true)
 
         def quartzScheduler = Mock(Scheduler){
             schedule * scheduleJob(_)
@@ -347,6 +348,7 @@ class UpdateModeProjectServiceSpec extends Specification implements ServiceUnitT
         def result = service.editProject(rundeckProject,project,disable, executionLater, scheduleLater)
         then:
         result!=null
+        _ * service.frameworkService.notifyProjectSchedulingChange(_,_,_,_)
 
         where:
         disableExecution  | disableSchedule  | disable | executionLater | scheduleLater| delete | schedule

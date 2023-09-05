@@ -83,7 +83,7 @@
   font-size: $font-size-base;
   font-weight: 400;
   line-height: 1;
-  color: $input-color;
+  color: var(--font-color);
   text-align: center;
   background-color: var(--background-color);
   border: 1px solid var(--input-outline-color);

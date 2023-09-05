@@ -2440,6 +2440,11 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return
         }
 
+        if (request.method == 'POST') {
+            params.editNew = 'true'
+            return uploadPost()
+        }
+
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
         scheduledExecution.loglevel = servletContext.getAttribute("LOGLEVEL_DEFAULT")?servletContext.getAttribute("LOGLEVEL_DEFAULT"):"WARN"
@@ -2752,6 +2757,36 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             }
             jobset = parseresult.jobset
             jobset.each { it.job.project = params.project }
+            if (params.editNew == 'true') {
+                if(jobset.size()!=1){
+                    request.message = "There was an error."
+                    return render(view: 'upload')
+                }
+
+                ImportedJob<ScheduledExecution> imported = jobset[0]
+                def newScheduledExecution = imported.job
+                newScheduledExecution.project=params.project
+                newScheduledExecution.id=null
+                newScheduledExecution.uuid=null
+                //set session new workflow
+                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                if(newScheduledExecution.options){
+                    def editopts = [:]
+
+                    newScheduledExecution.options.each {Option opt ->
+                        editopts[opt.name] = opt.createClone()
+                    }
+                    EditOptsController.getSessionOptions(session,null,editopts)
+                }
+                def model = scheduledExecutionService.prepareCreateEditJob(params, newScheduledExecution , AuthConstants.ACTION_CREATE, authContext)
+                def jobComponentValues=rundeckJobDefinitionManager.getImportedJobDefinitionComponentValues(imported)
+                model["jobComponentValues"] = jobComponentValues
+
+                return render(
+                    view: 'create',
+                    model: model
+                )
+            }
             def changeinfo = [user: session.user, method: 'upload']
 
             def loadresults = scheduledExecutionService.loadImportedJobs(

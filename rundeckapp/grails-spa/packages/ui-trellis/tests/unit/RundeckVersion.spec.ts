@@ -1,6 +1,6 @@
 import 'jest'
 
-import {RundeckVersion} from '../../src/utilities/RundeckVersion'
+import {RundeckVersion} from '../../src/library/utilities/RundeckVersion'
 
 describe('RundeckVersion', () => {
 

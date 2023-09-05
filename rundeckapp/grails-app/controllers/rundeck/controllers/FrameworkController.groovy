@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
@@ -843,8 +844,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopy = configurationService.getString("project.defaults.filecopier", "sshj-scp")
 
         if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
             def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
@@ -1027,8 +1028,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
         }
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        final defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        final defaultFileCopy = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services
 
@@ -1042,8 +1044,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
             defaultNodeExec:defaultNodeExec,
-            nodeexecconfig: ['keypath': sshkeypath],
-            fcopyconfig: ['keypath': sshkeypath],
+            nodeexecconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
+            fcopyconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
             defaultFileCopy: defaultFileCopy,
             pluginGroupConfig: pluginGroupConfig,
             nodeExecDescriptions: nodeexecdescriptions,
@@ -1187,6 +1189,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if (!desc) {
                         return null
                     }
+                    def validation = frameworkService.validateDescription(desc, "", config)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
                     pconfigs << [type: provider, props: config]
                 }
 
@@ -1247,7 +1258,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
                 }
             }
-
 
             if (!errors) {
                 // Password Field Substitution
@@ -1459,6 +1469,25 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
 
+            //validate props for other plugins
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> config ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = frameworkService.validateDescription(desc, "", config)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
+                    }
+                }
+            }
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)

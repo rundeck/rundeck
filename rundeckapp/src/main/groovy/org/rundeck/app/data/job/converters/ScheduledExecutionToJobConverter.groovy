@@ -58,9 +58,9 @@ class ScheduledExecutionToJobConverter {
         job.nodeConfig = se.nodeConfig
         job.optionSet = convertJobOptionSet(se)
         job.notificationSet = convertNotificationSet(se)
-        job.workflow = convertWorkflow(se.workflow)
+        job.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(se.workflow)
         if(se.scheduled) job.schedule = se.schedule
-        job.orchestrator = convertOrchestrator(se.orchestrator)
+        job.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(se.orchestrator)
         job.pluginConfigMap = se.getPluginConfigMap()
         addJobComponents(job)
         return job
@@ -75,52 +75,6 @@ class ScheduledExecutionToJobConverter {
             }
             ((JobComponentDataImportExport)componentDef).exportToJobData(job)
         }
-    }
-
-    static RdOrchestrator convertOrchestrator(Orchestrator o) {
-        if(!o) return null
-        RdOrchestrator orchestrator = new RdOrchestrator()
-        orchestrator.type = o.type
-        orchestrator.configuration = o.configuration
-        return orchestrator
-    }
-
-    static RdWorkflow convertWorkflow(Workflow w) {
-        def wkf = new RdWorkflow()
-        wkf.threadcount = w.threadcount
-        wkf.keepgoing = w.keepgoing
-        wkf.strategy = w.strategy
-        wkf.pluginConfigMap = w.pluginConfigMap
-        wkf.steps = w.commands.collect { step -> convertWorkflowStep(step) }
-        return wkf
-    }
-
-    static RdWorkflowStep convertWorkflowStep(WorkflowStep wstep) {
-        if(!wstep) return null
-        def rds = new RdWorkflowStep()
-        rds.description = wstep.description
-        rds.keepgoingOnSuccess = wstep.keepgoingOnSuccess
-        rds.pluginConfig = wstep.pluginConfig
-        rds.errorHandler = convertWorkflowStep(wstep.errorHandler)
-        if(wstep instanceof PluginStep) {
-            def pstep = (PluginStep)wstep
-            rds.configuration = pstep.configuration
-        } else if(wstep instanceof JobExec) {
-            def jrstep = (JobExec)wstep
-            rds.configuration = new HashMap<>(jrstep.toMap())
-            rds.configuration.remove("plugins")
-            rds.configuration.remove("description")
-            rds.configuration.remove("keepgoingOnSuccess")
-        } else if(wstep instanceof CommandExec) {
-            def cstep = (CommandExec)wstep
-            rds.configuration = new HashMap<>(cstep.toMap()) as Map<String, Object>
-            rds.configuration.remove("plugins")
-            rds.configuration.remove("description")
-            rds.configuration.remove("keepgoingOnSuccess")
-        }
-        rds.nodeStep = wstep.nodeStep
-        rds.pluginType = wstep.getPluginType()
-        return rds
     }
 
     static TreeSet<RdOption> convertJobOptionSet(ScheduledExecution se) {

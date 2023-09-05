@@ -111,7 +111,7 @@ function startRunFollow(data) {
         }), function (resp, status, jqxhr) {
             if (status == 'success') {
                 /** Kick this event into Vue Land */
-                window._rundeck.eventBus.$emit('ko-adhoc-running', data)
+                window._rundeck.eventBus.emit('ko-adhoc-running', data)
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);

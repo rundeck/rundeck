@@ -193,6 +193,8 @@ public class JettyCachingLdapLoginModuleTest2 {
     public void testShouldGetNestedGroups() {
         JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
         module._nestedGroups = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
         try {
             UserInfo userInfo = module.getUserInfo(user1);
             assertThat(userInfo.getUserName(), is(user1));
@@ -210,6 +212,8 @@ public class JettyCachingLdapLoginModuleTest2 {
     public void testShouldGetNestedGroupsWithAD() {
         JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(true);
         module._nestedGroups = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
         try {
             UserInfo userInfo = module.getUserInfo(user1);
             assertThat(userInfo.getUserName(), is(user1));
@@ -228,6 +232,8 @@ public class JettyCachingLdapLoginModuleTest2 {
         JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(true);
         module._nestedGroups = true;
         module.rolePagination = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
         try {
             UserInfo userInfo = module.getUserInfo(user1);
             assertThat(userInfo.getUserName(), is(user1));
@@ -451,11 +457,19 @@ public class JettyCachingLdapLoginModuleTest2 {
             when(roles.hasMore()).thenReturn(true, true, false);
             when(roles.next()).thenReturn(role1, role2);
 
-            when(rootContext.search(
+            when((LdapContext) rootContext.lookup(anyString())).thenReturn(ldapContext).thenReturn(ldapContext);
+            when(ldapContext.search(
                 eq(module._roleBaseDn),
                 eq(module._roleMemberFilter),
                 any(SearchControls.class)
             )).thenReturn(allRolesSearchResults);
+
+            when(rootContext.search(
+                    eq(module._roleBaseDn),
+                    eq(module._roleMemberFilter),
+                    any(SearchControls.class)
+            )).thenReturn(allRolesSearchResults);
+
             when(allRolesSearchResults.nextElement()).thenReturn(
                 role1SearchResult,
                 role2SearchResult,

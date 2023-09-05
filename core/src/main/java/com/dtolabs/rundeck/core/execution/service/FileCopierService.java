@@ -55,7 +55,7 @@ public class FileCopierService
         "service." + SERVICE_NAME + ".default.local.provider";
     public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "file-copier";
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copier";
-    public static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
+    public static final String DEFAULT_REMOTE_PROVIDER = "sshj-scp";
     public static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
     private static final Map<String, Class<? extends FileCopier>> PRESET_PROVIDERS ;
 

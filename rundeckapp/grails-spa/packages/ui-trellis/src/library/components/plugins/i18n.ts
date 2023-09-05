@@ -12,8 +12,8 @@ export default {
       empty: 'Can be empty',
       cancel: 'Cancel',
       add: 'Add',
-      addField: 'Add Custom Field'
-
+      addField: 'Add Custom Field',
+      more: 'More...'
     }
   },
   es: {
@@ -28,7 +28,8 @@ export default {
       empty: 'Puede dejarse vacio',
       cancel: 'Cancelar',
       add: 'Agregar',
-      addField: 'Agregar Nuevo Campo'
+      addField: 'Agregar Nuevo Campo',
+      more: 'Ver más...'
     }
   },
 }

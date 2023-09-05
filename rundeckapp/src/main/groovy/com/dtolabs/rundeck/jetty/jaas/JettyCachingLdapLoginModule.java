@@ -262,6 +262,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected boolean _nestedGroups;
 
+    protected boolean _allGroups = true;
+
     /**
      * timeout for LDAP read
      */
@@ -657,63 +659,94 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         SearchControls ctls = new SearchControls();
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        ctls.setReturningAttributes(new String[]{_roleNameAttribute, _roleMemberAttribute});
 
         ConcurrentHashMap<String, List<String>> roleMemberOfMap = new ConcurrentHashMap<String, List<String>>();
 
         try {
-            NamingEnumeration<SearchResult> results = dirContext.search(_roleBaseDn, _roleMemberFilter, ctls);
-            while (results.hasMoreElements()) {
-                SearchResult result = results.nextElement();
-                Attributes attributes = result.getAttributes();
-
-                if (attributes == null) {
-                    continue;
-                }
-
-                Attribute roleAttribute = attributes.get(_roleNameAttribute);
-                Attribute memberAttribute = attributes.get(_roleMemberAttribute);
-
-                if (roleAttribute == null || memberAttribute == null) {
-                    continue;
-                }
-
-                NamingEnumeration role = roleAttribute.getAll();
-                NamingEnumeration members = memberAttribute.getAll();
-
-                if(!role.hasMore() || !members.hasMore()) {
-                    continue;
-                }
-
-                String roleName = (String) role.next();
-                if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
-                    roleName = roleName.replace(_rolePrefix, "");
-                }
-
-                while(members.hasMore()) {
-                    String member = (String) members.next();
-                    Matcher roleMatcher = rolePattern.matcher(member);
-                    if(!roleMatcher.find()) {
-                        continue;
+            if (_allGroups) {
+                byte[] cookie = null;
+                LdapContext dirContextAux = (LdapContext) dirContext.lookup(_providerUrl);
+                Control[] pageControls = new Control[]{new PagedResultsControl(rolesPerPage, Control.CRITICAL)};
+                dirContextAux.setRequestControls(pageControls);
+                do {
+                    NamingEnumeration<SearchResult> results = dirContextAux.search(_roleBaseDn, _roleMemberFilter, ctls);
+                    searchRolesAndGroups(roleMemberOfMap, results);
+                    Control[] responseControls = dirContextAux.getResponseControls();
+                    if (responseControls != null) {
+                        for (Control control : responseControls) {
+                            if (control instanceof PagedResultsResponseControl) {
+                                PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
+                                cookie = prrc.getCookie();
+                                break;
+                            }
+                        }
                     }
-                    String roleMember = roleMatcher.group(1);
-                    List<String> memberOf;
-                    if(roleMemberOfMap.containsKey(roleMember)) {
-                        memberOf = roleMemberOfMap.get(roleMember);
-                    } else {
-                        memberOf = new ArrayList<String>();
-                    }
-
-                    memberOf.add(roleName);
-
-                    roleMemberOfMap.put(roleMember, memberOf);
-                }
-
+                    pageControls = new Control[]{new PagedResultsControl(rolesPerPage, cookie, Control.CRITICAL)};
+                    dirContextAux.setRequestControls(pageControls);
+                } while (cookie != null);
+                dirContextAux.close();
+            } else {
+                NamingEnumeration<SearchResult> results = dirContext.search(_roleBaseDn, _roleMemberFilter, ctls);
+                searchRolesAndGroups(roleMemberOfMap, results);
+                dirContext.close();
             }
-        } catch (NamingException e) {
-            e.printStackTrace();
+        } catch (NamingException | IOException e) {
+            LOG.error("Error: {0}", e);
         }
         return roleMemberOfMap;
     }
+
+    private void searchRolesAndGroups(ConcurrentHashMap<String, List<String>> roleMemberOfMap, NamingEnumeration<SearchResult> results) throws NamingException {
+        while (results.hasMoreElements()) {
+            SearchResult result = results.nextElement();
+            Attributes attributes = result.getAttributes();
+
+            if (attributes == null) {
+                continue;
+            }
+
+            Attribute roleAttribute = attributes.get(_roleNameAttribute);
+            Attribute memberAttribute = attributes.get(_roleMemberAttribute);
+
+            if (roleAttribute == null || memberAttribute == null) {
+                continue;
+            }
+
+            NamingEnumeration role = roleAttribute.getAll();
+            NamingEnumeration members = memberAttribute.getAll();
+
+            if(!role.hasMore() || !members.hasMore()) {
+                continue;
+            }
+
+            String roleName = (String) role.next();
+            if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
+                roleName = roleName.replace(_rolePrefix, "");
+            }
+
+            while(members.hasMore()) {
+                String member = (String) members.next();
+                Matcher roleMatcher = rolePattern.matcher(member);
+                if(!roleMatcher.find()) {
+                    continue;
+                }
+                String roleMember = roleMatcher.group(1);
+                List<String> memberOf;
+                if(roleMemberOfMap.containsKey(roleMember)) {
+                    memberOf = roleMemberOfMap.get(roleMember);
+                } else {
+                    memberOf = new ArrayList<String>();
+                }
+
+                memberOf.add(roleName);
+
+                roleMemberOfMap.put(roleMember, memberOf);
+            }
+
+        }
+    }
+
     protected boolean isDebug(){
         return _debug;
     }
@@ -1056,6 +1089,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             _nestedGroups = Boolean.parseBoolean((String) options.get("nestedGroups"));
         }
 
+        if (options.containsKey("allGroups")) {
+            _allGroups = Boolean.parseBoolean((String) options.get("allGroups"));
+        }
+
         if (options.containsKey("forceBindingLoginUseRootContextForRoles")) {
             _forceBindingLoginUseRootContextForRoles = Boolean.parseBoolean((String) options.get("forceBindingLoginUseRootContextForRoles"));
         }
@@ -1194,6 +1231,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (_bindPassword != null) {
             env.put(Context.SECURITY_CREDENTIALS, _bindPassword);
         }
+
         env.put("com.sun.jndi.ldap.read.timeout", Long.toString(_timeoutRead));
         env.put("com.sun.jndi.ldap.connect.timeout", Long.toString(_timeoutConnect));
 

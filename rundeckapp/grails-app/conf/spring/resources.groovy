@@ -112,6 +112,7 @@ import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
+import org.rundeck.app.data.providers.GormExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
@@ -156,6 +157,7 @@ import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
 import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
+import rundeck.services.NodeSourceLoaderService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
 import rundeck.services.audit.AuditEventsService
@@ -416,6 +418,14 @@ beans={
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
     }
+
+    nodeSourceLoaderService(NodeSourceLoaderService){
+        frameworkService = ref('frameworkService')
+        pluginService=ref('pluginService')
+        projectManagerService = ref('projectManagerService')
+        rundeckSpiBaseServicesProvider = ref('rundeckSpiBaseServicesProvider')
+    }
+
 
     executionValidatorService(ExecutionValidatorService)
 
@@ -913,6 +923,7 @@ beans={
     execReportDataProvider(GormExecReportDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
+    executionDataProvider(GormExecutionDataProvider)
     pluginMetaDataProvider(GormPluginMetaDataProvider)
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)

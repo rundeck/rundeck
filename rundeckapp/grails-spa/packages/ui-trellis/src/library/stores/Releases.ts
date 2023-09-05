@@ -3,23 +3,19 @@ import {RundeckClient} from '@rundeck/client'
 
 import axios from 'axios'
 import { VersionInfo } from './System'
-import { observable, action, runInAction } from 'mobx'
 import { Serial } from '../utilities/Async'
 
 export class Releases {
-    @observable releases: Array<Release> = []
+    releases: Array<Release> = []
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
     @Serial
-    @action
     async load() {
         const results = await axios.get<Array<ApiRelease>>('https://api.rundeck.com/news/v1/release')
 
-        runInAction( () => {
-            results.data.forEach(r => {
-                this.releases.push(Release.FromApi(r))
-            })
+        results.data.forEach(r => {
+            this.releases.push(Release.FromApi(r))
         })
     }
 }

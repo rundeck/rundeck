@@ -16,10 +16,12 @@
 package org.rundeck.plugin.objectstore
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import io.minio.MinioClient
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDirectorySource
@@ -37,6 +39,7 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
     @PluginProperty(title = 'Object Store Url', description = 'The URL endpoint of the s3 compatible service')
     String objectStoreUrl;
     @PluginProperty(title = 'Secret Key', description = 'The secret key used by the client to connect to the service')
+    @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = "PASSWORD")
     String secretKey;
     @PluginProperty(title = 'Access Key', description = 'The access key used by the client to connect to the service')
     String accessKey;

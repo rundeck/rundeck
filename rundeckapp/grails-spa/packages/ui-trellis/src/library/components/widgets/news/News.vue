@@ -1,13 +1,13 @@
 <template>
     <div class="news-widget">
-        <Skeleton :loading="!news.loaded" type="community-news">
-            <div class="news-article" v-for="article in news.articles.slice(0,4)" :key="article.name">
+        <Skeleton :loading="!newsStore.loaded" type="community-news">
+            <div class="news-article" v-for="article in newsStore.articles.slice(0,4)" :key="article.title">
                 <div style="margin-right: 10px; flex-basis: 50px; flex-shrink: 0;align-items: center;align-content: center; display: flex;">
                     <img :src="article.imageUrl"/>
                 </div>
                 <div class="news-article__details">
-                    <p class="news-article__date">{{article.date.toUTCString('MMMM Do YYYY hh:mm')}}</p>
-                    <p class="news-article__description"><a :href="article.url" target="_blank">{{article.title}}</a></p>
+                  <p class="news-article__date">{{article.date.toUTCString()}}</p><!--'MMMM Do YYYY hh:mm'-->
+                  <p class="news-article__description"><a :href="article.url" target="_blank">{{article.title}}</a></p>
                 </div>
             </div>
         </Skeleton>
@@ -18,39 +18,26 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import {Component, Inject} from 'vue-property-decorator'
-import {Observer} from 'mobx-vue'
-import PerfectScrollbar from 'perfect-scrollbar'
-
-import { RecycleScroller } from 'vue-virtual-scroller'
+import {defineComponent} from 'vue'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
-
-import {RootStore} from '../../../stores/RootStore'
-import { NewsStore } from '../../../stores/News'
-
 import Skeleton from '../../skeleton/Skeleton.vue'
 
-
-@Observer
-@Component({components: {
-    RecycleScroller,
-    Skeleton
-}})
-export default class CommunityNews extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    news!: NewsStore
-
-    created() {
-        this.news = this.rootStore.news
-    }
-
+export default defineComponent({
+    name:"News",
+    components: {
+        Skeleton
+    },
+    emits:['news:select-all'],
+    data() {
+        return {
+            newsStore: window._rundeck.rootStore.news
+        }
+    },
     mounted() {
-        this.news.load()
+        this.newsStore.load()
     }
-}
+})
+
 </script>
 
 <style scoped lang="scss">

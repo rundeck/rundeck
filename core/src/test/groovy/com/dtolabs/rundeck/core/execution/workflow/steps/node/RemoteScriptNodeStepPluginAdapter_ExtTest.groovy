@@ -69,7 +69,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
             }
             def node = new NodeEntryImpl('node')
             def script = Mock(FileExtensionGeneratedScript)
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null, true)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
@@ -111,7 +111,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
                     script: script,
                     pluginPropNames: ['abc', 'def', 'xyz']
             )
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin, false)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
             def instanceConfig = [
@@ -151,7 +151,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
             def script = Mock(FileExtensionGeneratedScript) {
                 getArgs() >> ['someargs'].toArray()
             }
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null, true)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
 
@@ -188,7 +188,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
             }
 
             def plugin = Mock(RemoteScriptNodeStepPlugin)
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin, true)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
@@ -235,7 +235,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
                 isInterpreterArgsQuoted() >> quoted
                 getScriptInterpreter() >> scriptinterpreter
             }
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(null, true)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
@@ -280,7 +280,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
             }
 
         when:
-            def result = new RemoteScriptNodeStepPluginAdapter_Ext(null).executeRemoteScript(
+            def result = new RemoteScriptNodeStepPluginAdapter_Ext(null, true).executeRemoteScript(
                     context,
                     node,
                     script,
@@ -318,7 +318,7 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
                     pluginPropNames: ['abc', 'def', 'xyz']
             )
             plugin.setVersion("2.0")
-            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin)
+            def adapter = new RemoteScriptNodeStepPluginAdapter_Ext(plugin, true)
             adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
             def instanceConfig = [

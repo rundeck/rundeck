@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import copyBox from '../../../library/components/containers/copybox/CopyBox.vue'
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
@@ -10,13 +10,12 @@ function init(){
     if (!els)
         return
 
-    for (var i = 0; i < els.length; i++) {
+    for (let i = 0; i < els.length; i++) {
         const e = els[i]
-        /* eslint-disable no-new */
-        new Vue({
-            el: e,
+        const app = createApp({
             components: { copyBox }
         })
+        app.mount(e)
     }
 }
 

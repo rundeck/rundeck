@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
@@ -47,6 +48,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -62,6 +64,7 @@ import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
@@ -79,6 +82,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
+    PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
 
@@ -454,7 +458,11 @@ class ProjectController extends ControllerBase{
                 }
                 flash.warn=warning.join(",")
                 }catch( Exception e ){
+                    def hint = hintErrorCause(e)
                     flash.error="There was some errors in the import process: [ ${e.getMessage()} ]"
+                    if( hint.length() ){
+                        flash.warn=hint
+                    }
                 }
 
                 return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
@@ -463,6 +471,24 @@ class ProjectController extends ControllerBase{
             flash.error = g.message(code:'request.error.invalidtoken.message')
             return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
+    }
+
+    /**
+     * Give a hint based on the error message in the exception thrown during the import
+     *
+     * @param Throwable - The exception thrown
+     * @return String - null if is not supported yet, a message if it is.
+     *
+     * */
+    @CompileStatic
+    private String hintErrorCause(Throwable t){
+        final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
+        final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
+        def cause = ExceptionUtils.getRootCause(t).message
+        if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
+            return SIZE_CONSTRAINT_VIOLATION_MESSAGE
+        }
+        return ''
     }
 
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
@@ -2189,6 +2215,33 @@ key2=value'''
         }
         Properties currentProps = project.getProjectProperties() as Properties
 
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(configProps, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
 
         if(!result.success){
@@ -2454,7 +2507,35 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+        Properties projProp = new Properties([(key_): value_])
+
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
+        def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){
             return apiService.renderErrorFormat(response, [

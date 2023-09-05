@@ -51,46 +51,48 @@
               :validation-warning-text="$t('Validation errors')"
               @input="configUpdated"
             >
-              <div slot="extra" class="row" v-if="mode==='edit'">
-                <div class="col-xs-12 col-sm-12">
-                  <span v-if="editFocus===-1">
-                    <a
-                      class="btn btn-default btn-xs"
-                      @click="editPlugin(index,plugin)"
-                      :key="'edit'"
-                    >{{$t('Edit')}}</a>
-                  </span>
-                  <span v-if="editFocus===index">
-                    <a
-                      class="btn btn-cta btn-xs"
-                      @click="savePlugin(plugin,index)"
-                      :key="'save'"
-                    >{{$t('Save')}}</a>
-                    <a class="btn btn-default btn-xs" @click="didCancel(plugin, index)">{{$t('Cancel')}}</a>
-                  </span>
-                  <span class="small text-info" v-if="plugin.modified">
-                    <i class="fas fa-pen-square"></i>
-                    Modified
-                  </span>
-                  <div class="btn-group pull-right" v-if="(editFocus===-1||editFocus===index)">
-                    <btn
-                      class="btn-xs btn-danger"
-                      @click="removePlugin(plugin,index)"
-                      :disabled="editFocus!==-1&&editFocus!==(index)"
-                    >
-                      {{$t('Delete')}}
-                      <i class="fas fa-minus"></i>
-                    </btn>
+              <template v-slot:extra v-if="mode==='edit'">
+                <div class="row">
+                  <div class="col-xs-12 col-sm-12">
+                    <span v-if="editFocus===-1">
+                      <a
+                        class="btn btn-default btn-xs"
+                        @click="editPlugin(index,plugin)"
+                        :key="'edit'"
+                      >{{$t('Edit')}}</a>
+                    </span>
+                    <span v-if="editFocus===index">
+                      <a
+                        class="btn btn-cta btn-xs"
+                        @click="savePlugin(plugin,index)"
+                        :key="'save'"
+                      >{{$t('Save')}}</a>
+                      <a class="btn btn-default btn-xs" @click="didCancel(plugin, index)">{{$t('Cancel')}}</a>
+                    </span>
+                    <span class="small text-info" v-if="plugin.modified">
+                      <i class="fas fa-pen-square"></i>
+                      Modified
+                    </span>
+                    <div class="btn-group pull-right" v-if="(editFocus===-1||editFocus===index)">
+                      <btn
+                        class="btn-xs btn-danger"
+                        @click="removePlugin(plugin,index)"
+                        :disabled="editFocus!==-1&&editFocus!==(index)"
+                      >
+                        {{$t('Delete')}}
+                        <i class="fas fa-minus"></i>
+                      </btn>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </template>
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
           </div>
           <div class="list-group-item" v-if="workingData.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
-                {{$t("No Plugin Groups Configured",serviceName)}}
+                {{$t("No Plugin Groups Configured", {serviceName})}}
               </span>
             </slot>
           </div>
@@ -111,8 +113,7 @@
           >
             <div class="list-group">
               <a
-                v-for="plugin in pluginProviders"
-                v-if="!plugin['configSet']"
+                v-for="plugin in filteredPluginProviders"
                 v-bind:key="plugin.name"
                 href="#"
                 @click="addPlugin(plugin.name)"
@@ -128,9 +129,11 @@
                 </plugin-info>
               </a>
             </div>
-            <div slot="footer">
-              <btn @click="modalAddOpen=false">{{$t('Cancel')}}</btn>
-            </div>
+            <template v-slot:footer>
+              <div>
+                <btn @click="modalAddOpen=false">{{$t('Cancel')}}</btn>
+              </div>
+            </template>
           </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
@@ -143,7 +146,7 @@
 
 <script lang="ts">
 import axios from "axios";
-import Vue from "vue";
+import {defineComponent} from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "../../../library";
 import Expandable from "../../../library/components/utils/Expandable.vue";
@@ -154,6 +157,7 @@ import PluginValidation from "../../../library/interfaces/PluginValidation";
 import {RundeckBrowser} from "@rundeck/client";
 import {cloneDeep} from "lodash"
 import _ from 'lodash';
+import {useI18n} from "vue-i18n";
 
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
@@ -178,7 +182,7 @@ interface ProjectPluginConfigEntry {
 }
 
 const array_clone = (arr: any[]): any[] => arr.map(val => Object.assign({}, val))
-export default Vue.extend({
+export default defineComponent({
   name: "App",
   components: {
     PluginInfo,
@@ -201,7 +205,7 @@ export default Vue.extend({
       configOrig: [] as any[],
       rundeckContext: {} as RundeckContext,
       modalAddOpen: false,
-      pluginProviders: [] as any,
+      pluginProviders: [] as any[],
       pluginLabels: {},
       projectSettings: {},
       editFocus: -1,
@@ -217,7 +221,10 @@ export default Vue.extend({
         data.push({type: plugin.entry.type, config: plugin.entry.config})
       });
       return data
-    }
+    },
+    filteredPluginProviders(): any[] {
+      return this.pluginProviders.filter((plugin) => !plugin['configSet'])
+    },
   },
   props: {
     editMode: {
@@ -242,6 +249,7 @@ export default Vue.extend({
     help: { required: false, type: String },
     editButtonText: { required: false, type: String },
   },
+  emits: ['input', 'saved', 'plugin-storage-access'],
   methods: {
     notifyError(msg: string, args: any[]) {
       Notification.notify({
@@ -333,10 +341,10 @@ export default Vue.extend({
         plugin.entry.config
       );
       if (!validation.valid) {
-        Vue.set(plugin, "validation", validation);
+        plugin.validation = validation;
         return;
       }
-      Vue.delete(plugin, "validation");
+      delete plugin.validation;
       this.pluginConfigs = array_clone(this.workingData)
       plugin.create = false;
       plugin.modified = true;

@@ -171,6 +171,7 @@ function BulkEditor(data){
     self.scmImportActions = ko.observable(null);
     self.scmExportRenamed = ko.observable(null);
     self.scmDone = ko.observable(null);
+    self.actionLinks = ko.observableArray([])
     self.isExportEnabled=ko.pureComputed(function(){
         return self.scmExportEnabled();
     });

@@ -5,10 +5,12 @@
   </div>
 </template>
 <script>
+import { defineComponent } from 'vue'
 import moment from 'moment'
 
-export default {
-  props:['value','dateClass','timeClass'],
+export default defineComponent({
+  props:['modelValue','dateClass','timeClass'],
+  emits: ['update:modelValue'],
   data(){
     return {
       dateString:'',
@@ -25,8 +27,8 @@ export default {
       this.time=mo.toDate()
     },
     setFromValue(){
-      if(this.value){
-        let dt=moment(this.value)
+      if(this.modelValue){
+        let dt=moment(this.modelValue)
         this.time=dt.toDate()
         this.dateString=dt.format('YYYY-MM-DD')
       }
@@ -40,10 +42,10 @@ export default {
     },
     time:{
       handler(newVal,oldVal){
-        this.$emit('input', this.datetime)
+        this.$emit('update:modelValue', this.datetime)
       }
     },
-    value:{
+    modelValue:{
       handler(newVal,oldVal){
         this.setFromValue()
       }
@@ -57,7 +59,7 @@ export default {
   mounted(){
     this.setFromValue()
   }
-}
+})
 </script>
 <style lang="scss" >
 .bs-date-picker{

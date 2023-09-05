@@ -8,7 +8,7 @@
                 {{versionSemantic}}
             </span>
 
-            <version-date-display v-if="isGa && showDate" :title="date" :date="date"/>
+            <version-date-display v-if="isGa && showDate" :title="date" :date="date || ''"/>
 
             <span v-if="!isGa && (showDate||showRelativeDate||showTag)">
                 <span v-if="showTag">
@@ -16,27 +16,28 @@
                     <span v-else class="rundeck-version-tag" :style="versionColorStyle">{{versionTag}}</span>
                 </span>
                 <span v-if="showRelativeDate"
-                      class="rundeck-version-relative-date">{{date | moment("from", "now")}}</span>
-                <version-date-display v-if="showDate" :title="date" :date="date"/>
+                      class="rundeck-version-relative-date">{{formatFromNow(date)}}</span>
+                <version-date-display v-if="showDate" :title="date" :date="date || ''"/>
             </span>
 
             <version-icon-name-display :icon="versionIcon" :text="versionText" :color="versionColor" v-if="showName"/>
         </span>
-        <template slot="popover">
+        <template v-slot:popover>
             {{version}}
-            <version-date-display :date="date"/>
+            <version-date-display :date="date || ''"/>
             <version-icon-name-display :icon="versionIcon" :text="versionText" :color="versionColor"/>
         </template>
     </popover>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 import {RundeckVersion} from '../../utilities/RundeckVersion'
 import VersionIconNameDisplay from './VersionIconNameDisplay.vue'
 import VersionDateDisplay from './VersionDateDisplay.vue'
+import { formatFromNow } from "../../utilities/DateTimeFormatters";
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     VersionIconNameDisplay,
     VersionDateDisplay
@@ -118,7 +119,7 @@ export default Vue.extend({
         background: rdversion.stripeBg(color, 15, '#5c5c5c', 20),
         color: 'white'
       } : {}
-    }
+    },
   },
   watch:{
     version(){
@@ -128,6 +129,9 @@ export default Vue.extend({
   methods:{
     loadversion(){
         this.rdversion = new RundeckVersion({versionString: this.version, versionDate: this.date, appId: this.appName})
+    },
+    formatFromNow(date) {
+        return formatFromNow(date)
     }
   },
   mounted() {

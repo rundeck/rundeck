@@ -44,6 +44,16 @@ public interface JobDefinitionComponent {
     Map exportCanonicalMap(Map jobDataMap);
 
     /**
+     * Return modified canonical Job Map
+     *
+     * @param jobDataMap source canonical job map
+     * @return modified canonical job map
+     */
+    default Map exportCanonicalMap(Map jobDataMap, Object associate) {
+        return exportCanonicalMap(jobDataMap);
+    }
+
+    /**
      * Return modified Xmap
      *
      * @param jobXMap source xmap

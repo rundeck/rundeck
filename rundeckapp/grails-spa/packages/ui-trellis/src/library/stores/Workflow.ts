@@ -1,21 +1,16 @@
-import {observable, action, runInAction} from 'mobx'
-
 import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
 import { JobWorkflow } from '../utilities/JobWorkflow'
 
 export class WorkflowStore {
-    @observable.shallow workflows: Map<string, JobWorkflow> = new Map()
+    workflows: Map<string, JobWorkflow> = new Map()
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
-    @action
     async get(jobId: string) {
         if (!this.workflows.has(jobId)) {
             const workflow = await this.fetch(jobId)
-            runInAction( () => {
-                this.workflows.set(jobId, workflow)
-            })
+            this.workflows.set(jobId, workflow)
         }
         return this.workflows.get(jobId)!
     }

@@ -22,6 +22,7 @@ dependencies {
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
     pluginLibs("io.minio:minio:7.1.0") {
         exclude(group: 'com.fasterxml.jackson.core')
+        exclude(group: 'com.google.guava', module: 'guava')
     }
 
     // Use the awesome Spock testing and specification framework

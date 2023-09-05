@@ -21,7 +21,7 @@
         <b v-if="status === 'NOT LOGGED'" class="text-muted fas fa-minus-circle"></b>
         <b v-if="status === 'ABANDONED'" class="text-muted fas fa-bed"></b>
         <span v-if="label">
-            {{$t('message.loginStatus.'+status)}}
+            {{$t('message_loginStatus.'+status)}}
         </span>
     </span>
 </template>

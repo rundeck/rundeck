@@ -858,7 +858,7 @@ search
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
-                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
+                                      <div class="execution-log-viewer" style="height: 100%" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
                                   </div>
 
                               </div>
@@ -1100,19 +1100,6 @@ search
     window._rundeck.data = Object.assign(window._rundeck.data || {}, {
         "execution": loadJsonData('execDataJSON')
     })
-
-    const observer = new MutationObserver(function(mutations_list) {
-        mutations_list.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(added_node) {
-                if(added_node.className == 'wfnodestate' && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
-                    var eventKOProcessed = new Event('vue-ui-socket-node-added');
-                    window.dispatchEvent(eventKOProcessed)
-                    observer.disconnect();
-                }
-            });
-        });
-    })
-    observer.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
 
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
