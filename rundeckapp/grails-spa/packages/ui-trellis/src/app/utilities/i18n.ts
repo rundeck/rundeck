@@ -1,4 +1,5 @@
 import {nextTick} from "vue";
+import {UiMessage} from '../../library/stores/UIStore'
 import en_US from './locales/en_US'
 import es_419 from './locales/es_419'
 import fr_FR from './locales/fr_FR'
@@ -46,8 +47,20 @@ const updateLocaleMessages = async (i18n, locale, lang, messages) => {
     i18n.global.setLocaleMessage(locale, mergeDeep(baseMessages, messages))
     return nextTick()
 }
+/**
+ * update locale messages for the i18n instance
+ * @param i18n vue-i18n instance
+ * @param messages new messages data
+ */
+const commonAddUiMessages = async (i18n, messages) => {
+    const newMessages = messages.reduce((acc: any, message: UiMessage) => message ? ({...acc, ...message}) : acc, {})
+    const locale = window._rundeck.locale || 'en_US'
+    const lang = window._rundeck.language || 'en'
+    return updateLocaleMessages(i18n, locale, lang, newMessages)
+}
 
 export {
     initI18n,
     updateLocaleMessages,
+    commonAddUiMessages
 }
