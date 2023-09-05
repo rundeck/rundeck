@@ -1,6 +1,6 @@
 <template>
     <span :title="title">
-        <span :style="{color}" class="rundeck-server-uuid" :data-server-uuid="uuid" data-test-id="server-display-uuid">
+        <span :style="{color}">
             <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
             <span v-if="showId">{{ uuidShort }}</span>
         </span>
