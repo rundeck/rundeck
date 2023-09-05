@@ -262,7 +262,8 @@
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>
-    <label class="${labelColType}  ${prop.required?'required':''}"
+    <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
+    <label data-storage="${enc(attr:storageFilter)}" class="${labelColType}  ${prop.required?'required':''}"
            for="${enc(attr: fieldid)}"><stepplugin:message
             service="${service}"
             name="${provider}"
@@ -331,7 +332,6 @@
     <g:if test="${hasStorageSelector}">
         %{-- selector for accessible storage --}%
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
-        <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
         <div class="vue-ui-socket">
             <ui-socket section="plugin-runner-key-selector" location="main"
                        :event-bus="eventBus"
