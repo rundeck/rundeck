@@ -5,16 +5,18 @@
             <span v-if="showId">{{ uuidShort }}</span>
         </span>
         <span style="margin-left: 0.5em" :class="css">{{name}}</span>
+        <ui-socket section="server-info-display" location="badges" :socket-data="{uuid}" />
     </span>
 </template>
 
 <script lang="ts">
 import {defineComponent, PropType} from 'vue'
 
-import {ServerInfo} from '../../stores/System'
+import UiSocket from '../utils/UiSocket.vue'
 import { RundeckVersion } from '../../utilities/RundeckVersion'
 
 export default defineComponent({
+  components: {UiSocket},
     props: {
         glyphicon: String,
         uuid: String,
