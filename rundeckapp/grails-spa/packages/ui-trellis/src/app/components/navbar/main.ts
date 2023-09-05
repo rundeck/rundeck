@@ -7,6 +7,8 @@ import ThemeSelectWidget from '../../../library/components/widgets/theme-select/
 
 import {UtilityActionItem} from '../../../library/stores/UtilityBar'
 import { getRundeckContext, getAppLinks } from '../../../library'
+import {commonAddUiMessages, initI18n} from '../../utilities/i18n'
+import * as uiv from 'uiv'
 
 const appLinks = getAppLinks()
 const rootStore = getRundeckContext().rootStore
@@ -87,5 +89,12 @@ function initUtil() {
         rootStore
       }
     })
+
+  const i18n = initI18n()
+  vue.use(i18n)
+  vue.use(uiv)
+  vue.provide('addUiMessages', async (messages) => {
+    await commonAddUiMessages(i18n, messages)
+  })
     vue.mount(elm)
 }
