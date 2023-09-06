@@ -332,7 +332,9 @@
         %{-- selector for accessible storage --}%
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
         <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
-        <div class="vue-ui-socket">
+        <div class="vue-ui-socket"
+             for="${enc(attr: fieldid)}"
+             data-storage-filter="${enc(attr:storageFilter)}">
             <ui-socket section="plugin-runner-key-selector" location="main"
                        :event-bus="eventBus"
                        :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}' }"
