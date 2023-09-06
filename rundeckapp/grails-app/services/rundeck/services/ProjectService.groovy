@@ -182,21 +182,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
-
-        def File logfile = loggingService.getLogFileForExecution(exec)
+    /**
+     * Generates log files for the given execution.
+     * output-<execId>.rdlog containing the log output
+     * state-<execId>.state.json containing the execution state
+     * <name>.xml containing the summary of the execution
+     * @param zip builder to pack the execution
+     * @param exec execution to export
+     * @param name of the target xml file
+     * @param remotePathTemplate configured path for remote log storage
+     *
+     * @throws ProjectServiceException
+     */
+    def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
+        File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
         if (logfile && logfile.isFile()) {
             logfilepath = "output-${exec.id}.rdlog"
+            zip.file logfilepath, logfile
+        } else if (remotePathTemplate != null){ // if there's a configured remote storage
+            logfilepath = "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePathTemplate)}"
         }
         //convert map to xml
         zip.file("$name") { Writer writer ->
             executionUtilService.exportExecutionXml(exec, writer, logfilepath)
         }
-        if (logfile && logfile.isFile()) {
-            zip.file logfilepath, logfile
-        }
-        def File statefile = workflowService.getStateFileForExecution(exec)
+        File statefile = workflowService.getStateFileForExecution(exec)
         if (statefile && statefile.isFile()) {
             zip.file "state-${exec.id}.state.json", statefile
         }
@@ -812,8 +823,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('executions/') {
                             //export executions
                             //export execution logs
+                            String remotePathTemplate = null
                             execs.each { Execution exec ->
-                                exportExecution zip, exec, "execution-${exec.id}.xml"
+                                if(remotePathTemplate == null)
+                                    remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
+
+                                exportExecution zip, exec, "execution-${exec.id}.xml", remotePathTemplate
 
                                 jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
 
@@ -1644,25 +1659,31 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     oldidtoexec[oldids[e]] = e
                 }
                 //check outputfile exists in mapping
-                if (e.outputfilepath && execout[e.outputfilepath]) {
-                    File oldfile = execout[e.outputfilepath]
-                    //move to appropriate location and update outputfilepath
-                    File newfile = logFileStorageService.getFileForExecutionFiletype(
-                            e,
-                            LoggingService.LOG_FILE_FILETYPE,
-                            false,
-                            false
-                    )
-                    try {
-                        FileUtils.moveFile(oldfile, newfile)
-                    } catch (IOException exc) {
-                        execerrors << "Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
-                        log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
+                String oldOutputFilePath = e.outputfilepath
+                if (oldOutputFilePath) {
+                    if(e.isRemoteOutputfilepath()){
+                        log.warn("Log file for imported execution \"${e.id}\" is not present in archive. This logs will be loaded when accessed if its path \"${e.outputfilepath}\" is present in configured log storage")
+                    } else if (execout[oldOutputFilePath]) {
+                        File oldfile = execout[oldOutputFilePath]
+                        //move to appropriate location and update outputfilepath
+                        File newfile = logFileStorageService.getFileForExecutionFiletype(
+                                e,
+                                LoggingService.LOG_FILE_FILETYPE,
+                                false,
+                                false
+                        )
+                        try {
+                            FileUtils.moveFile(oldfile, newfile)
+                        } catch (IOException exc) {
+                            execerrors << "Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
+                            log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
+                        }
+                        e.outputfilepath = newfile.absolutePath
                     }
-                    e.outputfilepath = newfile.absolutePath
-                } else {
-                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}"
-                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
+                }
+                if (!oldOutputFilePath || !(execout[oldOutputFilePath] || e.isRemoteOutputfilepath())){
+                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin."
+                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin.")
                 }
 
                 //copy state.json file
