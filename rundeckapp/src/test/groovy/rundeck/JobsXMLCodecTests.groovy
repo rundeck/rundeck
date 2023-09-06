@@ -6915,7 +6915,39 @@ void testDecodeBasic__no_group(){
         job.options.getAt("OPTION").getAt("values").size() == 3
     }
 
+    @Test
+    public void "Allow to import jobs with blank notification's config"() {
 
+        // Missing notification config
+        def xml0 = """<joblist>
+    <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <notification>
+      <onstart>
+        <plugin type='SlackNotification' />
+      </onstart>
+    </notification>
+  </job>
+</joblist>
+"""
 
-
+        try {
+            def jobs = JobsXMLCodec.decode(xml0)
+            assertNotNull(jobs)
+        } catch (Exception e) {
+            // Never going to get here but...
+            assertNotEquals("onstart plugin had blank or missing 'configuration' element", e.message)
+        }
+    }
 }
