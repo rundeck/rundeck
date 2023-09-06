@@ -44,7 +44,7 @@ export default defineComponent({
   setup() {
     const items = ref<UIItem[]>([])
     const uiwatcher = ref<UIWatcher>()
-    const rootStore = getRundeckContext()?getRundeckContext().rootStore:null
+    const rootStore = getRundeckContext()?.rootStore || null
     return {
       items,
       uiwatcher,

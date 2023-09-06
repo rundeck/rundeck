@@ -21,7 +21,7 @@ const ServerIdentityComp = defineComponent({
     serverName: {type: String, default: ''},
     serverUuid: {type: String, default: ''}
   },
-  async mounted() {
+ mounted() {
       this.serverInfo = new ServerInfo(this.serverName, this.serverUuid)
   },
   template: `
@@ -34,7 +34,7 @@ const ServerIdentityComp = defineComponent({
     </server-display>`
 })
 
-let rundeckContext = getRundeckContext()
+const rundeckContext = getRundeckContext()
 if (rundeckContext && rundeckContext.rootStore && rundeckContext.rootStore.ui) {
   rundeckContext.rootStore.ui.addItems([
     {
