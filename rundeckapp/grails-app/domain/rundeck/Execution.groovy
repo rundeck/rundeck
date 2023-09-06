@@ -47,6 +47,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Date dateCompleted
     String status
     String outputfilepath
+    Integer execIdForLogStore
     String failedNodeList
     String succeededNodeList
     String abortedby
@@ -68,7 +69,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     boolean serverNodeUUIDChanged = false
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore']
     static constraints = {
         importFrom SharedExecutionConstraints
         importFrom SharedNodeConfigConstraints
@@ -214,6 +215,18 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata ? asJsonMap(extraMetadata) : [:]
     }
 
+    Integer getExecIdForLogStore(){
+        return execIdForLogStore ? execIdForLogStore : id
+    }
+
+    String getOutputfilepath(){
+        return isRemoteOutputfilepath() ? outputfilepath.substring('ext:'.length()) : outputfilepath
+    }
+
+    boolean isRemoteOutputfilepath(){
+        return this.outputfilepath.startsWith('ext:')
+    }
+
     void setExtraMetadataMap(Map config) {
         extraMetadata = config ? serializeJsonMap(config) : null
     }
@@ -322,6 +335,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         map.dateCompleted=dateCompleted
         map.status=status
         map.outputfilepath=outputfilepath
+        map.execIdForLogStore = getExecIdForLogStore()
         map.failedNodeList = failedNodeList
         map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
@@ -395,6 +409,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         exec.dateCompleted=data.dateCompleted
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
+        exec.execIdForLogStore = data.execIdForLogStore
         exec.failedNodeList = data.failedNodeList
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby

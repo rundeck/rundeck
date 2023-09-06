@@ -987,6 +987,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.filter = execution.filter
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.outputfilepath = execution.outputfilepath
+        jobcontext.execIdForLogStore = execution.getExecIdForLogStore().toString()
+        jobcontext.isRemoteFilePath = execution.isRemoteOutputfilepath().toString()
         jobcontext.executionUuid = execution.uuid
         jobcontext.execDateCompleted = execution.dateCompleted
         jobcontext.executionType = execution.executionType
