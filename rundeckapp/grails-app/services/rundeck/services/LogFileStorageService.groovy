@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
@@ -28,12 +29,15 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.*
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
+import grails.web.mapping.LinkGenerator
 import org.hibernate.sql.JoinType
 import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
@@ -94,7 +98,7 @@ class LogFileStorageService
     TaskExecutor logFileStorageDeleteRemoteTask
     def executorService
     def grailsApplication
-    def grailsLinkGenerator
+    LinkGenerator grailsLinkGenerator
     ApplicationContext applicationContext
     def metricService
     def configurationService
@@ -999,7 +1003,7 @@ class LogFileStorageService
             boolean partial = false
     )
     {
-        if (useStoredPath && execution.outputfilepath) {
+        if (useStoredPath && execution.outputfilepath && !execution.isRemoteOutputfilepath()) {
             //use previously stored outputfilepath if present, substitute correct filetype
             String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
             return new File(path + '.' + filetype + (partial ? '.part' : ''))
@@ -1367,6 +1371,41 @@ class LogFileStorageService
             }
         }
         return null
+    }
+
+    String getStorePathForProject(String projectName){
+        PropertyResolverFactory.Factory resolverFactory = frameworkService.getFrameworkPropertyResolverFactory(projectName)
+        String pluginName = getConfiguredPluginName()
+        String storePath = null
+
+        if(pluginName != null) {
+            Description description = pluginService.getPluginDescriptor(pluginName, executionFileStoragePluginProviderService).getDescription()
+            storePath = PluginAdapterUtility.mapDescribedProperties(resolverFactory.create(executionFileStoragePluginProviderService.name, description), description, PropertyScope.Instance).get('path')
+        }
+
+        return storePath
+    }
+
+    String getRemotePathForExecutionFromPathTemplate(Execution execution, String pathTemplate){
+        Map<String, String> execCtx = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
+
+        return expandPath(pathTemplate, execCtx)
+    }
+
+    static String expandPath(String pathFormat, Map<String, String> context) {
+        String result = pathFormat.replaceAll("^/+", "");
+        if (null != context) {
+            result = DataContextUtils.replaceDataReferencesInString(
+                    result,
+                    DataContextUtils.addContext("job", context, new HashMap<>()),
+                    null,
+                    false,
+                    true
+            );
+        }
+        result = result.replaceAll("/+", "/");
+
+        return result;
     }
 
     /**
