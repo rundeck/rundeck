@@ -6942,12 +6942,8 @@ void testDecodeBasic__no_group(){
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml0)
-            assertNotNull(jobs)
-        } catch (Exception e) {
-            // Never going to get here but...
-            assertNotEquals("onstart plugin had blank or missing 'configuration' element", e.message)
-        }
+        def jobs = JobsXMLCodec.decode(xml0)
+        assertNotNull(jobs)
+
     }
 }
