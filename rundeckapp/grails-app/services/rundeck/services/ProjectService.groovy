@@ -203,8 +203,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (statefile && statefile.isFile()) {
                 zip.file "state-${exec.id}.state.json", statefile
             }
-        } else if (remotePath != null){
-            logfilepath = "ext:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePath)}"
+        } else if (remotePath != null){ // if there's a configured remote storage
+            logfilepath = "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePath)}"
         }
 
         //convert map to xml

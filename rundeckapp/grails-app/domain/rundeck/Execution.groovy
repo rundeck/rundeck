@@ -47,7 +47,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Date dateCompleted
     String status
     String outputfilepath
-    Integer execIdForLogStore
+    Long execIdForLogStore
     String failedNodeList
     String succeededNodeList
     String abortedby
@@ -215,16 +215,24 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata ? asJsonMap(extraMetadata) : [:]
     }
 
-    Integer getExecIdForLogStore(){
-        return execIdForLogStore ? execIdForLogStore : id
+    Long getExecIdForLogStore(){
+        if(!execIdForLogStore) {
+            if (isRemoteOutputfilepath()) {
+                final int extMarkPos = 'ext:'.length()
+                execIdForLogStore = Long.parseLong(outputfilepath.substring(extMarkPos, outputfilepath.indexOf(':', extMarkPos)))
+            } else
+                execIdForLogStore = id
+        }
+        return execIdForLogStore
     }
 
     String getOutputfilepath(){
-        return isRemoteOutputfilepath() ? outputfilepath.substring('ext:'.length()) : outputfilepath
+        final int extMarkPos = 'ext:'.length()
+        return isRemoteOutputfilepath() ? outputfilepath.substring(outputfilepath.indexOf(':', extMarkPos) + 1) : outputfilepath
     }
 
     boolean isRemoteOutputfilepath(){
-        return this.outputfilepath.startsWith('ext:')
+        return this.outputfilepath?.startsWith('ext:')
     }
 
     void setExtraMetadataMap(Map config) {
@@ -409,7 +417,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         exec.dateCompleted=data.dateCompleted
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
-        exec.execIdForLogStore = data.execIdForLogStore
+        exec.execIdForLogStore = data.execIdForLogStore ? Long.parseLong(data.execIdForLogStore as String) : null
         exec.failedNodeList = data.failedNodeList
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
