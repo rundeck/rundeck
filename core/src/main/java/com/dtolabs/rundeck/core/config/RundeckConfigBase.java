@@ -462,7 +462,6 @@ public class RundeckConfigBase {
         HttpHeaders headers;
         HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
-        Oauth oauth;
 
         @Data
         public static class InterceptorHelperConfig {
@@ -537,23 +536,6 @@ public class RundeckConfigBase {
             Boolean enabled;
             // A comma separated list of host names. E.g. "localhost, example.com, 127.0.0.1, 192.168.0.1"
             String allowedHostnames;
-        }
-
-        @Data
-        public static class Oauth {
-            Boolean enabled;
-            OauthProvider okta;
-            OauthProvider ping;
-            OauthProvider azure;
-        }
-
-        @Data
-        public static class OauthProvider {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-            String scope;
-            String authorityProperty;
         }
 
     }
