@@ -453,7 +453,7 @@ public class RundeckConfigBase {
         Boolean syncLdapUser;
         String requiredRole;
         String jaasRolePrefix;
-        Boolean syncOauthUser = Boolean.valueOf(false);
+        Boolean syncOauthUser = false;
 
         ApiCookieAccess apiCookieAccess;
         Authorization authorization;
@@ -462,7 +462,6 @@ public class RundeckConfigBase {
         HttpHeaders headers;
         HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
-        Oauth oauth;
 
         @Data
         public static class InterceptorHelperConfig {
@@ -539,23 +538,6 @@ public class RundeckConfigBase {
             String allowedHostnames;
         }
 
-        @Data
-        public static class Oauth {
-            Okta okta;
-            Ping ping;
-        }
-        @Data
-        public static class Okta {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
-        @Data
-        public static class Ping {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
     }
 
     @Data
