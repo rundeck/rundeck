@@ -23,7 +23,8 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
 
 @DirtyCheck
-abstract class WorkflowStep implements WorkflowStepData {
+abstract class WorkflowStep {
+    Boolean enabled = true
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description
@@ -33,6 +34,7 @@ abstract class WorkflowStep implements WorkflowStepData {
         importFrom SharedWorkflowStepConstraints
         errorHandler(nullable: true)
         pluginConfigData(nullable: true, blank: true)
+        enabled(defaultValue: true)
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['pluginConfig']

@@ -22,15 +22,17 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import grails.converters.JSON
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageService
 
 import javax.servlet.http.HttpServletResponse
@@ -38,7 +40,9 @@ import javax.servlet.http.HttpServletResponse
 class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
+    ConfigurationService configurationService;
     StorageService storageService
+    ScheduledExecutionService scheduledExecutionService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     static allowedMethods = [
             redo:'POST',
@@ -47,6 +51,8 @@ class WorkflowController extends ControllerBase {
             revert:'POST',
             save:'POST',
             undo:'POST',
+            dashboard: 'POST',
+            renderDashboard: 'GET'
     ]
     def index = {
         return redirect(controller: 'menu', action: 'index')
@@ -74,6 +80,47 @@ class WorkflowController extends ControllerBase {
                 actions,
                 scheduledExecution.project
             ), actions[0], 'Job', id
+        )
+    }
+
+    def renderDashboard() {
+        def renderDashboardsInGUI = configurationService.getBoolean('gui.stepsDashboard', true);
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                render           : renderDashboardsInGUI,
+                        ]
+                ) as JSON
+        )
+    }
+
+    def dashboard() {
+        Workflow modelWorkflow = null;
+        Workflow editWf = _getSessionWorkflow()
+
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.scheduledExecutionId)
+        def dbWf = scheduledExecution?.workflow
+
+        if (!editWf && dbWf) {
+            session.removeAttribute('editWF');
+            session.removeAttribute('undoWF');
+            session.removeAttribute('redoWF');
+            modelWorkflow = dbWf
+        } else {
+            modelWorkflow = editWf
+        }
+
+        if (dbWf && editWf) {
+            modelWorkflow = new Workflow()
+            if( dbWf.commands.size() > editWf.commands.size() ){
+                modelWorkflow.setCommands(dbWf.commands);
+            }else{
+                modelWorkflow.setCommands(editWf.commands);
+            }
+        }
+
+        return render(template: "/execution/stepsDashboard", model: [workflow: modelWorkflow]
         )
     }
 

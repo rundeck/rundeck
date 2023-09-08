@@ -49,7 +49,8 @@ public class ExecutionItemFactory {
             final String[] strings,
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
-            final String label
+            final String label,
+            final boolean enabled
     )
     {
         return createScriptFileItem(
@@ -61,7 +62,8 @@ public class ExecutionItemFactory {
                 handler,
                 keepgoingOnSuccess,
                 label,
-                null
+                null,
+                enabled
         );
     }
 
@@ -74,7 +76,8 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String label,
-            final List<PluginConfiguration> filterConfigs
+            final List<PluginConfiguration> filterConfigs,
+            final boolean enabled
     )
     {
         return new ScriptFileItem(
@@ -88,7 +91,8 @@ public class ExecutionItemFactory {
                 scriptInterpreter,
                 interpreterArgsQuoted,
                 filterConfigs,
-                false
+                false,
+                enabled
         );
     }
 
@@ -99,7 +103,8 @@ public class ExecutionItemFactory {
             final File file,
             final String[] strings,
             final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess, final String label
+            final boolean keepgoingOnSuccess, final String label,
+            final boolean enabled
     )
     {
         return createScriptFileItem(
@@ -112,7 +117,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 label,
                 null,
-                false
+                false,
+                enabled
         );
     }
 
@@ -126,7 +132,8 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final String label,
             final List<PluginConfiguration> filterConfigs,
-            final boolean expandTokenInScriptFile
+            final boolean expandTokenInScriptFile,
+            final boolean enabled
     )
     {
         final String filepath = file.getAbsolutePath();
@@ -141,7 +148,8 @@ public class ExecutionItemFactory {
                 scriptInterpreter,
                 interpreterArgsQuoted,
                 filterConfigs,
-                expandTokenInScriptFile
+                expandTokenInScriptFile,
+                enabled
         );
     }
 
@@ -150,7 +158,8 @@ public class ExecutionItemFactory {
             final String fileExtension,
             final boolean interpreterArgsQuoted,
             final String urlString, final String[] strings,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label,
+            final boolean enabled
     )
     {
         return createScriptURLItem(
@@ -163,32 +172,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 label,
                 null,
-                false
-        );
-    }
-
-    public static StepExecutionItem createScriptURLItem(
-            final String scriptInterpreter,
-            final String fileExtension,
-            final boolean interpreterArgsQuoted,
-            final String urlString, final String[] strings,
-            final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess,
-            final String label,
-            final List<PluginConfiguration> filterConfigs
-    )
-    {
-        return new ScriptURLItem(
-                label,
-                urlString,
-                strings,
-                handler,
-                keepgoingOnSuccess,
-                interpreterArgsQuoted,
-                fileExtension,
-                scriptInterpreter,
-                filterConfigs,
-                false
+                false,
+                enabled
         );
     }
 
@@ -201,7 +186,7 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final String label,
             final List<PluginConfiguration> filterConfigs,
-            final boolean expandTokenInScriptFile
+            final boolean enabled
     )
     {
         return new ScriptURLItem(
@@ -214,7 +199,36 @@ public class ExecutionItemFactory {
                 fileExtension,
                 scriptInterpreter,
                 filterConfigs,
-                expandTokenInScriptFile
+                false,
+                enabled
+        );
+    }
+
+    public static StepExecutionItem createScriptURLItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
+            final String urlString, final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs,
+            final boolean expandTokenInScriptFile,
+            final boolean enabled
+    )
+    {
+        return new ScriptURLItem(
+                label,
+                urlString,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                interpreterArgsQuoted,
+                fileExtension,
+                scriptInterpreter,
+                filterConfigs,
+                expandTokenInScriptFile,
+                enabled
         );
     }
 
@@ -222,10 +236,11 @@ public class ExecutionItemFactory {
             final String[] command,
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
-            final String label
+            final String label,
+            final boolean enabled
     )
     {
-        return createExecCommand(command, handler, keepgoingOnSuccess, label, null);
+        return createExecCommand(command, handler, keepgoingOnSuccess, label, null, enabled);
 
     }
 
@@ -234,11 +249,12 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String label,
-            final List<PluginConfiguration> filterConfigs
+            final List<PluginConfiguration> filterConfigs,
+            final boolean enabled
     )
     {
 
-        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs);
+        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs, enabled);
     }
 
     /**
@@ -282,7 +298,8 @@ public class ExecutionItemFactory {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         );
     }
 
@@ -316,7 +333,8 @@ public class ExecutionItemFactory {
             final String uuid,
             final Boolean useName,
             final Boolean ignoreNotifications,
-            final Boolean childNodes
+            final Boolean childNodes,
+            final boolean enabled
     )
     {
 
@@ -339,7 +357,8 @@ public class ExecutionItemFactory {
                 uuid,
                 useName,
                 ignoreNotifications,
-                childNodes
+                childNodes,
+                enabled
         );
     }
 
@@ -350,10 +369,11 @@ public class ExecutionItemFactory {
             final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler, final String label
+            final StepExecutionItem handler, final String label,
+            final boolean enabled
     )
     {
-        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
+        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, null, enabled);
     }
 
     /**
@@ -365,7 +385,8 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            final boolean enabled
     )
     {
 
@@ -375,21 +396,9 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                enabled
         );
-    }
-
-    /**
-     * Create a workflow execution item for a plugin step.
-     */
-    public static StepExecutionItem createPluginStepItem(
-            final String type,
-            final Map configuration,
-            final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler, final String label
-    )
-    {
-        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
     }
 
     /**
@@ -401,7 +410,23 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final boolean enabled
+    )
+    {
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null, enabled);
+    }
+
+    /**
+     * Create a workflow execution item for a plugin step.
+     */
+    public static StepExecutionItem createPluginStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations,
+            final boolean enabled
     )
     {
 
@@ -411,7 +436,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                enabled
         );
     }
 
@@ -427,6 +453,7 @@ public class ExecutionItemFactory {
         private final boolean interpreterArgsQuoted;
         private final List<PluginConfiguration> filterConfigs;
         private final boolean expandTokenInScriptFile;
+        private final boolean enabled;
 
         public ScriptFileItem(
                 final String label,
@@ -439,7 +466,8 @@ public class ExecutionItemFactory {
                 final String scriptInterpreter,
                 final boolean interpreterArgsQuoted,
                 final List<PluginConfiguration> filterConfigs,
-                final boolean expandTokenInScriptFile
+                final boolean expandTokenInScriptFile,
+                final boolean enabled
         )
         {
             this.label = label;
@@ -453,6 +481,7 @@ public class ExecutionItemFactory {
             this.interpreterArgsQuoted = interpreterArgsQuoted;
             this.filterConfigs = filterConfigs;
             this.expandTokenInScriptFile = expandTokenInScriptFile;
+            this.enabled = enabled;
         }
 
         @Override
@@ -509,6 +538,11 @@ public class ExecutionItemFactory {
         }
 
         @Override
+        public Boolean isEnabled() {
+            return this.enabled;
+        }
+
+        @Override
         public String toString() {
             return "ScriptFileItem{" +
                    (label != null ? "label='" + label + "', " : "") +
@@ -531,6 +565,7 @@ public class ExecutionItemFactory {
         private final String scriptInterpreter;
         private final List<PluginConfiguration> filterConfigs;
         private final boolean expandTokenInScriptFile;
+        private final boolean enabled;
 
         public ScriptURLItem(
                 final String label,
@@ -542,7 +577,8 @@ public class ExecutionItemFactory {
                 final String fileExtension,
                 final String scriptInterpreter,
                 final List<PluginConfiguration> filterConfigs,
-                final boolean expandTokenInScriptFile
+                final boolean expandTokenInScriptFile,
+                final boolean enabled
         )
         {
             this.label = label;
@@ -555,6 +591,7 @@ public class ExecutionItemFactory {
             this.scriptInterpreter = scriptInterpreter;
             this.filterConfigs = filterConfigs;
             this.expandTokenInScriptFile = expandTokenInScriptFile;
+            this.enabled = enabled;
         }
 
         @Override
@@ -604,6 +641,11 @@ public class ExecutionItemFactory {
         }
 
         @Override
+        public Boolean isEnabled() {
+            return this.enabled;
+        }
+
+        @Override
         public String toString() {
             return "ScriptURLItem{" +
                    (label != null ? "label='" + label + ", " : "") +
@@ -618,13 +660,15 @@ public class ExecutionItemFactory {
         private final StepExecutionItem handler;
         private final boolean keepgoingOnSuccess;
         private final List<PluginConfiguration> filterConfigs;
+        private final boolean enabled;
 
         public CommandItem(
                 final String label,
                 final String[] command,
                 final StepExecutionItem handler,
                 final boolean keepgoingOnSuccess,
-                final List<PluginConfiguration> filterConfigs
+                final List<PluginConfiguration> filterConfigs,
+                final boolean enabled
         )
         {
             this.label = label;
@@ -632,6 +676,7 @@ public class ExecutionItemFactory {
             this.handler = handler;
             this.keepgoingOnSuccess = keepgoingOnSuccess;
             this.filterConfigs = filterConfigs;
+            this.enabled = enabled;
         }
 
         @Override
@@ -656,6 +701,11 @@ public class ExecutionItemFactory {
         @Override
         public List<PluginConfiguration> getFilterConfigurations() {
             return filterConfigs;
+        }
+
+        @Override
+        public Boolean isEnabled() {
+            return this.enabled;
         }
 
         @Override

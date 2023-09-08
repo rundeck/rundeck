@@ -1,3 +1,40 @@
+Rundeck Step Disabler - PD Hackweek '23 Project
+========
+
+## Technical Debt To Date
+
+1. Fix the log output in EngineWorkflowExecutor.logSkippedOperations to be more accurate about the skip cause.
+2. Externalize CSS on the step dashboards
+
+## Tests To Assess Basic Functionality
+
+1. Basic enable/disable jobs
+2. Export to file
+3. Import from file
+4. Export to another instance
+5. Export from older than disabler version
+6. SCM export from older than disabler version
+
+by:
+
+* Rodrigo Navarro ([@ronaveva](https://github.com/ronaveva))
+* Darwis Narvaez ([@darwisnarvaezdev](https://github.com/darwisnarvaezdev))
+* Jesús Osuna ([@jesus-osuna-m](https://github.com/jesus-osuna-m))
+* Antony Velásquez ([@avelasquezr](https://github.com/avelasquezr))
+* Reiner Acuña ([@MegaDrive68k](https://github.com/MegaDrive68k))
+
+Abstract
+========
+
+When creating a Rundeck workflow job, we frequently find ourselves needing to add and test specifics steps. Since you often want to explore multiple approaches to completing the same step, it would be nice to maintain the step that has already been completed without fully losing it.
+
+The ability to enable and disable steps would speed up the process of building jobs on the fly.
+
+Objective
+========
+
+Add the ability to disable steps (without deleting them) in Rundeck OSS.
+
 Rundeck
 ========
 

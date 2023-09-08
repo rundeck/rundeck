@@ -3138,7 +3138,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -3248,7 +3249,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -3368,7 +3370,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -3484,7 +3487,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 ignoreNotifications,
-                false
+                false,
+                true
         )
 
 
@@ -3605,7 +3609,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -3856,7 +3861,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
                 )
 
 
@@ -3970,7 +3976,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -4495,7 +4502,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -4609,7 +4617,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -4886,7 +4895,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -5155,7 +5165,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 true,
-                false
+                false,
+                true
         )
 
 
@@ -5273,7 +5284,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -5656,7 +5668,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 
@@ -5945,7 +5958,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
                 false,
-                false
+                false,
+                true
         )
 
 

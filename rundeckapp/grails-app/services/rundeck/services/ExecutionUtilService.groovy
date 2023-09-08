@@ -195,7 +195,8 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 );
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
@@ -215,7 +216,8 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 );
 
             } else if (null != cmd.getAdhocFilepath()) {
@@ -238,7 +240,8 @@ class ExecutionUtilService {
                             !!cmd.keepgoingOnSuccess,
                             step.description,
                             createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
+                            !!cmd.expandTokenInScriptFile,
+                            step.enabled
                     )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
@@ -251,7 +254,8 @@ class ExecutionUtilService {
                             !!cmd.keepgoingOnSuccess,
                             step.description,
                             createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
+                            !!cmd.expandTokenInScriptFile,
+                            step.enabled
                     );
 
                 }
@@ -291,7 +295,8 @@ class ExecutionUtilService {
                     jobcmditem.uuid,
                     jobcmditem.useName,
                     jobcmditem.ignoreNotifications,
-                    jobcmditem.childNodes
+                    jobcmditem.childNodes,
+                    step.enabled
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -302,7 +307,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -311,7 +317,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.enabled
                 )
             }
         } else {

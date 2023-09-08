@@ -9,4 +9,14 @@ databaseChangeLog = {
             column(name: "error_handler_id")
         }
     }
+    changeSet(author: "rundeckuser (generated)", id: "1619468434683") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                columnExists(tableName: "workflow_step", columnName: 'enabled')
+            }
+        }
+        addColumn(tableName: "workflow_step") {
+            column(name: "enabled", type: '${boolean.type}')
+        }
+    }
 }

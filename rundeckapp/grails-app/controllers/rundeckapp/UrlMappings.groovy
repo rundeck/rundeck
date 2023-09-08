@@ -333,6 +333,8 @@ class UrlMappings {
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "/helplink/name"(controller:'helplink',action:'helplinkName')
+        "/project/edit/dashboard"(controller:'Workflow',action:'dashboard')
+        "/project/edit/renderdashboard"(controller:'Workflow',action:'renderDashboard')
         "/workflowgraph/show"(controller:'WorkflowGraph',action:'WorkflowGraph')
 
         "404"(controller:"error",action:"notFound")
