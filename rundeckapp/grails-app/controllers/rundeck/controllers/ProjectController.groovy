@@ -3066,7 +3066,6 @@ If false, do not import the project configuration (default).''', schema = @Schem
 If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
 If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importComponents ', required = false, in = ParameterIn.QUERY, description = '''It imports components''', schema = @Schema(implementation = String.class)),
                     @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
 If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'whkRegenAuthTokens', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, always regenerate the auth tokens associated with the webhook. 

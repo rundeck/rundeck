@@ -40,7 +40,6 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
-import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -73,12 +72,10 @@ import org.springframework.transaction.TransactionStatus
 import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
 import webhooks.component.project.WebhooksProjectComponent
-import webhooks.importer.WebhooksProjectImporter
 
 import java.lang.annotation.Annotation
 import java.text.ParseException
@@ -667,7 +664,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ) throws ProjectServiceException {
         File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
 
-        ProjectImportStatus ret = importProjectApiCall(file, archiveParams)
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams)
 
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
@@ -675,7 +672,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         response
     }
 
-    private static ProjectImportStatus importProjectApiCall(File archive, ProjectArchiveParams archiveParams){
+    private static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> map){
+        Map<String,String> prependedMap = [:]
+        map.each { String key, Object value ->
+            String newKey = "${strToPrepend}.${key}"
+            prependedMap[newKey] = value.toString()
+        }
+        return prependedMap
+    }
+
+    private static ProjectImportStatus importArchiveToInstance(File archive, ProjectArchiveParams archiveParams){
         Client<RundeckApi> client = RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build()
         ProjectImportStatus response = new ProjectImportStatus()
         response.successful = true
@@ -690,7 +696,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importWebhookOpt,
                 importWebhookOpt && !Boolean.getBoolean(archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
                 Boolean.getBoolean(archiveParams.exportComponents['node-wizard'] as String),
-                ['importComponents': archiveParams.serializeJsonMap(archiveParams.exportComponents)],
+                prependStringToKeysInMap('importComponents', archiveParams.exportComponents),
                 RequestBody.create(archive, Client.MEDIA_TYPE_ZIP)
         ).execute()
 
