@@ -1358,6 +1358,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def listener = Mock(ProgressListener){
 
             }
+
+            service.logFileStorageService = Mock(LogFileStorageService)
             service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.loggingService = Mock(LoggingService)
             service.workflowService = Mock(WorkflowService)
@@ -1953,13 +1955,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     static String EXEC_XML_TEST1_START = EXECS_START+EXEC_XML_TEST1_DEF_START
     static String EXEC_XML_TEST1_REST = EXEC_XML_TEST1_DEF_END+EXECS_END
     static String EXEC_XML_TEST1 = EXEC_XML_TEST1_START+ '''
-    <outputfilepath />''' + EXEC_XML_TEST1_REST
+    <outputfilepath />
+    <execIdForLogStore>1</execIdForLogStore>''' + EXEC_XML_TEST1_REST
 
     /**
      * Execution xml output with an output file path
      */
     static String EXEC_XML_TEST2 = EXEC_XML_TEST1_START+ '''
-    <outputfilepath>output-1.rdlog</outputfilepath>''' + EXEC_XML_TEST1_REST
+    <outputfilepath>output-1.rdlog</outputfilepath>
+    <execIdForLogStore>1</execIdForLogStore>''' + EXEC_XML_TEST1_REST
 
     /**
      * Execution xml with associated job ID
@@ -2047,6 +2051,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
     <status>true</status>
     <outputfilepath />
+    <execIdForLogStore>1</execIdForLogStore>
     <failedNodeList />
     <succeededNodeList />
     <abortedby />
@@ -2080,6 +2085,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
     <status>true</status>
     <outputfilepath />
+    <execIdForLogStore>1</execIdForLogStore>
     <failedNodeList />
     <succeededNodeList />
     <abortedby />
@@ -2180,12 +2186,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
-        zipmock.demand.file(1..1){name,Closure withwriter->
-            assertEquals(outfilename,name.toString())
-            withwriter.call(outwriter)
-            outwriter.flush()
-        }
-//        zipmock.demand.file(1..1){name,File outfile-> }
+
 
         Execution exec = new Execution(
             argString: "-test args",
@@ -2207,6 +2208,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             assertEquals('output-'+exec.id+'.rdlog', name)
             assertEquals(tempoutfile,out)
         }
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+
         def zip = zipmock.proxyInstance()
 
         def logmock = new MockFor(LoggingService)
@@ -2244,12 +2251,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
-        zipmock.demand.file(1..1){name,Closure withwriter->
-            assertEquals(outfilename,name.toString())
-            withwriter.call(outwriter)
-            outwriter.flush()
-        }
-//        zipmock.demand.file(1..1){name,File outfile-> }
 
         Execution exec = new Execution(
             argString: "-test args",
@@ -2267,7 +2268,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         )
         assertNotNull exec.save()
         int filecalled=0
-        zipmock.demand.file(2..2) {name, File out ->
+        Closure validateZipCall = { name, File out ->
             filecalled++
             if(filecalled==1){
                 assertEquals('output-'+exec.id+'.rdlog', name.toString())
@@ -2277,6 +2278,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 assertEquals(tempoutfile2, out)
             }
         }
+        zipmock.demand.file(1..1, validateZipCall)
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+        zipmock.demand.file(1..1, validateZipCall)
+
         def zip = zipmock.proxyInstance()
 
         def logmock = new MockFor(LoggingService)
