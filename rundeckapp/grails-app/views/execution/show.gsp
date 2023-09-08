@@ -284,7 +284,7 @@ search
                             </section>
                         </section>
 
-                        <section class="section-space execution-action-links " style="padding-top:.6em;">
+                        <section class="section-space execution-action-links vue-ui-socket" style="padding-top:.6em;">
 
                                 <g:if test="${null == execution.dateCompleted}">
                                     <span data-bind="if: canKillExec()">
@@ -465,6 +465,10 @@ search
                                         </div>
                                     </g:if>
                                 </g:if>
+                                <ui-socket section="execution-show"
+                                           location="header-action-links"
+                                           :event-bus="EventBus"
+                                           socket-data="${enc(attr:[authChecks:authChecks,serverNodeUUID:execution.serverNodeUUID,jobId:scheduledExecution?.extid,execId:execution.id].encodeAsJSON())}"/>
 
                         </section>
 
