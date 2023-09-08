@@ -44,6 +44,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private StepExecutionItem failureHandler;
     private String label;
     private List<PluginConfiguration> filterConfigurations;
+    private boolean enabled;
 
     public PluginStepExecutionItemImpl(
             final String type,
@@ -51,7 +52,8 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
             final boolean keepgoingOnSuccess,
             final StepExecutionItem failureHandler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            final boolean enabled
     ) {
         this.type = type;
         this.stepConfiguration = stepConfiguration;
@@ -59,6 +61,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
         this.failureHandler = failureHandler;
         this.label= label;
         this.filterConfigurations=filterConfigurations;
+        this.enabled = enabled;
     }
 
     @Override
@@ -96,6 +99,11 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
 
     public void setFailureHandler(StepExecutionItem failureHandler) {
         this.failureHandler = failureHandler;
+    }
+
+    @Override
+    public Boolean isEnabled() {
+        return this.enabled;
     }
 
     @Override

@@ -24,9 +24,13 @@
 package com.dtolabs.rundeck.execution;
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +48,8 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String label,
-            final List<PluginConfiguration> filterConfigs
+            final List<PluginConfiguration> filterConfigs,
+            final boolean enabled
     ){
         return ExecutionItemFactory.createPluginNodeStepItem(
                 type,
@@ -52,7 +57,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigs
+                filterConfigs,
+                enabled
         );
     }
 
@@ -98,7 +104,8 @@ public class ExecutionItemFactory {
                 null,
                 false,
                 false,
-                false
+                false,
+                true
         );
     }
 
@@ -132,7 +139,8 @@ public class ExecutionItemFactory {
             final String uuid,
             final Boolean useName,
             final Boolean ignoreNotifications,
-            final Boolean childNodes
+            final Boolean childNodes,
+            final boolean enabled
     )
     {
 
@@ -155,7 +163,8 @@ public class ExecutionItemFactory {
                 uuid,
                 useName,
                 ignoreNotifications,
-                childNodes
+                childNodes,
+                enabled
         );
     }
 
@@ -166,10 +175,11 @@ public class ExecutionItemFactory {
             final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler, final String label
+            final StepExecutionItem handler, final String label,
+            final boolean enabled
     )
     {
-        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
+        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, null, enabled);
     }
 
     /**
@@ -181,7 +191,8 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            final boolean enabled
     )
     {
 
@@ -191,21 +202,9 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                enabled
         );
-    }
-
-    /**
-     * Create a workflow execution item for a plugin step.
-     */
-    public static StepExecutionItem createPluginStepItem(
-            final String type,
-            final Map configuration,
-            final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler, final String label
-    )
-    {
-        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
     }
 
     /**
@@ -217,7 +216,23 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final StepExecutionItem handler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final boolean enabled
+    )
+    {
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null, enabled);
+    }
+
+    /**
+     * Create a workflow execution item for a plugin step.
+     */
+    public static StepExecutionItem createPluginStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations,
+            final boolean enabled
     )
     {
 
@@ -227,7 +242,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                enabled
         );
     }
 }

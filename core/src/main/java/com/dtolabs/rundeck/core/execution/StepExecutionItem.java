@@ -40,4 +40,9 @@ public interface StepExecutionItem {
      */
     public String getLabel();
 
+    /**
+     * @return true if the step is enabled
+     */
+    public default Boolean isEnabled(){ return true;}
+
 }

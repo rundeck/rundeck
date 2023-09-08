@@ -44,7 +44,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                                            final boolean keepgoingOnSuccess,
                                            final StepExecutionItem handler,
                                            final String label,
-                                           final List<PluginConfiguration> filterConfigurations
+                                           final List<PluginConfiguration> filterConfigurations,
+                                           final boolean enabled
     )
     {
         super(
@@ -53,7 +54,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                enabled
         );
         this.nodeStepType = type;
     }

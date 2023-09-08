@@ -24,7 +24,7 @@
  --%>
 
 <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
-<div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
+<div id="wfivis_${enc(attr:i)}" class="${item?.enabled ? '' : 'bg-danger'}" style="${i==highlight?'opacity: 0':''}; border-radius: 5px;">
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">

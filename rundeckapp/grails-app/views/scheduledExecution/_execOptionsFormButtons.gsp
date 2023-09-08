@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-
+<g:set var="workflow" value="${scheduledExecution?.workflow}" />
 <div id="formbuttons" data-ko-bind="runformoptions" class="px-row">
   <div>
     <g:if test="${!hideCancel}">
@@ -75,7 +75,7 @@
       <g:message code="job.starting.execution"/>
     </div>
     <div class="btn-group pull-right" id="execOptFormRunButtons">
-      <button 
+      <button
         type="submit"
         name="_action_runJobNow"
         id="execFormRunButton"
@@ -108,7 +108,7 @@
         <g:if test="${showRunLater}">
           <li class="divider"></li>
           <li>
-            <a 
+            <a
               data-toggle="modal"
               title="Set start time"
               href="#scheduler">
@@ -119,5 +119,8 @@
         </g:if>
       </ul>
     </div>
+    <g:render template="/execution/stepsMiniDashboard" model="${[workflow: workflow]}" />
+    <script lang="text/javascript">
+    </script>
   </div>
 </div>

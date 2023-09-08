@@ -201,6 +201,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(useName){
             map.jobref.useName="true"
         }
+        map.enabled=enabled
         return map
     }
     /**
@@ -287,6 +288,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
+        exec.enabled=map.enabled!=null?map.enabled:true
         if(map.jobref.nodefilters instanceof Map){
             exec.nodeFilter=map.jobref.nodefilters.filter?.toString()
             if(exec.nodeFilter){
