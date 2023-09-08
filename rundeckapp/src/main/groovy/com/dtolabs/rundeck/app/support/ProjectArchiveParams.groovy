@@ -46,11 +46,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable,
     Boolean exportAcls
     Boolean exportScm
 
-    @BindUsing({ obj, source ->
-        if(source['importComponents'] instanceof String)
-            return obj.asJsonMap(source['importComponents'] as String)
-        return source['importComponents']
-    })
     Map<String, Boolean> importComponents
     Map<String, Map<String, String>> importOpts
     Map<String, Boolean> exportComponents
