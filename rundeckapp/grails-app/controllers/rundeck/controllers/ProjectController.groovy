@@ -3154,8 +3154,6 @@ Note: `other_errors` included since API v35""",
             ])
         }
 
-        //archiveParams.setMapParamsFromSerializedMap(['importComponents': params.get('importComponents'), 'importOpts': params.get('importOpts')] as Map<String, String>)
-
         def framework = frameworkService.rundeckFramework
 
         AuthContext appContext = systemAuthContext
