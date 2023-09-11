@@ -1,4 +1,4 @@
-import {RundeckContext, AppLinks} from "../library";
+import type {RundeckContext, AppLinks} from "../library";
 import {defineComponent} from "vue";
 
 declare global {

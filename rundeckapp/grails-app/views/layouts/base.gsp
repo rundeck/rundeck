@@ -42,7 +42,7 @@
     <g:render template="/common/navData"/>
 
     %{-- Core theme styles from ui-trellis --}%
-    <asset:stylesheet href="static/css/components/theme.css"/>
+    <asset:stylesheet href="static/css/style.css"/>
 
     <asset:stylesheet href="ansi24.css"/>
     %{-- Vendor CSS styles--}%
@@ -73,14 +73,8 @@
     <g:render template="/common/css"/>
 
     <!-- VUE CSS MODULES -->
-    <asset:stylesheet href="static/css/components/motd.css"/>
-
-    <asset:stylesheet href="static/css/components/tour.css"/>
     <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
-    <g:if test="${!communityNewsDisabled}">
-      <asset:stylesheet href="static/css/components/community-news-notification.css"/>
-    </g:if>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -155,19 +149,6 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
-    <asset:stylesheet href="static/css/chunk-vendors.css"/>
-    <asset:stylesheet href="static/css/chunk-common.css"/>
-    <asset:javascript src="static/js/chunk-common.js"/>
-    <asset:javascript src="static/js/chunk-vendors.js"/>
-    %{-- Central should be loaded as soon as before any other Vue project code --}%
-    <asset:javascript src="static/components/central.js"/>
-    %{--  Navigation components load early too  --}%
-    <asset:stylesheet href="static/css/components/navbar.css"/>
-    <asset:javascript src="static/components/navbar.js"/>
-
-    <asset:stylesheet href="static/css/components/project-picker.css"/>
-    <asset:javascript src="static/components/uisockets.js"/>
-    <asset:javascript src="static/components/project-picker.js"/>
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
@@ -228,7 +209,25 @@
         }
     </style>
     </g:if>
+    <g:loadEntryAssets entry="components/theme" />
+%{-- Central should be loaded as soon as before any other Vue project code --}%
+    <g:loadEntryAssets entry="components/central" />
+%{--  Navigation components load early too  --}%
+    <g:loadEntryAssets entry="components/navbar" />
 
+    <g:loadEntryAssets entry="components/project-picker" />
+    <g:loadEntryAssets entry="components/ui" />
+
+
+<!-- VUE JS MODULES -->
+    <g:loadEntryAssets entry="components/motd" />
+    <g:loadEntryAssets entry="components/version" />
+    <g:loadEntryAssets entry="components/server-identity" />
+    <g:loadEntryAssets entry="components/tour" />
+    <g:if test="${!communityNewsDisabled}">
+        <g:loadEntryAssets entry="components/community-news-notification" />
+    </g:if>
+<!-- /VUE JS MODULES -->
 </head>
 
 <body class="view">
@@ -310,19 +309,7 @@
     jQuery('.modal-container').appendTo('body');
     jQuery('body > :not(.modal-container) .modal').appendTo('body');
 </script>
-
-<!-- VUE JS MODULES -->
-<asset:stylesheet href="static/css/components/motd.css"/>
-<asset:javascript src="static/components/motd.js"/>
-<asset:stylesheet href="static/css/components/version.css"/>
-<asset:javascript src="static/components/version.js"/>
-<asset:javascript src="static/components/server-identity.js"/>
-<asset:javascript src="static/components/tour.js"/>
-<g:if test="${!communityNewsDisabled}">
-    <asset:javascript src="static/components/community-news-notification.js"/>
-</g:if>
 <asset:deferredScripts/>
-<!-- /VUE JS MODULES -->
 </body>
 
 </html>

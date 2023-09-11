@@ -7,8 +7,6 @@ import { UiMessage } from '../../../library/stores/UIStore'
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import {initI18n, updateLocaleMessages} from "../../utilities/i18n";
 
-const rootStore = getRundeckContext().rootStore
-const EventBus = getRundeckContext().eventBus
 
 window.addEventListener('DOMContentLoaded', (() => {
   const elm = document.getElementsByClassName('vue-ui-socket')
@@ -33,6 +31,8 @@ function initUiComponentsOnEvent(evt:Event){
 }
 
 function initUiComponents(elmElement:any) {
+  const rootStore = getRundeckContext().rootStore
+  const EventBus = getRundeckContext().eventBus
   const i18n = initI18n()
   const vue = createApp({
     components: {UiSocket},

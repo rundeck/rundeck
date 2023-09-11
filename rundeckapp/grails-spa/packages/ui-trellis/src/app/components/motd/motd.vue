@@ -116,7 +116,7 @@ export default defineComponent({
         return ''
       }
       let style = ['danger', 'warning', 'primary', 'info', 'success']
-              .find((val) => this.project.readme.motd.indexOf('<!-- style:' + val) >= 0)
+              .find((val) => this.project.readme.motd.indexOf('<'+'!-- style:' + val) >= 0) // Solves "Unterminated string literal"
       if (style) {
         return style
       }
@@ -149,11 +149,11 @@ export default defineComponent({
   },
   async mounted () {
 
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      const response=await axios.get(`${window._rundeck.rdBase}menu/homeAjax`,{
+    if (this.rdBase && this.projectName) {
+      const response=await axios.get(`${this.rdBase}menu/homeAjax`,{
         headers: {'x-rundeck-ajax': true},
         params: {
-          projects: `${window._rundeck.projectName}`
+          projects: `${this.projectName}`
         },
         withCredentials: true
       })

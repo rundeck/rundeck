@@ -21,7 +21,9 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/></title>
-    <asset:stylesheet src="static/css/pages/repository.css"/>
+    <g:loadEntryAssets entry="components/central" />
+    <g:loadEntryAssets entry="pages/job/editor" />
+    <g:loadEntryAssets entry="pages/repository" />
 </head>
 
 <body>
@@ -51,7 +53,6 @@
 <div class="container-fluid">
   <div id=repository-vue></div>
 </div>
-<asset:javascript src="static/pages/repository.js"/>
 </div>
 </div>
 </body>

@@ -20,7 +20,7 @@
             style="height: 0;width: 0;appearance: none;"/>
         <span 
             class="switch__slider"
-            :class="{'switch__slider--checked': modelValue}"/>
+            :class="{'switch__slider--checked': modelValue}"></span>
     </div>
 </template>
 

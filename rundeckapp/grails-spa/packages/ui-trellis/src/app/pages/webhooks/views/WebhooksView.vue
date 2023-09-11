@@ -6,7 +6,7 @@
       </div>
       <div class="flex--grow navs">
         <div id="wh-list" class="px-3">
-          <WebhookSelect :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
+          <WebhookSelect :webhook-store="rootStore.webhooks" :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="handleSelect"/>
         </div>
       </div>
       <div class="flex--none bg-grey-100">
@@ -49,7 +49,7 @@
           </div>
 
           <Tabs data-tabkey="webhook-header" style="height: 200px;" :key="curHook.new ? curHook.uuid : ''">
-            <Tab :index="0" title="General">
+            <Tab :index="0" title="General" :is-active="false">
               <div class="wh-edit__body">
                 <div  class="form-group">
                   <div class="card card-accent">
@@ -98,7 +98,7 @@
                 </div>
               </div>
             </Tab>
-            <Tab :index="1" title="Handler Configuration">
+            <Tab :index="1" title="Handler Configuration" :is-active="false">
               <div class="wh-edit__body">
                 <div class="card" style="padding: 1em;">
                   <div class="form-group">

@@ -53,7 +53,6 @@
     ])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
-    <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -98,7 +97,8 @@ search
         }
     })
     </g:javascript>
-    <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+    <g:loadEntryAssets entry="pages/project-activity" />
+    <g:loadEntryAssets entry="pages/project-dashboard" />
 </head>
 <body>
 <div class="content">

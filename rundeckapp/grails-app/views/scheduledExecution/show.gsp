@@ -30,7 +30,6 @@
     <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
 
-    <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -186,8 +185,9 @@ search
     }
 })
     </g:javascript>
-    <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
-    <asset:javascript src="static/components/copybox.js"/>
+    <g:loadEntryAssets entry="pages/project-activity" />
+    <g:loadEntryAssets entry="pages/project-dashboard" />
+    <g:loadEntryAssets entry="components/copybox"/>
 </head>
 
 <body>

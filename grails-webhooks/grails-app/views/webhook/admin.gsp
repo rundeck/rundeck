@@ -22,7 +22,6 @@
     <meta name="tabpage" content="Webhooks"/>
     <title><g:appTitle/></title>
     <asset:javascript src="ace-bundle.js"/>
-    <asset:stylesheet src="static/css/pages/webhooks.css"/>
 
     <style type="text/css">
         .dismiss-positioner button.close {
@@ -39,6 +38,6 @@
     <div style="flex-grow: 0;"><div id="tour-vue-display"></div></div>
 </div>
 
-<asset:javascript src="static/pages/webhooks.js"/>
+<g:loadEntryAssets entry="pages/webhooks" />
 </body>
 </html>

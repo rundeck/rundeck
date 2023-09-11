@@ -5,16 +5,16 @@
                 <ul class="nav-bar__list-group" ref="group-main">
                     <template v-for="item in getItems('root', 'main')">
                         <NavBarItem v-if="item.type === 'link'" :item="item" :key="item.id" itemStyle="icon" />
-                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" />
+                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" :nav-bar="navBar" />
                     </template>
                 </ul>
             </li>
             <li style="margin-top: auto;width: 100%">
                 <ul class="nav-bar__list-group nav-bar__list-group--bottom" ref="group-bottom">
-                    <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" />
+                    <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" :nav-bar="navBar"/>
                     <template v-for="item in getItems('root', 'bottom')">
                         <NavBarItem v-if="item.type === 'link'" :item="item" :key="item.id" itemStyle="icon" />
-                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" />
+                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" :nav-bar="navBar"/>
                     </template>
                 </ul>
             </li>
@@ -23,6 +23,7 @@
 </template>
 
 <script lang="ts">
+import type {PropType} from 'vue'
 import {defineComponent, ref} from 'vue'
 
 import {NavBar, NavContainer, NavItem} from '../../stores/NavBar'
@@ -36,16 +37,13 @@ export default defineComponent({
     NavBarItem,
     NavBarContainer
   },
+  props: {
+      navBar: Object as PropType<NavBar>,
+  },
   mounted() {
     window.addEventListener('resize', this.overflow)
     /** After layout and before render handle overflow */
     window.requestAnimationFrame(this.overflow)
-  },
-  data() {
-    return {
-      navBar: window._rundeck.rootStore.navBar
-
-    }
   },
   methods: {
     getItems(ctr: string, grp: string): NavItem[] {
@@ -77,7 +75,7 @@ export default defineComponent({
         window.requestAnimationFrame(this.overflow)
       }
     }
-  }
+  },
 })
 </script>
 

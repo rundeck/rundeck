@@ -8,6 +8,7 @@
 <script>
 import { defineComponent } from 'vue'
 import * as _ from 'lodash'
+
 import OtherEditor from '../../../components/job/other/OtherEditor.vue'
 import JsonEmbed from './JsonEmbed.vue'
 

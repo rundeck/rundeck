@@ -8,25 +8,25 @@
 
 
 <script lang="ts">
-import {defineComponent, onBeforeMount, ref} from 'vue'
-
-import { PluginStore } from '../../../stores/Plugins'
-import { WebhookStore } from '../../../stores/Webhooks'
+import {defineComponent} from 'vue'
+import {PropType} from "vue";
 
 import FilterList from '../../filter-list/FilterList.vue'
-
 import WebhookSelectItem from './WebhookSelectItem.vue'
-import {RundeckContext} from "../../../interfaces/rundeckWindow";
-import {getRundeckContext} from "../../../rundeckService";
+import {WebhookStore} from "../../../stores/Webhooks"
 
 export default defineComponent({
     name: "WebhookSelect",
-    inject: ['rootStore'],
+    inheritAttrs: false,
     components: {
         FilterList,
         WebhookSelectItem
     },
     props: {
+        webhookStore: {
+            type: Object as PropType<WebhookStore>,
+            required: true,
+        },
         project: {
             type: String,
             required: true
@@ -39,17 +39,13 @@ export default defineComponent({
     computed: {
       webhooksForProject() {
           return this.webhookStore.webhooks.filter( wh => wh.project == this.project) || []
-      }
-    },
-    data() {
-        return {
-            webhookStore: window._rundeck.rootStore.webhooks
-        }
+      },
     },
     beforeMount() {
         this.webhookStore.load(this.project)
     }
 })
+
 </script>
 
 <style scoped lang="scss">

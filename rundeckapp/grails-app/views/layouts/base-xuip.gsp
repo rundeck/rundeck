@@ -155,15 +155,11 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
-    <asset:stylesheet href="static/css/chunk-vendors.css"/>
-    <asset:stylesheet href="static/css/chunk-common.css"/>
-    <asset:javascript src="static/js/chunk-common.js"/>
-    <asset:javascript src="static/js/chunk-vendors.js"/>
     %{-- Central should be loaded as soon as before any other Vue project code --}%
-    <asset:javascript src="static/components/central.js"/>
+    <g:loadEntryAssets entry="components/central" />
     %{--  Navigation components load early too  --}%
-    <asset:javascript src="static/components/navbar.js"/>
-    <asset:javascript src="static/components/project-picker.js"/>
+    <g:loadEntryAssets entry="components/navbar" />
+    <g:loadEntryAssets entry="components/project-picker" />
 
 %{--    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">--}%
 

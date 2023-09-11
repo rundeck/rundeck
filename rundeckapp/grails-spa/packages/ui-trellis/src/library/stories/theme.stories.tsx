@@ -346,7 +346,7 @@ export const inputs = () => ({
             <div>
                 <div class="card" style="padding: 20px;">
                     <div class="checkbox">
-                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked value="true" id="exportExecutions"/>
                         <label for="exportExecutions">Executions</label>
                     </div>
                     <div class="checkbox">
@@ -354,7 +354,7 @@ export const inputs = () => ({
                         <label for="exportExecutions">Executions</label>
                     </div>
                     <div class="radio">
-                        <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
+                        <input type="radio" name="stripJobRef" checked value="no" id="dontStrip"/>
                         <label for="dontStrip">
                         Do not modify referenced jobs at export.
                         </label>
@@ -379,7 +379,7 @@ export const inputs = () => ({
 
                 <div class="card card-accent" style="padding: 20px;">
                     <div class="checkbox">
-                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked value="true" id="exportExecutions"/>
                         <label for="exportExecutions">Executions</label>
                     </div>
                     <div class="checkbox">
@@ -387,7 +387,7 @@ export const inputs = () => ({
                         <label for="exportExecutions">Executions</label>
                     </div>
                     <div class="radio">
-                        <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
+                        <input type="radio" name="stripJobRef" checked value="no" id="dontStrip"/>
                         <label for="dontStrip">
                         Do not modify referenced jobs at export.
                         </label>

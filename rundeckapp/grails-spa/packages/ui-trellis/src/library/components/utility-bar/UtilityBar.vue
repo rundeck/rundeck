@@ -18,16 +18,22 @@
 import {defineComponent} from 'vue'
 import type {PropType} from "vue"
 import UtilItem from './UtilityBarItem.vue'
+import {UtilityBar} from "../../stores/UtilityBar";
 
 export default defineComponent({
     name:"UtilityBar",
     components: {
         UtilItem
     },
+    props: {
+      utilityBar: {
+        type: Object as PropType<UtilityBar>,
+        require: true,
+      },
+    },
     data() {
         return {
             open: false,
-            utilityBar: window._rundeck.rootStore.utilityBar
         }
     },
     computed: {

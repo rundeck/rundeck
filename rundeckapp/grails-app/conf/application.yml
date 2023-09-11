@@ -200,10 +200,10 @@ rundeck:
                     comment: the following policy definition should work in default rundeck install
                     config:
                         default-src: 'none'
-                        connect-src: 'self https://api.rundeck.com https://data.analytics.rundeck.com'
+                        connect-src: 'self https://api.rundeck.com https://data.analytics.rundeck.com http://127.0.0.1:4173'
                         style-src: 'self unsafe-inline'
-                        script-src: 'self https://content.analytics.rundeck.com unsafe-inline unsafe-eval'
-                        font-src: 'self data:'
+                        script-src: 'self https://content.analytics.rundeck.com http://127.0.0.1:4173 unsafe-inline unsafe-eval'
+                        font-src: 'self http://127.0.0.1:4173 data:'
                         img-src: '* data:'
                         form-action: 'self'
         interceptor:

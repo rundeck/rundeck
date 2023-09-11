@@ -210,7 +210,7 @@
       </div>
     </template>
     </div>
-    <ui-socket section="job-edit-schedules-editor" location="scheduledExecutionEditTZ:after" :event-bus="eventBus"/>
+    <ui-socket section="job-edit-schedules-editor" location="scheduledExecutionEditTZ:after" :event-bus="eventBus" />
     <div class="form-group">
         <div class="col-sm-2 control-label text-form-label">
           {{ $t('scheduledExecution.property.scheduleEnabled.label') }}
@@ -289,7 +289,7 @@ import {
   getMonths,
   getSimpleDecomposition,
 } from "./services/scheduleDefinition"
-import { EventBus } from "../../../../library";
+import { EventBus } from '../../../../library';
 
 export default defineComponent({
   name: 'ScheduleEditor',
@@ -313,7 +313,7 @@ export default defineComponent({
   emits: ['update:modelValue'],
   data() {
     return {
-      modelData: {},
+      modelData: {} as any,
       name: "",
       errors: "",
       hours: [],

@@ -30,7 +30,8 @@ implied. - See the License for the specific language governing permissions and -
             <asset:javascript src="menu/storage.js"/>
         </feature:disabled>
         <feature:enabled name="vueKeyStorage">
-            <asset:javascript src="static/pages/storage.js" defer="defer"/>
+            <g:loadEntryAssets entry="components/central" />
+            <g:loadEntryAssets entry="pages/storage" />
             <g:javascript>
                 window._rundeck = Object.assign(window._rundeck || {}, {
                     data: { }

@@ -25,10 +25,9 @@
 import { defineComponent } from 'vue'
 import type {PropType} from "vue";
 
-import {NavBar, NavContainer, NavItem} from '../../stores/NavBar'
+import {NavBar, NavContainer} from '../../stores/NavBar'
 
 import NavBarItem from './NavBarItem.vue'
-
 import NavBarDrawer from './NavBarDrawer.vue'
 
 export default defineComponent({
@@ -37,12 +36,8 @@ export default defineComponent({
         NavBarItem, NavBarDrawer
     },
     props: {
-        item: Object as PropType<NavContainer>
-    },
-    data() {
-        return {
-            navBar: window._rundeck.rootStore.navBar
-        }
+        item: Object as PropType<NavContainer>,
+        navBar: Object as PropType<NavBar>,
     },
     computed: {
         label() {
@@ -51,7 +46,7 @@ export default defineComponent({
     },
     methods: {
       getNavBarContainerItems(itemId) {
-          return this.navBar.containerItems(itemId)
+          return this.navBar?.containerItems(itemId) || []
       }
     }
 })

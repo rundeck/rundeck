@@ -38,6 +38,7 @@ import {IBuilderOpts} from "./logBuilder"
 import { EventBus } from '../../utilities/vueEventBus';
 import type {PropType} from "vue";
 import {ExecutionOutputEntry} from "../../stores/ExecutionOutput";
+import {getRundeckContext} from "../../rundeckService";
 
 export default defineComponent({
     name:"EntryFlex",
@@ -97,6 +98,9 @@ export default defineComponent({
         },
         displayGutter() {
             return this.cfg.gutter?.visible && (this.cfg.time?.visible || this.cfg.command?.visible)
+        },
+        rootStore() {
+            return getRundeckContext().rootStore
         }
     },
     methods: {

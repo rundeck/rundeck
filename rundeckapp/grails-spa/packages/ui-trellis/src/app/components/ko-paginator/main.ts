@@ -5,7 +5,7 @@ const template = `
     <Pagination 
         v-model="activePage"
         :totalPages="totalPages"
-        @change="handlePageChange"
+        @update:modelValue="handlePageChange"
     />
     `
 
@@ -40,20 +40,24 @@ const KoPaginator = {
 
 const mounted = new Map<String, boolean>()
 
-/** Listen to events advertising pagination and mount to elements */
-window._rundeck.eventBus.on('ko-pagination', (event: any) => {
-    const {name, pager} = event
+const init = () => {
+    /** Listen to events advertising pagination and mount to elements */
+    window._rundeck.eventBus.on('ko-pagination', (event: any) => {
+        const {name, pager} = event
 
-    if (!mounted.has(name)) {
-        const elements = document.querySelectorAll(`[data-ko-pagination='${name}']`)
+        if (!mounted.has(name)) {
+            const elements = document.querySelectorAll(`[data-ko-pagination='${name}']`)
 
-        for (const elm of elements) {
-            const app = createApp(KoPaginator,{
-                pager
-            })
-            app.mount(elm)
+            for (const elm of elements) {
+                const app = createApp(KoPaginator, {
+                    pager
+                })
+                app.mount(elm)
+            }
+
+            mounted.set(name, true)
         }
+    })
+}
 
-        mounted.set(name, true)
-    }
-})
+window.addEventListener('DOMContentLoaded', init)

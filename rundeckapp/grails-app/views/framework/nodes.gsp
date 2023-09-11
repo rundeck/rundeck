@@ -21,7 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
+    <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>

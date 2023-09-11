@@ -16,15 +16,21 @@
 
 package rundeck.controllers
 
+import asset.pipeline.grails.AssetMethodTagLib
+import asset.pipeline.grails.AssetProcessorService
+import asset.pipeline.grails.AssetsTagLib
+import asset.pipeline.grails.LinkGenerator
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import grails.testing.gorm.DataTest
+import groovy.json.JsonSlurper
 import org.grails.plugins.codecs.URLCodec
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import rundeck.AssetsEntrypointTagLib
 import rundeck.PluginStep
 import rundeck.UtilityTagLib
 
@@ -616,7 +622,19 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
     def "save with error should call dynamic properties"() {
         given:
         def assetTaglib = mockTagLib(UtilityTagLib)
+
+        mockTagLib(AssetsTagLib)
+        def assetMethodTagLibMock = mockTagLib(AssetMethodTagLib)
+        def assetProcessorService = new AssetProcessorService()
+        assetProcessorService.grailsApplication   = grailsApplication
+        assetProcessorService.grailsLinkGenerator = new LinkGenerator("http://localhost:8080")
+        assetMethodTagLibMock.assetProcessorService = assetProcessorService
+        def assetsEntrypointTagLibMock = mockTagLib(AssetsEntrypointTagLib)
+        assetsEntrypointTagLibMock.jsonSlurper = Mock(JsonSlurper) {
+            parse(_) >> ["entryPoints": [:]]
+        }
         grailsApplication.config.clear()
+        grailsApplication.config.grails.serverURL = "http://localhost:8080"
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
 
         params.project = 'aProject'

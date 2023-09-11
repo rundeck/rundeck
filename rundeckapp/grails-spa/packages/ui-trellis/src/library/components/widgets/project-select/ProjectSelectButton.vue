@@ -12,7 +12,7 @@
         <i class="fas project-select-btn__right-icon" :class="[`fa-chevron-${open ? 'up' : 'down'}`]"/>
         <Popper v-if="open" @close="close">
             <div id="projectPicker" class="card card--popover project-select-btn__popper">
-                <ProjectSelect @project:selected="handleSelect" @project:select-all="handleSelectAll"/>
+                <ProjectSelect :project-store="projectStore" @project:selected="handleSelect" @project:select-all="handleSelectAll"/>
             </div>
         </Popper>
     </button>
@@ -20,10 +20,12 @@
 
 <script lang="ts">
 import {defineComponent} from 'vue'
+import type { PropType } from 'vue'
 
 import Popper from '../../utility-bar/Popper.vue'
 
 import ProjectSelect from './ProjectSelect.vue'
+import {ProjectStore} from "../../../stores/Projects";
 
 export default defineComponent({
     components: {
@@ -32,7 +34,11 @@ export default defineComponent({
     },
     emits: ['project:select-all','project:selected'],
     props: {
-        projectLabel: {type: String}
+        projectLabel: {type: String},
+        projectStore: {
+          type: Object as PropType<ProjectStore>,
+          required: true,
+        }
     },
     data: () => ({
         open: false

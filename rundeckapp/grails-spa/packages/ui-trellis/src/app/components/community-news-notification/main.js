@@ -27,8 +27,9 @@ rootStore.utilityBar.addItems([
     widget: markRaw(defineComponent({
       app:"NewsApp",
       components: {News},
+      data() { return { rootStore }},
       provide: {rootStore},
-      template: `<News @news:select-all="moreNews"/>`,
+      template: `<News :news-store="rootStore.news" @news:select-all="moreNews"/>`,
       methods: {
         moreNews() {
           window.open(links.communityNews, '_blank')

@@ -24,7 +24,7 @@
                   <span v-else-if="!loadError" class="text-muted">
                     <i class="fas fa-spinner fa-pulse" ></i>
                   </span>
-                  {{$tc('execution',pagination.total>0?pagination.total:0)}}
+                  {{executionTranslation(pagination.total>0?pagination.total:0)}}
                 </a>
             </span>
 
@@ -39,9 +39,7 @@
             <!-- bulk edit controls -->
             <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete" class="spacing-x">
                 <span v-if="bulkEditMode" >
-                  <span>
-                    {{ $t("bulk.selected.count") }}
-                    <strong>{{bulkSelectedIds.length}}</strong>
+                  <span v-html="$t('bulk.selected.count', [`${bulkSelectedIds.length}`])">
                   </span>
                   <span class="btn btn-default btn-xs   " @click="bulkEditSelectAll">
                       {{$t('select.all')}}
@@ -103,7 +101,7 @@
       <p>
           {{ $t("delete.confirm.text")}}
           <strong>{{bulkSelectedIds.length}}</strong>
-          <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
+          <span>{{executionTranslation(bulkSelectedIds.length)}}</span>
       </p>
 
       <template v-slot:footer>
@@ -246,7 +244,7 @@
         <tbody class="since-count-data autoclickable"  @click="reload" v-if="sincecount>0">
           <tr>
               <td colspan=8 class=text-center>
-                {{ $tc('info.newexecutions.since.0', sincecount) }}
+                {{ infoNewExecutionsSinceTranslation(sincecount) }}
             </td>
           </tr>
         </tbody>
@@ -379,8 +377,8 @@ import ActivityFilter from './activityFilter.vue'
 
 import {getRundeckContext} from "../../../library"
 import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
-import * as DOMPurify from 'dompurify';
-import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
+import DOMPurify from 'dompurify';
+import { formatFromNow, formatCalendar, formatDate } from "../../utilities/DateTimeFormatters";
 
 /**
  * Generate a URL
@@ -490,14 +488,20 @@ export default defineComponent({
     }
   },
   methods: {
+    infoNewExecutionsSinceTranslation(count: number) {
+        return this.$t('info.newexecutions.since.0', count)
+    },
+    executionTranslation(count: number) {
+        return this.$t('execution', count)
+    },
     momentFromNow(val: MomentInput) {
-        return DateTimeFormatters.formatFromNow(val)
+        return formatFromNow(val)
     },
     momentCalendarFormat(val:MomentInput) {
-        return DateTimeFormatters.formatCalendar(val)
+        return formatCalendar(val)
     },
     momentJobFormatDate(val: MomentInput) {
-      return DateTimeFormatters.formatDate(val,this.momentJobFormat)
+      return formatDate(val,this.momentJobFormat)
     },
     purify(text:string) {
       return DOMPurify.sanitize(text);
@@ -900,6 +904,10 @@ export default defineComponent({
 <style lang="scss" >
 .activity-list .table{
   margin-bottom:0;
+}
+
+.timerel {
+  margin-right: 4px;
 }
 
 .activity-list__eventargs {

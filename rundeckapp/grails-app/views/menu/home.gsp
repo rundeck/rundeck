@@ -51,15 +51,12 @@
     ]}" id="homeDataPagingParams"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/components/ko-paginator.js"/>
+    <g:loadEntryAssets entry="components/ko-paginator" />
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/home.js"/>
 
-    <!-- VUE CSS MODULES -->
-    <asset:stylesheet href="static/css/components/version-notification.css"/>
-    <!-- /VUE CSS MODULES -->
-    <asset:javascript src="static/pages/login.js"/>
+    <g:loadEntryAssets entry="pages/login" />
     <style type="text/css">
     .project_list_item_link{
         display:inline-block;
@@ -88,7 +85,7 @@
             </div>
             <div class="card-content">
               <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
-              <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+              <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="onSvgLoaded(this)"/>
               <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
               <p class="h6 text-strong" style="margin-top:1em;">
                 <g:message code="you.can.see.this.message.again.by.clicking.the" />
@@ -394,9 +391,16 @@
 </div>
 </div>
 <!-- VUE JS MODULES -->
-<asset:stylesheet href="static/css/components/first-run.css"/>
-<asset:javascript src="static/components/first-run.js"/>
-<asset:javascript src="static/components/version-notification.js"/>
+<g:loadEntryAssets entry="components/first-run" />
+<g:loadEntryAssets entry="components/version-notification" />
 <!-- /VUE JS MODULES -->
+<script type="application/javascript">
+  function onSvgLoaded(image) {
+    if (typeof SVGInject !== 'undefined') {
+      return SVGInject(image)
+    }
+    window.addEventListener('load', function() { SVGInject(image) })
+  }
+</script>
 </body>
 </html>

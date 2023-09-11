@@ -1,12 +1,13 @@
 <template>
   <div v-if="project">
-    <motd v-if="project && project.readme && project.readme.motd" :project="project"></motd>
+    <motd v-if="project && project.readme && project.readme.motd" :project="project" :rd-base="rdBase" :project-name="projectName"></motd>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import motd from './motd.vue'
+import {getRundeckContext} from "../../../library";
 
 export default {
   name: 'App',
@@ -16,6 +17,14 @@ export default {
   data () {
     return {
       project: null
+    }
+  },
+  computed: {
+    rdBase() {
+      return getRundeckContext()?.rdBase
+    },
+    projectName() {
+      return getRundeckContext()?.projectName
     }
   },
   mounted () {

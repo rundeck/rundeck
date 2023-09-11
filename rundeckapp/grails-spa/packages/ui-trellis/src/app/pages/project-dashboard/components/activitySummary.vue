@@ -7,7 +7,7 @@
             <span class="summary-count" :class="{ 'text-strong': count < 1, 'text-info': count > 0 }">
               {{count}}
             </span>
-            {{$tc('execution',count)}}
+            {{$t('execution',count)}}
           </a>
 
           {{$t('In the last Day')}}

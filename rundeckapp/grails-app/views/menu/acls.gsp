@@ -69,7 +69,7 @@
     <title><g:message code="gui.menu.AccessControl"/></title>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/components/ko-paginator.js"/>
+    <g:loadEntryAssets entry="components/ko-paginator" />
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>
