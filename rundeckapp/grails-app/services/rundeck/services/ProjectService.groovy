@@ -672,32 +672,44 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         response
     }
 
-    private static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> map){
+    /**
+     * It returns a copy of the given map but the keys have strToPrepend as prefix and the values were converted to strings
+     * @param strToPrepend the prefix to be used in the keys of the returned map
+     * @param inputMap to copy and convert values to string and change keys
+     * @return a map with keys "strToPrepend.inputMapKey" and values "inputMapValue.toString"
+     */
+    private static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> inputMap){
         Map<String,String> prependedMap = [:]
-        map.each { String key, Object value ->
+        inputMap.each { String key, Object value ->
             String newKey = "${strToPrepend}.${key}"
             prependedMap[newKey] = value.toString()
         }
         return prependedMap
     }
 
-    private static ProjectImportStatus importArchiveToInstance(File archive, ProjectArchiveParams archiveParams){
-        Client<RundeckApi> client = RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build()
+    /**
+     * It communicates with the destiny server api to make it import the given archive
+     * @param archiveToExport file with project to export content
+     * @param exportArchiveParams metadata of the archive to export from this server
+     * @return an import status object where the import progress of the destiny server is updated
+     */
+    private static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams){
+        Client<RundeckApi> client = RundeckClient.builder().baseUrl(exportArchiveParams.url).tokenAuth(exportArchiveParams.apitoken).apiVersion(39).build()
         ProjectImportStatus response = new ProjectImportStatus()
         response.successful = true
-        boolean importWebhookOpt = archiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
+        boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
 
-        Response<ProjectImportStatus> status = client.getService().importProjectArchive(archiveParams.getTargetproject(),
-                archiveParams.preserveuuid?'preserve':'remove',
-                archiveParams.exportExecutions,
-                archiveParams.exportConfigs,
-                archiveParams.exportAcls,
-                archiveParams.exportScm,
+        Response<ProjectImportStatus> status = client.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
+                exportArchiveParams.preserveuuid?'preserve':'remove',
+                exportArchiveParams.exportExecutions,
+                exportArchiveParams.exportConfigs,
+                exportArchiveParams.exportAcls,
+                exportArchiveParams.exportScm,
                 importWebhookOpt,
-                importWebhookOpt && !Boolean.getBoolean(archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
-                Boolean.getBoolean(archiveParams.exportComponents['node-wizard'] as String),
-                prependStringToKeysInMap('importComponents', archiveParams.exportComponents),
-                RequestBody.create(archive, Client.MEDIA_TYPE_ZIP)
+                importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
+                Boolean.getBoolean(exportArchiveParams.exportComponents['node-wizard'] as String),
+                prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
+                RequestBody.create(archiveToExport, Client.MEDIA_TYPE_ZIP)
         ).execute()
 
         if(status.isSuccessful()){

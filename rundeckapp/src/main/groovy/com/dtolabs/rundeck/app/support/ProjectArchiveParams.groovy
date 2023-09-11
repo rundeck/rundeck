@@ -16,12 +16,10 @@
 
 package com.dtolabs.rundeck.app.support
 
-import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import grails.validation.Validateable
 import groovy.transform.ToString
 import rundeck.services.ArchiveOptions
-import grails.databinding.BindUsing
 
 /**
  * ProjectArchiveParams is ...
@@ -29,7 +27,7 @@ import grails.databinding.BindUsing
  * @since 2014-08-14
  */
 @ToString(includeNames = true, includePackage = false)
-class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable, EmbeddedJsonData{
+class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     String project
     String jobUuidOption='preserve'
     Boolean importExecutions=true
@@ -45,7 +43,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable,
     Boolean exportReadmes
     Boolean exportAcls
     Boolean exportScm
-
     Map<String, Boolean> importComponents
     Map<String, Map<String, String>> importOpts
     Map<String, Boolean> exportComponents
@@ -136,22 +133,4 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable,
         )
     }
 
-    Map<String, Object> toImportMap(){
-        return [ 'importExecutions': exportExecutions,
-                 'importConfig' : exportConfigs,
-                 'importACL': exportAcls,
-                 'importScm': exportScm,
-                 'importComponents': exportComponents,
-                 'importOpts': exportOpts,
-                 'jobUuidOption': jobUuidOption
-        ]
-    }
-
-    void setMapParamsFromSerializedMap(Map<String,String> params){
-        params.each { paramName, paramValue ->
-            if(delegate.hasProperty(paramName) != null && paramValue != null){
-                delegate."${paramName}" = asJsonMap(paramValue)
-            }
-        }
-    }
 }
