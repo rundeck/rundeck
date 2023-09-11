@@ -703,6 +703,7 @@ workflows:
       - build:
           context:
             - slack-secrets
+            - Cloudsmith
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
@@ -872,6 +873,7 @@ workflows:
       - build:
           context:
             - slack-secrets
+            - Cloudsmith
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
