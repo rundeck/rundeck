@@ -486,7 +486,10 @@ export default defineComponent({
             // Generate sample key path string
             const sampleKeyPath = this.rootPath.endsWith("/") ? `${this.rootPath}${this.path}` : `${this.rootPath}/${this.path}`
 
-            this.errorMsg = `${jsonError.message} If you need to select a key, please type the path of the key with the prefix "${sampleKeyPath}" into the form field. E.g. ${sampleKeyPath}/path/to/the/key`
+            // Remove the Error prefix
+            const softenedMessage = jsonError.message.startsWith("Error: ") ? jsonError.message.substring("Error: ".length) : jsonError.message
+
+            this.errorMsg = `${softenedMessage} If you need to select a key, please type the path of the key with the prefix "${sampleKeyPath}" into the form field. E.g. ${sampleKeyPath}/path/to/the/key`
           } else {
             this.errorMsg = jsonError.message
           }
