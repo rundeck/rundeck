@@ -600,9 +600,9 @@ div.vgt-responsive {
   .vgt-global-search__input{
     .input__icon{
       .magnifying-glass{
-        border: 2px solid var(--background-color-accent);
+        border: 2px solid var(--background-color-accent) !important;
         &:before{
-          background: var(--background-color-accent);
+          background: var(--background-color-accent) !important;
         }
       }
     }
