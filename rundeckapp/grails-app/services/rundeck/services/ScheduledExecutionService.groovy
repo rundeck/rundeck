@@ -2457,6 +2457,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v10
         failed |= validateDefinitionComponents(importedJob, params, validation)
         //v11
+        if(failed){
+            scheduledExecution.errors.fieldErrors.each{err->
+                validation.put(
+                    err.field,
+                    [reason: messageSource.getMessage(err, Locale.default), value: err.rejectedValue?.toString()]
+                )
+            }
+        }
 
         !failed
     }
