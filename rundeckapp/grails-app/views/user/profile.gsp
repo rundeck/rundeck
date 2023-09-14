@@ -85,9 +85,9 @@
                             <g:icon name="edit"/>
                             <g:message code="button.Edit.label"/>
                         </g:link>
-                        <div class="vue-ui-socket">
+                        <span class="vue-ui-socket">
                             <ui-socket section="user-profile" location="header-buttons"></ui-socket>
-                        </div>
+                        </span>
                     </div>
 
                     <div class="col-md-8 col-xs-6 form-inline">
