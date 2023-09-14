@@ -269,7 +269,7 @@ export default defineComponent({
           this.uploadSetting.errorMsg = 'key aready exists';
           return
         } else {
-          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType })
+          rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType })
             .then((result: any) => {
               this.$emit("finishEditing", result)
             }).catch((err: Error) => {
@@ -279,8 +279,6 @@ export default defineComponent({
               }
               this.uploadSetting.errorMsg = errorMessage;
             });
-
-          this.$emit("finishEditing", resp)
         }
       } else {
         rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType })
