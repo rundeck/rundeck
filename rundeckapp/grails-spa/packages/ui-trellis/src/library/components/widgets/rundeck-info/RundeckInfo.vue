@@ -26,7 +26,7 @@
         <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
             <div class="rundeck-info-widget__heading">Latest Release</div>
             <div class="rundeck-info-widget__latest">
-                <RundeckVersion :app="false" :logo="false" :number="latest.full" :tag="latest.tag"/>
+                <RundeckVersion :logo="false" :number="latest.full" :tag="latest.tag"/>
             </div>
         </div>
         <div class="rundeck-info-widget__group" style="display: flex; flex-direction: column-reverse; flex-grow: 1;">
