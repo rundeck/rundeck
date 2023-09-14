@@ -15,7 +15,6 @@ import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.validation.Errors
-import rundeck.NodeFilter
 import rundeck.User
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
