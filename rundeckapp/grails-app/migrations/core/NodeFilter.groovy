@@ -77,4 +77,13 @@ databaseChangeLog = {
             }
         }
     }
+    changeSet(author: "gschueler (generated)", failOnError:"false", id: "5.0-nodefilter-1000") {
+        comment { 'rename "filter" to FILTER' }
+        preConditions(onFail: 'MARK_RAN') {
+            tableExists (tableName:"node_filter")
+        }
+        dropTable(tableName: "node_filter") {
+
+        }
+    }
 }
