@@ -45,7 +45,6 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import org.rundeck.storage.api.StorageException
-import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
@@ -61,7 +60,7 @@ import static org.rundeck.core.auth.AuthConstants.*
  */
 class FrameworkControllerSpec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
-    def setupSpec() { mockDomains NodeFilter, User }
+    def setupSpec() { mockDomains User }
 
     def setup() {
         grailsApplication.config.clear()
@@ -1777,60 +1776,6 @@ project.label=A Label
         request.errors == null
         response.redirectedUrl == "/project/projName/nodes/sources"
 
-    }
-
-    def "node summary ajax lists filters"() {
-        given:
-        def project = 'testProj'
-        controller.userService = Mock(UserService)
-        controller.frameworkService = Mock(FrameworkService)
-
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        def testUser = new User(login: 'auser').save()
-        [
-            new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
-            new NodeFilter(user: testUser, filter: 'tags:xyz', name: 'filter2', project: project),
-            new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
-
-        ]*.save(flush: true)
-        when:
-        controller.nodeSummaryAjax(project)
-        then:
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(*_) >> true
-        1 * controller.userService.findOrCreateUser(_) >> testUser
-        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-            getNodeSet() >> new NodeSetImpl()
-        }
-        1 * controller.frameworkService.summarizeTags(_) >> [asdf: 1]
-
-        response.json.filters == [
-            [filter: 'tags:xyz', name: 'filter2', project: project],
-            [filter: 'abc', name: 'filter1', project: project],
-        ]
-    }
-
-
-    def "node page with filter param doesn't redirect"() {
-        given:
-            def project = 'testProj'
-            controller.userService = Mock(UserService)
-            controller.frameworkService = Mock(FrameworkService)
-            def testUser = new User(login: 'auser').save()
-            [
-                    new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
-                    new NodeFilter(user: testUser, filter: 'tags:xyz', name: 'filter2', project: project),
-                    new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
-
-            ]*.save(flush: true)
-            def query = new ExtNodeFilters(project: project, filter: 'tags:abc')
-        when:
-            params.project = project
-            def result = controller.nodes(query)
-        then:
-            1 * controller.userService.findOrCreateUser(_) >> testUser
-            1 * controller.userService.getFilterPref(_) >> [nodes: 'filter1']
-            response.status == 200
-            result.filter == 'tags:abc'
     }
 
     def "save project node sources"() {
