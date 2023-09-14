@@ -648,4 +648,11 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "gschueler", id: "5.0-nodefilter-0500") {
+        preConditions(onFail: "MARK_RAN"){
+            foreignKeyConstraintExists (foreignKeyTableName: "node_filter", foreignKeyName: "FKhuj3n3gy2kqoie8d8oucay4b3")
+        }
+        dropForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "node_filter", constraintName: "FKhuj3n3gy2kqoie8d8oucay4b3", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
+    }
+
 }

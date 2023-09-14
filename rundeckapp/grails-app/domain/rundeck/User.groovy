@@ -38,7 +38,7 @@ class User implements RdUser{
     String lastSessionId
     String lastLoggedHostName
 
-    static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
+    static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter]
     static constraints={
         login(matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\.,@\\(\\)\\s_\\\\/-]+$')
         firstName(nullable:true)
