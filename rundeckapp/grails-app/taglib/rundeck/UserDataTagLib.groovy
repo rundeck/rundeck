@@ -15,14 +15,6 @@ class UserDataTagLib {
         }
     }
 
-    def getNodeFilters = { attrs, body ->
-        def nodeFilters = userDataProvider.findByLogin(attrs.user)?.nodefilters
-        def var = attrs.var ?: "filters"
-        if(nodeFilters) {
-            out << body((var): nodeFilters)
-        }
-    }
-
     def getReportFilters = { attrs, body ->
         def reportFilters = userDataProvider.findByLogin(attrs.user)?.reportfilters
         def var = attrs.var ?: "filters"

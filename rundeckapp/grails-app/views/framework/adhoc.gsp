@@ -113,9 +113,6 @@ search
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
-<user:getNodeFilters user="${session.user}">
-  <g:set var="filterset" value="${filters}"/>
-</user:getNodeFilters>
 
 <div class="content">
 <div id="layoutBody">
@@ -136,7 +133,7 @@ search
                 <div class="col-sm-12">
                   <div class=" input-group multiple-control-input-group input-group-lg tight">
                     <g:render template="nodeFilterInputGroup"
-                              model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus:!filterName && !filtvalue]"/>
+                              model="[filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus:!filterName && !filtvalue]"/>
                   </div>
                 </div>
               </div>
