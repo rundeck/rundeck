@@ -218,7 +218,6 @@ export default defineComponent({
       }
     },
     async handleUploadKey() {
-      console.log("handleUploadKey");
       const rundeckContext = getRundeckContext();
 
       let fullPath = this.calcBrowsePath(this.getKeyPath())
@@ -267,7 +266,6 @@ export default defineComponent({
 
       if(exists) {
         if(this.uploadSetting.dontOverwrite) {
-          console.log("aaaa")
           this.uploadSetting.errorMsg = 'key aready exists';
           return
         } else {
