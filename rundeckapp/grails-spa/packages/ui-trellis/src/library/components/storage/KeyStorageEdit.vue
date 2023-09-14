@@ -218,6 +218,7 @@ export default defineComponent({
       }
     },
     async handleUploadKey() {
+      console.log("handleUploadKey");
       const rundeckContext = getRundeckContext();
 
       let fullPath = this.calcBrowsePath(this.getKeyPath())
@@ -266,29 +267,37 @@ export default defineComponent({
 
       if(exists) {
         if(this.uploadSetting.dontOverwrite) {
+          console.log("aaaa")
           this.uploadSetting.errorMsg = 'key aready exists';
           return
         } else {
-          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType });
-
-          if(resp._response.status >= 400){
-            this.uploadSetting.errorMsg = resp.error
-            return
-          } 
+          const resp = await rundeckContext.rundeckClient.storageKeyUpdate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType })
+            .then((result: any) => {
+              this.$emit("finishEditing", result)
+            }).catch((err: Error) => {
+              let errorMessage = "";
+              if(err?.message){
+                errorMessage = JSON.parse(err.message)?.message;
+              }
+              this.uploadSetting.errorMsg = errorMessage;
+            });
 
           this.$emit("finishEditing", resp)
         }
       } else {
-        const resp = await rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType });
-        
-        if(resp._response.status!=201){
-          this.uploadSetting.errorMsg = resp.error;
-          return
-        }
-        await this.getCreatedKey(fullPath)
-
-        this.$emit("keyCreated", this.createdKey)
-        this.$emit("finishEditing", resp)
+        rundeckContext.rundeckClient.storageKeyCreate(fullPath, value, { contentType, inputType: this.uploadSetting.inputType, keyType: this.uploadSetting.keyType })
+          .then((result: any) => {
+            this.getCreatedKey(fullPath).then((r: any) => {
+              this.$emit("keyCreated", this.createdKey)
+              this.$emit("finishEditing", result)
+            })
+          }).catch((err: Error) => {
+            let errorMessage = "";
+            if(err?.message){
+              errorMessage = JSON.parse(err.message)?.message;
+            }
+            this.uploadSetting.errorMsg = errorMessage;
+        });
       }
     },
     async getCreatedKey(path: string){
