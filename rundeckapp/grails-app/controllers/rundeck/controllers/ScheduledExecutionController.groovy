@@ -2473,19 +2473,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             }
             scheduledExecution.argString=params.argString
         }
-        if(params.filterName){
-            if (params.filterName) {
-                def RdUser u = userService.findOrCreateUser(authContext.username)
-                //load a named filter and create a query from it
-                if (u) {
-                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                    if (filter) {
-                        def query2 = filter.createExtNodeFilters()
-                        params.put('filter', query2.asFilter())
-                    }
-                }
-            }
-        }
+
         if (params.filter){
             scheduledExecution.filter=params.filter
             scheduledExecution.doNodedispatch=true
@@ -2606,17 +2594,6 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
         params.excludeFilterUncheck = false
-        if (params.filterName) {
-            def RdUser u = userService.findOrCreateUser(authContext.username)
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    params.put('filter',query2.asFilter())
-                }
-            }
-        }
 
         params.extraMetadataMap = runAdhocRequest.meta ?: [:]
 
