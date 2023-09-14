@@ -18,7 +18,6 @@ public interface RdUser {
     String getLastSessionId();
     String getLastLoggedHostName();
     Object getJobfilters();
-    Object getNodefilters();
     Object getReportfilters();
 
 }
