@@ -254,15 +254,12 @@
                         <g:set var="filtvalue" value="${item?.nodeFilter}"/>
 
                         <span class="input-group multiple-control-input-group nodefilters">
-                            <user:getNodeFilters user="${session.user}">
-                                <g:set var="filterset" value="${filters}"/>
-                            </user:getNodeFilters>
+
                             <g:render template="/framework/nodeFilterInputGroup"
                                       model="[filterFieldName: 'nodeFilter',
                                               filterFieldId:'nodeFilterField'+rkey,
                                               queryFieldHelpId:'nodeFilterQueryFieldHelp'+rkey,
                                               queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override'),
-                                              filterset: filterset,
                                               filtvalue: filtvalue,
                                               filterName: null]"/>
                         </span>
