@@ -12,8 +12,10 @@ export class Releases {
 
     @Serial
     async load() {
+        if (this.releases.length >= 1) {
+            return
+        }
         const results = await axios.get<Array<ApiRelease>>('https://api.rundeck.com/news/v1/release')
-
         results.data.forEach(r => {
             this.releases.push(Release.FromApi(r))
         })
