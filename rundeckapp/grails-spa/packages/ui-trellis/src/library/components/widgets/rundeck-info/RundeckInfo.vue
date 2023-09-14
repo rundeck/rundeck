@@ -7,13 +7,13 @@
                     <PagerdutyLogo v-else/>
                 </a>
             </div>
-            <div class="rundeck-info-widget__header">
-                <RundeckVersion :app="false" :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
+            <div class="rundeck-info-widget__header" v-if="version && appInfo">
+                <RundeckVersion :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
             </div>
-            <div>
+            <div v-if="version && version.icon && version.color">
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
             </div>
-            <div>
+            <div v-if="server">
                 <span class="server-display">
                     <ServerDisplay
                         :name="server.name"
@@ -26,7 +26,7 @@
         <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
             <div class="rundeck-info-widget__heading">Latest Release</div>
             <div class="rundeck-info-widget__latest">
-                <RundeckVersion :app="false" :logo="false" :number="latest.full" :tag="latest.tag"/>
+                <RundeckVersion :logo="false" :number="latest.full" :tag="latest.tag"/>
             </div>
         </div>
         <div class="rundeck-info-widget__group" style="display: flex; flex-direction: column-reverse; flex-grow: 1;">
@@ -58,20 +58,16 @@ export default defineComponent({
     },
     props: {
         version: {
-            type: Object as PropType<VersionInfo>,
-            required: true
+            type: Object as PropType<VersionInfo>
         },
         latest: {
-            type: Object as PropType<Release>,
-            required: true
+            type: Object as PropType<Release>
         },
         server: {
-            type: Object as PropType<ServerInfo>,
-            required: true
+            type: Object as PropType<ServerInfo>
         },
         appInfo: {
-            type: Object as PropType<AppInfo>,
-            required: true
+            type: Object as PropType<AppInfo>
         }
     },
     methods: {
