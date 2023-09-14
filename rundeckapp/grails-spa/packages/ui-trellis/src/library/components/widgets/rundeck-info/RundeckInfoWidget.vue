@@ -1,5 +1,5 @@
 <template>
-    <InfoDisplay v-if="loaded" 
+    <InfoDisplay
         :version="system.versionInfo"
         :latest="releases.releases[0]"
         :server="system.serverInfo"
