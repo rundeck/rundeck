@@ -11,7 +11,7 @@ export class SystemStore {
     serverInfo?: ServerInfo
     appInfo: AppInfo
 
-    loaded = ref<boolean>(false)
+    loaded = false
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         this.versionInfo = new VersionInfo()
@@ -29,7 +29,7 @@ export class SystemStore {
 
     @Serial
     async load() {
-        if (this.loaded.value)
+        if (this.loaded)
             return
 
         const resp = await this.client.systemInfoGet()
@@ -42,7 +42,7 @@ export class SystemStore {
             resp.system!.rundeckProperty!.node!,
             resp.system!.rundeckProperty!.serverUUID!)
 
-        this.loaded.value = true
+        this.loaded = true
     }
 }
 
