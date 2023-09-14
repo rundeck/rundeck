@@ -307,10 +307,6 @@
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
 
-                        <user:getNodeFilters user="${session.user}">
-                            <g:set var="filterset" value="${filters.findAll { it.project == project }}"/>
-                        </user:getNodeFilters>
-
                         <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                             <div class="spacing">
@@ -323,7 +319,7 @@
                                         <div>
                                             <span class=" input-group multiple-control-input-group" >
                                                 <g:render template="/framework/nodeFilterInputGroup"
-                                                          model="[filterFieldName: 'extra.nodefilter',filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
+                                                          model="[filterFieldName: 'extra.nodefilter', filtvalue: filtvalue, filterName: filterName]"/>
                                             </span>
                                         </div>
                                     </g:form>

@@ -33,9 +33,7 @@
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-<user:getNodeFilters user="${session.user}">
-    <g:set var="filterset" value="${filters}"/>
-</user:getNodeFilters>
+
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
@@ -48,7 +46,7 @@
     <div class="col-xs-12 subtitle-head">
         <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">
             <g:render template="nodeFilterInputGroup"
-                      model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
+                      model="[ filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
         </div>
     </div>
 </div>
