@@ -382,7 +382,7 @@ export default defineComponent({
     },
     saveConfig() {
       // flattening nested objects to save to local storage
-      let flattenedSettings = this.crushObj({...this.settings})
+      let flattenedSettings = this.flattenObj({...this.settings})
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(flattenedSettings))
     },
     addScrollBlocker() {
