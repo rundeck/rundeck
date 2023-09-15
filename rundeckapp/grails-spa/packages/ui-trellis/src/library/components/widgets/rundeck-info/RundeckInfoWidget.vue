@@ -1,5 +1,5 @@
 <template>
-    <InfoDisplay v-if="loaded" 
+    <InfoDisplay
         :version="system.versionInfo"
         :latest="releases.releases[0]"
         :server="system.serverInfo"
@@ -9,7 +9,8 @@
 
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import {RootStore} from '../../../stores/RootStore'
+import {defineComponent, inject} from 'vue'
 import InfoDisplay from './RundeckInfo.vue'
 
 export default defineComponent({
@@ -17,21 +18,17 @@ export default defineComponent({
     components: {
         InfoDisplay
     },
-    data() {
-        return {
-            system: window._rundeck.rootStore.system,
-            releases: window._rundeck.rootStore.releases,
-            loaded: false
-        }
+    setup() {
+      let {system, releases} = inject('rootStore') as RootStore
+      return {system, releases}
     },
     async mounted() {
-        await this.releases.load()
         try {
             await Promise.all([
+                this.releases.load(),
                 this.system.load(),
             ])
         } catch(e) {}
-        this.loaded = true
     }
 })
 
