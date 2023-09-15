@@ -519,7 +519,7 @@ export default defineComponent({
     flattenObj(obj = {}) {
       return Object.keys(obj || {}).reduce((acc, cur) => {
         if (typeof obj[cur] === 'object') {
-          acc = { ...acc, ...this.crushObj(obj[cur])}
+          acc = { ...acc, ...this.flattenObj(obj[cur])}
         } else { acc[cur] = obj[cur] }
         return acc
       }, {})
