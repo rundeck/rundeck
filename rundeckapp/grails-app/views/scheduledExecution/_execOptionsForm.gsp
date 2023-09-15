@@ -44,7 +44,7 @@
 
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
-    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
+    <g:embedJSON id="filterParamsJSON" data="${[filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <div class=" collapse" id="queryFilterHelp">
         <div class="help-block">
             <g:render template="/common/nodefilterStringHelp"/>
@@ -319,7 +319,7 @@
                                         <div>
                                             <span class=" input-group multiple-control-input-group" >
                                                 <g:render template="/framework/nodeFilterInputGroup"
-                                                          model="[filterFieldName: 'extra.nodefilter', filtvalue: filtvalue, filterName: filterName]"/>
+                                                          model="[filterFieldName: 'extra.nodefilter', filtvalue: filtvalue]"/>
                                             </span>
                                         </div>
                                     </g:form>
@@ -510,15 +510,6 @@
                     nodesTitleSingular: message('Node'),
                     nodesTitlePlural: message('Node.plural')
                 }));
-
-            // ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-        //show selected named filter
-        nodeFilter.filterName.subscribe(function (val) {
-            if (val) {
-                jQuery('a[data-node-filter-name]').removeClass('active');
-                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-            }
-        });
 
         nodeSummary.reload();
         nodeFilter.updateMatchedNodes();

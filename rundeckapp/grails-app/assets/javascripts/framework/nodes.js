@@ -41,7 +41,7 @@ var pageParams={};
  * @param elem
  */
 function expandResultNodes(page,elem){
-    loadNodeFilter(null,nodeFilter.filter(),nodeFilter.filterAll(),elem,page);
+    loadNodeFilter(nodeFilter.filter(),nodeFilter.filterAll(),elem,page);
 }
 /**
  * load either filter string or saved filter
@@ -51,7 +51,7 @@ function expandResultNodes(page,elem){
  * @param elem target element
  * @param page number to load
  */
-function loadNodeFilter(filterName, filterString,filterAll,elem,page) {
+function loadNodeFilter( filterString,filterAll,elem,page) {
     jQuery('.nodefilterlink').removeClass('active');
     if (!page) {
         page = 0;
@@ -59,29 +59,21 @@ function loadNodeFilter(filterName, filterString,filterAll,elem,page) {
     if (!elem) {
         elem = 'nodelist';
     }
-    if(!filterName&&!filterString&&null==filterAll){
-        filterName=nodeFilter.filterName();
+    if(!filterString&&null==filterAll){
         filterString=nodeFilter.filter();
         filterAll=nodeFilter.filterAll();
     }
-    if(!filterName && !filterString){
+    if(!filterString){
         //if blank input and no filtername selected, do nothing
         return;
     }
     nodespage = page;
     var view = page == 0 ? 'table' : 'tableContent';
-    var data = filterName? {filterName: filterName} : {filter: filterString};
+    var data =  {filter: filterString};
     data.nodeExcludePrecedence='true';
-    if(filterName){
-        jQuery('a[data-node-filter-name=\''+filterName+'\']').addClass('active');
-        jQuery('.hiddenNodeFilter').val(filterString);
-        jQuery('.hiddenNodeFilterName').val(filterName);
-    }else{
-        jQuery('.hiddenNodeFilter').val(filterString );
-        jQuery('.hiddenNodeFilterName').val('');
-    }
+    jQuery('.hiddenNodeFilter').val(filterString );
+    jQuery('.hiddenNodeFilterName').val('');
     nodeFilter.filterAll(filterAll);
-    nodeFilter.filterName(filterName);
     nodeFilter.filter(filterString);
     nodeFilter.loading(true);
     _updateMatchedNodes(data,elem,pageParams.project,false,{view:view,expanddetail:true,inlinepaging:true,
@@ -169,7 +161,7 @@ var nodeSummary;
  */
 function pageLoad(){
     var pagestate;
-    if(filterParams.filterName || filterParams.filter|| filterParams.filterAll ){
+    if( filterParams.filter|| filterParams.filterAll ){
         nodeFilter.setPageParams(filterParams);
         nodeFilter.updateMatchedNodes();
         pagestate=nodeFilter.getPageParams();
@@ -208,13 +200,6 @@ function init() {
             nodeSummary:nodeSummary
         }));
     ko.applyBindings(nodeFilter);
-    //show selected named filter
-    nodeFilter.filterName.subscribe(function (val) {
-        if (val) {
-            jQuery('a[data-node-filter-name]').removeClass('active');
-            jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-        }
-    });
     nodeFilter.loading.subscribe(function(val){
         //select filter results tab whenever loading output
         jQuery('#tab_link_result > a').tab('show');
