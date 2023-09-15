@@ -19,73 +19,23 @@
     <span class="input-group-addon input-group-addon-title"><g:message code="nodes" /></span>
 </g:if>
 <div class="input-group-btn input-btn-toggle">
-    <button type="button" class="btn btn-default dropdown-toggle" data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }" data-toggle="dropdown">
+    <button type="button" class="btn btn-default dropdown-toggle"  data-toggle="dropdown">
         <span data-bind="text: filterNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">
         <li>
-            <g:link class="nodefilterlink"
+            <g:link class="nodefilterlink active"
                     action="nodes" controller="framework"
                     data-node-filter-name=".*"
                     data-node-filter=".*"
-                    data-bind="css: { active: '.*'== filterName() }"
                     params="[filterName: '.*']">
                 <i class="fas fa-asterisk"></i>
                 <g:message code="show.all.nodes" />
             </g:link>
         </li>
 
-        <li class="divider"></li>
 
-        <li class="dropdown-header" data-bind="visible: filterName()">
-            <g:message code="filter" /><span data-bind="text: filterNameDisplay()"></span>
-        </li>
-        <li data-bind="visible: canSaveFilter">
-            <a href="#"
-               data-toggle="modal"
-               data-target="#saveFilterModal">
-                <i class="glyphicon glyphicon-plus"></i>
-                <g:message code="save.filter.ellipsis" />
-            </a>
-        </li>
-        <li data-bind="visible: canDeleteFilter">
-            <a href="#"
-               class=""
-               data-bind="click: deleteFilter">
-                <i class="glyphicon glyphicon-remove"></i>
-                <g:message code="delete.this.filter.ellipsis" />
-            </a>
-        </li>
-        <li data-bind="visible: canSetDefaultFilter">
-            <a href="#"
-               class=""
-               data-bind="click: setDefaultFilter">
-                <i class="glyphicon glyphicon-filter"></i>
-                <g:message code="set.as.default.filter" />
-            </a>
-        </li>
-        <li data-bind="visible: canRemoveDefaultFilter">
-            <a href="#"
-               class=""
-               data-bind="click: nodeSummary().removeDefault">
-                <i class="glyphicon glyphicon-ban-circle"></i>
-                <g:message code="remove.default.filter" />
-            </a>
-        </li>
 
-        <!-- ko if: nodeSummary() -->
-        <!-- ko if: nodeSummary().filters().length > 0 -->
-        <li class="divider"></li>
-        <li class="dropdown-header"> <g:message code="saved.filters" /></li>
-        <!-- /ko -->
-        <!-- ko foreach: nodeSummary().filters -->
-        <li>
-            <a  class="nodefilterlink"
-                data-bind="text: name(), attr: { 'data-node-filter-name': name(), 'data-node-filter': filter() }, css: { active: name()==$root.filterName() }"
-            ></a>
-        </li>
-        <!-- /ko -->
-        <!-- /ko -->
     </ul>
 </div>
 
