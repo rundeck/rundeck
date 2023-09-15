@@ -91,7 +91,6 @@
         </div>
         <LogNodeChunk ref="logEntryChunk"
                       class="execution-log__node-chunk"
-                      :key="logLines"
                       :event-bus="eventBus"
                       :selected-line="selectedLineIdx"
                       :node="node"
@@ -102,13 +101,12 @@
                       :time="settings.timestamps"
                       :gutter="settings.gutter"
                       :line-wrap="settings.lineWrap"
-                      :entries="entries"
+                      :entries="viewerEntries"
                       :jump-to-line="jumpToLine"
                       :jumped="jumped"
                       @line-select="handleLineSelect"
                       @jumped="jumped = true"
         />
-
       </div>
     </div>
     <div class="stats" v-if="settings.stats">
@@ -127,8 +125,7 @@ import { EventBus } from '../../utilities/vueEventBus'
 import { Btn, BtnGroup, ProgressBar } from 'uiv'
 import {App, PropType} from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
-import {ExecutionOutputEntry} from "../../stores/ExecutionOutput";
-import {autorun, IObservableArray} from "mobx";
+import {JobWorkflow} from "@/library/utilities/JobWorkflow";
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
@@ -287,6 +284,32 @@ export default defineComponent({
       }
       return this.settings.theme
     },
+    viewerEntriesByNodeCtx() {
+      return this.viewer.entries.reduce((acc, entry) => ({
+        ...acc,
+        [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ''}`]: [...(acc[`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ''}`] || []), entry]
+      }), {})
+    },
+    viewerEntriesByNode() {
+      return this.viewer.entries.reduce((acc, entry) => {
+        return {
+          ...acc,
+          [entry.node]: [...(acc[entry.node] || []), entry]
+        }
+      }, {})
+    },
+    viewerEntries() {
+      if (this.viewer == null) {
+        return []
+      }
+      if(this.node){
+        if (this.stepCtx) {
+          return this.viewerEntriesByNodeCtx[`${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`]
+        }
+        return this.viewerEntriesByNode[this.node]
+      }
+      return this.viewer.entries
+    },
   },
   watch: {
     settings: {
@@ -339,8 +362,6 @@ export default defineComponent({
     }
 
     this.populateLogsProm = await this.populateLogs()
-    this.observeFiltered(() => this.viewer.getEntriesFiltered(this.node, this.stepCtx))
-    this.entries = this.viewer?.getEntriesFiltered(this.node, this.stepCtx)
   },
   methods: {
     loadConfig() {
@@ -360,7 +381,9 @@ export default defineComponent({
       Object.assign(this.settings, this.config || {})
     },
     saveConfig() {
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
+      // flattening nested objects to save to local storage
+      let flattenedSettings = this.crushObj({...this.settings})
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(flattenedSettings))
     },
     addScrollBlocker() {
       /**
@@ -405,9 +428,11 @@ export default defineComponent({
     },
     scrollToLine(n: number | string) {
       const _scroller = this.$refs['scroller'] as HTMLElement
-      this.$refs['logEntryChunk'].scrollToLine(Number(n));
-      const target = this.$refs['logEntryChunk']._container
+      if(this.$refs["logEntryChunk"]){
+        this.$refs['logEntryChunk'].scrollToLine(Number(n));
+      }
 
+      const target = this.$refs['logEntryChunk']._container
       let parent = target.parentNode
 
       let offset = target.offsetTop
@@ -491,17 +516,13 @@ export default defineComponent({
       this.totalTime = Date.now() - this.startTime
       this.populateLogsProm = undefined
     },
-    observeFiltered(lookupFunc: () => IObservableArray<ExecutionOutputEntry> | undefined) {
-      autorun((reaction) => {
-        const output = lookupFunc()
-        if (!output) return
-        reaction.dispose()
-        this.entries = output
-
-        if (this.mfollow) {
-          this.scrollToLine(this.entries.length)
-        }
-      })
+    flattenObj(obj = {}) {
+      return Object.keys(obj || {}).reduce((acc, cur) => {
+        if (typeof obj[cur] === 'object') {
+          acc = { ...acc, ...this.crushObj(obj[cur])}
+        } else { acc[cur] = obj[cur] }
+        return acc
+      }, {})
     }
   }
 })
