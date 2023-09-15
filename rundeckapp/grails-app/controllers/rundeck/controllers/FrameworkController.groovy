@@ -526,8 +526,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         RdUser u = userService.findOrCreateUser(session.user)
-        def usedFilter = null
-        def usedFilterExclude = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if (filterpref['nodes']) {
@@ -550,12 +548,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         query.project = params.project
         def result = nodesdata(query)
         result.colkeys = filterSummaryKeys(query)
-        if (usedFilter) {
-            result['filterName'] = usedFilter
-        }
-        if (usedFilterExclude) {
-            result['filterExcludeName'] = usedFilterExclude
-        }
+
         if (!result.nodesvalid) {
             request.error = "Error parsing file \"${result.nodesfile}\": " + result.nodeserror ? result.nodeserror*.message?.
                     join("\n") : 'no message'
