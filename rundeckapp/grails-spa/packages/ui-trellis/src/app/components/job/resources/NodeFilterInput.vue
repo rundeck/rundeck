@@ -57,11 +57,11 @@
             <li class="dropdown-header"> {{ $t('saved.filters') }}</li>
             <li v-for="filter in nodeSummary.filters">
               <node-filter-link
-                  :node-filter-name="filter.name"
+                  :node-filter-name="filter.filterName"
                   :node-filter="filter.filter"
                   @nodefilterclick="handleNodefilter"
               >
-                <template v-slot:suffix v-if="selectedFilterName===filter.name">
+                <template v-slot:suffix v-if="selectedFilterName===filter.filterName">
                   <span>
                     <i class="fa fa-check"></i>
                   </span>
@@ -190,24 +190,11 @@
   </div>
 </template>
 <script lang="ts">
-import {_genUrl} from '../../../utilities/genUrl'
-import {RundeckBrowser} from '@rundeck/client'
-import axios from 'axios'
-import {defineComponent, PropType, ref } from 'vue'
+import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterStore'
+import {defineComponent, ref} from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
-import {
-  getAppLinks,
-  getRundeckContext
-} from '../../../../library'
-import Trellis from '../../../../library'
 
-const client: RundeckBrowser = getRundeckContext().rundeckClient
-const rdBase = getRundeckContext().rdBase
 
-interface NodeSummary {
-  filters: any[]
-  defaultFilter: any
-}
 
 export default defineComponent({
   name: 'NodeFilterInput',
@@ -244,6 +231,10 @@ export default defineComponent({
       required: false,
       default: '',
     },
+    project: {
+      type: String,
+      required: true
+    },
     filterFieldName: {
       type: String,
       required: false,
@@ -266,11 +257,6 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: false,
-    },
-    nodeSummary: {
-      type: Object as PropType<NodeSummary>,
-      required: false,
-      default: () => {}
     }
   },
   emits: ['filters-updated', 'filter', 'update:modelValue'],
@@ -282,6 +268,8 @@ export default defineComponent({
     const saveFilterModalError = ref('')
     const newFilterName = ref('')
     const deleteFilterModal = ref(false)
+    const nodeSummary = ref({} as ProjectFilters)
+    const nodeFilterStore = new NodeFilterStore()
     return {
       outputValue,
       selectedFilterName,
@@ -290,6 +278,8 @@ export default defineComponent({
       saveFilterModalError,
       newFilterName,
       deleteFilterModal,
+      nodeSummary,
+      nodeFilterStore
     }
   },
   computed: {
@@ -312,14 +302,14 @@ export default defineComponent({
       if (this.outputValue && this.nodeSummary.filters) {
         let found = this.nodeSummary.filters.find((a: any) => a.filter === this.outputValue)
         if (found) {
-          return found
+          return found.filterName
         }
       }
       return null
     },
     selectedSavedFilter() {
       if (this.selectedFilterName && this.nodeSummary.filters) {
-        let found = this.nodeSummary.filters.find((a: any) => a.name === this.selectedFilterName)
+        let found = this.nodeSummary.filters.find((a: any) => a.filterName === this.selectedFilterName)
         if (found) {
           return found
         }
@@ -337,46 +327,30 @@ export default defineComponent({
       return this.outputValue
     },
     async saveFilter() {
-      let result = await client.sendRequest({
-        method: 'POST',
-        url: _genUrl(
-            getAppLinks().frameworkStoreFilterAjax,
-            {
-              newFilterName: this.newFilterName,
-              isJobEdit: true,
-              filter: this.outputValue
-            })
+      this.nodeFilterStore.saveFilter(this.project,{
+        filterName: this.newFilterName,
+        isJobEdit: true,
+        filter: this.outputValue
       })
-      if (result.status == 200) {
         this.saveFilterModal = false
         this.selectedFilterName = this.newFilterName
         this.newFilterName = ''
+        this.loadNodeFilters()
         this.$emit('filters-updated')
-      } else {
-        this.saveFilterModalError = 'Error saving filter: ' + result.status + ': ' + (result.parsedBody?.msg || 'Unknown error')
-      }
     },
     async deleteFilter() {
-      let result = await client.sendRequest(
-          {
-            method: 'POST',
-            url: _genUrl(getAppLinks().frameworkDeleteNodeFilterAjax, {filtername: this.selectedFilterName})
-          }
-      )
-
-      if (result.status == 200) {
+      this.nodeFilterStore.removeFilter(this.project, this.selectedFilterName)
         this.deleteFilterModal = false
         this.selectedFilterName = ''
+        this.loadNodeFilters()
         this.$emit('filters-updated')
-      }
     },
     async setDefaultFilter() {
-      let result = await Trellis.FilterPrefs.setFilterPref('nodes', this.selectedFilterName)
-
+      this.nodeFilterStore.setStoredDefaultFilter(this.project,this.selectedFilterName)
       this.nodeSummary.defaultFilter = this.selectedFilterName
     },
     async removeDefaultFilter() {
-      let result = await Trellis.FilterPrefs.unsetFilterPref('nodes')
+      this.nodeFilterStore.removeStoredDefaultFilter(this.project)
       this.nodeSummary.defaultFilter = null
     },
     doSearch() {
@@ -393,13 +367,16 @@ export default defineComponent({
       }
       this.$emit('filter', val)
     },
+    loadNodeFilters(){
+      this.nodeSummary = this.nodeFilterStore.loadStoredProjectNodeFilters(this.project)
+    },
     async onMount() {
       this.outputValue = this.modelValue
       if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
         this.selectedFilterName = ''
       }
       this.selectedFilterName = this.filterName
-
+      this.loadNodeFilters()
     }
   },
   watch: {
