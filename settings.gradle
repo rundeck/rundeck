@@ -39,7 +39,7 @@ include	'rundeck-storage',
     'plugins:flow-control-plugin',
     'plugins:jasypt-encryption-plugin',
     'plugins:object-store-plugin',
-        'plugins:azure-object-store-plugin',
+    'plugins:azure-object-store-plugin',
     'plugins:orchestrator-plugin',
     'plugins:git-plugin',
     'plugins:audit-logging-plugin',
@@ -54,7 +54,8 @@ include	'rundeck-storage',
     'grails-webhooks',
     'grails-execution-mode-timer',
     'grails-rundeck-data-shared',
-    'docker'
+    'docker',
+    'functional-test'
 
 def projectFeatureEnabled = { String feature, Boolean defaultVal ->
     try {
