@@ -56,8 +56,14 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging']
-def externalPlugins=['ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer','sshj-plugin']
-
+//load build.yaml from rundeckcore
+def corebuild = new File('build.yaml').withReader{reader->
+    new groovy.yaml.YamlSlurper().parse(reader)
+}
+def coreExternalPlugins= corebuild.rundeck.plugins.collectEntries{
+    def parts=it.split(':')
+    [parts[1],parts[2].replaceAll('@','.')]
+}
 //manifest describing expected build results
 def manifest=[
     "rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar":[:],
@@ -146,7 +152,12 @@ plugins.each{plugin->
       ])
     pluginsum+=2
 }
-externalPlugins.each{plugin->
+coreExternalPlugins.each{plugin->
+    def ext = plugin.value.endsWith('.zip')?plugin.value: "${plugin.value}.jar"
+    manifest.get(warFile).addAll([
+            "WEB-INF/rundeck/plugins/${plugin.key}-${ext}",
+            "WEB-INF/rundeck/plugins/${plugin.key}-${ext}.properties"
+    ])
   pluginsum+=2
 }
 //require correct plugin files count in dir
