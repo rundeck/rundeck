@@ -37,7 +37,6 @@ w.appLinks = {
     frameworkAdhoc: "/resources/adhoc",
     frameworkCheckResourceModelConfig: "/resources/checkResourceModelConfig",
     frameworkCreateResourceModelConfig: "/resources/createResourceModelConfig",
-    frameworkDeleteNodeFilterAjax: "/resources/deleteNodeFilterAjax",
     frameworkEditResourceModelConfig: "/resources/editResourceModelConfig",
     frameworkNodeSummaryAjax: "/resources/nodeSummaryAjax",
     frameworkNodes: "/resources/nodes",
