@@ -50,7 +50,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
+public class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public static final Convert CONVERTER = new Convert();
     private StepPlugin plugin;
 
@@ -58,7 +58,7 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         this.plugin = plugin;
     }
 
-    static class Convert implements Converter<StepPlugin, StepExecutor> {
+    public static class Convert implements Converter<StepPlugin, StepExecutor> {
         @Override
         public StepExecutor convert(final StepPlugin plugin) {
             return new StepPluginAdapter(plugin);
@@ -69,6 +69,19 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
             return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Map<String, Object> dynamicDefaults(
+            final Map<String, Object> projectAndFrameworkValues,
+            final Services services
+    )
+    {
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicDefaults(projectAndFrameworkValues, services);
         }
 
         return null;
@@ -93,34 +106,18 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
                                                    final StepExecutionItem item) throws StepException
         {
-        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-            Description description = getDescription();
-            Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-            if(description != null) {
-                description.getProperties().forEach(p -> {
-                    blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                });
-            }
-        if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.global(),
-                    ContextView::nodeStep,
-                    null,
-                    executionContext.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap
-            );
-        }
+
         final String providerName = item.getType();
+        final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
+        final Map<String, Object> instanceConfiguration = createConfig(executionContext, item);
+
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
                 instanceConfiguration,
                 ServiceNameConstants.WorkflowStep,
                 providerName
         );
-        final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description,
-                plugin, PropertyScope.InstanceOnly);
+        Map<String, Object>  config = PluginAdapterUtility.configureProperties(resolver, getDescription(),plugin, PropertyScope.InstanceOnly);
+
         try {
             plugin.executeStep(stepContext, config);
         } catch (StepException e) {
@@ -148,6 +145,32 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         return new StepExecutionResultImpl();
     }
 
+    public Map<String, Object> createConfig(StepExecutionContext executionContext,
+                                  StepExecutionItem item){
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        Description description = getDescription();
+        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        if(description != null) {
+            description.getProperties().forEach(p -> {
+                blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+            });
+        }
+        if (null != instanceConfiguration) {
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.global(),
+                    ContextView::nodeStep,
+                    null,
+                    executionContext.getSharedDataContext(),
+                    false,
+                    blankIfUnexMap
+            );
+        }
+
+        return instanceConfiguration;
+
+    }
+
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
@@ -156,4 +179,7 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         }
     }
 
+    public StepPlugin getPlugin() {
+        return plugin;
+    }
 }

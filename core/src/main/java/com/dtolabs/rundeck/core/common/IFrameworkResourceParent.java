@@ -21,7 +21,10 @@ import java.util.Collection;
 /**
  * a set of interfaces for managing child {@link IFrameworkResource} instances. Each child is keyed by
  * its name.
+ * 
+ * @deprecated This class apparently is no longer used.
  */
+@Deprecated
 public interface IFrameworkResourceParent extends IFrameworkResource {
 
     /**

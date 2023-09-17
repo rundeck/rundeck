@@ -5,6 +5,7 @@
 
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
+    <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
     <title>%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -

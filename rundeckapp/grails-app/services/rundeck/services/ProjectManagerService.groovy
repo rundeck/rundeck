@@ -16,10 +16,8 @@
 
 package rundeck.services
 
-
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -43,6 +41,7 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import com.sun.org.apache.xpath.internal.operations.Bool
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
@@ -51,16 +50,18 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
+import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
-import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.Project
+import org.springframework.transaction.annotation.Propagation
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -86,6 +87,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     FeatureService featureService
     private StorageService storageService
     AppAuthContextProcessor rundeckAuthContextProcessor
+    RundeckProjectDataProvider projectDataProvider
     /**
      * Scheduled executor for retries
      */
@@ -175,20 +177,20 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         log.debug("init: listFrameworkProjects: ${System.currentTimeMillis() - now}")
     }
 
+    /**
+     * List the names of available projects.
+     * @return
+     */
     @Override
-    @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> listFrameworkProjectNames() {
-        def c = Project.createCriteria()
-        c.list {
-            projections {
-                property "name"
-            }
-        }
+        return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED) 
     }
+
     @Override
     int countFrameworkProjects() {
-        return Project.count()
+        return projectDataProvider.countFrameworkProjectsByState(RdProject.State.ENABLED)
     }
+    
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
             throw new IllegalArgumentException("Project does not exist: " + name)
@@ -202,9 +204,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        Project.withSession{
-            Project.countByName(project) > 0
-        }
+        projectDataProvider.projectExists(project)
     }
 
     @Override
@@ -566,33 +566,42 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         create.expand()
         return create
     }
-    public static final Map<String, String> DEFAULT_PROJ_PROPS = Collections.unmodifiableMap(
-        [
-            'resources.source.1.type'              : 'local',
-            'service.NodeExecutor.default.provider': 'jsch-ssh',
-            'service.FileCopier.default.provider'  : 'jsch-scp',
-            'project.ssh-keypath'                  :
-                new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath(),
-            'project.ssh-authentication'           : 'privateKey'
-        ]
-    )
 
     @CompileStatic(TypeCheckingMode.SKIP)
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
-        Project found = Project.findByName(projectName)
+        RdProject projectData = projectDataProvider.findByName(projectName)
+        
+        if(projectData?.state == RdProject.State.DISABLED) {
+            throw new IllegalArgumentException("Unable to create project. Project exists and is disabled")
+        }
+
         def description = properties.get('project.description')
+        String defaultExecutor = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopier = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
+        Map<String, String> projectDefaults = ['service.NodeExecutor.default.provider':defaultExecutor,
+                                               'service.FileCopier.default.provider':defaultFileCopier,
+                                               'project.ssh-authentication':'privateKey',
+                                               'resources.source.1.type':'local']
+        if(includeSshKeypath){
+            projectDefaults.put('project.ssh-keypath', new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath())
+        }
+
         boolean generateInitProps = false
-        if (!found) {
-            def project = new Project(name: projectName, description: description)
-            project.save(failOnError: true)
+        if (!projectData) {
+            projectData = new SimpleProjectBuilder()
+                                        .setDescription(description)
+                                        .setName(projectName)
+                                        .setState(RdProject.State.ENABLED)
+            projectDataProvider.create(projectData)
             generateInitProps = true
         }
         Properties storedProps = new Properties()
         storedProps.putAll(properties)
         if (generateInitProps) {
             Properties newProps = new Properties()
-            DEFAULT_PROJ_PROPS.each { k, v ->
+            projectDefaults.each { k, v ->
                 if (null == properties || !properties.containsKey(k)) {
                     newProps.setProperty(k, v);
                 }
@@ -605,8 +614,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        res.lastModified, res.creationTime
         )
-
-        def newproj= preloadedProject(projectName, rdprojectconfig)
+        
+        def newproj= new RundeckProject(projectData, rdprojectconfig, this)
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
@@ -618,17 +627,34 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void removeFrameworkProject(final String projectName) {
-        Project found = Project.findByName(projectName)
-        if (!found) {
-            throw new IllegalArgumentException("project does not exist: " + projectName)
-        }
-        found.delete(flush: true)
+        projectDataProvider.delete(projectName)
         deleteProjectResources(projectName)
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    void disableFrameworkProject(String projectName) {
+        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
+        projectData.setState(RdProject.State.DISABLED)
+        projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
+    void enableFrameworkProject(String projectName) {
+        def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
+        projectData.setState(RdProject.State.ENABLED)
+        projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
+    boolean isFrameworkProjectDisabled(String projectName) {
+        def project = projectDataProvider.findByNameAndState(projectName, RdProject.State.DISABLED)
+        return project != null
+    }
+
+    @Override
     IRundeckProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
-        Project found = Project.findByName(projectName)
+        RdProject found = projectDataProvider.findByName(projectName)
         if (found) {
             throw new IllegalArgumentException("project exists: " + projectName)
         }
@@ -644,12 +670,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            Project.withSession {
-                def dbproj = Project.findByName(project.name)
-                dbproj.description = description ? description : null
-                dbproj.save(flush: true)
-
-            }
+            RdProject dbproj = projectDataProvider.findByName(project.name)
+            SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
+            updatedProject.setDescription(description ? description : null)
+            projectDataProvider.update(dbproj.getId(), updatedProject)
         }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
@@ -668,7 +692,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
-        Project found = Project.findByName(projectName)
+        RdProject found = projectDataProvider.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -713,16 +737,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         project.nodesFactory = rundeckNodeService
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
-        def description = properties['project.description']
-        Project.withSession{
-            def found = Project.findByName(projectName)
-            if (!found) {
-                throw new IllegalArgumentException("project does not exist: " + projectName)
-            }
-            found.description = description?description:null
-            found.save(flush: true)
-
+        String description = properties['project.description']
+        def found = projectDataProvider.findByName(projectName)
+        if (!found) {
+            throw new IllegalArgumentException("project does not exist: " + projectName)
         }
+        SimpleProjectBuilder projectBuilder = SimpleProjectBuilder.with(found)
+                                                .setDescription(description?:null)
+        projectDataProvider.update(projectBuilder.getId(), projectBuilder)
         def res = loadProjectConfigResource(projectName)
         Map resource=storeProjectConfig(projectName, res?.config, properties)
         resource
@@ -750,12 +772,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
         return rdprojectconfig
     }
-    RundeckProject preloadedProject(String project, IRundeckProjectConfig config){
-        new RundeckProject(project, config, this)
-    }
-    RundeckProject lazyProject(String project){
-        new RundeckProject(project,null, this)
-    }
+
     /**
      * Load the project config and node support
      * @param project
@@ -768,8 +785,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
-        def rdproject = lazyProject(project)
-        def description = getProjectDescription(project)
+        def projectData = projectDataProvider.findByName(project)
+        def description = projectData.description
+        def rdproject = new RundeckProject(projectData,null, this)
         //preload cached readme/motd
 //        String readme = readCachedProjectFileAsAstring(project,"readme.md")
 //        String motd = readCachedProjectFileAsAstring(project,"motd.md")
@@ -785,24 +803,18 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return rdproject
     }
 
-    @CompileStatic(TypeCheckingMode.SKIP)
     def String getProjectDescription(String name){
-        def c = Project.createCriteria()
-        c.get {
-            eq('name', name)
-            projections {
-                property "description"
-            }
-        }
+        projectDataProvider.getProjectDescription(name)
     }
-    boolean needsReload(IRundeckProject project) {
-        Project.withSession {
-            Project rdproject = Project.findByName(project.name)
-            boolean needsReload = rdproject == null ||
-                    project.configLastModifiedTime == null ||
-                    getProjectConfigLastModified(project.name) > project.configLastModifiedTime
-            needsReload
-        }
+    
+    private boolean needsReload(IRundeckProject project) {
+        RdProject rdproject = projectDataProvider.findByName(project.name)
+        boolean needsReload = rdproject == null ||
+                project.configLastModifiedTime == null ||
+                getProjectConfigLastModified(project.name) > project.configLastModifiedTime ||
+                (RdProject.State.DISABLED != rdproject.state) != project.isEnabled()
+
+        needsReload
     }
 
     //basic creation, created via spec string in afterPropertiesSet()

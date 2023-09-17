@@ -2,20 +2,17 @@ version: "3"
 
 services:
   rundeck:
-    image: ${RUNDECK_IMAGE:-rundeck/rundeck}
+    image: ${RUNDECK_IMAGE:-rundeck/rundeck:SNAPSHOT}
     environment:
-      RUNDECK_SERVER_ADDRESS: rundeck
-      RUNDECK_GRAILS_URL: http://rundeck:4440/
-    expose: ['4440']
-
-  selenium:
-    image: rundeck/selenium@sha256:d2c31cbc93716420479cf5d999dd7e0d8a6429e1aacd36bc99d4f9711fb70a05
-    tty: true
-    links:
-    - rundeck
+      RUNDECK_SERVER_ADDRESS: http://localhost
+      RUNDECK_GRAILS_URL: http://localhost
+      RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
+    expose:
+      - 4440
+    ports:
+      - "80:4440"
     volumes:
-    - ./:/app 
-    - node_modules:/app/node_modules:nocopy
-  
+      - ./test-tokens.properties:/home/rundeck/etc/tokens.properties
+
 volumes:
   node_modules:

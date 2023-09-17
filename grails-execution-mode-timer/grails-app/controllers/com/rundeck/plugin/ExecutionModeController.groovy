@@ -1,17 +1,30 @@
 package com.rundeck.plugin
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
+import com.rundeck.plugin.api.model.ModeLaterRequest
+import com.rundeck.plugin.api.model.ModeLaterResponse
 import grails.converters.JSON
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.tags.Tags
 import org.rundeck.core.auth.AuthConstants
 
 import javax.servlet.http.HttpServletResponse
 
 
+@Controller("/system/executions")
 class ExecutionModeController {
 
     static allowedMethods = [
@@ -90,6 +103,51 @@ class ExecutionModeController {
         )
     }
 
+    @Post(uri = "/enable/later")
+    @Operation(
+        method = "POST",
+        summary = "Enable System executions after a duration of time",
+        description = """Sets System execution mode to Active at a later time.
+
+Since: v34
+""",
+        requestBody = @RequestBody(
+            required = true,
+            description = """Enable Executions.
+Specify a `value` with a time duration expression. (See request schema for syntax.)
+""",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(value='{"value":"2h30m"}'),
+                ],
+                schema = @Schema(implementation = ModeLaterRequest)
+            )
+        )
+    )
+    @ApiResponse(
+        description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already enabled.",
+        responseCode = "200",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":true,"msg":"Execution Mode Later saved"}')
+        )
+    )
+    @ApiResponse(
+        description = "Request error response. A description of the error is in the `msg` field.",
+        responseCode = "400",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @Tags(
+       [
+           @Tag(name="system execution mode")
+       ]
+    )
     def apiExecutionModeLaterActive(){
 
         if (!authorizeSystemAdmin()) {
@@ -134,6 +192,51 @@ class ExecutionModeController {
     }
 
 
+    @Post(uri = "/disable/later")
+    @Operation(
+        method = "POST",
+        summary = "Disable System executions after a duration of time",
+        description = """Sets System execution mode to Passive at a later time.
+
+Since: v34
+""",
+        requestBody = @RequestBody(
+            required = true,
+            description = """Disable Executions.
+Specify a `value` with a time duration expression. (See request schema for syntax.)
+""",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(value='{"value":"2h30m"}'),
+                ],
+                schema = @Schema(implementation = ModeLaterRequest)
+            )
+        )
+    )
+    @ApiResponse(
+        description = "Request processed. The `saved` value may be false if e.g. the current execution mode is already disabled.",
+        responseCode = "200",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":true,"msg":"Execution Mode Later saved"}')
+        )
+    )
+    @ApiResponse(
+        description = "Request error response. A description of the error is in the `msg` field.",
+        responseCode = "400",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ModeLaterResponse),
+            examples = @ExampleObject('{"saved":false,"msg":"Project Execution Mode Later saved"}')
+        )
+    )
+    @Tags(
+        [
+            @Tag(name="system execution mode")
+        ]
+    )
     def apiExecutionModeLaterPassive(){
 
         if (!authorizeSystemAdmin()) {

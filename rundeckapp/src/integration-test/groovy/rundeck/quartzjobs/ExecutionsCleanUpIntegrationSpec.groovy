@@ -19,10 +19,11 @@ package rundeck.quartzjobs
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
-import groovy.mock.interceptor.MockFor
 import org.grails.config.NavigableMap
 import org.junit.Assert
 import org.junit.Test
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -35,6 +36,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
+import rundeck.services.ReportService
 import spock.lang.Specification
 
 /**
@@ -47,6 +49,8 @@ import spock.lang.Specification
 @Integration
 @Rollback
 class ExecutionsCleanUpIntegrationSpec extends Specification{
+
+    ReportService reportService
 
     def testExecuteJobCleanerNoExecutionsToDelete(){
         given:
@@ -68,7 +72,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
 
         when:
@@ -80,16 +84,18 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         then:
         execIdsToExclude.size() == 0
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
     }
 
     def testExecuteJobCleanerWithExecutionsToDelete(){
         given:
+
         String projName = 'projectTest2'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
         def logFileStorageService = Mock(LogFileStorageService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -106,7 +112,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         when:
         List execIds = job.searchExecutions(frameworkService,
-                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
 
 
 
@@ -114,12 +120,12 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIds.size() > 0
 
         when:
-        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService)
+        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService, referencedExecutionDataProvider, reportService)
 
         then:
         execIds.size() == sucessTotal
         0 == Execution.countByProject(projName)
-        0 == ExecReport.countByCtxProject(projName)
+        0 == ExecReport.countByProject(projName)
     }
 
     private FrameworkService initNonClusterFrameworkService() {
@@ -149,18 +155,15 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
             getServerUUID()>> "aaaa"
             isClusterModeEnabled()>> true
         }
+        def mockjs=Mock(JobSchedulerService)
 
-
-        def mockjs=Mock(JobSchedulerService) {
-            _*getDeadMembers(_) >> ["null", "bbbb"]
-        }
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         when:
         Execution execution = setupExecution(se, projName, execDate, execDate)
 
         then:
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
 
 
@@ -171,13 +174,13 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIdsToExclude.size() ==1
         execIdsToExclude.contains(execution.id)
         1 == Execution.countByProject(projName)
-        1 == ExecReport.countByCtxProject(projName)
+        1 == ExecReport.countByProject(projName)
 
     }
 
     private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
         Execution e
-        Execution.withNewTransaction {
+        Execution.withTransaction {
             e = new Execution(
                     project: projName,
                     user: 'bob',
@@ -205,7 +208,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
 
     private ScheduledExecution setupJob(String projName, Closure extra=null) {
-        ScheduledExecution.withNewTransaction {
+        ScheduledExecution.withTransaction {
             ScheduledExecution se = new ScheduledExecution(
                     jobName: 'blue',
                     project: projName,

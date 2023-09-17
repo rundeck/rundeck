@@ -15,9 +15,11 @@ services:
             RUNDECK_DATABASE_USERNAME: rundeck
             RUNDECK_DATABASE_PASSWORD: rundeck
             RUNDECK_DATABASE_URL: jdbc:mariadb://mysql/rundeck?autoReconnect=true&useSSL=false
+            RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
         volumes:
           - ${RUNDECK_LICENSE_FILE:-/dev/null}:/home/rundeck/etc/rundeckpro-license.key
           - logs:/home/rundeck/var/logs
+          - ./cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
         expose:
           - 4440
     rundeck-2:
@@ -34,9 +36,11 @@ services:
             RUNDECK_DATABASE_USERNAME: rundeck
             RUNDECK_DATABASE_PASSWORD: rundeck
             RUNDECK_DATABASE_URL: jdbc:mariadb://mysql/rundeck?autoReconnect=true&useSSL=false
+            RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
         volumes:
           - ${RUNDECK_LICENSE_FILE:-/dev/null}:/home/rundeck/etc/rundeckpro-license.key
           - logs:/home/rundeck/var/logs
+          - ./cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
         expose:
           - 4440
     nginx:

@@ -1,7 +1,4 @@
 package rundeckapp
-
-import com.dtolabs.rundeck.app.api.ApiVersions
-
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -39,13 +36,23 @@ class UrlMappings {
         "/api/$api_version/execution/$id/input/files"(controller: 'execution', action: 'apiExecutionInputFiles')
         "/api/$api_version/execution/$id/output(.$format)?"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
-        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
+        "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutputNodeFilter')
+        "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputNodeStepFilter')
+        "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutputStepFilter')
 
 
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
 
+        "/api/$api_version/incubator/execution/$id?"(controller: 'rdExecution') {
+            action = [GET: 'get', DELETE: 'delete']
+        }
+        "/api/$api_version/incubator/executions/$id"(controller: 'rdExecution', action: "listForJob")
+
+        "/api/$api_version/incubator/job/$id?"(controller: 'rdJob') {
+            action = [GET: 'get', POST: 'save', DELETE: 'delete']
+        }
+
+        "/api/$api_version/incubator/jobs"(controller: 'rdJob', action: "query")
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
@@ -224,7 +231,20 @@ class UrlMappings {
         "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
         "/api/$api_version/user/roles"(controller: 'user', action: 'apiListRoles')
 
-        "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
+        "/api/$api_version/feature" {
+            controller = 'api'
+            action = 'featureQueryAll'
+        }
+
+        "/api/$api_version/feature/$featureName" {
+            controller = 'api'
+            action = 'featureQuery'
+            constraints {
+                featureName(matches: /[a-zA-Z0-9-]+/)
+            }
+        }
+
+
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
@@ -311,6 +331,9 @@ class UrlMappings {
         }
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
+
+        "/helplink/name"(controller:'helplink',action:'helplinkName')
+        "/workflowgraph/show"(controller:'WorkflowGraph',action:'WorkflowGraph')
 
         "404"(controller:"error",action:"notFound")
         "405"(controller:"error",action:"notAllowed")

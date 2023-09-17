@@ -6,17 +6,16 @@ import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import rundeck.ExecReport
 import rundeck.Execution
-import rundeck.ReferencedExecution
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
 class ExecutionsCleanUp implements InterruptableJob {
     static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
-    def boolean wasInterrupted
+    boolean wasInterrupted
 
     void interrupt() throws UnableToInterruptJobException {
         wasInterrupted = true
@@ -24,9 +23,14 @@ class ExecutionsCleanUp implements InterruptableJob {
 
 
     void execute(JobExecutionContext context) throws JobExecutionException {
-        logger.info("Initializing cleaner execution history job")
-
+        JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
+        FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
+        ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
         String project = context.jobDetail.jobDataMap.get('project')
+        String uuid = frameworkService.getServerUUID()
+
+        logger.info("Initializing cleaner execution history job from server ${uuid}")
+
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
         String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
         String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
@@ -36,11 +40,10 @@ class ExecutionsCleanUp implements InterruptableJob {
         logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
         logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
-        FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
         LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
-        JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
+        ReferencedExecutionDataProvider referencedExecutionDataProvider = fetchReferencedExecutionDataProvider(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
             List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
@@ -48,12 +51,12 @@ class ExecutionsCleanUp implements InterruptableJob {
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                     maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
             logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
-            deleteByExecutionList(execIdsToExclude,fileUploadService, logFileStorageService)
+            deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
         }
     }
 
     private Map deleteBulkExecutionIds(List<Long> execs, FileUploadService fileUploadService,
-                                LogFileStorageService logFileStorageService) {
+                                LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService) {
         def failures=[]
         def failed=false
         def count=0
@@ -62,7 +65,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + exec, id: exec]
             } else {
-                result = deleteExecution(exec, fileUploadService, logFileStorageService)
+                result = deleteExecution(exec, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
                 result.id = exec
             }
             if(!result.success){
@@ -76,7 +79,7 @@ class ExecutionsCleanUp implements InterruptableJob {
         return [success:!failed, failures:failures, successTotal:count]
     }
 
-    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService){
+    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService, ReferencedExecutionDataProvider referencedExecutionDataProvider, ReportService reportService){
         Map result
         try {
             Execution e = Execution.findById(execId)
@@ -85,14 +88,10 @@ class ExecutionsCleanUp implements InterruptableJob {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
 
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
-            //delete all reports
-            ExecReport.findAllByExecutionId(e.id).each { rpt ->
-                rpt.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
 
+            //delete all reports
+            reportService.deleteByExecutionId(e.id)
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
 
             List<File> files = []
@@ -148,34 +147,15 @@ class ExecutionsCleanUp implements InterruptableJob {
     private List<Long> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
                                              Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
         List collectedExecutions= []
-        List<String> listDeadMembers = null
-        def serverUUID = frameworkService.getServerUUID()
-        def removeNullServerUUID = false
 
-        if(frameworkService.isClusterModeEnabled()){
-            listDeadMembers = jobSchedulerService.getDeadMembers(serverUUID);
-            logger.info("searching executions of node ID: ${serverUUID}")
+        logger.info("Searching All Executions")
 
-            if(listDeadMembers){
-                logger.info("list dead nodes to size: ${listDeadMembers.size()}")
-                logger.info("list dead nodes to check: ${listDeadMembers.toString()}")
-
-                if(listDeadMembers.contains("null")){
-                    removeNullServerUUID=true
-                    listDeadMembers.remove("null")
-                }
-            }
-        }
-
-        Map jobList = executionService.queryExecutions(createCriteria(
+        Map jobList = executionService.queryExecutions(
+            getExecutionsQueryCriteria(
                 project,
-                frameworkService.isClusterModeEnabled(),
                 maxDaysToKeep,
-                maximumDeletionSize,
-                serverUUID,
-                listDeadMembers,
-                removeNullServerUUID)
-
+                maximumDeletionSize
+            )
         )
 
         if(null != jobList && null != jobList.get("total")) {
@@ -240,31 +220,13 @@ class ExecutionsCleanUp implements InterruptableJob {
         return null != total ? total : 0
     }
 
-    private Closure createCriteria(String project, boolean isClusterEnabled, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null, List<String> deadMembers = null, boolean removeNullServerUUID = false){
+    private Closure getExecutionsQueryCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500){
         Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
         return {isCount ->
             if(!isCount){
                 projections {
                     //just return the ID on the select
                     property('id')
-                }
-            }
-
-            if(isClusterEnabled){
-                if(!deadMembers){
-                    eq('serverNodeUUID', serverNodeUUID)
-                }else{
-                    deadMembers.add(serverNodeUUID)
-                    if(removeNullServerUUID){
-                        //if deadMembers contain null, it will also remove the serverNodeUUID=null
-                        or {
-                            isNull('serverNodeUUID')
-                            'in'('serverNodeUUID', deadMembers)
-                        }
-                    }else{
-                        'in'('serverNodeUUID', deadMembers)
-                    }
-
                 }
             }
 
@@ -285,10 +247,10 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
     }
 
-    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {
+    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider, ReportService reportService) {
         logger.info("Start to delete ${collectedExecutions.size()} executions")
         if(collectedExecutions.size()>0) {
-            Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService)
+            Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
             if (result != null) {
                 List failureList = new ArrayList<>();
                 List<Map> resultList = (List<Map>) result.get("failures")
@@ -381,5 +343,28 @@ class ExecutionsCleanUp implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid JobSchedulerService type: " + jobSchedulerService.getClass().getName())
         }
         return jobSchedulerService
+    }
+
+
+    private ReportService fetchReportService(def jobDataMap) {
+        def fws = jobDataMap.get("reportService")
+        if (fws==null) {
+            throw new RuntimeException("reportService could not be retrieved from JobDataMap!")
+        }
+        if (! (fws instanceof ReportService)) {
+            throw new RuntimeException("JobDataMap contained invalid reportService type: " + fws.getClass().getName())
+        }
+        return fws
+    }
+
+    private ReferencedExecutionDataProvider fetchReferencedExecutionDataProvider(def jobDataMap){
+        def referencedExecutionDataProvider = jobDataMap.get("referencedExecutionDataProvider")
+        if (referencedExecutionDataProvider==null) {
+            throw new RuntimeException("referencedExecutionDataProvider could not be retrieved from JobDataMap!")
+        }
+        if (! (referencedExecutionDataProvider instanceof ReferencedExecutionDataProvider)) {
+            throw new RuntimeException("JobDataMap contained invalid ReferencedExecutionDataProvider type: " + referencedExecutionDataProvider.getClass().getName())
+        }
+        return referencedExecutionDataProvider
     }
 }

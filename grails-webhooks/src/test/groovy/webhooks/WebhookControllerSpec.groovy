@@ -30,7 +30,6 @@ import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.rmi.CORBA.Stub
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -59,6 +58,40 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         authtoken   | expectedMsg | webhookResponder
         "1234"      | 'ok' | new DefaultWebhookResponder()
         "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder([msg:"ok"])
+    }
+
+    def "test post content types"() {
+        given:
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+        controller.webhookService = Mock(MockWebhookService)
+
+        when:
+        params.authtoken = "1234"
+        if(isFormData) {
+            params.putAll(payload)
+        } else {
+            request.JSON = payload
+        }
+        request.method = 'POST'
+        request.contentType = contentType
+        controller.post()
+
+        then:
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _) >> { new SubjectAuthContext(null, null) }
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { args ->
+            if(isFormData) {
+                assert args[2].formData["key1"] == "val1"
+            }
+            new DefaultWebhookResponder()
+        }
+
+        where:
+        authtoken   | contentType | payload | isFormData
+        "1234"      | 'application/json' | '{"key1":"val1"}' | false
+        "1234"      | 'application/x-www-form-urlencoded' | [key1:"val1"] | true
     }
 
     def "post fail when not authorized"() {

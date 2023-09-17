@@ -32,6 +32,7 @@
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
                                       AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
+      <g:set var="scheduledExecutionService" bean="${rundeck.services.ScheduledExecutionService}"/>
       <g:each in="${authKeys}" var="actionName">
       <g:if test="${execution.scheduledExecution}">
           <%-- set auth values --%>
@@ -56,16 +57,13 @@
       <asset:javascript src="execution/show.js"/>
 
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="execDataJSON" data="${execution.toMap()}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
                             project: params.project ?: request.project]}"/>
       <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
-      <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-          <asset:javascript src="workflow.test.js"/>
-          <asset:javascript src="util/compactMapList.test.js"/>
-      </g:if>
       <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
@@ -470,6 +468,14 @@ search
 
                         </section>
 
+                        <section>
+                            <div class="vue-ui-socket">
+                                <div>
+                                    <ui-socket section="execution-show" location="header" :event-bus="EventBus" />
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
 
                     <div class="subtitle-head-item execution-aux-info flex-item-1">
@@ -852,7 +858,7 @@ search
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
-                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
+                                      <div class="execution-log-viewer" style="height: 100%" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
                                   </div>
 
                               </div>
@@ -1090,6 +1096,11 @@ search
     }
 
     var activity;
+
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "execution": loadJsonData('execDataJSON')
+    })
+
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
         var workflowData=loadJsonData('workflowDataJSON');
@@ -1132,8 +1143,8 @@ search
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
       </g:if>
-        totalDuration : '${enc(js:scheduledExecution?.getTotalTimeStats()?: -1)}',
-        totalCount: '${enc(js: scheduledExecution?.getExecCountStats() ?: -1)}',
+        totalDuration : '${enc(js:scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid)?: -1)}',
+        totalCount: '${enc(js: scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid) ?: -1)}',
         colStep:{value:${enc(js: !isAdhoc)} },
         colNode:{value:false}
       });
@@ -1264,6 +1275,7 @@ search
             nodeflowvm.activeTab("nodes");
         }
         initKoBind(null, {nodeflow: nodeflowvm})
+        window.dispatchEvent(new Event('rundeck-exec-show-page-loaded'));
     }
     jQuery(init);
     </script>

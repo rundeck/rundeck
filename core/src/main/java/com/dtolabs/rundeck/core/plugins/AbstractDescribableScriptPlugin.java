@@ -79,6 +79,8 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
 
+    public static final String CONFIG_BLANK_IF_UNEXPANDED = "blankIfUnexpanded";
+
     private final ScriptPluginProvider provider;
     private final Framework framework;
     Description description;
@@ -154,7 +156,6 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     }
 
                     pbuild.required(required);
-
 
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
 
@@ -423,22 +424,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final Map<String, Object> renderingOptions
     ) throws ConfigurationException
     {
-        //a storage path property
-        String root = null;
-        if (null != renderingOptions.get( StringRenderingConstants.STORAGE_PATH_ROOT_KEY)) {
-            root = renderingOptions.get(StringRenderingConstants.STORAGE_PATH_ROOT_KEY).toString();
-        }
         String filter = null;
         if (null != renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)) {
             filter = renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY).toString();
         }
         boolean clearValue = isValueConversionFailureRemove(renderingOptions);
-        if (null != root && !PathUtil.hasRoot(propValue, root)) {
-            if(clearValue) {
-                data.remove(name);
-            }
-            return;
-        }
+        boolean ignoreKeyPathConversion = isValueConversionFailureIgnore(renderingOptions);
+
         try {
             Resource<ResourceMeta> resource = storageTree.getResource(propValue);
             ResourceMeta contents = resource.getContents();
@@ -462,6 +454,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             contents.writeContent(byteArrayOutputStream);
             data.put(name, new String(byteArrayOutputStream.toByteArray()));
         } catch (StorageException | IOException e) {
+            if(ignoreKeyPathConversion){
+                return;
+            }
+
             if(clearValue) {
                 data.remove(name);
                 return;
@@ -516,6 +512,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         );
     }
 
+    private boolean isValueConversionFailureIgnore(final Map<String, Object> renderingOptions) {
+        return StringRenderingConstants.VALUE_CONVERSION_FAILURE_SKIP.equals(
+                renderingOptions.get(
+                        StringRenderingConstants.VALUE_CONVERSION_FAILURE_KEY
+                )
+        );
+    }
 
     @Override
     public Description getDescription() {

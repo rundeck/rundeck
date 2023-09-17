@@ -14,9 +14,6 @@
   - limitations under the License.
   --}%
 <%@ page import="grails.util.Environment; grails.converters.JSON" %>
-<g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-    <asset:javascript src="filterStepPluginsKOTest.js"/>
-</g:if>
 <div class="panel-heading">
     <span class="h3 ">
         <g:message code="${addMessage}"/>
@@ -128,7 +125,8 @@
                             </span>
                             <span>-
                             <g:render template="/scheduledExecution/description"
-                                      model="[description: stepplugin.messageText(
+                                      model="[firstLineOnly:true,
+                                              description: stepplugin.messageText(
                                               service: 'WorkflowNodeStep',
                                               name: typedesc.name,
                                               code: 'plugin.description',
@@ -177,7 +175,8 @@
                             </span>
                             <span>-
                                 <g:render template="/scheduledExecution/description"
-                                          model="[description:
+                                          model="[firstLineOnly:true,
+                                                  description:
                                                           stepplugin.messageText(
                                                                   service: 'WorkflowStep',
                                                                   name: typedesc.name,

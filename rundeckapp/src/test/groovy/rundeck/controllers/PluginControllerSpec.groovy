@@ -177,7 +177,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         def fakePluginDesc = new PluginApiServiceSpec.FakePluginDescription()
         params.name = "fake"
         params.service = "Notification"
-        1 * controller.pluginService.getPluginDescriptor("fake", 'Notification') >> new DescribedPlugin(null,fakePluginDesc,"fake")
+        1 * controller.pluginService.getPluginDescriptor("fake", 'Notification') >> new DescribedPlugin(null,fakePluginDesc,"fake", null, null)
         1 * controller.frameworkService.rundeckFramework.pluginManager.getPluginMetadata(_,_) >> new PluginApiServiceSpec.FakePluginMetadata()
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.title','Fake Plugin',_)>>'plugin.title'
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.description','This is the best fake plugin',_)>>'plugin.description'
@@ -294,8 +294,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.pluginService.getPluginTypeByService(svcName) >> NotificationPlugin
         1 * controller.pluginService.listPlugins(NotificationPlugin) >> [
-                XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
-                ABCfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc2, 'ABCfake')
+                XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake', null, null),
+                ABCfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc2, 'ABCfake', null, null)
             ]
             1 * controller.uiPluginService.getPluginMessage(svcName, 'ABCfake', 'plugin.title', _, _) >>
             'ABC title'
@@ -659,7 +659,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             'pdescription'
             1 * controller.pluginApiService.pluginPropertiesAsMap('UI', 'test1', _) >> []
             1 * controller.pluginService.getPluginDescriptor('test1', uiPluginProviderService) >>
-            new DescribedPlugin<UIPlugin>(plugin, description, 'test1')
+            new DescribedPlugin<UIPlugin>(plugin, description, 'test1', null, null)
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
                 1 * getPluginManager() >> Mock(ServiceProviderLoader) {
                     1 * getPluginMetadata('UI', 'test1') >> pluginMeta

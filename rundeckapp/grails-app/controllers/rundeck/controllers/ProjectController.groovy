@@ -26,22 +26,45 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.tags.Tags
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.web.WebUtil
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
@@ -55,11 +78,14 @@ import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
 
+@Controller('/project')
 class ProjectController extends ControllerBase{
     FrameworkService frameworkService
     ProjectService projectService
-    def scheduledExecutionService
+    PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
+    ConfigurationService configurationService
+
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -394,13 +420,15 @@ class ProjectController extends ControllerBase{
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
                 }
-                def result = projectService.importToProject(
-                    project1,
-                    frameworkService.getRundeckFramework(),
-                    authorizing.authContext,
-                    file.getInputStream(),
-                    archiveParams
-                )
+
+                try{
+                    def result = projectService.importToProject(
+                        project1,
+                        frameworkService.getRundeckFramework(),
+                        authorizing.authContext,
+                        file.getInputStream(),
+                        archiveParams
+                    )
 
 
                 if(result.success){
@@ -429,12 +457,38 @@ class ProjectController extends ControllerBase{
                     }
                 }
                 flash.warn=warning.join(",")
+                }catch( Exception e ){
+                    def hint = hintErrorCause(e)
+                    flash.error="There was some errors in the import process: [ ${e.getMessage()} ]"
+                    if( hint.length() ){
+                        flash.warn=hint
+                    }
+                }
+
                 return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
             }
         }.invalidToken {
             flash.error = g.message(code:'request.error.invalidtoken.message')
             return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
+    }
+
+    /**
+     * Give a hint based on the error message in the exception thrown during the import
+     *
+     * @param Throwable - The exception thrown
+     * @return String - null if is not supported yet, a message if it is.
+     *
+     * */
+    @CompileStatic
+    private String hintErrorCause(Throwable t){
+        final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
+        final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
+        def cause = ExceptionUtils.getRootCause(t).message
+        if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
+            return SIZE_CONSTRAINT_VIOLATION_MESSAGE
+        }
+        return ''
     }
 
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
@@ -564,6 +618,35 @@ class ProjectController extends ControllerBase{
         g.createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/${projectName}")
     }
 
+    @Get(uri = '/projects')
+    @Operation(
+        method = 'GET',
+        summary = 'List Projects',
+        description = '''List the existing projects on the server.
+
+Authorization required: `read` for project resource
+''',
+        tags = ['project'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''
+*Since API version 26*: add the project `label` to the response
+
+*Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
+`project.properties` file in the file system or in the DB storage.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(type = 'object')),
+                examples = @ExampleObject('''[
+    {
+        "name":"...",
+        "description":"...",
+        "url":"..."
+    }
+]''')
+            )
+        )
+    )
     /**
      * API: /api/11/projects
      */
@@ -600,6 +683,37 @@ class ProjectController extends ControllerBase{
     /**
      * API: /api/11/project/NAME
      */
+    @Get('/{project}')
+    @Operation(
+            method = "GET",
+            summary = "Get a project",
+            description = """Get information about a project.
+The reponse in XML or JSON format is determined by the Accept request header.
+
+Authorization required: `read` access for `project` resource type to get basic project details and `configure` access to get all properties config or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema=@Schema(type='object'),
+                    examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
     def apiProjectGet() {
         if (!apiService.requireApi(request, response)) {
@@ -620,7 +734,42 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    @Post(uri = '/projects')
+    @Operation(
+        method = 'POST',
+        summary = 'Create a Project',
+        description = '''Create a new project.
 
+Authorization required: `create` for resource type `project`
+''',
+        tags = ['project'],
+        requestBody = @RequestBody(
+            description='Project Create contains a name, and configuration values',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples=@ExampleObject('''{ "name": "myproject", "config": { "propname":"propvalue" } }''')
+            )
+        ),
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = '''
+*Since API version 26*: add the project `label` to the response
+
+*Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
+`project.properties` file in the file system or in the DB storage.''',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "description": "",
+  "name": "NAME",
+  "url": "http://server:4440/api/11/project/NAME",
+  "config": {  }
+}''')
+            )
+        )
+    )
     @RdAuthorizeApplicationType(
         type = AuthConstants.TYPE_PROJECT,
         access = RundeckAccess.General.AUTH_APP_CREATE
@@ -698,6 +847,15 @@ class ProjectController extends ControllerBase{
                             format: respFormat
                     ])
         }
+        def disabled = frameworkService.isFrameworkProjectDisabled(project)
+        if (disabled) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.project.disabled',
+                    args: [project],
+                    format: respFormat
+            ])
+        }
         def exists = frameworkService.existsFrameworkProject(project)
         if (exists) {
             return apiService.renderErrorFormat(response, [
@@ -748,7 +906,52 @@ class ProjectController extends ControllerBase{
         }
     }
 
-    @GrailsCompileStatic
+    /**
+     * API: /api/11/project/NAME
+     */
+    @Delete('/{project}')
+    @Operation(
+            method = "Delete",
+            summary = "Delete a project",
+            description = """Delete an existing projects on the server.
+
+Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'deferred',
+                            in = ParameterIn.QUERY,
+                            description = 'Deferred Delete. Since: v45',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
+                    )]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Project details",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def apiProjectDelete(){
         if (!apiService.requireApi(request, response)) {
@@ -757,11 +960,19 @@ class ProjectController extends ControllerBase{
         def authorizing = authorizingProject
         def project1 = authorizing.resource
 
+        Boolean deferred = false
+
+        if (request.api_version >= ApiVersions.V45) {
+            deferred = params.getBoolean("deferred",
+                    configurationService.getBoolean("projectService.deferredProjectDelete", true))
+        }
+
         ProjectService.DeleteResponse result = projectService.deleteProject(
             project1,
             frameworkService.getRundeckFramework(),
             authorizing.authContext,
-            authorizing.authContext.username
+            authorizing.authContext.username,
+            deferred
         )
         if (!result.success) {
             return apiService.renderErrorFormat(
@@ -834,6 +1045,49 @@ class ProjectController extends ControllerBase{
         }
         return frameworkService.getFrameworkProject(project)
     }
+
+    @Get('/{project}/config')
+    @Operation(
+            method = "GET",
+            summary = "Get a project config",
+            description = """Retrieve the project configuration data.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            schema=@Schema(type='string'),
+                            examples = @ExampleObject('''key=value
+key2=value''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}''')
+                    )
+            ]
+    )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigGet(){
@@ -868,9 +1122,372 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+
     /**
      * /api/14/project/NAME/acl/* endpoint
      */
+    @Get('/{project}/acl/{path}')
+    @Operation(
+            method = "GET",
+            summary = "Get ACL Policy file for a project.",
+            description = """Retrieve the YAML text of the ACL Policy file for a project. 
+If YAML or text content is requested, the contents will be returned directly. Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `read` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the Acl policy file',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            schema=@Schema(type='string'),
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/yaml",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectAclsGet_docs(){}
+
+    @Post('/{project}/acl/{path}')
+    @Operation(
+            method = "POST",
+            summary = "Update a Project ACL Policy",
+            description = """Use `POST` to create a policy.
+If the Content-Type is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly. 
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `create` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema = @Schema(implementation = String.class),
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/yaml",
+                                    schema=@Schema(type='object'),
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema=@Schema(type='object'),
+                                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL Policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "201",
+            description = "ACL policy created",
+            content = [
+                    @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema = @Schema(type = 'string'),
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_YAML,
+                            schema = @Schema(type = 'object'),
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = 'object'),
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "409",
+            description = "Conflict if already exists",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if validation failure",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectAclsPost_docs(){}
+
+    @Put('/{project}/acl/{path}')
+    @Operation(
+            method = "PUT",
+            summary = "Update a Project ACL Policy",
+            description = """Use `PUT` to update a policy.
+If the Content-Type is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly. 
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `update` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema = @Schema(type = 'string'),
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_YAML,
+                                    schema = @Schema(type = 'string'),
+                                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(type = 'object'),
+                                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL Policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "ACL Policy updated",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/yaml",
+                            examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectAclsPut_docs(){}
+
+    @Delete('/{project}/acl/{path}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete an ACL policy file.",
+            description = """Delete a project ACL policy file.
+
+Authorization required: `delete` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
+Since: v14""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'path',
+                            in = ParameterIn.PATH,
+                            description = 'Path to the ACL policy',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectAclsDelete_docs(){}
+
     def apiProjectAcls() {
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
@@ -1138,6 +1755,81 @@ class ProjectController extends ControllerBase{
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
+
+    @Put('/{project}/{filename}')
+    @Operation(
+            method = "PUT",
+            summary = "To create or modify the `readme.md` and `motd.md` contents",
+            description = """Create or modify the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
+                                    examples = [
+                                            @ExampleObject('''{"contents":"The readme contents"}''')
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
+                                    examples = [
+                                            @ExampleObject('''The readme contents''')
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` and `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            schema=@Schema(type='string'),
+                            examples = @ExampleObject('''The readme contents''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     def apiProjectFilePut() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
@@ -1231,6 +1923,63 @@ class ProjectController extends ControllerBase{
             }
         }
     }
+
+    @Get('/{project}/{filename}')
+    @Operation(
+            method = "GET",
+            summary = "Get `readme.md` and `motd.md`",
+            description = """Retrieve the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` or `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            schema=@Schema(type='string'),
+                            examples = @ExampleObject('''The readme contents''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     def apiProjectFileGet() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
@@ -1270,6 +2019,50 @@ class ProjectController extends ControllerBase{
             renderProjectFile(baos.toString(),request,response, respFormat)
         }
     }
+
+    @Delete('/{project}/{filename}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete `readme.md` and `motd.md`",
+            description = """Delete the `readme.md` and `motd.md` files, which are Markdown formatted and displayed in the Project listing page.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'filename',
+                            in = ParameterIn.PATH,
+                            description = '`readme.md` or `motd.md` file name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     def apiProjectFileDelete() {
         if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
@@ -1299,6 +2092,85 @@ class ProjectController extends ControllerBase{
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
+
+    @Put('/{project}/config')
+    @Operation(
+            method = "PUT",
+            summary = "Modify a project config",
+            description = """Replaces all configuration data with the submitted values.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'set-project-config',
+                                                    summary = "Replace all project config settings",
+                                                    value = '''{
+    "key":"value",
+    "key2":"value2..."
+}'''
+                                            )
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'set-project-config',
+                                                    summary = "Replace all project config settings",
+                                                    value = '''key=value
+key2=value'''
+                                            )
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = @Parameter(
+                    name = 'project',
+                    in = ParameterIn.PATH,
+                    description = 'Project Name',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(implementation = String.class)
+            )
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema=@Schema(type='string'),
+                            examples = [
+                                    @ExampleObject('''key=value
+key2=value'''
+                                    )
+                            ]
+                    )
+            ]
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigPut() {
         if(!apiService.requireApi(request,response)){
@@ -1339,8 +2211,36 @@ class ProjectController extends ControllerBase{
                 return
             }
             configProps.putAll(config)
+
         }
         Properties currentProps = project.getProjectProperties() as Properties
+
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(configProps, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
 
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
 
@@ -1354,6 +2254,67 @@ class ProjectController extends ControllerBase{
         checkScheduleChanges(project, currentProps, configProps)
         respondProjectConfig(respFormat, project)
     }
+
+    @Get('/{project}/config/{keypath}')
+    @Operation(
+            method = "GET",
+            summary = "Get an individual project config by their key",
+            description = """Retrieve an individual configuration properties by their key.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = "application/text",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''key=value
+key2=value''')
+                    ),
+                    @Content(
+                            mediaType = "application/json",
+                            schema=@Schema(type='object'),
+                            examples = @ExampleObject('''{
+    "key":"value",
+    "key2":"value2..."
+}''')
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyGet() {
         if(!apiService.requireApi(request,response)){
@@ -1419,6 +2380,94 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    @Put('/{project}/config/{keypath}')
+    @Operation(
+            method = "PUT",
+            summary = "Set the value.",
+            description = """Replace an individual configuration data with the submitted value.
+The response, based on `Accept` header, can be returned in the Text, XML or Json format.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    schema=@Schema(type='object'),
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'set-project-config',
+                                                    summary = "Replace an individual config settings",
+                                                    value = '''{ "[KEY]" : "key value" }'''
+                                            )
+                                    ]
+                            ),
+                            @Content(
+                                    mediaType = MediaType.TEXT_PLAIN,
+                                    schema=@Schema(type='string'),
+                                    examples = [
+                                            @ExampleObject(
+                                                    name = 'set-project-config',
+                                                    summary = "Replace an individual config settings",
+                                                    value = '''key value'''
+                                            )
+                                    ]
+                            )
+                    ]
+            ),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project details",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject('''{ "[KEY]" : "key value" }'''
+                                    )
+                            ]
+                    ),
+                    @Content(
+                            mediaType = MediaType.TEXT_PLAIN,
+                            schema=@Schema(type='string'),
+                            examples = [
+                                    @ExampleObject('''key value'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request to put project config",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyPut() {
         if(!apiService.requireApi(request,response)){
@@ -1458,7 +2507,35 @@ class ProjectController extends ControllerBase{
             propValueBefore = new Properties([(key_): ''])
         }
 
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+        Properties projProp = new Properties([(key_): value_])
+
+        //validate plugin property values
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            providers.each { String provider, Map<String, String> providerConfig ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (desc) {
+                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
+                }
+            }
+        }
+        if(errors){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:errors,
+                    format:respFormat
+            ])
+        }
+        def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){
             return apiService.renderErrorFormat(response, [
@@ -1488,6 +2565,42 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+
+    @Delete('/{project}/config/{keypath}')
+    @Operation(
+            method = "DELETE",
+            summary = "Delete the key",
+            description = """Delete an individual configuration properties by their key.
+
+Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'keypath',
+                            in = ParameterIn.PATH,
+                            description = 'Key Path',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "204",
+            description = "No content"
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyDelete() {
         if (!apiService.requireApi(request, response)) {
@@ -1508,6 +2621,71 @@ class ProjectController extends ControllerBase{
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @Get('/{project}/export')
+    @Operation(
+            method = "GET",
+            summary = "Export a zip archive of the project.",
+            description = """Performs the export to a zip archive of the project synchronously. 
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+* optionally use POST method with with application/x-www-form-urlencoded content for large lists of execution IDs
+* optionally, specify executionIds multiple times, with a single ID per entry.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project exported zip archive file",
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     def apiProjectExport(ProjectArchiveParams archiveParams) {
         if(!apiService.requireApi(request,response)){
@@ -1595,7 +2773,147 @@ class ProjectController extends ControllerBase{
         )
     }
 
+    @Get('/{project}/export/async')
+    @Operation(
+            method = "GET",
+            summary = "Export a zip archive of the project asynchronously.",
+            description = """Performs the export to a zip archive of the project asynchronously.
+Use the Token result to query the export status and to retrieve the result once ready 
+Optional parameters:
 
+* executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+* optionally use POST method with with application/x-www-form-urlencoded content for large lists of execution IDs
+* optionally, specify executionIds multiple times, with a single ID per entry.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Returns the Token to retrieve export status and download zip achive",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject('''{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectExportAsync_docs() {}
+
+
+    @Get('/{project}/export/status/{token}')
+    @Operation(
+            method = "GET",
+            summary = "Get the status of an async export request",
+            description = """Get the status of an async export request. 
+Retrieve the result once ready with `/api/V/project/[PROJECT]/export/download/[TOKEN]`.
+
+Requires `export` authorization for the project resource.
+Since: v19""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'token',
+                            in = ParameterIn.PATH,
+                            description = 'Token to retrieve export status',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Returns the Token to retrieve export status and download zip achive",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject('''{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     def apiProjectExportAsyncStatus() {
         def token = params.token
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
@@ -1628,6 +2946,51 @@ class ProjectController extends ControllerBase{
         )
     }
 
+    @Get('/{project}/export/download/{token}')
+    @Operation(
+            method = "GET",
+            summary = "Download the zip archive file",
+            description = """Download the archive file once the export status is `ready`.
+
+Requires `export` authorization for the project resource.
+Since: v19""",
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'token',
+                            in = ParameterIn.PATH,
+                            description = 'Token to retrieve export status',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project exported zip archive file",
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     def apiProjectExportAsyncDownload() {
         def token = params.token
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
@@ -1669,6 +3032,104 @@ class ProjectController extends ControllerBase{
         projectService.releasePromise(session.user, token)
     }
 
+    @Put('/{project}/import')
+    @Operation(
+            method = "PUT",
+            summary = "Import a zip archive.",
+            description = """Import a zip archive to the project.
+Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
+
+Requires `import` authorization for the project resource.""",
+            requestBody = @RequestBody(content = @Content(mediaType = "application/zip", schema = @Schema(implementation = InputStream))),
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'jobUuidOption', required = false, in = ParameterIn.QUERY,
+                            description = '''Option declaring how duplicate Job UUIDs should be handled. 
+If preserve (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. 
+If remove then all job UUIDs will be removed before importing.''', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'importExecutions', required = false, in = ParameterIn.QUERY, description = '''If true, import all executions and logs from the archive (default). 
+If false, do not import executions or logs.''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importConfig ', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
+If false, do not import the project configuration (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importACL ', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
+If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
+If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
+If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'whkRegenAuthTokens', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, always regenerate the auth tokens associated with the webhook. 
+If false, the webhook auth token in the archive will be imported. 
+If no auth token info was included with the webhook, it will be generated (default).''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
+If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
+                    @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+
+For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
+
+* `importComponents.webhooks=true&importOpts.webhooks.regenAuthTokens=true`
+
+Import schedules definitions:
+
+* `importComponents.Schedule%20Definitions=true`''', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'importOpts.NAME.KEY', required = false, in = ParameterIn.QUERY, description = 'Set a component option. See `importComponents.NAME` parameter description', schema = @Schema(implementation = String.class))
+            ]
+    )
+    @Tags(
+            [
+                    @Tag(name="project")
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = """Note: the import status indicates "failed" if any Jobs had failures, otherwise it indicates "successful" even if other files in the archive were not imported.
+
+Response will indicate whether the imported contents had any errors.
+
+Note: `other_errors` included since API v35""",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject(name = 'successful-result', description = 'All imported jobs and files were successful' , value = '''{"import_status":"successful"}'''),
+                                    @ExampleObject(name = 'status-failed-result', description = 'Some imported files failed' , value = '''{
+    "import_status":"failed",
+    "errors": [
+        "Job ABC could not be validated: ...",
+        "Job XYZ could not be validated: ..."
+    ],
+    "execution_errors": [
+        "Execution 123 could not be imported: ...",
+        "Execution 456 could not be imported: ..."
+    ],
+    "acl_errors": [
+        "file.aclpolicy could not be validated: ...",
+        "file2.aclpolicy could not be validated: ..."
+    ],
+    "other_errors": [
+        "webhooks could not be validated: ..."
+    ]
+}''')
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectImport(ProjectArchiveParams archiveParams){
         if(!apiService.requireApi(request,response)){

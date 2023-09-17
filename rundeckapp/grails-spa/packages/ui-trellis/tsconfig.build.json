@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "jsx": "react",
+        "jsx": "preserve",
         "outDir": "lib",
         "baseUrl": ".",
         "sourceMap": true,
@@ -14,14 +14,18 @@
         "skipLibCheck": true,
         "typeRoots": [
             "webpack-env",
-            "src/types"
+            "src/library/src/types"
         ]
     },
     "include": [
-        "./src/**/*"
+        "./src/library/**/*",
+        "main.ts"
     ],
     "exclude": [
-        "./src/components/**/*",
-        "./src/stories/**/*"
+        "./src/app",
+        "**/*.stories.ts",
+        "**/*.stories.tsx",
+        "**/*.test.ts",
+        "./src/library/stories/**/*"
     ]
 }

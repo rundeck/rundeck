@@ -18,8 +18,10 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.config.RundeckConfigBase
+import org.grails.web.json.JSONArray
+import org.rundeck.app.data.model.v1.AuthTokenMode
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
@@ -32,6 +34,8 @@ import org.quartz.SchedulerMetaData
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeSystem
@@ -41,6 +45,7 @@ import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -70,7 +75,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         bob2.save()
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthTokenType.USER,
+                type: AuthenticationToken.AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -79,7 +84,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         createdToken.save()
         AuthToken webhookToken = new AuthToken(
             user: bob,
-            type: AuthTokenType.WEBHOOK,
+            type: AuthenticationToken.AuthTokenType.WEBHOOK,
             tokenMode: AuthTokenMode.LEGACY,
             token: 'whk',
             authRoles: 'a,b',
@@ -109,6 +114,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         controller.apiService = Mock(ApiService) {
             hasTokenAdminAuth(_) >> { true }
+            listTokens() >> { AuthToken.list() }
         }
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -132,7 +138,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         bob.save()
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthTokenType.USER,
+                type: AuthenticationToken.AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -276,14 +282,14 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
                 creator: 'elf',
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('api_token_group')
+        def roles = AuthenticationToken.parseAuthRoles('api_token_group')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -319,7 +325,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -327,7 +333,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('a,b')
+        def roles = AuthenticationToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -375,7 +381,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.apiService = Mock(ApiService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -383,7 +389,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('a,b')
+        def roles = AuthenticationToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -656,4 +662,51 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     }
 
 
+    def "query feature endpoint for a specific feature name"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 42) >> true
+        }
+        controller.featureService = Mock(FeatureService) {
+            _ * featurePresent(featureName) >> enabled
+        }
+
+        when:
+        controller.featureQuery(featureName)
+
+        then:
+        response.status == 200
+        response.json.enabled == enabled
+
+        where:
+        featureName             | enabled
+        'aFeatureEnabled'       | true
+        'aFeatureNotEnabled'    | false
+        'aFeatureNotExists'     | false
+    }
+
+    def "query feature endpoint without a specific name"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            _ * requireApi(_, _) >> true
+            _ * requireVersion(_, _, _) >> true
+        }
+
+        RundeckConfigBase.RundeckFeatureConfig config = new RundeckConfigBase.RundeckFeatureConfig()
+        controller.configurationService = Mock(ConfigurationService) {
+            1 * getAppConfig() >> [
+                    "feature": config
+                ]
+        }
+
+        when:
+        controller.featureQueryAll()
+
+        then:
+        response.status == 200
+        response.json.getClass() == JSONArray.class
+        response.json.length() > 0
+        response.json.getJSONObject(0).name != null
+        response.json.getJSONObject(0).enabled != null
+    }
 }

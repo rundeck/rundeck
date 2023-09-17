@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -54,6 +55,7 @@ public class StepExecutionService
     private final PluginStepExecutionService pluginStepExecutionService;
 
     private List<ProviderService<StepExecutor>>             serviceList;
+    @Deprecated()
     private PresetBaseProviderRegistryService<StepExecutor> builtinStepExecutionService;
     private PresetBaseProviderRegistryService<StepExecutor> dynamicRegistryService;
 
@@ -74,6 +76,9 @@ public class StepExecutionService
         serviceList.add(builtinStepExecutionService);
         serviceList.add(dynamicRegistryService);
         serviceList.add(stepPluginAdaptedStepExecutorService);
+    }
+    public static boolean isRegistered(String name){
+        return name.equals(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE);
     }
 
     @Override
@@ -101,13 +106,14 @@ public class StepExecutionService
         return serviceList;
     }
 
-    public static StepExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static StepExecutionService getInstanceForFramework(final Framework framework,
+                                                               final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final StepExecutionService service = new StepExecutionService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (StepExecutionService) framework.getService(SERVICE_NAME);
+        return (StepExecutionService) registration.getService(SERVICE_NAME);
     }
 
     public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {
@@ -124,10 +130,11 @@ public class StepExecutionService
         return DescribableServiceUtil.listDescriptions(this);
     }
 
+    @Deprecated
     public void registerClass(String name, Class<? extends StepExecutor> clazz) {
         builtinStepExecutionService.registerClass(name, clazz);
     }
-
+    @Deprecated
     public void registerInstance(String name, StepExecutor object) {
         builtinStepExecutionService.registerInstance(name, object);
     }
@@ -135,6 +142,7 @@ public class StepExecutionService
     /**
      * @return dynamic registry for providers
      */
+    @Deprecated
     public ProviderRegistryService<StepExecutor> getProviderRegistryService() {
         return dynamicRegistryService;
     }

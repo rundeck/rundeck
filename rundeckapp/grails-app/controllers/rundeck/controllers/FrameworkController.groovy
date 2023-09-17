@@ -24,14 +24,37 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.common.NodeFileParserException
+import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Put
+import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.api.model.ApiErrorResponse
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -56,11 +79,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
+import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 
 import javax.servlet.http.HttpServletResponse
@@ -88,11 +112,13 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import com.dtolabs.rundeck.app.api.ApiVersions
 
+@Controller
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     public static final Integer MAX_DAYS_TO_KEEP = 60
     public static final Integer MINIMUM_EXECUTION_TO_KEEP = 50
     public static final Integer MAXIMUM_DELETION_SIZE = 500
     public static final String SCHEDULE_DEFAULT = "0 0 0 1/1 * ? *"
+    static final String PROJECT_PLUGINS_REMOVED_EVENT = 'project.plugins.removed'
     public static final Map CRON_MODELS_SELECT_VALUES = [
             "0 0 0 1/1 * ? *"    : "Daily at 00:00",
             "0 0 23 ? * FRI *"   : "Weekly (Every Fridays 11PM)",
@@ -106,19 +132,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
     UserService userService
+    ProjectService projectService
+    ConfigurationService configurationService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
     PasswordFieldsService execPasswordFieldsService
     PasswordFieldsService pluginsPasswordFieldsService
     PasswordFieldsService fcopyPasswordFieldsService
+    PasswordFieldsService pluginGroupPasswordFieldsService
 
     def metricService
     def ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    def featureService
+    FeatureService featureService
 
     // the delete, save and update actions only
     // accept POST requests
@@ -167,7 +196,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     params: [project: params.project, filter: frameworkService.frameworkNodeName]
             )
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def prefs=userService.getFilterPref(u.login)
         if(params.filterName=='.*'){
@@ -176,7 +205,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }else if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     query = query2
@@ -271,10 +300,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def usedFilter = null
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(session.user)
+            RdUser u = userService.findOrCreateUser(session.user)
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     //XXX: node query doesn't use pagination, as it is not an actual DB query
@@ -410,7 +439,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.page){
             page=Integer.parseInt(params.page)
             if(params.max){
-                max=Integer.parseInt(params.max)
+                def maxByProps = configurationService.getInteger("gui.matchedNodesMaxCount",null)
+                if( maxByProps ) {
+                    max = maxByProps
+                }else{
+                    max=Integer.parseInt(params.max)
+                }
             }else{
                 max=20
             }
@@ -493,7 +527,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format:'json'
             ])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def defaultFilter = null
         Map filterpref = userService.parseKeyValuePref(u.filterPref)
         if (filterpref['nodes']) {
@@ -502,7 +536,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def filters=[]
         //load a named filter and create a query from it
         if (u) {
-            def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
+            def filterResults = NodeFilter.findAllByUserAndProject(User.get(u.getId()), project, [sort: 'name', order: 'desc'])
             filters = filterResults.collect {
                 [name: it.name, filter: it.asFilter(), project: project]
             }
@@ -537,7 +571,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )) {
             return
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def usedFilterExclude = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
@@ -549,7 +583,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     query2.excludeFilterUncheck = query.excludeFilterUncheck
@@ -561,7 +595,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         if (params.filterExcludeName) {
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, User.get(u.getId()))
                 if (filter) {
                     def queryExclude = filter.createExtNodeFilters()
                     query.filterExclude = queryExclude.filter
@@ -674,18 +708,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         withForm{
         g.refreshFormTokensHeader()
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
         if(params.newFilterName){
-            def ofilter = NodeFilter.findByNameAndUser(params.newFilterName,u)
+            def ofilter = NodeFilter.findByNameAndUser(params.newFilterName, User.get(u.getId()))
             if(ofilter){
                 ofilter.properties = query.properties
                 filter=ofilter
             }else{
                 filter= new NodeFilter(query.properties)
                 filter.name=params.newFilterName
-                u.addToNodefilters(filter)
+                filter.user=u
                 saveuser=true
             }
         }else if(!params.newFilterName){
@@ -699,10 +733,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return chain(controller:'framework',action:'nodes',params:params)
         }
         if(saveuser){
-            if(!u.save(flush:true)){
+            User user = User.get(u.getId())
+            user.addToNodefilters(filter)
+            if(!user.save(flush: true)){
 //                u.errors.allErrors.each { log.error(g.message(error:it)) }
 //                flash.error="Unable to save filter for user"
-                return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
+                return renderErrorView(user.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
         if(params.isJobEdit){
@@ -719,9 +755,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
     def deleteNodeFilter={
         withForm{
-            def User u = userService.findOrCreateUser(session.user)
+            RdUser u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
-            final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
+            final def ffilter = NodeFilter.findByNameAndUser(filtername, User.get(u.getId()))
             if(ffilter){
                 ffilter.delete(flush:true)
             }
@@ -735,8 +771,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def deleteNodeFilterAjax(String project, String filtername){
         withForm{
             g.refreshFormTokensHeader()
-            def User u = userService.findOrCreateUser(session.user)
-            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, u, project)
+            RdUser u = userService.findOrCreateUser(session.user)
+            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, User.get(u.getId()), project)
             if(ffilter){
                 ffilter.delete(flush:true)
             }
@@ -770,6 +806,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def prefixKey = 'plugin'
         def project = params.newproject
         Framework framework = frameworkService.getRundeckFramework()
+        ProjectManager projectManager = framework.getFrameworkProjectMgr()
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
@@ -807,8 +844,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopy = configurationService.getString("project.defaults.filecopier", "sshj-scp")
+
+        if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
+            def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+            if(groupData instanceof Collection){
+                for(Object data: groupData){
+                    if(data instanceof Map
+                            && data.type instanceof String
+                            && data.config instanceof Map) {
+                        String type = data.get('type')
+                        Map config = data.get('config')
+                        projProps.put(
+                                "project.PluginGroup.${type}.enabled".toString(),
+                                'true'
+                        )
+                        for (String confKey : config.keySet()) {
+                            if(config.get(confKey) != null) {
+                                projProps.put(
+                                        "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                        config.get(confKey).toString()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
@@ -876,7 +939,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         Map<String, Map> extraConfig = pconfigurable.config
         projProps.putAll(pconfigurable.props)
-
+        
 
         if (!project) {
             projectNameError = "Project name is required"
@@ -887,8 +950,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
-        } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
-            projectNameError = "Project already exists: ${project}"
+        } else if (projectManager.isFrameworkProjectDisabled(project)) {
+            projectNameError = message(code: "project.disabled", args: [project])
+            log.error(projectNameError)
+            errors << projectNameError
+        } else if (projectManager.existsFrameworkProject(project)) {
+            projectNameError = message(code: "project.exists", args: [project])
             log.error(projectNameError)
             errors << projectNameError
         } else if (!errors) {
@@ -961,13 +1028,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
         }
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        final defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        final defaultFileCopy = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services
 
         def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
 
+        List<Map<String, Object>> pluginGroupConfig = []
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
@@ -975,9 +1044,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
             defaultNodeExec:defaultNodeExec,
-            nodeexecconfig: ['keypath': sshkeypath],
-            fcopyconfig: ['keypath': sshkeypath],
+            nodeexecconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
+            fcopyconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
             defaultFileCopy: defaultFileCopy,
+            pluginGroupConfig: pluginGroupConfig,
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
@@ -1119,6 +1189,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if (!desc) {
                         return null
                     }
+                    def validation = frameworkService.validateDescription(desc, "", config)
+                    if (!validation.valid) {
+                        Validator.Report report = validation.report
+                        errors << (
+                                report.errors ?
+                                        "${provider} configuration was invalid: " + report.errors :
+                                        "${provider} configuration was invalid"
+                        )
+                    }
                     pconfigs << [type: provider, props: config]
                 }
 
@@ -1179,7 +1258,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
                 }
             }
-
 
             if (!errors) {
                 // Password Field Substitution
@@ -1354,6 +1432,62 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
+            if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
+                List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+                //specific props for typed pluginValues
+                removePrefixes.add("project.plugin.PluginGroup.".toString())
+                removePrefixes.add("project.PluginGroup.".toString())
+                if (params.pluginValues?.PluginGroup?.json) {
+                    def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                    if (groupData instanceof Collection) {
+                        for (Object data : groupData) {
+                            if (data instanceof Map
+                                && data.type instanceof String
+                                && data.config instanceof Map) {
+                                String type = data.get('type')
+                                Map config = data.get('config')
+                                pluginGroupPasswordFieldsService.untrack(
+                                    [[config: [type: type, props: config], type: type, index: 0]],
+                                    pluginGroupDescs
+                                )
+                                projProps.put(
+                                        "project.PluginGroup.${type}.enabled".toString(),
+                                        'true'
+                                )
+                                for (String confKey : config.keySet()) {
+                                    if(config.get(confKey) != null) {
+                                        projProps.put(
+                                                "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                                config.get(confKey).toString()
+                                        )
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            //validate props for other plugins
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> config ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = frameworkService.validateDescription(desc, "", config)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
+                    }
+                }
+            }
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
@@ -1376,6 +1510,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                pluginGroupPasswordFieldsService.reset()
                 if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true)){
                     frameworkService.scheduleCleanerExecutions(
                         project,
@@ -1616,7 +1751,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView("configPrefix parameter is required")
         }
         def plugins = request.JSON.plugins
-
+        List removedPlugins = request.JSON.removedPlugins as List
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
@@ -1625,6 +1760,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
+        if(removedPlugins)
+            notifyRemovedPlugins(project, removedPlugins)
 
         def errors = []
         def reports = [:]
@@ -1681,7 +1818,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
 
-            configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+            configs <<  SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
@@ -1978,13 +2115,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException | IOException exc) {
+        } catch (Exception exc) {
+
             log.error('Error Saving nodes file content', exc)
-            exc.printStackTrace()
             error = exc
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
+            return redirect(
+                    controller: 'framework',
+                    action: 'projectNodeSources',
+                    params: [project: project]
+            )
+        }else{
+            flash.error = message(code: "archive.import.importNodesSource.failed.message")
             return redirect(
                     controller: 'framework',
                     action: 'projectNodeSources',
@@ -2029,11 +2173,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
-        final def projectDescription = Project.withNewSession {
-            Project.findByName(project)?.description
-        }
+        final def projectDescription = fwkProject.info?.description
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
+
 
         //get list of node executor, and file copier services
 
@@ -2066,10 +2209,25 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         // Reset Password Fields in Session
         execPasswordFieldsService.reset()
         fcopyPasswordFieldsService.reset()
+        pluginGroupPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
+        List<Map<String, Object>> pluginGroupConfig = []
+        if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
+          final fproject = frameworkService.getFrameworkProject(project)
+          def projectProps = fproject.getProjectProperties()
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+            pluginGroupDescs.each {
+                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                    Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+                    pluginGroupPasswordFieldsService
+                        .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
+                    pluginGroupConfig.add([type: it.name, config: providerConfig])
+                }
+            }
+        }
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
@@ -2091,6 +2249,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
+            pluginGroupConfig: pluginGroupConfig,
             defaultNodeExec: defaultNodeExec,
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,
@@ -2602,6 +2761,58 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return result
     }
 
+    @Get(uri='/project/{project}/sources')
+    @Operation(
+        method='GET',
+        summary='List Resource Model Sources for a Project',
+        description='''The response contains a set of `source` objects, each describes the `index`, the `type`, and 
+details about the `resources`. If the
+source had any error, that is included as `errors`.
+
+Resources data includes any `description` provided by the source, whether it is `empty`, and
+whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
+
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = @Parameter(
+            name = 'project',
+            description = 'Project Name',
+            required = true,
+            in = ParameterIn.PATH,
+            schema = @Schema(type = 'string')
+        ),
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''Sources List.''',
+            content=@Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = Source)),
+                examples=@ExampleObject('''[
+    {
+        "index": 1,
+        "resources": {
+            "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
+            "empty": false,
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/1/resources",
+            "writeable": true
+        },
+        "type": "file"
+    },
+    {
+        "errors": "File does not exist: /Users/greg/rundeck2.11/projects/atest/etc/resources2.xml",
+        "index": 2,
+        "resources": {
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/2/resources",
+            "writeable": false
+        },
+        "type": "stub"
+    }
+]''')
+            )
+        )
+    )
     def apiSourcesList() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2678,6 +2889,85 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Post(uri = '/project/{project}/source/{index}/resources')
+    @Operation(
+        method = 'POST',
+        summary = 'Update Resources of a Resource Model Source',
+        description = '''
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags = ['project', 'nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        requestBody = @RequestBody(
+            required = true,
+            description = 'Resource model data in the supported format',
+            content = [
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                        description = "Resources JSON Format"
+                    )),
+                    examples = @ExampleObject('''{
+  "node1": {
+    "nodename": "node1",
+    "hostname": "node1",
+    "osVersion": "5.15.49-linuxkit",
+    "osFamily": "unix",
+    "osArch": "amd64",
+    "description": "Rundeck server node",
+    "osName": "Linux"
+  }
+}''')
+                ),
+                @Content(
+                    mediaType = 'text/yaml',
+                    schema = @Schema(type = 'string', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                        description = "Resources YAML Format"
+                    )),
+                    examples = @ExampleObject('''node1:
+  nodename: node1
+  hostname: node1
+  osVersion: 5.15.49-linuxkit
+  osFamily: unix
+  osArch: amd64
+  description: Rundeck server node
+  osName: Linux
+  tags: \'\'''')
+                )
+            ]
+        ),
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1source~1%7Bindex%7D~1resources/get/responses/200'
+            ),
+            @ApiResponse(
+                responseCode="400",
+                description="Invalid format",
+                content=@Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema = @Schema(type='object', implementation = ApiErrorResponse)
+                )
+            )
+        ]
+    )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2768,9 +3058,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         long size = -1
         def error = null
+        def errStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+        def errCode = 'api.error.resource.write.failure'
         try {
             size = source.writeableSource.writeData(inputStream)
-        } catch (ResourceModelSourceException | IOException exc) {
+        } catch (ResourceModelSourceException exc) {
+            error = exc
+            if(exc instanceof ResourceModelSourceException){
+                if(exc.cause instanceof ResourceFormatParserException){
+                    if(exc.cause.cause instanceof NodeFileParserException){
+                        errStatus = HttpServletResponse.SC_BAD_REQUEST
+                        errCode = 'api.error.resource.format.failure'
+                        error = exc.cause.cause
+                    }
+                }
+            }
+        } catch (IOException exc){
             log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
@@ -2778,8 +3081,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (error) {
             apiService.renderErrorFormat(
                 response,
-                [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                 code  : 'api.error.resource.write.failure',
+                [status: errStatus,
+                 code  : errCode,
                  args  : [error.message]]
             )
             return
@@ -2792,6 +3095,58 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return apiRenderNodeResult(readsource.source.nodes, framework, params.project)
     }
 
+
+    @Get(uri='/project/{project}/source/{index}')
+    @Operation(
+        method='GET',
+        summary='Get a Resource Model Source for a Project',
+        description='''The response contains the `index`, the `type`, and 
+details about the `resources`. If the
+source had any error, that is included as `errors`.
+
+Resources data includes any `description` provided by the source, whether it is `empty`, and
+whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
+
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''Source definition.''',
+            content=@Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = Source),
+                examples=@ExampleObject('''
+    {
+        "index": 1,
+        "resources": {
+            "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
+            "empty": false,
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/1/resources",
+            "writeable": true
+        },
+        "type": "file"
+    }''')
+            )
+        )
+    )
     def apiSourceGet() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2839,7 +3194,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         respondProjectSource(config.type, writeableSource, project, index, errors?.message)
     }
 
-    public void respondProjectSource(
+    protected void respondProjectSource(
         String type,
         IProjectNodes.WriteableProjectNodes writeableSource,
         project,
@@ -2885,6 +3240,37 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Get(uri='/project/{project}/source/{index}/resources')
+    @Operation(
+        method='GET',
+        summary='List Resources of a Resource Model Source',
+        description='''
+Authorization required: `configure` for project resource
+
+Since: v23''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'index',
+                description = 'Source Index',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+            )
+        ]
+    )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
@@ -2928,9 +3314,39 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
         }
-
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
+
+    @Get(uri='/project/{project}/resource/{name}')
+    @Operation(
+        method='GET',
+        summary='Get Node Info',
+        description='''Get a specific resource within a project.
+
+Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
+
+Since: v14''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'name',
+                description = 'Node Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            ref = '#/paths/~1project~1%7Bproject%7D~1resources/get/responses/200'
+        )
+    )
     /**
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
@@ -2964,7 +3380,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
 
-        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(params.project, [AuthConstants.ACTION_READ] as Set, nodes, authContext)
 
         if (!readnodes || readnodes.nodes.size() < 1) {
             return apiService.renderErrorFormat(response, [
@@ -2975,10 +3391,104 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
+
+    @Get(uri='/project/{project}/resources')
+    @Operation(
+        method='GET',
+        summary='List Project Nodes',
+        description='''List or query the nodes (resources) for a project.
+
+Node Filter parameters: You can select nodes to include and exclude in the result set, see below.
+
+**Note:** If no query parameters are included, the result set will include all Node resources for the project.
+
+Refer to the [User Guide - Node Filters](https://docs.rundeck.com/docs/manual/11-node-filters.html) Documentation for information on
+the node filter syntax and usage.
+
+A basic node filter looks like:
+
+    attribute: value attribute2: value2
+
+To specify a Node Filter string as a URL parameter for an API request, use a parameter named `filter`.
+Your HTTP client will have to correctly escape the value of the `filter` parameter.  For example you can
+use `curl` like this;
+
+    curl --data-urlencode "filter=attribute: value"
+
+Common attributes:
+
+* `name` - node name
+* `tags` - tags
+* `hostname`
+* `username`
+* `osFamily`, `osName`, `osVersion`, `osArch`
+
+Custom attributes can also be used.
+
+Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
+
+Since: v14''',
+        tags=['project','nodes'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                        description = "Resources JSON Format"
+                    )),
+                    examples=@ExampleObject('''{
+  "node1": {
+    "nodename": "node1",
+    "hostname": "node1",
+    "osVersion": "5.15.49-linuxkit",
+    "osFamily": "unix",
+    "osArch": "amd64",
+    "description": "Rundeck server node",
+    "osName": "Linux"
+  }
+}''')
+                ),
+                @Content(
+                    mediaType = 'text/yaml',
+                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                        description = "Resources YAML Format"
+                    )),
+                    examples=@ExampleObject('''node1:
+  nodename: node1
+  hostname: node1
+  osVersion: 5.15.49-linuxkit
+  osFamily: unix
+  osArch: amd64
+  description: Rundeck server node
+  osName: Linux
+  tags: \'\'''')
+                )
+            ]
+        )
+    )
     /**
      * API: /api/2/project/NAME/resources, version 2
      */
-    def apiResourcesv2(ExtNodeFilters query) {
+    def apiResourcesv2(@Parameter(hidden = true) ExtNodeFilters query) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -3129,6 +3639,303 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     }
 
+    /**
+     * Documentation method for DELETE system acls
+     */
+    @Delete('/system/acl/{path}')
+    @Operation(
+        method = "DELETE",
+        summary = "Delete an ACL Policy.",
+        description = """
+Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = "204",
+                description = "No Content"
+            ),
+
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            )
+
+        ]
+    )
+    protected def apiSystemAcls_DELETE_docs(){}
+
+    /**
+     * Documentation method for PUT system acls
+     */
+    @Put('/system/acl/{path}')
+    @Operation(
+        method = "PUT",
+        summary = "Update an ACL Policy.",
+        description = """
+Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        requestBody = @RequestBody(
+            ref = '#/paths/~1system~1acl~1%7Bpath%7D/post/requestBody'
+        ),
+        responses = [
+            @ApiResponse(
+                ref = '#/paths/~1system~1acl~1%7Bpath%7D/get/responses/200'
+            ),
+
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "400",
+                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "valid": false,
+  "policies": [
+    {
+      "policy": "file1.aclpolicy[1]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    },
+
+    {
+      "policy": "file1.aclpolicy[2]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    }
+  ]
+}''')
+                )
+            )
+        ]
+    )
+    protected def apiSystemAcls_PUT_docs(){}
+
+
+    /**
+     * Documentation method for POST system acls
+     */
+    @Post('/system/acl/{path}')
+    @Operation(
+        method = "POST",
+        summary = "Create an ACL Policy.",
+        description = """
+Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='''If the `Content-Type` is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly.
+
+Otherwise, you can use JSON to wrap the yaml content inside `contents`
+''',
+            content = [
+                @Content(
+                    mediaType = 'application/yaml',
+                    schema=@Schema(type='string'),
+                    examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                ),
+                @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                )
+            ]
+        ),
+        responses = [
+            @ApiResponse(
+                responseCode = "201",
+                description = "Created",
+                content = [
+                    @Content(
+                        mediaType = 'text/plain',
+                        examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                        mediaType = "application/yaml",
+                        examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+                    ),
+                    @Content(
+                        mediaType = "application/json",
+                        examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+                    )
+                ]
+            ),
+
+            @ApiResponse(
+                responseCode = "409",
+                description = "Conflict. Already exists",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "400",
+                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "valid": false,
+  "policies": [
+    {
+      "policy": "file1.aclpolicy[1]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    },
+
+    {
+      "policy": "file1.aclpolicy[2]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    }
+  ]
+}''')
+                )
+            )
+        ]
+    )
+    protected def apiSystemAcls_POST_docs(){}
+
+    @Get('/system/acl/{path}')
+    @Operation(
+        method = "GET",
+        summary = "Get an ACL Policy.",
+        description = """Retrieve the YAML text of the ACL Policy file.  If YAML or text content is requested, the contents will be returned directly.
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
+
+Since: v14""",
+        tags=['acls'],
+        parameters = [
+            @Parameter(
+                name = 'path',
+                in = ParameterIn.PATH,
+                description = 'Path to the Acl policy file',
+                allowEmptyValue = false,
+                required = true,
+                schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "ACL Policy Document",
+        content = [
+            @Content(
+                mediaType = 'text/plain',
+                examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+            ),
+            @Content(
+                mediaType = "application/yaml",
+                examples = @ExampleObject('''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build''')
+            ),
+            @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject('''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}''')
+            )
+        ]
+    )
     /**
      * /api/14/system/acl/* endpoint
      */
@@ -3399,5 +4206,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
-}
 
+    private void notifyRemovedPlugins(String project, List removedPlugins){
+        removedPlugins.each { plugin ->
+            frameworkService.grailsEventBus.notify(PROJECT_PLUGINS_REMOVED_EVENT + '.' + plugin['type'], [ plugin: plugin, project: project ])
+        }
+    }
+}

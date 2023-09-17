@@ -5,7 +5,7 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 
 NAME=ubuntu16.04
-DIR=docker/debinstall
+DIR=packaging/test/docker/debinstall
 TAG="rd$NAME"
 
 build(){

@@ -5,8 +5,12 @@ import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.info.License
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
 import org.rundeck.app.bootstrap.PreBootstrap
@@ -38,12 +42,13 @@ import java.nio.file.Paths
         description = 'Original Rundeck API Documentation',
         url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
     ),
+    security = @SecurityRequirement(name = "rundeckApiToken"),
     servers = @Server(
         url = '{host}/api/{apiversion}',
         variables = [
             @ServerVariable(
                 name = 'apiversion',
-                defaultValue = '41' //NB: spec generation doesn't seem to accept a constant string :(
+                defaultValue = '44' //NB: spec generation doesn't seem to accept a constant string :(
             ),
             @ServerVariable(
                 name = 'host',
@@ -52,7 +57,12 @@ import java.nio.file.Paths
         ]
     )
 )
-
+@SecurityScheme(
+    name = "rundeckApiToken",
+    type = SecuritySchemeType.APIKEY,
+    in = SecuritySchemeIn.HEADER,
+    paramName = "X-Rundeck-Auth-Token"
+)
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
@@ -61,12 +71,29 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPrebootstrap()
-        ctx = GrailsApp.run(Application, args)
-        if(rundeckConfig.isMigrate()) {
-            println "\nMigrations complete"
-            System.exit(0)
+        boolean error = runPrebootstrap()
+        if(error) {
+            System.err.println("Rundeck initialization failed")
+            exitWithCode(1)
         }
+        boolean startupException = false
+        try {
+            execRunApp()
+        } catch(Exception ex) {
+            startupException = true
+        }
+        if(rundeckConfig.isMigrate()) {
+            println startupException ? "\nError encountered when running migrations" : "\nMigrations complete"
+            exitWithCode(startupException ? 1 : 0)
+        }
+    }
+
+    static void execRunApp(String[] args) {
+        ctx = GrailsApp.run(Application, args)
+    }
+
+    static void exitWithCode(Integer code) {
+        System.exit(code)
     }
 
     static void restartServer() {
@@ -102,7 +129,26 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
+        removeGORMdbCreateProperty(environment)
     }
+
+    /**
+     * It sets dataSource.dbCreate as 'none', always
+     * @param environment
+     * @return void
+     */
+    void removeGORMdbCreateProperty(final Environment environment){
+        if(environment && environment.propertySources){
+            environment.propertySources.each{
+                if(it.containsProperty("dataSource.dbCreate")){
+                    if(it.source && it.source instanceof Properties){
+                        it.source.'dataSource.dbCreate' = 'none'
+                    }
+                }
+            }
+        }
+    }
+
 
     @Override
     void doWithApplicationContext() {
@@ -117,19 +163,27 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void doWithDynamicMethods() {
     }
-    static void runPrebootstrap() {
-        ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
-        List<PreBootstrap> preboostraplist = []
-        preBootstraps.each { pbs -> preboostraplist.add(pbs) }
+    static boolean runPrebootstrap() {
+        List<PreBootstrap> preboostraplist = getPrebootstrapFunctions()
         preboostraplist.sort { a,b -> a.order <=> b.order }
+        boolean error = false;
         preboostraplist.each { pbs ->
             try {
                 pbs.run()
             } catch(Exception ex) {
                 System.err.println("PreBootstrap process "+pbs.class.canonicalName+" failed")
                 ex.printStackTrace()
+                error = true;
             }
         }
+        return error;
+    }
+
+    static List<PreBootstrap> getPrebootstrapFunctions() {
+        ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
+        List<PreBootstrap> preboostraplist = []
+        preBootstraps.each { pbs -> preboostraplist.add(pbs) }
+        return preboostraplist
     }
 
 

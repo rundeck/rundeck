@@ -16,9 +16,9 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import rundeck.services.ExecutionService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -30,9 +30,9 @@ import static org.junit.Assert.*
  * Time: 11:25 AM
  */
 
-class ExecutionTest extends RundeckHibernateSpec  {
+class ExecutionTest extends Specification implements DataTest  {
 
-    List<Class> getDomainClasses() { [Execution, Workflow, CommandExec]}
+    def setupSpec() { mockDomains Execution, Workflow, CommandExec }
 
     void "testValidateBasic"() {
         when:
@@ -173,7 +173,35 @@ class ExecutionTest extends RundeckHibernateSpec  {
         se.status = "any string"
         then:
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
+        when:
+        se.status ="average-duration-exceeded"
+        then:
+        assertEquals(ExecutionService.AVERAGE_DURATION_EXCEEDED,se.executionState)
     }
+
+    void testIsCustomStatusString() {
+        given:
+        boolean result
+
+        when:
+        result = Execution.isCustomStatusString(statusValue)
+
+        then:
+        result == isCustom
+
+        where:
+        statusValue                                     | isCustom
+        ExecutionService.EXECUTION_TIMEDOUT             | false
+        ExecutionService.EXECUTION_FAILED_WITH_RETRY    | false
+        ExecutionService.ABORT_ABORTED                  | false
+        ExecutionService.EXECUTION_SUCCEEDED            | false
+        ExecutionService.EXECUTION_FAILED               | false
+        ExecutionService.EXECUTION_QUEUED               | false
+        ExecutionService.EXECUTION_SCHEDULED            | false
+        ExecutionService.AVERAGE_DURATION_EXCEEDED      | false
+        "CUSTOM STRING"                                 | true
+    }
+
     void testStatusSucceededTrue() {
         when:
         Execution se = createBasicExecution()

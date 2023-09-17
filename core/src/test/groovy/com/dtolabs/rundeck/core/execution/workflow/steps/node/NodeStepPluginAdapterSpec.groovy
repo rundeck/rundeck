@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -55,6 +56,26 @@ class NodeStepPluginAdapterSpec extends Specification {
     static class TestPlugin implements NodeStepPlugin, Describable {
         NodeStepPlugin impl
         Description description
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(name = "test2", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test2Plugin implements NodeStepPlugin {
+        NodeStepPlugin impl
+
+        @PluginProperty(title = "test",
+                description = "test",
+                defaultValue = "test")
+        private String test
 
         @Override
         void executeNodeStep(
@@ -169,5 +190,86 @@ class NodeStepPluginAdapterSpec extends Specification {
         [c: 'q'] | [a: 'b', c: 'q', d: 'something "xyz${option.p}qws"']
         [p: 'Q'] | [a: 'b', c: '${option.c}', d: 'something "xyzQqws"']
         [c: 'Z', p: 'Q'] | [a: 'b', c: 'Z', d: 'something "xyzQqws"']
+
     }
+
+    def "check expanding values according to blankIfUnexpanded field"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestPlugin(
+                impl: plugin,
+                description: DescriptionBuilder.builder()
+                        .name('nodetype')
+                        .property(PropertyBuilder.builder().string('a').build())
+                        .property(PropertyBuilder.builder().string('c').blankIfUnexpandable(false).build())
+                        .build()
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: inputconfig,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+
+        when:
+        def result = adapter.createConfig(context, item, node)
+
+        then:
+        result == expect
+
+        where:
+        inputconfig = [a: 'b/${config.x}', c: 'a/${config.a}']
+        data | expect
+        [:] | [a: 'b/', c: 'a/${config.a}']
+
+    }
+
+
+    def "get plugin variables using PluginProperty"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new Test2Plugin(
+                impl: plugin
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def config = [test: '123456']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        1 * plugin.executeNodeStep(!null as PluginStepContext, [:], node)
+        result.isSuccess()
+        wrap.test == "123456"
+    }
+
+
 }

@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
@@ -171,7 +170,37 @@ public class PropertyResolverFactory {
                 null != projectName ? projectRetriever(projectPrefix, framework, projectName) : null,
                 frameworkRetriever(frameworkPrefix, framework)
         );
+    }/**
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @param framework the framework
+     * @param projectName name of the project, or null to disable project property resolution
+     * @param instanceProperties instance properties, or null
+     */
+    public static Factory createFrameworkProjectRuntimeResolverFactory(
+            final IFramework framework,
+            final String projectName,
+            final Map<String, Object> instanceProperties
+    )
+    {
+        return pluginPrefixedScoped(
+                null!=instanceProperties?instanceRetriever(instanceProperties):null,
+                null!=projectName?instanceRetriever(framework.getFrameworkProjectMgr().getFrameworkProject(projectName).getProperties()):null,
+                framework.getPropertyRetriever()
+        );
     }
+
+
+    /**
+     * create resolver using service name and provider name arguments
+     */
+    public static interface Factory {
+        PropertyResolver create(String service, Description description);
+    }
+
+    public static Factory creates(PropertyResolver resolver){
+        return (a, b) -> resolver;
+    }
+
     /**
      * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      * @param framework the framework property lookup
@@ -211,35 +240,82 @@ public class PropertyResolverFactory {
     /**
      * @return Create a resolver from a set of retrievers, possibly null
      *
-     * @param resolver resolver
-     * @param pluginType service type name
-     * @param providerName provider name
+     * @param instance instance data
+     * @param projectScope project scope
+     * @param frameworkScope scope
      */
-    public static PropertyResolver createPrefixedResolver(final PropertyResolver resolver, String providerName, String pluginType) {
-        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-        return new PropertyResolver(){
-            public Object resolvePropertyValue(String name, PropertyScope scope) {
-                String value = null;
-                if (scope.isInstanceLevel()) {
-                    value = (String)resolver.resolvePropertyValue(name,scope);
-                }
-                if (null != value || scope == PropertyScope.InstanceOnly) {
-                    return value;
-                }
+    public static Factory pluginPrefixedScoped(final PropertyRetriever instance, final PropertyRetriever projectScope, final PropertyRetriever frameworkScope) {
+        return (String pluginType, Description description)-> {
+            String providerName=description.getName();
+            final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+            final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+            return new ScopedResolver(instance, projectScope, frameworkScope, description, projectPrefix, frameworkPrefix);
+        };
+    }
+    public static class ScopedResolver implements PropertyResolver {
+        final PropertyRetriever instance;
+        final PropertyRetriever projectScope;
+        final PropertyRetriever frameworkScope;
+        final Description description;
+        final String projectPrefix ;
+        final String frameworkPrefix;
+        boolean legacyMappingEnabled = true;
 
-                if (scope.isProjectLevel()) {
-                    value = (String) resolver.resolvePropertyValue(projectPrefix + name, scope);
-                }
-                if (null != value || scope == PropertyScope.ProjectOnly) {
-                    return value;
-                }
+        public ScopedResolver(
+                final PropertyRetriever instance,
+                final PropertyRetriever projectScope,
+                final PropertyRetriever frameworkScope,
+                final Description description,
+                final String projectPrefix,
+                final String frameworkPrefix
+        )
+        {
+            this.instance = instance;
+            this.projectScope = projectScope;
+            this.frameworkScope = frameworkScope;
+            this.description = description;
+            this.projectPrefix = projectPrefix;
+            this.frameworkPrefix = frameworkPrefix;
+        }
 
-                value = (String) resolver.resolvePropertyValue(frameworkPrefix + name, scope);
+        @Override
+        public Object resolvePropertyValue(final String name, final PropertyScope scope) {
+            String value = null;
+            if (scope.isInstanceLevel() && instance != null) {
+                value = instance.getProperty(name);
+            }
+            if (null != value || scope == PropertyScope.InstanceOnly) {
                 return value;
             }
-        };
 
+            if (scope.isProjectLevel() && projectScope != null) {
+                value = projectScope.getProperty(projectPrefix + name);
+
+                if (value == null
+                    && legacyMappingEnabled
+                    && description != null
+                    && description.getPropertiesMapping() != null
+                    && description.getPropertiesMapping().containsKey(name)) {
+                    String key = description.getPropertiesMapping().get(name);
+                    value = projectScope.getProperty(key);
+                }
+            }
+            if (null != value || scope == PropertyScope.ProjectOnly) {
+                return value;
+            }
+
+            value = frameworkScope.getProperty(frameworkPrefix + name);
+
+            if (value == null
+                && legacyMappingEnabled
+                && description != null
+                && description.getFwkPropertiesMapping() != null
+                && description.getFwkPropertiesMapping().containsKey(name)) {
+                String key = description.getFwkPropertiesMapping().get(name);
+                value = frameworkScope.getProperty(key);
+            }
+            return value;
+        }
     }
 
     /**

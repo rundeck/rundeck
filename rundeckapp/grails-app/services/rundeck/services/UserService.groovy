@@ -18,19 +18,23 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.user.BaseUserProfile
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import org.hibernate.StaleStateException
-import org.springframework.dao.OptimisticLockingFailureException
-import rundeck.User
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.model.v1.user.dto.UserProperties
+import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.spi.data.DataAccessException
 
 @Transactional
 class UserService {
     public static final String G_EVENT_LOGIN_PROFILE_CHANGE = 'user.login.profile.change'
     ConfigurationService configurationService
     FrameworkService frameworkService
+    UserDataProvider userDataProvider
+
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
@@ -38,71 +42,38 @@ class UserService {
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
     public static final String SHOW_LOGGED_USERS_DEFAULT = 'gui.userSummaryShowLoggedUsersDefault'
 
-    static enum LogginStatus{
-        LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
-        private final String value
-        LogginStatus(String value){
-            this.value = value
-        }
-        String getValue(){
-            this.value
-        }
+    RdUser findOrCreateUser(String login) {
+        return userDataProvider.findOrCreateUser(login)
     }
 
-    def findOrCreateUser(String login) {
-        def User user = User.findByLogin(login)
-        if(!user){
-            def User u = new User(login:login)
-            if(!u.save(flush:true)){
-                writeErr("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
-            }
-            user=u
-        }
-        return user
+    String getOwnerName(Long userId) {
+        userDataProvider.get(userId).login
+    }
+
+    String getUserEmail(String login) {
+        return userDataProvider.findByLogin(login)?.email
     }
 
     def registerLogin(String login, String sessionId){
-        User user = User.findByLogin(login)
-        if(!user){
-            user = new User(login:login)
-        }
-        user.lastLogin = new Date()
-        user.lastLoggedHostName = frameworkService.getServerHostname()
-        if(isSessionIdRegisterEnabled()){
-            if(sessionIdRegisterMethod == 'plain') {
-                user.lastSessionId = sessionId
-            }else{
-                user.lastSessionId = sessionId.encodeAsSHA256()
-            }
-        }else{
-            user.lastSessionId = null
-        }
         try {
-            if (!user.save(flush: true)) {
-                writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}");
-            }
-            return user
-        }catch(StaleStateException exception){
-            log.warn("registerLogin: for ${login}, caught StaleStateException: $exception")
-        }catch(OptimisticLockingFailureException exception){
-            log.warn("registerLogin: for ${login}, caught OptimisticLockingFailureException: $exception")
+            return userDataProvider.registerLogin(login, sessionId)
+        } catch(DataAccessException dae) {
+            writeErr(dae.getMessage())
+            return userDataProvider.buildUser()
         }
     }
 
     def registerLogout(String login){
-        User user = User.findByLogin(login)
-        if(!user){
-            user = new User(login:login)
+        try {
+            return userDataProvider.registerLogout(login)
+        } catch(DataAccessException dae) {
+            writeErr(dae.getMessage())
+            return userDataProvider.buildUser()
         }
-        user.lastLogout = new Date()
-        if(!user.save(flush:true)){
-            writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}")
-        }
-        return user
     }
 
     static void writeErr(String errMsg) {
-        System.err.println(errMsg);
+        System.err.println(errMsg)
     }
 
 
@@ -142,7 +113,7 @@ class UserService {
      * @deprecated
      */
     public Map getFilterPref(String username){
-        def User u = findOrCreateUser(username)
+        def RdUser u = findOrCreateUser(username)
         if(!u){
             return null
         }
@@ -153,7 +124,7 @@ class UserService {
      * @deprecated
      */
     public storeFilterPref(String username, pref){
-        def User u = findOrCreateUser(username)
+        def RdUser u = findOrCreateUser(username)
         if(!u){
             return [error:"Couldn't find user: ${username}"]
         }
@@ -162,8 +133,7 @@ class UserService {
         storedpref.putAll(inpref)
         storedpref=storedpref.findAll{it.value!='!'}
 
-        u.filterPref=genKeyValuePref(storedpref)
-        u.save()
+        userDataProvider.updateFilterPref(username, genKeyValuePref(storedpref))
         return [user:u,storedpref:storedpref]
     }
 
@@ -185,11 +155,7 @@ class UserService {
         String email
     }
     void updateUserProfile(String username, String lastName, String firstName, String email) {
-        User u = findOrCreateUser(username)
-        u.firstName = firstName
-        u.lastName = lastName
-        u.email = email
-        u.save()
+        userDataProvider.updateUserProfile(username, lastName, firstName, email)
     }
 
     List<String> getUserGroupSourcePluginRoles(String username) {
@@ -203,7 +169,7 @@ class UserService {
                         configurePlugin(
                                 prov.key,
                                 groupSourcePluginService,
-                                frameworkService.getFrameworkPropertyResolver(),
+                                frameworkService.getFrameworkPropertyResolverFactory(),
                                 PropertyScope.Unspecified
                         )
                 if(configuredPlugin && configuredPlugin.instance) roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))
@@ -215,99 +181,24 @@ class UserService {
         return roles
     }
 
-    def getLoginStatus(User user){
-        def status = LogginStatus.NOTLOGGED.value
-        if(user){
-            Date lastDate = user.getLastLogin()
-            if(lastDate != null){
-                int minutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
-                Calendar calendar = Calendar.getInstance()
-                calendar.setTime(lastDate)
-                calendar.add(Calendar.MINUTE, minutes)
-                if(user.lastLogout != null){
-                    if(lastDate.after(user.lastLogout)){
-                        if(calendar.getTime().before(new Date())){
-                            status = LogginStatus.ABANDONED.value
-                        }else{
-                            status = LogginStatus.LOGGEDIN.value
-                        }
-                    }else{
-                        status = LogginStatus.LOGGEDOUT.value
-                    }
-                }else if(calendar.getTime().after(new Date())){
-                    status = LogginStatus.LOGGEDIN.value
-                }else{
-                    status = LogginStatus.ABANDONED.value
-                }
-            }else {
-                status = LogginStatus.NOTLOGGED.value
-            }
-        }
-        status
+    def getLoginStatus(RdUser user){
+        return userDataProvider.getLoginStatus(user)
     }
 
     def findWithFilters(boolean loggedInOnly, def filters, offset, max){
+        return userDataProvider.findWithFilters(loggedInOnly, filters, offset, max)
+    }
 
-        int timeOutMinutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
-        boolean showLoginStatus = configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
-        Calendar calendar = Calendar.getInstance()
-        calendar.add(Calendar.MINUTE, -timeOutMinutes)
+    HashMap<String, UserProperties> getInfoFromUsers(List usernames) {
+        return userDataProvider.getInfoFromUsers(usernames)
+    }
 
-        def totalRecords = User.createCriteria().count(){
-            if(showLoginStatus && loggedInOnly){
-                or{
-                    and{
-                        isNotNull("lastLogin")
-                        isNotNull("lastLogout")
-                        gtProperty("lastLogin", "lastLogout")
-                        gt("lastLogin", calendar.getTime())
-                    }
-                    and{
-                        isNotNull("lastLogin")
-                        isNull("lastLogout")
-                        gt("lastLogin", calendar.getTime())
-                    }
-                }
-            }
-            if(filters){
-                filters.each {k,v ->
-                    eq(k, v)
-                }
-            }
-        }
+    Integer countUsers() {
+        return userDataProvider.count()
+    }
 
-        def users = []
-        if(totalRecords > 0){
-            users = User.createCriteria().list(max:max, offset:offset){
-                if(showLoginStatus && loggedInOnly){
-                    or{
-                        and{
-                            isNotNull("lastLogin")
-                            isNotNull("lastLogout")
-                            gtProperty("lastLogin", "lastLogout")
-                            gt("lastLogin", calendar.getTime())
-                        }
-                        and{
-                            isNotNull("lastLogin")
-                            isNull("lastLogout")
-                            gt("lastLogin", calendar.getTime())
-                        }
-                    }
-                }
-
-                if(filters){
-                    filters.each {k,v ->
-                        eq(k, v)
-                    }
-                }
-                order("login", "asc")
-            }
-        }
-        [
-            totalRecords    : totalRecords,
-            users           : users,
-            showLoginStatus : showLoginStatus
-        ]
+    Integer countUsers(Date fromLoginDate) {
+        return userDataProvider.count(fromLoginDate)
     }
 
     /**
@@ -327,7 +218,7 @@ class UserService {
     }
 
     boolean validateUserExists(String username) {
-        User.findByLogin(username) != null
+        userDataProvider.validateUserExists(username)
     }
 
     /**
@@ -339,5 +230,18 @@ class UserService {
                 loggedOnly      :configurationService.getBoolean(SHOW_LOGGED_USERS_DEFAULT, false),
                 showLoginStatus :configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
         ]
+    }
+
+    UserInfo getCurrentUserInfo() {
+        RdUser user = userDataProvider.findByLogin(session.user)
+        if(!user) return null
+        return new UserInfo(username: user.login, email: user.email, firstname: user.firstName, lastname: user.lastName)
+    }
+
+    static class UserInfo implements BaseUserProfile {
+        String username
+        String email
+        String firstname
+        String lastname
     }
 }

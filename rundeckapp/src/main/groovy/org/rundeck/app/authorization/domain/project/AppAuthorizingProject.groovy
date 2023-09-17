@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.core.auth.access.*
-import rundeck.Project
+import rundeck.services.ProjectService
 
 import javax.security.auth.Subject
 /**
@@ -18,6 +18,7 @@ import javax.security.auth.Subject
 class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, String>
     implements AuthorizingProject {
     final ProjectManager projectManager
+    final ProjectService projectService
 
     final String resourceTypeName = 'Project'
 
@@ -41,7 +42,7 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, S
 
     @Override
     boolean exists() {
-        return Project.countByName(identifier) == 1
+        return projectManager.existsFrameworkProject(identifier)
     }
 
     @Override

@@ -8,7 +8,7 @@ export const Elems = {
   commandInputText: By.css('input#runFormExec'),
   filterNodesButton: By.css('#searchForm  a.btn.btn-cta.btn-fill'),
   nodeFilterText: By.css('#schedJobNodeFilter'),
-  runCommandButton: By.css('#runbox > form a.btn-cta.runbutton'),
+  runCommandButton: By.css('form > #runbox a.btn-cta.runbutton'),
   runningContent: By.css('#runcontent'),
   runningExecutionLink: By.css('#runcontent .executionshow .execution-action-links a'),
   runningExecutionState: By.css('#runcontent .executionshow .execution-action-links a .execstate[data-execstate]'),

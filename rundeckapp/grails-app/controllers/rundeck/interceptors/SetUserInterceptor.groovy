@@ -1,19 +1,18 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Token
+import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
-import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.rundeck.app.access.InterceptorHelper
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
+import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.security.core.context.SecurityContextHolder
-import rundeck.AuthToken
-import rundeck.User
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -22,6 +21,7 @@ import webhooks.Webhook
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
+import java.util.stream.Collectors
 
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
@@ -103,13 +103,13 @@ class SetUserInterceptor {
                 session.subject=null
                 session.user=null
                 if(authtoken){
-                    request.invalidAuthToken = "Token:" + AuthToken.printable(authtoken)
+                    request.invalidAuthToken = "Token:" + AuthenticationToken.printable(authtoken)
                 }
                 request.authenticatedToken = null
                 request.authenticatedUser = null
                 request.invalidApiAuthentication = true
                 if(authtoken){
-                    log.error("Invalid API token used: ${AuthToken.printable(authtoken)}");
+                    log.error("Invalid API token used: ${AuthenticationToken.printable(authtoken)}");
                 }else{
                     log.error("Unauthenticated API request");
                 }
@@ -126,10 +126,16 @@ class SetUserInterceptor {
                 return false
             }
         }
-        def requiredRole = configurationService.getString("security.requiredRole","")
-        if(!requiredRole.isEmpty()) {
-            if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
-                log.error("User ${request.remoteUser} must have role: ${requiredRole} to log in.")
+        def requiredRoles = getRequiredRolesFromProps()
+        if( requiredRoles.size() ){
+            def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
+            List<String> requestRoles = requestGroups.stream()
+            .map{it.getName()}
+            .collect(Collectors.toList())
+            List<String> matchedRoles = new ArrayList<>(requiredRoles)
+            matchedRoles.retainAll(requestRoles)
+            if( !matchedRoles.size() ){
+                log.error("User ${request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
@@ -182,6 +188,7 @@ class SetUserInterceptor {
      * @return
      */
     @PackageScope
+    @CompileStatic
     AuthenticationToken lookupToken(String authtoken, ServletContext context, boolean webhookType) {
         if(!authtoken){
             return null
@@ -204,22 +211,21 @@ class SetUserInterceptor {
             }
         }
 
-        AuthToken tokenobj = null
+        AuthenticationToken tokenobj = null
         if(webhookType) {
-            tokenobj = AuthToken.tokenLookup(authtoken,AuthTokenType.WEBHOOK)
+            tokenobj = apiService.tokenLookupWithType(authtoken,AuthTokenType.WEBHOOK)
         } else if(request.getAttribute(RUNNER_RQ_ATTRIB)) {
-            tokenobj = AuthToken.tokenLookup(authtoken, AuthTokenType.RUNNER)
+            tokenobj = apiService.tokenLookupWithType(authtoken, AuthTokenType.RUNNER)
         } else {
-            tokenobj = AuthToken.tokenLookup(authtoken)
+            tokenobj = apiService.tokenLookup(authtoken)
         }
 
         if (tokenobj) {
-            if (tokenobj.tokenIsExpired()) {
-                log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");
+            if (AuthenticationToken.tokenIsExpired(tokenobj)) {
+                log.debug("loginCheck token is expired ${tokenobj?.getOwnerName()}, ${tokenobj}");
                 return null
             }
-            User user = tokenobj?.user
-            log.debug("loginCheck found user ${user.login} via DB, ${tokenobj}");
+            log.debug("loginCheck found user ${tokenobj?.getOwnerName()} via DB, ${tokenobj}");
             return tokenobj
         }
         null
@@ -231,6 +237,7 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
+    @CompileStatic
     private Set<String> lookupTokenRoles(AuthenticationToken authtoken, ServletContext context) {
         if(!authtoken){
             return null
@@ -244,11 +251,11 @@ class SetUserInterceptor {
                     roles = userLine.toString().split(",").drop(1) as List
                 }
                 log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken.printableToken}");
-                return roles
+                return roles.stream().collect(Collectors.toSet());
             }
         }
 
-        Set<String> tokenRoles = authtoken.authRolesSet()
+        Set<String> tokenRoles = authtoken.getAuthRolesSet()
         if (tokenRoles && !tokenRoles.isEmpty()) {
             log.debug("loginCheck found roles ${tokenRoles} via DB, ${authtoken}");
             return tokenRoles
@@ -272,6 +279,21 @@ class SetUserInterceptor {
         .setUuid(token)
         .setCreator(owner)
         .setOwnerName(owner)
+    }
+
+    /**
+     * Get the required roles to authenticate with Rundeck's Server
+     * from properties if there's any, and return a list with them.
+     *
+     * */
+    @CompileStatic
+    private List<String> getRequiredRolesFromProps(){
+        List<String> rolesFromProps = []
+        String requiredRoles = configurationService.getString("security.requiredRole","")
+        if( requiredRoles ){
+            rolesFromProps = requiredRoles.split(",").collect( it -> it.trim())
+        }
+        return rolesFromProps
     }
 
 }

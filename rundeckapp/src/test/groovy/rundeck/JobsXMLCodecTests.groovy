@@ -6778,5 +6778,172 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong timeout value","10",doc.job[0].dispatch[0].threadcount.text()
     }
 
+    @Test
+    void "export job to XML respecting value list delimiter"() {
 
+       given:"a job to be exported"
+       def values = "'a;b,c;d'"
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(enforcedvalues:'true', name:'option1', required:'true', valuesList:values, valuesListDelimiter:';')
+                        ] as TreeSet,
+                )
+        ]
+        when:"the job is exported"
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:"job should keep options and delimiter"
+        xmlstr.contains("<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='option1' required='true' values="+values+" valuesListDelimiter=';' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <description>test descrip</description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>test job 1</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <sequence keepgoing='true' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <jobref group='/some/path' name='a Job' />\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "  </job>\n" +
+                "</joblist>")
+    }
+
+    @Test
+    public void "import job from XML respecting value list delimiter "(){
+
+        given:"a job to be imported"
+        def values = "'a;b,c;d'"
+
+        def xml = "<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='option1' required='true' values="+values+" valuesListDelimiter=';' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <description>test descrip</description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>test job 1</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <sequence keepgoing='true' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <jobref group='/some/path' name='a Job' />\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "  </job>\n" +
+                "</joblist>"
+
+        when:"the job is imported"
+        def jobs = JobsXMLCodec.decode(xml)
+
+        then:"job should keep options and delimiter"
+        jobs[0].options[0].valuesList==values
+
+    }
+
+    @Test
+    public void "import a job from xml where valueListDelimiter was modified using an jobXmlValueListDelimiter"() {
+
+        given: "a job with 3 values and a wrong valueListDelimiter"
+        Map job
+
+
+        def linkedHashMap = new LinkedHashMap([
+                context           : [
+                        options: [
+                                preserveOrder: true,
+                                option       : [
+                                        delimiter            : '#',
+                                        enforcedvalues       : true,
+                                        multivalueAllSelected: true,
+                                        multivalued          : true,
+                                        name                 : 'OPTION',
+                                        required             : true,
+                                        value                : '/opt/rundeck/server/logs/#/opt/rundeck/server/logs/validations/#/opt/rundeck/options/F5/tokens/',
+                                        values               : '/opt/rundeck/server/logs/,/opt/rundeck/server/logs/validations/,/opt/rundeck/options/F5/tokens/',
+                                        valuesListDelimiter  : ' '
+                                ]
+                        ]
+                ],
+                description       : 'test descrip',
+                executionEnabled  : true,
+                loglevel          : 'INFO',
+                name              : 'test job 1',
+                nodeFilterEditable: false,
+                scheduleEnabled   : true,
+                sequence          : [
+                        keepgoing: true,
+                        strategy : 'node-first',
+                        command  : [
+                                jobref: [
+                                        group: '/some/path',
+                                        name : 'a Job'
+                                ]
+                        ]
+                ]
+        ])
+
+
+
+        when: "the job is imported using a ( , ) as jobXmlValueListDelimiter"
+        job = JobsXMLCodec.convertXMapToJobMap(linkedHashMap, ",")
+
+
+        then: "job should keep same options values quantity as the original xml"
+        job.options.getAt("OPTION").getAt("values").size() == 3
+    }
+
+    @Test
+    public void "Allow to import jobs with blank notification's config"() {
+
+        // Missing notification config
+        def xml0 = """<joblist>
+    <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <notification>
+      <onstart>
+        <plugin type='SlackNotification' />
+      </onstart>
+    </notification>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml0)
+        assertNotNull(jobs)
+
+    }
 }

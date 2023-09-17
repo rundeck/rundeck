@@ -37,8 +37,11 @@ else
     export RUNDECK_MAIN_BUILD=false
 fi
 
+# Location for storage of Selenium Images
+export S3_SELENIUM_IMAGES_BASE="projects/rundeck/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/selenium-images/"
+
 # Location of CI resources such as private keys
-S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
+export S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
 # The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
@@ -216,7 +219,8 @@ twistlock_scan() {
     elif [[ "${CIRCLE_BRANCH}" = "main" ]] ; then
         export RUNDECK_IMAGE_TAG="rundeck/rundeck:SNAPSHOT"
     else
-        export RUNDECK_IMAGE_TAG="rundeck/ci:$CIRCLE_BRANCH"
+        IMG_TAG=$(echo $CIRCLE_BRANCH | tr '/' '-')
+        export RUNDECK_IMAGE_TAG="rundeck/ci:$IMG_TAG"
     fi
 
     echo "==> Scan Image: $RUNDECK_IMAGE_TAG"
@@ -240,10 +244,12 @@ twistlock_scan() {
       done
     fi
 
+    mkdir -p test-results/junit
+    bash scripts/convert_tl_junit.sh twistlock_scan_result.json > test-results/junit/twistlock-junit.xml
 
     local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
 
-    if [[ $incidents > 0 ]] ; then
+    if [[ $incidents -gt 0 ]] ; then
       echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
       exit $incidents
     fi

@@ -71,30 +71,23 @@
   <input id="loginName" name="loginName" type="hidden" value="${user.login}">
   <div class="row">
       <div class="col-xs-12">
-        <div class="card">
-          <g:render template="/common/messages"/>
-        </div>
+        <g:render template="/common/messages"/>
       </div>
       <div class="col-sm-12">
           <div class="card">
               <div class="card-content">
                 <div class="row">
                     <div class="col-md-4 col-xs-6">
-                        <div class="row">
-                            <div class="col-xs-1">
-                                <g:link action="edit"
-                                        params="[login: user.login]"
-                                        class="btn btn-default btn-sm"
-                                        title="${message(code: 'userController.action.edit.description', args: [user.login])}">
-                                    <g:icon name="edit"/>
-                                    <g:message code="button.Edit.label"/>
-                                </g:link>
-                            </div>
-                            <div class="col-xs-1">
-                            </div>
-                            <div class="col-xs-1" id="password-manager">
-                            </div>
-                        </div>
+                        <g:link action="edit"
+                                params="[login: user.login]"
+                                class="btn btn-default btn-sm"
+                                title="${message(code: 'userController.action.edit.description', args: [user.login])}">
+                            <g:icon name="edit"/>
+                            <g:message code="button.Edit.label"/>
+                        </g:link>
+                        <span class="vue-ui-socket">
+                            <ui-socket section="user-profile" location="header-buttons"></ui-socket>
+                        </span>
                     </div>
 
                     <div class="col-md-8 col-xs-6 form-inline">

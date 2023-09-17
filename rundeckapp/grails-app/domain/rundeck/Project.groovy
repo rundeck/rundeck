@@ -17,19 +17,22 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.project.RdProject
 
 /**
  * Created by greg on 2/19/15.
  */
-class Project {
+class Project implements RdProject {
     String name
     String description
     Date dateCreated
     Date lastUpdated
+    State state
 
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
-        description(nullable:true, matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)_-]+$')
+        description(nullable:true, maxSize: 255)
+        state(nullable:true)
     }
 
     static mapping = {

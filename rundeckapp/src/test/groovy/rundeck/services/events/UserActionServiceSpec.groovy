@@ -1,13 +1,13 @@
 package rundeck.services.events
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import rundeck.services.UserService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
-class UserActionServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<UserActionService> {
+class UserActionServiceSpec extends Specification implements ServiceUnitTest<UserActionService>, DataTest {
 
 
     void "handleAuthenticationSuccessEvent"() {

@@ -16,15 +16,15 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
 /**
  * Created by greg on 6/13/15.
  */
-class ExecReportSpec extends RundeckHibernateSpec {
+class ExecReportSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [Execution,Workflow,CommandExec,JobExec] }
+    def setupSpec() { mockDomains Execution,Workflow,CommandExec,JobExec }
 
     def "adhoc from execution"(){
         given:
@@ -50,7 +50,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
     def "adhoc from execution, succeeded"(){
@@ -77,7 +77,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
 
@@ -105,7 +105,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
     }
 
@@ -134,7 +134,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
         report.node==result
         report.adhocExecution
         report.adhocScript=='test exec'
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
 
         where:
@@ -173,7 +173,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null
-        report.ctxProject=='test'
+        report.project=='test'
         report.status=='succeed'
         report.title=='[0 steps]'
     }

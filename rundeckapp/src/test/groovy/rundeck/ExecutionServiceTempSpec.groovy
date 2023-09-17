@@ -20,23 +20,23 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import rundeck.services.*
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 /**
  * Created by greg on 2/17/15.
  */
-class ExecutionServiceTempSpec extends RundeckHibernateSpec {
+class ExecutionServiceTempSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution] }
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution }
 
     ExecutionService service
     def setup(){
         service = new ExecutionService()
         service.executionValidatorService = new ExecutionValidatorService()
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {

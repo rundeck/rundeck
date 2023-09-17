@@ -1,6 +1,6 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.app.internal.logging.LogFlusher
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -28,11 +28,16 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
-import org.hibernate.JDBCException
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.providers.GormExecReportDataProvider
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -52,7 +57,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import com.dtolabs.rundeck.execution.JobRefCommand
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
@@ -66,6 +71,7 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -87,10 +93,19 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
     def setup(){
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
         service.executionValidatorService = new ExecutionValidatorService()
         service.logFileStorageService=Mock(LogFileStorageService)
         service.fileUploadService=Mock(FileUploadService)
+
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        GormExecReportDataProvider providerExec = new GormExecReportDataProvider()
+        GormReferencedExecutionDataProvider referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        service.userDataProvider = provider
+        service.execReportDataProvider = providerExec
+        service.referencedExecutionDataProvider = referencedExecutionDataProvider
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -310,28 +325,48 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "create execution and prep expand date strings"() {
 
         given:
+        ScheduledExecution scheduledExecution = new ScheduledExecution(
+                jobName: 'Temp/adHoc',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a Adhoc command job',
+                argString: argString,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+
         def params = [
                 project    : 'AProject',
                 groupPath  : 'some/where',
                 description: 'a job',
                 argString  : argString,
                 user       : 'bob',
-                workflow   : new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
+                workflow   : scheduledExecution.workflow,
                 retry      : '1'
         ]
+
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
 
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
         }
+
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
         when:
         Execution e2 = service.createExecutionAndPrep(
-                params,
-                null
+                scheduledExecution,
+                authContext,
+                params
         )
 
         then:
@@ -474,7 +509,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def params = [:]
         service.reportService = Stub(ReportService) {
             reportExecutionResult(_) >> { args ->
-                params = args[0]
+                SaveReportRequestImpl saveReportRequest = args[0]
+                params = [
+                        'executionId': saveReportRequest.executionId,
+                        'jcJobId': saveReportRequest.jobId,
+                        'reportId': saveReportRequest.reportId,
+                        'adhocExecution': saveReportRequest.adhocExecution,
+                        'ctxProject': saveReportRequest.project,
+                        'author': saveReportRequest.author,
+                        'title': saveReportRequest.title,
+                        'status': saveReportRequest.status,
+                        'node': saveReportRequest.node,
+                        'message': saveReportRequest.message,
+                        'dateStarted': saveReportRequest.dateStarted,
+                        'dateCompleted': saveReportRequest.dateCompleted,
+                        'succeededNodeList': saveReportRequest.succeededNodeList,
+                        'failedNodeList': saveReportRequest.failedNodeList,
+                        'filterApplied': saveReportRequest.filterApplied,
+                ]
             }
         }
         when:
@@ -1208,7 +1260,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
-        ExecReport execReport = ExecReport.fromExec(execution).save()
+        ExecReport execReport = ExecReport.fromExec(execution)
         assert execReport!=null
         def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
@@ -1640,7 +1692,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1672,7 +1724,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1713,7 +1765,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Option opt = new Option(name: 'test1', enforced: true, defaultValue: defaultValue, optionValues: null)
         se.addToOptions(opt)
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
-        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -1964,7 +2016,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : option,
                     values       : [],
@@ -3010,6 +3062,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -3215,7 +3268,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : ["A", "B", "C"],
@@ -3284,7 +3337,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         }
 
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
 
@@ -3401,7 +3454,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         }
 
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
         def origContext = Mock(StepExecutionContext){
             getDataContext()>>datacontext
@@ -3943,8 +3996,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        def refexec = ReferencedExecution.findByScheduledExecution(job)
-        def seStats = ScheduledExecutionStats.findBySe(job)
+        def refexec = ReferencedExecution.findByJobUuid(job.uuid)
+        def seStats = ScheduledExecutionStats.findByJobUuid(job.uuid)
         if(expectedRef){
             seStats.getContentMap().refExecCount==0
         }else{
@@ -4767,7 +4820,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                retry: '1'
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
         )
         job.save()
         Execution e1 = new Execution(
@@ -4801,7 +4855,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
 
@@ -4859,8 +4913,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.notificationService.asyncTriggerJobNotification('start', job.id, _)
-        1 * service.notificationService.asyncTriggerJobNotification(trigger, job.id, _)
+        1 * service.notificationService.asyncTriggerJobNotification('start', job.uuid, _)
+        1 * service.notificationService.asyncTriggerJobNotification(trigger, job.uuid, _)
         where:
         success      | trigger
         true         | 'success'
@@ -5071,7 +5125,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -5187,7 +5241,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
         service.notificationService = Mock(NotificationService)
         def framework = Mock(Framework)
@@ -5326,7 +5380,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
@@ -5384,7 +5438,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure exposed option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
@@ -5443,7 +5497,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote and exposed options changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",
@@ -5572,7 +5626,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -5649,7 +5703,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,
-                ['option':'test1', 'extra':['option':['test1':'Foo']]],_) >> {
+                ['option':'test1', 'extra':['option':['test1':'Foo']]],_,_) >> {
             [
                     optionSelect : opt,
                     values       : remoteValues,
@@ -5683,7 +5737,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                retry: '1'
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
         )
         job.save()
         Execution e1 = new Execution(
@@ -5721,7 +5776,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 }
             }
 
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.workflowService = Mock(WorkflowService)
         service.notificationService = Mock(NotificationService)
         service.reportService = Mock(ReportService){
@@ -5762,7 +5817,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         when:
-        service.saveExecutionState(job.id, e1.id, resultMap, execmap, [:])
+        service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
         then:
 
         calls * service.workflowService.requestStateSummary(_,succeededNodes.toList()) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: nodeSummaries])
@@ -5794,8 +5849,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         HashMap optparams = service.parseJobOptionInput([:], se, admin)
 
         then:
-            1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin') >> [:]
-            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null) >> [:]
+            1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin',_) >> [:]
+            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null,_) >> [:]
     }
 
 
@@ -5958,7 +6013,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
-        ExecReport execReport = ExecReport.findByJcJobId(job.id.toString())
+        ExecReport execReport = ExecReport.findByJobId(job.id.toString())
 
         then:
         triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)
@@ -6023,22 +6078,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "metrics data from criteria result"(){
         given:
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             def critresult=[
                 count:3,
-                durationMax: new Time(0,9,0),
-                durationMin: new Time(0,2,0),
-                durationSum: new Time(0,15,0),
+                durationMax: new Long(1L),
+                durationMin: new Long(2L),
+                durationSum: new Long(3L),
             ]
         when:
             def result = service.metricsDataFromCriteriaResult(critresult)
         then:
-            result.total == 3
-            result.duration.average == 5L * 60L * 1000L
-            result.duration.min == 2L * 60L * 1000L
-            result.duration.max == 9L * 60L * 1000L
-
-
+        result.total == 3
+        result.duration.average == 1000L
+        result.duration.min == 2000L
+        result.duration.max == 1000L
     }
+
     def "metrics data from projection result"(){
         given:
             Date now = new Date()
@@ -6063,5 +6118,42 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.duration.average == 5L * 60L * 1000L
             result.duration.min == 2L * 60L * 1000L
             result.duration.max == 9L * 60L * 1000L
+    }
+
+    def "load additional listener"(){
+        when:
+            def result = service.loadAdditionalListeners([])
+        then:
+            result.size() == 1
+            result[0].class.name == WorkflowExecutionListenerTest.class.name
+    }
+
+    def "should add additional listener to original listeners"() {
+        given:
+            def initialListeners = [
+                    new LogFlusher(),
+                    new LogFlusher()
+            ]
+        when:
+            def result = service.loadAdditionalListeners(initialListeners)
+        then:
+            result.size() == 3
+            result.containsAll(initialListeners)
+    }
+
+    def "should not fail if there is no additional listeners"() {
+        given:
+            ServiceLoader.metaClass.static.load = { Class clazz ->
+                return null
+            }
+            def initialListeners = [
+                    new LogFlusher(),
+                    new LogFlusher()
+            ]
+        when:
+            def result = service.loadAdditionalListeners(initialListeners)
+        then:
+            result.size() == 2
+            result.containsAll(initialListeners)
     }
 }

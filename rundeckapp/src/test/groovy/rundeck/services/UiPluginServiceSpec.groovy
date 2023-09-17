@@ -21,8 +21,8 @@ class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPlu
 
         then:
         1 * service.pluginService.listPlugins(UIPlugin, _) >> [
-                'b': new DescribedPlugin<UIPlugin>(Mock(UIPlugin), null, 'b'),
-                'a': new DescribedPlugin<UIPlugin>(Mock(UIPlugin), null, 'a')
+                'b': new DescribedPlugin<UIPlugin>(Mock(UIPlugin), null, 'b', null, null),
+                'a': new DescribedPlugin<UIPlugin>(Mock(UIPlugin), null, 'a', null, null)
         ]
         1 * service.pluginService.getPlugin('a', _) >> Mock(UIPlugin) {
             1 * doesApply(path) >> ('a' in applies)
@@ -86,7 +86,9 @@ class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPlu
             1 * service.pluginService.getPluginDescriptor('plug', 'svc') >> new DescribedPlugin<Object>(
                     null,
                     DescriptionBuilder.builder().name('plug').metadata([a: 'b', c: 'd']).build(),
-                    'plug'
+                    'plug',
+                    null,
+                    null
             )
             result.providerMetadata
             result.providerMetadata == [a: 'b', c: 'd']

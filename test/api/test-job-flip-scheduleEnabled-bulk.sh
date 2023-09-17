@@ -3,6 +3,9 @@
 
 set -e
 
+# use api V44
+API_VERSION=44
+
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 args="echo hello there"
@@ -148,12 +151,12 @@ assert_job_schedule_enabled(){
     expectedcount=$2
 
     runurl="${APIURL}/job/${jobname}"
-    params=""
+    params="format=json"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    assert_xml_value $enabled "//job/scheduleEnabled" $DIR/curl.out
+    assert_json_value $enabled ".[0].scheduleEnabled" $DIR/curl.out
 }
 
 ####

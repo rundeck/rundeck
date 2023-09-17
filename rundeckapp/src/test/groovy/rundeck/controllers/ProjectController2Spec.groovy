@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
@@ -45,8 +45,8 @@ import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
@@ -55,9 +55,9 @@ import java.lang.annotation.Annotation
 
 import static org.junit.Assert.*
 
-class ProjectController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectController2Spec extends Specification implements ControllerUnitTest<ProjectController>, DataTest {
 
-    List<Class> getDomainClasses() { [Project] }
+    def setupSpec() { mockDomain Project }
 
     def setup(){
         controller.apiService = Mock(ApiService)
@@ -314,14 +314,14 @@ class ProjectController2Spec extends RundeckHibernateSpec implements ControllerU
     @Unroll
     def "renderApiProjectXml hasConfig #hasConfig vers #vers"() {
         given:
-            Properties projProps = new Properties(
+            Map projProps =
                 [
                     'project.description': 'a description',
                     'project.label'      : 'a label',
                     "test.property"      : "value1",
                     "test.property2"     : "value2"
                 ]
-            )
+
             def configDate = new Date()
             def rdProject = Mock(IRundeckProject) {
                 _ * getName() >> 'test1'
@@ -353,10 +353,10 @@ class ProjectController2Spec extends RundeckHibernateSpec implements ControllerU
 
             (seeConfig?4:0)== response.config.property.size()
 
-            response.config.property[0].'@key'.text() == (seeConfig?'test.property':'')
-            response.config.property[0].'@value'.text() == (seeConfig?'value1':'')
-            response.config.property[1].'@key'.text() == (seeConfig?'test.property2':'')
-            response.config.property[1].'@value'.text() == (seeConfig?'value2':'')
+            response.config.property[2].'@key'.text() == (seeConfig?'test.property':'')
+            response.config.property[2].'@value'.text() == (seeConfig?'value1':'')
+            response.config.property[3].'@key'.text() == (seeConfig?'test.property2':'')
+            response.config.property[3].'@value'.text() == (seeConfig?'value2':'')
 
             response.label.size()==seeLabel
 
@@ -729,6 +729,7 @@ class ProjectController2Spec extends RundeckHibernateSpec implements ControllerU
         controller.frameworkService=Mock(FrameworkService)
 
         1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
+        1 * controller.frameworkService.isFrameworkProjectDisabled('test1')>>false
 
 
         (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]

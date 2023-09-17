@@ -1,23 +1,28 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.user.LoginStatus
+import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingAppType
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+
 import rundeck.*
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -27,7 +32,6 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 class UserControllerSpec extends Specification implements ControllerUnitTest<UserController>, DataTest {
-
     void setupSpec() {
         mockDomain Execution
         mockDomain User
@@ -49,6 +53,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         controller.apiService = Stub(ApiService)
         controller.rundeckAppAuthorizer=Mock(AppAuthorizer)
         session.subject = new Subject()
+
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        controller.userDataProvider = provider
+
     }
 
     protected void setupFormTokens(params) {
@@ -131,6 +140,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
                 null
             }
         }
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> userToSearch == username }
+        }
         when:
         request.method='GET'
         request.format='xml'
@@ -160,6 +172,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
                 null
             }
 
+        }
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> userToSearch == username }
         }
         when:
         request.method='GET'
@@ -225,6 +240,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
 
         }
+
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> "anotheruser" == username }
+        }
         when:
         request.method='GET'
         request.format='xml'
@@ -250,6 +269,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
                 1 * getAuthContextForSubject(_) >> auth
             }
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> userToSearch == username }
+        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -300,6 +322,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
                 handlers.json(request.JSON)
                 true
             }
+        }
+
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> userToSearch == username }
         }
         when:
         request.method='POST'
@@ -417,6 +443,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,_) >> true
 
@@ -448,6 +475,8 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
+
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,_) >> true
 
@@ -526,12 +555,21 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         setup:
         User user = new User(login: "admin")
         user.save()
-        createAuthToken(user:user,type:null)
-        createAuthToken(user:user,type: AuthTokenType.USER)
-        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
-        createAuthToken(user:user,creator:'admin',type: AuthTokenType.USER)
+        def userTks = []
+        def adminTks = []
+        adminTks.add(createAuthToken(user:user,type:null))
+        adminTks.add(createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER))
+        adminTks.add(createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK))
+        userTks.add(createAuthToken(user:user,creator:'admin',type: AuthenticationToken.AuthTokenType.USER))
         def authCtx = Mock(UserAndRolesAuthContext)
         session.user='admin'
+        controller.tokenDataProvider = Mock(TokenDataProvider) {
+                countTokensByType(_) >> total
+                countTokensByCreatorAndType(_,_)>>total
+                findAllTokensByType(_,_)>>adminTks
+                findAllUserTokensByCreator(_,_)>>userTks
+
+        }
             controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
                     1 * isAuthorized(RundeckAccess.General.APP_ADMIN) >> isAdmin
@@ -539,6 +577,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
                     0 * _(*_)
                 }
             }
+
+        controller.userService = Mock(UserService) {
+            1 * validateUserExists(_) >> { String username -> "admin" == username }
+            1 * findOrCreateUser(_) >> user
+        }
         when:
         params.login = "admin"
         def result = controller.profile()
@@ -558,8 +601,8 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         User user = new User(login: "admin")
         user.save()
         createAuthToken(user:user,type:null)
-        createAuthToken(user:user,type: AuthTokenType.USER)
-        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK)
         controller.apiService = Stub(ApiService)
 
         controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
@@ -585,6 +628,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     def "loadUsersList summary with last exec"() {
         given:
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -639,6 +683,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     def "loadUsersList summary with logged in status"() {
         given:
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -678,7 +723,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             controller.userService = Mock(UserService) {
                 isSessionIdRegisterEnabled() >> true
                 findWithFilters(*_) >> [users: [u], totalRecords: 1]
-                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
+                getLoginStatus(_)>> LoginStatus.LOGGEDIN.getValue()
             }
         when:
             params.includeExec=true
@@ -689,13 +734,14 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             response.json.users
             response.json.users.find { it.login == userToSearch }
             response.json.users.find { it.login == userToSearch }.lastJob
-            response.json.users.find { it.login == userToSearch }.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+            response.json.users.find { it.login == userToSearch }.loggedStatus == LoginStatus.LOGGEDIN.getValue()
             response.json.users.find { it.login == userToSearch }.lastSessionId == lastSessionId
 
     }
 
     def "loadUsersList summary with no session id"() {
         given:
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -735,7 +781,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             controller.userService = Mock(UserService) {
                 isSessionIdRegisterEnabled() >> false
                 findWithFilters(*_) >> [users: [u], totalRecords: 1]
-                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
+                getLoginStatus(_)>>LoginStatus.LOGGEDIN.getValue()
             }
         when:
             params.includeExec=true
@@ -745,27 +791,12 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             response.json.users
             response.json.users.find { it.login == userToSearch }
             response.json.users.find { it.login == userToSearch }.lastJob
-            response.json.users.find { it.login == userToSearch }.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+            response.json.users.find { it.login == userToSearch }.loggedStatus == LoginStatus.LOGGEDIN.getValue()
             response.json.users.find { it.login == userToSearch }.lastSessionId == null
 
     }
 
-    def "countUserApiTokens does not include webhook tokens"() {
-        given:
-        User bob = new User(login:"bob")
-        bob.save()
-        new AuthToken(user:bob,type:AuthTokenType.USER,authRoles: "admin",token:Math.random().toString()).save()
-        new AuthToken(user:bob,authRoles: "admin",token:Math.random().toString()).save()
-        new AuthToken(user:bob,type:AuthTokenType.WEBHOOK,authRoles: "admin",token:Math.random().toString()).save()
-
-        when:
-        def tokenCount = controller.countUserApiTokens(bob)
-
-        then:
-        tokenCount == 2
-    }
-
-    private void createAuthToken(params) {
+    private def createAuthToken(params) {
         AuthToken tk = new AuthToken()
         tk.authRoles = "admin"
         tk.token = Math.random().toString()

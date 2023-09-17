@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
@@ -46,22 +47,29 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormUserDataProvider
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
+import rundeck.services.data.UserDataService
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 10/15/15.
  */
-class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScmService> {
+class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService>, DataTest {
+    def setupSpec() { mockDomains ScheduledExecution, User, Storage  }
 
-    List<Class> getDomainClasses() { [ScheduledExecution, User, Storage ] }
+    def setup() {
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
+    }
 
     class TestCloseable implements Closeable {
         boolean closed
@@ -235,8 +243,12 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         given:
         def config = [:]
         service.pluginService = Mock(PluginService)
-        service.frameworkService = Mock(FrameworkService)
         def resolver = Mock(PropertyResolver)
+        service.frameworkService = Mock(FrameworkService){
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> resolver
+            }
+        }
         service.scmExportPluginProviderService = Mock(ScmExportPluginProviderService)
         service.scmImportPluginProviderService = Mock(ScmImportPluginProviderService)
 
@@ -248,14 +260,14 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
 
         then:
 
-        1 * service.frameworkService.getFrameworkPropertyResolver('test', config) >> resolver
+
         1 * service.pluginService.validatePlugin(
                 'type',
                 integration == ScmService.EXPORT ? service.scmExportPluginProviderService :
                         service.scmImportPluginProviderService,
-                resolver,
+                _,
                 PropertyScope.Instance,
-                PropertyScope.Project
+                PropertyScope.Project,
         ) >>
                 validated
         result == validated
@@ -272,9 +284,12 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         def ctx = Mock(ScmOperationContext)
         def config = [:]
         service.pluginService = Mock(PluginService)
-        service.frameworkService = Mock(FrameworkService)
         def resolver = Mock(PropertyResolver)
-
+        service.frameworkService = Mock(FrameworkService){
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> resolver
+            }
+        }
 
         def report = Validator.errorReport('a', 'b')
         def validated = new ValidatedPlugin(valid: false, report: report)
@@ -282,7 +297,7 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         def result = service.initPlugin(integration, ctx, 'atype', config)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+
         1 * service.pluginService.validatePlugin(*_) >> validated
 
         ScmPluginInvalidInput err = thrown()
@@ -318,7 +333,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         def result = service.initPlugin(integration, ctx, 'atype', config)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(importFactory, testCloser)
         1 * service.pluginConfigService.loadScmConfig(*_) >> configobj
@@ -360,7 +374,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
             def result2 = service.initPlugin(integration, ctx, 'atype', config)
 
         then:
-            2 * service.frameworkService.getFrameworkPropertyResolver(*_)
             2 * service.pluginService.validatePlugin(*_) >> validated
             2 * service.pluginService.retainPlugin('atype', _) >>
             Closeables.closeableProvider(importFactory, testCloser)
@@ -399,7 +412,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         def result = service.initPlugin(integration, ctx, 'atype', config)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(ctx, config, true) >> plugin
@@ -438,7 +450,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
             def result2 = service.initPlugin(integration, ctx, 'atype', config)
 
         then:
-            2 * service.frameworkService.getFrameworkPropertyResolver(*_)
             2 * service.pluginService.validatePlugin(*_) >> validated
             2 * service.pluginService.retainPlugin('atype', _) >>
             Closeables.closeableProvider(exportFactory, exportCloser)
@@ -498,7 +509,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
             getUsername()>>'testuser'
             getRoles()>>new HashSet<String>(['arole'])
         }
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(_, config, true) >> plugin
@@ -547,7 +557,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
             getUsername()>>'testuser'
             getRoles()>>new HashSet<String>(['arole'])
         }
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(_, _, true) >> plugin
@@ -599,7 +608,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         1 * plugin.getInputViewForAction(_, 'actionId') >> Mock(BasicInputView) {
             getProperties() >> []
         }
-        1 * service.frameworkService.getFrameworkPropertyResolver('test1', input)
         1 * plugin.export(_, 'actionId', _, _, input) >> Mock(ScmExportResult) {
             isSuccess() >> true
             getCommit() >> Mock(ScmCommitInfo) {
@@ -670,7 +678,6 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
                 Mock(UserAndRolesAuthContext) {
             getUsername() >> 'bob'
         }
-        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(importFactory)
         1 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b'], true) >> plugin
@@ -702,6 +709,29 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
         info.firstName == 'a'
         info.lastName == 'b'
         info.email == 'test@test.com'
+    }
+
+    def "Call for the scm plugin implementations to see if a user has access to the configured key o password"(){
+        given:
+        def project = 'testProject'
+        def authContext = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'test'
+        }
+        def integration = 'import'
+        service.storageService = Mock(StorageService)
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        service.pluginConfigService = Mock(PluginConfigService){
+            getConfig() >> Mock(ScmPluginConfigData)
+        }
+
+        when:
+        def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
+
+        then:
+        response.hasAccess
+
     }
 
 

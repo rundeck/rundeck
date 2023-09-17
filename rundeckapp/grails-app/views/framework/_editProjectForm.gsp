@@ -61,9 +61,9 @@
     }
     function cleanerchkbox(el) {
         if(el.checked){
-            $('cleaner_config').show()
+            jQuery('#cleaner_config').show()
         } else {
-            $('cleaner_config').hide()
+            jQuery('#cleaner_config').hide()
         }
     }
 </script>
@@ -85,7 +85,7 @@
   </g:if>
     <div class="form-group ">
         <label for="label">
-            <g:message code="domain.Project.label.label" default="Label"/>
+            <g:message code="domain.Project.label.label" default="Project Display Name"/>
         </label>
         <g:textField name="label" size="50"  value="${projectLabel}" class="form-control"/>
     </div>
@@ -249,7 +249,7 @@
                                 <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                                 <i class="rdicon icon-small plugin"></i>
                                 <!-- /ko -->
-                                <span data-bind="text: title"></span>
+                                <span data-test-id="node-executor-selected" data-bind="text: title"></span>
                                 </span>
                             </span>
                         </span>
@@ -266,6 +266,7 @@
 
                             <li data-bind="foreach: descriptions['${serviceDefaults.service}']">
                                 <a href="#" data-bind="click: function(){$parent.defaults['${serviceDefaults.service}'].type(type())}">
+                                    <span>
                                     <!-- ko if: iconSrc -->
                                     <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                                     <!-- /ko -->
@@ -282,7 +283,7 @@
                                     <i class="rdicon icon-small plugin"></i>
                                     <!-- /ko -->
                                     <span data-bind="text: title"></span>
-
+                                    </span>
                                 </a>
                             </li>
                     </ul>
@@ -328,3 +329,28 @@
     </div>
 
 </g:each>
+<feature:enabled name="pluginGroups">
+<div class="tab-pane form-horizontal" id="tab_pluginGroups">
+
+    <div class="form-group">
+        <div class=" col-sm-12 help-block"><g:message
+                code="domain.Project.edit.plugins.explanation" default="Project settings for Plugins"/>
+        </div>
+    </div>
+
+    <div class=" form-group spacing-lg">
+        <div class="col-sm-12">
+            <div class="project-config-plugins-vue">
+                <plugin-set-config :event-bus="EventBus"
+                                   service-name="PluginGroup"
+                                   :mode-toggle="false"
+                                   :config-list="[]"
+                                   config-prefix="pluginValues.PluginGroup."
+                                   @modified="EventBus.emit('page-modified','Plugins')"
+                                   @reset="EventBus.emit('page-reset','Plugins')"
+                ></plugin-set-config>
+            </div>
+        </div>
+    </div>
+</div>
+</feature:enabled>

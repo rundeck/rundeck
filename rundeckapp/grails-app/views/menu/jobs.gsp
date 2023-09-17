@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="org.rundeck.core.auth.AuthConstants;rundeck.User; grails.util.Environment" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants;grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -34,10 +34,6 @@
     <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.js"/>
-    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-        <asset:javascript src="menu/joboptionsTest.js"/>
-        <asset:javascript src="menu/job-remote-optionsTest.js"/>
-    </g:if>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
     <g:embedJSON data="${jobListIds ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
@@ -244,7 +240,7 @@ search
         }
 
         function initJobActionMenus(){
-            jQuery('.act_job_action_dropdown').click(function(){
+            jQuery('.act_job_action_dropdown').on('click',function(){
                 var id=jQuery(this).data('jobId');
                 var el=jQuery(this).parent().find('.dropdown-menu');
                 el.load(
@@ -343,6 +339,9 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+                    if( data.warning !== undefined ){
+                        showError(data.warning)
+                    }
 
                     bulkeditor.scmDone(true);
                 }
@@ -370,9 +369,9 @@ search
         .gsp-pager .step { padding: 0 2px; }
         .gsp-pager .currentStep { padding: 0 2px; }
     </style>
-    <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
-        <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
-    </g:if>
+    <user:getJobFilters user="${session.user}">
+        <g:set var="filterset" value="${filters}"/>
+    </user:getJobFilters>
 
     <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
 

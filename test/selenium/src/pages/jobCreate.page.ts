@@ -126,8 +126,13 @@ export const Elems = {
     otherTab  : By.css('#job_edit_tabs > li > a[href=\'#tab_other\']'),
     multiExecFalse: By.css('input#multipleFalse'),
     multiExecTrue: By.css('input#multipleTrue'),
-    retryInput: By.css('input#schedJobRetry')
-    // Job Queue tab
+    retryInput: By.css('input#schedJobRetry'),
+
+    contextAutocomplete  : By.css('div[class="autocomplete-suggestions"]'),
+    notificationContextAutocomplete  : By.css('section[class="dropdown open"] > ul > li > a'),
+
+    addNewWfStepPlugin: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowNodeStep]'),
+    wfStepPluginForm: By.xpath('//*[@id="workflowContent"]/div/div[2]/div[4]/ol/li/span/div')
 }
 
 export class JobCreatePage extends Page {
@@ -288,7 +293,7 @@ export class JobCreatePage extends Page {
     }
 
     async notificationsTab(){
-        return await this.ctx.driver.findElement(Elems.notificationsTab)
+        return this.ctx.driver.findElement(Elems.notificationsTab)
     }
     async vueNotificationEditSections() {
         return this.ctx.driver.findElements(Elems.vueNotificationEditSection)
@@ -616,4 +621,70 @@ export class JobCreatePage extends Page {
     async retryInput() {
         return this.ctx.driver.findElement(Elems.retryInput)
     }
+
+    async findJobContextAutocomplete() {
+        let containers = await this.ctx.driver.findElements(Elems.contextAutocomplete)
+        let autoCompleteDiv
+
+        for(let t = 0; t < containers.length; t++){
+            let isDisplayed = await containers[t].isDisplayed()
+
+            if(isDisplayed){
+                autoCompleteDiv = containers[t]
+            }
+        }
+
+        let result = await autoCompleteDiv.findElement(By.css("div.autocomplete-suggestion"))
+
+        return result
+    }
+
+    async findJobNotificationContextAutocomplete() {
+        let notificationContextAutocomplete = await this.ctx.driver.findElement(Elems.notificationContextAutocomplete)
+        return notificationContextAutocomplete
+    }
+
+    async addNewWfStepPlugin(name){
+
+        let containers = await this.ctx.driver.findElements(By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type'))
+
+        let stepSelected
+        for(let t = 0; t < containers.length; t++){
+            let step = containers[t]
+
+            let descriptionElement = await step.findElement(By.css("span.text-strong"))
+            let description = await descriptionElement.getText()
+
+            if(description == name){
+                stepSelected = containers[t]
+            }
+        }
+
+        return stepSelected
+        
+    }
+
+    async waitWfStepStepForm(){
+        await this.ctx.driver.wait(until.elementLocated(Elems.wfStepPluginForm), 15000)
+    }
+
+
+    async pluginSteponfigFormGroupForProp() {
+        return this.ctx.driver.wait(
+          until.elementLocated(
+            By.css('#wfli_0')
+          ),
+          15000
+        )
+    }
+    async pluginStepConfigFillPropText(text: string) {
+        const recipientsFormGroup = await this.pluginSteponfigFormGroupForProp()
+        expect(recipientsFormGroup).toBeDefined()
+        const formField = await recipientsFormGroup.findElement(By.name("pluginConfig.ansible-binaries-dir-path"))
+        expect(formField).toBeDefined()
+        await formField.clear()
+        return formField.sendKeys(text)
+    }
+
+
 }

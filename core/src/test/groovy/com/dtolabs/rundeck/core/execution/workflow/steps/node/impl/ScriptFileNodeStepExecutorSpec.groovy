@@ -1,18 +1,21 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.data.BaseDataContext
-import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher
+import com.dtolabs.rundeck.core.execution.dispatch.SequentialNodeDispatcher;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -35,10 +38,26 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
     private static final String PROJ_NAME = "TestScriptFileNodeStepExecutor";
     public static final String UNIX_FILE_EXT = "sh";
     public static final String WINDOWS_FILE_EXT = "bat";
+    ServiceSupport serviceSupport
+    ExecutionServiceImpl executionServiceImpl
+    Framework frameworkInstance
 
     def setup() {
+        serviceSupport=new ServiceSupport()
 
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
+        executionServiceImpl = new ExecutionServiceImpl()
+
+        IExecutionProviders frameworkPlugins = Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem(_, _) >> Mock(StepExecutor)
+            _ * getFileCopierForNodeAndProject(_, _) >> Mock(FileCopier)
+            _ * getNodeDispatcherForContext(_) >> Mock(NodeDispatcher)
+            _ * getNodeExecutorForNodeAndProject(_, _) >> Mock(NodeExecutor)
+            _ * getNodeStepExecutorForItem(_, _) >> Mock(NodeStepExecutor)
+        }
+        executionServiceImpl.setExecutionProviders(frameworkPlugins)
+        serviceSupport.executionProviders = frameworkPlugins
+        serviceSupport.executionService = executionServiceImpl
+        frameworkInstance = AbstractBaseTest.createTestFramework(serviceSupport)
         final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
                 PROJ_NAME);
         AbstractBaseTest.generateProjectResourcesFile(
@@ -146,17 +165,11 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContentLocalUnix() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
-        //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -229,17 +242,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContent_expandTokens() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -313,22 +321,27 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
 
     }
 
+    private void setupTestExecAndCopy(NodeExecutor testexec, FileCopier testcopier) {
+        def execPluginsMock = Mock(IExecutionProviders) {
+            _ * getNodeExecutorForNodeAndProject(_, _) >> testexec
+            _ * getFileCopierForNodeAndProject(_, _) >> testcopier
+            _ * getNodeDispatcherForContext(_) >> new SequentialNodeDispatcher(frameworkInstance)
+        }
+        serviceSupport.setExecutionProviders(execPluginsMock)
+        executionServiceImpl.setExecutionProviders(execPluginsMock)
+    }
+
     /**
      * Copy to unix target with DOS source line endings, expect unix line endings
      */
     public void testInterpretCommandScriptContentLocalUnix_sourceDosLineendings() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -409,17 +422,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContentWithArgs() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -499,17 +507,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContentLocalUnixChmodFailure() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -567,17 +570,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContentLocalWindows() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -642,17 +640,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptFileLocal() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -725,18 +718,13 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testFile_notTokenExpanded() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
 
+        setupTestExecAndCopy(testexec, testcopier)
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
@@ -1012,17 +1000,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
             Map<String, Map<String, String>> dataContext,
             final String fileExtension
     ) throws NodeStepException {
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1139,17 +1122,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptInputLocal() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1222,17 +1200,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInputStream_expandTokens() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1316,17 +1289,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
 
     public void testInterpretCommandRmFileFails() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1400,17 +1368,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
 
     public void testInterpretCommandCopyFailure() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1458,17 +1421,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     public void testInterpretCommandScriptContentLocalWindowsUsingBom() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
@@ -1537,17 +1495,12 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
      */
     def 'testInterpretCommandScriptFileLocal with replace token in file path'() throws Exception {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
-        service.registerInstance("local", testexec);
-
         FileCopierMock testcopier = new FileCopierMock();
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
-        copyservice.registerInstance("local", testcopier);
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        setupTestExecAndCopy(testexec, testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");

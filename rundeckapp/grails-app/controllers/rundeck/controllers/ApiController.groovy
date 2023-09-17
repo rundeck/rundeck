@@ -16,12 +16,13 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.feature.FeatureEnabledResult
 import com.dtolabs.rundeck.app.api.tokens.CreateToken
 import com.dtolabs.rundeck.app.api.tokens.CreateTokenStringRoles
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
@@ -35,19 +36,20 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.api.model.LinkListResponse
 import org.rundeck.app.api.model.SystemInfoModel
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.sun.management.OperatingSystemMXBean
 import grails.web.mapping.LinkGenerator
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
-import rundeck.AuthToken
+import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.http.HttpServletResponse
+import javax.validation.constraints.Pattern
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -70,6 +72,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
+    FeatureService featureService
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -77,8 +80,32 @@ class ApiController extends ControllerBase{
             apiTokenCreate       : ['POST'],
             apiTokenRemoveExpired: ['POST'],
             apiTokenGet          : ['GET'],
-            apiTokenDelete       : ['DELETE']
+            apiTokenDelete       : ['DELETE'],
+            featureQuery         : ['GET'],
+            featureQueryAll      : ['GET']
     ]
+
+    @Get('/')
+    @Operation(
+        method = 'GET',
+        summary = 'Get API Information',
+        description = '''Return basic information about the Rundeck API.
+
+Includes current latest API Version, and base API URL.''',
+        tags = ['general'],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'API Information',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "apiversion": 44,
+  "href": "http://localhost:4441/api/44"
+}''')
+            )
+        )
+    )
     def info () {
         respond((Object) [
                 apiversion: ApiVersions.API_CURRENT_VERSION,
@@ -140,7 +167,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'Metric name, or blank to receive list of metrics',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string',
                     allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
@@ -208,62 +234,111 @@ class ApiController extends ControllerBase{
         forward(uri: servletPath.replace('/*', "/$name"))
     }
 
-    /**
-     * API endpoints
-     */
-    /**
-     * Return true if grails configuration allows given feature, or '*' features
-     * @param name
-     * @return
-     */
-    private boolean featurePresent(def name){
-        boolean featureStatus = configurationService.getBoolean("feature.incubator.${name}", false)
 
-        def splat=configurationService.getBoolean("feature.incubator.*", false)
-        return splat || featureStatus
-    }
+
+
+
+    @Tag(name = "system")
     /**
-     * Set an incubator feature toggle on or off
-     * @param name
-     * @param enable
+     * API endpoint to query system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature/{featureName}` where featureName is the specific name of the feature without `rundeck.feature.` prefix and `enabled` surfix.
+     * E.g. The configuration item name of the feature to enable runner is `rundeck.feature.runner.enabled`, to query the status of this feature
+     *      the request will be `/feature/runner`. The result of this query is a JSON object { name: "$featureName", "enabled": true/false }
+     *
      */
-    private void toggleFeature(def name, boolean enable){
-        grailsApplication.config.feature?.incubator?.putAt(name, enable)
+    @Get(
+        uri= "/feature/{featureName}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get Rundeck System Feature Status",
+        description = "Return whether a feature is enabled or disabled.",
+        parameters = [
+            @Parameter(
+                    name='featureName',
+                    in = ParameterIn.PATH,
+                    description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
+                    allowEmptyValue = false,
+                    required = true,
+                    schema = @Schema(
+                            type='string'
+                    )
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "On/off status of the feature",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = FeatureEnabledResult)
+                )
+            )
+        ]
+    )
+    @CompileStatic
+    def featureQuery(@PathVariable(name = "featureName") String featureName) {
+        if (!apiService.requireApi(request, response, ApiVersions.V42)) {
+            return
+        }
+
+        FeatureEnabledResult result = new FeatureEnabledResult(featureName, featureService.featurePresent(featureName))
+        return respond(result, formats: ['json'])
+
     }
+
+    @Tag(name = "system")
     /**
-     * Feature toggle api endpoint for development mode
+     * API endpoint to query all system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature`. The query will return all system features' status as a list of JSON objects [{ name: "featureName", "enabled": true/false }, ...]
      */
-    def featureToggle={
+    @Get(
+            uri= "/feature",
+            produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+            method = "GET",
+            summary = "List all System Feature on/off Status",
+            description = "The query will return all system features' status",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "List of features' on/off status",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
+                            )
+                    )
+            ]
+    )
+    @CompileStatic
+    def featureQueryAll() {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def respond={
-            render(contentType: 'text/plain', text: featurePresent(params.featureName) ? 'true' : 'false')
-        }
-        if(params.featureName){
-            if(request.method=='GET'){
-                respond()
-            } else if (request.method=='PUT'){
-                toggleFeature(params.featureName, request.inputStream.text=='true')
-                respond()
-            }else if(request.method=='POST'){
-                toggleFeature(params.featureName, true)
-                respond()
-            }else if(request.method=='DELETE'){
-                toggleFeature(params.featureName, false)
-                respond()
-            }
-        }else{
-            response.contentType='text/plain'
-            response.outputStream.withWriter('UTF-8') { w ->
-                grailsApplication.config.feature?.incubator?.each { k, v ->
-                    appendOutput(response, "${k}:${v in [true, 'true']}\n")
-                }
-            }
-            flush(response)
-        }
-    }
 
+        if (!apiService.requireVersion(request, response, ApiVersions.V42)) {
+            return
+        }
+
+        List<FeatureEnabledResult> result = new ArrayList<>()
+        Map<String, Object> map = configurationService.getAppConfig().feature.getProperties()
+
+        for(Map.Entry e : map.entrySet()) {
+            String key = e.getKey().toString()
+            Object value = e.getValue()
+            if(value != null && value.hasProperty("enabled")) {
+                result.add(new FeatureEnabledResult(key, (Boolean)value.getAt("enabled")))
+            }
+        }
+
+        return respond(result, formats: ['json'])
+
+    }
 
     /*
      * Token API endpoints
@@ -315,7 +390,7 @@ class ApiController extends ControllerBase{
     @Tag(name = "tokens")
     @CompileStatic
     def apiTokenGet(String tokenid) {
-        AuthToken oldtoken = validateTokenRequest(tokenid)
+        AuthenticationToken oldtoken = validateTokenRequest(tokenid)
 
         if (!oldtoken) {
             return
@@ -325,7 +400,7 @@ class ApiController extends ControllerBase{
     }
 
     @CompileStatic
-    private AuthToken validateTokenRequest(String tokenid){
+    private AuthenticationToken validateTokenRequest(String tokenid){
         if (!apiService.requireApi(request, response)) {
             return null
         }
@@ -341,12 +416,11 @@ class ApiController extends ControllerBase{
         UserAndRolesAuthContext authContext = systemAuthContext
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-
         //admin: search by token ID
         //user: search for token ID owned by user
-        AuthToken oldtoken = adminAuth ?
-                             apiService.findTokenId(tokenid) :
-                             apiService.findUserTokenId(authContext.username, tokenid)
+        AuthenticationToken oldtoken = adminAuth ?
+                apiService.findTokenId(tokenid) :
+                apiService.findUserTokenId(authContext.username, tokenid)
 
         if (!apiService.requireExistsFormat(response, oldtoken, ['Token', tokenid])) {
             return null
@@ -385,7 +459,7 @@ class ApiController extends ControllerBase{
     @Tag(name = "tokens")
     @CompileStatic
     def apiTokenDelete(String tokenid) {
-        AuthToken oldtoken = validateTokenRequest(tokenid)
+        AuthenticationToken oldtoken = validateTokenRequest(tokenid)
 
         if (!oldtoken) {
             return
@@ -406,7 +480,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string'
                 )
@@ -449,17 +522,18 @@ class ApiController extends ControllerBase{
         if (!adminAuth && user && user != authContext.username) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', user])
         }
-        def tokenlist
+        List<AuthenticationToken> tokenlist
         if (user) {
             tokenlist = apiService.findUserTokensCreator(user)
         } else if (!adminAuth) {
             tokenlist = apiService.findUserTokensCreator(authContext.username)
         } else {
-            tokenlist = AuthToken.list()
+            tokenlist = apiService.listTokens()
         }
 
-        def data = new ListTokens(user, !user, tokenlist.findAll {
-            it.type != AuthTokenType.WEBHOOK
+
+        def data = new ListTokens(user, !user, tokenlist.findAll {tkn->
+            tkn.getType() != AuthenticationToken.AuthTokenType.WEBHOOK
         }.collect {
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
@@ -490,7 +564,6 @@ Since: v11
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type = 'string'
                 )
@@ -503,7 +576,7 @@ Since: v11
                 schema = @Schema(oneOf = [CreateToken, CreateTokenStringRoles]),
                 examples = [
                     @ExampleObject(
-                        name='list of roles',
+                        name='list-of-roles',
                         summary = "Using a list of roles",
                         value = '''{
                                   "user": "alice",
@@ -516,7 +589,7 @@ Since: v11
                                 }'''
                     ),
                     @ExampleObject(
-                        name = 'string roles',
+                        name = 'string-roles',
                         summary = "Using a comma-separated string for roles",
                         value = '''{
                               "user": "alice",
@@ -616,14 +689,14 @@ Since: v11
         }
         Set<String> rolesSet=null
         if (roles instanceof String) {
-            rolesSet = AuthToken.parseAuthRoles(roles)
+            rolesSet = AuthenticationToken.parseAuthRoles(roles)
         } else if (roles instanceof Collection) {
             rolesSet = new HashSet(roles)
         }
         if (rolesSet.size() == 1 && rolesSet.contains('*')) {
             rolesSet = null
         }
-        AuthToken token
+        AuthenticationToken token
 
         Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
         if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {
@@ -641,7 +714,7 @@ Since: v11
                     tokenuser,
                     rolesSet,
                     true,
-                    AuthTokenType.USER,
+                    AuthenticationToken.AuthTokenType.USER,
                     tokenName
             )
         } catch (Exception e) {

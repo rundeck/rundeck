@@ -50,26 +50,26 @@ class JobYAMLFormat implements JobFormat {
         if (!data.every { it instanceof Map }) {
             throw new JobDefinitionException("Yaml: Expected list of Maps")
         }
-        data.each { jobMap ->
-            Map notifTriggers = jobMap['notification']
-            if(notifTriggers) {
-                (notifTriggers as Map).keySet().each { trigger ->
-                    def notifsMap = notifTriggers[trigger]
+        data.each (JobYAMLFormat.&convertJobNotifications)
+        return data
+    }
+    static void convertJobNotifications(Map jobMap){
+        Map notifTriggers = jobMap['notification'] as Map
+        if(notifTriggers) {
+            (notifTriggers as Map).keySet().each { trigger ->
+                def notifsMap = notifTriggers[trigger]
 
-                    if (notifsMap instanceof Map) {
-                        def notifList = []
-
-                        notifsMap.each {
-                            Map notifToAdd = [:]
-                            notifToAdd.put(it.key, it.value)
-                            notifList.add(notifToAdd)
-                        }
-                        notifTriggers[trigger] = notifList
+                if (notifsMap instanceof Map) {
+                    def notifList = []
+                    Map notifToAdd = [:]
+                    ((Map)notifsMap).each {
+                        notifToAdd.put(it.key, it.value)
                     }
+                    notifList.add(notifToAdd)
+                    notifTriggers[trigger] = notifList
                 }
             }
         }
-        return data
     }
 
     static Object canonicalValue(Object val, boolean trimSpacesFromLines = false) {
@@ -150,6 +150,29 @@ class JobYAMLFormat implements JobFormat {
         useOld = hasMany?false:true
         return useOld
     }
+    static Map performMapping(Options options, Map<String, Object> map){
+        boolean shouldUseOldFormat = map['notification']? useOldFormat(map['notification'] as Map) : false
+        if (options.replaceIds && options.replaceIds.get(map['id'])) {
+            map['id'] = options.replaceIds.get(map.remove('id'))
+            map['uuid'] = options.replaceIds.get(map.remove('uuid'))
+        } else if (!options.preserveUuid) {
+            map.remove('id')
+            map.remove('uuid')
+        }
+        if(shouldUseOldFormat){
+            (map['notification'] as Map).keySet().sort().findAll { (it as String).startsWith('on') }.each { trigger ->
+                String trigger_ = trigger as String
+                def notifs = map['notification'][trigger_]
+                map['notification'][trigger_] = [:]
+                notifs.each { Map it ->
+                    if(it['plugin'])
+                        it['plugin'] = (it['plugin'] as List)[0]
+                    map['notification'][trigger_] = (map['notification'][trigger_] as Map) + it
+                }
+            }
+        }
+        map
+    }
 
     @Override
     void encode(final List<Map> list, Options options, final Writer writer) {
@@ -158,30 +181,8 @@ class JobYAMLFormat implements JobFormat {
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
         final Representer representer = new CommaStringQuotedRepresenter()
         Yaml yaml = new Yaml(representer,dumperOptions)
-        def mapping = { Map<String, Object> map ->
-            boolean shouldUseOldFormat = map['notification']? useOldFormat(map['notification'] as Map) : false
-            if (options.replaceIds && options.replaceIds.get(map['id'])) {
-                map['id'] = options.replaceIds.get(map.remove('id'))
-                map['uuid'] = options.replaceIds.get(map.remove('uuid'))
-            } else if (!options.preserveUuid) {
-                map.remove('id')
-                map.remove('uuid')
-            }
-            if(shouldUseOldFormat){
-                (map['notification'] as Map).keySet().sort().findAll { (it as String).startsWith('on') }.each { trigger ->
-                    String trigger_ = trigger as String
-                    def notifs = map['notification'][trigger_]
-                    map['notification'][trigger_] = [:]
-                    notifs.each { Map it ->
-                        if(it['plugin'])
-                            it['plugin'] = (it['plugin'] as List)[0]
-                        map['notification'][trigger_] = (map['notification'][trigger_] as Map) + it
-                    }
-                }
-            }
-            map
-        }
 
-        yaml.dump(list.collect { canonicalMap(mapping(it), trimSpacesFromLines) }, writer)
+
+        yaml.dump(list.collect { canonicalMap(performMapping(options,it), trimSpacesFromLines) }, writer)
     }
 }

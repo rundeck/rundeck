@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import groovy.mock.interceptor.MockFor
 
 //import grails.test.GrailsUnitTestCase
@@ -27,7 +28,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 /**
  * $INTERFACE is ...
@@ -35,9 +36,9 @@ import testhelper.RundeckHibernateSpec
  * Date: 8/7/13
  * Time: 3:07 PM
  */
-class ExecutionServiceTests extends RundeckHibernateSpec {
+class ExecutionServiceTests extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec]}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec }
 
     private getAppCtxtMock(){
         def mockAppCtxt = new MockFor(ApplicationContext)

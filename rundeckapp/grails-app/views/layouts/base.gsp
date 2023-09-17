@@ -22,10 +22,10 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.js"/>
+        <asset:javascript src="vendor/vue.global.js"/>
     </g:if>
     <g:else>
-        <asset:javascript src="vendor/vue.min.js"/>
+        <asset:javascript src="vendor/vue.global.prod.js"/>
     </g:else>
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
@@ -162,7 +162,11 @@
     %{-- Central should be loaded as soon as before any other Vue project code --}%
     <asset:javascript src="static/components/central.js"/>
     %{--  Navigation components load early too  --}%
+    <asset:stylesheet href="static/css/components/navbar.css"/>
     <asset:javascript src="static/components/navbar.js"/>
+
+    <asset:stylesheet href="static/css/components/project-picker.css"/>
+    <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
@@ -181,11 +185,16 @@
         <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin scripts for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
-                <script src="${createLink(
-                        controller: 'plugin',
-                        action: 'pluginFile',
-                        params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}" type="text/javascript"></script>
+                <g:if test="${scriptPath.startsWith('asset:')}">
+                    <asset:javascript src="${scriptPath.substring('asset:'.length())}"/>
+                </g:if>
+                <g:else>
+                    <script src="${createLink(
+                            controller: 'plugin',
+                            action: 'pluginFile',
+                            params: [service: 'UI', name: pluginname, path: scriptPath]
+                    )}" type="text/javascript"></script>
+                </g:else>
             </g:each>
             <!-- END UI Plugin scripts for ${pluginname} -->
         </g:each>
@@ -193,11 +202,16 @@
         <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin css for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].styles}" var="scriptPath">
-                <link rel="stylesheet" href="${createLink(
-                        controller: 'plugin',
-                        action: 'pluginFile',
-                        params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}"/>
+                <g:if test="${scriptPath.startsWith('asset:')}">
+                    <asset:stylesheet href="${scriptPath.substring('asset:'.length())}"/>
+                </g:if>
+                <g:else>
+                    <link rel="stylesheet" href="${createLink(
+                            controller: 'plugin',
+                            action: 'pluginFile',
+                            params: [service: 'UI', name: pluginname, path: scriptPath]
+                    )}"/>
+                </g:else>
             </g:each>
             <!-- END UI Plugin css for ${pluginname} -->
         </g:each>
@@ -228,6 +242,10 @@
         </section>
     </g:if>
 
+    <div id="section-content-wrap">
+        <div class="vue-ui-socket">
+            <ui-socket section="main-content" location="before" tag="div"></ui-socket>
+        </div>
     <section id="section-content">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
@@ -267,6 +285,10 @@
         <g:layoutBody/>
     %{--        <g:render template="/common/footer"/>--}%
     </section>
+        <div class="vue-ui-socket">
+            <ui-socket section="main-content" location="after" tag="div"></ui-socket>
+        </div>
+    </div>
 </section>
 
 <section id="section-header" style="background-color: red;">
@@ -290,7 +312,9 @@
 </script>
 
 <!-- VUE JS MODULES -->
+<asset:stylesheet href="static/css/components/motd.css"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:stylesheet href="static/css/components/version.css"/>
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/server-identity.js"/>
 <asset:javascript src="static/components/tour.js"/>

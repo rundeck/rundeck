@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -144,7 +145,7 @@ class JobsXMLCodec {
     /**
      * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
      */
-    static convertXMapToJobMap={ Map map->
+    static convertXMapToJobMap={ Map map, String jobXmlValueListDelimiter->
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
@@ -211,14 +212,24 @@ class JobsXMLCodec {
                 //if preserveOrder is true, include sortIndex information
                 if (opts && opts instanceof Collection) {
                     opts.each { optm ->
+                        String listDelimiter = Option.DEFAULT_DELIMITER
+                        if(optm.valuesListDelimiter){
+                            listDelimiter = optm.valuesListDelimiter
+                        }
+                        if(jobXmlValueListDelimiter != null && !jobXmlValueListDelimiter.isEmpty()){
+                            listDelimiter = jobXmlValueListDelimiter
+                        }
                         map.options[optm.name.toString()] = optm
                         if (optm.values instanceof String) {
-                            optm.values = optm.values.split(",") as List
+                            optm.values = optm.values.split(listDelimiter) as List
                         } else if (optm.values) {
                             optm.values = [optm.values.toString()]
                         }
                         if (null != optm.enforcedvalues) {
                             optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'), false)
+                        }
+                        if(null !=optm.sortValues){
+                            optm.sortValues = XmlParserUtil.stringToBool(optm.remove('sortValues'), false)
                         }
                         if (null != optm.required) {
                             optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
@@ -340,9 +351,6 @@ class JobsXMLCodec {
                     if (notifData.type==null) {
                         throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
                     }
-                    if (notifData.configuration==null) {
-                        throw new JobXMLException("${trigger} plugin had blank or missing 'configuration' element")
-                    }
                     convertPluginToMap(notifData)
                     Map plugNotifs = map.notification[trigger].find {notif -> notif.plugin}
                     if(!plugNotifs)  map.notification[trigger].add(['plugin':[notifData]])
@@ -377,7 +385,7 @@ class JobsXMLCodec {
                                 setValidNotifData(notifVal, notifType, trigger)
                             }
                         }else {
-                            throw new JobXMLException("${notifType} is not a valid/supported notification definition")
+                            throw new JobXMLException("Invalid Notification: [ name: ${map.name}, desc: ${map.desc}, group: ${map.group}, type: ${notifType}")
                         }
                     }
             }
@@ -538,6 +546,10 @@ class JobsXMLCodec {
             def optslist=[]
             //options are sorted by (sortIndex, name)
             opts.each{x->
+                String listDelimiter = Option.DEFAULT_DELIMITER
+                if(x.valuesListDelimiter){
+                    listDelimiter = x.valuesListDelimiter
+                }
                 x.remove('sortIndex')
                 //add 'name' attribute
                 BuilderUtil.addAttribute(x,'name',x.remove('name'))
@@ -550,7 +562,10 @@ class JobsXMLCodec {
                 }
                 //convert 'values' list to comma-separated attribute value @values
                 if(x.values){
-                    BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))
+                    BuilderUtil.addAttribute(x,'values',x.remove('values').join(listDelimiter))
+                }
+                if(x.sortValues){
+                    BuilderUtil.addAttribute(x,'sortValues',x.remove('sortValues'))
                 }
                 if(x.valuesListDelimiter){
                     BuilderUtil.addAttribute(x,'valuesListDelimiter',x.remove('valuesListDelimiter'))

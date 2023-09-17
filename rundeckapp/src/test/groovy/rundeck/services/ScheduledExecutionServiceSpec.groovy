@@ -16,18 +16,23 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import groovy.transform.CompileStatic
+import org.grails.plugins.codecs.JSONCodec
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -37,6 +42,9 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -45,12 +53,15 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import org.rundeck.util.HttpClientCreator
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
-import testhelper.RundeckHibernateSpec
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import rundeck.data.constants.NotificationConstants
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -86,12 +97,13 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
+class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, GrailsWebUnitTest, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
-    List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User] }
+    def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
 
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
@@ -99,6 +111,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             getRundeckBase() >> ''
             getServerUUID() >> 'uuid'
             isClusterModeEnabled() >> clusterEnabled
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
         }
         def quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
@@ -114,9 +129,12 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_)>>[]
             getFrameworkNodeName() >> "testProject"
         }
@@ -125,27 +143,31 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],[:])
             }
-            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true, validations:[:])
+            validateImportedJob(_)>>new Validator.ReportSet(true,[:])
+        }
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
         }
         TEST_UUID1
     }
     def "blank email notification"() {
         given:
         setupDoValidate()
+        def json='[{"type":"email","trigger":"onsuccess","config":{"recipients":""}}]'
+
         def params = baseJobParams()+[
                 workflow      : new Workflow(
                         threadcount: 1,
                         keepgoing: true,
                         commands: [new CommandExec(adhocRemoteString: 'a remote string')]
                 ),
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'',
+                jobNotificationsJson: json,
 
         ]
         def authContext = Mock(UserAndRolesAuthContext){
@@ -165,19 +187,18 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         scheduledExecution.errors != null
         scheduledExecution.errors.hasErrors()
-        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS)
+        scheduledExecution.errors.hasFieldErrors('notifications')
 
     }
 
     def "blank webhook notification"() {
         given:
         setupDoValidate()
+        def json='[{"type":"url","trigger":"onsuccess","config":{"urls":"","format":"xml"}}]'
 
         when:
         def params = baseJobParams()+[
-                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'',
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
-
+            jobNotificationsJson: json,
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
@@ -194,7 +215,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         scheduledExecution.errors != null
         scheduledExecution.errors.hasErrors()
-        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_URL)
+        scheduledExecution.errors.hasFieldErrors('notifications')
 
     }
 
@@ -485,7 +506,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         valid
         !step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -537,7 +558,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         !valid
         step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -582,7 +603,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -629,7 +650,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -659,7 +680,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -694,7 +715,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         params['logFilterValidation']["0"] instanceof Validator.Report
         !params['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -763,13 +784,13 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         then:
             1 * service.pluginService.validatePluginConfig('aType', ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:true)
             1 * service.pluginService.validatePluginConfig('bType', ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
                 PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
                         SimplePluginConfiguration.builder().provider('aType').configuration([a:'b']).build(),
                         SimplePluginConfiguration.builder().provider('bType').configuration([b:'c']).build(),
                 ]
             }
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
             !results.failed
 
     }
@@ -801,13 +822,13 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         then:
             1 * service.pluginService.validatePluginConfig('aType',ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false,report:Validator.errorReport('a','wrong'))
             1 * service.pluginService.validatePluginConfig('bType',ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
                 PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
                         SimplePluginConfiguration.builder().provider('aType').configuration([a:'b']).build(),
                         SimplePluginConfiguration.builder().provider('bType').configuration([b:'c']).build(),
                 ]
             }
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
             results.failed
             results.scheduledExecution.errors.hasFieldErrors('pluginConfig')
     }
@@ -891,6 +912,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.failed
         results.scheduledExecution.errors.hasFieldErrors('workflow')
         results.scheduledExecution.workflow.commands[0].errors.hasFieldErrors(fieldName)
+        results.validation.workflow != null
 
         where:
         cmd                                           | fieldName
@@ -987,11 +1009,18 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     @Unroll
     def "validate notifications email data for #trigger"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                (field):content,
-                (flag):'true',
 
+        def json = [[
+            type   : type,
+            trigger: trigger,
+            config : [
+                recipients: content
+            ]
+        ]].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1005,20 +1034,29 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content | field | flag
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
     }
     @Unroll
     def "validate notifications email data any domain #trigger for #content"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                (field):content,
-                (flag):'true',
+        def json = [
+            [
+                type   : type,
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1030,22 +1068,35 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content|field|flag
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | '${job.user.name}@something.org'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        trigger                                                      | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME          | 'email' | 'c@example.comd'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME          | 'email' | '${job.user.name}@something.org'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME          | 'email' | 'example@any.domain'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME          | 'email' | '${job.user.email}'
+        NotificationConstants.ONSTART_TRIGGER_NAME            | 'email' | 'monkey@internal'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME    | 'email' | 'user@test'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
     }
     @Unroll
     def "invalid notifications data"() {
         given:
+        mockCodec(JSONCodec)
         setupDoValidate()
-        def params = baseJobParams()+[
-                      (contentField):content,
-                      (flag):'true'
+
+        def config = type=='email'? [
+            recipients: content
+        ] : [
+            urls: content
+        ]
+        def json = [
+            [
+                type   : type,
+                trigger: trigger,
+                config : config
+            ]
+        ].encodeAsJSON().toString()
+        def params = baseJobParams()+ [
+            jobNotificationsJson: json,
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1053,30 +1104,30 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         then:
         results.failed
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        contentField|trigger                                             | type    | content  |flag
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSTART_URL
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_URL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | ''
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | ''
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | ''
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | ''
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
     @Unroll
     def "do update job invalid notifications"() {
@@ -1098,27 +1149,38 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         then:
         !results.success
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        contentField|trigger                                             | type    | content
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        trigger                                             | type    | content
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
+        NotificationConstants.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        NotificationConstants.ONAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
+        NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
-    def "validate notifications email form fields"() {
+    def "validate notifications email json"() {
         given:
+
+        mockCodec(JSONCodec)
         setupDoValidate()
+
+        def json = [
+            [
+                type   : 'email',
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                      (enablefield): 'true',
-                      (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1130,19 +1192,26 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | 'c@example.com,d@example.com'
+        content='c@example.com,d@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
     }
-    def "invalid notifications email form fields"() {
+    def "invalid notifications email json"() {
         given:
+
+        mockCodec(JSONCodec)
         setupDoValidate()
+
+        def json = [
+            [
+                type   : 'email',
+                trigger: trigger,
+                config : [
+                    recipients: content
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                      (enablefield): 'true',
-                      (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1150,15 +1219,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         then:
         results.failed
         results.scheduledExecution.errors.hasErrors()
-        results.scheduledExecution.errors.hasFieldErrors(contentField)
+        results.scheduledExecution.errors.hasFieldErrors('notifications')
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | '@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | '@example.com'
+        content='c@example.'//,'@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
     }
 
 
@@ -1382,6 +1447,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
             }
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             getFrameworkProject(_) >> projectMock
         }
         service.rundeckJobScheduleManager=Mock(JobScheduleManager){
@@ -1399,10 +1467,15 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.quartzScheduler = Mock(Scheduler)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
-            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
+            validateImportedJob(_)>>new Validator.ReportSet(true,[:])
+        }
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
         }
         uuid
     }
@@ -1430,7 +1503,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                    create(_,_) >> Mock(PropertyResolver)
+                }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -1446,7 +1521,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             _ * getExecutionsAreActive() >> false
         }
         service.pluginService = Mock(PluginService) {
-            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _, _)
         }
 
         service.executionUtilService = Mock(ExecutionUtilService) {
@@ -1455,13 +1530,14 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             }
         }
         service.quartzScheduler = Mock(Scheduler)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
             }
-            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
+            validateImportedJob(_)>>new Validator.ReportSet(true,[:])
         }
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
         uuid
     }
 
@@ -1553,7 +1629,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
-
         then:
         !results.success
         results.scheduledExecution.errors.hasFieldErrors(fieldName)
@@ -1573,7 +1648,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
-
 
         then:
         !results.success
@@ -1782,12 +1856,12 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams()).save();
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
 
         def newJob = new ScheduledExecution(createJobParams())
-        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'))
-        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
+        newJob.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'))
+        newJob.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
 
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
 
@@ -1801,8 +1875,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         !results.scheduledExecution.errors.hasErrors()
         results.success
         results.scheduledExecution.notifications.size()==2
-        results.scheduledExecution.notifications.find{it.eventTrigger==ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME}.configuration==[recipients:'spaghetti@nowhere.com']
-        results.scheduledExecution.notifications.find{it.eventTrigger==ScheduledExecutionController.ONFAILURE_TRIGGER_NAME}.configuration==[recipients:'milk@store.com']
+        results.scheduledExecution.notifications.find{it.eventTrigger==NotificationConstants.ONSUCCESS_TRIGGER_NAME}.configuration==[recipients:'spaghetti@nowhere.com']
+        results.scheduledExecution.notifications.find{it.eventTrigger==NotificationConstants.ONFAILURE_TRIGGER_NAME}.configuration==[recipients:'milk@store.com']
 
     }
     @Unroll
@@ -1810,13 +1884,19 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         given:
         setupSchedulerService(false)
         setupDoUpdate()
+        mockCodec(JSONCodec)
+
+        def json = inparams.encodeAsJSON().toString()
+        def params = [
+            jobNotificationsJson:json
+        ]
 
         def se = new ScheduledExecution(createJobParams()).save();
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
 
         when:
-        def results = service._doupdate([id:se.id.toString()]+inparams, mockAuth())
+        def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
 
 
         then:
@@ -1830,38 +1910,38 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         where:
         inparams|expect
         [
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'spaghetti@nowhere.com',
-                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS):'milk@store.com',
-                ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
+            [type:'email',trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,config:[recipients:'spaghetti@nowhere.com']],
+            [type:'email',trigger:NotificationConstants.ONFAILURE_TRIGGER_NAME,config:[recipients:'milk@store.com']]
+        ] | [(NotificationConstants.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (NotificationConstants.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
 
         [
+            [type:'url',trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,config:[urls:'http://monkey.com']]
+        ] | [(NotificationConstants.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
 
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'http://monkey.com',
-
-        ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
-
-        [notified: 'false',(ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
-        [notified: 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
-
+        [] | [:]
 
     }
 
     @Unroll
-    def "do update notifications form fields"() {
+    def "do update notifications json"() {
         given:
         setupSchedulerService(false)
         setupDoUpdate()
+        mockCodec(JSONCodec)
+
+        def json = [[
+            trigger:trigger,
+            type:'email',
+            config:[
+                recipients:content
+            ]
+        ]].encodeAsJSON().toString()
 
         def se = new ScheduledExecution(createJobParams()).save()
-        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com'))
 
         def params = baseJobParams() + [
-                notified: 'true',
-                (enablefield): 'true',
-                (contentField): content,
+            jobNotificationsJson:json
         ]
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
@@ -1875,12 +1955,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger|enablefield                                             | contentField | content
-        'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
-        'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
-        'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
-        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
-        'onretryablefailure'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS | 'c@example.com,d@example.com'
+        content='c@example.com,d@example.com'
+        trigger << NotificationConstants.TRIGGER_NAMES
+
     }
     @Unroll
     def "do update options modify"(){
@@ -2091,6 +2168,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             isClusterModeEnabled() >> false
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
 
             getRundeckFramework() >> Mock(Framework) {
                 getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
@@ -2106,12 +2186,13 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
-            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true,validations:[:])
+            validateImportedJob(_) >> new Validator.ReportSet(true, [:])
 
         }
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
 
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
@@ -2299,7 +2380,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         ]
         !results.scheduledExecution.errors.hasFieldErrors('workflow')
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
         ]
@@ -2337,7 +2418,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         passparams['logFilterValidation']["0"] instanceof Validator.Report
         !passparams['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -2374,17 +2455,18 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         def pluginService = service.pluginService
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
-        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
-        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+        2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
         1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
         1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
         0 * _
@@ -2415,6 +2497,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def pluginConfigSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2425,11 +2508,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                     build()
                     ]
             )
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
             1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],_)>>true
-            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
             1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
             1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
             service.jobSchedulesService = Mock(SchedulesManager){
@@ -2446,7 +2529,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
             1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
             new ValidatedPlugin(valid: true)
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_, _)
 
     }
 
@@ -2458,6 +2541,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def configSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2468,11 +2552,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                     build()
                     ]
             )
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> configSet
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> configSet
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
             0 * service.frameworkService.getFrameworkNodeName()
-            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
             0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
             service.jobSchedulesService = Mock(SchedulesManager){
                 1 * isScheduled(_)
@@ -2511,16 +2595,17 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         def pluginService = service.pluginService
 
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','wrong')
         ]
         0 * service.frameworkService.validateDescription(*_)
-        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         0 * service.frameworkService.getFrameworkNodeName()
-        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+        2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
 
         0 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)
         service.jobSchedulesService = Mock(SchedulesManager){
@@ -3343,6 +3428,42 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
     }
 
+    def "should schedule despite project properties being outdated"() {
+        given:
+        def projectPropsOutdated = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':(disableSchedule)?!Boolean.valueOf(disableSchedule):'true',
+                                       'project.disable.executions':(disableExecution)?!Boolean.valueOf(disableSchedule):'true']
+        }
+
+        def projectPropsUpdated = Mock(IRundeckProjectConfig) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectPropsOutdated
+            getProjectConfigReloaded(_) >> projectPropsUpdated
+        }
+        when:
+        def result = service.shouldScheduleInThisProject('proj')
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
+
     @Unroll
     def "do save job with dynamic threadcount"(){
         given:
@@ -3492,7 +3613,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -3500,7 +3621,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         then:
         results.success
-        1 * service.jobLifecyclePluginService.beforeJobSave(se,_)>>lfresult
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_)>>lfresult
 
         where:
         inparams                                        | lfresult
@@ -3516,7 +3637,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:
@@ -3526,8 +3647,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         !results.success
         se.errors.hasErrors()
         se.errors.hasGlobalErrors()
-        1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
-            throw new JobLifecyclePluginException('an error')
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
+            throw new JobLifecycleComponentException('an error')
         }
 
         where:
@@ -3544,13 +3665,15 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                     workflow: new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test what')]),
             ]
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.frameworkService = Stub(FrameworkService) {
-            existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled() >> false
             getServerUUID() >> TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_) >> Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_) >> []
             getFrameworkNodeName() >> "testProject"
         }
@@ -3570,8 +3693,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.errors.hasErrors()
         results.scheduledExecution.errors.hasGlobalErrors()
         results.scheduledExecution.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-        1 * service.jobLifecyclePluginService.beforeJobSave(_,_) >> {
-            throw new JobLifecyclePluginException('an error')
+        1 * service.jobLifecycleComponentService.beforeJobSave(_,_) >> {
+            throw new JobLifecycleComponentException('an error')
         }
 
     }
@@ -3604,7 +3727,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3659,7 +3784,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3736,7 +3863,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3805,7 +3934,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3871,7 +4002,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3933,7 +4066,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3994,7 +4129,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:
@@ -4005,8 +4140,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             se.errors.hasErrors()
             se.errors.hasGlobalErrors()
             se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-            1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
-                throw new JobLifecyclePluginException('an error')
+            1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
+                throw new JobLifecycleComponentException('an error')
             }
 
 
@@ -4152,6 +4287,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         service.rundeckAuthContextProcessor.authorizeProjectResource(*_)>>false
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
+        service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
@@ -4249,12 +4385,21 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     def "blank email notification attached options defaults to inline"() {
         given:
         setupDoValidate()
+        mockCodec(JSONCodec)
 
+        def json = [
+            [
+                trigger:NotificationConstants.ONSUCCESS_TRIGGER_NAME,
+                type:'email',
+                config:[
+                    recipients:'a@example.com,z@example.com',
+                    attachLog:true,
+                    attachLogInFile:true
+                ]
+            ]
+        ].encodeAsJSON().toString()
         def params = baseJobParams()+[
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'a@example.com,z@example.com',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
-
+                jobNotificationsJson:json
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
@@ -4450,6 +4595,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+            service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:
@@ -4522,6 +4670,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+            service.jobStatsDataProvider = new GormJobStatsDataProvider()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:
@@ -4548,8 +4698,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     @Unroll
     def "delete scheduled execution also deletes job stats and job refs"() {
         given:
-            def job = new ScheduledExecution(createJobParams()).save()
-            def stats = new ScheduledExecutionStats(se: job, content: '{}').save()
+            def job = new ScheduledExecution(createJobParams() + [uuid: UUID.randomUUID().toString()]).save()
+            def stats = new ScheduledExecutionStats(jobUuid: job.uuid, content: '{}').save()
             def exec1 = new Execution(
                     status: 'running',
                     dateStarted: new Date(100),
@@ -4558,7 +4708,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                     user: 'bob',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
             ).save(flush: true)
-            def ref = new ReferencedExecution(scheduledExecution: job, status: 'success', execution: exec1).save()
+            def ref = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
 
             def authContext = Mock(AuthContext)
             def username = 'bob'
@@ -4569,6 +4719,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
             service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+            service.jobStatsDataProvider = new GormJobStatsDataProvider()
         when:
             def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
         then:
@@ -4983,7 +5135,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
         service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
         baseJob.save(flush:true)
-        def options = Option.findAll().size()
+        def options = baseJob.options.size()
 
         then: "baseJob should have 1 option remaining"
 
@@ -5010,20 +5162,27 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             job.notifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
             job.notifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
     }
-    def "job definition notifications from old params"() {
-        given:
-            def job = new ScheduledExecution(notifications:[])
-            def params = [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
-                          (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com']
-            def auth = Mock(UserAndRolesAuthContext)
-        when:
-            service.jobDefinitionNotifications(job, null, params, auth)
-        then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'email'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration == [recipients:  'c@example.com,d@example.com']
+
+    def "job definition notifications from input job should remove notifications"() {
+
+        given:"a base job with notifications"
+        setupDoUpdate()
+        def baseJob = new ScheduledExecution(createJobParams(notifications:[
+                new Notification(type:'email',content:'blah',eventTrigger: 'onsuccess'),
+                new Notification(type:'aplugin',content:'{}',eventTrigger: 'onfailure')
+        ])).save()
+        def jobEmptyNotifications = new ScheduledExecution(createJobParams(notifications:[]))
+        def params = [:]
+        def auth = Mock(UserAndRolesAuthContext)
+
+        when:"uploading the same job without any notifications"
+        service.jobDefinitionBasic(baseJob, jobEmptyNotifications, params, auth)
+        def notifications = Notification.findAllByScheduledExecution(baseJob)
+
+        then:"base job should not have any notifications"
+        notifications.size()==0
     }
+
     def "job definition notifications from jobNotificationsJson email"() {
         given:
             def job = new ScheduledExecution(notifications:[])
@@ -5506,7 +5665,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             service.notificationService = Mock(NotificationService){
             }
             service.orchestratorPluginService=Mock(OrchestratorPluginService)
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
             service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             service.configurationService=Mock(ConfigurationService)
 
@@ -5532,6 +5691,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             }
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
+            GormUserDataProvider provider = new GormUserDataProvider()
+            service.userDataProvider = provider
 
 
         when:"the connection values are set directly on the URL"
@@ -5549,7 +5710,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             }
 
             def input=[:]
-            ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
                 input.url=url
                 input.timeout=vtimeout
                 input.contimeout=vcontimeout
@@ -5560,7 +5721,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                         ]
                 ]
             }
-            def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+            def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"the values on the input should be the same as the spectec values "
             input.url=='file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
@@ -5585,6 +5746,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
@@ -5592,7 +5756,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         ))
         se.save()
         def input=[:]
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url,JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             input.url=url
             input.timeout=vtimeout
             input.contimeout=vcontimeout
@@ -5616,7 +5780,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 _ * loadProjectConfig('testProject')
             }
         }
-        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"values setted on the config.properties should be equals to input values"
         input.url=='file://test'
@@ -5641,6 +5805,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
@@ -5655,10 +5822,10 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         when:"getRemoteJSON trow an exception"
         Exception e = new Exception("some exception")
-        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={ HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
             throw new Exception(e)
         }
-        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser', null)
 
         then:"result should have the information of the exception"
         result.err.exception.toString() == "java.lang.Exception: java.lang.Exception: some exception"
@@ -5696,6 +5863,138 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             sort    | size
             true    | 4
             false   | 4
+    }
+
+    def "Returns the SCM options to dropdown list"(){
+        given:
+        def project = 'test'
+        def authContext = Mock(UserAndRolesAuthContext)
+        def scheduledExecution = Mock(ScheduledExecution)
+        service.scmService = Mock(ScmService){
+            it.projectHasConfiguredExportPlugin(_) >> exportIntegrationConfigured
+            it.projectHasConfiguredImportPlugin(_) >> importIntegrationConfigured
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> hasAccessToKeyOrPassword
+        }
+        def scmImportKeys = [:]
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.optionKey, "test")
+        scmImportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.optionKey, "test")
+        def scmExportKeys = [:]
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.optionKey, "test")
+        scmExportKeys.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_RENAMED_PATH.optionKey, "test")
+
+        when:
+        def result = service.scmActionMenuOptions(project, authContext, scheduledExecution)
+
+        then:
+        result != null
+        scmImportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasImportKeys
+        scmExportKeys.keySet().stream().allMatch(result.keySet()::contains) == hasExportKeys
+
+        where:
+        importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
+        true                        | false                       | ["hasAccess": true]      | true          | false
+        false                       | true                        | ["hasAccess": true]      | false         | true
+        true                        | true                        | ["hasAccess": true]      | true          | true
+        false                       | false                       | ["hasAccess": true]      | false         | false
+        true                        | true                        | ["hasAccess": false]     | false         | false
+
+    }
+
+    def "validate workflow strategy from job import"(){
+
+        given:
+        Map params = [:]
+        Map validationMap = [:]
+        def enabled= false
+        def serverUUID = null
+        def uuid=serverUUID?:UUID.randomUUID().toString()
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getProjectProperties() >> [:]
+            _*_
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> projectMock
+            _ * existsFrameworkProject('BProject') >> true
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> enabled
+            _ * getServerUUID() >> uuid
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * frameworkNodeName () >> null
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
+            _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            _ * authorizeProjectJobAll(*_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            _ * getExecutionsAreActive() >> false
+        }
+        service.pluginService=Mock(PluginService){
+            1 *  validatePlugin(
+                    plugiName,
+                    _,
+                    _,
+                    PropertyScope.Instance,
+                    null
+            ) >> null
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            _ * createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+                _ * getWorkflow()
+            }
+        }
+        service.quartzScheduler = Mock(Scheduler)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+            updateJob(_,_,_)>>{
+                RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
+            }
+            validateImportedJob(_)>>new Validator.ReportSet(true,[:])
+        }
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        def se = new ScheduledExecution(createJobParams(
+                workflow: new Workflow(strategy: strategy,
+                        commands: [
+                                new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)
+                        ]
+                )
+        )
+        )
+
+        when:
+        def results = service.validateDefinitionWFStrategy(se,params,validationMap)
+
+
+        then:
+        results == validation
+
+        where:
+        strategy         | plugiName           | validation
+        "step-first"     | "sequential"        | false
+        "sequential"     | "sequential"        | false
+        "node-first"     | "node-first"        | false
+        "ruleset"        | "ruleset"           | false
+        "parallel"       | "parallel"          | false
     }
 
 }

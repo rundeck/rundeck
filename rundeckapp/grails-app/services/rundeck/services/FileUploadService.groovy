@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -21,6 +22,7 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.feature.FeatureService
 
 import java.nio.file.Files
+import java.util.regex.Pattern
 
 /**
  * Manage receiving and retrieving files uploaded for job execution
@@ -31,6 +33,8 @@ class FileUploadService {
     public static final String RECORD_TYPE_OPTION_INPUT = 'option'
     public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
     public static final String DEFAULT_MAX_SIZE = '200MB'
+    public static final Pattern ILLEGAL_FILENAME_CHARACTERS = ~/[#@=%&{}$!`?*<>|:;'"\n\r\t\f\/\\]/
+    
     PluginService pluginService
     ConfigurationService configurationService
     TaskService taskService
@@ -92,8 +96,12 @@ class FileUploadService {
 
     FileUploadPlugin getPlugin() {
         PluggableProviderService fileUploadProviderService = frameworkService.getRundeckPluginRegistry().createPluggableService(FileUploadPlugin.class)
-        def configured = pluginService.configurePlugin(pluginType, fileUploadProviderService, frameworkService.getFrameworkPropertyResolver(),
-                                                       PropertyScope.Framework)
+        def configured = pluginService.configurePlugin(
+            pluginType,
+            fileUploadProviderService,
+            frameworkService.pluginConfigFactory(null,null),
+            PropertyScope.Framework
+        )
         def plugin = configured.instance
         plugin.initialize()
         return plugin
@@ -132,6 +140,13 @@ class FileUploadService {
     )
     {
 
+        // Validate received filename.
+        if(origName && origName =~ ILLEGAL_FILENAME_CHARACTERS) {
+            throw new FileUploadServiceException(
+                "Illegal filename: ${origName}"
+            )
+        }
+        
         def shastream = new SHAInputStream(input)
         def readstream = shastream
         long max = optionUploadMaxSize

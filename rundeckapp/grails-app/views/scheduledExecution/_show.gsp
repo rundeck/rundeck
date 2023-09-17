@@ -130,7 +130,7 @@
 
                         <div class="tab-pane active" id="runjob">
                             <tmpl:execOptionsForm
-                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized,isScheduled:isScheduled]}"
+                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized,isScheduled:isScheduled, jobComponents: jobComponents, jobComponentValues: jobComponentValues]}"
                                     hideHead="${true}"
                                     hideCancel="${true}"
                                     defaultFollow="${true}"/>
@@ -163,7 +163,7 @@
                                             <g:if test="${hasEventReadAuth}">
                                                 <span class="vue-project-activity">
                                                 <activity-running-indicator :event-bus="EventBus" class="text-info ">
-                                                    <template slot-scope="{count}">
+                                                    <template v-slot:default="{ count }">
                                                         <b class="fas fa-circle"></b>
                                                         <span v-if="count>1">{{count}}</span>
                                                     </template>

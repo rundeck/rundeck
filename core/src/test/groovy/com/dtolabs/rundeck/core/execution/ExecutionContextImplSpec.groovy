@@ -271,6 +271,8 @@ class ExecutionContextImplSpec extends Specification {
         def node2 = new NodeEntryImpl('bnode')
         def orc1 = new OrchestratorConfig('a', [b: 'c'])
         def orc2 = new OrchestratorConfig('b', [e: 'f'])
+        def execRef1 = Mock(ExecutionReference)
+        def execRef2 = Mock(ExecutionReference)
         def sharedctx1 = SharedDataContextUtils.sharedContext()
         sharedctx1.merge(ContextView.global(), DataContextUtils.context('data', [bob: 'data', blah: 'blee']))
         def sharedctx2 = SharedDataContextUtils.sharedContext()
@@ -300,6 +302,7 @@ class ExecutionContextImplSpec extends Specification {
                                          .outputContext(outcontext1)
                                          .sharedDataContext(sharedctx1)
                                          .loggingManager(logmanager1)
+                                         .execution(execRef1)
 //                                         .singleNodeContext(node1, false)
                                          .pluginControlService(plugincontrol1)
 
@@ -328,6 +331,7 @@ class ExecutionContextImplSpec extends Specification {
                                          .outputContext(outcontext2)
                                          .sharedDataContext(sharedctx2)
                                          .loggingManager(logmanager2)
+                                         .execution(execRef2)
 //                                         .singleNodeContext(node2, false)
                                          .pluginControlService(plugincontrol2)
 
@@ -357,6 +361,7 @@ class ExecutionContextImplSpec extends Specification {
             result.outputContext == (outcontext2)
             result.sharedDataContext.consolidate().getData(ContextView.global()).data == [bob: 'data2', blee: 'blah', blah: 'blee']
             result.loggingManager == (logmanager2)
+            result.execution == (execRef2)
             result.singleNodeContext == null
             result.pluginControlService == (plugincontrol2)
     }

@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
@@ -35,6 +36,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
+import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -1604,6 +1606,44 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "Check if the user has permission to the ssh or password configured for the integration"() {
+        given:
+        def scmUserInfo = Mock(ScmUserInfo)
+        def storageTree = Mock(StorageTreeImpl){
+            it.hasPath(_) >> userAccess
+        }
+        def scmOperationContext = Mock(ScmOperationContext){
+            getStorageTree() >> storageTree
+            getUserInfo() >> scmUserInfo
+        }
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def common = Mock(Common){
+            getSshPrivateKeyPath() >> 'keys/test'
+        }
+        def plugin = new GitExportPlugin(config)
+        plugin.setCommonConfig(common)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        hasAccess = plugin.userHasAccessToKeyOrPassword(scmOperationContext)
+
+        then:
+        hasAccess !== null
+
+        where:
+        userAccess | hasAccess
+        true       | true
+        false      | false
+
+    }
+
     def "get job status, does not exist in repo, respect serialize false"() {
         given:
 
@@ -1701,8 +1741,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Could not clone the remote branch: dev2, because it does not exist. " +
-                "To create it, you need to set the Create Branch option to true."
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
     }
 
     def "initialize plugin with unknown branch with create config"() {
@@ -1745,9 +1784,8 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(context)
 
         then:
-        gitdir.isDirectory()
-        new File(gitdir, '.git').isDirectory()
-        openGit(gitdir).repository.getFullBranch()=='refs/heads/dev2'
+        ScmPluginException e = thrown()
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
 
     }
 
@@ -1791,7 +1829,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Non existent remote branch: wrong"
+        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
     }
 
     def "refresh status should re-serialize job if stored commit is different than local commit"() {
@@ -1930,5 +1968,48 @@ class GitExportPluginSpec extends Specification {
             plugin.jobStateMap['xyz'].version==1
 
 
+    }
+
+    def "Should delete directory if this exists no matter the OS"(){
+        given:
+            def gitdir = new File(tempdir, 'scm')
+            def origindir = new File(tempdir, 'origin')
+            Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+            ScmOperationContext context = Mock(ScmOperationContext)
+            //create a git dir
+            def git = createGit(origindir)
+            addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
+            git.close()
+            def plugin = new GitExportPlugin(config)
+            plugin.initialize(Mock(ScmOperationContext))
+            File base = new File(config.dir)
+
+        when:
+            plugin.totalClean()
+
+        then:
+            !base.exists()
+    }
+
+    def "Directory should not exists and should not call FileUtils.Delete method"(){
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+        File base = new File("/test")
+
+        when:
+        plugin.totalClean()
+
+        then:
+        !base.exists()
+        0 * FileUtils.delete(_, _)
     }
 }

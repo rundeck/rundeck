@@ -2,13 +2,10 @@ package rundeck
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
-import grails.test.hibernate.HibernateSpec
-import groovy.mock.interceptor.MockFor
-import net.bytebuddy.implementation.bytecode.Throw
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
+import grails.testing.gorm.DataTest
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -28,14 +25,14 @@ import net.bytebuddy.implementation.bytecode.Throw
 
 //import grails.test.GrailsUnitTestCase
 
-import org.junit.Test
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import rundeck.controllers.ScheduledExecutionController
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import rundeck.services.FrameworkService
-import rundeck.services.JobLifecyclePluginService
+import rundeck.services.JobLifecycleComponentService
+import rundeck.services.OldJob
 import rundeck.services.ScheduledExecutionService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -47,9 +44,9 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-public class ScheduledExecutionServiceSpec extends RundeckHibernateSpec {
+public class ScheduledExecutionServiceSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow,CommandExec }
 
     void runBeforeSave(){
         when:
@@ -71,8 +68,8 @@ public class ScheduledExecutionServiceSpec extends RundeckHibernateSpec {
         ScheduledExecutionService service = new ScheduledExecutionService()
         def authContext = Mock(UserAndRolesAuthContext)
         service.frameworkService = Mock(FrameworkService)
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
-            beforeJobSave(_, _) >> {throw new JobLifecyclePluginException("message from life cycle plugin")}
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
+            beforeJobSave(_, _) >> {throw new JobLifecycleComponentException("message from life cycle plugin")}
         }
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
@@ -80,6 +77,32 @@ public class ScheduledExecutionServiceSpec extends RundeckHibernateSpec {
         def result = service.runBeforeSave(scheduledExecution, authContext)
         then:
         assertEquals result, [success: false, scheduledExecution: scheduledExecution, error: "message from life cycle plugin"]
+    }
+
+    void "Job gets persisted if the scheduling is changed"(){
+        when:
+        def scheduledExecution = new ScheduledExecution(id: 1, jobName:'testScheduling',groupPath:'group1', project:'test', dayOfWeek: "1")
+        scheduledExecution.save()
+        ImportedJob<ScheduledExecution> importedJob =  new RundeckJobDefinitionManager.ImportedJobDefinition(job: scheduledExecution, associations:  null)
+        importedJob.job.dayOfWeek = "2"
+        FrameworkService frameworkService = Mock(FrameworkService){
+            it.isClusterModeEnabled() >> false
+        }
+        OldJob mockedOldJob = Mock(OldJob){
+            it.wasRenamed(_) >> false
+            it.schedulingWasChanged(_) >> true
+        }
+        ScheduledExecutionService service = Mock(ScheduledExecutionService){
+            it.validateJobDefinition(_) >> false
+            it.runBeforeSave(_,_) >> [success: true]
+            it.saveComponents(_,_) >> [success: true]
+            it.rundeckJobDefinitionManager.waspersisted(_,_) >> true
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+        service._dosaveupdated([:],importedJob,mockedOldJob,authContext,[method: "update", user: "admin", change: "modify"],false)
+
+        then:
+        ScheduledExecution.findById(scheduledExecution.id).dayOfWeek == "2"
     }
 
     void testGetNodes(){

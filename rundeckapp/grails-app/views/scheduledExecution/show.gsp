@@ -27,7 +27,7 @@
 
     <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
-    <asset:javascript src="jquery.autocomplete.min.js"/>
+    <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
@@ -200,7 +200,7 @@ search
             </div>
         </div>
     </g:if>
-<tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
+<tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}" jobComponents="${jobComponents}" jobComponentValues="${jobComponentValues}"/>
 <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 </div>

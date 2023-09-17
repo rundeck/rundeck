@@ -274,7 +274,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     elem.addEventListener('keypress', noenter, false);
   });
   if (liitem.find('input[type=text]').length > 0) {
-    liitem.find('input[type=text]')[0].focus();
+    liitem.find('input[type=text]')[0].focus()
   }
   isnodestep = isnodestep || liitem.data('wfitemnodestep');
   var calcnodestep = function () {
@@ -321,120 +321,157 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
 
 }
 
-function setupNotificationAutocomplete(idcompenent){
-  jQuery('#' + idcompenent).each(function (i, elem) {
-    addNotificationAutocomplete(jQuery(elem));
-  });
-}
-
-function addNotificationAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
+var notificationAutocomplete = function (id) {
+  var elem = jQuery('#' + id)
   var baseVarData = [].concat(_jobVarData());
   baseVarData = baseVarData.concat(_jobGlobalVarData());
   baseVarData = baseVarData.concat(_executionVarData());
 
-  autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode);
-}
-
-function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
-  var baseNodeData = [];
-
-  //special error-handler vars
-
-  if (iseh) {
-    baseVarData = baseVarData.concat(_jobEhData());
+  var istextareatemplatemode = function (elem) {
+    return jQuery(elem).hasClass('_wfscriptitem');
   }
 
-  var mkenv = function (name) {
-    return ('RD_' + name).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
-  };
-  var varmodes = {
-    sh: function (name) {
-      return '$' + mkenv(name);
-    },
-    powershell: function (name) {
-      return '$env:' + mkenv(name);
-    },
-    batchfile: function (name) {
-      return '%' + mkenv(name) + '%';
+  var gettextfieldenvmode = function (elem) {
+    var obj = jQuery(elem);
+    if (obj.hasClass('context_env_autocomplete')) {
+      var key = liitem.find('._wfiedit').data('rkey');
+      return (key && workflowEditor.scriptSteps()[key] && workflowEditor.scriptSteps()[key].guessAceMode() || 'sh');
     }
+    return null;
+  }
+
+  var autoenvmode = gettextfieldenvmode && gettextfieldenvmode(elem) || null;
+  var isscriptStep = istextareatemplatemode && istextareatemplatemode(elem);
+
+  var autovarfuncLocal = function (prefix, suffix, mode) {
+    return autovarfunc(prefix, suffix, mode, baseVarData, function (elem) { return false})
   };
-  var autovarfunc = function (prefix, suffix, mode) {
-    prefix = prefix || '${';
-    suffix = suffix || '}';
-    var mkvar = function (name) {
-      return prefix + name + suffix;
-    };
-    var expvars = [];
-    var data = [].concat(baseVarData);
 
-    if (isnodestepfunc && isnodestepfunc()) {
-      data = data.concat(_jobNodeData());
-    }
+  var vars = isscriptStep ? autovarfuncLocal('@', '@', autoenvmode) : autovarfuncLocal(null, null, autoenvmode);
+  return vars
+}
 
-    var mkmodevar = (varmodes[mode] || varmodes['sh']);
-    for (var i = 0; i < data.length; i++) {
+
+var mkenv = function (name) {
+  return ('RD_' + name).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+};
+
+
+var varmodes = {
+  sh: function (name) {
+    return '$' + mkenv(name);
+  },
+  powershell: function (name) {
+    return '$env:' + mkenv(name);
+  },
+  batchfile: function (name) {
+    return '%' + mkenv(name) + '%';
+  }
+};
+
+var autovarfunc = function (prefix, suffix, mode, baseVarData, isnodestepfunc) {
+  prefix = prefix || '${';
+  suffix = suffix || '}';
+  var mkvar = function (name) {
+    return prefix + name + suffix;
+  };
+  var expvars = [];
+  var data = [].concat(baseVarData);
+
+  if (isnodestepfunc && isnodestepfunc()) {
+    data = data.concat(_jobNodeData());
+  }
+
+  var mkmodevar = (varmodes[mode] || varmodes['sh']);
+  for (var i = 0; i < data.length; i++) {
+    expvars.push({
+      value: mkvar(data[i].key),
+      data: data[i]
+    });
+    if (mode) {
       expvars.push({
-        value: mkvar(data[i].key),
+        value: mkmodevar(data[i].key),
         data: data[i]
       });
-      if (mode) {
-        expvars.push({
-          value: mkmodevar(data[i].key),
-          data: data[i]
-        });
-      }
     }
-    for (var x = 0; x < _jobOptionData.length; x++) {
+  }
+  for (var x = 0; x < _jobOptionData.length; x++) {
+    expvars.push({
+      value: mkvar('option.' + _jobOptionData[x].name),
+      data: {
+        category: 'Options',
+        title: 'Option value',
+        desc: 'For option: ' + _jobOptionData[x].name
+      }
+    });
+    expvars.push({
+      value: mkvar('unquotedoption.' + _jobOptionData[x].name),
+      data: {
+        category: 'Options',
+        title: 'Option value',
+        desc: 'Unquoted value for option: ' + _jobOptionData[x].name
+      }
+    });
+    if (_jobOptionData[x].multivalued == true) {
       expvars.push({
-        value: mkvar('option.' + _jobOptionData[x].name),
+        value: mkvar('option.' + _jobOptionData[x].name + '.delimiter'),
+        data: {
+          category: 'Options',
+          title: 'Option Delimeter value',
+          desc: 'For option: ' + _jobOptionData[x].name
+        }
+      });
+    }
+    if (mode) {
+      expvars.push({
+        value: mkmodevar('option.' + _jobOptionData[x].name),
         data: {
           category: 'Options',
           title: 'Option value',
           desc: 'For option: ' + _jobOptionData[x].name
         }
       });
-      expvars.push({
-        value: mkvar('unquotedoption.' + _jobOptionData[x].name),
-        data: {
-          category: 'Options',
-          title: 'Option value',
-          desc: 'Unquoted value for option: ' + _jobOptionData[x].name
-        }
-      });
+
       if (_jobOptionData[x].multivalued == true) {
         expvars.push({
-          value: mkvar('option.' + _jobOptionData[x].name + '.delimiter'),
-          data: {
-            category: 'Options',
-            title: 'Option Delimeter value',
-            desc: 'For option: ' + _jobOptionData[x].name
-          }
-        });
-      }
-      if (mode) {
-        expvars.push({
-          value: mkmodevar('option.' + _jobOptionData[x].name),
+          value: mkmodevar('option.' + _jobOptionData[x].name + '.delimiter'),
           data: {
             category: 'Options',
             title: 'Option value',
             desc: 'For option: ' + _jobOptionData[x].name
           }
         });
-
-        if (_jobOptionData[x].multivalued == true) {
-          expvars.push({
-            value: mkmodevar('option.' + _jobOptionData[x].name + '.delimiter'),
-            data: {
-              category: 'Options',
-              title: 'Option value',
-              desc: 'For option: ' + _jobOptionData[x].name
-            }
-          });
-        }
       }
-      if (_jobOptionData[x].type == 'file') {
+    }
+    if (_jobOptionData[x].type == 'file') {
+      expvars.push({
+        value: mkvar('file.' + _jobOptionData[x].name),
+        data: {
+          category: 'File Option',
+          title: 'The local file path',
+          desc: 'For file option: ' + _jobOptionData[x].name
+        }
+      });
+      expvars.push({
+        value: mkvar('file.' + _jobOptionData[x].name + '.fileName'),
+        data: {
+          category: 'File Option',
+          title: 'The original File name',
+          desc: 'For file option: ' + _jobOptionData[x].name
+        }
+      });
+      expvars.push({
+        value: mkvar('file.' + _jobOptionData[x].name + '.sha'),
+        data: {
+          category: 'File Option',
+          title: 'The file contents SHA256 value',
+          desc: 'For file option: ' + _jobOptionData[x].name
+        }
+      });
+
+      if (mode) {
         expvars.push({
-          value: mkvar('file.' + _jobOptionData[x].name),
+          value: mkmodevar('file.' + _jobOptionData[x].name),
           data: {
             category: 'File Option',
             title: 'The local file path',
@@ -442,58 +479,43 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
           }
         });
         expvars.push({
-          value: mkvar('file.' + _jobOptionData[x].name + '.fileName'),
+          value: mkmodevar('file.' + _jobOptionData[x].name + '.fileName'),
           data: {
             category: 'File Option',
             title: 'The original File name',
-            desc: 'For file option: ' + _jobOptionData[x].name
+            desc: 'For file option:' + _jobOptionData[x].name
           }
         });
         expvars.push({
-          value: mkvar('file.' + _jobOptionData[x].name + '.sha'),
+          value: mkmodevar('file.' + _jobOptionData[x].name + '.sha'),
           data: {
             category: 'File Option',
             title: 'The file contents SHA256 value',
             desc: 'For file option: ' + _jobOptionData[x].name
           }
         });
-
-        if (mode) {
-          expvars.push({
-            value: mkmodevar('file.' + _jobOptionData[x].name),
-            data: {
-              category: 'File Option',
-              title: 'The local file path',
-              desc: 'For file option: ' + _jobOptionData[x].name
-            }
-          });
-          expvars.push({
-            value: mkmodevar('file.' + _jobOptionData[x].name + '.fileName'),
-            data: {
-              category: 'File Option',
-              title: 'The original File name',
-              desc: 'For file option:' + _jobOptionData[x].name
-            }
-          });
-          expvars.push({
-            value: mkmodevar('file.' + _jobOptionData[x].name + '.sha'),
-            data: {
-              category: 'File Option',
-              title: 'The file contents SHA256 value',
-              desc: 'For file option: ' + _jobOptionData[x].name
-            }
-          });
-        }
       }
     }
-    return expvars;
+  }
+  return expvars;
+};
+
+function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
+  //special error-handler vars
+  if (iseh) {
+    baseVarData = baseVarData.concat(_jobEhData());
+  }
+
+  var autovarfuncLocal = function (prefix, suffix, mode) {
+    return autovarfunc(prefix, suffix, mode, baseVarData, isnodestepfunc)
   };
+
   liitem.find('textarea.apply_ace').each(function (ndx, elem) {
     var isscriptStep = istextareatemplatemode && istextareatemplatemode(elem);
     var editor = _addAceTextarea(elem, null, function (editor, session, pos, prefix) {
       "use strict";
       var aceSyntaxMode = getAceSyntaxMode(editor);
-      var vals = isscriptStep ? autovarfunc('@', '@', aceSyntaxMode) : autovarfunc(null, null, aceSyntaxMode);
+      var vals = isscriptStep ? autovarfuncLocal('@', '@', aceSyntaxMode) : autovarfuncLocal(null, null, aceSyntaxMode);
       return vals.map(function (ea) {
         "use strict";
         //ace text editor lang tools completer format
@@ -518,7 +540,7 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
       tabDisabled: true,
       lookup: function (q, callback) {
         var query = q.toLowerCase();
-        var results = jQuery.grep(autovarfunc(null, null, autoenvmode), function (suggestion) {
+        var results = jQuery.grep(autovarfuncLocal(null, null, autoenvmode), function (suggestion) {
           "use strict";
           return suggestion.value.toLowerCase().indexOf(query) !== -1
         });
@@ -530,7 +552,7 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
       formatResult: function (suggestion, currentValue) {
         "use strict";
         if (suggestion.data.title) {
-          return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+          return `${jQuery.Autocomplete.formatResult(suggestion, currentValue)}-${suggestion.data.title}`
         }
         return jQuery.Autocomplete.formatResult(suggestion, currentValue)
       }
@@ -649,11 +671,11 @@ function _wfisave(key, num, formelem, iseh) {
     success: function (resp, status, jqxhr) {
       var litem = jQuery('#wfli_' + key);
       litem.html(resp);
-      if (litem.find('div.wfitemEditForm').size() < 1) {
+      if (litem.find('div.wfitemEditForm').length < 1) {
         _showWFItemControls();
         if (iseh) {
           _hideWFItemControlsAddEH(num);
-          if (litem.parent().closest('li').find('.wfitem.jobtype').size() > 0) {
+          if (litem.parent().closest('li').find('.wfitem.jobtype').length > 0) {
             //disable the config button
             _disableWFItemControlsConfigButton(num)
           }
@@ -663,7 +685,7 @@ function _wfisave(key, num, formelem, iseh) {
       }
       _vueEmitJobEdited()
     }
-  }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
+  }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 var newitemElem;
 
@@ -740,7 +762,7 @@ function _wfisavenew(formelem) {
       }
       _vueEmitJobEdited()
     }
-  }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
+  }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 
 function _wficancelnew() {
@@ -962,7 +984,7 @@ function _ajaxWFAction(url, params) {
 }
 
 function _vueEmitJobEdited() {
-  window._rundeck.eventBus.$emit('job-edit:edited', true)
+  window._rundeck.eventBus.emit('job-edit:edited', true)
 }
 
 function _updateWFUndoRedo() {
@@ -1625,7 +1647,7 @@ function groupChosen(path) {
   jQuery('#groupChooseModal').modal('hide')
 
 }
-jQuery(window).load(function () {
+jQuery(window).on('load',function () {
   jQuery('#groupChooseModal').on('shown.bs.modal', function (e) {
     jQuery.get(appLinks.scheduledExecutionGroupTreeFragment + '?jscallback=true', function (d) {
       jQuery('#groupChooseModalContent').html(d)

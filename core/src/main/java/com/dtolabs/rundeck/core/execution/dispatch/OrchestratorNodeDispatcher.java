@@ -22,12 +22,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.OrchestratorConfig;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
@@ -53,9 +49,9 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Ashley Taylor
  */
 public class OrchestratorNodeDispatcher implements NodeDispatcher {
-    private Framework framework;
+    private IFramework framework;
 
-    public OrchestratorNodeDispatcher(Framework framework) {
+    public OrchestratorNodeDispatcher(IFramework framework) {
         this.framework = framework;
     }
 

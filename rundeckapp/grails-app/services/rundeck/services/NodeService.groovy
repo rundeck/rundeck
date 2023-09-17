@@ -22,13 +22,14 @@ import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.common.NodeSourceLoader
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.common.SourceDefinition
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
-import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.resources.ResourceModelSource
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -45,6 +46,8 @@ import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import rundeck.services.nodes.CachedProjectNodes
 
@@ -66,6 +69,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
     def Services rundeckSpiBaseServicesProvider
+
+    def nodeSourceLoaderService
 
     @Override
     Map<String, String> getCategories() {
@@ -226,31 +231,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,
-            { ProjectNodeSupport.SourceDefinition definition ->
-                //load via pluginService to enable app-level plugins
-                def retained = pluginService.retainPlugin(
-                        definition.type,
-                        resourceModelSourceService
-                )
-                if (null != retained) {
-                    //load services
-                    def services = projectManagerService.getNonAuthorizingProjectServicesForPlugin(
-                        project,
-                        ServiceNameConstants.ResourceModelSource,
-                        definition.type
-                    )
-                    return retained.convert(
-                        ResourceModelSourceService.factoryConverter(
-                            rundeckSpiBaseServicesProvider.combine(services),
-                            definition.properties
-                        )
-                    )
-                } else {
-                    return null
-                }
-            }
+            nodeSourceLoaderService
         )
-
 
         def preloadedNodes = null
 

@@ -110,7 +110,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
         given:
             service.rundeckPluginRegistry = Mock(PluginRegistry)
             def providerService = Mock(PluggableProviderService)
-            def describedPlugin = new DescribedPlugin(null, null, 'blah')
+            def describedPlugin = new DescribedPlugin(null, null, 'blah', null, null)
         when:
             def result = service.getPluginDescriptor('blah', ServiceNameConstants.LogFilter)
         then:
@@ -200,9 +200,14 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                                                  .property(PropertyBuilder.builder().string('xprop').build())
                                                  .build()
             def pluginInstance = Mock(DynamicProperties)
-
+            def providerService = Mock(PluggableProviderService)
+            service.frameworkService = Mock(FrameworkService){
+                getProjectPropertyResolver(_) >> PropertyResolverFactory.instanceRetriever(projProps)
+                getRundeckFramework() >> fwk
+            }
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * configurePluginByName(_,_,_ as PropertyResolverFactory.Factory,_) >> new ConfiguredPlugin<Object>(pluginInstance, dynamicInput)
+                1 * createPluggableService(_) >> providerService
             }
 
 
@@ -214,8 +219,8 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
             result == [aprop: ['a', 'b']]
 
         where:
-            fwkProps                                              | projProps | dynamicInput
-            [:]                                                   | [:]       | [:]
+            fwkProps                                                  | projProps | dynamicInput
+            [:]                                                       | [:]       | [:]
             ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
             ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval']
             ['framework.plugin.WorkflowStep.AProvider.xprop': 'xval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
@@ -254,8 +259,14 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                                                  .frameworkMapping("custom.xprop","xprop")
                                                  .build()
             def pluginInstance = Mock(DynamicProperties)
+            def providerService = Mock(PluggableProviderService)
+            service.frameworkService = Mock(FrameworkService){
+                getProjectPropertyResolver(_) >> PropertyResolverFactory.instanceRetriever(projProps)
+                getRundeckFramework() >> fwk
+            }
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * configurePluginByName(_,_,_ as PropertyResolverFactory.Factory,_) >> new ConfiguredPlugin<Object>(pluginInstance, dynamicInput)
+                1 * createPluggableService(_) >> providerService
             }
 
         when:
@@ -267,9 +278,9 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
         where:
             fwkProps                                              | projProps | dynamicInput
-            ['custom.aprop': 'aval'] | [:]      | [aprop: 'aval']
-            ['custom.xprop': 'xval'] | [:]      | [xprop: 'xval']
-            ['custom.aprop': 'aval','custom.xprop': 'xval'] | [:]      | [aprop: 'aval',xprop: 'xval']
+            ['custom.aprop': 'aval']                              | [:]       | [aprop: 'aval']
+            ['custom.xprop': 'xval']                              | [:]       | [xprop: 'xval']
+            ['custom.aprop': 'aval','custom.xprop': 'xval']       | [:]       | [aprop: 'aval',xprop: 'xval']
 
     }
 
@@ -305,8 +316,14 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                                                  .mapping("custom.xprop","xprop")
                                                  .build()
             def pluginInstance = Mock(DynamicProperties)
+            def providerService = Mock(PluggableProviderService)
+            service.frameworkService = Mock(FrameworkService){
+                getProjectPropertyResolver(_) >> PropertyResolverFactory.instanceRetriever(projProps)
+                getRundeckFramework() >> fwk
+            }
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * configurePluginByName(_,_,_ as PropertyResolverFactory.Factory,_) >> new ConfiguredPlugin<Object>(pluginInstance, dynamicInput)
+                1 * createPluggableService(_) >> providerService
             }
 
         when:
@@ -317,10 +334,10 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
             result == [aprop: ['a', 'b']]
 
         where:
-            fwkProps                                              | projProps | dynamicInput
-            [:] | ['custom.aprop': 'aval']      | [aprop: 'aval']
-            [:] | ['custom.xprop': 'xval']      | [xprop: 'xval']
-            [:] | ['custom.aprop': 'aval','custom.xprop': 'xval']      | [aprop: 'aval',xprop: 'xval']
+            fwkProps | projProps                                       | dynamicInput
+            [:]      | ['custom.aprop': 'aval']                        | [aprop: 'aval']
+            [:]      | ['custom.xprop': 'xval']                        | [xprop: 'xval']
+            [:]      | ['custom.aprop': 'aval','custom.xprop': 'xval'] | [aprop: 'aval',xprop: 'xval']
 
     }
 
@@ -356,8 +373,14 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                 .build()
         def pluginInstance = Mock(DynamicProperties)
 
+        def providerService = Mock(PluggableProviderService)
+        service.frameworkService = Mock(FrameworkService){
+            getProjectPropertyResolver(_) >> PropertyResolverFactory.instanceRetriever([:])
+            getRundeckFramework() >> fwk
+        }
         service.rundeckPluginRegistry=Mock(PluginRegistry){
-            1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            1 * configurePluginByName(_,_,_ as PropertyResolverFactory.Factory,_) >> new ConfiguredPlugin<Object>(pluginInstance, [:])
+            1 * createPluggableService(_) >> providerService
         }
 
         when:
@@ -389,6 +412,20 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
         result == configuredPlugin
         result.instance.getService() != null
+    }
+    def "listPlugins"(){
+        given:
+            def test = [
+                a: new DescribedPlugin(null, null, 'alphaTestService', new File("alphaTestService.groovy"),null),
+                b: new DescribedPlugin(null, null, 'bTestService', new File("bTestService.groovy"),null)
+            ]
+            service.rundeckPluginRegistry = Mock(PluginRegistry)
+        when:
+            def result = service.listPlugins(String, Mock(PluggableProviderService))
+        then:
+            1 * service.rundeckPluginRegistry.listPluginDescriptors(String,_)>>test
+            result['a'].name=='alphaTestService'
+            result['b'].name=='bTestService'
     }
 
 

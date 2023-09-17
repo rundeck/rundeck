@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# use api V44
+API_VERSION=44
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -125,8 +126,8 @@ check_schedule_contents(){
     projname=$1
     xmlproj=$($XMLSTARLET esc "$projname")
 
-    runurl="${APIURL}/project/${projname}/jobs/export?format=xml"
-    params=""
+    runurl="${APIURL}/project/${projname}/jobs/export"
+    params="format=xml"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"

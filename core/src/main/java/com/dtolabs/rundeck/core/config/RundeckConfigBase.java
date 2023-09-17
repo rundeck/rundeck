@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -44,6 +45,7 @@ public class RundeckConfigBase {
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
+    RundeckProjectConfig project;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
@@ -57,11 +59,33 @@ public class RundeckConfigBase {
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
     ScmLoader scmLoader;
+    ScmConfig scm;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
+    JobsImport jobsImport;
+
+    @Data public static class JobsImport{
+        XmlValueListDelimiter xmlValueListDelimiter;
+        @Data public static class XmlValueListDelimiter{
+            String xmlValueListDelimiter;
+        }
+    }
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
+    }
+
+    @Data public static class RundeckProjectConfig{
+
+        ProjectConfigDefaults defaults;
+        @Data public static class ProjectConfigDefaults{
+            String nodeExecutor;
+            String fileCopier;
+            ProjectKeypath sshKeypath;
+        }
+        @Data public static class ProjectKeypath{
+            Boolean enabled;
+        }
     }
 
     @Data
@@ -214,6 +238,7 @@ public class RundeckConfigBase {
 
     @Data
     public static class RundeckProjectServiceConfig {
+        Boolean deferredProjectDelete;
         ProjectExportCache projectExportCache;
 
         @Data
@@ -318,6 +343,9 @@ public class RundeckConfigBase {
         @Data
         public static class Servlet {
             Map<String,Object> initParams;
+            Integer stsMaxAgeSeconds;
+            Boolean stsIncludeSubdomains;
+
         }
     }
 
@@ -392,7 +420,10 @@ public class RundeckConfigBase {
         Enabled pluginSecurity = new Enabled(false);
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
-
+        Enabled pluginGroups = new Enabled(true);
+        Enabled vueKeyStorage = new Enabled(true);
+        Enabled legacyUi = new Enabled(false);
+        Debug debug = new Debug();
 
 
         @Data
@@ -406,6 +437,11 @@ public class RundeckConfigBase {
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
         }
+
+        @Data
+        public static class Debug {
+            Boolean showTracesOnResponse = false;
+        }
     }
 
     @Data
@@ -417,14 +453,15 @@ public class RundeckConfigBase {
         Boolean syncLdapUser;
         String requiredRole;
         String jaasRolePrefix;
+        Boolean syncOauthUser = false;
 
         ApiCookieAccess apiCookieAccess;
         Authorization authorization;
         Csrf csrf;
         Ldap ldap;
         HttpHeaders headers;
+        HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
-        Oauth oauth;
 
         @Data
         public static class InterceptorHelperConfig {
@@ -489,23 +526,18 @@ public class RundeckConfigBase {
             Boolean enabled;
             Map<String,Object> provider; //very complex structure
         }
+
+        /**
+         * Configuration for HttpFirewall which is a spring security feature to counter HTTP related attacks.
+         */
         @Data
-        public static class Oauth {
-            Okta okta;
-            Ping ping;
+        public static class HttpFirewall {
+            // A flag let system admin turn on/off this HttpFirewall feature
+            Boolean enabled;
+            // A comma separated list of host names. E.g. "localhost, example.com, 127.0.0.1, 192.168.0.1"
+            String allowedHostnames;
         }
-        @Data
-        public static class Okta {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
-        @Data
-        public static class Ping {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
+
     }
 
     @Data
@@ -565,6 +597,8 @@ public class RundeckConfigBase {
         String instanceNameLabelTextColor;
         String titleLink;
         String helpLink;
+        String helpLinkName;
+        Boolean workflowGraph;
         Boolean realJobTree;
         String logoSmall;
         Integer matchedNodesMaxCount;
@@ -595,6 +629,7 @@ public class RundeckConfigBase {
         @Data
         public static class Job {
             Description description;
+
         }
         @Data
         public static class Description {
@@ -668,6 +703,16 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckNotificationConfig {
         Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmConfig {
+        ScmStartup startup;
+    }
+
+    @Data
+    public static class ScmStartup{
+        boolean initDeferred;
     }
 
     @Data

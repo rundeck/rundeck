@@ -13,28 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-function PageConfirm(message){
+function PageConfirm(message,opts){
     var self=this;
     self.message=message;
     self.needConfirm = false;
 
     self.setNeedsConfirm=function() {
         self.needConfirm = true;
+        if(opts && typeof(opts.setNeedsConfirm)==='function'){
+            opts.setNeedsConfirm()
+        }
     };
 
     self.clearNeedConfirm=function() {
         self.needConfirm = false;
+        if(opts && typeof(opts.clearNeedConfirm)==='function'){
+            opts.clearNeedConfirm()
+        }
     };
     self.watchConfirm=function(input){
         jQuery(input).on("change", self.setNeedsConfirm);
     };
+    self.opts=opts
 
     jQuery(function () {
-        window.onbeforeunload = function () {
-            if (self.needConfirm) {
-                return self.message;
-            }
-        };
+        if(!opts || !opts.skipbehavior) {
+            let orig = window.onbeforeunload
+            window.onbeforeunload = function (ev) {
+                if (self.needConfirm) {
+                    return self.message;
+                }
+                if (typeof (orig) === 'function') {
+                    return orig(ev)
+                }
+            };
+        }
         jQuery(document.body).find(':input').on("change", self.setNeedsConfirm);
         jQuery(document.body).find(':input').on("keydown", self.setNeedsConfirm);
         jQuery(document.body).find('.reset_page_confirm').on("click", self.clearNeedConfirm);

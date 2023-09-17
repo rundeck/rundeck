@@ -143,7 +143,11 @@ function Option(data) {
 
         var testselected = function (val) {
             if (self.selectedMultiValues() && self.selectedMultiValues().length > 0) {
-                return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
+                if (self.multivalueAllSelected()) {
+                    return true;
+                } else {
+                    return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
+                }
             } else if (self.defaultMultiValues() && self.defaultMultiValues().length > 0) {
                 return ko.utils.arrayIndexOf(self.defaultMultiValues(), val) >= 0;
             } else if (self.value()) {
@@ -484,7 +488,7 @@ function Option(data) {
     };
     self.animateAdd = function (div) {
         jQuery(div).hide().slideDown('fast',function(){
-            jQuery(div).find('input[type=text]').focus();
+            jQuery(div).find('input[type=text]').trigger('focus');
         });
     };
 }

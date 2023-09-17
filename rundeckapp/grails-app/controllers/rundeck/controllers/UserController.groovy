@@ -17,23 +17,41 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.rundeck.app.api.model.ApiErrorResponse
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.user.LoginStatus
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
-import rundeck.AuthToken
 import rundeck.Execution
-import rundeck.User
+import rundeck.commandObjects.RdUserCommandObject
+import rundeck.data.paging.RdPageable
 import rundeck.services.UserService
-import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
 
+@Controller
 class UserController extends ControllerBase{
 
     private static final int DEFAULT_USER_PAGE_SIZE = 100
@@ -42,6 +60,8 @@ class UserController extends ControllerBase{
     UserService userService
     GrailsApplication grailsApplication
     def configurationService
+    TokenDataProvider tokenDataProvider
+    UserDataProvider userDataProvider
 
     static allowedMethods = [
             addFilterPref      : 'POST',
@@ -102,7 +122,7 @@ class UserController extends ControllerBase{
         access = RundeckAccess.General.AUTH_APP_ADMIN
     )
     def list(){
-        [users:User.listOrderByLogin()]
+        [users:userDataProvider.listAllOrderByLogin()]
     }
 
     def profile() {
@@ -118,26 +138,19 @@ class UserController extends ControllerBase{
         boolean tokenAdmin = authorizingAppType.isAuthorized(RundeckAccess.General.APP_ADMIN)
         def authContext = authorizingAppType.authContext
 
-        def User u = User.findByLogin(params.login)
-        if (!u && params.login == session.user) {
+        def userExists = userService.validateUserExists(params.login)
+        if (!userExists && params.login == session.user) {
             //redirect to profile edit page, so user can setup their profile
             flash.message = "Please fill out your profile"
             return redirect(action: 'register')
         }
-        if (notFoundResponse(u, 'User', params['login'])) {
+        if (notFoundResponse(userExists, 'User', params['login'])) {
             return
         }
 
-        def tokenTotal = AuthToken.createCriteria().count {
-            if (!tokenAdmin) {
-                eq("creator", u.login)
-            }
-            or {
-                eq("type", AuthTokenType.USER)
-                isNull("type")
-            }
-
-        }
+        RdUser u = userService.findOrCreateUser(params.login)
+        def tokenTotal = tokenAdmin ? tokenDataProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
+                tokenDataProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
                 configurationService.getInteger(
@@ -154,22 +167,10 @@ class UserController extends ControllerBase{
             offset = tokenTotal - diff
         }
 
-        def tokenList = AuthToken.createCriteria().list {
-            if (!tokenAdmin) {
-                eq("creator", u.login)
-            }
-            if (offset) {
-                firstResult(offset)
-            }
-            if (max) {
-                maxResults(max)
-            }
-            or {
-                eq("type", AuthTokenType.USER)
-                isNull("type")
-            }
-            order("dateCreated", "desc")
-        }
+        def pageable = new RdPageable(offset: offset, max: max).withOrder("dateCreated","desc")
+        def tokenList = tokenAdmin ? tokenDataProvider.findAllTokensByType(AuthenticationToken.AuthTokenType.USER, pageable) :
+                tokenDataProvider.findAllUserTokensByCreator(u.login, pageable)
+
         params.max = max
         params.offset = offset
 
@@ -185,7 +186,7 @@ class UserController extends ControllerBase{
         ]
     }
     def create={
-        render(view:'register',model:[user:new User(),newuser:true])
+        render(view:'register',model:[user: userDataProvider.buildUser(),newuser:true])
     }
     def register(){
         UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -204,16 +205,16 @@ class UserController extends ControllerBase{
                 return
             }
         }
-        def User u = User.findByLogin(user)
-        if(u){
+        def userExists = userDataProvider.validateUserExists(user)
+        if(userExists){
            return redirect(action:'edit')
         }
-        u = new User(login:user)
+        def u = userDataProvider.buildUser(login: user)
 
         def model=[user: u,newRegistration:true]
         return model
     }
-    public def store(User user){
+    public def store(RdUserCommandObject user){
         withForm{
         if(user.hasErrors()){
             flash.errors=user.errors
@@ -232,18 +233,18 @@ class UserController extends ControllerBase{
             return
         }
 
-        def User u = User.findByLogin(user.login)
-        if(u){
+        def userExists = userDataProvider.validateUserExists(user.login)
+        if(userExists){
             request.errorCode = 'api.error.item.alreadyexists'
             request.errorArgs = ['User profile', user.login]
             return renderErrorView([:])
         }
-        u = new User(user.properties.subMap(['login','firstName','lastName','email']))
+        def createdUser = userDataProvider.createUserWithProfile(user.login, user.lastName, user.firstName, user.email)
 
-        if(!u.save(flush:true)){
+        if(!createdUser.isSaved){
             flash.error = "Error updating user"
-            flash.errors = user.errors
-            return render(view:'edit',model:[user:u])
+            flash.errors = createdUser.errors
+            return render(view:'edit',model:[user:createdUser.user])
         }
         flash.message="User profile updated: ${user.login}"
         return redirect(action:'profile',params:[login: user.login])
@@ -253,14 +254,153 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Post(uris=['/user/info/{username}'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags = ['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = true,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}''')
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+
+    )
+    protected def apiOtherUserDataPost_docs(){}
+
+    @Post(uris=['/user/info'])
+    @Operation(
+        method='POST',
+        summary='Modify user profile',
+        description='''Modify the user profile data for current user.
+
+Since: v21''',
+        tags = ['user'],
+        requestBody = @RequestBody(
+          description='Request content',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object'),
+                examples = @ExampleObject('''{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}''')
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+
+    )
+    protected def apiUserDataPost_docs(){}
+
+    @Get(uris=['/user/info'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for current user.
+
+Since: v21''',
+        tags=['user'],
+        responses=[
+            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
+            @ApiResponse(responseCode='200',description = 'User Profile Data',
+                content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+                    examples = @ExampleObject('''{
+  "login": "username",
+  "firstName": "first name",
+  "lastName": "last name",
+  "email": "email@domain"
+}''')
+                )
+            )
+        ]
+
+    )
+    protected def apiUserData_docs(){}
+
+    @Get(uris=['/user/info/{username}'])
+    @Operation(
+        method='GET',
+        summary='Get User Profile',
+        description='''Get the user profile data for another user.
+
+Authorization required: `app_admin` for `system` resource, if not the current user.
+
+Since: v21''',
+        tags=['user'],
+        parameters=[
+            @Parameter(
+                name = 'username',
+                in = ParameterIn.PATH,
+                required = true,
+                description = 'Username, for a different user',
+                schema = @Schema(type = 'string')
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/403'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/404'
+            ),
+            @ApiResponse(
+                ref = '#/paths/~1user~1info/get/responses/200'
+            )
+        ]
+    )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
         UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        def user = params.username?:auth.username
-        if(user!=auth.username){
+        def username = params.username?:auth.username
+        if(username!=auth.username){
             //requiere admin privileges
             if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
@@ -283,9 +423,9 @@ class UserController extends ControllerBase{
                 return
             }
         }
-        User u = User.findByLogin(user)
-        if(!u){
-            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]
+        def userExists = userService.validateUserExists(username)
+        if(!userExists){
+            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',username]]
             withFormat {
                 xml {
                     return apiService.renderErrorXml(response, errorMap)
@@ -299,6 +439,7 @@ class UserController extends ControllerBase{
             }
             return
         }
+        RdUser u = userDataProvider.findByLogin(username)
         if (request.method == 'POST'){
             def config
             def succeed = apiService.parseJsonXmlWith(request, response, [
@@ -315,18 +456,12 @@ class UserController extends ControllerBase{
             if(!succeed){
                 return
             }
-            if(config.email){
-                u.email=config.email
-            }
-            if(config.firstName){
-                u.firstName=config.firstName
-            }
-            if(config.lastName){
-                u.lastName=config.lastName
-            }
-
-            if(!u.save(flush:true)){
-                def errorMsg= u.errors.allErrors.collect { g.message(error:it) }.join(";")
+            String lastName = (config.containsKey("lastName")) ? config.lastName : u.lastName
+            String firstName = (config.containsKey("firstName")) ? config.firstName : u.firstName
+            String email = (config.containsKey("email")) ? config.email : u.email
+            def updateResponse = userDataProvider.updateUserProfile(username, lastName, firstName, email)
+            if(!updateResponse.isSaved){
+                def errorMsg= updateResponse.errors.allErrors.collect { g.message(error:it) }.join(";")
                 return apiService.renderErrorFormat(response,[
                         status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                         message:errorMsg,
@@ -360,6 +495,28 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/roles')
+    @Operation(
+        method = 'GET',
+        summary = 'List Authorized Roles',
+        description = '''Get a list of the authenticated user's roles.
+
+Since: v30''',
+        tags = ['user', 'authorization'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success response, with a list of roles.''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object'),
+                    examples = @ExampleObject('''{
+    "roles":["admin","user"]
+}''')
+                )
+            )
+        ]
+    )
     def apiListRoles() {
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
             return
@@ -387,6 +544,54 @@ class UserController extends ControllerBase{
         }
     }
 
+    @Get(uri='/user/list')
+    @Operation(
+        method = 'GET',
+        summary = 'List users',
+        description = '''Get a list of all the users.
+
+Authorization required: `app_admin` for `system` resource
+
+Since: v21''',
+        tags = ['user'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = '''Success Response, with a list of users.
+
+For APIv27+, the results will contain additional fields:
+* `created` creation date
+* `updated` updated date
+* `lastJob` last job execution
+* `tokens` number of API tokens
+''',
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema = @Schema(type = 'object')),
+                    examples = @ExampleObject('''[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com",
+    "created": "2017-10-01T09:00:20Z",
+    "updated": "2018-08-24T13:53:02Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 1
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com",
+    "created": "2016-07-17T18:42:00Z",
+    "updated": "2018-08-24T13:53:00Z",
+    "lastJob": "2018-08-28T13:31:00Z",
+    "tokens": 6
+}]''')
+                )
+            )
+        ]
+    )
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return
@@ -417,7 +622,7 @@ class UserController extends ControllerBase{
         def users = []
         if(request.api_version >= ApiVersions.V27){
             def userList = [:]
-            User.listOrderByLogin().each {
+            userDataProvider.listAllOrderByLogin().each {
                 def obj = [:]
                 obj.login = it.login
                 obj.firstName = it.firstName
@@ -429,13 +634,13 @@ class UserController extends ControllerBase{
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
                 }
-                def tokenList = AuthToken.findAllByUser(it)
+                def tokenList = tokenDataProvider.findAllByUser(it.id.toString())
                 obj.tokens = tokenList?.size()
-                userList.put(it.login,obj)
+                userList.put(it.login, obj)
             }
             userList.each{k,v -> users<<v}
         }else{
-            users = User.findAll()
+            users = userDataProvider.findAll()
         }
 
 
@@ -531,15 +736,14 @@ class UserController extends ControllerBase{
                     obj.lastJob = lastExec
                 }
             }
-            def tokenCount = countUserApiTokens(it)
-            obj.tokens = tokenCount
+            obj.tokens = tokenDataProvider.countTokensByUser(it.id.toString())
             obj.loggedStatus = userService.getLoginStatus(it)
             obj.lastHostName = it.lastLoggedHostName
             if (userService.isSessionIdRegisterEnabled()) {
                 obj.lastSessionId = it.lastSessionId
             }
             obj.loggedInTime = it.lastLogin
-            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)) {
+            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(LoginStatus.LOGGEDIN.value)) {
                 userList.add(obj)
             } else {
                 userList.add(obj)
@@ -584,19 +788,7 @@ class UserController extends ControllerBase{
         )
     }
 
-    protected Integer countUserApiTokens(User user) {
-        return AuthToken.createCriteria().list {
-            projections {
-                count()
-            }
-            eq("user",user)
-            or {
-                eq("type", AuthTokenType.USER)
-                isNull("type")
-            }
-        }[0]
-    }
-    public def update (User user) {
+    public def update (RdUserCommandObject user) {
         withForm{
         if (user.hasErrors()) {
             flash.errors = user.errors
@@ -612,16 +804,16 @@ class UserController extends ControllerBase{
         ), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
         }
-        def User u = User.findByLogin(params.login)
+        RdUser u = userDataProvider.findByLogin(params.login)
         if(notFoundResponse(u,'User',params.login)){
             return
         }
 
-        bindData(u,params.subMap(['firstName','lastName','email']))
+        def updateResponse = userDataProvider.updateUserProfile(params.login, params.lastName, params.firstName, params.email)
 
-        if(!u.save(flush:true)){
+        if(!updateResponse.isSaved){
             request.error = "Error updating user"
-            request.errors = u.errors
+            request.errors = updateResponse.errors
             return render(view:'edit',model:[user:u])
         }
         flash.message="User profile updated: ${params.login}"
@@ -685,17 +877,18 @@ class UserController extends ControllerBase{
         //default to current user profile
         def result = [:]
         try {
-            AuthToken token = apiService.generateUserToken(
+            AuthenticationToken token = apiService.generateUserToken(
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthToken.parseAuthRoles(tokenRoles),
+                    AuthenticationToken.parseAuthRoles(tokenRoles),
                     true,
-                    AuthTokenType.USER,
+                    AuthenticationToken.AuthTokenType.USER,
                     tokenName
             )
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
         } catch (Exception e) {
+            e.printStackTrace()
             result = [result: false, error: e.getCause()?.message ?: e.message]
         }
         return renderTokenGenerateResult(result, params.login)
@@ -726,7 +919,7 @@ class UserController extends ControllerBase{
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
         try {
-            AuthToken token = adminAuth ?
+            AuthenticationToken token = adminAuth ?
                     apiService.findTokenId(tokenid) :
                     apiService.findUserTokenId(authContext.username, tokenid)
             if (!token) {
@@ -863,7 +1056,7 @@ class UserController extends ControllerBase{
 
         return redirect(controller: 'user', action: 'profile', params: redirParams)
     }
-    def clearApiToken(User user) {
+    def clearApiToken(RdUserCommandObject user) {
         boolean valid = false
         withForm {
             valid = true
@@ -911,23 +1104,23 @@ class UserController extends ControllerBase{
             result = [result: false, error: error]
         } else {
 
-            def User u = userService.findOrCreateUser(login)
-            if (!u) {
+            def userExists = userService.validateUserExists(login)
+            if (!userExists) {
                 def error = "Couldn't find user: ${login}"
                 log.error error
                 result=[result: false, error: error]
             }else{
                 def findtoken = params.tokenid ?: params.token
-                AuthToken found = null
+                AuthenticationToken found = null
                 if (adminAuth) {
                     //admin can delete any token
                     found = params.token ?
-                            AuthToken.findByToken(params.token) :
+                            tokenDataProvider.tokenLookup(params.token) :
                             apiService.findTokenId(params.tokenid)
                 } else {
                     //users can delete owned token
                     found = params.token ?
-                            AuthToken.findByTokenAndCreator(params.token, login) :
+                            apiService.findByTokenAndCreator(params.token, login) :
                             apiService.findUserTokenId(login, params.tokenid)
                 }
 
@@ -966,7 +1159,7 @@ class UserController extends ControllerBase{
 
     }
     def setDashboardPref={
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def list=params.dpref.split(",").collect{Integer.parseInt(it)}
         (1..4).each{
             if(!list.contains(it)){

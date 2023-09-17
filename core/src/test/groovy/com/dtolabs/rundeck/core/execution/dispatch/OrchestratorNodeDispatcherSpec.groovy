@@ -76,7 +76,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
     def "expand property refs in config"() {
         given:
         Map<String, Map<String, String>> dataContext = [:] + idataContext
-        OrchestratorService orchestratorService = OrchestratorService.getInstanceForFramework(framework)
+        OrchestratorService orchestratorService = OrchestratorService.getInstanceForFramework(framework,framework)
         OrchestratorConfig oconfig = new OrchestratorConfig('test', inputConfig)
         OrchestratorPlugin plugin = new TestPlugin1()
         TestProviderLoader providerLoader = Mock(TestProviderLoader) {
@@ -122,7 +122,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
     def "don't expand property refs for empty config"() {
         given:
         Map<String, Map<String, String>> dataContext = [:] + idataContext
-        OrchestratorService orchestratorService = OrchestratorService.getInstanceForFramework(framework)
+        OrchestratorService orchestratorService = OrchestratorService.getInstanceForFramework(framework,framework)
         OrchestratorConfig oconfig = new OrchestratorConfig('test', inputConfig)
         OrchestratorPlugin plugin = new TestPlugin1()
         TestProviderLoader providerLoader = Mock(TestProviderLoader) {

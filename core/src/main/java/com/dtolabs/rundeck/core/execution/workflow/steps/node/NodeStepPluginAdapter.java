@@ -54,7 +54,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
+public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
     private          String  serviceName;
     private          boolean blankIfUnexpanded;
@@ -73,6 +73,15 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
             return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Map<String, Object> dynamicDefaults(Map<String, Object> projectAndFrameworkValues, Services services){
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicDefaults(projectAndFrameworkValues, services);
         }
 
         return null;
@@ -123,7 +132,12 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
             this(ServiceNameConstants.WorkflowNodeStep, true);
         }
 
-        public NodeStepExecutor convert(final NodeStepPlugin plugin) {
+        public NodeStepExecutor convert(final NodeStepPlugin plugin, final boolean blankIfUnexpanded) {
+            return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
+        }
+
+        @Override
+        public NodeStepExecutor convert(NodeStepPlugin plugin) {
             return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
         }
     }
@@ -135,34 +149,17 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                                           final NodeStepExecutionItem item,
                                           final INodeEntry node)
         throws NodeStepException {
-        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-        Description description = getDescription();
-        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-        if(description != null) {
-            description.getProperties().forEach(p -> {
-                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
-            });
-        }
-        if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.node(node.getNodename()),
-                    ContextView::nodeStep,
-                    null,
-                    context.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap
-            );
-        }
+
         final String providerName = item.getNodeStepType();
+        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        final Map<String, Object> instanceConfiguration = createConfig(context, item, node);
 
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                                                                                                  instanceConfiguration,
-                                                                                                  getServiceName(),
-                                                                                                  providerName);
-        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
+                instanceConfiguration,
+                getServiceName(),
+                providerName);
+        Map<String, Object>  config =  PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
+
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (NodeStepException e) {
@@ -187,11 +184,42 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
         return new NodeStepResultImpl(node);
     }
 
-    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+    public Map<String, Object> createConfig( StepExecutionContext context,
+                                            NodeStepExecutionItem item,
+                                            INodeEntry node){
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        Description description = getDescription();
+        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        if(description != null) {
+            description.getProperties().forEach(p -> {
+                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
+            });
+        }
+        if (null != instanceConfiguration) {
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    blankIfUnexMap
+            );
+        }
+        return instanceConfiguration;
+    }
+
+    public Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
         } else {
             return null;
         }
     }
+
+    public NodeStepPlugin getPlugin(){
+        return this.plugin;
+    }
+
 }

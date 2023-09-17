@@ -16,10 +16,10 @@
 
 package rundeck
 
+import org.rundeck.app.data.model.v1.user.RdUser
+import rundeck.data.validation.validators.AnyDomainEmailValidator
 
-import rundeck.services.AnyDomainEmailValidator
-
-class User {
+class User implements RdUser{
     String login
     String password
     String firstName

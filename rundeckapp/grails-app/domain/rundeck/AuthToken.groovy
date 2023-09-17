@@ -17,9 +17,8 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.AuthenticationToken
 
 import java.time.Clock
 
@@ -42,7 +41,7 @@ class AuthToken implements AuthenticationToken {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
         uuid(nullable: true)
-        user(nullable:false)
+        user(nullable: false)
         creator(nullable: true)
         expiration(nullable: true)
         lastUpdated(nullable: true)
@@ -76,7 +75,7 @@ class AuthToken implements AuthenticationToken {
     }
 
     /**
-     * Encodes a clear token value acording to the tokenMode supplied.
+     * Encodes a clear token value according to the tokenMode supplied.
      */
     public static String encodeTokenValue(String clearValue, AuthTokenMode mode){
         if(!clearValue)
@@ -94,61 +93,12 @@ class AuthToken implements AuthenticationToken {
         }
     }
 
-    /**
-     * Finds a user token from the provided value.
-     */
-    public static AuthToken tokenLookup(String tokenValue) {
-        def tokenHash = encodeTokenValue(tokenValue, AuthTokenMode.SECURED)
-        return createCriteria().get {
-            or {
-                and {
-                    eq("tokenMode", AuthTokenMode.SECURED)
-                    eq("token", tokenHash)
-                }
-                and {
-                    or {
-                        isNull("tokenMode")
-                        eq("tokenMode", AuthTokenMode.LEGACY)
-                    }
-                    eq("token", tokenValue)
-                }
-            }
-            or {
-                isNull("type")
-                eq("type", AuthTokenType.USER)
-            }
-        }
-    }
-
-    /**
-     * Finds a token from the provided value and type
-     */
-    public static AuthToken tokenLookup(String tokenValue, AuthTokenType tokenType) {
-        def tokenHash = encodeTokenValue(tokenValue, AuthTokenMode.SECURED)
-        return createCriteria().get {
-            eq("type", tokenType)
-            or {
-                and {
-                    eq("tokenMode", AuthTokenMode.SECURED)
-                    eq("token", tokenHash)
-                }
-                and {
-                    or {
-                        isNull("tokenMode")
-                        eq("tokenMode", AuthTokenMode.LEGACY)
-                    }
-                    eq("token", tokenValue)
-                }
-            }
-        }
-    }
-
     String getClearToken() {
         return clearToken
     }
 
     @Override
-    Set<String> authRolesSet() {
+    Set<String> getAuthRolesSet() {
         return parseAuthRoles(authRoles)
     }
 

@@ -17,6 +17,7 @@ buildscript {
     }
 }
 plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
     id "com.github.node-gradle.node" version "3.1.1"
     id "java-library"
@@ -33,6 +34,38 @@ apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
+allprojects {
+    ext["liquibase.version"] = liquibaseVersion
+}
+
+//list of grails plugins to depend on in various ways
+ext.coreGrailsPlugins = [
+    ':grails-metricsweb',
+    ':grails-persistlocale',
+    ':grails-securityheaders',
+    ':grails-repository',
+    ':grails-webhooks',
+    ':grails-execution-mode-timer',
+    ':grails-rundeck-data-shared',
+]
+
+if(!project.findProperty('isRunning')) {
+    //for openapi spec generation, make gradle
+    //evaluate each grails plugin to define the
+    //apiSpecFiles configurations, before we depend on them.
+    //however, it seems to interfere with proper
+    //behavior when running "bootRun", so skip it in that case
+
+    //force gradle configuration of core grails plugins
+    coreGrailsPlugins.each{
+        project.evaluationDependsOn(it)
+    }
+    //force gradle configuration of extra grails plugins
+    project.findProperty('extraGrailsPlugins')?.each{
+        project.evaluationDependsOn(it)
+    }
+}
+
 configurations {
     agent
     war{}
@@ -40,6 +73,7 @@ configurations {
     pluginFiles {
         transitive = false
     }
+    apiSpecFiles
     spa //dependency on grails-spa
     developmentOnly
     runtimeClasspath {
@@ -75,6 +109,8 @@ dependencies {
     // Rundeck project dependencies.
     implementation project(':core')
     implementation project(':rundeck-storage:rundeck-storage-filesys')
+    implementation project(':rundeck-data-model')
+    implementation project(':rundeck-app-util')
 
 
     /** It's important that the configuration addition follow the form 'compile project("")'
@@ -85,12 +121,25 @@ dependencies {
         implementation project("$proj")
     }
 
+    //api spec file dependencies from extra grails plugins
+    for(proj in project.findProperty('extraGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
+    }
+    //api spec file dependencies from core grails plugins
+    for(proj in project.findProperty('coreGrailsPlugins')) {
+        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+            apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
+        }
+    }
+
     // From BuildConfig.groovy.
     implementation 'org.quartz-scheduler:quartz:2.3.2'
     implementation 'org.grails.plugins:quartz:2.0.13'
     implementation 'org.grails.plugins:mail:3.0.0'
 
-    implementation 'org.springframework.cloud:spring-cloud-context:3.1.0'
+    implementation 'org.springframework.cloud:spring-cloud-context:3.1.6'
 
     //enable greenmail plugin below for testing email behavior
     // https://github.com/gpc/greenmail
@@ -103,7 +152,7 @@ dependencies {
     }
     implementation 'org.owasp.encoder:encoder:1.2.1'
     implementation 'org.grails.plugins:external-config:2.0.0'
-    implementation 'commons-fileupload:commons-fileupload:1.3.3'
+    implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
@@ -157,7 +206,7 @@ dependencies {
     implementation "org.eclipse.jetty:jetty-jaas"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
-    implementation ('org.grails.plugins:spring-security-core:5.0.0'){
+    implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     implementation 'org.kohsuke:libpam4j:1.11'
@@ -169,29 +218,36 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
     }
 
+    implementation ("com.jayway.jsonpath:json-path:2.8.0"){
+        exclude group:"org.slf4j",module:"slf4j-api"
+        exclude group:'org.ow2.asm', module: 'asm'
+    }
+
+    implementation ("net.minidev:json-smart:2.4.10")
+    
     // OpenApi Dependencies
-    compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
-    implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
+    compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    compileOnly("io.micronaut.openapi:micronaut-openapi:${micronautOpenapiVersion}") {
+        exclude group: 'org.slf4j', module: 'slf4j-nop'
+    }
     implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
-
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
-    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.3.3'
+    runtimeOnly 'org.postgresql:postgresql:42.3.8'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
@@ -199,20 +255,15 @@ dependencies {
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
-        exclude group: 'log4j', module: 'log4j'
-    }
-    api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
-        exclude group: 'log4j', module: 'log4j'
-    }
-    implementation "com.squareup.okhttp3:okhttp:4.9.2"
+
+    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
-    testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
+    testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
@@ -243,12 +294,9 @@ dependencies {
 }
 grails{
     plugins{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
+        coreGrailsPlugins.each {
+            implementation project(it)
+        }
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
@@ -268,12 +316,9 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependencies{
-        implementation project(':grails-metricsweb')
-        implementation project(':grails-persistlocale')
-        implementation project(':grails-securityheaders')
-        implementation project(':grails-repository')
-        implementation project(':grails-webhooks')
-        implementation project(':grails-execution-mode-timer')
+        coreGrailsPlugins.each{
+            implementation project(it)
+        }
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
@@ -293,13 +338,35 @@ bootRun {
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
-tasks.withType(GroovyCompile) {
-    def additionalSpecDir = new File(project.buildDir, 'openapi')
+
+tasks.register('copyApiSpecFiles', Copy){
+    description 'Copy openapi spec files from each grails plugin dependency into a common dir'
+    def additionalSpecDir = file("${buildDir}/openapi")
     doFirst {
         additionalSpecDir.mkdirs()
     }
+    outputs.dir additionalSpecDir
+    inputs.files configurations.apiSpecFiles
+    from configurations.apiSpecFiles
+    into additionalSpecDir
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    def additionalSpecDir = new File(project.buildDir, 'openapi')
+    def opts=[
+        '-Xmx1024m'
+    ]
+    if(!project.findProperty('isRunning')) {
+        dependsOn copyApiSpecFiles
+        opts.addAll([
+            '-Dmicronaut.openapi.filename=rundeck-api',
+            "-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()
+        ])
+    }else{
+        opts.add('-Dmicronaut.openapi.enabled=false')
+    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()]
+        forkOptions.jvmArgs = opts
     }
 }
 
@@ -308,6 +375,10 @@ tasks.withType(Test) {
     systemProperty "geb.env", System.getProperty('geb.env')
     systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')
     systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
+}
+
+tasks.withType(Test).configureEach {
+    forkEvery = 500
 }
 
 assets {
@@ -535,6 +606,7 @@ publishing {
 }
 
 apply from: "${rootDir}/gradle/java.gradle"
+apply from: "../gradle/java-version.gradle"
 
 
 if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {

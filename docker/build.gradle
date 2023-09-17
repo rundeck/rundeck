@@ -26,17 +26,17 @@ if (vTag != 'SNAPSHOT'){
     dockerTags << vTag //SNAPSHOT
 }
 
-task ensureWar {
+tasks.register('ensureWar') {
     def rundeckapp = project(":rundeckapp")
 
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile = file(rundeckapp.war.archiveFile)
-    if (! warFile.exists()) {
+    if (!warFile.exists()) {
         dependsOn rundeckapp.bootWar
     }
 }
 
-task officialBuild {
+tasks.register('officialBuild') {
     dependsOn ensureWar
 
     inputs.dir "official/etc"
@@ -56,8 +56,8 @@ task officialBuild {
         file(outputDir).mkdir()
 
         def rundeckapp = project(":rundeckapp")
-        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain","")
-        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain","")
+        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain", "")
+        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain", "")
 
         copy {
             from archiveFile
@@ -74,8 +74,8 @@ task officialBuild {
 
         for (tag in dockerTags)
             args.add("-t=rundeck/rundeck:$tag")
-        
-        args.add( "." )
+
+        args.add(".")
 
         exec {
             workingDir "./official"
@@ -85,7 +85,7 @@ task officialBuild {
         for (tag in dockerTags) {
             file("$outputDir/$tag").createNewFile()
         }
-        
+
     }
 
     clean {
@@ -93,7 +93,7 @@ task officialBuild {
     }
 }
 
-task officialPush {
+tasks.register('officialPush') {
     dependsOn officialBuild
     doLast {
         for (tag in dockerTags) {
@@ -101,11 +101,11 @@ task officialPush {
                 commandLine "docker", "push", "rundeck/rundeck:$tag"
             }
         }
-        
+
     }
 }
 
-task buildUbuntuBase {
+tasks.register('buildUbuntuBase') {
     doLast {
         exec {
             workingDir "./ubuntu-base"
@@ -113,8 +113,9 @@ task buildUbuntuBase {
         }
     }
 }
+officialBuild.dependsOn buildUbuntuBase
 
-task pushUbuntuBase {
+tasks.register('pushUbuntuBase') {
     dependsOn buildUbuntuBase
     doLast {
         exec {

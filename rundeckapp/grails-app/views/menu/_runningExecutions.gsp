@@ -108,8 +108,9 @@
                         </span>
                     </g:if>
                     <g:else>
-                        <g:if test="${scheduledExecution && scheduledExecution.getAverageDuration() > 0 && execution.dateStarted && timeNow >= execution.dateStarted.getTime()}">
-                            <g:set var="avgTime" value="${(Long)(scheduledExecution.getAverageDuration())}"/>
+                        <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
+                        <g:if test="${scheduledExecution && executionService.getAverageDuration(scheduledExecution.uuid) > 0 && execution.dateStarted && timeNow >= execution.dateStarted.getTime()}">
+                            <g:set var="avgTime" value="${(Long)(executionService.getAverageDuration(scheduledExecution.uuid))}"/>
                             <g:set var="completePercent" value="${(int)Math.floor((double)(100 * (timeNow - execution.dateStarted.getTime())/(avgTime)))}"/>
                             <g:set var="estEndTime" value="${(long)(execution.dateStarted.getTime() + (long)avgTime)}"/>
                             <g:set var="completeEstimate" value="${new Date(estEndTime)}"/>

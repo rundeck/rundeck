@@ -57,10 +57,10 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
 
         when:
-        List l = ReferencedExecution.executionProjectList(se)
+        List l = ReferencedExecution.executionProjectList(se.uuid)
 
         then:
         l.size() == 1
@@ -89,6 +89,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -131,13 +132,13 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
-        def re2 = new ReferencedExecution(scheduledExecution: se,execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
 
         def executionIdList = [[executionId: exec.id, project: exec.project], [executionId: exec2.id, project: exec2.project]]
 
         when:
-        List l = ReferencedExecution.executionProjectList(se, max)
+        List l = ReferencedExecution.executionProjectList(se.uuid, max)
 
         then:
         l.size() == sizeList
@@ -201,14 +202,14 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
 
         when:
-        List l = ReferencedExecution.parentList(se)
+        List l = ReferencedExecution.parentJobSummaries(se.uuid)
 
         then:
         l.size() == 1
-        l.getAt(0).equals(seb)
+        l[0].uuid == seb.uuid
     }
 
     def "parent list with max result"(){
@@ -293,15 +294,15 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 scheduledExecution: seb2
         ).save()
 
-        def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
-        def re2 = new ReferencedExecution(scheduledExecution: se,execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
 
         when:
-        List l = ReferencedExecution.parentList(se, max)
+        List l = ReferencedExecution.parentJobSummaries(se.uuid, max)
 
         then:
         l.size() == sizeList
-        l*.toString() == result
+        l.collect {s-> "${s.groupPath}/${s.jobName} - null".toString()} == result
 
         where:
         max  | sizeList | result

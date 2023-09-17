@@ -16,35 +16,46 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
+import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.cache.LoadingCache
 import grails.events.bus.EventBus
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.providers.GormProjectDataProvider
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
+import org.rundeck.spi.data.DataAccessException
+
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import rundeck.Project
+import rundeck.User
+import rundeck.services.data.AuthTokenDataService
+import rundeck.services.data.ProjectDataService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
-class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ProjectManagerService> {
+class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest<ProjectManagerService>, DataTest {
 
-    List<Class> getDomainClasses() { [Project] }
+    def setupSpec() { mockDomains Project }
 
     def setup() {
+
+
+        mockDataService(ProjectDataService)
+        GormProjectDataProvider provider = new GormProjectDataProvider()
+        provider.projectDataService = applicationContext.getBean(ProjectDataService)
+        service.projectDataProvider = provider
     }
 
     def cleanup() {
@@ -284,6 +295,10 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
         service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
         when:
 
         def result = service.createFrameworkProject('test1',props)
@@ -300,7 +315,138 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         })
 
         result.name=='test1'
-        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+        result.getProjectProperties().get("project.ssh-keypath") == null
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "create project with props, local ssh key enabled"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                    { InputStream is ->
+                        def tprops = new Properties()
+                        tprops.load(is)
+                        tprops['abc'] == 'def'
+                    },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+            getBoolean("project.defaults.sshKeypath.enabled", false) >> true
+        }
+        when:
+
+        def result = service.createFrameworkProject('test1',props)
+
+        then:
+        1*service.projectCache.invalidate('test1')
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        0*service.rundeckNodeService.getNodes('test1')
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
+            it.project=='test1'
+            it.props.abc=='def'
+            it.props.'project.name'=='test1'
+            it.changedKeys.containsAll(it.props.keySet())
+        })
+
+        result.name=='test1'
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+        result.getProjectProperties().containsKey("project.ssh-keypath")
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "create project with props, set JSCH as default node executor and file copier"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                    { InputStream is ->
+                        def tprops = new Properties()
+                        tprops.load(is)
+                        tprops['abc'] == 'def'
+                    },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        service.targetEventBus=Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "jsch-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "jsch-scp"
+        }
+        when:
+
+        def result = service.createFrameworkProject('test1',props)
+
+        then:
+        1*service.projectCache.invalidate('test1')
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        0*service.rundeckNodeService.getNodes('test1')
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
+            it.project=='test1'
+            it.props.abc=='def'
+            it.props.'project.name'=='test1'
+            it.changedKeys.containsAll(it.props.keySet())
+        })
+
+        result.name=='test1'
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "jsch-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "jsch-scp"
+        result.getProjectProperties().get("project.ssh-keypath") == null
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
@@ -309,7 +455,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
 
     void "create project strict already exists"(){
         setup:
-        Project p = new Project(name:'test1').save()
+        Project p = new Project(name:'test1').save(flush: true)
         def props = new Properties()
         props['abc']='def'
 
@@ -356,6 +502,10 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
 
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
         when:
 
         def result = service.createFrameworkProjectStrict('test1',props)
@@ -366,8 +516,12 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         0*service.rundeckNodeService.getNodes('test1')
 
         0*service.rundeckNodeService._(*_)
+        result.getProjectProperties().get("project.ssh-authentication") == "privateKey"
+        result.getProjectProperties().get("resources.source.1.type") == "local"
+        result.getProjectProperties().get("service.NodeExecutor.default.provider") == "sshj-ssh"
+        result.getProjectProperties().get("service.FileCopier.default.provider") == "sshj-scp"
+
         result.name=='test1'
-        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
@@ -382,7 +536,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
 
         then:
         0*service.rundeckNodeService._(*_)
-        IllegalArgumentException e = thrown()
+        DataAccessException e = thrown()
         e.message.contains('does not exist')
     }
 
@@ -425,7 +579,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         Properties props1 = new Properties()
         props1['def']='ghi'
         props1['abc']=abcval
-        new Project(name:'test1').save()
+        new Project(name:'test1').save(flush: true)
         service.configStorageService=Stub(ConfigStorageService){
             existsFileResource("projects/test1/etc/project.properties") >> true
             getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
@@ -477,7 +631,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         setup:
         Properties props1 = new Properties()
         props1['def'] = 'ghi'
-        new Project(name: 'test1').save()
+        new Project(name: 'test1').save(flush: true)
         service.configStorageService=Stub(ConfigStorageService) {
             existsFileResource("projects/test1/etc/project.properties") >> false
             updateFileResource(
@@ -712,6 +866,41 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         null==result.getProperty("def")
         null==result.getProperty("defleopard")
         "789"==result.getProperty("ghi")
+    }
+
+    void "merge project properties"(){
+        given:
+        def projectData = Mock(RdProject) {
+            getName() >> "project"
+        }
+        RundeckProject rundeckProject = new RundeckProject(projectData, null, service)
+        RundeckProjectDataProvider providerMock = Mock(RundeckProjectDataProvider){
+            findByName("project") >> Mock(RdProject)
+        }
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            existsFileResource("projects/test1/not-my-resource") >> false
+        }
+
+        service.projectDataProvider = providerMock
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+        properties.setProperty("project.description", "desc")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+
+        when:
+        service.mergeProjectProperties(rundeckProject, properties, null)
+
+        then:
+        rundeckProject.projectConfig.name == "project"
+        rundeckProject.nodesFactory == service.rundeckNodeService
     }
 
     void "storage exists test"(){
@@ -1022,7 +1211,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
 
         def props = new Properties()
         props['abc'] = 'def'
-        props['project.description'] = 'desc_test'
+        props['project.description'] = description
 
         service.configStorageService=Stub(ConfigStorageService) {
             existsFileResource("projects/test1/etc/project.properties") >> false
@@ -1047,6 +1236,17 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         }
         service.rundeckNodeService = Mock(NodeService)
         service.projectCache = Mock(LoadingCache)
+        service.configurationService = Mock(ConfigurationService){
+            getString("project.defaults.nodeExecutor", "sshj-ssh") >> "sshj-ssh"
+            getString("project.defaults.fileCopier", "sshj-scp") >> "sshj-scp"
+        }
+        service.projectDataProvider=Mock(RundeckProjectDataProvider){
+            1 * findByName('test1')
+            1 * create({
+                it.description==description
+                it.name=='test1'
+            })
+        }
 
         when:
 

@@ -1,6 +1,6 @@
 import {Argv} from 'yargs'
 
-import { Rundeck, PasswordCredentialProvider } from 'ts-rundeck'
+import { Rundeck, PasswordCredentialProvider, TokenCredentialProvider } from 'ts-rundeck'
 
 import {spawn} from '../async/child-process'
 import { ProjectImporter } from '../projectImporter'
@@ -8,12 +8,16 @@ import { createWaitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory, IClusterManager } from '../ClusterManager'
 import { Config } from '../Config';
 
+const DEFAULT_DOCKER_COMPOSE_FILE_NAME = 'docker-compose.yml'
+
 interface Opts {
     provision: boolean
     clusterConfig?: string
+    composeFileName?: string
     image?: string
     debug: boolean
     url: string
+    testToken?: string
     jest: string
     headless: boolean
     runInBand: boolean
@@ -37,9 +41,19 @@ class TestCommand {
                 default: `http://${process.env.HOSTNAME}:4440`,
                 describe: "Rundeck URL"
             })
+            .option('t', {
+                alias: 'testToken',
+                describe: 'API Token to use for tests',
+                type: 'string'
+            })
             .option('c', {
                 alias: 'clusterConfig',
                 describe: 'Directory containing cluster configuration for test',
+                type: 'string'
+            })
+            .option('f', {
+                alias: 'composeFileName',
+                describe: 'Allows for a non-standard Docker Compose file name',
                 type: 'string'
             })
             .option('provision', {
@@ -115,10 +129,13 @@ class TestCommand {
 
         let cluster: IClusterManager | undefined
         if (opts.provision) {
-            cluster = await ClusterFactory.CreateCluster(opts.clusterConfig || config.clusterConfig, {
-                licenseFile: './license.key',
-                image: opts.image || config.baseImage
-            })
+            cluster = await ClusterFactory.CreateCluster(
+                opts.clusterConfig || config.clusterConfig,
+                {
+                    licenseFile: './license.key',
+                    image: opts.image || config.baseImage,
+                    composeFileName: opts.composeFileName || DEFAULT_DOCKER_COMPOSE_FILE_NAME
+                })
 
             await cluster.startCluster()
 
@@ -150,7 +167,9 @@ class TestCommand {
         console.info(`Waiting for server to accept requests...`)
         const reqstart = Date.now()
         await createWaitForRundeckReady(
-          () => new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {noRetryPolicy: true, baseUri: opts.url}),
+          () => new Rundeck(
+            opts.testToken ? new TokenCredentialProvider(opts.testToken): new PasswordCredentialProvider(opts.url, 'admin', 'admin'),
+            {noRetryPolicy: true, baseUri: opts.url}),
           5 * 60 * 1000
         )
         console.info(`Client connected. (${Date.now() - reqstart}ms)`)
@@ -163,6 +182,7 @@ class TestCommand {
                 ...process.env,
                 SELENIUM_PROMISE_MANAGER: '0',
                 TESTDECK_RUNDECK_URL: opts.url,
+                TESTDECK_RUNDECK_TOKEN: opts.testToken,
                 TESTDECK_HEADLESS: opts.headless.toString(),
                 TESTDECK_S3_UPLOAD: opts.s3Upload.toString(),
                 TESTDECK_S3_BASE: opts.s3Base,

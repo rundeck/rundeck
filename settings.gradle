@@ -27,6 +27,8 @@ include	'rundeck-storage',
     'rundeck-authz:rundeck-authz-api',
     'rundeck-authz:rundeck-authz-core',
     'rundeck-authz:rundeck-authz-yaml',
+    'rundeck-data-model',
+    'rundeck-app-util',
     'core',
     'plugins:localexec-plugin',
     'plugins:script-plugin',
@@ -51,4 +53,19 @@ include	'rundeck-storage',
     'grails-repository',
     'grails-webhooks',
     'grails-execution-mode-timer',
+    'grails-rundeck-data-shared',
     'docker'
+
+def projectFeatureEnabled = { String feature, Boolean defaultVal ->
+    try {
+        settings[feature].toBoolean()
+    } catch (Exception ex) {
+        defaultVal == null ? false : defaultVal
+    }
+}
+
+def enableIncremental = projectFeatureEnabled('rundeck.proj.incremental.enabled', false)
+if (enableIncremental) {
+    enableFeaturePreview('GROOVY_COMPILATION_AVOIDANCE')
+}
+

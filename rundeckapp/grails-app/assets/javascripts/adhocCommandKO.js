@@ -24,6 +24,7 @@ function AdhocLink(data,nodefilter) {
     self.title=ko.observable(null);
     self.execid=ko.observable(null);
     self.filter=ko.observable(null);
+    self.extraMetadata=ko.observable(null);
 
     self.status=ko.observable(null);
     self.succeeded=ko.observable(null);
@@ -51,6 +52,8 @@ function AdhocLink(data,nodefilter) {
     self.fillCommand=function(){
         jQuery('#runFormExec').val(self.title());
         self.nodefilter.useFilterString(self.filter());
+        const runnerEvent = new CustomEvent('runner-filter-changed', { detail: ko.mapping.toJS(self.extraMetadata()) });
+        window.dispatchEvent(runnerEvent)
     };
 
     ko.mapping.fromJS(data,{},self);
@@ -74,7 +77,7 @@ function AdhocCommand(data,nodefilter) {
     var mapping = {
         'recentCommands': {
             create: function (options) {
-                return new AdhocLink(options.data,self.nodefilter);
+                return new AdhocLink(options.data, self.nodefilter);
             }
         }
     };
@@ -96,7 +99,7 @@ function AdhocCommand(data,nodefilter) {
         self.loadList({}).done(function (data,status,xhr) {
             self.recentCommandsLoaded(true);
             try {
-                ko.mapping.fromJS({recentCommands:data.executions},mapping,self);
+                ko.mapping.fromJS({ recentCommands: data.executions }, mapping, self);
             } catch (e) {
                 console.log('Recent commands list: error receiving data',e);
                 self.error('Recent commands list: error receiving data: '+e);

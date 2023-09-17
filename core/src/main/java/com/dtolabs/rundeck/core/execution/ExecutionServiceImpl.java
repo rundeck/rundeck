@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IExecutionProviders;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
@@ -43,6 +43,8 @@ import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,12 +59,10 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ExecutionServiceImpl implements ExecutionService {
-    private final Framework framework;
+public class ExecutionServiceImpl implements ExecutionService {
+    @Getter @Setter private IExecutionProviders executionProviders;
 
-    public ExecutionServiceImpl(Framework framework) {
-
-        this.framework = framework;
+    public ExecutionServiceImpl() {
     }
 
     protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
@@ -82,7 +82,7 @@ class ExecutionServiceImpl implements ExecutionService {
 
         final StepExecutor executor;
         try {
-            executor = framework.getStepExecutionService().getExecutorForItem(item);
+            executor = getExecutionProviders().getStepExecutorForItem(item, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             return new StepExecutionResultImpl(e, ServiceFailureReason.ServiceFailure, e.getMessage());
         }
@@ -111,7 +111,7 @@ class ExecutionServiceImpl implements ExecutionService {
                 result = executor.executeWorkflowStep(context, item);
             } finally {
                 if (null != pluginLogging) {
-                    pluginLogging.end();
+                    pluginLogging.end(result);
                 }
             }
         } finally {
@@ -131,7 +131,8 @@ class ExecutionServiceImpl implements ExecutionService {
 
         final NodeStepExecutor interpreter;
         try {
-            interpreter = framework.getNodeStepExecutorForItem(item);
+            interpreter =
+                    getExecutionProviders().getNodeStepExecutorForItem(item, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             throw new NodeStepException(e, ServiceFailureReason.ServiceFailure, node.getNodename());
         }
@@ -206,7 +207,7 @@ class ExecutionServiceImpl implements ExecutionService {
                 result = interpreter.executeNodeStep(nodeContext, item, node);
             } finally {
                 if (null != pluginLogging) {
-                    pluginLogging.end();
+                    pluginLogging.end(result);
                 }
             }
             if (!result.isSuccess()) {
@@ -255,7 +256,7 @@ class ExecutionServiceImpl implements ExecutionService {
                 context.getExecutionListener().beginNodeDispatch(context, dispatchable);
             }
         }
-        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
+        final NodeDispatcher dispatcher = getExecutionProviders().getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
             if (null != item) {
@@ -286,7 +287,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -310,7 +311,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -339,7 +340,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -367,7 +368,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -398,7 +399,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final NodeExecutor nodeExecutor;
         try {
-            nodeExecutor = framework.getNodeExecutorForNodeAndProject(node, context.getFrameworkProject());
+            nodeExecutor = getExecutionProviders().getNodeExecutorForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new CoreException(e);
         }

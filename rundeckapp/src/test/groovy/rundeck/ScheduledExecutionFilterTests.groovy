@@ -16,14 +16,14 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
-class ScheduledExecutionFilterTests extends RundeckHibernateSpec {
+class ScheduledExecutionFilterTests extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecutionFilter ]}
+    def setupSpec() { mockDomain ScheduledExecutionFilter }
 
     void "testValidation"() {
         when:

@@ -24,12 +24,27 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.JsonProcessingException
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import rundeck.data.job.RdJobDataSummary
+import rundeck.data.job.RdLogConfig
+import rundeck.data.job.RdNodeConfig
+import rundeck.data.job.RdSchedule
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.util.Sizes
+import rundeck.data.validation.shared.SharedJobConstraints
+import rundeck.data.validation.shared.SharedJobScheduleConstraints
+import rundeck.data.validation.shared.SharedLogConfigConstraints
+import rundeck.data.validation.shared.SharedNodeConfigConstraints
+import rundeck.data.validation.shared.SharedProjectNameConstraints
 import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 
-class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
+class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
@@ -56,9 +71,11 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     /** @deprecated unused */
     Date nextExecution
-    boolean scheduled = false
+    Boolean scheduled = false
     Boolean nodesSelectedByDefault = true
+    /** @deprecated unused */
     Long totalTime=0
+    /** @deprecated unused */
     Long execCount=0
     String adhocExecutionType
     Date dateCreated
@@ -98,46 +115,23 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
+                         'crontabString', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap']
+                         'pluginConfigMap', 'components']
 
     static constraints = {
-        project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        importFrom SharedProjectNameConstraints
+        importFrom SharedJobConstraints
+        importFrom SharedNodeConfigConstraints
+        importFrom SharedLogConfigConstraints
         workflow(nullable:true)
         options(nullable:true)
-        jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
-        groupPath(nullable:true, maxSize: 2048)
         nextExecution(nullable:true)
-        nodeKeepgoing(nullable:true)
-        doNodedispatch(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
-        filter(nullable:true)
-        user(nullable:true)
         userRoleList(nullable:true)
-        loglevel(nullable:true)
         totalTime(nullable:true)
         execCount(nullable:true)
-        nodeThreadcount(nullable:true)
         refExecCount(nullable:true)
-        nodeRankOrderAscending(nullable:true)
-        nodeRankAttribute(nullable:true)
-        argString(nullable:true)
         seconds(nullable: true, matches: /^[0-9*\/,-]*$/)
         minute(nullable:true, matches: /^[0-9*\/,-]*$/ )
         hour(nullable:true, matches: /^[0-9*\/,-]*$/ )
@@ -145,39 +139,9 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         month(nullable:true, matches: /^[0-9a-zA-z*\/,-]*$/ )
         dayOfWeek(nullable:true, matches: /^[0-9a-zA-z*\/?,L#-]*$/ )
         year(nullable:true, matches: /^[0-9*\/,-]*$/)
-        description(nullable:true)
         uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         orchestrator(nullable:true)
-        multipleExecutions(nullable: true)
-        serverNodeUUID(maxSize: 36, size: 36..36, blank: true, nullable: true, validator: { val, obj ->
-            if (null == val) return true;
-            try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
-                return false
-            }
-        })
-        timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,validator: { val, obj ->
-            if (null == val) return true;
-            if (val.indexOf('${')>=0) return true;
-            try { return Integer.parseInt(val)>=0 } catch (NumberFormatException e) {
-                return false
-            }
-        })
         crontabString(bindable: true,nullable: true)
-        nodesSelectedByDefault(nullable: true)
-        scheduleEnabled(nullable: true)
-        executionEnabled(nullable: true)
-        nodeFilterEditable(nullable: true)
-        logOutputThreshold(maxSize: 256, blank:true, nullable: true)
-        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
-        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
-        timeZone(maxSize: 256, blank: true, nullable: true)
-        retryDelay(nullable:true)
-        successOnEmptyNodeFilter(nullable: true)
-        nodeThreadcountDynamic(nullable: true)
-        notifyAvgDurationThreshold(nullable: true)
-        defaultTab(maxSize: 256, blank: true, nullable: true)
-        maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
         pluginConfig(nullable: true)
     }
 
@@ -236,6 +200,11 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         withProject { project ->
             eq 'project', project
         }
+        findByUUID{ uuid ->
+            eq 'uuid', uuid
+            cache false
+            setUniqueResult true
+        }
     }
 
 
@@ -289,7 +258,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             map.uuid=uuid
             map.id=uuid
         }else if (id) {
-            map.id = id
+            map.id=id
         }
         map.description=description
         map.loglevel=loglevel
@@ -658,17 +627,17 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    public setUserRoles(List l){
+    public setUserRoles(List<String> l){
         def json = serializeJsonList(l)
         setUserRoleList(json)
     }
 
-    public List getUserRoles(){
+    public List<String> getUserRoles(){
         if(userRoleList){
             //check if the string is a valid JSON
             try {
                 return asJsonList(userRoleList)
-            } catch(JsonParseException ex) {
+            } catch(JsonParseException | JsonProcessingException ex) {
                 return Arrays.asList(userRoleList.split(/,/))
             }
 
@@ -703,7 +672,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     // various utility methods to the process crontab entry data
     def String generateCrontabExression() {
-        return [seconds?seconds:'0',minute,hour,dayOfMonth.toUpperCase(),month.toUpperCase(),dayOfMonth=='?'?dayOfWeek.toUpperCase():'?',year?year:'*'].join(" ")
+        return [seconds?seconds:'0',minute,hour,dayOfMonth?.toUpperCase(),month?.toUpperCase(),dayOfMonth=='?'?dayOfWeek?.toUpperCase():'?',year?year:'*'].join(" ")
     }
 
     /**
@@ -831,12 +800,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }else{
             months = params.selectedMonths?.trim() ? valueStringToIndexString(params.selectedMonths, monthsofyearlist) : parseCheckboxFieldFromParams("month", params,true, monthsofyearlist)
         }
-        this.month = months
-        this.dayOfWeek = daysOfWeek ?: '?'
-        this.dayOfMonth = daysOfMonth
-        this.seconds = params.seconds?params.seconds:"0"
-        this.year = params.year?params.year:"*"
-        this.crontabString=null
+        setMonth(months)
+        setDayOfWeek(daysOfWeek ?: '?')
+        setDayOfMonth(daysOfMonth)
+        setSeconds(params.seconds?params.seconds:"0")
+        setYear(params.year?params.year:"*")
+        setCrontabString(null)
     }
 
     String valueStringToIndexString(inputString, valuesArray) {
@@ -970,7 +939,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
-      if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
+      if (this.month && !this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.month,monthsofyearlist,"month")
           result.putAll(map)
 //          this.month.split(",").each {
@@ -984,7 +953,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 //              }
 //          }
       }
-      if (!this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
+      if (this.dayOfWeek && !this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.dayOfWeek,daysofweeklist,"dayOfWeek")
           result.putAll(map)
 //          this.dayOfWeek.split(",").each {
@@ -1129,15 +1098,6 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    long getAverageDuration() {
-        def stats = getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent && statsContent.totalTime && statsContent.execCount) {
-            return Math.floor(statsContent.totalTime / statsContent.execCount)
-        }
-        return 0;
-    }
-
     //new threadcount value that can be defined using an option value
     Integer getNodeThreadcount() {
         if(null!=nodeThreadcount && null==nodeThreadcountDynamic){
@@ -1184,50 +1144,6 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    ScheduledExecutionStats getStats(lock = false) {
-        def stats
-
-        if(this.id) {
-            def queryArgs = lock ? [lock: true]  : [:]
-
-            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
-            if (!stats) {
-                def content = [execCount   : this.execCount,
-                               totalTime   : this.totalTime,
-                               refExecCount: this.refExecCount]
-
-                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
-            }
-        }
-        stats
-    }
-
-    Long getRefExecCountStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.refExecCount) {
-            return statsContent.refExecCount
-        }
-        return 0;
-    }
-
-    Long getTotalTimeStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.totalTime) {
-            return statsContent.totalTime
-        }
-        return 0;
-    }
-
-    Long getExecCountStats(){
-        def stats = this.getStats()
-        def statsContent= stats?.getContentMap()
-        if (statsContent?.execCount) {
-            return statsContent.execCount
-        }
-        return 0;
-    }
 
     /**
      *
@@ -1235,6 +1151,71 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      */
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
+    }
+
+    SortedSet<OptionData> getOptionSet() {
+        return options
+    }
+
+    Set<NotificationData> getNotificationSet() {
+        return notifications
+    }
+
+    Map<String, JobComponentData> getComponents() {
+        //TODO: hydrate job component data
+    }
+
+    RdLogConfig getLogConfig() {
+        new RdLogConfig(loglevel: loglevel,
+                logOutputThreshold: logOutputThreshold,
+                logOutputThresholdAction: logOutputThresholdAction,
+                logOutputThresholdStatus: logOutputThresholdStatus
+        )
+    }
+
+    RdNodeConfig getNodeConfig() {
+        new RdNodeConfig(
+                nodeInclude : nodeInclude,
+                nodeExclude : nodeExclude,
+                nodeIncludeName : nodeIncludeName,
+                nodeExcludeName : nodeExcludeName,
+                nodeIncludeTags : nodeIncludeTags,
+                nodeExcludeTags : nodeExcludeTags,
+                nodeIncludeOsName : nodeIncludeOsName,
+                nodeExcludeOsName : nodeExcludeOsName,
+                nodeIncludeOsFamily : nodeIncludeOsFamily,
+                nodeExcludeOsFamily : nodeExcludeOsFamily,
+                nodeIncludeOsArch : nodeIncludeOsArch,
+                nodeExcludeOsArch : nodeExcludeOsArch,
+                nodeIncludeOsVersion : nodeIncludeOsVersion,
+                nodeExcludeOsVersion : nodeExcludeOsVersion,
+                nodeExcludePrecedence : nodeExcludePrecedence,
+                successOnEmptyNodeFilter: successOnEmptyNodeFilter,
+                filter: filter,
+                filterExclude: filterExclude,
+                excludeFilterUncheck: excludeFilterUncheck,
+                nodesSelectedByDefault : nodesSelectedByDefault,
+                nodeKeepgoing : nodeKeepgoing,
+                doNodedispatch : doNodedispatch,
+                nodeRankAttribute : nodeRankAttribute,
+                nodeRankOrderAscending : nodeRankOrderAscending,
+                nodeFilterEditable : nodeFilterEditable,
+                nodeThreadcount : nodeThreadcount,
+                nodeThreadcountDynamic : nodeThreadcountDynamic
+        )
+    }
+
+    RdSchedule getSchedule() {
+        new RdSchedule (
+                year : year,
+                month : month,
+                dayOfWeek : dayOfWeek,
+                dayOfMonth : dayOfMonth,
+                hour : hour,
+                minute : minute,
+                seconds : seconds,
+                crontabString : crontabString
+        )
     }
 
     /**
@@ -1248,6 +1229,18 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             groupPath: groupPath,
             project: project,
             serverUUID: serverNodeUUID
+        )
+    }
+
+    JobDataSummary toJobDataSummary() {
+        new RdJobDataSummary(
+                uuid: uuid,
+                jobName: jobName,
+                groupPath: groupPath,
+                project: project,
+                scheduled: scheduled,
+                scheduleEnabled: scheduleEnabled,
+                executionEnabled: executionEnabled
         )
     }
 }

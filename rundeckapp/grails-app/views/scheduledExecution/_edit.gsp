@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.ScheduledExecution; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.ScheduledExecution; org.rundeck.core.auth.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
 <g:set var="ukey" value="${g.rkey()}" />
@@ -343,7 +343,7 @@
                                                     showNodeIcon   : false,
                                                     hideTitle      : false,
                                                     hideDescription: false,
-                                                    fullDescription: true
+                                                    fullDescription: false
                                             ]}"/>
                                         </label>
                                     </div>

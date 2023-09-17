@@ -6,7 +6,7 @@ public interface FeatureService {
      * @param feature
      * @return
      */
-    boolean featurePresent(Features feature);
+    boolean featurePresent(FeaturesDefinition feature);
 
     /**
      * Return true if grails configuration allows given feature
@@ -21,7 +21,7 @@ public interface FeatureService {
      * @param defaultEnabled default enabled value for the feature, if unset
      * @return true if enabled
      */
-    boolean featurePresent(Features feature, boolean defaultEnabled);
+    boolean featurePresent(FeaturesDefinition feature, boolean defaultEnabled);
 
     /**
      * Return true if grails configuration allows given feature
@@ -36,7 +36,7 @@ public interface FeatureService {
      * @param feature
      * @param enable
      */
-    void toggleFeature(Features feature, boolean enable);
+    void toggleFeature(FeaturesDefinition feature, boolean enable);
 
     /**
      * Set an incubator feature toggle on or off
@@ -45,7 +45,7 @@ public interface FeatureService {
      */
     void toggleFeature(String name, boolean enable);
 
-    Object getFeatureConfig(Features feature);
+    Object getFeatureConfig(FeaturesDefinition feature);
 
     Object getFeatureConfig(String name);
 }

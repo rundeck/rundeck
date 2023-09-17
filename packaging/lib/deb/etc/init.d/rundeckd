@@ -1,0 +1,102 @@
+#!/bin/bash 
+#
+# rundeckd    Startup script for the rundeck
+#
+# chkconfig: 2345 90 10
+# description: rundeckd, providing rundeckd
+# pidfile: /var/run/rundeckd.pid
+
+### BEGIN INIT INFO
+# Provides:		rundeckd
+# Required-Start:	$all
+# Required-Stop:	$local_fs
+# Default-Start: 	2 3 4 5
+# Default-Stop: 	0 1 6
+# Short-Description:	rundeck job automation console
+# Description:		rundeckd services.
+### END INIT INFO
+
+# Source function library
+. /lib/lsb/init-functions
+
+prog="rundeckd"
+USER="rundeck"
+
+. /etc/rundeck/profile
+
+RETVAL=0
+PIDFILE=/var/run/$prog.pid
+DAEMON="${JAVA_HOME:-/usr}/bin/java"
+DAEMON_EXEC="$rundeckd"
+LOG="/var/log/rundeck/service.log"
+
+
+start() {
+	pid=$(pidofproc -p $PIDFILE rundeckd)
+	if [ -n "$pid" ] ; then
+		echo "$prog already running!"
+		exit 0
+	fi
+
+	cd /var/log/rundeck
+	start-stop-daemon --start --quiet --chuid $USER:$USER --chdir $RDECK_BASE \
+                    --make-pidfile --pidfile $PIDFILE \
+                    --background --startas /bin/bash -- \
+                    -c "exec $DAEMON_EXEC >> $LOG 2>&1" 
+
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		log_success_msg "Starting $prog"
+		log_action_end_msg $RETVAL
+	else
+		log_failure_msg
+	fi
+	return $RETVAL
+}
+
+stop() {
+	start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+	RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+            log_success_msg "Stopping $prog"
+            log_action_end_msg $RETVAL
+    else
+            log_failure_msg
+    fi
+    return $RETVAL
+}
+
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	force-reload)
+		stop
+		sleep 5
+		start
+		;;
+	restart)
+		stop
+		sleep 5
+		start
+		;;
+	condrestart)
+		if [ -f /var/run/$prog ]; then
+			stop
+			start
+		fi
+		;;
+	status)
+		status_of_proc -p $PIDFILE $DAEMON $prog
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+		RETVAL=1
+esac
+
+exit $RETVAL

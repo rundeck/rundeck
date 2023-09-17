@@ -26,6 +26,8 @@ buildscript {
 subprojects {
     apply plugin: "groovy"
 
+    apply from: "../../gradle/java-version.gradle"
+
     repositories {
         mavenCentral()
     }

@@ -33,7 +33,7 @@ import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -44,24 +44,24 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
+import org.rundeck.storage.api.StorageException
 import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
-import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import static org.rundeck.core.auth.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
  */
-class FrameworkControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkControllerSpec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
-    List<Class> getDomainClasses() { [NodeFilter, User] }
+    def setupSpec() { mockDomains NodeFilter, User }
 
     def setup() {
         grailsApplication.config.clear()
@@ -653,6 +653,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
@@ -690,6 +691,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -724,7 +726,66 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            1 * fwkService.discoverScopedConfiguration(_, 'project.plugin')
             0 * fwkService._(*_)
+    }
+    def "save project plugin groups"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService){
+                (pgEnabled ? 1 : 0) * featurePresent(Features.PLUGIN_GROUPS) >> pgEnabled
+                _ * featurePresent(Features.CLEAN_EXECUTIONS_HISTORY,_) >> false
+            }
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+            params.project = "TestSaveProject"
+            params.label = 'A Label'
+            if(json){
+                params['pluginValues.PluginGroup.json']=json
+            }
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.updateFrameworkProjectConfig(
+                _,
+                { it.subMap(expected.keySet())==expected && it.getProperty("project.plugin.PluginGroup.aplugin.c") == null},
+                { it.containsAll(rmPrefixes) }
+            ) >> [success: true]
+
+
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+            1 * fwkService.getRundeckFramework()
+            (pgEnabled?1:0) * fwkService.listPluginGroupDescriptions() >> null
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
+            1 * fwkService.refreshSessionProjects(_,_)
+            1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            1 * fwkService.discoverScopedConfiguration(_, 'project.plugin')
+            0 * fwkService._(*_)
+            1 * controller.pluginGroupPasswordFieldsService.reset()
+            (expected?1:0) * controller.pluginGroupPasswordFieldsService.untrack([[config: [type: 'aplugin', props: [a:'b', 'c':null]], type: 'aplugin', index: 0]],_)
+        where:
+            pgEnabled | rmPrefixes                                              | json |expected
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | ''   |[:]
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[]' |[:]
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[{"type":"aplugin","config":{"a":"b", "c":null}}]'|['project.PluginGroup.aplugin.enabled':'true','project.plugin.PluginGroup.aplugin.a':'b']
     }
     def "save project with out description"(){
         setup:
@@ -732,6 +793,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         controller.featureService = Mock(FeatureService)
@@ -769,6 +831,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService){
                 featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
@@ -818,6 +881,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -1285,6 +1349,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         def sEService=Mock(ScheduledExecutionService){
@@ -1581,6 +1646,52 @@ project.label=A Label
         request.errors == ['project.description.can.only.contain.these.characters']
         model.projectDescription == description
 
+    }
+
+    def "create project plugin groups don't save null"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        controller.metricService = Mock(MetricService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
+
+            1 * getAuthContextForSubject(_) >> null
+        }
+        def fwkService = Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        def project = Mock(Project){
+            getName() >> "TestSaveProject"
+        }
+        def projectManager = Mock(ProjectManager){
+            existsFrameworkProject( )>>false
+        }
+        def rdframework=Mock(Framework){
+            1 * getFrameworkProjectMgr()>>projectManager
+        }
+
+        params.newproject = "TestSaveProject"
+        if(json){
+            params['pluginValues.PluginGroup.json']=json
+        }
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+
+        1 * fwkService.validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+        1 * fwkService.getRundeckFramework() >> rdframework
+        1 * fwkService.createFrameworkProject(
+                _,
+                { it.subMap(expected.keySet())==expected && it.getProperty("project.plugin.PluginGroup.aplugin.a") == null}) >> [project, null]
+
+        where:
+         json                                                  |expected
+         '[{"type":"aplugin","config":{"a":null, "b":"good"}}]'|['project.PluginGroup.aplugin.enabled':'true',"project.plugin.PluginGroup.aplugin.b":"good"]
     }
 
     def "create project description name starting with space"(){
@@ -1884,11 +1995,11 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: true)
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -1948,11 +2059,11 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2015,7 +2126,7 @@ project.label=A Label
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2076,12 +2187,12 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: false, report: report)
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2142,12 +2253,12 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: true)
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2165,51 +2276,89 @@ project.label=A Label
     def "save node source file, catch IOException"() {
 
         setup:
-            def source = Mock(WriteableModelSource) {
-                1 * writeData(_) >> {
-                    throw new IOException("expected error")
-                }
-                2 * getSyntaxMimeType() >> 'application/json'
-                1 * getSourceDescription()>>'x'
-                0 * _(*_)
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new IOException("expected error")
             }
-            controller.frameworkService = Mock(FrameworkService) {
-                1 * getRundeckFramework()>>Mock(IFramework){
-                    1 * getResourceModelSourceService()
-                }
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
-                    1 * getProjectNodes() >> Mock(IProjectNodes) {
-                        1 * getWriteableResourceModelSources() >> [
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
                             Mock(IProjectNodes.WriteableProjectNodes) {
                                 getWriteableSource() >> source
                                 getIndex() >> 1
                                 getType() >> 'monkey'
                             }
-                        ]
-                    }
+                    ]
                 }
-                0 * _(*_)
             }
+            0 * _(*_)
+        }
 
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectConfigure(_, 'test') >> true
-                1 * getAuthContextForSubject(_)
-            }
-            controller.pluginService=Mock(PluginService){
-                1 * getPluginDescriptor('monkey',_)
-            }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
 
-            params.project = "test"
-            params.index = "1"
-            request.method = 'POST'
-            params.fileText = 'some text'
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        params.fileText = 'some text'
         when:
 
-            setupFormTokens(params)
-            def result = controller.saveProjectNodeSourceFile()
+        setupFormTokens(params)
+        def result = controller.saveProjectNodeSourceFile()
 
         then:
-            view=='/framework/editProjectNodeSourceFile'
-            model.saveError=='expected error'
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.error == "archive.import.importNodesSource.failed.message"
     }
+
+    def "save node source file, catch exception"() {
+
+        setup:
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new StorageException()
+            }
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
+                            Mock(IProjectNodes.WriteableProjectNodes) {
+                                getWriteableSource() >> source
+                                getIndex() >> 1
+                                getType() >> 'monkey'
+                            }
+                    ]
+                }
+            }
+            0 * _(*_)
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        params.fileText = 'some text'
+        when:
+
+        setupFormTokens(params)
+        def result = controller.saveProjectNodeSourceFile()
+
+        then:
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.error == "archive.import.importNodesSource.failed.message"
+    }
+
 }

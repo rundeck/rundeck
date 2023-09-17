@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
@@ -44,14 +45,17 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.logging.*
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
-import com.dtolabs.rundeck.execution.JobExecutionItem
-import com.dtolabs.rundeck.execution.JobRefCommand
+import com.dtolabs.rundeck.core.jobs.JobExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
@@ -70,6 +74,11 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -148,9 +157,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    JobLifecyclePluginService jobLifecyclePluginService
-    def executionLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
+    def executionLifecycleComponentService
+
     AuditEventsService auditEventsService
+    UserDataProvider userDataProvider
+    ExecReportDataProvider execReportDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobStatsDataProvider jobStatsDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -211,16 +225,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         applicationIsShutdown = true;
     }
 
-
-    void initialize(){
-        //TODO: use plugin registry instead
-        //ExecutionService handles Job reference steps
-        final cis = frameworkService.rundeckFramework.stepExecutionService
-        cis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
-        //ExecutionService handles Job reference node steps
-        final nis = frameworkService.rundeckFramework.nodeStepExecutorService
-        nis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
-    }
     /**
      * Render execution document for api response
      */
@@ -807,7 +811,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     private void cleanupExecution(Execution e, String status = null) {
         saveExecutionState(
-                e.scheduledExecution?.id,
+                e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
@@ -827,7 +831,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     private void cleanupExecution_currentTransaction(Execution e, String status = null) {
         saveExecutionState_currentTransaction(
-                e.scheduledExecution?.id,
+                e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
@@ -901,7 +905,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
-        def reportMap=[:]
+        SaveReportRequestImpl saveReportRequest = new SaveReportRequestImpl()
         def internalLog = LoggerFactory.getLogger("ExecutionService")
         if(null==project || null==user  ){
             //invalid
@@ -910,40 +914,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if(execId){
-            reportMap.executionId=execId
+            saveReportRequest.executionId=execId
         }
         if(startDate){
-            reportMap.dateStarted=startDate
+            saveReportRequest.dateStarted=startDate
         }
         if(jobExecId){
-            reportMap.jcJobId=jobExecId
+            saveReportRequest.jobId=jobExecId
         }
         if(jobName){
-            reportMap.reportId=jobName
-            reportMap.adhocExecution = false
+            saveReportRequest.reportId=jobName
+            saveReportRequest.adhocExecution = false
         }else{
-            reportMap.reportId='adhoc'
-            reportMap.adhocExecution = true
+            saveReportRequest.reportId='adhoc'
+            saveReportRequest.adhocExecution = true
         }
 
         if(succeededNodeList){
-            reportMap.succeededNodeList = succeededNodeList
+            saveReportRequest.succeededNodeList = succeededNodeList
         }
         if(failedNodeList){
-            reportMap.failedNodeList = failedNodeList
+            saveReportRequest.failedNodeList = failedNodeList
         }
         if(filter){
-            reportMap.filterApplied = filter
+            saveReportRequest.filterApplied = filter
         }
-        reportMap.ctxProject=project
+        saveReportRequest.project=project
 
         if(iscancelled && abortedby){
-            reportMap.abortedByUser=abortedby
+            saveReportRequest.abortedByUser=abortedby
         }else if(iscancelled){
-            reportMap.abortedByUser=user
+            saveReportRequest.abortedByUser=user
         }
-        reportMap.author=user
-        reportMap.title= jobSummary?jobSummary:"Rundeck Job Execution"
+        saveReportRequest.author=user
+        saveReportRequest.title= jobSummary?jobSummary:"Rundeck Job Execution"
 
         def statusMap =[
                 true:'succeed',
@@ -954,13 +958,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 (EXECUTION_FAILED):'fail',
                 false:'fail',
         ]
-        reportMap.status= statusMap[statusString]?:'other'
-        reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
+        saveReportRequest.status= statusMap[statusString]?:'other'
+        saveReportRequest.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+        saveReportRequest.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
             willretry?'Job Failed (will retry)':istimedout?'Job timed out':'Job failed')
-        reportMap.dateCompleted=new Date()
-        def result=reportService.reportExecutionResult(reportMap)
+        saveReportRequest.dateCompleted=new Date()
+        def result=reportService.reportExecutionResult(saveReportRequest)
         if(result.error){
             log.error("Failed to create report: "+result.report.errors.allErrors.collect{it.toString()}).join("; ")
         }
@@ -1066,8 +1070,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
         try{
-            def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
+            def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
+
+            // Before execute the job, check if there is any pre execution check error. If there is some error throw a JobLifecycleComponentException
+            // This will let the loghandler save the error message into the execution log file.
+            String preExecutionCheckError = execution.getExtraMetadataMap().get(JobPreExecutionEvent.getName())
+            if(preExecutionCheckError) {
+                throw new JobLifecycleComponentException("Pre Job Execution Check Failure: ${preExecutionCheckError}")
+            }
 
             //manages workflow step+node context data
             ContextManager contextmanager = new ContextManager()
@@ -1136,17 +1147,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
+            def listenersList = [
+                    contextmanager,
+                    executionListener, //manages context for logging
+                    wfEventListener, //emits state change events to log
+                    execStateListener, //updates WF execution state model
+                    logOutFlusher, //flushes stdout output after node steps
+                    logErrFlusher, //flush stderr output after node steps
+                    /*new EchoExecListener() */
+            ]
             def multiListener = MultiWorkflowExecutionListener.create(
                     executionListener, //delegate for ExecutionListener
-                    [
-                            contextmanager,
-                            executionListener, //manages context for logging
-                            wfEventListener, //emits state change events to log
-                            execStateListener, //updates WF execution state model
-                            logOutFlusher, //flushes stdout output after node steps
-                            logErrFlusher, //flush stderr output after node steps
-                            /*new EchoExecListener() */
-                    ]
+                    loadAdditionalListeners(listenersList)
             )
 
             def secureOptionNodeDeferred = [:]
@@ -1192,7 +1204,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
-                notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
+                notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
                         [execution: execution, context:executioncontext])
 
             }
@@ -1220,9 +1232,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
             def executionLifecyclePluginConfigs = scheduledExecution ?
-                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
                                    null
-            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
@@ -1246,6 +1258,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
+            metricService.markMeter(this.class.name,'executionJobStartFailedMeter')
             sysThreadBoundOut.close()
             sysThreadBoundOut.removeThreadStream()
             sysThreadBoundErr.close()
@@ -1273,6 +1286,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return scheduledExecution?.logOutputThresholdAction
     }
 
+    private List<WorkflowExecutionListener> loadAdditionalListeners(List<WorkflowExecutionListener> listeners){
+        ServiceLoader<WorkflowExecutionListener> additionalListeners = ServiceLoader.load(
+                WorkflowExecutionListener
+        )
+        additionalListeners.each {
+            listeners.add(it)
+        }
+        return listeners
+    }
     /**
      * Return true if password can be read
      * @param authContext
@@ -1296,6 +1318,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             return false;
         }
+    }
+
+    String readStoragePassword(AuthContext authContext, String storagePath){
+        KeyStorageTree keystore = storageService.storageTreeWithContext(authContext)
+        String password = null
+
+        if(keystore.hasPassword(storagePath)){
+            password = new String(keystore.readPassword(storagePath))
+        }
+
+        return password
     }
 
     /**
@@ -1417,6 +1450,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SCHEDULED = "scheduled"
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
+    public static String AVERAGE_DURATION_EXCEEDED = "average-duration-exceeded"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -1480,7 +1514,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             userName=execMap.user
         }
 
-        def userLogin = User.findByLogin(userName)
+        def userLogin = userDataProvider.findByLogin(userName)
         if(userLogin && userLogin.email){
             jobcontext['user.email'] = userLogin.email
         }
@@ -1578,6 +1612,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             orchestrator = null;
         }
+        
+        def ExecutionReference executionReference = null
+        if(execMap instanceof Execution) {
+            executionReference = execMap.asReference()
+        }
+        
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1596,6 +1636,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             privateDataContext(privatecontext)
             executionListener(listener)
             workflowExecutionListener(wlistener)
+            execution(executionReference)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
@@ -1788,7 +1829,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } else if (null == dateCompleted) {
             scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
-                se ? se.id : null,
+                se ? se.uuid : null,
                 eid,
                     [
                         status       : forceIncomplete ? cleanupStatus : String.valueOf(false),
@@ -1894,13 +1935,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
-            ReferencedExecution.findAllByExecution(e).each{ re ->
-                re.delete()
-            }
+            referencedExecutionDataProvider.deleteByExecutionId(e.id)
                 //delete all reports
-            ExecReport.findAllByExecutionId(e.id).each { rpt ->
-                rpt.delete()
-            }
+            execReportDataProvider.deleteAllByExecutionId(e.id)
 
             List<File> files = []
             def execs = []
@@ -2100,19 +2137,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(Map params, String user) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(ScheduledExecution scheduledExecution, AuthContext authContext, Map params) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
-        if(!props.user){
-            props.user=user
-        }
-        def Execution execution = createExecution(props)
+
+        props.executionType = 'scheduled'
+
+        Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
         if(newstr!=execution.argString){
             execution.argString=newstr
         }
+
+        // Abandon the transient ScheduledExecution entity instance.
+        execution.scheduledExecution = null
+        execution.jobUuid = null
 
         if(execution.workflow){
             if(!execution.workflow.save(flush:true)){
@@ -2195,6 +2236,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
+
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
+            }
 
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
@@ -2289,7 +2334,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
+            Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
+            }
 
             // Update execution
             e.dateStarted       = startTime
@@ -2370,9 +2420,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map securedOpts,
             Map secureExposedOpts
     ) {
-        def props = [:]
+        Map props = [:]
 
-        se = ScheduledExecution.get(se.id)
+        // For adhoc command the ScheduledExecution instance is created as transient that has no a corresponding entity in database.
+        se = ScheduledExecution.get(se.id) ?: se
         def propset=[
                 'project',
                 'user',
@@ -2433,10 +2484,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException("executionType is required")
         }
         if(input['meta'] instanceof Map){
-            props['extraMetadataMap'] = input['meta']
+            props.extraMetadataMap = input['meta']
         }
-        //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
+ 
+        // Parse base received options for processing and validation.
+        HashMap baseOptParams = parseJobOptionInput(props, se, authContext)
+
+        /* 
+        Process job lifecycle before execution event 
+        */
+
+        def beforeExecutionResult = checkBeforeJobExecution(se, baseOptParams, props, authContext)
+
+        // Process metadata updates
+        if (beforeExecutionResult?.isUseNewMetadata()) {
+            props.extraMetadataMap = beforeExecutionResult.newExecutionMetadata
+        }
+
+        // Process option values updates
+        Map optparams = baseOptParams
+        if (beforeExecutionResult?.isUseNewValues()) {
+            optparams = beforeExecutionResult.optionsValues
+            checkSecuredOptions(beforeExecutionResult.optionsValues, securedOpts, secureExposedOpts)
+        }
+
+        /* End job lifecycle processing */
+
+        // Final option values validation
+        validateOptionValues(se, optparams, authContext)
 
         optparams = removeSecureOptionEntries(se, optparams)
 
@@ -2492,6 +2567,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         execution.scheduledExecution=se
+        execution.jobUuid=se.uuid
+
+        // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
+        if(!beforeExecutionResult?.isSuccessful() && beforeExecutionResult?.isTriggeredByJobEvent(JobPreExecutionEvent)) {
+            Map<String, String> extraMeta = execution.getExtraMetadataMap()
+            if(!extraMeta) extraMeta = new HashMap<>()
+            extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
+            execution.setExtraMetadataMap(extraMeta)
+        }
+
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
             log.error("unable to save execution workflow")
@@ -2503,6 +2588,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.error("unable to create execution: " + msg)
             throw new ExecutionServiceException("unable to create execution: "+msg)
         }
+
         return execution
     }
 
@@ -2520,7 +2606,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @throws ExecutionServiceException
      */
     @Publisher
-    def Execution createExecution(
+    Execution createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
@@ -2535,13 +2621,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         JobValidationReference jobReference = ExecutionValidatorService.buildJobReference(se)
 
+        // Prevent any execution if project is disabled
+        if(frameworkService.isFrameworkProjectDisabled(se.project)) {
+            throw new ExecutionServiceException(lookupMessage("project.disabled",[se.project]))
+        }
+        
         // Validate max executions.
         if(!executionValidatorService.canRunMoreExecutions(jobReference, retry, prevId)) {
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
 
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
-        
+
         // Publish audit event for new job run.
         if(auditEventsService) {
             auditEventsService.eventBuilder()
@@ -2555,29 +2646,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return newExec
     }
 
-    /**
-     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
-     * options. Validate the values for the Job options and throw exception if validation fails. Return a map of name
-     * to value for the parsed options.
-     * @param props
-     * @param scheduledExec
-     * @param authContext auth for reading storage defaults
-     * @param optionValues values modified by a job plugin
-     * @param securedOpts
-     * @param securedExposedOpts
-     * @return
-     */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
-        HashMap optparams
-        optparams = parseJobOptionInput(props, scheduledExec, authContext)
-        def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
-        if(result?.isUseNewValues()){
-            optparams = result.optionsValues
-            checkSecuredOptions(result.optionsValues, securedOpts, securedExposedOpts)
-        }
-        validateOptionValues(scheduledExec, optparams,authContext)
-        return optparams
-    }
 
     /**
      * It replaces values coming from optionsValues into secured options and secured exposed options
@@ -2669,7 +2737,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def defaultoptions=[:]
             options.each {Option opt ->
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
-                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         Map selectedOption = remoteOptions.values.find {it instanceof Map && [true, 'true'].contains(it.selected)}
                         if(selectedOption){
@@ -2812,7 +2880,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if(opt.enforced && !(opt.optionValues || opt.optionValuesPluginType)){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution,
-                            [option: opt.name, extra: [option: optparams]], authContext?.username)
+                            [option: opt.name, extra: [option: optparams]], authContext?.username, authContext)
                     if(!remoteOptions.err && remoteOptions.values){
                         opt.optionValues = remoteOptions.values.collect { optValue ->
                             if (optValue instanceof Map) {
@@ -2936,6 +3004,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
         execution.properties = props
+        if(!execution.uuid) {
+            execution.uuid = UUID.randomUUID().toString()
+        }
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }
@@ -2944,7 +3015,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
+            scheduledExecution = ScheduledExecution.findByUuid(schedId)
+            if(!execution.jobUuid) execution.jobUuid = scheduledExecution.uuid
         }
 
         //check the final status of succeeded nodes
@@ -3098,45 +3170,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(Long schedId, eId, long time) {
-        def success = false
-        try {
-            ScheduledExecutionStats.withTransaction {
-                def scheduledExecution = ScheduledExecution.get(schedId)
-                def seStats = scheduledExecution.getStats(true)
-
-                def statsMap = seStats.getContentMap()
-                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                    statsMap.execCount = 1
-                    statsMap.totalTime = time
-                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                    statsMap.execCount++
-                    statsMap.totalTime += time
-                } else if (statsMap.execCount >= 10) {
-                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                    statsMap.totalTime -= popTime
-                    statsMap.totalTime += time
-                }
-                seStats.setContentMap(statsMap)
-
-                if (seStats.validate()) {
-                    if (seStats.save(flush: true)) {
-                        log.info("updated scheduled Execution Stats")
-                    } else {
-                        seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                        log.warn("failed saving execution to history")
-                    }
-                    success = true
-                }
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
-        } catch (DuplicateKeyException ve) {
-            log.warn("Caught DuplicateKeyException for migrated stats, will retry updateScheduledExecStatistics for ${eId}")
-        }
-        return success
+    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
     }
 
     /**
@@ -3146,54 +3181,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def updateJobRefScheduledExecStatistics(Long schedId, long time) {
-        def success = false
-        try {
-            def scheduledExecution = ScheduledExecution.get(schedId)
-            def seStats = scheduledExecution.getStats()
-            def statsMap = seStats.getContentMap()
-
-            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
-                statsMap.execCount = 1
-                statsMap.totalTime = time
-            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
-                statsMap.execCount++
-                statsMap.totalTime += time
-            } else if (statsMap.execCount >= 10) {
-                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
-                statsMap.totalTime -= popTime
-                statsMap.totalTime += time
-            }
-
-
-            if (!statsMap.refExecCount) {
-                statsMap.refExecCount = 1
-            } else {
-                statsMap.refExecCount++
-            }
-            seStats.setContentMap(statsMap)
-
-            if (seStats.validate()) {
-                if (seStats.save(flush: true)) {
-                    log.info("updated referenced Job Stats")
-                } else {
-                    seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
-                    log.warn("failed saving referenced Job Stats")
-                }
-                success = true
-            }
-        } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.warn("Caught ConcurrencyFailureException, dismissed statistic for referenced Job")
-        } catch (StaleObjectStateException e) {
-            log.warn("Caught StaleObjectState, dismissed statistic for for referenced Job")
-        } catch (DuplicateKeyException ve) {
-            // Do something ...
-            log.warn("Caught DuplicateKeyException for migrated stats, dismissed statistic for referenced Job")
-        }
-        return success
+    def updateJobRefScheduledExecStatistics(String jobUuid, long time) {
+        return jobStatsDataProvider.updateJobRefStats(jobUuid, time)
     }
 
-
+    Long getAverageDuration(String jobUuid) {
+        def statsContent= jobStatsDataProvider.getStatsContent(jobUuid)
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
+        }
+        return 0;
+    }
 
 
     /**
@@ -3729,7 +3727,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createSuccess()
                 }
             } else {
-                averageDuration = se.averageDuration
+                averageDuration = getAverageDuration(se.uuid)
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
@@ -3791,7 +3789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
             executionReference = exec.asReference()
-            refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
+            refId = saveRefExecution(EXECUTION_RUNNING, null, se.uuid, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
                 String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3810,9 +3808,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def shouldCheckTimeout = timeoutms > 0
 
             def executionLifecyclePluginConfigs = se ?
-                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) :
+                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
-            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
@@ -3828,7 +3826,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
-                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
+                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
                                 [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
                     }
 
@@ -3851,7 +3849,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (wresult.result) {
                 def savedJobState = false
                 if (!disableRefStats) {
-                    updateJobRefScheduledExecStatistics(id, duration)
+                    updateJobRefScheduledExecStatistics(se.uuid, duration)
                 }
                 saveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
             }
@@ -3878,8 +3876,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
             }
             if(!jitem.ignoreNotifications) {
+                def scheduledExecution = ScheduledExecution.get(id)
+
                 if (averageDuration > 0 && duration > averageDuration) {
-                    avgDurationExceeded(id, [
+                    avgDurationExceeded(scheduledExecution.uuid, [
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
@@ -3887,10 +3887,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ])
                 }
 
-                def scheduledExecution = ScheduledExecution.get(id)
                 notificationService.asyncTriggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
-                        scheduledExecution.id,
+                        scheduledExecution.uuid,
                         [
                                 execution : execution,
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
@@ -3909,18 +3908,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
-            if(refId){
-                ReferencedExecution refExec = ReferencedExecution.findById(refId)
-                refExec.status = status
-                refExec.save(flush:true)
-            }else{
-                ScheduledExecution se = ScheduledExecution.findById(seId)
-                Execution exec = Execution.findById(execId)
-                ReferencedExecution refExec = new ReferencedExecution(
-                        scheduledExecution: se, execution: exec, status: status).save(flush:true)
-                return refExec.id
-            }
+    def saveRefExecution(String status, Long refId, String jobUuid = null, Long execId=null){
+        return referencedExecutionDataProvider.updateOrCreateReference(refId, jobUuid, execId, status)
     }
     /**
      * Query for executions for the specified job
@@ -4028,52 +4017,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private def queryExecutionMetricsByCriteria(ExecutionQuery query){
-        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
-        def metricCriteria = {
 
-            // Run main query criteria
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                /* Group by Calculated Status */
-//                groupProperty("state") // state field added as formula on Execution.groovy
-//                property("state", "state")
-
-/*
-                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
-                sqlProjection "CASE " +
-                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
-                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
-                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
-                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
-                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
-                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
-                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
-                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
-                    'estado',
-                    StandardBasicTypes.STRING
-*/
-
-                rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
-                    'durationSum',
-                    StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
-                    'durationMin',
-                    StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
-                    'durationMax',
-                    StandardBasicTypes.TIME
-
+        List<Closure> metricsCriterias = getCriteriaScenarios(query)
+        def metricsData = [:]
+        for (Closure c : metricsCriterias) {
+            try {
+                metricsData = Execution.createCriteria().get(c)
+                log.debug("Resultset extracted.")
+                break;
+            } catch (Exception ignored) {
+                log.debug("Cannot obtain resultset from criteria's function, attempting other criteria.")
             }
         }
-
-        // get data and calculate
-        def metricsData = Execution.createCriteria().get(metricCriteria)
-
         return metricsDataFromCriteriaResult(metricsData)
 
     }
@@ -4084,24 +4039,118 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
-        long totalCount = metricsData?.count ? metricsData.count : 0
 
-        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
-        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
-        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
-        double avgDuration = totalCount != 0 ? (durationSum / totalCount) : 0
+        def formattedMetrics = formatMetrics(metricsData)
 
         // Build response
         return [
-            total   : totalCount,
+            total   : formattedMetrics.totalCount,
 
             duration: [
-                average: avgDuration,
-                max    : maxDuration,
-                min    : minDuration
+                average: formattedMetrics.avgDuration,
+                max    : formattedMetrics.maxDuration,
+                min    : formattedMetrics.minDuration
             ]
         ]
 
+    }
+
+    /**
+     * Returns a list of criterias to be applied in runtime query to extract metric's resultset from db.
+     *
+     * Tha main goal is to support the query in all supported DB's, so each criteria will be
+     * executed until it gets the result set and not an exception in 'queryExecutionMetricsByCriteria'.
+     *
+     * @param query - ExecutionQuery object
+     *
+     * */
+    List<Closure> getCriteriaScenarios(ExecutionQuery query){
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+        def metricCriteriaA = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.TIME
+                sqlProjection 'min(date_completed - date_started) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.TIME
+                sqlProjection 'max(date_completed - date_started) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.TIME
+
+            }
+        }
+        def metricCriteriaB = {
+            // Run main query criteria
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(extract(EPOCH from (date_completed - date_started))) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(extract(EPOCH from (date_completed - date_started))) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(extract(EPOCH from (date_completed - date_started))) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+    }
+
+    /**
+     * Apply format according to the format of query's result.
+     *
+     * @param metricsData - resultset extracted from the db.
+     *
+     * */
+    private Map<String,Object> formatMetrics(Map<String,Object> metricsData){
+
+        def totalCount = metricsData?.count ? metricsData.count : 0
+        def maxDuration = metricsData?.durationMax ? metricsData.durationMax : 0
+        def minDuration = metricsData?.durationMin ? metricsData.durationMin : 0
+        def durationSum = metricsData?.durationSum ? metricsData.durationSum : 0
+
+        if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
+            maxDuration = epochToTime(metricsData?.durationMax)
+            minDuration = epochToTime(metricsData?.durationMin)
+            durationSum = epochToTime(metricsData?.durationSum)
+        }
+
+        def avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
+
+        return [
+                totalCount: totalCount,
+                maxDuration: sqlTimeToMillis(maxDuration),
+                minDuration: sqlTimeToMillis(minDuration),
+                avgDuration: avgDuration
+        ]
+
+    }
+
+    /**
+     * Parse Unix time in Long, into a java.sql.Time object
+     *
+     * @param epoch - Long : The result of the query
+     * @return a new instance of Time
+     *
+     * */
+    @CompileStatic
+    private Time epochToTime(Long epoch){
+        Date date = new Date(epoch * 1000L)
+        return new Time(date.getTime())
     }
 
     private def queryExecutionMetricsOnMemory(ExecutionQuery query){
@@ -4184,8 +4233,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
-    void avgDurationExceeded(schedId, Map content){
-        notificationService.asyncTriggerJobNotification('avgduration', schedId, content)
+    void avgDurationExceeded(schedUuid, Map content){
+        notificationService.asyncTriggerJobNotification('avgduration', schedUuid, content)
     }
 
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){
@@ -4210,23 +4259,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
-    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
+    /**
+     * Process the beforeJobExecution event for existing Job Lifecycle Components
+     * @param scheduledExecution The Job
+     * @param optparams Option parameters
+     * @param props Execution properties
+     * @param authContext Authentication Context
+     * @return JobLifecycleStatus object with process result.
+     */
+    JobLifecycleStatus checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext, new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]))
-        def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
+        def nodeFilter = props.filter ? props.filter : scheduledExecution.asFilter()
         JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
-                scheduledExecution.jobName,
-                props.project,
-                props.user,
-                optparams,
-                nodes,
-                nodeFilter,
-                scheduledExecution.jobOptionsSet())
+            scheduledExecution.jobName,
+            scheduledExecution.uuid,
+            props.project,
+            props.user,
+            scheduledExecution.jobOptionsSet(),
+            optparams,
+            nodeFilter,
+            nodes,
+            props.extraMetadataMap)
+
         try {
-            return jobLifecyclePluginService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobLifecyclePluginException jpe) {
-            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
+        } catch(JobLifecycleComponentException e) {
+            log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            def jobEventStatus = new JobEventStatusImpl(
+                    successful: false,
+                    eventType: event.getClass(),
+                    optionsValues: event.optionsValues,
+                    errorMessage: e.getMessage()
+            )
+            JobLifecycleComponentService.mergeEvent(jobEventStatus, event)
+            return jobEventStatus
         }
+
     }
 
     def getEffectiveSuccessNodeList(Execution e){
@@ -4258,8 +4327,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.workflow.save()
         missed.status = 'missed'
         missed.save()
-        ExecReport execReport = ExecReport.fromExec(missed)
-        execReport.save()
+
+        execReportDataProvider.createReportFromExecution(missed.id)
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

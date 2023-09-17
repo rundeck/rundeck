@@ -40,6 +40,7 @@ import grails.plugins.mail.MailService
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import grails.util.Holders
@@ -47,6 +48,7 @@ import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
 import rundeck.CommandExec
 import rundeck.Execution
@@ -55,20 +57,23 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.services.data.UserDataService
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
-import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 7/12/16.
  */
-class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
+class NotificationServiceSpec extends Specification implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest, DataTest {
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats }
 
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
-
+    def setup() {
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider =  provider
+    }
 
     private List createTestJob() {
 
@@ -266,7 +271,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
 
     }
 
@@ -305,7 +310,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, null)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
 
     }
 
@@ -355,7 +360,6 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -420,6 +424,64 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
 
         when:
         def result = service.triggerJobNotification('success', job, content)
+
+        then:
+        1 * service.loggingService.getLogReader(_) >> reader
+        1 * service.mailService.sendMail(_)
+        result
+    }
+
+    def "email notification average duration exceeded"() {
+        given:
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+        content.execution.status = ExecutionService.AVERAGE_DURATION_EXCEEDED
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onavgduration',
+                        type: 'email',
+                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+        service.mailService = Mock(MailService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+        service.configurationService = Mock(ConfigurationService)
+
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                [
+                        new DefaultLogEvent(
+                                eventType: LogUtil.EVENT_TYPE_LOG,
+                                datetime: new Date(),
+                                message: "log",
+                                metadata: [:],
+                                loglevel: LogLevel.NORMAL
+                        ),
+                ]
+        )
+        service.loggingService=Mock(LoggingService)
+
+        when:
+        def result = service.triggerJobNotification('avgduration', job, content)
 
         then:
         1 * service.loggingService.getLogReader(_) >> reader
@@ -545,7 +607,6 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -613,7 +674,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -905,7 +966,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
 
         service.pluginService = Mock(PluginService){
             listPlugins(_,_)>>[
-                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
+                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake', null, null),
             ]
         }
         service.frameworkService = Mock(FrameworkService) {

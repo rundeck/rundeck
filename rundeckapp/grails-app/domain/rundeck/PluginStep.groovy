@@ -19,7 +19,7 @@ package rundeck
 import com.fasterxml.jackson.databind.ObjectMapper
 
 class PluginStep extends WorkflowStep{
-    boolean nodeStep
+    Boolean nodeStep = false
     String type
     String jsonData
     static constraints = {
@@ -29,6 +29,10 @@ class PluginStep extends WorkflowStep{
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['configuration']
+
+    public String getPluginType() {
+        return type
+    }
 
     public Map getConfiguration() {
         //de-serialize the json
@@ -93,16 +97,20 @@ class PluginStep extends WorkflowStep{
 
     static PluginStep fromMap(Map data) {
         PluginStep ce = new PluginStep()
+        updateFromMap(ce, data)
+        return ce
+    }
+
+    static void updateFromMap(PluginStep ce, Map data) {
         ce.nodeStep=data.nodeStep
         ce.type=data.type
-        ce.configuration=data.configuration
+        ce.setConfiguration(data.configuration)
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description=data.description?.toString()
         if (data.plugins) {
             ce.pluginConfig = data.plugins
         }
-        return ce
     }
 
     public PluginStep createClone() {

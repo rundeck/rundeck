@@ -5,11 +5,13 @@ import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -17,7 +19,6 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.spring.BeanBuilder
 import grails.testing.mixin.integration.Integration
 import grails.gorm.transactions.*
-import okhttp3.Request
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -136,12 +137,13 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         NodeSetImpl testNodeSetB = new NodeSetImpl()
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
 
-        def iRundeckProject = Mock(IRundeckProject){
-        }
 
         def properties = new Properties()
         properties.setProperty("fwkprop","fwkvalue")
 
+        def iRundeckProject = Mock(IRundeckProject){
+            getProperties() >> properties
+        }
         def frameworkService  = Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -156,6 +158,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
                     getFrameworkProject(_) >> iRundeckProject
                 }
                 getPropertyLookup() >> PropertyLookup.create(properties)
+                getPropertyRetriever()>>PropertyLookup.create(properties)
             }
             getProjectGlobals(_) >> [:]
         }
@@ -171,6 +174,12 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         service.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        service.pluginService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>> Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever([:])
+            }
+        }
+
         service.jobSchedulesService = Mock(SchedulesManager){
         }
 
@@ -180,7 +189,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
 
         service.notificationService = notificationService
         service.orchestratorPluginService=Mock(OrchestratorPluginService)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             authorizeProjectJobAll(_, _, ['update'], _) >> true

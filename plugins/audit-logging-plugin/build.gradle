@@ -19,6 +19,9 @@ ext.pluginName = 'Audit Logger plugin'
 ext.pluginDescription = 'Write audit events to the service log'
 
 apply plugin: "groovy"
+
+apply from: "../../gradle/java-version.gradle"
+
 configurations{
     pluginLibs
 

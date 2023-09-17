@@ -18,12 +18,18 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.PluginConfigureService
+import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -38,14 +44,15 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.config.ConfiguredBy
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
-import com.dtolabs.rundeck.server.plugins.RenamedDescription
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.Services
 
 @CompileStatic
-class PluginService implements ResourceFormats {
+class PluginService implements ResourceFormats, PluginConfigureService, PluginServiceCapabilities {
 
     def PluginRegistry rundeckPluginRegistry
     def FrameworkService frameworkService
@@ -186,78 +193,55 @@ class PluginService implements ResourceFormats {
         String project,
         Services services
     ) {
-        def pluginServiceType
-        def pluginDescriptor
 
-        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
-        }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginServiceType = rundeckFramework.getStepExecutionService()
-        }
+        PropertyRetriever retriever = PropertyResolverFactory.instanceRetriever([:])
+        PropertyRetriever projectRetriever = PropertyResolverFactory.instanceRetriever(rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties())
+        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,projectRetriever,rundeckFramework.getPropertyRetriever())
+        def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
 
-        if(pluginServiceType){
-            pluginDescriptor = getPluginDescriptor(type, pluginServiceType)
-        }else{
-            pluginDescriptor = getPluginDescriptor(type, serviceName)
-        }
-
-        if(!pluginDescriptor){
+        def instance=plugin?.instance
+        if(!(instance instanceof DynamicProperties)){
             return null
-        }
-        if(!(pluginDescriptor.instance instanceof DynamicProperties)){
-            return null
-        }
-
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
-            project,
-            rundeckFramework,
-            null,
-            serviceName,
-            type
-        )
-        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
-            resolver,
-            pluginDescriptor.description,
-            PropertyScope.Project
-        )
-
-        Description desc = pluginDescriptor.description
-
-        //add custom mapping for plugin properties at project level.
-        // eg: set the value of the plugin properties based on project setting
-        //     builder.mapping("project.path.attr", "attr")
-        Map projectProperties = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
-        if(desc.getPropertiesMapping()){
-            Map props = Validator.performMapping(projectProperties, desc.getPropertiesMapping(), true)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
-        }
-
-        //add custom mapping for plugin properties at framework level.
-        // eg: set the value of the plugin properties based on framework setting
-        //     builder.mapping("framework.path.attr", "attr")
-        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
-        if(desc.getFwkPropertiesMapping()){
-            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
         }
 
         try{
-            Map<String, Object> dynamicProperties = pluginDescriptor.instance.dynamicProperties(config, services)
+            Map<String, Object> dynamicProperties = instance.dynamicProperties(plugin.configuration, services)
             return dynamicProperties
+        }catch(Exception e){
+            log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
+        }
+
+        return null
+    }
+
+    /**
+     * load the dynamic select values for properties from the plugin, or null
+     * @param serviceName
+     * @param type
+     * @param project
+     * @param services
+     * @return
+     */
+    def Map<String, Object> getDynamicDefaults(
+        IFramework rundeckFramework,
+        String serviceName,
+        String type,
+        String project,
+        Services services
+    ) {
+
+        PropertyRetriever retriever = PropertyResolverFactory.instanceRetriever([:])
+        PropertyRetriever projectRetriever = PropertyResolverFactory.instanceRetriever(rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties())
+        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,projectRetriever,rundeckFramework.getPropertyRetriever())
+        def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
+
+        def instance=plugin?.instance
+        if(!(instance instanceof DynamicProperties)){
+            return null
+        }
+
+        try{
+            return instance.dynamicDefaults(plugin.configuration, services)
         }catch(Exception e){
             log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
         }
@@ -276,14 +260,9 @@ class PluginService implements ResourceFormats {
         rundeckPluginRegistry?.createPluggableService(type)
     }
 
-    /**
-     * Configure a plugin given only instance configuration
-     * @param name name
-     * @param configuration instance configuration
-     * @param service service
-     * @return plugin, or null if configuration or plugin loading failed
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, PluggableProviderService<T> service) {
+
+    @Override
+     <T> ConfiguredPlugin<T> configurePlugin(String name, Map<String,Object> configuration, PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, configuration)
         if (validation != null && !validation.valid) {
             logValidationErrors(service.name, name, validation.report )
@@ -296,28 +275,19 @@ class PluginService implements ResourceFormats {
         log.error("${service.name} not found: ${name}")
         return null
     }
-    /**
-     * Configure a plugin given only instance configuration
-     * @param name name
-     * @param configuration instance configuration
-     * @param service service
-     * @return plugin , or null if configuration or plugin loading failed
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, Class<T> type) {
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(String name, Map<String,Object> configuration, Class<T> type) {
         configurePlugin(name, configuration, createPluggableService(type))
     }
-    /**
-     * Configure a plugin given only instance configuration
-     * @param name name
-     * @param configuration instance configuration
-     * @param service service
-     * @return plugin , or null if configuration or plugin loading failed
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, String service, Map configuration) {
-        Class serviceType = getPluginTypeByService(service)
-        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService((Class) serviceType))
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(String name, String service, Map<String,Object> configuration) {
+        Class<?> serviceType = getPluginTypeByService(service)
+        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService((Class<T>) serviceType))
     }
 
+    @Override
     def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(
             String projectName,
             IFramework framework,
@@ -329,14 +299,9 @@ class PluginService implements ResourceFormats {
             plugin?.instance
         } as SimplePluginProviderLoader<T>
     }
-    /**
-     * Configure a new plugin using only instance-scope configuration values
-     * @param name provider name
-     * @param configuration map of instance configuration values
-     * @param service service
-     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, String projectName,
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(String name, Map<String,Object> configuration, String projectName,
                                                 IFramework framework,
                                                 PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
@@ -355,15 +320,10 @@ class PluginService implements ResourceFormats {
         log.error("${service.name} not found: ${name}")
         return null
     }
-    /**
-     * Configure a new plugin using only instance-scope configuration values
-     * @param name provider name
-     * @param configuration map of instance configuration values
-     * @param service service
-     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(
-            String name, Map configuration, String projectName,
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
+            String name, Map<String,Object> configuration, String projectName,
             IFramework framework,
             Class<T> type
     )
@@ -377,15 +337,9 @@ class PluginService implements ResourceFormats {
         )
     }
 
-    /**
-     * Configure a new plugin using a specific property resolver for configuration
-     * @param name provider name
-     * @param service service
-     * @param resolver property resolver for configuration properties
-     * @param defaultScope default plugin property scope
-     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
             String name,
             PluggableProviderService<T> service,
             PropertyResolver resolver,
@@ -395,24 +349,50 @@ class PluginService implements ResourceFormats {
         configurePlugin(name, service, resolver, defaultScope, null)
     }
 
-    /**
-     * Configure a new plugin using a specific property resolver for configuration
-     * @param name provider name
-     * @param service service
-     * @param resolver property resolver for configuration properties
-     * @param defaultScope default plugin property scope
-     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
-     */
-    def <T> ConfiguredPlugin<T> configurePlugin(
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolverFactory.Factory factory,
+            PropertyScope defaultScope
+    )
+    {
+        configurePlugin(name, service, factory, defaultScope, null)
+    }
+
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
             String name,
             PluggableProviderService<T> service,
             PropertyResolver resolver,
             PropertyScope defaultScope,
             Services servicesProvider
+    ) {
+        return configurePlugin(
+            name,
+            service,
+            PropertyResolverFactory.creates(resolver),
+            defaultScope,
+            servicesProvider
+        )
+    }
+
+    @Override
+    boolean hasRegisteredProvider(final String name, final Class type) {
+        return rundeckPluginRegistry.hasRegisteredPlugin(createPluggableService(type).name, name)
+    }
+
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolverFactory.Factory resolverFactory,
+            PropertyScope defaultScope,
+            Services servicesProvider
     )
     {
-        def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
-                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+        def validation = rundeckPluginRegistry?.validatePluginByName(name, service, resolverFactory, defaultScope)
         if(null==validation){
             return null
         }
@@ -420,8 +400,7 @@ class PluginService implements ResourceFormats {
             logValidationErrors(service.name, name, validation.report)
             return null
         }
-        def result = rundeckPluginRegistry?.configurePluginByName(name, service,
-                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+        def result = rundeckPluginRegistry?.configurePluginByName(name, service, resolverFactory, defaultScope)
 
         if (result.instance != null) {
             serviceSpiProvider(result, servicesProvider)
@@ -432,13 +411,35 @@ class PluginService implements ResourceFormats {
         return null
     }
 
-    def serviceSpiProvider(ConfiguredPlugin plugin, Services providers ){
-        if(plugin.instance instanceof AcceptsServices){
-            plugin.instance.setServices(providers);
+    <T> ConfiguredPlugin<T> configurePluginWithoutValidation(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolverFactory.Factory resolverFactory,
+            PropertyScope defaultScope,
+            Services servicesProvider
+    )
+    {
+
+        def result = rundeckPluginRegistry?.configurePluginByName(name, service, resolverFactory, defaultScope)
+
+        if (result?.instance != null) {
+            serviceSpiProvider(result, servicesProvider)
+
+            return result
+        }
+        log.error("${service.name} not found: ${name}")
+        return null
+    }
+
+    def serviceSpiProvider(ConfiguredPlugin plugin, Services providers) {
+        def instance = plugin.instance
+        if(instance instanceof AcceptsServices){
+            instance.setServices(providers)
         }
     }
 
-    def <T> ConfiguredPlugin<T> configurePlugin(
+    @Override
+    <T> ConfiguredPlugin<T> configurePlugin(
             String name,
             Class<T> type,
             PropertyResolver resolver,
@@ -455,21 +456,13 @@ class PluginService implements ResourceFormats {
      * @param defaultScope default plugin property scope
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
-    def <T> Map getPluginConfiguration(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
-
-        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory
-                .createPrefixedResolver(resolver, name, service.name), defaultScope
+    def <T> Map getPluginConfiguration(String name, PluggableProviderService<T> service, PropertyResolverFactory.Factory factory, PropertyScope defaultScope) {
+        return rundeckPluginRegistry?.getPluginConfigurationByName(
+            name,
+            service,
+            factory,
+            defaultScope
         )
-    }
-
-    def <T> Map getPluginConfiguration(
-            String name,
-            Class<T> type,
-            PropertyResolver resolver,
-            PropertyScope defaultScope
-    )
-    {
-        getPluginConfiguration(name, createPluggableService(type), resolver, defaultScope)
     }
 
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
@@ -491,12 +484,17 @@ class PluginService implements ResourceFormats {
      * @param service service
      * @param resolver property resolver for configuration properties
      * @param defaultScope default plugin property scope
+     * @param ignoredScope ignored scope
      * @return validation
      */
-    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver,
-                         PropertyScope defaultScope) {
-        return rundeckPluginRegistry?.validatePluginByName(name, service,
-                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, PropertyResolverFactory.Factory factory, PropertyScope defaultScope, PropertyScope ignoredScope) {
+        return rundeckPluginRegistry?.validatePluginByName(
+            name,
+            service,
+            factory,
+            defaultScope,
+            ignoredScope
+        )
     }
     /**
      * Configure a new plugin using a specific property resolver for configuration
@@ -507,9 +505,14 @@ class PluginService implements ResourceFormats {
      * @param ignoredScope ignored scope
      * @return validation
      */
-    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
-        return rundeckPluginRegistry?.validatePluginByName(name, service,
-                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope, ignoredScope)
+    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, String project, Map config, PropertyScope defaultScope, PropertyScope ignoredScope) {
+        return rundeckPluginRegistry?.validatePluginByName(
+            name,
+            service,
+            frameworkService.pluginConfigFactory(project,config),
+            defaultScope,
+            ignoredScope
+        )
     }
 
     /**
@@ -586,24 +589,7 @@ class PluginService implements ResourceFormats {
      * @return map of [name: DescribedPlugin]
      */
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
-        def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
-        //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
-        String svcName=service.name
-        //clean up name of any Groovy plugin without annotations that ends with the service name
-        plugins.each { key, DescribedPlugin plugin ->
-            def desc = plugin.description
-            if(plugin.file && plugin.name.endsWith(svcName)){
-                def newname = plugin.name
-                newname=plugin.name.substring(0, plugin.name.length() - svcName.length())
-                plugin.name = newname
-                if (desc?.name?.endsWith(svcName)) {
-                    plugin.description = new RenamedDescription(delegate: desc, name: newname)
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
+        return rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
     }
 
     ResourceFormatParser getResourceFormatParser(String format) {
@@ -622,4 +608,7 @@ class PluginService implements ResourceFormats {
         generator
     }
 
+    PluginRegistry getPluginRegistry() {
+        return rundeckPluginRegistry
+    }
 }

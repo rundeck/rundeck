@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
@@ -23,7 +24,7 @@ import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import grails.web.mapping.LinkGenerator
@@ -33,7 +34,6 @@ import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
-import java.text.SimpleDateFormat
 
 class PluginApiService {
 
@@ -51,8 +51,8 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
-    ExecutionLifecyclePluginService executionLifecyclePluginService
-    JobLifecyclePluginService jobLifecyclePluginService
+    ExecutionLifecycleComponentService executionLifecycleComponentService
+    JobLifecycleComponentService jobLifecycleComponentService
     def rundeckPluginRegistry
     LinkGenerator grailsLinkGenerator
 
@@ -105,12 +105,12 @@ class PluginApiService {
 
         //web-app level plugin descriptions
         if(featureService.featurePresent(Features.JOB_LIFECYCLE_PLUGIN)) {
-            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+            pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name]=jobLifecycleComponentService.listJobLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
         if(featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN)) {
-            pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
+            pluginDescs[executionLifecycleComponentService.executionLifecyclePluginProviderService.name]=executionLifecycleComponentService.listExecutionLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
@@ -163,6 +163,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListenerPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.PluginGroup] = pluginService.listPlugins(PluginGroup).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 

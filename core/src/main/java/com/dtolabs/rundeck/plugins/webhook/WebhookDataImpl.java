@@ -19,6 +19,7 @@ import lombok.Data;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -34,5 +35,7 @@ public class WebhookDataImpl implements WebhookData {
     private String                 project;
     private String                 contentType;
     private InputStream            data;
+
+    private Map<String, Object>    formData;
     private HashMap<String,String> headers = new HashMap<>();
 }

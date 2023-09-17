@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -69,6 +70,7 @@ class SimpleDataFilterPluginSpec extends Specification {
 
         where:
         dolog | regex                          | lines                           | expect
+        true  | SimpleDataFilterPlugin.PATTERN | ['.*']                          | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
@@ -80,6 +82,41 @@ class SimpleDataFilterPluginSpec extends Specification {
                         'RUNDECK:DATA:simple digital salad : = ::djkjdf= ',
                 ]                                                                |
                 [:]
+    }
+
+    @Unroll
+    def "The plugin supports empty values"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = dolog
+        plugin.invalidKeyPattern = null
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
+        1 * context.log(2, _, _)
+
+        where:
+        dolog | regex                            | lines                           | expect
+        true  | '^\\s*([^\\s]+?)\\s*=\\s*(.*)$'  | ['key=']                        | [key:'']
+
     }
 
     @Unroll
@@ -220,5 +257,77 @@ class SimpleDataFilterPluginSpec extends Specification {
         false  | ''              | '.*:(.+?)\\s*=\\s*(.+)$'   | null | ['Incident:Number= 1235'] | [Number: '1235']
 
 
+    }
+
+    @Unroll
+    def "invalid characters replaced by custom character"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = false
+        plugin.name = name
+        plugin.invalidKeyPattern = validKeyPattern
+        plugin.replaceFilteredResult = true
+        plugin.invalidCharactersReplacement = invalidStringReplacement
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == ['data': expect]
+
+        1 * context.log(1, _)
+
+        where:
+        validKeyPattern        | regex                    | invalidStringReplacement | name      | lines                           | expect
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ''                       | ' ubuntu' | ['RUNDECK:DATA:zangief']        | [ubuntu: 'zangief']
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Football'               | ' wimple' | ['RUNDECK:DATA:zangief']        | [Footballwimple: 'zangief']
+
+    }
+
+    @Unroll
+    def "Test good parameters"() {
+
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+
+        expect:
+        simpleDataFilterPluginValidator.isValid(regexValue, props)
+
+        where:
+        regexValue                             |            props              | expectedResult
+        '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)\$'         | [name: "TestValue"]           | true
+        '(.*)'                                                | [name: "TestValue"]           | true
+    }
+
+    @Unroll
+    def "Test failing parameters"() {
+
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+
+        when:
+        simpleDataFilterPluginValidator.isValid(regexValue, props)
+
+        then:
+        def error = thrown(expectedException)
+        error.message == expectedMessage
+
+        where:
+        regexValue   |            props              | expectedException      |     expectedMessage
+            '.*'     | [name: "TestValue"]           | ValidationException    |  'Pattern must have at least one group'
+           '(.*)'    | [:]                           | ValidationException    |  'The Name field must be defined when only one capture group is specified'
     }
 }

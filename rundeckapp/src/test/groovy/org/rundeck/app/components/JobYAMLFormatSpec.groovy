@@ -218,7 +218,7 @@ class JobYAMLFormatSpec extends Specification {
     }
 
     @Unroll
-    def "should return a notification map with email and webhook notifs"() {
+    def "should return a notification list of map with email and webhook notifs"() {
         given:
         def input = "" +
                 "- defaultTab: nodes\n" +
@@ -234,15 +234,41 @@ class JobYAMLFormatSpec extends Specification {
                 "        attachLogInFile: true\n" +
                 "        recipients: leojesus.juarez@gmail.com\n" +
                 "        subject: RD-SUCCESS\n" +
-                "    - email:\n" +
-                "        attachLog: true\n" +
-                "        attachLogInline: true\n" +
-                "        recipients: 2@gmail.com\n" +
-                "        subject: RD-SUCCESS\n" +
                 "    - format: xml\n" +
                 "      httpMethod: get\n" +
                 "      urls: http://localhost:4440/project\n" +
-                "    - format: json\n" +
+                "  notifyAvgDurationThreshold: null\n" +
+                "  plugins:\n" +
+                "    ExecutionLifecycle: null\n" +
+                "  scheduleEnabled: true\n" +
+                "  schedules: []\n" +
+                "  sequence:\n" +
+                "    commands:\n" +
+                "    - exec: asd\n" +
+                "    keepgoing: false\n" +
+                "    strategy: node-first"
+        def sut = new JobYAMLFormat()
+        when:
+        def result = sut.decode(new StringReader(input))
+        then:
+        result[0].notification['onsuccess'].size() == 2
+        result[0].notification['onsuccess'].findAll{ it['email'] != null }.size() == 1
+        result[0].notification['onsuccess'].findAll{ it['urls'] != null }.size() == 1
+    }
+
+    @Unroll
+    def "should return a notification list with one webhook notification"() {
+        given:
+        def input = "" +
+                "- defaultTab: nodes\n" +
+                "  description: ''\n" +
+                "  executionEnabled: true\n" +
+                "  loglevel: INFO\n" +
+                "  name: a\n" +
+                "  nodeFilterEditable: false\n" +
+                "  notification:\n" +
+                "    onsuccess:\n" +
+                "      format: json\n" +
                 "      httpMethod: post\n" +
                 "      urls: http://localhost:4440/project\n" +
                 "  notifyAvgDurationThreshold: null\n" +
@@ -259,9 +285,135 @@ class JobYAMLFormatSpec extends Specification {
         when:
         def result = sut.decode(new StringReader(input))
         then:
+        result[0].notification['onsuccess'].size() == 1
+        result[0].notification['onsuccess'].findAll{ it['urls'] != null }.size() == 1
+    }
+
+    @Unroll
+    def "should return list of notifications for each trigger when some triggers have notifs in yaml list and some not in a list"() {
+        given:
+        def input = "" +
+                "- defaultTab: nodes\n" +
+                "  description: \"\"\n" +
+                "  executionEnabled: true\n" +
+                "  loglevel: INFO\n" +
+                "  name: a\n" +
+                "  nodeFilterEditable: false\n" +
+                "  notification:\n" +
+                "    onsuccess:\n" +
+                "      - email:\n" +
+                "          attachLog: true\n" +
+                "          attachLogInFile: true\n" +
+                "          recipients: leojesus.juarez@gmail.com\n" +
+                "          subject: RD-SUCCESS\n" +
+                "      - email:\n" +
+                "          attachLog: true\n" +
+                "          attachLogInline: true\n" +
+                "          recipients: 2@gmail.com\n" +
+                "          subject: RD-SUCCESS\n" +
+                "      - format: xml\n" +
+                "        httpMethod: get\n" +
+                "        urls: http://localhost:4440/project\n" +
+                "      - format: json\n" +
+                "        httpMethod: post\n" +
+                "        urls: http://localhost:4440/project\n" +
+                "    onfailure:\n" +
+                "      format: json\n" +
+                "      httpMethod: post\n" +
+                "      urls: http://localhost:4440/project\n" +
+                "  notifyAvgDurationThreshold: null\n" +
+                "  plugins:\n" +
+                "    ExecutionLifecycle: null\n" +
+                "  scheduleEnabled: true\n" +
+                "  schedules: []\n" +
+                "  sequence:\n" +
+                "    commands:\n" +
+                "      - exec: asd\n" +
+                "    keepgoing: false\n" +
+                "    strategy: node-first\n"
+        def sut = new JobYAMLFormat()
+        when:
+        def result = sut.decode(new StringReader(input))
+        then:
         result[0].notification['onsuccess'].size() == 4
         result[0].notification['onsuccess'].findAll{ it['email'] != null }.size() == 2
         result[0].notification['onsuccess'].findAll{ it['urls'] != null }.size() == 2
+
+        result[0].notification['onfailure'].size() == 1
+        result[0].notification['onfailure'].findAll{ it['urls'] != null }.size() == 1
+    }
+
+    @Unroll
+    def "should return list of notifications for each trigger when all triggers have notifs in yaml maps"() {
+        given:
+        def input = "" +
+                "- defaultTab: nodes\n" +
+                "  description: ''\n" +
+                "  executionEnabled: true\n" +
+                "  loglevel: INFO\n" +
+                "  name: a\n" +
+                "  nodeFilterEditable: false\n" +
+                "  notification:\n" +
+                "    onstart:\n" +
+                "      email:\n" +
+                "        attachLog: 'true'\n" +
+                "        attachLogInFile: true\n" +
+                "        recipients: tom@example.com\n" +
+                "        subject: JOB-STARTED\n" +
+                "    onfailure:\n" +
+                "      email:\n" +
+                "        recipients: 'tom@example.com,shirley@example.com'\n" +
+                "    onsuccess:\n" +
+                "      format: json\n" +
+                "      httpMethod: post\n" +
+                "      urls: http://localhost:4440/project \n" +
+                "      plugin:\n" +
+                "        type: my-plugin\n" +
+                "        configuration:\n" +
+                "          somekey: somevalue\n" +
+                "    onavgduration:\n" +
+                "      email:\n" +
+                "        recipients: test@example.com\n" +
+                "        subject: Job Exceeded average duration\n" +
+                "      plugin:\n" +
+                "        type: my-plugin\n" +
+                "        configuration:\n" +
+                "          somekey: somevalue\n" +
+                "    onretryablefailure:\n" +
+                "      plugin:\n" +
+                "        type: my-plugin\n" +
+                "        configuration:\n" +
+                "          somekey: somevalue\n" +
+                "  notifyAvgDurationThreshold: '+30'\n" +
+                "  plugins:\n" +
+                "    ExecutionLifecycle: null\n" +
+                "  scheduleEnabled: true\n" +
+                "  schedules: []\n" +
+                "  sequence:\n" +
+                "    commands:\n" +
+                "      - exec: asd\n" +
+                "    keepgoing: false\n" +
+                "    strategy: node-first"
+        def sut = new JobYAMLFormat()
+        when:
+        def result = sut.decode(new StringReader(input))
+        then:
+        result[0].notification['onstart'].size() == 1
+        result[0].notification['onstart'].findAll{ it['email'] != null }.size() == 1
+
+        result[0].notification['onfailure'].size() == 1
+        result[0].notification['onfailure'].findAll{ it['email'] != null }.size() == 1
+
+        result[0].notification['onsuccess'].size() == 1
+        result[0].notification['onsuccess'].findAll{ it['urls'] != null }.size() == 1
+        result[0].notification['onsuccess'].findAll{ it['plugin'] != null }.size() == 1
+
+        result[0].notification['onavgduration'].size() == 1
+        result[0].notification['onavgduration'].findAll{ it['email'] != null }.size() == 1
+        result[0].notification['onavgduration'].findAll{ it['plugin'] != null }.size() == 1
+
+        result[0].notification['onretryablefailure'].size() == 1
+        result[0].notification['onretryablefailure'].findAll{ it['plugin'] != null }.size() == 1
     }
 
     @Unroll

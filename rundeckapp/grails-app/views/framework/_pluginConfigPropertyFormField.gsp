@@ -21,8 +21,7 @@
  --%>
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
-%{--<g:set var="fieldname" value="${}"/>--}%
-%{--<g:set var="origfieldname" value="${}"/>--}%
+
 <g:set var="inputSize" value="${fieldInputSize!=null?fieldInputSize:'input-sm'}"/>
 <g:set var="labelCss" value="control-label ${inputSize}"/>
 <g:set var="labelColType" value="col-sm-2 ${labelCss}"/>
@@ -40,6 +39,20 @@
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
 <g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
+
+<g:if
+        test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.HIDDEN, 'HIDDEN']}">
+    <g:set var="fieldid" value="${g.rkey()}"/>
+    <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+    <g:set var="hiddenIdentity" value="${prop.renderingOptions['hidden_identity']}"/>
+
+    <g:hiddenField id="${fieldid}"
+                   name="${prop.name}"
+                   value="${valueText}"
+                   data-hidden-field-identity="${hiddenIdentity}"
+                   class="_config_prop_display_hidden"/>
+</g:if>
+<g:else>
 <div class="form-group ${enc(attr:hasError)}">
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
@@ -267,8 +280,6 @@
         <g:set var="syntax" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODE)}"/>
         <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:set var="syntaxModes" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODES_ALLOWED)}"/>
-
-
         <g:set var="scriptTokenAutocomplete" value="${prop.renderingOptions?.(StringRenderingConstants.SCRIPT_TOKEN_AUTOCOMPLETE)}"/>
         <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&StringRenderingConstants.ScriptTokenAutocomplete.ENABLED.equalsOrString(scriptTokenAutocomplete)?'_wfscriptitem':''}"/>
 
@@ -280,7 +291,7 @@
             data-ace-height="100px"
             data-ace-resize-auto="true"
             data-ace-resize-max="20"
-                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${scriptTokenAutocompleteCss} ${extraInputCss}"/>
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${scriptTokenAutocompleteCss}"/>
 
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
@@ -318,17 +329,24 @@
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">
-        <div class="${valueColTypeSplit20}">
         %{-- selector for accessible storage --}%
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
         <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
-        <a class="btn btn-sm btn-default obs-select-storage-path"
-                data-toggle="modal"
-                href="#storagebrowse"
-                data-storage-root="${enc(attr:storageRoot)}"
-                data-storage-filter="${enc(attr:storageFilter)}"
-                data-field="#${enc(attr:fieldid)}"
-        ><g:message code="select" /> <i class="glyphicon glyphicon-folder-open"></i></a>
+        <div class="vue-ui-socket"
+             data-field-id="${enc(attr: fieldid)}"
+             data-storage-filter="${enc(attr:storageFilter)}">
+            <ui-socket section="plugin-runner-key-selector" location="main"
+                       :event-bus="eventBus"
+                       :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}' }"
+            >
+                <a class="btn btn-sm btn-default obs-select-storage-path"
+                        data-toggle="modal"
+                        href="#storagebrowse"
+                        data-storage-root="${enc(attr:storageRoot)}"
+                        data-storage-filter="${enc(attr:storageFilter)}"
+                        data-field="#${enc(attr:fieldid)}"
+                ><g:message code="select" /> <i class="glyphicon glyphicon-folder-open"></i></a>
+            </ui-socket>
         </div>
     </g:if>
 </g:else>
@@ -354,4 +372,5 @@
     </g:if>
 </div>
 </div>
+</g:else>
 </g:unless>

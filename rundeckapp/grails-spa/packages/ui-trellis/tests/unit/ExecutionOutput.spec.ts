@@ -2,21 +2,29 @@ import 'isomorphic-fetch'
 
 console.log(global.fetch)
 
-import {ExecutionOutput, ExecutionOutputStore} from '../../src/stores/ExecutionOutput'
-import {ExecutionLog} from '../../src/utilities/ExecutionLogConsumer'
+import {ExecutionOutput, ExecutionOutputStore} from '../../src/library/stores/ExecutionOutput'
+import {ExecutionLog} from '../../src/library/utilities/ExecutionLogConsumer'
 
 import {observe, autorun, intercept} from 'mobx'
 import { PasswordCredentialProvider, passwordAuthPolicy, rundeckPasswordAuth, RundeckClient, TokenCredentialProvider } from '@rundeck/client'
 import {RundeckVcr, Cassette} from '@rundeck/client/dist/util/RundeckVcr'
 import { BtoA, AtoB } from '../utilities/Base64'
-import { RootStore } from '../../src/stores/RootStore'
+import { RootStore } from '../../src/library/stores/RootStore'
 import fetchMock from 'fetch-mock'
 
 jest.setTimeout(60000)
 
 describe('ExecutionOutput Store', () => {
+    beforeEach(() => {
+        window._rundeck = {
+            navbar: {
+                items: []
+            }
+        }
+    })
     it('Loads Output', async () => {
         const client = new RundeckClient(new TokenCredentialProvider('foo'), {baseUri: '/'})
+        fetchMock.mock('path:/api/43/execution/900/output', { entries: [], completed: true, execCompleted: true })
 
         const vcr = new RundeckVcr(fetchMock)
         const cassette = await Cassette.Load('./tests/data/fixtures/ExecRunningOutput.json')

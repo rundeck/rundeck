@@ -18,23 +18,27 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IExecutionProviders
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierException
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import okhttp3.mockwebserver.MockResponse
@@ -49,9 +53,26 @@ import spock.lang.Unroll
  */
 class ScriptURLNodeStepExecutorSpec extends Specification {
     String projName
+    ServiceSupport serviceSupport
+    ExecutionServiceImpl executionServiceImpl
+    Framework frameworkInstance
     def setup(){
         projName = "TestScriptFileNodeStepExecutor"
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
+        serviceSupport=new ServiceSupport()
+
+        executionServiceImpl = new ExecutionServiceImpl()
+
+        IExecutionProviders frameworkPlugins = Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem(_, _) >> Mock(StepExecutor)
+            _ * getFileCopierForNodeAndProject(_, _) >> Mock(FileCopier)
+            _ * getNodeDispatcherForContext(_) >> Mock(NodeDispatcher)
+            _ * getNodeExecutorForNodeAndProject(_, _) >> Mock(NodeExecutor)
+            _ * getNodeStepExecutorForItem(_, _) >> Mock(NodeStepExecutor)
+        }
+        executionServiceImpl.setExecutionProviders(frameworkPlugins)
+        serviceSupport.executionProviders = frameworkPlugins
+        serviceSupport.executionService = executionServiceImpl
+        frameworkInstance = AbstractBaseTest.createTestFramework(serviceSupport)
         final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
                 projName);
         AbstractBaseTest.generateProjectResourcesFile(
@@ -107,19 +128,25 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
     }
 
+    private void setupNodeExecutor(NodeExecutor testexec, FileCopier fileCopier) {
+        def frameworkPlugins = Mock(IExecutionProviders) {
+            _ * getNodeExecutorForNodeAndProject(_, _) >> testexec
+            _ * getFileCopierForNodeAndProject(_, _) >> fileCopier
+        }
+        executionServiceImpl.setExecutionProviders(frameworkPlugins)
+        serviceSupport.executionProviders = frameworkPlugins
+    }
+
+
+
     def "interpret command script file local"() {
         given:
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
         ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
 
         //setup nodeexecutor for local node
         MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
-        service.registerInstance("local", testexec)
-
         TestFileCopier testcopier = new TestFileCopier()
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
-        copyservice.registerInstance("local", testcopier)
+        setupNodeExecutor(testexec,testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
@@ -199,17 +226,12 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
     def "interpret command script file local changing file extension"() {
         given:
 
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
         ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
-        service.registerInstance("local", testexec)
-
-        TestFileCopier testcopier = new TestFileCopier()
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
-        copyservice.registerInstance("local", testcopier)
+            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+            TestFileCopier testcopier = new TestFileCopier()
+            setupNodeExecutor(testexec,testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
@@ -266,17 +288,12 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
     def "interpret command script file local changing invocation"() {
         given:
 
-        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
         ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
 
         //setup nodeexecutor for local node
-        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
-        service.registerInstance("local", testexec)
-
-        TestFileCopier testcopier = new TestFileCopier()
-        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
-        copyservice.registerInstance("local", testcopier)
+            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+            TestFileCopier testcopier = new TestFileCopier()
+            setupNodeExecutor(testexec,testcopier)
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")

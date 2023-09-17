@@ -17,12 +17,10 @@
 package com.dtolabs.rundeck.core.tools;
 
 
-import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.TestCase;
 import com.dtolabs.launcher.Setup;
-import com.dtolabs.rundeck.core.common.Framework;
 import org.apache.tools.ant.BuildException;
 
 import java.io.File;
@@ -146,10 +144,18 @@ public abstract class AbstractBaseTest extends TestCase {
     }
 
     public static Framework createTestFramework() {
+        ServiceSupport serviceSupport = new ServiceSupport();
+        BaseFrameworkExecutionServices services = new BaseFrameworkExecutionServices();
+        serviceSupport.setExecutionServices(services);
+        Framework framework = AbstractBaseTest.createTestFramework(serviceSupport);
+        services.setFramework(framework);
+        return framework;
+    }
+    public static Framework createTestFramework(IFrameworkServices services) {
         if(!new File(RDECK_BASE).exists()) {
             configureFramework();
         }
-        return FrameworkFactory.createForFilesystem(RDECK_BASE);
+        return FrameworkFactory.createForFilesystem(RDECK_BASE, services);
     }
 
     protected static void configureFramework()

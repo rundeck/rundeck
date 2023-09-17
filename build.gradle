@@ -39,7 +39,7 @@ buildscript {
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
-        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
         classpath 'org.owasp:dependency-check-gradle:5.3.2'
     }
 }
@@ -87,7 +87,11 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-filesys",
         ":rundeck-storage:rundeck-storage-conf"
 ]
-
+/** Detect if this is being bootRun: typically by the grails cli **/
+def isRunning = project.gradle.startParameter.taskNames.any {
+    return it.toLowerCase().contains('bootrun')
+}
+project.ext.isRunning = isRunning
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
 project.ext.artifactDir = "$projectDir/artifacts"
 
@@ -99,6 +103,10 @@ def vNum = ext.vNum = versionProps.getProperty('version.number')
 def vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty('version.tag') : 'SNAPSHOT'
 def vDate = ext.vDate = versionProps.getProperty('version.date')
 def vRevision = ext.vRevision = versionProps.getProperty('version.release.number')
+
+/** Determine if incremental build is enabled */
+def enableIncremental = project.hasProperty('rundeck.proj.incremental.enabled') ? findProperty('rundeck.proj.incremental.enabled').toBoolean() : true
+
 
 if (ext.environment == 'release') {
     project.ext.resolvedVersion = vVersion
@@ -117,6 +125,7 @@ allprojects {
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
+    ext.enableIncremental = enableIncremental
     if(project.environment == 'release'){
         ext.isReleaseBuild=true
     } else {
@@ -136,8 +145,22 @@ subprojects {
     // set the eclipse project naming convention to rundeck:<path>:<projectName>
     // so it matches the logical hierarchy more closely
     apply plugin: 'eclipse'
+    apply from: "${rootDir}/gradle/java-version.gradle"
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
+
+/**
+ * Enable incremental Groovy compile
+ */
+if (enableIncremental) {
+    getAllprojects().findAll() {proj ->
+        proj.tasks.withType(GroovyCompile).configureEach {
+            options.incremental = true
+            options.incrementalAfterFailure = true
+        }
+    }
+}
+
 
 def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
@@ -159,6 +182,11 @@ project(':rundeckapp') {
         project(':plugins:source-refresh-plugin'),
         project(':plugins:upvar-plugin')
     ]
+
+    //extra grails plugins
+    it.ext.extraGrailsPlugins = []
+    //only grails plugins that will be used in bootRun
+    it.ext.bundledGrailsPlugins = []
 }
 
 // prompt for PGP key passphrase if not set

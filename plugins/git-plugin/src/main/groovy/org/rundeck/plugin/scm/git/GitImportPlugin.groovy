@@ -524,6 +524,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return createJobImportStatus(status,jobActionsForStatus(status), jobRenamed)
     }
 
+    @Override
+    Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx) {
+        return userHasAccessToCommonConfigKeyOrPassword(ctx)
+    }
+
     List<Action> jobActionsForStatus(Map status) {
         if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
             [actions[ACTION_IMPORT_JOBS]]
@@ -762,18 +767,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         fetchFromRemote(context)
 
         def bstat = BranchTrackingStatus.of(repo, branch)
+        PullResult pullResult = null
         if (bstat && bstat.behindCount > 0) {
             try {
-                PullResult result = gitPull(context)
-                jobs.each{job ->
-                    refreshJobStatus(job,originalPaths?.get(job.id))
-                }
+                pullResult = gitPull(context)
             } catch (TransportException e) {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
-            return [updated:true]
         }
-        [:]
+        jobs.each{job ->
+            refreshJobStatus(job,originalPaths?.get(job.id))
+        }
+        return (pullResult != null)? [updated:true]:[:]
     }
 
     @Override

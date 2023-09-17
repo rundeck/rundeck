@@ -63,7 +63,11 @@ public interface Property {
         /**
          * A set of checkbox options
          */
-        Options
+        Options,
+        /**
+         * A string property auto generated according to a closure
+         */
+        AutogenInstanceId
     }
 
     /**

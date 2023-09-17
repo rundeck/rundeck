@@ -5,6 +5,7 @@ set -euo pipefail
 . common.sh
 
 export DOCKER_COMPOSE_SPEC=docker-compose-multinode-test.yml
+DEBUG_RD_SERVER=${DEBUG_RD_SERVER:-''}
 
 if [ -f rundeck-launcher.war ] ; then
 	mv rundeck-launcher.war dockers/rundeck/data/
@@ -25,6 +26,7 @@ docker-compose -f $DOCKER_COMPOSE_SPEC build
 
 
 # run docker
+echo "Running compose file: $(pwd)/${DOCKER_COMPOSE_SPEC}"
 docker-compose -f $DOCKER_COMPOSE_SPEC up -d
 
 echo "up completed, running tests..."
@@ -35,11 +37,15 @@ docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 \
 	bash scripts/run_tests.sh /tests/rundeck /tests/run-tests.sh testproj1
 
 EC=$?
-echo "run_tests.sh finished with: $EC"
 
 docker-compose -f $DOCKER_COMPOSE_SPEC logs
 
-# Stop and clean all
-docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
+if [ "$DEBUG_RD_SERVER" != true ] ; then
+  # Stop and clean all
+  docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
+else
+  echo "Skipping Containers removal for debug..."
+fi
 
+echo "run_tests.sh finished with: $EC"
 exit $EC

@@ -57,10 +57,10 @@
       </div>
     </div>
     <div class="row row-space">
-      <div class="col-sm-3">
+      <div class="col-sm-6">
           <strong><g:message code="execution.show.mode.column.node" /></strong>
       </div>
-      <div class="col-sm-2 col-sm-offset-5">
+      <div class="col-sm-2 col-sm-offset-2">
           <strong><g:message code="start.time" /></strong>
       </div>
       <div class="col-sm-2">
@@ -71,7 +71,7 @@
   <div data-bind="foreach: activeNodes()">
     <div class="wfnodestate" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
       <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
-          <div class="col-sm-3  nodectx"
+          <div class="col-sm-6  nodectx"
                data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
               <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                   <i class="auto-caret text-muted"></i>
@@ -80,14 +80,14 @@
               </div>
           </div>
 
-          <div class="col-sm-3 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
+          <div class="col-sm-2 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
                   <span class="execstate " data-bind="attr: {'data-execstate': summaryState } ">
                       <span data-bind="text: summary"></span>
                       <i class="fas fa-circle-notch fa-spin text-muted" data-bind="visible: summaryState()==='RUNNING'" style="display:none"></i>
                   </span>
           </div>
 
-          <div class="col-sm-4 ">
+          <div class="col-sm-2 ">
               <div data-bind="with: currentStep(), visible: !expanded()">
                   <span class="stepident "
                         data-bind="attr: { 'data-execstate': executionState }">

@@ -1,7 +1,9 @@
 package com.dtolabs.rundeck.core.plugins;
 
 
-public class JobLifecyclePluginException extends Exception {
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException;
+
+public class JobLifecyclePluginException extends JobLifecycleComponentException {
 
     public JobLifecyclePluginException() {
         super();

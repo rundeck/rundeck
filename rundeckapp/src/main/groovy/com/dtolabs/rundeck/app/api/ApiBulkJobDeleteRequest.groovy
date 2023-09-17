@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.app.api
 
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import grails.validation.Validateable
+import io.swagger.v3.oas.annotations.media.Schema
 
 /*
  * ApiBulkJobDeleteRequest.java
@@ -30,6 +31,7 @@ class ApiBulkJobDeleteRequest implements Validateable {
     public static final String IDLIST_REGEX = '^' + FrameworkResource.VALID_RESOURCE_NAME_CHARSET_REGEX + '(,' +
             '' + FrameworkResource.VALID_RESOURCE_NAME_CHARSET_REGEX + ')*$'
     List<String> ids
+    @Schema(description="A comma separated list of ids")
     String idlist
     String id
     static constraints={

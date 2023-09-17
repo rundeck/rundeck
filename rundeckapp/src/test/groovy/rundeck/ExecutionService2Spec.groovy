@@ -1,6 +1,6 @@
 package rundeck
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -27,28 +27,33 @@ import com.dtolabs.rundeck.core.jobs.JobOption
  */
 
 import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.springframework.context.MessageSource
 import rundeck.services.*
-import testhelper.RundeckHibernateSpec
+import rundeck.services.data.UserDataService
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
 //import grails.test.GrailsMock
 
-class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionService> {
+class ExecutionService2Spec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
+    def setupSpec() { mockDomains ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User }
 
     def setup(){
         service.executionValidatorService = new ExecutionValidatorService()
+
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
     }
 
     /**
@@ -65,6 +70,17 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         mock.demand.getUsername{ user }
         mock.demand.getRoles { roles }
         mock.proxyInstance()
+    }
+
+    private FrameworkService createFrameworkService() {
+        return mockWith(FrameworkService){
+            isFrameworkProjectDisabled(1..1) { project ->
+                false
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
     }
 
     void testCreateExecutionRunning(){
@@ -92,12 +108,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){scheduledExecution, filter, authContext ->
                 null
@@ -107,7 +118,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         try{
@@ -148,11 +159,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -162,7 +169,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
@@ -191,7 +198,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         svc.scheduledExecutionService = Mock(ScheduledExecutionService){
             1 * getNodes(_,_,_,_)
         }
-        svc.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             1 * beforeJobExecution(_,_)
         }
 
@@ -230,11 +237,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -244,7 +247,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -282,11 +285,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -296,7 +295,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -328,11 +327,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -342,7 +337,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -368,11 +363,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -382,7 +373,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -410,11 +401,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -424,7 +411,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -523,11 +510,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -537,7 +520,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -570,11 +553,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -584,7 +563,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -612,11 +591,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -626,7 +601,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -653,11 +628,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -667,7 +638,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -694,11 +665,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -708,7 +675,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -741,11 +708,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -755,7 +718,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         when:
@@ -791,11 +754,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -805,7 +764,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         when:
@@ -822,11 +781,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -836,7 +791,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -853,11 +808,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -867,7 +818,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -885,11 +836,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -899,7 +846,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -915,11 +862,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -929,7 +872,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -964,11 +907,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         ScheduledExecution se = prepare()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -978,7 +917,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -1128,7 +1067,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
 
-        service.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
+        service.executionLifecycleComponentService = mockWith(ExecutionLifecycleComponentService){
 
         }
 
@@ -2177,6 +2116,8 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
         def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,false,true,false);
 
+        expect:
+        newCtxt.stepNumber==1
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
         assertEquals(1,newCtxt.threadCount)
@@ -2198,10 +2139,6 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
                       'name':'blue',
                       'group':'some/where'
                      ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
-
-        expect:
-        // asserts validate above
-        1 == 1
 
     }
     void testcreateJobReferenceContext_overrideNodefilter(){
@@ -2485,11 +2422,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         se.save()
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2499,7 +2432,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2532,11 +2465,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2546,7 +2475,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2594,11 +2523,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
 
 
         ExecutionService svc = service
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
-        }
+        FrameworkService fsvc = createFrameworkService()
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
@@ -2608,7 +2533,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecycleComponentService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 

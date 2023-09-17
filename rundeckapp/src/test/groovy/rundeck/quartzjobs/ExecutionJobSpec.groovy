@@ -23,41 +23,48 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import org.quartz.*
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
-import testhelper.RundeckHibernateSpec
+import rundeck.services.ScheduledExecutionDeletedException
+import spock.lang.Specification
 
 import java.sql.Timestamp
+import java.util.concurrent.CountDownLatch
 
 /**
  * Created by greg on 4/12/16.
  */
-class ExecutionJobSpec extends RundeckHibernateSpec {
+class ExecutionJobSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats }
 
     def "execute missing job"() {
         given:
         def datamap = new JobDataMap([scheduledExecutionId: '123'])
         ExecutionJob job = new ExecutionJob()
+        def quartzScheduler = Mock(Scheduler){
+            1 * deleteJob(_) >> void
+        }
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
                 getJobDataMap() >> datamap
             }
+            1 * getScheduler() >> quartzScheduler
         }
 
         when:
         job.execute(context)
 
         then:
-        RuntimeException e = thrown()
-        e.message == 'failed to lookup scheduledException object from job data map: id: 123'
+        ScheduledExecutionDeletedException e = thrown()
+        e.message == "Failed to lookup scheduledException object from job data map: id: 123 , job will be unscheduled"
     }
 
     def "execute retrieves execution id"() {
@@ -71,8 +78,9 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
             JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
+                project: se.project,
                 executionId: e.id.toString(),
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 executionService:es,
                 executionUtilService: eus,
                 frameworkService: fwk,
@@ -106,8 +114,9 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
             JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
+                project: se.project,
                 executionId: e.id.toString(),
-                scheduledExecutionId: se.id.toString(),
+                scheduledExecutionId: se.uuid,
                 executionService:es,
                 executionUtilService: eus,
                 frameworkService: fwk,
@@ -132,7 +141,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         then:
             1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * jobSchedulerService.afterExecution(_, _, _)
-            1 * es.saveExecutionState(se.id, e.id, { it.status == 'failed' }, null, !null)
+            1 * es.saveExecutionState(se.uuid, e.id, { it.status == 'failed' }, null, !null)
             job.executionId == e.id
     }
 
@@ -200,7 +209,8 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         Execution e = new Execution(
@@ -217,7 +227,8 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -276,13 +287,15 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
                 ),
                 scheduled: false,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -340,13 +353,15 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
                 ),
                 scheduled: isScheduled,
                 executionEnabled: isExecEnabled,
-                scheduleEnabled: isScheduleEnabled
+                scheduleEnabled: isScheduleEnabled,
+                uuid: jobUUID
         )
         se.save(flush:true)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
@@ -387,22 +402,22 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
     def "scheduled job quartz trigger context with scheduleArgs sets execution argString"() {
 
-            def serverUUID = UUID.randomUUID().toString()
-            def jobUUID = UUID.randomUUID().toString()
-            def es = Mock(ExecutionService)
-            def eus = Mock(ExecutionUtilService)
-            def jobSchedulesService = Mock(JobSchedulesService)
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService)
+        def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def jobSchedulerService = Mock(JobSchedulerService)
-            def fs = Mock(FrameworkService) {
-                getServerUUID() >> serverUUID
-                getFrameworkProject('AProject')>>Mock(IRundeckProject){
-                    getProjectProperties()>>[:]
-                }
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+            getProjectConfigReloaded('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> [:]
             }
-            AuthContextProvider authContextProvider = Mock(AuthContextProvider){
-                getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
-            }
-            ScheduledExecution se = new ScheduledExecution(
+        }
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_, _, _) >> Mock(UserAndRolesAuthContext)
+        }
+        ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -410,69 +425,75 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
                 argString: '-a b -c d',
                 serverNodeUUID: jobUUID,
                 workflow: new Workflow(
-                    keepgoing: true,
-                    commands: [new CommandExec(
-                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                    )]
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
-            )
-            se.save(flush:true)
-            Execution e = new Execution(
+                scheduleEnabled: true,
+                uuid: jobUUID
+        )
+        se.save(flush: true)
+        Execution e = new Execution(
                 scheduledExecution: se,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: se.project,
                 user: 'bob',
                 workflow: new Workflow(commands: [new CommandExec(
-                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                 )]
                 )
-            ).save(flush: true)
-            def datamap = new JobDataMap(
+        ).save(flush: true)
+        def datamap = new JobDataMap(
                 [
-                    scheduledExecutionId: se.id.toString(),
-                    executionService    : es,
-                    executionUtilService: eus,
-                    frameworkService    : fs,
-                    bySchedule          : true,
-                    jobSchedulesService : jobSchedulesService,
-                    jobSchedulerService : jobSchedulerService,
-                    authContextProvider : authContextProvider,
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
                 ]
-            )
-            ExecutionJob job = new ExecutionJob()
-            def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+        )
+        ExecutionJob job = new ExecutionJob()
+        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
-            def quartzScheduler = Mock(Scheduler)
-            def trigger=Mock(Trigger)
-            def context = Mock(JobExecutionContext) {
-                getJobDetail() >> Mock(JobDetail) {
-                    getJobDataMap() >> datamap
-                    getKey() >> ajobKey
-                }
-
-                getScheduler() >> quartzScheduler
-                getTrigger() >> trigger
+        def quartzScheduler = Mock(Scheduler)
+        def trigger = Mock(Trigger)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+                getKey() >> ajobKey
             }
-            1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
-            new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
+
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
+        }
+        1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
+                new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         given: "trigger has scheduleArgs"
-            1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
+        1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
 
         when: "job is executed"
-            job.execute(context)
+        job.execute(context)
 
         then: "execution args are set"
-            0 * quartzScheduler.deleteJob(ajobKey)
-            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+        0 * quartzScheduler.deleteJob(ajobKey)
+        1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
     }
 
     def "average notification threshold from options"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -498,7 +519,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                                                              se.averageDuration,dataContext)
+                                                              es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -509,7 +530,11 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
     def "average notification threshold add time to avg"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -532,7 +557,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -542,7 +567,11 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
     def "average notification threshold fixed time"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -565,7 +594,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -575,7 +604,11 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
     def "average notification threshold perc time"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -598,7 +631,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -608,7 +641,11 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
     def "average notification threshold bad value"() {
         given:
+        def es = new ExecutionService()
+        es.jobStatsDataProvider = new GormJobStatsDataProvider()
+        def jobUuid = UUID.randomUUID().toString()
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -631,7 +668,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         when:
 
         def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
-                se.averageDuration,dataContext)
+                es.getAverageDuration(jobUuid),dataContext)
 
         then:
 
@@ -642,6 +679,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
     def "average notification context"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -693,24 +731,33 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
         }
 
+        CountDownLatch latch = new CountDownLatch(1)
+
+        //simulate a workflow thread
+        def testThread=new WorkflowExecutionServiceThread(null,null,origContext,null,null){
+            void run(){
+                //keep "running" until notification sent
+                latch.await()
+            }
+        }
         def execmap = [
                 execution         : e,
                 scheduledExecution: se,
-                thread : Mock(WorkflowExecutionServiceThread){
-                    getContext()>>origContext
-                    isAlive()>>true
-                }
+                thread : testThread
         ]
 
         def es = Mock(ExecutionService){
-            executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed)>>execmap
+            1 * executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed) >> {
+                testThread.start()
+                execmap
+            }
+            getAverageDuration(_) >> 1
         }
 
         ExecutionJob executionJob = new ExecutionJob()
-        def context = execmap.thread.context
         Map content = [
-                execution: execmap.execution,
-                context:context
+            execution: e,
+            context  : origContext
         ]
         ExecutionJob.RunContext runContext=new ExecutionJob.RunContext(
             executionService: es,
@@ -728,10 +775,11 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         def result=executionJob.executeCommand(runContext)
 
         then:
-
-        1* es.avgDurationExceeded(_,content)
+        1 * es.avgDurationExceeded(_, content) >> {
+            latch.countDown()
+        }
         result != null
-
+        se.executions.status.get(0) == ExecutionService.AVERAGE_DURATION_EXCEEDED
     }
 
     def "scheduled job quartz checking the same format of dates"() {
@@ -743,7 +791,7 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
-            getFrameworkProject('AProject')>>Mock(IRundeckProject){
+            getProjectConfigReloaded('AProject')>>Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
         }
@@ -765,13 +813,14 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true
+                scheduleEnabled: true,
+                uuid: jobUUID
         )
         se.save(flush:true)
         Execution e = new Execution(
                 scheduledExecution: se,
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
+                dateStarted: new Timestamp(new Date().time),
+                dateCompleted: new Timestamp(new Date().time),
                 project: se.project,
                 user: 'bob',
                 workflow: new Workflow(commands: [new CommandExec(
@@ -781,7 +830,8 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         ).save(flush: true)
         def dataMap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id.toString(),
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,

@@ -49,7 +49,7 @@ function NodeSummary(data){
                   self.error('Nodes Summary: request failed: ' + err)
               }
           }
-      }).success(function(data){
+      }).done(function(data){
           ko.mapping.fromJS(data,{},self);
       });
     };
@@ -76,7 +76,7 @@ function NodeSummary(data){
         }
     };
     self.removeDefault=function(){
-        setFilter('nodes','!').success(function(data, status, jqxhr){
+        setFilter('nodes','!').then(function(data, status, jqxhr){
             self.defaultFilter(null);
         });
     };
@@ -99,7 +99,7 @@ function NodeSummary(data){
         }else{
             fname=filter.name();
         }
-        setFilter('nodes',fname).success(function(data, status, jqxhr){
+        setFilter('nodes',fname).then(function(data, status, jqxhr){
             self.defaultFilter(fname);
         });
     };
@@ -119,10 +119,10 @@ function NodeSummary(data){
         jQuery.ajax({
             url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
             beforeSend: _createAjaxSendTokensHandler('ajaxDeleteFilterTokens')
-        }).success(function (resp, status, jqxhr) {
+        }).done(function (resp, status, jqxhr) {
             self.filterToDelete(null);
             self.filters.remove(filter);
-        }).success(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
+        }).done(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
     };
     if(data) {
         ko.mapping.fromJS(data, {}, self);

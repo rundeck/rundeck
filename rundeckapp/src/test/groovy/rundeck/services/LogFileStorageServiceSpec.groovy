@@ -22,13 +22,13 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.springframework.core.task.AsyncListenableTaskExecutor
@@ -36,9 +36,9 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,18 +55,15 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.W
 /**
  * Created by greg on 3/28/16.
  */
-class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<LogFileStorageService> {
+class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest<LogFileStorageService>, DataTest {
     File tempDir
 
-    List<Class> getDomainClasses() { [LogFileStorageRequest, Execution] }
+    def setupSpec() { mockDomains LogFileStorageRequest, Execution }
 
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
-    }
-
-    def cleanup() {
-
-
+        tempDir.deleteOnExit()
+        service.logFileStorageRequestProvider = new GormLogFileStorageRequestProvider()
     }
 
     def "resume incomplete delayed"() {
@@ -84,12 +81,15 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
             })
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, _, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin(
                     mockPlugin,
                     [:]
             )
         }
-        service.frameworkService = Mock(FrameworkService)
+        service.frameworkService = Mock(FrameworkService){
+
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+        }
         service.grailsLinkGenerator = Mock(LinkGenerator)
         def e1 = new Execution(dateStarted: new Date(),
                                dateCompleted: null,
@@ -219,12 +219,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 }
             )
         }
-        def test2PropertyResolver = Mock(PropertyResolver)
+        def test2PropertyResolverFactory = Mock(PropertyResolverFactory.Factory)
         service.frameworkService = Mock(FrameworkService) {
-            1 * getFrameworkPropertyResolver('test2') >> test2PropertyResolver
+            1 * getFrameworkPropertyResolverFactory('test2') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -345,12 +345,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def mockPlugin = Mock(ExecutionFileStoragePlugin) {
             1 * initialize(_)
         }
-        def test2PropertyResolver = Mock(PropertyResolver)
+        def test2PropertyResolverFactory = Mock(PropertyResolverFactory.Factory)
         service.frameworkService = Mock(FrameworkService) {
-            1 * getFrameworkPropertyResolver('test') >> test2PropertyResolver
+            1 * getFrameworkPropertyResolverFactory('test') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -776,6 +776,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def filetype = 'rdlog'
         def performLoad = true
 
+        def scheduledExecution = new ScheduledExecution()
+        scheduledExecution.id = 1
+
+        exec.scheduledExecution = scheduledExecution
+        exec.save()
+
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProperties() >> (
                 [
@@ -804,20 +810,20 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def tempDir = Files.createTempDirectory('test_logs')
         def logsDir = tempDir.resolve('rundeck')
 
-
         def exec = new Execution(
             dateStarted: new Date(),
             dateCompleted: null,
             user: 'user2',
             project: 'test',
-            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-            outputfilepath: '/tmp/file'
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
         ).save()
         def filetype = 'rdlog'
         def performLoad = true
 
         createLogFile(logsDir, exec, filetype)
 
+        exec.outputfilepath = logsDir.resolve("test/run/logs/${exec.id}.${filetype}")
+        exec.save()
 
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProperties() >> (
@@ -896,6 +902,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def filetype = 'rdlog'
         def performLoad = true
 
+        def scheduledExecution = new ScheduledExecution()
+        scheduledExecution.id = 1
+
+        exec.scheduledExecution = scheduledExecution
+        exec.save()
+
         service.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> true
             getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
@@ -944,13 +956,14 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                     'framework.logs.dir': tempDir.toAbsolutePath().toString()
                 ] as Properties
             )
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
         service.configurationService = Mock(ConfigurationService) {
             getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
         }
         service.pluginService = Mock(PluginService) {
-            configurePlugin('testplugin', _, _, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
+            1 * configurePlugin('testplugin', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
         }
         when:
 
@@ -977,12 +990,14 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
             user: 'user2',
             project: 'test',
             serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-            outputfilepath: '/tmp/file'
         ).save()
         def filetype = 'rdlog'
         def performLoad = true
 
         createLogFile(logsDir, exec, filetype)
+
+        exec.outputfilepath = logsDir.resolve("test/run/logs/${exec.id}.${filetype}")
+        exec.save()
 
         service.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> true
@@ -1016,11 +1031,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
             ).save()
             def filetype = 'rdlog'
             def performLoad = true
@@ -1035,6 +1049,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+                getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1049,10 +1064,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
             }
             service.pluginService = Mock(PluginService) {
-                configurePlugin(
+                1 * configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1080,11 +1095,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'blabla',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'blabla'
             )
 
             exec.save()
@@ -1099,6 +1113,9 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+
+
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1116,7 +1133,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1145,11 +1162,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
             ).save()
             def filetype = 'rdlog'
             def performLoad = true
@@ -1164,6 +1180,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1184,7 +1201,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1269,14 +1286,15 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 outputfilepath: '/tmp/file'
             ).save()
             service.frameworkService = Mock(FrameworkService){
-                2 * getFrameworkPropertyResolver(_)
+
+                2 * getFrameworkPropertyResolverFactory(_) >> Mock(PropertyResolverFactory.Factory)
             }
             service.configurationService=Mock(ConfigurationService){
                 _ * getString('execution.logs.fileStoragePlugin',null)>>'test1'
             }
             def instance = Mock(ExecutionFileStoragePlugin)
             service.pluginService=Mock(PluginService){
-                2 * configurePlugin('test1', _, _, PropertyScope.Instance)>>new ConfiguredPlugin<ExecutionFileStoragePlugin>(
+                2 * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance)>>new ConfiguredPlugin<ExecutionFileStoragePlugin>(
                     instance,
                     [:]
                 )
@@ -1287,6 +1305,98 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
             service.submitForStorage(exec)
         then:
             service.storageRequests.size()==1
+
+    }
+
+    def "countIncompleteStorageRequests"() {
+        given:
+        def serveruuid = 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        service.frameworkService = Mock(FrameworkService){
+
+            serverUUID >> serveruuid
+        }
+        def e2 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: serveruuid
+        ).save(flush: true)
+        def l2 = new LogFileStorageRequest(
+                execution: e2,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: true
+        ).save(flush: true)
+        def e3 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save(flush: true)
+        def l3 = new LogFileStorageRequest(
+                execution: e3,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+
+        when:
+        int count = service.countIncompleteLogStorageRequests()
+
+        then:
+        count == 1
+    }
+
+    def "count IncompleteStorageRequests"() {
+        given:
+        def serveruuid = 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        service.frameworkService = Mock(FrameworkService){
+
+            serverUUID >> serveruuid
+        }
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: 'some-other-server-uuid'
+        ).save(flush: true)
+        def l = new LogFileStorageRequest(
+                execution: e,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+        def e2 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user2',
+                project: 'test',
+                serverNodeUUID: serveruuid
+        ).save(flush: true)
+        def l2 = new LogFileStorageRequest(
+                execution: e2,
+                pluginName: 'blah2',
+                filetype: '*',
+                completed: true
+        ).save(flush: true)
+        def e3 = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user3',
+                project: 'test',
+                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save(flush: true)
+        def l3 = new LogFileStorageRequest(
+                execution: e3,
+                pluginName: 'blah3',
+                filetype: '*',
+                completed: false
+        ).save(flush: true)
+
+        when:
+        def results = service.listIncompleteRequests(serveruuid)
+
+        then:
+        results.size() == 1
+        results[0].pluginName == 'blah3'
 
     }
 }

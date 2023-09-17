@@ -23,24 +23,40 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
+import com.dtolabs.rundeck.core.http.RequestProcessor
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
+import org.apache.http.Header
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.StatusLine
+import org.apache.http.Header
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.util.HttpClientCreator
+import org.slf4j.Logger
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
+import org.rundeck.app.jobs.options.ApiTokenReporter
+import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -639,6 +655,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     def "show job retry failed exec id filter nodes"(){
         given:
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
         ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
@@ -700,6 +717,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
@@ -728,6 +746,81 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         [:] == model.optiondependencies
         null == model.optionordering
         [:] == model.remoteOptionData
+
+    }
+
+    def "no failed nodes show job retry with original nodeset"(){
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList: null,
+                failedNodeList: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        NodeSetImpl originalNodeSet = new NodeSetImpl()
+        originalNodeSet.putNode(new NodeEntryImpl("nodea"))
+        originalNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            _*authorizeProjectJobAny(_,_,_,_)>>true
+            _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+        }
+
+        controller.executionService = Mock(ExecutionService){
+            filtersAsNodeSet(_,_) >> originalNodeSet
+        }
+
+        controller.frameworkService=Mock(FrameworkService){
+            filterNodeSet(_,_)>>originalNodeSet
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+        def model = controller.show()
+
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.nodes == originalNodeSet.nodes
 
     }
 
@@ -768,7 +861,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
 
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                _*authorizeProjectJobAny(_,_,['read'],_)>>true
+                _*authorizeProjectJobAny(_,_,[AuthConstants.ACTION_READ],_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
 
@@ -784,7 +877,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 it[2]<<"format: $format"
             }
         }
-
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
@@ -795,7 +888,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
         response.text=="format: $format"
         where:
-        format << ['xml', 'yaml']
+        format << ['xml', 'yaml', 'json']
 
     }
 
@@ -843,6 +936,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -904,6 +998,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -969,6 +1064,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1043,6 +1139,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             //assert the empty file will be uploaded
             1 * receiveFile(_,_,_,'afile.txt', 'OPT1',_,_,_,_) >> 'aref'
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1112,6 +1209,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1199,6 +1297,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1269,6 +1368,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1354,6 +1454,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1477,6 +1578,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1494,6 +1596,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        
 
 
 
@@ -1540,6 +1644,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1595,6 +1700,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * isFrameworkProjectDisabled(_)>> false
             0 * _(*_)
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -1706,6 +1812,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1806,11 +1915,15 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            getRefExecCountStats(_)>>refTotal
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -1876,7 +1989,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: jobuuid,execution: exec).save()
         }
 
 
@@ -1908,6 +2021,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -1978,7 +2094,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: "uuid",execution: exec).save()
         }
 
 
@@ -2009,6 +2125,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2252,6 +2371,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
 
 
         when:
@@ -2328,6 +2450,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
 
         when:
@@ -2407,6 +2533,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
 
         when:
@@ -2491,6 +2621,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
 
         when:
@@ -2560,6 +2694,62 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             job.project=='anuncle'
             model.nextExecutions!=null
             model.nextExecutions.size()==1
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
+    @Unroll
+    def "upload job file via create form #type"() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
+            def authContext = Mock(UserAndRolesAuthContext)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[test:'values'])
+                        ]
+                ]
+                1 * prepareCreateEditJob(_, job , AuthConstants.ACTION_CREATE, authContext)>>[:]
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                _*authorizeProjectResource(_, _, _, _) >> true
+                _*getAuthContextForSubjectAndProject(_, _) >> authContext
+            }
+            controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+                1 * getImportedJobDefinitionComponentValues(!null)>>[input:'values']
+            }
+
+            request.method = 'POST'
+            params.project='anuncle'
+            setupFormTokens(params)
+        when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
+            controller.create()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/create'
+            model.jobComponentValues==[input:'values']
+            //job project set to upload parameter
+            job.project=='anuncle'
 
         where:
             type<<['params','multipart','multipartreq']
@@ -2827,6 +3017,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job"
         params.id = '1'
@@ -2909,6 +3103,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job"
         params.id = '1'
@@ -2991,6 +3189,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job"
         params.id = '1'
@@ -3070,6 +3272,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job"
         params.id = '1'
@@ -3173,6 +3379,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job"
         params.id = '1'
@@ -3254,6 +3464,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job and request has ajax header"
         params.id = '1'
@@ -3324,6 +3538,10 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+
 
         given: "params for job and request has ajax header"
         params.id = '1'
@@ -3572,6 +3790,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             params.dupeOption = dupeoption
             params.uuidOption = uuidoption
             params.validateJobref = validateJobref
+            request.api_version = apivers
         when:
             controller.apiJobsImportv14()
         then:
@@ -3587,12 +3806,13 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * controller.apiService.renderSuccessXml(_, _, _)
             job.project == 'aproj'
         where:
-            type               | format | dupeoption | uuidoption | validateJobref
-            'application/xml'  | 'xml'  | null       | null       | null
-            'application/yaml' | 'yaml' | null       | null       | null
-            'application/yaml' | 'yaml' | null       | null       | 'true'
-            'application/yaml' | 'yaml' | null       | 'remove'   | null
-            'application/yaml' | 'yaml' | 'update'   | null       | null
+            type               | format | dupeoption | uuidoption | validateJobref | apivers
+            'application/xml'  | 'xml'  | null       | null       | null           | 14
+            'application/yaml' | 'yaml' | null       | null       | null           | 14
+            'application/yaml' | 'yaml' | null       | null       | 'true'         | 14
+            'application/yaml' | 'yaml' | null       | 'remove'   | null           | 14
+            'application/yaml' | 'yaml' | 'update'   | null       | null           | 14
+            'application/json' | 'json' | null       | null       | null           | 44
     }
     @Unroll
     def "api jobs import xmlBatch text format #format fileformat #fformat"() {
@@ -3692,6 +3912,87 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             'yaml' |null | null       | 'remove'   | null
             'yaml' |null | 'update'   | null       | null
     }
+    def "api job export"(){
+        given:
+            def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodeFilterEditable: true,
+                filter:'',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [
+                        new CommandExec([
+                            adhocRemoteString: 'test buddy',
+                            argString: '-delay 12 -monkey cheese -particle'
+                        ])
+                    ]
+                )
+            ).save()
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+                1 * requireExists(_, se, ['Job ID', 'testUUID']) >> true
+                0 * renderErrorFormat(*_)
+            }
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                1 * getByIDorUUID('testUUID')>>se
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectJobAll(_, se, [AuthConstants.ACTION_READ], 'project1')>>true
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * isFrameworkProjectDisabled(_) >> false
+            }
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            params.id='testUUID'
+            response.format = format
+            request.api_version=apiVers
+        when:
+            def result = controller.apiJobExport()
+        then:
+            response.contentType==expectedType+';charset=UTF-8'
+            1 * controller.rundeckJobDefinitionManager.exportAs(expectedFormat,[se],_)>>{
+                it[2].write('test output')
+            }
+            response.text=='test output'
+        where:
+            format | apiVers | expectedFormat | expectedType
+            'xml'  | 14      | 'xml'          | 'text/xml'
+            'yaml' | 14      | 'yaml'         | 'text/yaml'
+            'json' | 44      | 'json'         | 'application/json'
+            'all'  | 43      | 'xml'          | 'text/xml'
+            'all'  | 44      | 'xml'          | 'text/xml'
+    }
+    def "api job export unsupported format"(){
+        given:
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+            }
+
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            params.id='testUUID'
+            response.format = format
+            request.api_version=apiVers
+        when:
+            controller.apiJobExport()
+        then:
+            0 * controller.rundeckJobDefinitionManager.exportAs(*_)
+            1 * controller.apiService.renderErrorFormat(_,[
+                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                code  : 'api.error.item.unsupported-format',
+                args: [expected]
+            ])
+        where:
+            format | expected | apiVers
+            'asdf' | 'asdf'   | 14
+            'asdf' | 'asdf'   | 43
+            'json' | 'json'   | 42
+            null   | 'html'   | 14
+            null   | 'html'   | 43
+    }
 
     def "test broken plugin on editing"() {
 
@@ -3735,18 +4036,105 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.response.redirectedUrl == null
         flash.message != null
     }
+    def "test job edit not found"() {
+        given:
+            def badid='123badid'
+            params.id = badid
+            params.project = 'testProject'
+
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                getByIDorUUID('123badid') >> null
+            }
+
+            def handler = Mock(WebExceptionHandler)
+            controller.rundeckExceptionHandler= handler
+        when:
+            controller.edit()
+        then:
+            1 * handler.handleException(_,_,_ as NotFound)
+    }
+    def "test job update not found"() {
+        given:
+            def badid='123badid'
+            params.id = badid
+            params.project = 'testProject'
+
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                getByIDorUUID('123badid') >> null
+            }
+
+            def handler = Mock(WebExceptionHandler)
+            controller.rundeckExceptionHandler= handler
+
+            setupFormTokens(params)
+            request.method='POST'
+        when:
+            controller.update()
+        then:
+            1 * handler.handleException(_,_,_ as NotFound)
+    }
+
+    def "Cannot update job when it has orchestrator + secure options + job queue"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
+        params.id = job1.id
+        params.project = job1.project
+        def thrownMessage = "Job Queueing is not supported in jobs with secure options."
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            it.getByIDorUUID(_) >> job1
+            it._doupdate(_,_,_) >> {throw new Exception(thrownMessage)}
+            it._dosaveupdated(_,_,_,_,_,_) >> {throw new Exception(thrownMessage)}
+        }
+
+        def handler = Mock(WebExceptionHandler)
+        controller.rundeckExceptionHandler= handler
+
+        setupFormTokens(params)
+        request.method='POST'
+        when:
+        controller.update()
+
+        then:
+        flash.error == "Failed to update job: [${thrownMessage}]"
+        response.redirectedUrl=="/project/AProject/job/edit/${job1.id}"
+    }
 
     def "test special chars in URL user-password"() {
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
 
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
         when:
-        controller.getRemoteJSON(url, 100, 100, 5,false)
+        def result = controller.getRemoteJSON(httpClientCreator,url, null, 100, 100, 5,false)
 
         then:
-        def e = thrown(UnknownHostException)
-        e.message.contains("web.server")
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.stats.httpStatusCode == 200
+        result.stats.url.contains("web.server")
 
         where:
         url                                                         |_
@@ -3754,5 +4142,368 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         'https://admin:m^^y^^$!pass1@web.server/option.json'        |_
         'https://web.server/geto'                                   |_
         'http://web.server/geto'                                    |_
+    }
+
+    def "test remote url basic auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BASIC
+        configRemoteUrl.username = "test"
+        configRemoteUrl.password ="test"
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.setUri(_)
+        1 * client.setBasicAuthCredentials("test","test")
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+
+    }
+
+    def "test remote url api-token auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+        configRemoteUrl.token = "123"
+        configRemoteUrl.keyName = "apiKey"
+        configRemoteUrl.apiTokenReporter = ApiTokenReporter.HEADER
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.addHeader("apiKey","123")
+        1 * client.setUri(_)
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+        result != null
+
+    }
+
+    def "test remote url api-token auth query param"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def url = 'http://web.server/geto'
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+        configRemoteUrl.token = "123"
+        configRemoteUrl.keyName = "apiKey"
+        configRemoteUrl.apiTokenReporter = ApiTokenReporter.QUERY_PARAM
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.setUri({URI uri->
+            uri.getQuery()!=null
+            uri.getQuery()=="apiKey=123"
+        })
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+
+    }
+
+    def "test remote url bearer token auth"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BEARER_TOKEN
+        configRemoteUrl.token = "123"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.addHeader("Authorization","Bearer 123")
+        1 * client.setUri(_)
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+
+    }
+
+
+    def "test remote url filter"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.key2"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.json == ["sub-key3":"value3", "sub-key4":"value4"]
+
+    }
+
+    def "test remote url filter, filter not found"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.test"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.error != null
+        result.error == "No results for path: \$['test']"
+
+    }
+
+    def "test remote url filter, filter is empty"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, null, 100, 100, 5,false)
+
+        then:
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.json == [key1:"value1", key2:["sub-key4":"value4", "sub-key3":"value3"]]
+
+    }
+
+    def "test remote url filter, filter return a list"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def url = 'http://web.server/geto'
+
+        def jobChangeLogger = Mock(Logger)
+        controller.logger = jobChangeLogger
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$..*"
+
+        HttpResponse rsp = Mock(HttpResponse){
+            getStatusLine()>>Mock(StatusLine){
+                getStatusCode()>>200
+            }
+            getEntity()>>Mock(HttpEntity){
+                getContent()>>new ByteArrayInputStream('{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'.getBytes());
+            }
+            getFirstHeader("Content-Type")>>Mock(Header){
+                getValue()>>"application/json"
+            }
+        }
+
+        when:
+        def result = controller.getRemoteJSON(httpClientCreator, url, configRemoteUrl, 100, 100, 5,false)
+
+        then:
+        1 * client.setUri(_)
+        1 * client.execute(_) >> {
+            RequestProcessor processor = it[0]
+            processor.accept(rsp)
+        }
+
+        result != null
+        result.error == "the filter \$..* return a list, please use another filter"
+
     }
 }

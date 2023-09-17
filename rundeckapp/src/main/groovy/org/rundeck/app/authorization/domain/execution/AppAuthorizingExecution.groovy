@@ -61,7 +61,11 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, Proje
         if (identifier.project) {
             found = Execution.findByIdAndProject(identifier.id.toLong(), identifier.project)
         } else {
-            found = Execution.get(identifier.id.toLong())
+            try {
+                found = Execution.get(identifier.id.toLong())
+            } catch(NumberFormatException ignored) {
+                found = Execution.findByUuid(identifier.id)
+            }
         }
         Optional.ofNullable(found)
     }

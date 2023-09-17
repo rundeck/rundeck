@@ -17,40 +17,50 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
+import com.dtolabs.rundeck.app.support.ReportQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ReferencedExecution
+import rundeck.ReportFilter
 import rundeck.ScheduledExecution
-import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
-import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.app.support.ReportQuery
-import rundeck.User
-import rundeck.ReportFilter
-import rundeck.services.FrameworkService
-import com.dtolabs.rundeck.app.api.ApiVersions
 
+@Controller
 class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
     def scheduledExecutionService
     def MetricService metricService
+    def ReferencedExecutionDataProvider referencedExecutionDataProvider
     static allowedMethods = [
             deleteFilter    : 'POST',
             storeFilter     : 'POST',
@@ -104,7 +114,7 @@ class ReportsController extends ControllerBase{
         ){
             return
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
         if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
             if(filterPref['events']){
@@ -157,7 +167,10 @@ class ReportsController extends ControllerBase{
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionProjectList(sched)
+                def list = []
+                if(sched!= null) {
+                    list = referencedExecutionDataProvider.executionProjectList(sched.uuid)
+                }
                 def allowedProjects = []
                 list.each { project ->
                     if(project != params.project){
@@ -232,7 +245,7 @@ class ReportsController extends ControllerBase{
         if (query.hasErrors()) {
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
 
         if(params.filterName){
             //load a named filter and create a query from it
@@ -322,21 +335,7 @@ class ReportsController extends ControllerBase{
             }
         }
     }
-    def eventsFragment(ExecQuery query) {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_EVENT,
-            AuthConstants.ACTION_READ,
-            params.project
-        ), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
-            return
-        }
-        def results = index_old(query)
-        results.params=params
-        return results
-    }
     def eventsAjax(ExecQuery query){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
@@ -363,7 +362,7 @@ class ReportsController extends ControllerBase{
                 map.executionId= map.executionId.toString()
                 try {
                     map.execution = Execution.get(map.executionId).toMap()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.executionId, params: [project: (map?.ctxProject != null)? map.ctxProject : params.project])
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.executionId, params: [project: (map?.project != null)? map.project : params.project])
                 } catch (Exception e) {
 
                 }
@@ -407,7 +406,7 @@ class ReportsController extends ControllerBase{
             request.errors=storeFilterCommand.errors
             return renderErrorView([:])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def ReportFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
@@ -457,7 +456,7 @@ class ReportsController extends ControllerBase{
                 )
             }
 
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def ReportFilter filter
             def boolean saveuser = false
             if (query.newFilterName && !query.existsFilterName) {
@@ -534,7 +533,7 @@ class ReportsController extends ControllerBase{
             ]
             )
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def filterset = u.reportfilters?.findAll { it.projFilter == project } ?: []
 
         render(contentType: 'application/json') {
@@ -546,7 +545,7 @@ class ReportsController extends ControllerBase{
 
     def deleteFilter(){
         withForm{
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
             final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
             if(ffilter){
@@ -578,7 +577,7 @@ class ReportsController extends ControllerBase{
                 ]
                 )
             }
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def filtername = params.delFilterName
             final def ffilter = ReportFilter.findByNameAndUserAndProjFilter(filtername, u, project)
             if (ffilter) {
@@ -624,10 +623,142 @@ class ReportsController extends ControllerBase{
     }
 
 
+    @Get(uri='/project/{project}/history')
+    @Operation(
+        method = 'GET',
+        summary = 'Listing History',
+        description = '''
+List the event history for a project.''',
+        tags = ['history'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'jobIdFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for a job ID.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'reportIdFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for a event Name.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'userFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events created by a user.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'statFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events based on result status.  this can be \'succeed\',\'fail\', or \'cancel\'.',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'jobListFilter',
+                in = ParameterIn.QUERY,
+                description = 'include events for the job by name, format: \'group/name\'.  To use multiple values, include this parameter multiple times.',
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name = 'excludeJobListFilter',
+                in = ParameterIn.QUERY,
+                description = 'exclude events for the job by name, format: \'group/name\'. To use multiple values, include this parameter multiple times.',
+                array = @ArraySchema(schema = @Schema(type = 'string'))
+            ),
+            @Parameter(
+                name = 'recentFilter',
+                in = ParameterIn.QUERY,
+                description = '''Use a simple text format to filter events that occurred within a period of time. The format is "XY" where X is an integer, and "Y" is one of:
+        * `h`: hour
+        * `d`: day
+        * `w`: week
+        * `m`: month
+        * `y`: year
+        So a value of "2w" would return events within the last two weeks.''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'begin',
+                in = ParameterIn.QUERY,
+                description = '''Specify exact date for earliest result. a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ"''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'end',
+                in = ParameterIn.QUERY,
+                description = '''Specify exact date for latest result. a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ"''',
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'max',
+                in = ParameterIn.QUERY,
+                description = '''indicate the maximum number of events to return. The default maximum to return is 20''',
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'offset',
+                in = ParameterIn.QUERY,
+                description = '''indicate the 0-indexed offset for the first event to return''',
+                schema = @Schema(type = 'integer')
+            )
+        ],
+        responses = @ApiResponse(
+            responseCode = '200',
+            description = 'History results',
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = 'object'),
+                examples = @ExampleObject('''{
+  "paging": {
+    "count": 10,
+    "total": 110,
+    "max": 20,
+    "offset": 100
+  },
+  "events": [
+  {
+  "starttime": 123,
+  "endtime": 123,
+  "title": "[job title, or adhoc]",
+  "status": "[status]",
+  "statusString": "[string]",
+  "summary": "[summary text]",
+  "node-summary": {
+    "succeeded": 1,
+    "failed": 2,
+    "total": 3
+  },
+  "user": "[user]",
+  "project": "[project]",
+  "date-started": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "date-ended": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "job": {
+    "id": "[uuid]",
+    "href": "[api href]"
+  },
+  "execution": {
+    "id": "[id]",
+    "href": "[api href]"
+  }
+}
+  ]
+}''')
+            )
+        )
+    )
     /**
      * API, /api/14/project/PROJECT/history
      */
-    def apiHistoryv14(ExecQuery query){
+    def apiHistoryv14(@Parameter(hidden=true) ExecQuery query){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
@@ -727,15 +858,15 @@ class ReportsController extends ControllerBase{
                                 summary(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                                 user(rpt.author)
-                                project(rpt.ctxProject)
+                                project(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
-                                    def jparms=[id:foundjob?foundjob.extid:rpt.jcJobId]
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
+                                    def jparms=[id:foundjob?foundjob.extid:rpt.jobId]
                                     if(foundjob){
                                         jparms.href=apiService.apiHrefForJob(foundjob)
                                         jparms.permalink=apiService.guiHrefForJob(foundjob)
@@ -785,14 +916,14 @@ class ReportsController extends ControllerBase{
                                 summary=(rpt.adhocScript?:rpt.title)
                                 delegate.'node-summary'=[succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]]
                                 user=(rpt.author)
-                                project=(rpt.ctxProject)
+                                project=(rpt.project)
                                 if(rpt.status=='cancel' && rpt.abortedByUser){
                                     abortedby=(rpt.abortedByUser)
                                 }
                                 delegate.'date-started'=(g.w3cDateValue(date:rpt.dateStarted))
                                 delegate.'date-ended'=(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jcJobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                                if(rpt.jobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
                                     if(foundjob){
                                         job = [
                                                 id       : foundjob.extid,

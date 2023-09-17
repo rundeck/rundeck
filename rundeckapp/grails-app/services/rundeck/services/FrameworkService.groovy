@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -28,21 +29,29 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.core.storage.service.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
 import grails.events.bus.EventBus
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
+import org.rundeck.app.job.option.JobOptionUrlExpander
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
@@ -60,25 +69,25 @@ import java.util.function.Predicate
  * Interfaces with the core Framework object
  */
 @GrailsCompileStatic
-class FrameworkService implements ApplicationContextAware, ClusterInfoService {
+class FrameworkService implements ApplicationContextAware, ClusterInfoService, FrameworkServiceCapabilities {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
     public static final String FIRST_LOGIN_FILE = ".firstLogin"
     static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
 
-    def ApplicationContext applicationContext
+    ApplicationContext applicationContext
     def gormEventStoreService
-    def executionService
+    ExecutionService executionService
     MetricService metricService
-    def Framework rundeckFramework
+    Framework rundeckFramework
     def rundeckPluginRegistry
-    def PluginService pluginService
-    def PluginControlService pluginControlService
+    PluginService pluginService
+    PluginControlService pluginControlService
     def scheduledExecutionService
     def logFileStorageService
     def fileUploadService
-    def EventBus grailsEventBus
-    def AuthContextEvaluator rundeckAuthContextEvaluator
+    EventBus grailsEventBus
+    AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
@@ -87,6 +96,11 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     FeatureService featureService
     ExecutorService executorService
     AppAuthContextProcessor rundeckAuthContextProcessor
+    ReportService reportService
+    JobOptionUrlExpander jobOptionUrlExpander
+    RemoteJsonOptionRetriever remoteJsonOptionRetriever
+    WorkflowExecutionItemFactory workflowExecutionItemFactory
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -176,6 +190,10 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         file.delete()
     }
 
+    @Override
+    ProjectManager getFrameworkProjectManager() {
+        return rundeckFramework.frameworkProjectMgr
+    }
 /**
      * Return a list of FrameworkProject objects
      */
@@ -356,22 +374,27 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     @CompileStatic(TypeCheckingMode.SKIP)
     def scheduleCleanerExecutions(String project, ExecutionCleanerConfig config){
-        log.info("removing cleaner executions job scheduled for ${project}")
-        scheduledExecutionService.deleteCleanerExecutionsJob(project)
+        if(!isClusterModeEnabled() || jobSchedulerService.tryAcquireExecCleanerJob(getServerUUID(),project)) {
+            log.info("removing cleaner executions job scheduled for ${project}")
+            scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(config.enabled) {
-            log.info("scheduling cleaner executions job for ${project}")
-            scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
-                    [
-                            maxDaysToKeep: config.maxDaysToKeep,
-                            minimumExecutionToKeep: config.minimumExecutionToKeep,
-                            maximumDeletionSize: config.maximumDeletionSize,
-                            project: project,
-                            logFileStorageService: logFileStorageService,
-                            fileUploadService: fileUploadService,
-                            frameworkService: this,
-                            jobSchedulerService: jobSchedulerService
-                    ])
+            if (config.enabled) {
+                log.info("scheduling cleaner executions job for ${project}")
+                scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
+                        [
+                                maxDaysToKeep         : config.maxDaysToKeep,
+                                minimumExecutionToKeep: config.minimumExecutionToKeep,
+                                maximumDeletionSize   : config.maximumDeletionSize,
+                                project               : project,
+                                logFileStorageService : logFileStorageService,
+                                fileUploadService     : fileUploadService,
+                                frameworkService      : this,
+                                jobSchedulerService   : jobSchedulerService,
+                                referencedExecutionDataProvider: referencedExecutionDataProvider,
+                                reportService         : reportService
+                                
+                        ])
+            }
         }
     }
 
@@ -433,8 +456,25 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
             }
         }
     }
-    def existsFrameworkProject(String project) {
+    boolean existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
+    }
+
+    /**
+     * @return true if the project exists and is disabled. false otherwise.
+     */
+    boolean isFrameworkProjectDisabled(String projectName) {
+        return rundeckFramework.getFrameworkProjectMgr().isFrameworkProjectDisabled(projectName)
+    }
+
+    /**
+     * Force project configuration load and returns it
+     * @param projectName
+     * @return new project configuration object
+     */
+    @CompileStatic
+    IRundeckProjectConfig getProjectConfigReloaded(String projectName){
+        return rundeckFramework.getFrameworkProjectMgr().loadProjectConfig(projectName)
     }
 
     @CompileStatic
@@ -535,12 +575,49 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      * @param projectName
      * @return
      */
+    PropertyResolverFactory.Factory pluginConfigFactory(String projectName, Map instanceConfiguration) {
+        pluginConfigFactory(instanceConfiguration, null!=projectName?getFrameworkProject(projectName).getProperties():null)
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    PropertyResolverFactory.Factory pluginConfigFactory(Map instanceConfiguration, Map projectConfig) {
+        PropertyResolverFactory.pluginPrefixedScoped(
+            PropertyResolverFactory.instanceRetriever(instanceConfiguration),
+            PropertyResolverFactory.instanceRetriever(projectConfig),
+            rundeckFramework.getPropertyRetriever()
+        )
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
     PropertyResolver getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
-                null != projectName ? PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties()) : null,
+                null != projectName ? getProjectPropertyResolver(projectName) : null,
                 rundeckFramework.getPropertyRetriever()
         )
+    }
+
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    PropertyResolverFactory.Factory getFrameworkPropertyResolverFactory(String projectName=null, Map instanceConfiguration=null) {
+        return PropertyResolverFactory.createFrameworkProjectRuntimeResolverFactory(
+            rundeckFramework,
+            projectName,
+            instanceConfiguration
+        )
+    }
+
+    public PropertyRetriever getProjectPropertyResolver(String projectName) {
+        PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties())
     }
     /**
      * Get a property resolver for optional project level
@@ -567,7 +644,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      * @param selector
      * @param project
      */
-    def INodeSet filterNodeSet( NodesSelector selector, String project) {
+    INodeSet filterNodeSet( NodesSelector selector, String project) {
         return metricService.timer(this.class.name,'filterNodeSet').time((Callable<INodeSet>) {
             def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
             if(0==unfiltered.getNodeNames().size()) {
@@ -589,18 +666,18 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
 
 
-    def getFrameworkNodeName() {
+    String getFrameworkNodeName() {
         return rundeckFramework.getFrameworkNodeName()
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    def AuthContext userAuthContext(session) {
+    AuthContext userAuthContext(HttpSession session) {
         if (!session['_Framework:AuthContext']) {
             session['_Framework:AuthContext'] = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         }
         return session['_Framework:AuthContext']
     }
-    def IFramework getRundeckFramework(){
+    IFramework getRundeckFramework(){
         return rundeckFramework;
     }
 
@@ -928,6 +1005,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         return [descriptions, nodeexecdescriptions, filecopydescs]
     }
 
+    List<Description> listPluginGroupDescriptions() {
+        pluginService.listPluginDescriptions(
+                PluginGroup,
+                pluginService.createPluggableService(PluginGroup)
+        )
+    }
+
 
     List<Description> listResourceModelSourceDescriptions() {
         pluginService.listPluginDescriptions(
@@ -969,6 +1053,16 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         getServicePropertiesForType(serviceType, getNodeExecutorService(), project)
     }
 
+    public boolean hasPluginGroupConfigurationForType(String serviceType, Map<String,String> projectProps) {
+        return projectProps.get(
+            "project.PluginGroup.${serviceType}.enabled".toString()
+        )=='true'
+    }
+
+    public Map<String, String> getPluginGroupConfigurationForType(String serviceType, String project) {
+        getServicePropertiesForPluginGroups(serviceType, pluginService.createPluggableService(PluginGroup), project)
+    }
+
     /**
      * Return a map of property name to value
      * @param serviceType
@@ -979,6 +1073,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         getServicePropertiesMapForType(serviceType, getNodeExecutorService(), properties)
     }
 
+    private Map<String,String> getServicePropertiesForPluginGroups(String serviceType, PluggableProviderService service, String project) {
+        return getServicePropertiesMapForPluginGroups(serviceType,service,getFrameworkProject(project).getProperties())
+    }
     /**
      * Return a map of property name to value for the configured project plugin
      * @param serviceType
@@ -1003,6 +1100,22 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                 def described = pluginService.getPluginDescriptor(serviceType, service)
                 if(described?.description) {
                     properties = Validator.demapProperties(props, described.description)
+                }
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+                log.debug(e.message,e)
+            }
+        }
+        properties
+    }
+
+    public Map<String,String> getServicePropertiesMapForPluginGroups(String serviceType, PluggableProviderService service, Map props) {
+        Map<String,String> properties = new HashMap<>()
+        if (serviceType) {
+            try {
+                def described = pluginService.getPluginDescriptor(serviceType, service)
+                if(described?.description) {
+                    properties = Validator.demapPluginGroupProperties(props, described.description)
                 }
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
@@ -1276,6 +1389,11 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                 props : projProps,
                 remove: removePrefixes
         ]
+    }
+
+    @CompileDynamic
+    ExecutionLifecycleJobDataAdapter getExecutionLifecyclePluginService() {
+        return executionService.executionLifecycleComponentService
     }
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {

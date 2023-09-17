@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectInfo
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -43,6 +44,10 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -54,7 +59,9 @@ import org.rundeck.core.auth.app.NamedAuthRequestUtil
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.RdAuthorizeSystem
+
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -70,12 +77,14 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulesService
 import rundeck.services.LocalJobSchedulesManager
+import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import rundeck.services.StorageService
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -137,6 +146,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
+
         when:
         params.id=testUUID
         controller.response.format = "xml"
@@ -147,9 +159,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -180,6 +189,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.jobSchedulesService = jobSchedulesService
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
         when:
         params.id=testUUID
@@ -191,9 +202,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -321,6 +329,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -366,6 +376,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000
@@ -418,6 +430,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             nextExecutions(_,_) >> [new Date()]
         }
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -466,6 +480,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             nextExecutions(_,_) >> [new Date()]
         }
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.executionService = new ExecutionService()
+        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000
@@ -1295,17 +1311,22 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         given:
 
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    def description = 'desc'
-        new Project(name: 'proj', description: description).save(flush: true)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        def description = 'desc'
+        def prj = new Project(name: 'proj', description: description).save(flush: true)
+        def projinfo = Mock(IProjectInfo) {
+            getDescription() >> description
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projinfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-
+        controller.projectService = Mock(ProjectService)
+        GormProjectDataProvider provider = new GormProjectDataProvider()
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1333,7 +1354,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1354,14 +1375,18 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     new Project(name: 'proj').save(flush: true)
+        def projInfo = Mock(IProjectInfo) {
+            getDescription() >> null
+        }
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            getInfo() >> projInfo
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1389,6 +1414,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
 
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
@@ -1452,7 +1478,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.scmService = Mock(ScmService)
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+        }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData){
             getEnabled() >> true
@@ -1495,7 +1523,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.scmService = Mock(ScmService)
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+        }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
 
@@ -1547,7 +1577,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.scmService = Mock(ScmService)
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+        }
+        controller.storageService = Mock(StorageService)
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
 
@@ -1589,9 +1622,114 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         where:
             enabled | count
             true    | 1
-            false   | 0
     }
 
+    @Unroll
+    def "No SCM import status if the user don't have access to the SCM's configured key or password"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.loadScmConfig(_,integration) >> scmConfig
+        }
+        controller.storageService = Mock(StorageService)
+        def project = 'test'
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        0 * controller.scmService.getRenamedJobPathsForProject(project)
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        (statusCalls) * controller.scmService.getJobsPluginMeta(project, false)
+        (statusCalls) * controller.scmService.importStatusForJobs(project,_, _, _, _)
+        (statusCalls) * controller.scmService.importPluginStatus(_,project)
+        (statusCalls) * controller.scmService.importPluginActions(_,project,_)
+
+        where:
+        access   |  integration   | statusCalls
+        true     | 'import'       | 1
+        false    | 'import'       | 0
+    }
+
+    @Unroll
+    def "No SCM export status if the user don't have access to the SCM's configured key or password"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+        controller.scmService = Mock(ScmService){
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.loadScmConfig(_,integration) >> scmConfig
+        }
+        controller.storageService = Mock(StorageService)
+        def project = 'test'
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        (statusCalls) * controller.scmService.getJobsPluginMeta(project, true)
+        (statusCalls) * controller.scmService.exportStatusForJobs(project,_, _, _, _)
+
+        where:
+        access   |  integration   | statusCalls
+        true     | 'export'       | 1
+        false    | 'export'       | 0
+    }
 
     def "project Toggle SCM off"(){
         given:
@@ -1704,7 +1842,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -2090,8 +2228,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         (ienabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('import','test')>>iconfiged
         (eenabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('export','test')>>econfiged
-        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
-        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
+        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null, null, null)
+        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null, null, null)
         model.hasConfiguredScmPlugins==hasConfigured
         model.hasConfiguredScmPluginsEnabled==hasEnabled
         where:
@@ -2161,9 +2299,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -2208,9 +2343,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
@@ -2259,9 +2391,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'AProject') >>
-                Mock(UserAndRolesAuthContext)
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,true) >> [new Date()]
@@ -2734,6 +2863,18 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     }
 
     @Unroll
+    def "RdAuthorizeJob required for endpoint #endpoint authorize #access"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeJob)
+        then:
+            result.value() == access
+        where:
+            endpoint                                | access
+            'apiJobDetail'                          | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+            'apiJobForecast'                        | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+    }
+
+    @Unroll
     @Ignore("TODO: could enforce authorize annotation of every controller Action")
     def "all methods #method authorize check"() {
         expect:
@@ -2795,6 +2936,186 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         jobTree | groupsSize    | group
         true    | 4             | ["acme","demo","demo/level1","demo/level2"]
         false   | 3             | ["acme","demo/level1","demo/level2"]
+    }
+
+    @Unroll
+    def "api export jobs v14"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[job1],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
+
+
+        when:
+        request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
+        response.format = format
+        controller.apiJobsExportv14(query)
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                              action    : AuthConstants.ACTION_READ,
+                                                                                              resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        response.status == 200
+        response.text=="format: $format"
+        response.contentType=="$contentType;charset=UTF-8"
+        where:
+        format | contentType        | apivers
+        'xml'  | 'text/xml'         | 14
+        'yaml' | 'text/yaml'        | 14
+        'json' | 'application/json' | 44
+    }
+    @Unroll
+    def "api export jobs with unspecified format"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[job1],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
+
+
+        when: "api export with a specific requested format"
+        request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
+
+        controller.apiJobsExportv14(query)
+        then: "result use default format for the api version"
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                              action    : AuthConstants.ACTION_READ,
+                                                                                              resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        response.status == 200
+        response.text=="format: $format"
+        response.contentType=="$contentType;charset=UTF-8"
+        where:"default format is xml"
+        format | contentType        | apivers
+        'xml'  | 'text/xml'         | 14
+        'xml'  | 'text/xml'         | 44
+    }
+
+    @Unroll
+    def "api export jobs unsupported format"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            0 * exportAs(_,_,_)
+        }
+
+
+        when:
+        request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
+        response.format = format
+        controller.apiJobsExportv14(query)
+        then:
+        0 * controller.scheduledExecutionService.listWorkflows(_,_)
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        0 * controller.rundeckAuthContextProcessor.authResourceForJob(_)
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _)
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _)
+        0 * controller.scheduledExecutionService.finishquery(_, _, _)
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.status == HttpServletResponse.SC_NOT_ACCEPTABLE
+            it.code == 'api.error.item.unsupported-format'
+            it.args == [format]
+        }
+        )
+        where:
+        format |  apivers
+        'zxml' |  14
+        'asdf' |  14
+        'json' |  14
+        'json' |  43
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {

@@ -16,32 +16,16 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageManager
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.storage.api.PathUtil
-import org.rundeck.storage.api.Resource
-import org.rundeck.storage.api.StorageException
 import spock.lang.Specification
-import testhelper.RundeckHibernateSpec
-
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 
-class ConfigStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ConfigStorageService> {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class ConfigStorageServiceSpec extends Specification implements ServiceUnitTest<ConfigStorageService>, DataTest {
 
     def "has fix indicator"() {
         given:

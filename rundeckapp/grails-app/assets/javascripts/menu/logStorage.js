@@ -93,10 +93,10 @@ function StorageStats(data) {
             url: _genUrl(url,opts),
             method:'POST',
             beforeSend: _createAjaxSendTokensHandler(self.tokensName)
-        }).success(_createAjaxReceiveTokensHandler(self.tokensName));
+        }).done(_createAjaxReceiveTokensHandler(self.tokensName));
     };
     self.resumeAllIncomplete = function () {
-        return self.ajaxAction(self.resumeUrl,{}).success(function(data){
+        return self.ajaxAction(self.resumeUrl,{}).then(function(data){
             if(data.status=='ok'){
                 self.reload();
             }
@@ -109,7 +109,7 @@ function StorageStats(data) {
         }else if(typeof(obj)=='string'){
             id=obj;
         }
-        return self.ajaxAction(self.resumeUrl,{id:id}).success(function(data){
+        return self.ajaxAction(self.resumeUrl,{id:id}).then(function(data){
             if(data.status=='ok'){
                 self.reload();
             }
@@ -119,7 +119,7 @@ function StorageStats(data) {
         });
     };
     self.cleanupAllIncomplete = function () {
-        return self.ajaxAction(self.cleanupUrl,{}).success(function(data){
+        return self.ajaxAction(self.cleanupUrl,{}).then(function(data){
             if(data.status=='ok'){
                 self.reload();
             }
@@ -132,7 +132,7 @@ function StorageStats(data) {
         }else if(typeof(obj)=='string'){
             id=obj;
         }
-        return self.ajaxAction(self.cleanupUrl,{id:id}).success(function(data){
+        return self.ajaxAction(self.cleanupUrl,{id:id}).then(function(data){
             if(data.status=='ok'){
                 self.reload();
             }

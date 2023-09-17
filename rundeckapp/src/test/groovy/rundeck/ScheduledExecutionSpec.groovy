@@ -16,17 +16,16 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import org.eclipse.jetty.util.ajax.JSON
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 import static org.junit.Assert.*
 
 /**
  * Created by greg on 10/21/15.
  */
-class ScheduledExecutionSpec extends RundeckHibernateSpec
+class ScheduledExecutionSpec extends Specification implements DataTest
 {
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec]}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec}
     def "has nodes selected by default"() {
         given:
             def se = new ScheduledExecution(nodesSelectedByDefault: value)
@@ -81,6 +80,31 @@ class ScheduledExecutionSpec extends RundeckHibernateSpec
             notification.type == "url"
             notification.format == "JSON"
             notification.content == '{"urls":"url1","httpMethod":"POST"}'
+    }
+
+    def "should return a user role list given comma separated roles or json list"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: "TestName",
+                project: "TestFrameworkProject",
+                argString: "-test",
+                description: "whatever",
+                userRoleList: givenUserRolesString
+        )
+
+        when:
+        List userRolesList = se.getUserRoles()
+
+        then:
+        userRolesList == expectedUserRoleList
+
+        where:
+        givenUserRolesString            | expectedUserRoleList
+        ""                              | []
+        "role1,role2"                   | ["role1","role2"]
+        "123 role1,321 role2"           | ["123 role1","321 role2"]
+        "[\"role1\",\"role2\"]"         | ["role1","role2"]
+        "[\"123 role1\",\"321 role2\"]" | ["123 role1","321 role2"]
     }
 
     void testGenerateJobScheduledName() {

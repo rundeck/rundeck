@@ -337,4 +337,9 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
     ) {
         return JschSecretBundleUtil.createBundle(context,node);
     }
+
+    @Override
+    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
+        return JschSecretBundleUtil.getSecretsPath(context, node);
+    }
 }

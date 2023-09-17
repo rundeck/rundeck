@@ -23,7 +23,7 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
@@ -45,12 +45,13 @@ import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -66,7 +67,7 @@ import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 /**
  * Created by greg on 2/26/15.
  */
-class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectControllerSpec extends Specification implements ControllerUnitTest<ProjectController>, DataTest {
 
     def setup(){
         session.subject = new Subject()
@@ -171,6 +172,7 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
             args[2].json.call(args[0].JSON)
             true
         }
+        1 * controller.frameworkService.isFrameworkProjectDisabled('aproject')>>false
         1 * controller.frameworkService.existsFrameworkProject('aproject')>>false
         1 * controller.frameworkService.createFrameworkProject('aproject',{
             it['project.description']==inputDesc
@@ -219,6 +221,7 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
                 args[2].json.call(jsonData)
                 true
             }
+            1 * controller.frameworkService.isFrameworkProjectDisabled('aproject') >> false
             1 * controller.frameworkService.existsFrameworkProject('aproject') >> false
             1 * controller.frameworkService.createFrameworkProject('aproject', _) >> [Mock(IRundeckProject) {
                 getName() >> 'aproject'
@@ -460,15 +463,57 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
+        1 * controller.projectService.deleteProject(_, _, _, _, _) >> [success: false, error: 'message']
         1 * controller.apiService.renderErrorFormat(_, [
                 status : 500,
                 code   : 'api.error.unknown',
                 message: 'message'
         ]
         )
+    }
 
+    def "api project delete deferred parameter behavior"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> configValue
+        }
+        setupAuthDelete()
 
+        params.project = 'aproject'
+        request.method = 'DELETE'
+        request.api_version = apiVersion
+        if(deferParamPresent) {
+            params.deferred = deferredValue
+        }
+
+        when:
+        def result = controller.apiProjectDelete()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.projectService.deleteProject(_, _, _, _, deferredResult) >> [success: true]
+
+        where:
+        apiVersion | deferParamPresent | deferredValue | configValue | deferredResult
+        11         | false             | null          | true        | false
+        11         | true              | "null"        | true        | false
+        11         | true              | "false"       | true        | false
+        11         | true              | "true"        | true        | false
+        11         | false             | null          | false       | false
+        11         | true              | "null"        | false       | false
+        11         | true              | "false"       | false       | false
+        11         | true              | "true"        | false       | false
+        45         | false             | null          | true        | true
+        45         | true              | "null"        | true        | false
+        45         | true              | "false"       | true        | false
+        45         | true              | "true"        | true        | true
+        45         | false             | null          | false       | false
+        45         | true              | "null"        | false       | false
+        45         | true              | "false"       | false       | false
+        45         | true              | "true"        | false       | true
     }
 
     def "export prepare"() {
@@ -2013,7 +2058,106 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
         flash.joberrors == "There was an error during the import project"
 
     }
+
+    def "If there's a hint, it displays to the user or not displays at all"(){
+        setup:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * project(_,_)>>Mock(AuthorizingProject){
+                1 * getResource()>>Stub(IRundeckProject){
+                    getName()>>'test'
+                }
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>> { throw new Exception(exceptionString) }
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
+            0 * _(*_)
+        }
+        session.subject= new Subject()
+        when:
+        setupFormTokens()
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        flash.warn == flashWarning
+
+        where:
+        exceptionString                      |     flashWarning
+        'Data too long for column \'data\''  |     "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
+        'Other exception'                    |     null
+
+    }
     
+    def "When a exception is thrown during project's import process, the user is flashed with errors"(){
+        setup:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * project(_,_)>>Mock(AuthorizingProject){
+                1 * getResource()>>Stub(IRundeckProject){
+                    getName()>>'test'
+                }
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>>new Exception("expected exception")
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
+            0 * _(*_)
+        }
+        session.subject= new Subject()
+
+        when:
+        setupFormTokens()
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        flash.error == 'There was some errors in the import process: [ No such property: success for class: java.lang.Exception ]'
+    }
+
     def "import archive no importACL"(){
         setup:
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){

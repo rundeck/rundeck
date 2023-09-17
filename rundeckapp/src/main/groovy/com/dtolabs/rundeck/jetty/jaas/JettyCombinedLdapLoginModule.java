@@ -88,7 +88,7 @@ public class JettyCombinedLdapLoginModule extends JettyCachingLdapLoginModule {
      */
     @Override
     protected List getUserRoles(final DirContext dirContext, final String username)
-            throws LoginException, NamingException
+            throws LoginException, NamingException, IOException
     {
         if (_ignoreRoles) {
             ArrayList<String> strings = new ArrayList<>();

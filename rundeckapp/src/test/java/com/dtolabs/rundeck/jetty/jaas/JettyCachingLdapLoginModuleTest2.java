@@ -31,6 +31,7 @@ import org.junit.Test;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+import javax.naming.ldap.LdapContext;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -192,6 +193,8 @@ public class JettyCachingLdapLoginModuleTest2 {
     public void testShouldGetNestedGroups() {
         JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
         module._nestedGroups = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
         try {
             UserInfo userInfo = module.getUserInfo(user1);
             assertThat(userInfo.getUserName(), is(user1));
@@ -209,6 +212,28 @@ public class JettyCachingLdapLoginModuleTest2 {
     public void testShouldGetNestedGroupsWithAD() {
         JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(true);
         module._nestedGroups = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
+        try {
+            UserInfo userInfo = module.getUserInfo(user1);
+            assertThat(userInfo.getUserName(), is(user1));
+
+            List<String> actualRoles = userInfo.getRoleNames();
+            List<String> expectedRoles = Arrays.asList(role1, role2, nestedRole1);
+            assertThat(actualRoles, is(expectedRoles));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testShouldGetPaginatedGroupsWithAD() {
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(true);
+        module._nestedGroups = true;
+        module.rolePagination = true;
+        module.rolesPerPage = 1000;
+        module._providerUrl = "ldap://localhost";
         try {
             UserInfo userInfo = module.getUserInfo(user1);
             assertThat(userInfo.getUserName(), is(user1));
@@ -352,6 +377,7 @@ public class JettyCachingLdapLoginModuleTest2 {
         module._roleBaseDn = "ou=groups,dc=example,dc=com";
 
         DirContext rootContext = mock(DirContext.class);
+        LdapContext ldapContext = mock(LdapContext.class);
         NamingEnumeration<SearchResult> userSearchResults = mock(NamingEnumeration.class);
         when(userSearchResults.hasMoreElements()).thenReturn(true);
         SearchResult userSearchResult = mock(SearchResult.class);
@@ -431,16 +457,31 @@ public class JettyCachingLdapLoginModuleTest2 {
             when(roles.hasMore()).thenReturn(true, true, false);
             when(roles.next()).thenReturn(role1, role2);
 
-            when(rootContext.search(
+            when((LdapContext) rootContext.lookup(anyString())).thenReturn(ldapContext).thenReturn(ldapContext);
+            when(ldapContext.search(
                 eq(module._roleBaseDn),
                 eq(module._roleMemberFilter),
                 any(SearchControls.class)
             )).thenReturn(allRolesSearchResults);
+
+            when(rootContext.search(
+                    eq(module._roleBaseDn),
+                    eq(module._roleMemberFilter),
+                    any(SearchControls.class)
+            )).thenReturn(allRolesSearchResults);
+
             when(allRolesSearchResults.nextElement()).thenReturn(
                 role1SearchResult,
                 role2SearchResult,
                 nestedRole1SearchResult
             );
+
+            when(ldapContext.search(
+                    eq(module._roleBaseDn),
+                    anyString(),
+                    any(Object[].class),
+                    any(SearchControls.class)
+            )).thenReturn(roleSearchResults);
 
             when(role1NameAttribute.getAll()).thenReturn(role1Roles);
             when(role1Roles.next()).thenReturn(role1);
@@ -472,6 +513,7 @@ public class JettyCachingLdapLoginModuleTest2 {
         }
 
         module._rootContext = rootContext;
+        module.ldapContext = ldapContext;
         return module;
     }
 

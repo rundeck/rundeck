@@ -92,7 +92,7 @@ public class TestResourceModelSourceService extends AbstractBaseTest {
 
     public void testGetProviderForConfiguration() throws Exception {
         final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
-            getFrameworkInstance());
+            getFrameworkInstance(),getFrameworkInstance());
         service.setCacheInstances(true);
         {
             final test1 factory = new test1();

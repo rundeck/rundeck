@@ -57,6 +57,7 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
@@ -66,6 +67,10 @@ import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
+
+import java.util.function.Function
+import java.util.function.Predicate
+
 
 /**
  * Manages scm integration
@@ -95,6 +100,7 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    UserDataProvider userDataProvider
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
@@ -320,7 +326,7 @@ class ScmService {
 
     def ValidatedPlugin validateExportPluginSetup(String project, String name, Map config) {
         return pluginService.validatePlugin(name, scmExportPluginProviderService,
-                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            frameworkService.pluginConfigFactory(project, config),
                                             PropertyScope.Instance,
                                             PropertyScope.Project
         )
@@ -328,7 +334,7 @@ class ScmService {
 
     def ValidatedPlugin validateImportPluginSetup(String project, String name, Map config) {
         return pluginService.validatePlugin(name, scmImportPluginProviderService,
-                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            frameworkService.pluginConfigFactory(project, config),
                                             PropertyScope.Instance,
                                             PropertyScope.Project
         )
@@ -1157,6 +1163,60 @@ class ScmService {
     }
 
     /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param auth: UserAndRolesAuthContext object from the controller
+     * @param integration: import, export, etc.
+     * @return [true/false , message]
+     */
+    @CompileStatic
+    def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
+        def hasAccess = true;
+        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess] as LinkedHashMap<String, Boolean>)
+        if( null == auth || null == integration ){
+            return defaultResponse;
+        }
+        def ctx = scmOperationContext(auth, project)
+        if( ctx ){
+            switch(integration){
+                case IMPORT:
+                    def plugin = getLoadedImportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
+                    }
+                    return defaultResponse
+                    break;
+                case EXPORT:
+                    def plugin = getLoadedExportPluginFor project
+                    if( plugin ){
+                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
+                    }
+                    return defaultResponse
+                    break;
+                default:
+                    return defaultResponse
+            }
+        }
+        return defaultResponse
+    }
+
+    /**
+     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
+     * @param userAuthenticated: a boolean which will be a decisive parameter to return an unauthorized message or not.
+     * @return [true/false , message]
+     */
+    Function<LinkedHashMap<String, Boolean>, LinkedHashMap<Boolean, String>> scmAuthenticationResponse = integrationAndAccess -> {
+        def integration = integrationAndAccess.integration
+        def access = integrationAndAccess.access
+        def responsePrefix = "[SCM - ${integration}]"
+        def unauthorizedMessage = "${responsePrefix} User don't have access to the configured key or password yet."
+        def authorizedMessage = "${responsePrefix} User has access to the configured key or password."
+        if( access ){
+            return [ hasAccess: access, message: authorizedMessage ]
+        }
+        return [ hasAccess: access, message: unauthorizedMessage ]
+    }
+
+    /**
      * Return a map of status for jobs
      * @param jobs
      * @return
@@ -1339,7 +1399,7 @@ class ScmService {
     }
 
     ScmUserInfo lookupUserInfo(final String username) {
-        def user = User.findByLogin(username)
+        def user = userDataProvider.findByLogin(username)
         return new ScmUser(
                 userName: username,
                 email: user?.email,
@@ -1587,6 +1647,24 @@ class ScmService {
 
             // synch commit info to exported commit data
             checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
+        }
+    }
+
+    enum ScmOptionsForJobActionDropdown{
+        SCM_EXPORT_ENABLED("scmExportEnabled"),
+        SCM_EXPORT_STATUS("scmExportStatus"),
+        SCM_EXPORT_RENAMED_PATH("scmExportRenamedPath"),
+        SCM_IMPORT_ENABLED("scmImportEnabled"),
+        SCM_IMPORT_STATUS("scmImportStatus")
+
+        String optionKey
+
+        ScmOptionsForJobActionDropdown(String optionKey){
+            this.optionKey = optionKey
+        }
+
+        String getOptionKey(){
+            return optionKey
         }
     }
 

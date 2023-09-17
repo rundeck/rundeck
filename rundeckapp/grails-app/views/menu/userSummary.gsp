@@ -34,7 +34,9 @@
 </div>
 <div class="card">
     <div class="card-content">
-        <div id=user-summary-vue></div>
+        <div class="vue-ui-socket">
+            <ui-socket section="user-summary" location="main"></ui-socket>
+        </div>
     </div>
 </div>
 </div>

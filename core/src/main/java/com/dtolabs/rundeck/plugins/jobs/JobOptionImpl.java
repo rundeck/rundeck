@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData;
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 import lombok.Builder;
@@ -41,7 +42,8 @@ public class JobOptionImpl implements JobOption, Comparable {
     @Builder.Default
     private Boolean secureExposed = false;
     private String optionType;
-    private String configData;
+
+    private JobOptionConfigData configData;
     @Builder.Default
     private Boolean multivalueAllSelected = false;
     private String optionValuesPluginType;
@@ -98,7 +100,7 @@ public class JobOptionImpl implements JobOption, Comparable {
             }else{
                 builder.valuesListDelimiter = DEFAULT_DELIMITER;
             }
-            builder.valuesList = produceValuesList(builder);
+            builder.valuesList = produceValuesList(builder.build());
             builder.values = null;
         }
         if(option.containsKey("multivalued")){
@@ -131,14 +133,14 @@ public class JobOptionImpl implements JobOption, Comparable {
     }
 
 
-    static private String produceValuesList(JobOptionImplBuilder builder) {
-        if (builder.values != null) {
-            if (builder.valuesListDelimiter == null) {
-                builder.valuesListDelimiter = DEFAULT_DELIMITER;
+    static private String produceValuesList(JobOptionImpl jobOption) {
+        if (jobOption.values != null) {
+            if (jobOption.valuesListDelimiter == null) {
+                jobOption.valuesListDelimiter = DEFAULT_DELIMITER;
             }
-            builder.valuesList = String.join(builder.valuesListDelimiter, builder.values);
-            builder.values = null;
-            return builder.valuesList;
+            jobOption.valuesList = String.join(jobOption.valuesListDelimiter, jobOption.values);
+            jobOption.values = null;
+            return jobOption.valuesList;
         }else{
             return "";
         }

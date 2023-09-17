@@ -25,16 +25,18 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * CommandExecutorFactory is ...
@@ -55,7 +57,16 @@ public class NodeExecutorService
     public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "node-executor";
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
     public static final String DEFAULT_LOCAL_PROVIDER = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
-    public static final String DEFAULT_REMOTE_PROVIDER = JschNodeExecutor.SERVICE_PROVIDER_TYPE;
+    public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
+    private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS ;
+
+    static {
+        Map<String, Class<? extends NodeExecutor>> map = new HashMap<>();
+        map.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
+        map.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
+        map.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
+        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
 
     public String getName() {
         return SERVICE_NAME;
@@ -67,33 +78,50 @@ public class NodeExecutorService
     public NodeExecutorService(Framework framework) {
         super(framework,true);
 
-        registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
-        registry.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
-        registry.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
+        registry.putAll(PRESET_PROVIDERS);
+    }
+
+    public static boolean isRegistered(String name){
+        return PRESET_PROVIDERS.containsKey(name);
     }
 
     @Override
-    protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
-        if (framework.isLocalNode(node)) {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+    public String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
+        return getProviderNameForNode(
+                framework.isLocalNode(node),
+                framework.getProjectManager().loadProjectConfig(project)
+        );
+    }
+
+    public static NodeExecutorService getInstanceForFramework(final Framework framework,
+                                                              final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
+            final NodeExecutorService service = new NodeExecutorService(framework);
+            registration.setService(SERVICE_NAME, service);
+            return service;
+        }
+        return (NodeExecutorService) registration.getService(SERVICE_NAME);
+    }
+
+    @Override
+    public String getServiceProviderNodeAttributeForNode(INodeEntry node) {
+        return getNodeAttributeForProvider(framework.isLocalNode(node));
+    }
+    public static String getProviderNameForNode(
+            final boolean localNode,
+            final IRundeckProjectConfig loadProjectConfig
+    )
+    {
+        if (localNode) {
+            final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
             return null != value ? value : DEFAULT_LOCAL_PROVIDER;
         }
-        final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
+        final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
         return null != value ? value : DEFAULT_REMOTE_PROVIDER;
     }
 
-    public static NodeExecutorService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
-            final NodeExecutorService service = new NodeExecutorService(framework);
-            framework.setService(SERVICE_NAME, service);
-            return service;
-        }
-        return (NodeExecutorService) framework.getService(SERVICE_NAME);
-    }
-
-    @Override
-    protected String getServiceProviderNodeAttributeForNode(INodeEntry node) {
-        if (framework.isLocalNode(node)) {
+    public static String getNodeAttributeForProvider(final boolean localNode) {
+        if (localNode) {
             return LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
         }
         return NODE_SERVICE_SPECIFIER_ATTRIBUTE;

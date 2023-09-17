@@ -68,11 +68,11 @@ jQuery(function () {
         var executionDisable = jQuery('#' + disableExecutionId).is(":checked");
         var scheduleDisable = jQuery('#' + disableScheduledId).is(":checked");
 
-        jQuery('#' + disableExecutionId).change(function() {
+        jQuery('#' + disableExecutionId).on('change',function() {
             enableDisableExecutionLater(this.checked, disableExecutionLaterId, disableExecutionLaterValueId, enableExecutionLaterId, enableExecutionLaterValueId)
         });
 
-        jQuery('#' + disableScheduledId).change(function() {
+        jQuery('#' + disableScheduledId).on('change',function() {
             enableDisableScheduleLater(this.checked, disableScheduleLaterId,disableScheduleLaterValueId,  enableScheduleLaterId, enableScheduleLaterValueId)
         });
 
@@ -120,7 +120,7 @@ jQuery(function () {
             jQuery('#' + valueId).prop('disabled', false);
         }
 
-        jQuery('#' + id).change(function() {
+        jQuery('#' + id).on('change',function() {
             if(this.checked) {
                 jQuery('#' + valueId).prop('disabled', false);
             }else{

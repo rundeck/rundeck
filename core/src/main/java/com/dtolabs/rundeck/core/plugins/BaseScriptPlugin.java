@@ -46,9 +46,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -234,14 +232,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
     public SecretBundle prepareSecretBundle(
             final ExecutionContext context, final INodeEntry node
     ) {
-        DefaultSecretBundle bundle = new DefaultSecretBundle();
         Description pluginDesc = getDescription();
-
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
-                context.getFramework(),
-                context.getFrameworkProject(),
-                context.getDataContext()
-        );
 
         final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
                 context,
@@ -257,13 +248,86 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
                         PropertyScope.Instance
                 );
 
-        //expand properties
+        return generateBundle(context, config);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration) {
+        return generateBundle(context, configuration);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundleWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration) {
+        return generateBundle(context, configuration);
+    }
+
+    @Override
+    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
+        Description pluginDesc = getDescription();
+
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+                context,
+                loadInstanceDataFromNodeAttributes(node, pluginDesc),
+                getProvider().getService(),
+                getProvider().getName()
+        );
+
+        final Map<String, Object> config =
+                PluginAdapterUtility.mapDescribedProperties(
+                        resolver,
+                        pluginDesc,
+                        PropertyScope.Instance
+                );
+        return generateListStoragePath(context, config);
+    }
+
+    @Override
+    public List<String> listSecretsPathWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration) {
+        return generateListStoragePath(context, configuration);
+    }
+
+    @Override
+    public List<String> listSecretsPathWorkflowStep(ExecutionContext context, Map<String, Object> configuration) {
+        return generateListStoragePath(context, configuration);
+    }
+
+    private SecretBundle generateBundle(ExecutionContext context, Map<String, Object> configuration){
+
+        List<String> listStoragePaths = generateListStoragePath(context, configuration);
+        DefaultSecretBundle bundle = new DefaultSecretBundle();
+
+        for (String propValue : listStoragePaths) {
+            Resource<ResourceMeta> r = context.getStorageTree().getResource(propValue);
+            if(r != null) {
+                try( ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()){
+                    r.getContents().writeContent(byteArrayOutputStream);
+                    bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
+                } catch (IOException iex) {
+                    context.getExecutionLogger().log(0,String.format("IOException Unable to add secret value to secret bundle for: %s",propValue));
+                }
+            }
+        }
+        return bundle;
+    }
+
+
+    private List<String> generateListStoragePath(ExecutionContext context, Map<String, Object> configuration){
+        List<String> listStoragePath = new ArrayList<>();
+
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                context.getFramework(),
+                context.getFrameworkProject(),
+                context.getDataContext()
+        );
+
         Map<String, Object> expanded =
                 DataContextUtils.replaceDataReferences(
-                        config,
+                        configuration,
                         localDataContext
                 );
 
+
+        Description pluginDesc = getDescription();
         Map<String, String> data = MapData.toStringStringMap(expanded);
         for (Property property : pluginDesc.getProperties()) {
             String name = property.getName();
@@ -274,22 +338,11 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
             Map<String, Object> renderingOptions = property.getRenderingOptions();
             if (renderingOptions != null) {
                 Object conversion = renderingOptions.get(StringRenderingConstants.VALUE_CONVERSION_KEY);
-
                 if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
-                    Resource<ResourceMeta> r = context.getStorageTree().getResource(propValue);
-                    if(r != null) {
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        try {
-                            r.getContents().writeContent(byteArrayOutputStream);
-                            bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
-                        } catch (IOException iex) {
-                            context.getExecutionLogger().log(0,String.format("IOException Unable to add secret value to secret bundle for: %s",name));
-                        }
-                    }
-
+                    listStoragePath.add(propValue);
                 }
             }
         }
-        return bundle;
+        return listStoragePath;
     }
 }

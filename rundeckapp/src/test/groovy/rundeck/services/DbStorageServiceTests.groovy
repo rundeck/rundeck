@@ -17,17 +17,31 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
-import testhelper.RundeckHibernateSpec
+import rundeck.services.data.AuthTokenDataService
+import rundeck.services.data.StorageDataService
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
-class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitTest<DbStorageService> {
+class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbStorageService>, DataTest {
 
-    List<Class> getDomainClasses() { [Storage] }
+    def setupSpec() {
+    mockDomain Storage
+     }
+
+    void setup() {
+
+        def provider = new GormStorageDataProvider()
+        mockDataService(StorageDataService)
+        provider.storageDataService = applicationContext.getBean(StorageDataService)
+        service.storageDataProvider = provider
+    }
 
     void testHasResource() {
         when:
@@ -338,7 +352,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertEquals(null, store0.getNamespace())
         assertEquals('', store0.dir)
         assertEquals('abc', store0.name)
-        assertEquals('abc', store0.path)
+        assertEquals('abc', store0.path.path)
         assertEquals([abc: 'xyz1'], store0.storageMeta)
         assertEquals(new String('abc1'.bytes), new String(store0.data))
         def store1 = Storage.findByNamespaceAndDirAndName('other', '', 'abc')
@@ -348,7 +362,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertEquals('other', store1.namespace)
         assertEquals('', store1.dir)
         assertEquals('abc', store1.name)
-        assertEquals('abc', store1.path)
+        assertEquals('abc', store1.path.path)
         assertEquals([abc: 'xyz3'], store1.storageMeta)
         assertEquals(new String('abc2'.bytes), new String(store1.data))
     }
@@ -368,7 +382,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertNotNull(store1)
         assertEquals('', store1.dir)
         assertEquals('abc3', store1.name)
-        assertEquals('abc3', store1.path)
+        assertEquals('abc3', store1.path.path)
         assertEquals([abc: 'xyz3'], store1.storageMeta)
         assertEquals(new String('abc'.bytes), new String(store1.data))
     }
@@ -438,7 +452,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         then:
         assertEquals(store1, Storage.get(storage1.id))
         assertNotNull(store1)
-        assertEquals('abc', store1.path)
+        assertEquals('abc', store1.path.path)
         assertEquals('', store1.dir)
         assertEquals('abc', store1.name)
         assertEquals([abc: 'xyz3'], store1.storageMeta)
@@ -466,7 +480,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertEquals(store1, Storage.get(storage1.id))
         assertNotNull(store1)
         assertEquals(null, store1.namespace)
-        assertEquals('abc', store1.path)
+        assertEquals('abc', store1.path.path)
         assertEquals('', store1.dir)
         assertEquals('abc', store1.name)
         assertEquals([abc: 'xyz1'], store1.storageMeta)
@@ -477,7 +491,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertEquals(store2.id, storage2.id)
         assertNotNull(store2)
         assertEquals('other', store2.namespace)
-        assertEquals('abc', store2.path)
+        assertEquals('abc', store2.path.path)
         assertEquals('', store2.dir)
         assertEquals('abc', store2.name)
         assertEquals([abc: 'xyz3'], store2.storageMeta)
@@ -759,14 +773,14 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
     }
     void testListDirectoryResources_ok() {
         expect:
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(validate: true, flush:true)
         assertNotNull storage1
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        assertNotNull new Storage(data: 'abc3'.bytes, name: 'abc3', dir: 'xyz', storageMeta: [abc: 'xyz3']).save(true)
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(validate: true, flush:true)
+        assertNotNull new Storage(data: 'abc3'.bytes, name: 'abc3', dir: 'xyz', storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         def res1 = service.listDirectoryResources(null,'xyz')
         assertNotNull(res1)
         assertEquals(2, res1.size())
@@ -816,7 +830,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
                 storageMeta: [abc: 'xyz3']).save(true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate:true, flush:true)
         def res1 = service.listDirectoryResources(null,'')
         assertNotNull(res1)
         assertEquals(1, res1.size())
@@ -834,7 +848,7 @@ class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitT
         assertNotNull new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
                 storageMeta: [abc: 'xyz3']).save(true)
         assertNotNull new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate:true, flush: true)
         def res1 = service.listDirectoryResources(null,'')
         assertNotNull(res1)
         assertEquals(0, res1.size())

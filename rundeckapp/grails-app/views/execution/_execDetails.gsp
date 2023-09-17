@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; org.rundeck.core.auth.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
+<%@ page import="rundeck.data.constants.NotificationConstants; com.dtolabs.rundeck.app.support.ExecutionContext; org.rundeck.core.auth.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row">
 <div class="col-sm-12 table-responsive">
@@ -181,7 +181,7 @@
                             <g:javascript>
                                 jQuery(function(){
                                     var nfilter=loadJsonData('nodeFilterData');
-                                    jQuery('#nodeFilterUpdate').click(function(e){
+                                    jQuery('#nodeFilterUpdate').on('click',function(e){
                                         _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
                                     });
                                 });
@@ -300,7 +300,7 @@
 
             <g:if test="${!knockout}">
                 <g:javascript>
-                jQuery('#serverNodeUpdate').click(function(e){
+                jQuery('#serverNodeUpdate').on('click',function(e){
                    _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
                 });
                 </g:javascript>
@@ -321,7 +321,7 @@
                     <div class="col-sm-12" >
                         <span class=""><g:message code="notification.event.${trigger}"/>:</span>
 
-                        <g:if test="${trigger == ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME}">
+                        <g:if test="${trigger == NotificationConstants.ONAVGDURATION_TRIGGER_NAME}">
                             <div class="">
                                 <g:message code="scheduledExecution.property.notifyAvgDurationThreshold.label" default="Threshold"/>:
                                 <code class="argstring optvalue"><g:enc>${scheduledExecution.notifyAvgDurationThreshold}</g:enc></code>

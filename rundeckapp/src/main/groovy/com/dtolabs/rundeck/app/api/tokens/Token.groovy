@@ -22,9 +22,9 @@ import com.dtolabs.rundeck.app.api.marshall.ApiVersion
 import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import io.swagger.v3.oas.annotations.media.Schema
-import rundeck.AuthToken
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthTokenMode
 
 /**
  * @author greg
@@ -73,19 +73,21 @@ class Token {
     @Schema(description = "since: v19")
     Boolean expired;
 
-    Token(AuthToken authToken, boolean masked = true, boolean legacyApiMode=false) {
-        this.name = authToken.name
-        this.id = authToken.uuid ?: authToken.id
+
+    Token(AuthenticationToken token, boolean masked = true, boolean legacyApiMode=false) {
+        this.name = token.name
+        this.id = token.uuid
+        this.token = masked ? null : token.token
         this.token = masked ? null :
-                     (authToken.tokenMode == null || authToken.tokenMode == AuthTokenMode.LEGACY) ? authToken.token :
-                     authToken.clearToken
+                (token.getTokenMode() == null || token.getTokenMode() == AuthTokenMode.LEGACY) ? token.getToken() :
+                        token.getClearToken()
         if(legacyApiMode){
             this.id = this.token
         }
-        this.creator = authToken.creator
-        this.user = authToken.user.login
-        this.roles = authToken.authRolesSet()
-        this.expiration = authToken.expiration
-        this.expired = authToken.tokenIsExpired()
+        this.creator = token.creator
+        this.user = token.ownerName
+        this.roles = token.getAuthRolesSet()
+        this.expiration = token.expiration
+        this.expired = token.tokenIsExpired(token)
     }
 }

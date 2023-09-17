@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.storage.file.WindowCacheConfig
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -111,8 +112,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         format = config.format ?: 'xml'
 
-        if (!(format in ['xml', 'yaml'])) {
-            throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml")
+        if (!(format in ['xml', 'yaml', 'json'])) {
+            throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml,json")
         }
 
         branch = config.branch
@@ -144,18 +145,28 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void cleanup() {
         git?.close()
-        git?.getRepository()?.close()
     }
 
     @Override
     void totalClean(){
+        repo?.close()
         git?.getRepository()?.close()
+        git?.close()
         File base = new File(config.dir)
-        try {
-            FileUtils.delete(base, FileUtils.RECURSIVE)
-        } catch(IOException e){
-            logger.error("Failed to delete repo folder")
+
+        if(base.exists()){
+            try {
+                if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                    //this operation forces a cache clean freeing any lock -> windows only issue!
+                    WindowCacheConfig windowCacheConfig = new WindowCacheConfig()
+                    windowCacheConfig.install()
+                }
+                FileUtils.delete(base, FileUtils.RECURSIVE | FileUtils.RETRY)
+            } catch(IOException e){
+                logger.error("Failed to delete repo folder ", e)
+            }
         }
+
     }
 
 
@@ -513,6 +524,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         return createJobStatus(status, jobActionsForStatus(status))
+    }
+
+    @Override
+    Boolean userHasAccessToKeyOrPassword(ScmOperationContext ctx) {
+        return userHasAccessToCommonConfigKeyOrPassword(ctx)
     }
 
     List<Action> jobActionsForStatus(Map status) {

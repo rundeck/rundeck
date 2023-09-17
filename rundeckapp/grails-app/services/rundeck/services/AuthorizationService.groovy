@@ -43,7 +43,6 @@ import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.auth.AuthManager
 import org.rundeck.app.cluster.ClusterInfo
 import org.springframework.beans.factory.InitializingBean
-import rundeck.Storage
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -277,13 +276,11 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         String file = key.file
 
         boolean needsReload=true
-        Storage.withNewSession {
-            def exists= aclStorageFileManager.existsPolicyFile(key.context,file)
-            AclPolicyFile resource= exists ? aclStorageFileManager.getAclPolicy(key.context, file) : null
-            needsReload = resource == null ||
+        def exists= aclStorageFileManager.existsPolicyFile(key.context,file)
+        AclPolicyFile resource= exists ? aclStorageFileManager.getAclPolicy(key.context, file) : null
+        needsReload = resource == null ||
                     source.lastModified == null ||
                     resource.modified.time > source.lastModified.time
-        }
         needsReload
     }
 

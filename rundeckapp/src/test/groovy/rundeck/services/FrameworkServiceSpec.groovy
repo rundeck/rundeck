@@ -404,7 +404,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         where:
             retval                                   | _
             null                                     | _
-            new DescribedPlugin(null, null, 'atype') | _
+            new DescribedPlugin(null, null, 'atype', null, null) | _
     }
 
     def "remapReportProperties missing provider"() {
@@ -422,7 +422,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         where:
             retval                                   | _
             null                                     | _
-            new DescribedPlugin(null, null, 'atype') | _
+            new DescribedPlugin(null, null, 'atype', null, null) | _
     }
 
     def "addProjectNodeExecutorPropertiesForType missing provider"() {
@@ -580,11 +580,11 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             if (nodeStep) {
                 1 * service.rundeckFramework.getNodeStepExecutorService() >> nodeStepService
                 1 * service.pluginService.getPluginDescriptor('atype', nodeStepService) >>
-                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+                (descriptor ? new DescribedPlugin(_, desc, 'atype', null, null) : null)
             } else {
                 1 * service.rundeckFramework.getStepExecutionService() >> wfStepService
                 1 * service.pluginService.getPluginDescriptor('atype', wfStepService) >>
-                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+                (descriptor ? new DescribedPlugin(_, desc, 'atype', null, null) : null)
             }
             result == (descriptor ? desc : null)
 
@@ -796,6 +796,9 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             def project = 'AProject'
             def config = Mock(ExecutionCleanerConfig)
             service.scheduledExecutionService = Mock(ScheduledExecutionService)
+            service.configurationService = Mock(ConfigurationService){
+                getBoolean("clusterMode.enabled", _) >> false
+            }
         when:
             service.scheduleCleanerExecutions(project, config)
         then:
@@ -806,6 +809,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
     def "scheduleCleanerExecutions enabled"() {
         given:
             def project = 'AProject'
+
             def config = Mock(ExecutionCleanerConfig) {
                 isEnabled() >> true
                 getCronExpression()>>'cron1'
@@ -814,6 +818,9 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getMinimumExecutionToKeep()>>3
             }
             service.scheduledExecutionService = Mock(ScheduledExecutionService)
+            service.configurationService = Mock(ConfigurationService){
+                getBoolean("clusterMode.enabled", _) >> false
+            }
         when:
             service.scheduleCleanerExecutions(project, config)
         then:

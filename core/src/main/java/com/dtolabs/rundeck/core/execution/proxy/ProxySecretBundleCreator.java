@@ -17,9 +17,43 @@ package com.dtolabs.rundeck.core.execution.proxy;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import org.rundeck.app.spi.Services;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ProxySecretBundleCreator {
-    SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node);
+    default SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node){
+        return null;
+    }
+
+    default SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
+        return null;
+    }
+
+    default SecretBundle prepareSecretBundleWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration){
+        return null;
+    }
+
+    default SecretBundle prepareSecretBundleResourceModel(Services services, Map<String, Object> configuration){
+        return null;
+    }
+
+
+    default List<String> listSecretsPath(ExecutionContext context, INodeEntry node){
+        return null;
+    }
+
+    default List<String> listSecretsPathWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration){
+        return null;
+    }
+
+    default List<String> listSecretsPathWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
+        return null;
+    }
+
+    default List<String> listSecretsPathResourceModel(Map<String, Object> configuration){
+        return null;
+    }
+
 }

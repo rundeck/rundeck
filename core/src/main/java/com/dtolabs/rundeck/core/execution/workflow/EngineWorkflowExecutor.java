@@ -161,7 +161,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
     }
 
-    private static interface LogOut {
+    static interface LogOut {
         void log(String message);
     }
 
@@ -256,7 +256,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     WorkflowSystem.SharedData.with(
                             sharedContext::merge,
                             () -> sharedContext,
-                            () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
+                            () -> DataContextUtils.flattenDataContext(sharedContext.consolidate().getData(ContextView.global()))
                     );
 
             Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
@@ -500,7 +500,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return strategyForWorkflow;
     }
 
-    private static Set<StepOperation> buildOperations(
+    protected static Set<StepOperation> buildOperations(
             final EngineWorkflowExecutor engineWorkflowExecutor,
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
@@ -598,9 +598,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final StepExecutionContext executionContext
         )
         {
-            MutableStateObj
-                    mutable =
-                    States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+            MutableStateObj mutable = States.mutable();
             mutable.updateState(Workflows.getNewWorkflowState());
             mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(item.getWorkflow().isKeepgoing()));
             return mutable;

@@ -121,28 +121,11 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
 
     }
 
-    def "shouldShowLogin show local after first login"() {
-        when:
-        File firstLoginFile = File.createTempFile("first","login")
-        tagLib.configurationService = Mock(ConfigurationService) {
-            getBoolean("login.localLogin.enabled",true) >> { false }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
-        }
-        tagLib.frameworkService = Mock(FrameworkService) {
-            getFirstLoginFile() >> { return firstLoginFile }
-        }
-        def result = tagLib.showLocalLogin(null,"loginform").toString()
-
-        then:
-        result == "loginform"
-    }
-
     def "shouldShowLogin suppress local if no first login"() {
         when:
         File firstLoginFile = new File("/tmp/doesnotexist")
         tagLib.configurationService = Mock(ConfigurationService) {
             getBoolean("login.localLogin.enabled",true) >> { false }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
         }
         tagLib.frameworkService = Mock(FrameworkService) {
             getFirstLoginFile() >> { return firstLoginFile }
@@ -157,7 +140,6 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         when:
         tagLib.configurationService = Mock(ConfigurationService) {
             getBoolean("login.localLogin.enabled",true) >> { toggle }
-            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { false }
         }
         def result = tagLib.showLocalLogin(null,"loginform").toString()
 
@@ -169,4 +151,88 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         true   | "loginform"
         false  | ""
     }
+
+    /** test html content sanitation on basicData tagLib */
+    def "basicData should sanitize inner content."() {
+        when:
+        def content = '''
+<g:basicData fieldTitle="${[
+                     'fileName': 'Name',
+                     'size'    : 'Size',
+                     'sha'     : 'SHA256',
+                     'id'      : 'ID'
+             ]}"
+             fields="${[
+                     'fileName',
+                     'size',
+                     'sha',
+                     'id'
+             ]}"
+             data="${[
+                     fileName: filename,
+                     sha     : sha,
+                     size    : size,
+                     id      : value
+             ]}"
+             dataTitles="${[
+                     fileName: "titlefile",
+                     sha     : "titlesha",
+                     size    : "titlesize",
+                     id      : "titleid"
+             ]}">
+</g:basicData>
+'''
+        
+        def expected = '''<table class="table "><tr><td>Name</td><td title="titlefile">&lt;script&gt;alert(1)&lt;/script&gt;</td></tr><tr><td>Size</td><td title="titlesize">1gb</td></tr><tr><td>SHA256</td><td title="titlesha">2o38</td></tr><tr><td>ID</td><td title="titleid"></td></tr></table>'''
+
+        def output = applyTemplate(content, [
+            filename: '<script>alert(1)</script>',
+            sha     : '2o38',
+            size    : '1gb',
+            id      : 'ADH345'
+        ])
+
+        then:
+        output.trim() == expected
+    }
+
+    /** test html content sanitation on basicList tagLib */
+    def "basicList should sanitize inner content."() {
+        when:
+        def content = '''
+<g:basicList data="${['value1','<script>alert(1)</script>','value3','value4','value5']}">
+</g:basicList>
+'''
+
+        def expected = '''<ul class=" "><li>value1</li><li>&lt;script&gt;alert(1)&lt;/script&gt;</li><li>value3</li><li>value4</li><li>value5</li></ul>'''
+
+        def output = applyTemplate(content)
+
+        then:
+        output.trim() == expected
+    }    
+    
+    /** test html content sanitation on basicTable tagLib */
+    def "basicTable should sanitize inner content."() {
+        when:
+        def content = '''
+<g:basicTable columns="${['col1','col2','col3']}"
+    data="${[
+        [col1: 'value11', col2: 'value12', col3: 'value13'], 
+        [col1: 'value21', col2: 'value22', col3: 'value23'], 
+        [col1: 'value31', col2: '<script>alert(32)</script>', col3: 'value33'], 
+        [col1: 'value41', col2: 'value42', col3: 'value43'], 
+        [col1: 'value51', col2: 'value52', col3: 'value53']
+    ]}">
+</g:basicTable>
+'''
+
+        def expected = '''<table class="table "><tr><th>col1</th><th>col2</th><th>col3</th></tr><tr><td>value11</td><td>value12</td><td>value13</td></tr><tr><td>value21</td><td>value22</td><td>value23</td></tr><tr><td>value31</td><td>&lt;script&gt;alert(32)&lt;/script&gt;</td><td>value33</td></tr><tr><td>value41</td><td>value42</td><td>value43</td></tr><tr><td>value51</td><td>value52</td><td>value53</td></tr></table>'''
+
+        def output = applyTemplate(content)
+
+        then:
+        output.trim() == expected
+    }    
+    
 }
