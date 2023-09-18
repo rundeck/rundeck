@@ -22,6 +22,5 @@
 <g:hiddenField name="formInput" value="true"/>
 
 <input type="hidden" name="filter" value="${enc(attr:query?.filter)}"  class="hiddenNodeFilter" data-bind="value: filter"/>
-<input type="hidden" name="filterName" value="${enc(attr:filterName?:'')}"  class="hiddenNodeFilterName" data-bind="value: filterName"/>
 
 <input type="hidden" name="nodeExcludePrecedence" value="${enc(attr:query?.nodeExcludePrecedence)}" />
