@@ -710,14 +710,17 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.updateMatchedNodes();
     };
     self.selectNodeFilterLink=function(link,isappend){
-        var oldfilter = self.filter();
         var filterString = jQuery(link).data('node-filter');
         var filterTag = jQuery(link).data('node-tag');
         if(filterString && filterString.indexOf("&")>=0){
             filterString = html_unescape(filterString);
         }
         var filterAll = jQuery(link).data('node-filter-all');
-        var v=oldfilter?oldfilter.indexOf('tags: '):-1;
+        self.selectNodeFilter({filter:filterString,tag:filterTag,filterAll:filterAll},isappend)
+    },
+    self.selectNodeFilter=function({filter: filterString, filterAll, tag: filterTag}, isappend){
+        const oldfilter = self.filter()
+        let v = oldfilter ? oldfilter.indexOf('tags: ') : -1
         if(isappend && filterTag && v>=0){
             var first=oldfilter.substring(0, v);
             var rest=oldfilter.substring(v + 6);
