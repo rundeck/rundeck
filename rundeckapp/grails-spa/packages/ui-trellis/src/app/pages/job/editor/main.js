@@ -13,6 +13,7 @@ import {
     EventBus
 } from '../../../../library/utilities/vueEventBus'
 import {initI18n, updateLocaleMessages} from "../../../utilities/i18n"
+import {observer} from '../../../utilities/uiSocketObserver'
 
 let locale = window._rundeck.locale || 'en_US'
 moment.locale(locale)
@@ -88,3 +89,13 @@ for (let i = 0; i < scsels.length; i++) {
         oapp.mount(e)
     }
 }
+
+//on job edit page listen for dom content changes and install UI Sockets
+window.addEventListener('DOMContentLoaded', (event) => {
+    // Job Editing page - Workflow Tab
+
+    let elem = document.querySelector("#workflowContent .pflowlist.edit")
+    if (elem) {
+        observer.observe(elem, {subtree: true, childList: true})
+    }
+})
