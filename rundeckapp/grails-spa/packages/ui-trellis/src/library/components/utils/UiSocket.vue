@@ -1,14 +1,12 @@
 <template>
-    <span v-if="items">
-        <slot v-if="items.length<1"></slot>
-        <template v-for="i in items">
-            <template v-if="i.text">{{ i.text }}</template>
-            <span v-else-if="i.html" v-html="i.html"></span>
-            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="itemData">
-                <slot></slot>
-            </component>
-        </template>
-    </span>
+    <slot v-if="items.length<1"></slot>
+    <template v-for="i in items">
+        <template v-if="i.text">{{ i.text }}</template>
+        <span v-else-if="i.html" v-html="i.html"></span>
+        <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="itemData">
+            <slot></slot>
+        </component>
+    </template>
 </template>
 <script lang="ts">
 import { defineComponent, ref} from 'vue'
