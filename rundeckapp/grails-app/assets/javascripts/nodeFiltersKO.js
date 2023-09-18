@@ -734,7 +734,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
                 rest = rest.substring(0,v);
             }
             filterString = first + 'tags: ' + rest + '+' + filterTag + last ;
-        }else if (filterString && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
+        }else if (filterString && oldfilter && !filterAll && oldfilter !== NODE_FILTER_ALL && isappend) {
             filterString = oldfilter + ' ' + filterString;
         } else if (filterAll) {
             filterString = NODE_FILTER_ALL;
