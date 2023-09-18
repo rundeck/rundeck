@@ -35,6 +35,7 @@ module.exports = {
     'pages/user-summary':                     {entry: './src/app/pages/menu/main.js'},
     'pages/dynamic-form':                     {entry: './src/app/pages/dynamic-form/main.js'},
     'pages/job/editor':                       {entry: './src/app/pages/job/editor/main.js'},
+    'pages/nodes':                            {entry: './src/app/pages/nodes/main.ts'},
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
