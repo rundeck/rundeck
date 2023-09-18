@@ -1,8 +1,7 @@
 <template>
-  <div>
-    <div class="input-group nodefilters multiple-control-input-group">
+    <div class="input-group nodefilters multiple-control-input-group"  v-bind="$attrs">
       <span class="input-group-addon input-group-addon-title" v-if="showTitle">{{ $t('nodes') }}</span>
-      <div class="input-group-btn">
+      <div class="input-group-btn input-btn-toggle">
         <button type="button" class="btn btn-default dropdown-toggle job_edit__node_filter__filter_select_dropdown"
                 :class="{'btn-success':selectedFilterName,'btn-default':!selectedFilterName}" data-toggle="dropdown">
           <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
@@ -72,7 +71,6 @@
         </ul>
       </div>
 
-      <!--    <g:jsonToken id="filter_select_tokens" url="${request.forwardURI}"/>-->
       <input type='search'
              :name="filterFieldName"
              class="schedJobNodeFilter form-control"
@@ -82,47 +80,51 @@
              v-on:keydown.enter.prevent="doSearch"
              v-on:blur="doSearch"
              :id="filterFieldId"/>
-      <div class="input-group-btn">
-        <btn id="filterSearchHelpBtn" tabindex="0" v-if="helpButton">
+
+      <div class="input-group-btn input-btn-toggle" v-if="helpButton">
+        <btn id="filterSearchHelpBtn" tabindex="0" class="dropdown-toggle">
           <i class="glyphicon glyphicon-question-sign"></i>
         </btn>
+      </div>
+      <div class="input-group-btn">
         <btn :type="`${searchBtnType} btn-fill`" @click="doSearch" :disabled="!outputValue" class="node_filter__dosearch">
-          {{ $t('search') }}
+          {{ $t('Search') }}
         </btn>
       </div>
-      <popover target="#filterSearchHelpBtn" trigger="focus" placement="bottom" v-if="helpButton">
-        <template v-slot:popover>
-          <div class="help-block">
-            <strong>{{ $t('select.nodes.by.name') }}:</strong>
-            <p>
-              <code>{{ $t('mynode1.mynode2') }}</code>
-            </p>
-            <p>
-              {{ $t('this.will.select.both.nodes') }}
-            </p>
-
-            <strong>{{ $t('filter.nodes.by.attribute.value') }}:</strong>
-            <ul>
-              <li>{{ $t('include') }}: <code>{{ $t('attribute') }}: {{ $t('value') }}</code></li>
-
-              <li>{{ $t('exclude') }}: <code>!{{ $t('attribute') }}: {{ $t('value') }}</code></li>
-            </ul>
-
-
-            <strong>{{ $t('use.regular.expressions') }}</strong>
-            <p>
-              <code>{{ $t('node.metadata.hostname') }}: dev(\d+).test.com</code>.
-            </p>
-
-            <strong>{{ $t('regex.syntax.checking') }}:</strong>
-            <p>
-              <code>{{ $t('attribute') }}: /regex/</code>
-            </p>
-
-          </div>
-        </template>
-      </popover>
     </div>
+
+  <popover target="#filterSearchHelpBtn" trigger="focus" placement="bottom" v-if="helpButton">
+    <template v-slot:popover>
+      <div class="help-block">
+        <strong>{{ $t('select.nodes.by.name') }}:</strong>
+        <p>
+          <code>{{ $t('mynode1.mynode2') }}</code>
+        </p>
+        <p>
+          {{ $t('this.will.select.both.nodes') }}
+        </p>
+
+        <strong>{{ $t('filter.nodes.by.attribute.value') }}:</strong>
+        <ul>
+          <li>{{ $t('include') }}: <code>{{ $t('attribute') }}: {{ $t('value') }}</code></li>
+
+          <li>{{ $t('exclude') }}: <code>!{{ $t('attribute') }}: {{ $t('value') }}</code></li>
+        </ul>
+
+
+        <strong>{{ $t('use.regular.expressions') }}</strong>
+        <p>
+          <code>{{ $t('node.metadata.hostname') }}: dev(\d+).test.com</code>.
+        </p>
+
+        <strong>{{ $t('regex.syntax.checking') }}:</strong>
+        <p>
+          <code>{{ $t('attribute') }}: /regex/</code>
+        </p>
+
+      </div>
+    </template>
+  </popover>
     <modal v-model="saveFilterModal" :title="$t('save.node.filter')">
 
       <div>
@@ -187,7 +189,6 @@
         </div>
       </template>
     </modal>
-  </div>
 </template>
 <script lang="ts">
 import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterStore'
@@ -198,6 +199,7 @@ import NodeFilterLink from './NodeFilterLink.vue'
 
 export default defineComponent({
   name: 'NodeFilterInput',
+  inheritAttrs: false,
   components: {
     NodeFilterLink,
   },
@@ -284,7 +286,7 @@ export default defineComponent({
   },
   computed: {
     filterNameDisplay() {
-      return this.selectedFilterName === '.*' ? 'All Nodes' : this.selectedFilterName
+      return this.outputValue === '.*' ? 'All Nodes' : this.selectedFilterName
     },
     canSaveFilter() {
       return !this.selectedFilterName && this.filterWithoutAll()
