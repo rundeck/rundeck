@@ -33,53 +33,60 @@ export class NodeFilterStore {
         return {}
     }
 
+    storeNodeFilters(nodeFilters: StoredNodeFilters) {
+        localStorage.setItem(STORAGE_NODE_FILTER_KEY, JSON.stringify(nodeFilters))
+    }
+
     loadStoredProjectNodeFilters(project: string): ProjectFilters {
-        let storedNodeFilters = loadStoredNodeFilters()
+        let storedNodeFilters = this.loadStoredNodeFilters()
         return storedNodeFilters[project] || {}
     }
 
-    getStoredDefaultFilter(project): string {
-        return loadStoredProjectNodeFilters(project).defaultFilter
+    getStoredDefaultFilter(project: string): string|undefined {
+        return this.loadStoredProjectNodeFilters(project).defaultFilter
     }
 
     setStoredDefaultFilter(project: string, name: string) {
-        let storedNodeFilters = loadStoredNodeFilters()
+        let storedNodeFilters = this.loadStoredNodeFilters()
         if (!storedNodeFilters[project]) {
             storedNodeFilters[project] = {filters: [], defaultFilter: name}
         } else {
             storedNodeFilters[project].defaultFilter = name
         }
 
-        localStorage.setItem(STORAGE_NODE_FILTER_KEY, JSON.stringify(storedNodeFilters))
+        this.storeNodeFilters(storedNodeFilters)
     }
 
     removeStoredDefaultFilter(project: string) {
-        let storedNodeFilters = loadStoredNodeFilters()
+        let storedNodeFilters = this.loadStoredNodeFilters()
         if (!storedNodeFilters[project]) {
             storedNodeFilters[project] = {filters: []}
         } else {
-            storedNodeFilters[project].defaultFilter = null
+            storedNodeFilters[project].defaultFilter = undefined
         }
-        localStorage.setItem(STORAGE_NODE_FILTER_KEY, JSON.stringify(storedNodeFilters))
+        this.storeNodeFilters(storedNodeFilters)
     }
 
     saveFilter(project: string, filter: StoredFilter) {
-        let storedNodeFilters = loadStoredNodeFilters()
+        let storedNodeFilters = this.loadStoredNodeFilters()
         if (!storedNodeFilters[project]) {
-            storedNodeFilters[project] = {filters: []}
+            storedNodeFilters[project] = {filters: [filter]}
+        } else if (!storedNodeFilters[project].filters) {
+            storedNodeFilters[project].filters = [filter]
+        }else{
+            storedNodeFilters[project]?.filters?.push(filter)
         }
-        storedNodeFilters[project].filters.push(filter)
 
-        localStorage.setItem(STORAGE_NODE_FILTER_KEY, JSON.stringify(storedNodeFilters))
+        this.storeNodeFilters(storedNodeFilters)
     }
 
     removeFilter(project: string, filterName: string) {
-        let storedNodeFilters = loadStoredNodeFilters()
-        if (!storedNodeFilters[project]) {
+        let storedNodeFilters = this.loadStoredNodeFilters()
+        if (!storedNodeFilters[project]?.filters) {
             return
         }
-        storedNodeFilters[project].filters = storedNodeFilters[project].filters.filter(f => f.filterName !== filterName)
-        localStorage.setItem(STORAGE_NODE_FILTER_KEY, JSON.stringify(storedNodeFilters))
+        storedNodeFilters[project].filters = storedNodeFilters[project]?.filters?.filter(f => f.filterName !== filterName)||[]
+        this.storeNodeFilters(storedNodeFilters)
     }
 
 }
