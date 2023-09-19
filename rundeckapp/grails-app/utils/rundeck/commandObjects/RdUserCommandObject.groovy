@@ -28,11 +28,6 @@ class RdUserCommandObject implements RdUser, Validateable{
     }
 
     @Override
-    Object getJobfilters() {
-        return null
-    }
-
-    @Override
     Object getReportfilters() {
         return null
     }
