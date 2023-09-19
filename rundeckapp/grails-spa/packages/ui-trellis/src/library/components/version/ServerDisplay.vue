@@ -1,20 +1,22 @@
 <template>
     <span :title="title">
-        <span :style="{color}" class="rundeck-server-uuid" :data-server-uuid="uuid" data-test-id="server-display-uuid">
+        <span :style="{color}">
             <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
             <span v-if="showId">{{ uuidShort }}</span>
         </span>
         <span style="margin-left: 0.5em" :class="css">{{name}}</span>
+        <ui-socket section="server-info-display" location="badges" :socket-data="{uuid}" />
     </span>
 </template>
 
 <script lang="ts">
 import {defineComponent, PropType} from 'vue'
 
-import {ServerInfo} from '../../stores/System'
+import UiSocket from '../utils/UiSocket.vue'
 import { RundeckVersion } from '../../utilities/RundeckVersion'
 
 export default defineComponent({
+  components: {UiSocket},
     props: {
         glyphicon: String,
         uuid: String,
@@ -37,7 +39,7 @@ export default defineComponent({
             if(!this.uuid){
               return ''
             }
-            return this.uuid.substr(0, 2)
+            return this.uuid.substring(0, 2)
         },
         title(): string {
             return `${this.glyphicon}-${this.uuidShort} / ${this.uuid}`

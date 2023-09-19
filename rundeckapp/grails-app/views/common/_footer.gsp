@@ -35,9 +35,14 @@
                             <g:set var="clusterIdentityInFooter" value="${cfg.getBoolean(config: "gui.clusterIdentityInFooter", default: false)}"/>
 
                             <g:if test="${clusterIdentityInFooter}">
-                                <span class="rundeck-server-uuid"
-                                      data-server-uuid="${enc(attr: servletContextAttribute(attribute: 'SERVER_UUID'))}"
-                                      data-server-name="${enc(attr: servletContextAttribute(attribute: 'FRAMEWORK_NODE'))}">
+                                <span class="vue-ui-socket">
+                                    <ui-socket
+                                            section="server-info-display"
+                                            location="main"
+                                            socket-data="${enc(attr:[serverUuid:servletContextAttribute(attribute: 'SERVER_UUID'),
+                                                                     serverName:servletContextAttribute(attribute: 'FRAMEWORK_NODE')
+                                            ].encodeAsJSON())}"
+                                    ></ui-socket>
                                 </span>
                             </g:if>
                         </g:ifServletContextAttribute>
