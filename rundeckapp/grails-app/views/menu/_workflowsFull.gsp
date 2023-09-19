@@ -156,14 +156,6 @@
                   <g:message code="cancel"/>
                 </button>
                 <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
-                <a
-                  class="btn btn-success pull-right"
-                  data-dismiss="modal"
-                  data-toggle="modal"
-                  href="#saveJobFilterKOModal"
-                  title="${message(code:"job.filter.save.button.title")}" >
-                    <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
-                </a>
               </div>
             </div>
           </g:form>
