@@ -25,6 +25,8 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
+    <asset:stylesheet src="static/css/pages/nodes.css"/>
     <g:embedJSON id="filterParamsJSON"
                  data="${[ filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams"
@@ -43,22 +45,17 @@
     <span class="text-h3"><i class="fas fa-sitemap"></i> ${g.message(code:"gui.menu.Nodes")}</span>
   </div>
 <div class="row" style="margin-bottom: 20px;">
-    <div class="col-xs-12 subtitle-head">
-        <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">
-            <g:render template="nodeFilterInputGroup"
-                      model="[ filtvalue: filtvalue,  showInputTitle: true, autofocus: true]"/>
-        </div>
+    <div class="col-xs-12 subtitle-head vue-ui-socket">
+        <ui-socket section="nodes-page" location="node-filter-input"
+                   socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: true].encodeAsJSON())}">
+
+        </ui-socket>
     </div>
 </div>
 <div id="nodesContent">
 
   <g:render template="/common/messages"/>
 
-  <div class=" collapse" id="queryFilterHelp">
-      <div class="help-block">
-          <g:render template="/common/nodefilterStringHelp"/>
-      </div>
-  </div>
 
   <div class="container-fluid">
     <div class="row">
