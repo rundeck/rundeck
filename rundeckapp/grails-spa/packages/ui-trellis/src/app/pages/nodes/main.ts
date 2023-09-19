@@ -50,6 +50,7 @@ const FilterInputComp = defineComponent(
                 }else if(this.koFieldName && window[this.koFieldName]){
                     return window[this.koFieldName]
                 }else if(!this.koFieldName){
+                  //@ts-ignore
                     return window.nodeFilter
                 }
             },
