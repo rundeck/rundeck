@@ -11,12 +11,16 @@ import {createApp} from 'vue'
 export const observer = new MutationObserver(function (mutations_list) {
     mutations_list.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (added_node) {
-            if (added_node.className && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
+            if(added_node.nodeType!==Node.ELEMENT_NODE){
+                return
+            }
+            let added_elem=added_node as Element
+            if (added_elem.className && added_elem.getElementsByClassName('vue-ui-socket')?.length > 0) {
                 const i18n = initI18n()
                 const rootStore = getRundeckContext().rootStore
                 const eventBus = getRundeckContext().eventBus
 
-                for (let socketElem of added_node.getElementsByClassName('vue-ui-socket')) {
+                for (let socketElem of added_elem.getElementsByClassName('vue-ui-socket')) {
                     const vue = createApp( {
                         name: 'DynamicUiSocketRoot',
                         components: { UiSocket },
@@ -31,8 +35,8 @@ export const observer = new MutationObserver(function (mutations_list) {
 
                     vue.provide('addUiMessages', async (messages) => {
                         const newMessages = messages.reduce((acc, message) => message ? ({...acc, ...message}) : acc, {})
-                        const locale = window._rundeck.locale || 'en_US'
-                        const lang = window._rundeck.language || 'en'
+                        const locale = getRundeckContext().locale || 'en_US'
+                        const lang = getRundeckContext().language || 'en'
                         return updateLocaleMessages(i18n, locale, lang, newMessages)
                     })
 
