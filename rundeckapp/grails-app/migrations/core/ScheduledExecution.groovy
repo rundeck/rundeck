@@ -337,4 +337,13 @@ databaseChangeLog = {
             column(name: "workflow_id")
         }
     }
+
+
+    changeSet(author: "rundeckuser (generated)", id: "5.0-job-filter-1001") {
+        comment { 'remove scheduled_execution_filter table' }
+        preConditions(onFail: "MARK_RAN"){
+            tableExists (tableName:"scheduled_execution_filter")
+        }
+        dropTable(tableName: "scheduled_execution_filter")
+    }
 }
