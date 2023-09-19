@@ -244,7 +244,7 @@
 
     <div id="section-content-wrap">
         <div class="vue-ui-socket">
-            <ui-socket section="main-content" location="before" tag="div"></ui-socket>
+            <ui-socket section="main-content" location="before"></ui-socket>
         </div>
     <section id="section-content">
         <g:ifPageProperty name="page.subtitle">
@@ -286,7 +286,7 @@
     %{--        <g:render template="/common/footer"/>--}%
     </section>
         <div class="vue-ui-socket">
-            <ui-socket section="main-content" location="after" tag="div"></ui-socket>
+            <ui-socket section="main-content" location="after"></ui-socket>
         </div>
     </div>
 </section>
