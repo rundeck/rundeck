@@ -50,7 +50,6 @@ w.appLinks = {
     iconTinyOk: "/static/images/icon-tiny-ok.png",
     iconTinyRemoveX: "/static/images/icon-tiny-removex.png",
     iconTinyWarn: "/static/images/icon-tiny-warn.png",
-    menuDeleteJobFilterAjax: "/menu/deleteJobFilterAjax",
     menuHomeAjax: "/menu/homeAjax",
     menuHomeSummaryAjax: "/menu/homeSummaryAjax",
     menuJobSearchJson: "/menu/jobsSearchJson",

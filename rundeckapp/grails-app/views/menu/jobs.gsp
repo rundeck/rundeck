@@ -346,13 +346,8 @@ search
                     bulkeditor.scmDone(true);
                 }
             });
-            const filtersData=loadJsonData('jobFiltersJson')
-            const jobFilters = new JobFilters({
-                redirectUrl:"${createLink(action:'jobs',controller: 'menu',params:[project:params.project])}",
-                filters:filtersData.filters,
-                currentFilter:filtersData.currentFilter
-            })
-            initKoBind(null,{bulkeditor:bulkeditor,jobFilters:jobFilters})
+
+            initKoBind(null,{bulkeditor:bulkeditor})
         });
 
 
@@ -369,11 +364,7 @@ search
         .gsp-pager .step { padding: 0 2px; }
         .gsp-pager .currentStep { padding: 0 2px; }
     </style>
-    <user:getJobFilters user="${session.user}">
-        <g:set var="filterset" value="${filters}"/>
-    </user:getJobFilters>
 
-    <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
 
       <g:javascript>
 

@@ -28,8 +28,6 @@ export interface AppLinks {
     frameworkReloadNodes: string
     frameworkNodeSummaryAjax: string
     authProjectsToCreateAjax: string
-    menuDeleteJobFilterAjax: string
-    menuSaveJobFilterAjax: string
     reportsEventsAjax: string
     reportsListFiltersAjax: string
     reportsSaveFilterAjax: string

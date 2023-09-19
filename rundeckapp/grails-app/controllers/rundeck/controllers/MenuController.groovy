@@ -103,10 +103,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
-            deleteJobfilter                : 'POST',
-            storeJobfilter                 : 'POST',
-            deleteJobFilterAjax            : 'POST',
-            saveJobFilterAjax              : 'POST',
             apiJobDetail                   : 'GET',
             apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
@@ -314,12 +310,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobs (ScheduledExecutionQuery query ){
 
         def RdUser u = userService.findOrCreateUser(session.user)
-        if(params.size()<1 && !params.filterName && u ){
-            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if(filterpref['workflows']){
-                params.filterName=filterpref['workflows']
-            }
-        }
         if(!params.project){
             return redirect(controller: 'menu',action: 'home')
         }
@@ -479,26 +469,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobsFragment(ScheduledExecutionQuery query, JobsScmInfo scmFlags) {
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
-        def usedFilter=null
 
-        if(params.filterName){
-            //load a named filter and create a query from it
-            def RdUser u = userService.findOrCreateUser(session.user)
-            if(u){
-                ScheduledExecutionFilter filter = ScheduledExecutionFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
         if(params['Clear']){
             query=new ScheduledExecutionQuery()
-            usedFilter=null
         }
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
@@ -536,10 +509,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        if(usedFilter){
-            results.filterName=usedFilter
-            results.paginateParams['filterName']=usedFilter
-        }
         results.params=params
 
         def remoteClusterNodeUUID=null
@@ -567,7 +536,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobsPicker(ScheduledExecutionQuery query) {
 
         AuthContext authContext
-        def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
         }
@@ -580,10 +548,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
-        if(usedFilter){
-            results.filterName=usedFilter
-            results.paginateParams['filterName']=usedFilter
-        }
         results.params=params
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
@@ -594,7 +558,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     public def jobsSearchJson(ScheduledExecutionQuery query) {
         AuthContext authContext
-        def usedFilter = null
         if (!query) {
             query = new ScheduledExecutionQuery()
         }
@@ -746,174 +709,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         totalauthorized: readauthcount,
         ]
     }
-
-
-    def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
-        withForm{
-        if (storeFilterCommand.hasErrors()) {
-            flash.errors = storeFilterCommand.errors
-            params.saveFilter = true
-            return redirect(controller: 'menu', action: 'jobs',
-                    params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
-        }
-
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def ScheduledExecutionFilter filter
-        def boolean saveuser=false
-        if(params.newFilterName && !params.existsFilterName){
-            filter= ScheduledExecutionFilter.fromQuery(query)
-            filter.name=params.newFilterName
-            filter.user=u
-            if(!filter.validate()){
-                flash.errors = filter.errors
-                params.saveFilter=true
-                def map = params.subMap(params.keySet().findAll { !it.startsWith('_') })
-                return redirect(controller:'menu',action:'jobs',params:map)
-            }
-            u.addToJobfilters(filter)
-            saveuser=true
-        }else if(params.existsFilterName){
-            filter = ScheduledExecutionFilter.findByNameAndUser(params.existsFilterName,u)
-            if(filter){
-                filter.properties=query.properties
-                filter.fix()
-            }
-        }else if(!params.newFilterName && !params.existsFilterName){
-            flash.error="Filter name not specified"
-            params.saveFilter=true
-            return redirect(controller:'menu',action:'jobs',params:params)
-        }
-        if(!filter.save(flush:true)){
-            flash.errors = filter.errors
-            params.saveFilter=true
-            return redirect(controller:'menu',action:'jobs',params:params)
-        }
-        if(saveuser){
-            if(!u.save(flush:true)){
-                return renderErrorView([beanErrors: filter.errors])
-            }
-        }
-        redirect(controller:'menu',action:'jobs',params:[filterName:filter.name,project:params.project])
-        }.invalidToken {
-            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
-        }
-    }
-
-
-    def deleteJobfilter={
-        withForm{
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
-        }
-        redirect(controller:'menu',action:'jobs',params:[project: params.project])
-        }.invalidToken{
-            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
-        }
-    }
-
-    def deleteJobFilterAjax(String project, String filtername) {
-        withForm {
-            g.refreshFormTokensHeader()
-            def RdUser u = userService.findOrCreateUser(session.user)
-            final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
-            if (ffilter) {
-                ffilter.delete(flush: true)
-            }
-            render(contentType: 'application/json') {
-                success true
-            }
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
-    def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
-        withForm {
-            g.refreshFormTokensHeader()
-            if (query.hasErrors()) {
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-            def RdUser u = userService.findOrCreateUser(session.user)
-            def ScheduledExecutionFilter filter
-            def boolean saveuser = false
-            if (query.newFilterName && !query.existsFilterName) {
-                if (ScheduledExecutionFilter.findByNameAndUser(query.newFilterName, u)) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'request.error.conflict.already-exists.message',
-                            args  : ["Job Filter", query.newFilterName]
-                    ]
-                    )
-                }
-                filter = ScheduledExecutionFilter.fromQuery(query)
-                filter.name = query.newFilterName
-                filter.user = u
-                if (!filter.validate()) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.invalid.request',
-                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                    ]
-                    )
-                }
-                u.addToJobfilters(filter)
-                saveuser = true
-            } else if (query.existsFilterName) {
-                filter = ScheduledExecutionFilter.findByNameAndUser(query.existsFilterName, u)
-                if (filter) {
-                    filter.properties = query.properties
-                    filter.fix()
-                }
-            }
-            if (!filter.save(flush: true)) {
-                flash.errors = filter.errors
-//                params.saveFilter = true
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-            if (saveuser) {
-                if (!u.save(flush: true)) {
-                    return renderErrorView([beanErrors: filter.errors])
-                }
-            }
-
-            render(contentType: 'application/json') {
-                success true
-                filterName query.newFilterName
-            }
-        }.invalidToken {
-
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
+    
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
         authorizingSystem.authorize(
