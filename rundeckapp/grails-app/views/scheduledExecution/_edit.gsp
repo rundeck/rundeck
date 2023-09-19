@@ -483,6 +483,7 @@ function getCurSEID(){
         }
         var nodeFilter;
         var nodeFilterMap = {};
+        window.nodeFilterMap = nodeFilterMap
         function registerNodeFilters(obj,key){
             nodeFilterMap[key]=obj;
         }

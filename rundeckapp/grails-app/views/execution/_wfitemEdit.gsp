@@ -250,26 +250,20 @@
                         <g:message code="node.filter.prompt"/>
                     </label>
 
-                    <div class="col-sm-10">
+                    <div class="col-sm-10 vue-ui-socket">
                         <g:set var="filtvalue" value="${item?.nodeFilter}"/>
-
-                        <span class="input-group multiple-control-input-group nodefilters">
-
-                            <g:render template="/framework/nodeFilterInputGroup"
-                                      model="[filterFieldName: 'nodeFilter',
-                                              filterFieldId:'nodeFilterField'+rkey,
-                                              queryFieldHelpId:'nodeFilterQueryFieldHelp'+rkey,
-                                              queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override'),
-                                              filtvalue: filtvalue,
-                                              filterName: null]"/>
-                        </span>
-
-                        <div class=" collapse" id="nodeFilterQueryFieldHelp${enc(attr: rkey)}">
-                            <div class="help-block">
-                                <g:render template="/common/nodefilterStringHelp"/>
-                            </div>
-                        </div>
-
+                        <ui-socket section="job-wfitem-edit"
+                                   location="jobref-node-filter-input"
+                                   socket-data="${enc(attr: [
+                                           extraAttrs: [ 'class': 'nodefilters' ],
+                                           filter: filtvalue?:'',
+                                           filterFieldName:'nodeFilter',
+                                           filterFieldId:'nodeFilterField'+rkey,
+                                           koFieldName:'nodeFilterMap',
+                                           koParam:'#nodeFilterOverride'+rkey,
+                                           queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override')
+                                   ].encodeAsJSON())}">
+                        </ui-socket>
                     </div>
                 </div>
 
