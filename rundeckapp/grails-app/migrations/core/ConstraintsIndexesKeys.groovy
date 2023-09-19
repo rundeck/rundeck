@@ -655,5 +655,11 @@ databaseChangeLog = {
         }
         dropForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "node_filter", constraintName: "FKhuj3n3gy2kqoie8d8oucay4b3", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
     }
+    changeSet(author: "gschueler", id: "5.0-jobfilter-0501") {
+        preConditions(onFail: "MARK_RAN"){
+            foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution_filter", foreignKeyName: "FK22545y15qs4iqod1ljyqsm1fi")
+        }
+        dropForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "scheduled_execution_filter", constraintName: "FK22545y15qs4iqod1ljyqsm1fi", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
+    }
 
 }
