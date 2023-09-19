@@ -45,11 +45,6 @@
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
     <g:embedJSON id="filterParamsJSON" data="${[filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-    <div class=" collapse" id="queryFilterHelp">
-        <div class="help-block">
-            <g:render template="/common/nodefilterStringHelp"/>
-        </div>
-    </div>
 
 
 
@@ -316,19 +311,18 @@
                                         <g:hiddenField name="offset" value="${offset}"/>
                                         <g:hiddenField name="formInput" value="true"/>
 
-                                        <div>
-                                            <span class=" input-group multiple-control-input-group" >
-                                                <g:render template="/framework/nodeFilterInputGroup"
-                                                          model="[filterFieldName: 'extra.nodefilter', filtvalue: filtvalue]"/>
-                                            </span>
+                                        <div class="vue-ui-socket">
+                                            <ui-socket section="job-show-page"
+                                                       location="exec-options-node-filter-input"
+                                                       socket-data="${enc(attr: [
+                                                               filter: filtvalue?:'',
+                                                               koVarName:'nodeFilter',
+                                                               filterFieldName:'extra.nodefilter',
+                                                       ].encodeAsJSON())}">
+                                            </ui-socket>
                                         </div>
                                     </g:form>
 
-                                    <div class=" collapse" id="queryFilterHelp">
-                                        <div class="help-block">
-                                            <g:render template="/common/nodefilterStringHelp"/>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -510,6 +504,7 @@
                     nodesTitleSingular: message('Node'),
                     nodesTitlePlural: message('Node.plural')
                 }));
+        window.nodeFilter = nodeFilter
 
         nodeSummary.reload();
         nodeFilter.updateMatchedNodes();

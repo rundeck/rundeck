@@ -29,6 +29,8 @@
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
+    <asset:stylesheet src="static/css/pages/nodes.css"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
