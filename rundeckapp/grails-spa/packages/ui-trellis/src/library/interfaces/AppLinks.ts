@@ -29,9 +29,6 @@ export interface AppLinks {
     frameworkNodeSummaryAjax: string
     authProjectsToCreateAjax: string
     reportsEventsAjax: string
-    reportsListFiltersAjax: string
-    reportsSaveFilterAjax: string
-    reportsDeleteFilterAjax: string
     menuNowrunningAjax: string
     menuHome: string
     menuHomeAjax: string
