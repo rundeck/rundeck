@@ -42,7 +42,6 @@ import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ReportFilter
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -95,7 +94,6 @@ class ReportsController extends ControllerBase{
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         //find previous executions
-        def usedFilter
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if(unauthorizedResponse(
@@ -113,25 +111,7 @@ class ReportsController extends ControllerBase{
         }
         def RdUser u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
-        if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
-            if(filterPref['events']){
-                params.filterName=filterPref['events']
-            }
-        }
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
+
         def options = [:]
         if (params['execRptCustomView']) {
             params.each {String k, v ->
@@ -148,7 +128,6 @@ class ReportsController extends ControllerBase{
             query=new ExecQuery()
             //no default filter
             params.recentFilter=null
-            usedFilter=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
@@ -201,7 +180,6 @@ class ReportsController extends ControllerBase{
                 } ?: reportService.getExecutionReports(query, true)
 
 //        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
-//        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
         if(model.lastDate<1 && query.recentFilter ){
             model.lastDate=curdate.time
         }else if (model.lastDate<1 && query.doendafterFilter  && (!query.doendbeforeFilter || curdate.time<query.endbeforeFilter.time)){
@@ -212,17 +190,12 @@ class ReportsController extends ControllerBase{
         }
 //        System.err.println("lastDatex: "+model.lastDate);
         model = reportService.finishquery(query,params,model)
-        if(usedFilter){
-            model.filterName=usedFilter
-            model.paginateParams['filterName']=usedFilter
-        }
         model.filterPref=filterPref
         return model
     }
 
     def since(ExecQuery query){
        //find previous executions
-        def usedFilter
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
@@ -244,20 +217,6 @@ class ReportsController extends ControllerBase{
         }
         def RdUser u = userService.findOrCreateUser(session.user)
 
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
         def options = [:]
 
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
