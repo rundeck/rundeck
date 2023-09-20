@@ -534,6 +534,37 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
     }
 
+    def "edit webhook keep authConfigJson"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook", "test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook", "test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_, _, _) >> { return new ValidatedPlugin(report: new Validator.Report(), valid: true) }
+            getPlugin(_, _) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event": new TestWebhookEventPlugin()] }
+        }
+        Webhook existing = new Webhook(id: "1", uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event", authConfigJson: '{"cfg1":"val1"}');
+        existing.save()
+
+        when:
+        def result = service.saveHook(mockUserAuth, [id: 1, uuid: "2c2d614b-34f5-4f52-969a-9c6a90fb8b75", name: "test", project: "Test", user: "webhookUser", roles: "webhook,test", useAuth: true, regenAuth: false, eventPlugin: "log-webhook-event", "config": ["cfg1": "val1"]])
+
+        then:
+        result.msg == "Saved webhook"
+        result.uuid
+        Webhook.get("1").authConfigJson == '{"cfg1":"val1"}'
+
+    }
+
     def "edit webhook's name"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
