@@ -81,4 +81,11 @@ databaseChangeLog = {
             column(name: "job_filter", type: '${varchar255.type}')
         }
     }
+    changeSet(author: "gschueler (generated)", failOnError:"false", id: "5.0-nodefilter-1002") {
+        comment { 'remove report_filter table' }
+        preConditions(onFail: 'MARK_RAN') {
+            tableExists (tableName:"report_filter")
+        }
+        dropTable(tableName: "report_filter")
+    }
 }
