@@ -17,6 +17,5 @@ public interface RdUser {
     Date getLastLogout();
     String getLastSessionId();
     String getLastLoggedHostName();
-    Object getReportfilters();
 
 }
