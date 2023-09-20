@@ -29,7 +29,7 @@ class RundeckDbMigrationTest extends Specification {
 
     def tableList = ['AUTH_TOKEN', 'BASE_REPORT', 'EXECUTION', 'JOB_FILE_RECORD', 'LOG_FILE_STORAGE_REQUEST',
                      'NOTIFICATION', 'ORCHESTRATOR', 'PLUGIN_META', 'PROJECT', 'RDUSER', 'RDOPTION',
-                     'REFERENCED_EXECUTION', 'REPORT_FILTER', 'SCHEDULED_EXECUTION',
+                     'REFERENCED_EXECUTION', 'SCHEDULED_EXECUTION',
                      'SCHEDULED_EXECUTION_STATS', 'STORAGE', 'STORED_EVENT', 'WEBHOOK',
                      'WORKFLOW', 'WORKFLOW_STEP', 'WORKFLOW_WORKFLOW_STEP']
 
