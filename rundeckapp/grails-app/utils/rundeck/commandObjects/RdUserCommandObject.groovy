@@ -27,8 +27,4 @@ class RdUserCommandObject implements RdUser, Validateable{
         lastUpdated(nullable: true)
     }
 
-    @Override
-    Object getReportfilters() {
-        return null
-    }
 }
