@@ -107,12 +107,14 @@ databaseChangeLog = {
             not{
                 uniqueConstraintExists (catalogName: '${catalogName}', tableName:"report_filter", constraintName:"UC_REPORT_FILTERNAME_COL")
             }
+            tableExists(tableName: 'report_filter')
         }
         addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-32", dbms:"mssql"){
         preConditions(onFail: "MARK_RAN"){
+            tableExists(tableName: 'report_filter')
             sqlCheck(expectedResult: '0', "select count(*) from sys.key_constraints where name = 'UC_REPORT_FILTERNAME_COL'")
         }
         addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
@@ -506,6 +508,7 @@ databaseChangeLog = {
             not{
                 foreignKeyConstraintExists (foreignKeyTableName: "report_filter", foreignKeyName: "FKcdly7hl8164nfb0e5908ch64n")
             }
+            tableExists(tableName: 'report_filter')
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "report_filter", constraintName: "FKcdly7hl8164nfb0e5908ch64n", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
     }
