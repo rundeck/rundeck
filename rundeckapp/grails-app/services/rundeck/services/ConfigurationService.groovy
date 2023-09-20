@@ -26,9 +26,13 @@ class ConfigurationService implements InitializingBean {
     static transactional = false
     def grailsApplication
     private Map<String, Object> appCfg = new HashMap<>()
+    private Boolean executionModeActiveValue
 
     boolean isExecutionModeActive() {
-        getAppConfig()?.executionMode == 'active'
+        if (null == executionModeActiveValue) {
+            executionModeActiveValue = getAppConfig()?.executionMode == 'active'
+        }
+        return executionModeActiveValue
     }
 
     public Map<String, Object> getAppConfig() {
@@ -44,7 +48,7 @@ class ConfigurationService implements InitializingBean {
     }
 
     void setExecutionModeActive(boolean active) {
-        getAppConfig().executionMode = (active ? 'active' : 'passive')
+        executionModeActiveValue = active
     }
     String getString(String property) {
         getString(property,null)
