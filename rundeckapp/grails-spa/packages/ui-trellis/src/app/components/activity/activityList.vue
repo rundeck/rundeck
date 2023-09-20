@@ -759,11 +759,9 @@ export default defineComponent({
       if(this.query.jobIdFilter){
         xquery['includeJobRef']='true'
       }
-      if(this.query.filterName){
-        xquery['filterName']=this.query.filterName
-      }else{
-        Object.assign(xquery,this.query)
-      }
+
+      Object.assign(xquery,this.query)
+
       try{
         const response = await axios.get(this.activityUrl,{
           headers: {'x-rundeck-ajax': true},
@@ -817,9 +815,6 @@ export default defineComponent({
       }
     },
     fullQueryParams():any{
-      if(this.query.filterName){
-        return {filterName:this.query.filterName}
-      }
       let params={} as {[key:string]:string}
       for(let v in this.query){
         if(this.query[v]){
