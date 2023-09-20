@@ -415,6 +415,7 @@ databaseChangeLog = {
             not{
                 foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution_filter", foreignKeyName: "FK22545y15qs4iqod1ljyqsm1fi")
             }
+            tableExists (tableName:"scheduled_execution_filter")
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "scheduled_execution_filter", constraintName: "FK22545y15qs4iqod1ljyqsm1fi", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
     }
