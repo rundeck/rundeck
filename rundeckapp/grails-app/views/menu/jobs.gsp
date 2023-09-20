@@ -567,12 +567,12 @@ search
   </auth:resourceAllowed>
 </div>
 
-<div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">
+<div class="modal fade" id="execDiv" role="dialog" aria-labelledby="execJobModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="deleteFilterModalLabel"><g:message code="job.execute.action.button" /></h4>
+        <h4 class="modal-title" id="execJobModalLabel"><g:message code="job.execute.action.button" /></h4>
       </div>
       <div class="" id="execDivContent"></div>
     </div>
