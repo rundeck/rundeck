@@ -14,7 +14,7 @@ RUN apt-get -y update && \
 
 ## Install Oracle JVM
 RUN apt-get update && \
-  apt-get install -y openjdk-8-jdk-headless
+  apt-get install -y openjdk-11-jdk-headless
 
 ## DEBUG ENV VARS AT THIS POINT
 #RUN echo "**** ENV VARS START ****" && printenv > /env_at_build_time && cat /env_at_build_time && echo "**** ENV VARS END ****"

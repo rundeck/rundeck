@@ -1,7 +1,7 @@
 
 set RDECK_BASE=/home/rundeck
 
-set JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
+set JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre
 
 :: Unsetting JRE_HOME to ensure there is no conflict with JAVA_HOME
 (set JRE_HOME=)

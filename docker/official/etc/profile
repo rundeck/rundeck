@@ -1,7 +1,7 @@
 RDECK_BASE=/home/rundeck
 export RDECK_BASE
 
-JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
+JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre
 export JAVA_HOME
 
 PATH=$JAVA_HOME/bin:$PATH
