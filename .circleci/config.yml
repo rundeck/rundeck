@@ -281,7 +281,7 @@ commands:
     parameters:
       version:
         type: string
-        default: 'v16.13.0'
+        default: 'v18.18.0'
     steps:
       - run:
           name: Install Node
@@ -523,7 +523,7 @@ jobs:
       - aws-cli/install:
           skip-install-check: false
       - install-node:
-          version: v16.18.0
+          version: v18.18.0
       - run:
           name: Fetch Artifacts
           command: |
@@ -536,7 +536,7 @@ jobs:
             cd ../..
             source .circleci/circle-shim.sh
             cd test/selenium
-            nvm use v16.18.0
+            nvm use v18.18.0
             echo 'export PATH=${PWD}/node_modules/chromedriver/bin:${PATH}' >> $BASH_ENV
             sudo rm /usr/local/bin/chromedriver
             npm run bootstrap
