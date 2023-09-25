@@ -658,13 +658,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile
     }
 
-    def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
+    ImportResponse exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
                                 ProjectArchiveParams archiveParams,
                                 AuthContext authContext
     ) throws ProjectServiceException {
         File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
 
-        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams)
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build())
 
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
@@ -678,7 +678,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param inputMap to copy and convert values to string and change keys
      * @return a map with keys "strToPrepend.inputMapKey" and values "inputMapValue.toString"
      */
-    private static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> inputMap){
+    static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> inputMap){
         Map<String,String> prependedMap = [:]
         inputMap.each { String key, Object value ->
             String newKey = "${strToPrepend}.${key}"
@@ -693,13 +693,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param exportArchiveParams metadata of the archive to export from this server
      * @return an import status object where the import progress of the destiny server is updated
      */
-    private static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams){
-        Client<RundeckApi> client = RundeckClient.builder().baseUrl(exportArchiveParams.url).tokenAuth(exportArchiveParams.apitoken).apiVersion(39).build()
+    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, Client<RundeckApi> rundeckClient) throws RuntimeException {
         ProjectImportStatus response = new ProjectImportStatus()
         response.successful = true
         boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
 
-        Response<ProjectImportStatus> status = client.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
+        Response<ProjectImportStatus> status = rundeckClient.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
                 exportArchiveParams.preserveuuid?'preserve':'remove',
                 exportArchiveParams.exportExecutions,
                 exportArchiveParams.exportConfigs,
@@ -739,7 +738,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         }else{
             ResponseBody responseBody = status.errorBody()
-            Converter<ResponseBody, ErrorResponse> errorConverter = client.getRetrofit().responseBodyConverter(
+            Converter<ResponseBody, ErrorResponse> errorConverter = rundeckClient.getRetrofit().responseBodyConverter(
                     ErrorResponse.class,
                     new Annotation[0]
             )

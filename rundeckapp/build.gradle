@@ -117,6 +117,8 @@ dependencies {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
 
+    testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '2.9.0'
+
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
