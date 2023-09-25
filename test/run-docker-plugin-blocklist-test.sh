@@ -23,7 +23,7 @@ copy_jar(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}
 
-    local buildJar=( $PWD/rundeckapp/build/libs/*.war )
+    local buildJar=( $PWD/rundeckapp/build/libs/*[A-Z0-9].war )
     echo "Testing against ${buildJar[0]}"
     test -d $DIR || mkdir -p $DIR
     cp ${buildJar[0]} $DIR/rundeck-launcher.war

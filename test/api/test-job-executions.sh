@@ -394,7 +394,7 @@ echo "OK"
 
 # job exec
 args="echo this job will be killed..."
-args2="sleep 120"
+args2="sleep 240"
 
 project="test"
 
@@ -502,7 +502,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # let pending abort finish
 
-sleep 10
+sleep 20
 
 
 ###

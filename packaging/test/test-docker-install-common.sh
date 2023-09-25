@@ -5,15 +5,14 @@ set -euo pipefail
 readonly ARGS=("$@")
 
 list_debs(){
-	PATTERN="${PACKAGING_DIR_PARENT}packaging/packaging/build/distributions/*.${PACKAGE_TYPE}"
+	PATTERN="${PACKAGING_DIR}/packaging/build/distributions/*.${PACKAGE_TYPE}"
 	echo $PATTERN
 }
 
 build(){
   echo "$PWD"
 	local TAG="rdpro-$COMMON"
-	docker build -t "$TAG-util" -f "${PACKAGING_DIR_PARENT}"packaging/test/docker/installcommon/"$COMMON".Dockerfile "${PACKAGING_DIR_PARENT}"packaging/test/docker/installcommon
-	docker build "$DIR" -t "$TAG"
+	docker build -t "$TAG-util" -f "${PACKAGING_DIR}/test/docker/installcommon/${COMMON}.Dockerfile" "${PACKAGING_DIR}/test/docker/installcommon"
 }
 
 run(){
@@ -25,6 +24,8 @@ run(){
 	DEBS=$(list_debs)
 	for DEB in $DEBS; do
 		echo $DEB
-		docker run -it -v "$PWD:/home/rundeck/rundeck" -e "PACKAGE=$DEB" "$TAG":latest -test
+		cp -pv "$DEB" "$DIR/rundeck.${PACKAGE_TYPE}"
+		docker build --no-cache "$DIR" -t "$TAG":latest
+		docker run -it -e "PACKAGE=/rundeck/rundeck.${PACKAGE_TYPE}" "$TAG":latest -test
 	done
 }

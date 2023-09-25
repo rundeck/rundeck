@@ -1,4 +1,6 @@
-FROM rundeckapp/testdeck:base-latest
+FROM ubuntu:22.04
+
+ARG CLI_VERS
 
 ENV USERNAME=rundeck \
     USER=rundeck \
@@ -6,13 +8,31 @@ ENV USERNAME=rundeck \
     LOGNAME=$USERNAME \
     TERM=xterm-256color
 
-ARG CLI_VERS
-
-#Add PAM test user
+## General package configuration
+RUN apt-get -y update && \
+    apt-get -y install \
+        sudo \
+        unzip \
+        curl \
+        xmlstarlet \
+        git \
+        netcat-traditional \
+        software-properties-common \
+        debconf-utils \
+        uuid-runtime \
+        ncurses-bin \
+        iputils-ping \
+        jq \
+        zip \
+        file \
+        apt-transport-https \
+        openjdk-11-jdk \
+        dos2unix
 
 RUN curl -s https://packagecloud.io/install/repositories/pagerduty/rundeck/script.deb.sh | os=any dist=any bash \
     && apt-get -y install rundeck-cli=${CLI_VERS}
 
+#Add PAM test user
 RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/bash pamlogintest
 
     # RUNDECK - create user
@@ -34,10 +54,7 @@ RUN \
         -jar $HOME/rundeck-launcher.war --installonly \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get -y update
-RUN apt-get -y install dos2unix
 USER rundeck
-
 
 # Copy files.
 RUN mkdir -p $HOME/scripts

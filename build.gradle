@@ -255,3 +255,12 @@ buildScan {
 test {
     maxHeapSize = "512m"
 }
+
+// Get the full path to the application war.
+tasks.register('printBootWarPath') {
+    doLast {
+        def rundeckapp = project(":rundeckapp")
+        def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
+        println "${bootArchiveFile}"
+    }
+}
