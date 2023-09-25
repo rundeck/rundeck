@@ -20,7 +20,6 @@ export interface StoredActivityFilterSet {
 export class ActivityFilterStore {
 
   storeFilters(filters: StoredActivityFilterSet) {
-    debugger
     localStorage.setItem(STORAGE_ACTIVITY_FILTER_KEY, JSON.stringify(filters))
   }
 

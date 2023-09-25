@@ -82,7 +82,6 @@ export default defineComponent({
       await this.loadFilters()
     },
     async doSaveFilter(name) {
-      debugger
       this.filterStore.saveFilter(this.projectName,{
         filterName:name,
         query:{...this.query, projFilter: this.projectName}
