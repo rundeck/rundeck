@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import org.rundeck.client.api.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.async.Promises
 import grails.events.bus.EventBus
@@ -33,6 +35,10 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import org.grails.async.factory.SynchronousPromiseFactory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.jetbrains.annotations.NotNull
@@ -47,13 +53,24 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
+import org.rundeck.client.util.Client
+import org.rundeck.client.api.RundeckApi
 import org.rundeck.core.auth.AuthConstants
+import org.slf4j.Logger
+import retrofit2.Call
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.mock.BehaviorDelegate
+import retrofit2.mock.Calls
+import retrofit2.mock.NetworkBehavior
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
+import retrofit2.mock.MockRetrofit
+import retrofit2.converter.jackson.JacksonConverterFactory
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
@@ -1786,6 +1803,119 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             false   | 0
     }
 
+    def "should result success and no error msgs when export to another instance is success"() {
+        given:
+        ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
+                project : 'project-target',
+                preserveuuid : 'preserve',
+                exportExecutions : true,
+                exportConfigs : true,
+                exportAcls : true,
+                exportScm : true,
+                exportComponents : [
+                        'webhooks' : true,
+                        'node-wizard' : true
+                ],
+                exportOpts : [
+                        'webhooks' : ['inludeAuthTokens' : 'true']
+                ],
+        ])
+        File archive = new File("testfile")
+        MockRundeckApi mockRundeckApi = (MockRundeckApi) Spy(MockRundeckApi, constructorArgs: [true, 200])
+
+        when:
+        ProjectImportStatus response = ProjectService.importArchiveToInstance(archive, exportArchiveParams, mockRundeckApi.getRundeckClient())
+
+        then:
+        assertTrue(response.getResultSuccess())
+        0 * ProjectService.projectLogger.error(_)
+    }
+
+    def "should log acl error when fails to export acls to another instance"() {
+        given:
+        ProjectService.projectLogger = Mock(Logger)
+
+        ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
+                project : 'project-target',
+                preserveuuid : 'preserve',
+                exportExecutions : true,
+                exportConfigs : true,
+                exportAcls : true,
+                exportScm : true,
+                exportComponents : [
+                        'webhooks' : true,
+                        'node-wizard' : true
+                ],
+                exportOpts : [
+                        'webhooks' : ['inludeAuthTokens' : 'true']
+                ],
+        ])
+        File archive = new File("testfile")
+        MockRundeckApi mockRundeckApi = (MockRundeckApi) Spy(MockRundeckApi, constructorArgs: [false, 200])
+
+        when:
+        ProjectImportStatus response = ProjectService.importArchiveToInstance(archive, exportArchiveParams, mockRundeckApi.getRundeckClient())
+
+        then:
+        assertFalse(response.getResultSuccess())
+        1 * ProjectService.projectLogger.error("Error on import acls to new project: 1")
+    }
+
+    def "should throw couldn't create resource runtime exception when exporting to another instance request has 409 status code"() {
+        given:
+        ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
+                project : 'TARGETprojectName',
+                preserveuuid : 'preserve',
+                exportExecutions : true,
+                exportConfigs : true,
+                exportAcls : true,
+                exportScm : true,
+                exportComponents : [
+                        'webhooks' : true,
+                        'node-wizard' : true
+                ],
+                exportOpts : [
+                        'webhooks' : ['inludeAuthTokens' : 'true']
+                ],
+        ])
+        File archive = new File("testfile")
+        MockRundeckApi mockRundeckApi = (MockRundeckApi) Spy(MockRundeckApi, constructorArgs: [false, errorStatusCode])
+
+        when:
+        ProjectService.importArchiveToInstance(archive, exportArchiveParams, mockRundeckApi.getRundeckClient())
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(expectedThrownMessage)
+
+        where:
+        errorStatusCode | expectedThrownMessage
+        409             | "Could not create resource"
+    }
+
+    def "should return a Map<string,string> with the same given keys but with an added desiredPrefix and the same value"() {
+        given:
+        ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
+                exportComponents : [
+                        'webhooks' : true,
+                        'node-wizard' : true,
+                        'component-X' : true,
+                        'component-Y' : false
+                ]
+        ])
+
+        String desiredPrefix = 'importComponents'
+
+        when:
+        Map<String,String> transformedMap = ProjectService.prependStringToKeysInMap(desiredPrefix, exportArchiveParams.exportComponents)
+
+        then:
+        exportArchiveParams.exportComponents.each {originalKey, originalValue ->
+            transformedMap[desiredPrefix + '.' + originalKey] == originalValue.toString()
+        }
+    }
+
+
     static String EXECS_START='<executions>'
     static String EXECS_END= '</executions>'
     static String EXEC_XML_TEST1_DEF_START= '''
@@ -2902,5 +3032,71 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         assertEquals(localFile, executionFile.localFile)
         assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
+    }
+}
+
+abstract class MockRundeckApi implements RundeckApi{
+    private boolean importSuccess
+    private int responseStatusCode
+    private Retrofit retrofit
+    private MockRetrofit mockRetrofit
+
+    private static final errorResponseJsonBody = ResponseBody.create(MediaType.parse("application/json") ,"{\"result\": {\"error\": {\"message\": \"error\"}}}")
+
+    final BehaviorDelegate<RundeckApi> delegate;
+
+    MockRundeckApi(Boolean importSuccess, Integer responseStatusCode){
+        this.responseStatusCode = responseStatusCode
+        this.importSuccess = importSuccess
+        setupRetrofit()
+        this.delegate = mockRetrofit.create(RundeckApi.class)
+    }
+
+
+    Client<RundeckApi> getRundeckClient(){
+        return new Client<>(this, retrofit,null, null, 0, false, null)
+    }
+
+    private void setupRetrofit(){
+        this.retrofit = new Retrofit.Builder()
+                .baseUrl("http://mock.url")
+                .client(new OkHttpClient.Builder().build())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build();
+
+        NetworkBehavior behavior =  NetworkBehavior.create()
+        behavior.setFailurePercent(0);
+        mockRetrofit = new MockRetrofit.Builder(retrofit)
+                .networkBehavior(behavior)
+                .build();
+    }
+
+    Call<ProjectImportStatus> importProjectArchive(
+            String project,
+            String jobUuidOption,
+            Boolean importExecutions,
+            Boolean importConfig,
+            Boolean importACL,
+            Boolean importScm,
+            Boolean importWebhooks,
+            Boolean whkRegenAuthTokens,
+            Boolean importNodesSources,
+            Map<String,String> params,
+            RequestBody body
+    ){
+        Response response
+        if(responseStatusCode == 200){
+            ProjectImportStatus respBody = new ProjectImportStatus();
+            respBody.successful = this.importSuccess;
+            if(!importSuccess){
+                respBody.aclErrors = new ArrayList<>();
+                respBody.aclErrors.add("Error");
+            }
+            response = Response.success(respBody)
+        }else {
+            response = Response.error(responseStatusCode, errorResponseJsonBody)
+        }
+
+        return delegate.returning(Calls.response(response)).importProjectArchive(project,jobUuidOption, importExecutions, importConfig, importACL, importScm, importWebhooks, whkRegenAuthTokens, importNodesSources, params, body)
     }
 }
