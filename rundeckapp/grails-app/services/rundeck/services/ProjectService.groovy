@@ -706,7 +706,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 exportArchiveParams.exportScm,
                 importWebhookOpt,
                 importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
-                Boolean.getBoolean(exportArchiveParams.exportComponents['node-wizard'] as String),
+                exportArchiveParams.exportConfigs,
                 prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
                 RequestBody.create(archiveToExport, Client.MEDIA_TYPE_ZIP)
         ).execute()
