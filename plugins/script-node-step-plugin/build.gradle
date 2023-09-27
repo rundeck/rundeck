@@ -20,7 +20,7 @@ configurations{
 dependencies {
     // Use the latest Groovy version for building this library
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
-    implementation 'org.rundeck:rundeck-core:4.16.0-20230825'
+//    implementation "org.rundeck:rundeck-core:${project.rundeckVersion}"
     pluginLibs group: 'com.esotericsoftware.yamlbeans', name: 'yamlbeans', version:'1.13'
 }
 

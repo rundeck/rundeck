@@ -69,8 +69,8 @@ public class NodeStepExecutionService
         Map<String, Class<? extends NodeStepExecutor>> map = new HashMap<>();
         map.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
         map.put(ScriptNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptNodeStepExecutor.class);
-        map.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
-        map.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
+//        map.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
+//        map.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
     }
 

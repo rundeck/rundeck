@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.BaseCommandExec
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -32,39 +33,39 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = ScriptFileNodeStepPlugin.PROVIDER_NAME)
-@PluginDescription(title = "Script File Node Step", description = "Verify and validate design")
-public class ScriptFileNodeStepPlugin implements NodeStepPlugin {
+@PluginDescription(title = "Script file or URL", description = "Verify and validate design", isHighlighted = true, order = 2)
+public class ScriptFileNodeStepPlugin implements NodeStepPlugin, BaseCommandExec {
     public static final String PROVIDER_NAME = "script-file-node-step-plugin";
 
     @PluginProperty(title = "File Path",
             description = "Path",
             required = true)
-    private String path;
+    String adhocFilepath;
 
     @PluginProperty(title = "Arguments",
             description = "Arguments",
             required = false)
-    private String arguments;
+    String argString;
 
     @PluginProperty(title = "Invocation String",
             description = "",
             required = false)
-    private String invocationString;
+    String scriptInterpreter;
 
     @PluginProperty(title = "Expand variables in script file",
             description = "",
             required = false)
-    private boolean expandVars;
+    Boolean expandTokenInScriptFile;
 
     @PluginProperty(title = "Quote arguments to script invocation string?",
             description = "",
             required = false)
-    private boolean quoteArgs;
+    Boolean interpreterArgsQuoted;
 
     @PluginProperty(title = "File Extension",
             description = "",
             required = false)
-    private String fileExtension;
+    String fileExtension;
 
     private DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
@@ -75,12 +76,12 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin {
             if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
                 expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
             }
-            if(null != path){
-                expandTokens = expandVars;
+            if(null != adhocFilepath){
+                expandTokens = expandTokenInScriptFile;
             }
 
             String expandedVarsInURL = SharedDataContextUtils.replaceDataReferences(
-                    path,
+                    adhocFilepath,
                     context.getExecutionContext().getSharedDataContext(),
                     //add node name to qualifier to read node-data first
                     ContextView.node(entry.getNodename()),
@@ -97,8 +98,8 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin {
             }
 
             final String[] args;
-            if (null != arguments) {
-                args = OptsUtil.burst(arguments);
+            if (null != argString) {
+                args = OptsUtil.burst(argString);
             } else {
                 args = new String[0];
             }
@@ -111,11 +112,26 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin {
                     null,
                     fileExtension,
                     args,
-                    invocationString,
-                    quoteArgs,
+                    scriptInterpreter,
+                    interpreterArgsQuoted,
                     context.getFramework().getExecutionService(),
                     expandTokens
             );
         }
+    }
+
+    @Override
+    String getAdhocRemoteString() {
+        return null
+    }
+
+    @Override
+    String getAdhocLocalString() {
+        return null
+    }
+
+    @Override
+    Boolean getAdhocExecution() {
+        return null
     }
 }
