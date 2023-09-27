@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
 import java.util.List;
@@ -113,6 +114,23 @@ public class ExecutionItemFactory {
                 label,
                 null,
                 false
+        );
+    }
+
+    public static StepExecutionItem createScriptFileItem(
+            final Map configuration,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
+    ){
+        return ExecutionItemFactory.createPluginNodeStepItem(
+                "script-file-node-step-plugin",
+                configuration,
+                keepgoingOnSuccess,
+                handler,
+                label,
+                filterConfigs
         );
     }
 
