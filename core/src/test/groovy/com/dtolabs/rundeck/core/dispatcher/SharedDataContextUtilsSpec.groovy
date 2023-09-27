@@ -194,6 +194,43 @@ class SharedDataContextUtilsSpec extends Specification {
         ['prop1':'${a.globalval} ${a.tester}','prop2':'z${no.exist}z'] | ['prop1':false] |  ['prop1':'aglobalval ${a.tester}','prop2':'zz']
 
     }
+    static interface TestConverter{
+        Object convert(String key, Object value)
+    }
+    @Unroll
+    def "replace data references with input and output converter"() {
+        given:
+        WFSharedContext shared = new WFSharedContext()
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
+        shared.merge(ContextView.step(1), new BaseDataContext([a: [b: "step1", stepval: "astepval1"]]))
+        def inputConverter = Mock(TestConverter)
+        def outputConverter = Mock(TestConverter)
+        when:
+        def result = SharedDataContextUtils.replaceDataReferences(
+                [prop1:input],
+                ContextView.global(),
+                ContextView.&nodeStep,
+                null,
+                shared,
+                false,
+                [:],
+                inputConverter.&convert,
+                outputConverter.&convert
+        )
+        then:
+        1 * inputConverter.convert('prop1', 'somedata') >> inputConverted
+        1 * outputConverter.convert('prop1', outputExpect) >> outputConverted
+        result == [prop1: outputConverted]
+
+        where:
+        input      | inputConverted            | outputExpect          | outputConverted
+        'somedata' | 'abc'                     | 'abc'                 | 'aglobalval'
+        'somedata' | '${a.globalval}'          | 'aglobalval'          | 'aglobalval'
+        'somedata' | ['${a.globalval}']        | ['aglobalval']        | 'aglobalval'
+        'somedata' | [other: '${a.globalval}'] | [other: 'aglobalval'] | 'aglobalval'
+    }
 
     @Unroll
     def "replace tokens in script duplicate start char #script"() {
