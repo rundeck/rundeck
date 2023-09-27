@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
@@ -574,18 +575,8 @@ public class NotificationService implements ApplicationContextAware{
                     Map context = null
                     (context, execMap) = generateNotificationContext(content.execution, content, source)
 
-                    Map config= n.configuration
-                    if (context && config) {
-                        config = DataContextUtils.replaceDataReferences(config, context)
-                    }
 
-                    config = config?.each {
-                        if(!it.value){
-                            it.value=null
-                        }
-                    }
-
-                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,config, content)
+                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,n.configuration, content,context)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -779,8 +770,28 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, String project, Map config, Map content){
+    private boolean triggerPlugin(String trigger, Map data,String type, String project, Map config, Map content, Map context){
+        if (context && config) {
+            DescribedPlugin described = pluginService.getPluginDescriptor(type, notificationPluginProviderService)
+            if(described?.description) {
+                CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(described.description)
+                config = DataContextUtils.replaceDataReferences(
+                        config,
+                        context,
+                        null,
+                        false,
+                        false,
+                        customFieldsAdapter.&convertInput,
+                        customFieldsAdapter.&convertOutput
+                )
+            }
+        }
 
+        config = config?.each {
+            if(!it.value){
+                it.value=null
+            }
+        }
         Map<Class, Object> servicesMap = [:]
         servicesMap.put(KeyStorageTree, content.context.storageTree)
 
