@@ -23,16 +23,21 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepPluginAdapter
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
+import com.dtolabs.rundeck.plugins.step.StepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 
 /**
@@ -76,6 +81,29 @@ class NodeStepPluginAdapterSpec extends Specification {
                 description = "test",
                 defaultValue = "test")
         private String test
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(name = "test2", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test3Plugin implements NodeStepPlugin {
+        NodeStepPlugin impl
+
+        @PluginProperty(title = "customFieldsTest",
+                description = "test")
+        @RenderingOption(
+                key = StringRenderingConstants.DISPLAY_TYPE_KEY,
+                value = "DYNAMIC_FORM"
+        )
+        private String customFieldsTest
 
         @Override
         void executeNodeStep(
@@ -145,6 +173,73 @@ class NodeStepPluginAdapterSpec extends Specification {
         [c: 'Z', p: 'Q'] | [a: 'b', c: 'Z', d: 'something "xyzQqws"']
     }
 
+    def "create config with custom fields"(){
+        given: 'a plugin with custom fields'
+
+        def json = new ObjectMapper()
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new Test3Plugin(
+                impl: plugin
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def customFieldsData = [
+                [
+                        key:'akey',
+                        value:'plain',
+                        desc:'Adesc'
+                ],
+                [
+                        key:'bkey',
+                        value:'some ${option.b} value',
+                        label:'Blabel'
+                ],
+                [
+                        key:'ckey',
+                        value:'${option.c}',
+                        desc:'Cdesc',
+                        label:'Clabel'
+                ],
+                [
+                        key:'dkey',
+                        value:'${option.d}'
+                ],
+        ]
+        def jsonFieldData=json.writeValueAsString(customFieldsData)
+        def config = [customFieldsTest: jsonFieldData]
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                label: 'a label'
+        )
+        when: 'create config is called'
+
+        def result = adapter.createConfig(context, item, node)
+
+        then: 'the custom field values inside the json are correct'
+
+        result['customFieldsTest'] instanceof String
+        List resData = json.readValue(result['customFieldsTest'].toString(), List)
+        resData[0] == [key: 'akey', value: expect['akey'], desc: 'Adesc']
+        resData[1] == [key: 'bkey', value: expect['bkey'], label: 'Blabel']
+        resData[2] == [key: 'ckey', value: expect['ckey'], desc: 'Cdesc', label: 'Clabel']
+        resData[3] == [key: 'dkey', value: expect['dkey']]
+
+        where:
+        data | expect
+        [:] | [akey: 'plain', bkey: 'some  value', ckey: '',dkey:'']
+        [b:'Bval',c:'Cval',d:'Dval\"with quotes\"'] | [akey: 'plain', bkey: 'some Bval value', ckey: 'Cval',dkey:'Dval\"with quotes\"']
+    }
     def "expand config vars uses blank from property config"() {
         given:
         framework.frameworkServices = Mock(IFrameworkServices)
