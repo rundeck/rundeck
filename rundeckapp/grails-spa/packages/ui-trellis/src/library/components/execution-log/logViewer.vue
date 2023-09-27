@@ -284,11 +284,15 @@ export default defineComponent({
       }
       return this.settings.theme
     },
-    viewerEntriesByNodeCtx() {
-      return this.viewer.entries.reduce((acc, entry) => ({
-        ...acc,
-        [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ''}`]: [...(acc[`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ''}`] || []), entry]
-      }), {})
+    viewerEntriesByRootStepCtx() {
+      return this.viewer.entries.reduce((acc, entry) => {
+        let rootCtx = JobWorkflow.parseContextId(entry.stepctx ? entry.stepctx : '')
+        rootCtx = rootCtx && rootCtx.length > 0 ? rootCtx[0] : ''
+        return {
+          ...acc,
+          [`${entry.node}:${rootCtx ? JobWorkflow.cleanContextId(rootCtx) : ''}`]: [...(acc[`${entry.node}:${rootCtx ? JobWorkflow.cleanContextId(rootCtx) : ''}`] || []), entry]
+        }
+      }, {})
     },
     viewerEntriesByNode() {
       return this.viewer.entries.reduce((acc, entry) => {
@@ -304,7 +308,7 @@ export default defineComponent({
       }
       if(this.node){
         if (this.stepCtx) {
-          return this.viewerEntriesByNodeCtx[`${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`]
+          return this.viewerEntriesByRootStepCtx[`${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`]
         }
         return this.viewerEntriesByNode[this.node]
       }

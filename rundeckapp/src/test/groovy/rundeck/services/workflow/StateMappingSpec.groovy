@@ -429,8 +429,8 @@ class StateMappingSpec extends Specification {
     }
 
 
-    def "mapof"() {
-        given:
+    def "expected outcome from mapof method over an execution with subworkflows"() {
+        given: 'a state where step 1 runs over localhost, it fails and runs referenced job error handler over 3 nodes (alpha1, alpha2, alpha4)'
             def sut = new StateMapping()
             def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
             mutableStep1.nodeStep = true
@@ -440,27 +440,22 @@ class StateMappingSpec extends Specification {
             def result = sut.mapOf(1, state)
         then:
             result.executionId == expect.executionId
-            for (def k : result.keySet()) {
-                assert result[k] == expect[k]
-            }
+            mapEntriesAreEqualIgnoringDates(result, expect)
         where:
             expect = [
                 executionId   : 1,
                 nodes         : [
-                    alpha2   : [[stepctx: '1/1', executionState: 'SUCCEEDED']],
-                    alpha4   : [[stepctx: '1/1', executionState: 'SUCCEEDED']],
-                    alpha1   : [[stepctx: '1/1', executionState: 'SUCCEEDED']],
                     localhost: [[stepctx: "1", executionState: 'SUCCEEDED']]
                 ],
                 serverNode    : null,
                 executionState: 'SUCCEEDED',
                 completed     : true,
                 targetNodes   : ['localhost'],
-                allNodes      : ['localhost', 'alpha1', 'alpha2', 'alpha4'],
+                allNodes: ['localhost','alpha1', 'alpha2', 'alpha4'],
                 stepCount     : 1,
-                updateTime    : '2014-09-06T04:28:06Z',
-                startTime     : '2014-09-06T04:28:04Z',
-                endTime       : '2014-09-06T04:28:06Z',
+                updateTime    : '2014-09-06T00:28:06Z',
+                startTime     : '2014-09-06T00:28:04Z',
+                endTime       : '2014-09-06T00:28:06Z',
                 steps         : [
                     [
                         hasSubworkflow : true,
@@ -469,41 +464,41 @@ class StateMappingSpec extends Specification {
                             completed     : true,
                             targetNodes   : ['alpha1', 'alpha2', 'alpha4'],
                             allNodes      : [],
-                            stepCount     : 1, updateTime: '2014-09-06T04:28:06Z', startTime: '2014-09-06T04:28:04Z',
-                            endTime       : '2014-09-06T04:28:06Z',
+                            stepCount     : 1, updateTime: '2014-09-06T00:28:06Z', startTime: '2014-09-06T00:28:04Z',
+                            endTime       : '2014-09-06T00:28:06Z',
                             steps         : [
                                 [
                                     nodeStates     :
                                         [
-                                            alpha2: [executionState: 'SUCCEEDED', startTime: '2014-09-06T04:28:05Z',
-                                                     updateTime    : '2014-09-06T04:28:05Z', duration: 0L, endTime:
-                                                         '2014-09-06T04:28:05Z'],
-                                            alpha4: [executionState: 'SUCCEEDED', startTime: '2014-09-06T04:28:05Z',
-                                                     updateTime    : '2014-09-06T04:28:06Z', duration: 1000L, endTime:
-                                                         '2014-09-06T04:28:06Z'],
-                                            alpha1: [executionState: 'SUCCEEDED', startTime: '2014-09-06T04:28:04Z',
-                                                     updateTime    : '2014-09-06T04:28:05Z', duration: 1000L, endTime:
-                                                         '2014-09-06T04:28:05Z']
+                                            alpha2: [executionState: 'SUCCEEDED', startTime: '2014-09-06T00:28:05Z',
+                                                     updateTime    : '2014-09-06T00:28:05Z', duration: 0L, endTime:
+                                                         '2014-09-06T00:28:05Z'],
+                                            alpha4: [executionState: 'SUCCEEDED', startTime: '2014-09-06T00:28:05Z',
+                                                     updateTime    : '1234-1234-1234T2134:28:06Z', duration: 1000L, endTime:
+                                                         '2014-09-06T00:28:06Z'],
+                                            alpha1: [executionState: 'SUCCEEDED', startTime: '2014-09-06T00:28:04Z',
+                                                     updateTime    : '2014-09-06T00:28:05Z', duration: 1000L, endTime:
+                                                         '2014-09-06T00:28:05Z']
                                         ],
                                     parameterStates: [:],
                                     id             : '1',
                                     stepctx        : '1/1',
                                     nodeStep       : true,
                                     executionState : 'SUCCEEDED',
-                                    startTime      : '2014-09-06T04:28:04Z',
-                                    updateTime     : '2014-09-06T04:28:05Z',
+                                    startTime      : '2014-09-06T00:28:04Z',
+                                    updateTime     : '2014-09-06T00:28:05Z',
                                     duration       : 2000L,
-                                    endTime        : '2014-09-06T04:28:06Z'
+                                    endTime        : '2014-09-06T00:28:06Z'
                                 ]
                             ]
                         ],
                         nodeStates     : [
                             localhost: [
                                 executionState: 'SUCCEEDED',
-                                startTime     : '2014-09-06T04:28:04Z',
-                                updateTime    : '2014-09-06T04:28:06Z',
+                                startTime     : '2014-09-06T00:28:04Z',
+                                updateTime    : '2014-09-06T00:28:06Z',
                                 duration      : 2000L,
-                                endTime       : '2014-09-06T04:28:06Z'
+                                endTime       : '2014-09-06T00:28:06Z'
                             ]
                         ],
                         parameterStates: [:],
@@ -511,16 +506,16 @@ class StateMappingSpec extends Specification {
                         stepctx        : '1',
                         nodeStep       : true,
                         executionState : 'SUCCEEDED',
-                        startTime      : '2014-09-06T04:28:04Z',
-                        updateTime     : '2014-09-06T04:28:04Z',
+                        startTime      : '2014-09-06T00:28:04Z',
+                        updateTime     : '2014-09-06T00:28:04Z',
                         duration       : 2000L,
-                        endTime        : '2014-09-06T04:28:06Z'
+                        endTime        : '2014-09-06T00:28:06Z'
                     ]
                 ]
             ]
     }
 
-    def "summarize node should include step 1"() {
+    def "summarize node should include step parent steps only"() {
         given: 'node step has subworkflow error handler'
             def sut = new StateMapping()
             def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
@@ -530,9 +525,27 @@ class StateMappingSpec extends Specification {
         when: "summarize node state"
             def result = sut.mapOf(1, state)
             def summarized = sut.summarize(result, ['localhost'], true)
-        then: "node has states for step 1 and 1/1"
-            summarized.nodeSteps['localhost'].size() == 2
-            summarized.nodeSteps['localhost'].find { it.stepctx == '1/1' } != null
+        then: "node has states for step 1 only"
+            summarized.nodeSteps['localhost'].size() == 1
+            summarized.nodeSteps['localhost'].find { it.stepctx == '1/1' } == null
             summarized.nodeSteps['localhost'].find { it.stepctx == '1' } != null
+    }
+
+    boolean mapEntriesAreEqualIgnoringDates(given, expected) {
+        //assume they are the same type
+        if (given instanceof Map) {
+            for (def k : given.keySet()) {
+                return mapEntriesAreEqualIgnoringDates(given[k], expected[k])
+            }
+        }
+        if (given instanceof List) {
+            given.eachWithIndex { val, ix ->
+                return mapEntriesAreEqualIgnoringDates(val, expected[ix])
+            }
+        }
+        if (given instanceof Date)
+            return true
+
+        return given == expected
     }
 }
