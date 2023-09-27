@@ -76,4 +76,16 @@ public interface Description {
         return null;
     }
 
+    public default boolean isHighlighted() {
+        return false;
+    }
+
+    public default int getOrder() {
+        return 0;
+    }
+
+    public default boolean isBuiltInPlugin() {
+        return false;
+    }
+
 }

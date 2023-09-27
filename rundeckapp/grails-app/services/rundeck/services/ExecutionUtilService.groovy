@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.fasterxml.jackson.databind.ObjectMapper
+import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
@@ -241,18 +243,17 @@ class ExecutionUtilService {
                     )
                 }else {
                     //TODO: create a script-file node step item
+                    String config = cmd as JSON
+                    ObjectMapper mapper = new ObjectMapper()
+                    Map mapConfig = mapper.readValue(config, Map.class)
+
                     return ExecutionItemFactory.createScriptFileItem(
-                            cmd.getScriptInterpreter(),
-                            cmd.getFileExtension(),
-                            !!cmd.interpreterArgsQuoted,
-                            new File(filepath),
-                            args,
+                            mapConfig,
                             handler,
                             !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
-                    );
+                            null,
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                    )
 
                 }
             }else {

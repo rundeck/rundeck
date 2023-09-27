@@ -38,4 +38,8 @@ public @interface PluginDescription {
     String title() default "";
 
     String description() default "";
+
+    boolean isHighlighted() default false;
+
+    int order() default 0;
 }

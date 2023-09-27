@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -4490,8 +4491,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def prepareCreateEditJob(params, def scheduledExecution, String action, UserAndRolesAuthContext authContext ){
         def pluginControlService=frameworkService.getPluginControlService(params.project)
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep)
+            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep) && !it.isHighlighted()
         }
+        def nodeStepTypesHighlighted = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep) && it.isHighlighted()
+        } + getBuiltInPlugins()
+
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
             !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
         }
@@ -4533,6 +4538,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                      params                      : params,
                      matchedNodesMaxCount        : getMatchedNodesMaxCount(),
                      nodeStepDescriptions        : nodeStepTypes,
+                     nodeStepDescriptionsHighlighted : nodeStepTypesHighlighted,
                      stepDescriptions            : stepTypes,
                      timeZones                   : timeZones,
                      logFilterPlugins            : logFilterPlugins,
@@ -4551,6 +4557,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         return model
 
+    }
+
+    List<Description> getBuiltInPlugins(){
+        //TODO: remove this method after all builtin plugins is migrated to a true plugin.
+        return [
+                [
+                        name:"command",
+                        title:"Command",
+                        description:"Run a command on the remote node",
+                        order: 0
+                ],
+                [
+                        name:"script",
+                        title: "Script",
+                        description: "Run a script on the remote node",
+                        order: 1
+                ],
+                [
+                        name: "job",
+                        title: "Job Reference",
+                        description: "Run a job on the remote node",
+                        order: 3
+                ]
+        ].collect {new BuiltInPluginDescription(it)}
     }
 
 
@@ -4662,5 +4692,26 @@ class OldJob{
                 originalTz != scheduledExecution.timeZone ||
                 localScheduled != scheduledExecution.scheduled ||
                 wasRenamed(scheduledExecution.jobName,scheduledExecution.groupPath)
+    }
+}
+
+@CompileStatic
+class BuiltInPluginDescription implements Description{
+    String name
+    String title
+    String description
+    List<Property> properties
+    Map<String, String> propertiesMapping
+    Map<String, String> fwkPropertiesMapping
+    int order
+
+    @Override
+    boolean isHighlighted() {
+        return true
+    }
+
+    @Override
+    boolean isBuiltInPlugin() {
+        return true
     }
 }
