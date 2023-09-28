@@ -234,7 +234,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
         @Override
         Date getPluginDate() {
-            return  new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy").parse("Tue Aug 14 08:29:02 CDT 2018")
+            return  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.Z").parse("2018-08-14T06:29:02.-0700")
         }
 
         @Override
