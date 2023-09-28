@@ -1,7 +1,7 @@
 <template>
-  <div class="execution-log__node-chunk" v-if="entries && entries.length > 0">
+  <div class="execution-log__node-chunk" v-if="entryOutputs && entryOutputs.length > 0">
     <DynamicScroller :items="entryOutputs"
-                     :min-item-size="21"
+                     :min-item-size="2"
                      :key="nodeChunkKey"
                      class="scroller execution-log__chunk"
                      key-field="lineNumber"

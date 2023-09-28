@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -28,8 +29,8 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.net.api.Client
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.model.ErrorDetail
+import com.dtolabs.rundeck.net.model.ErrorResponse
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -39,11 +40,11 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
-import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
+import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
@@ -60,6 +61,7 @@ import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
+import org.rundeck.client.RundeckClient
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -67,13 +69,15 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
+import webhooks.component.project.WebhooksProjectComponent
 
+import java.lang.annotation.Annotation
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.jar.Attributes
@@ -83,6 +87,11 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import org.rundeck.client.util.Client
+import org.rundeck.client.api.RundeckApi
+import org.rundeck.client.api.model.ProjectImportStatus
+import okhttp3.RequestBody
+import retrofit2.Response
 
 @Transactional
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
@@ -518,13 +527,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             IRundeckProject project,
             IFramework framework,
             String ident,
-            ProjectArchiveExportRequest options,
-            String iProject,
-            String apiToken,
-            String instanceUrl,
-            boolean preserveUUID,
+            ProjectArchiveParams archiveParams,
             AuthContext authContext
     ) {
+        String instanceUrl = archiveParams.url
         projectLogger.info("Begin export [" + project.name + "] to [" + instanceUrl + "]/" + project)
         String token = UUID.randomUUID().toString()
         def summary = new ExportFileProgress()
@@ -533,11 +539,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.project = iProject
-                    request.apitoken = apiToken
+                    request.project = archiveParams.targetproject
+                    request.apitoken = archiveParams.apitoken
                     request.instance = instanceUrl
-                    request.result = exportProjectToInstance(project, framework, summary, options,
-                            iProject, apiToken, instanceUrl, preserveUUID, authContext)
+                    request.result = exportProjectToInstance(project, framework, summary, archiveParams, authContext)
                     request.file = request.result.file
                     projectLogger.info("Export [" + project.name + "] to [" + instanceUrl + "]/" + project + " succeeded")
                 }
@@ -653,19 +658,114 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile
     }
 
-    def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
-                                ProjectArchiveExportRequest options, String iProject,
-                                String apiToken, String instanceUrl, boolean preserveUUID,
+    ImportResponse exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
+                                ProjectArchiveParams archiveParams,
                                 AuthContext authContext
     ) throws ProjectServiceException {
-        File file = exportProjectToFile(project, framework, listener, options, authContext)
-        Client client = new Client(instanceUrl, apiToken)
-        ProjectImportStatus ret = client.importProjectArchive(iProject, file, true, options.executions,
-                options.configs, options.acls, options.scm)
+        File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
+
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build())
+
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
         listener?.done()
         response
+    }
+
+    /**
+     * It returns a copy of the given map but the keys have strToPrepend as prefix and the values were converted to strings
+     * @param strToPrepend the prefix to be used in the keys of the returned map
+     * @param inputMap to copy and convert values to string and change keys
+     * @return a map with keys "strToPrepend.inputMapKey" and values "inputMapValue.toString"
+     */
+    static Map<String,String> prependStringToKeysInMap(String strToPrepend, Map<String, Object> inputMap){
+        Map<String,String> prependedMap = [:]
+        inputMap.each { String key, Object value ->
+            String newKey = "${strToPrepend}.${key}"
+            prependedMap[newKey] = value.toString()
+        }
+        return prependedMap
+    }
+
+    /**
+     * It communicates with the destiny server api to make it import the given archive
+     * @param archiveToExport file with project to export content
+     * @param exportArchiveParams metadata of the archive to export from this server
+     * @return an import status object where the import progress of the destiny server is updated
+     */
+    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, Client<RundeckApi> rundeckClient) throws RuntimeException {
+        ProjectImportStatus response = new ProjectImportStatus()
+        response.successful = true
+        boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
+
+        Response<ProjectImportStatus> status = rundeckClient.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
+                exportArchiveParams.preserveuuid?'preserve':'remove',
+                exportArchiveParams.exportExecutions,
+                exportArchiveParams.exportConfigs,
+                exportArchiveParams.exportAcls,
+                exportArchiveParams.exportScm,
+                importWebhookOpt,
+                importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
+                exportArchiveParams.exportConfigs,
+                prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
+                RequestBody.create(archiveToExport, Client.MEDIA_TYPE_ZIP)
+        ).execute()
+
+        if(status.isSuccessful()){
+            if(null != status.body()) {
+                response = status.body()
+                if(!response.getResultSuccess()){
+                    if(null != response.errors) {
+                        projectLogger.error(
+                                String.format("Error on import jobs to new project: %d", response.errors.size())
+                        )
+                    }
+                    if(null != response.executionErrors) {
+                        projectLogger.error(
+                                String.format("Error on import executions to new project: %d", response.executionErrors.size())
+                        )
+                    }
+                    if(null != response.aclErrors) {
+                        projectLogger.error(
+                                String.format("Error on import acls to new project: %d", response.aclErrors.size())
+                        )
+                    }
+                }
+            }else{
+                projectLogger.error("Null body on response")
+                response.successful=false
+            }
+
+        }else{
+            ResponseBody responseBody = status.errorBody()
+            Converter<ResponseBody, ErrorResponse> errorConverter = rundeckClient.getRetrofit().responseBodyConverter(
+                    ErrorResponse.class,
+                    new Annotation[0]
+            )
+            ErrorDetail error = errorConverter.convert(responseBody)
+            if (status.code() == 401 || status.code() == 403) {
+                throw new RuntimeException(
+                        String.format("Authorization failed: %d %s", status.code(), error.getErrorMessage()))
+            }
+            if (status.code() == 409) {
+                throw new RuntimeException(String.format(
+                        "Could not create resource: %d %s",
+                        status.code(),
+                        error.getErrorMessage()
+                ))
+            }
+            if (status.code() == 404) {
+                throw new RuntimeException(String.format(
+                        "Could not find resource:  %d %s",
+                        status.code(),
+                        error.getErrorMessage()
+                ))
+            }
+            throw new RuntimeException(
+                    String.format("Request failed:  %d %s", status.code(), error.getErrorMessage()))
+        }
+
+        return response
     }
     /**
      * Export the project to an outputstream
@@ -1290,7 +1390,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     authContext,
                                     project.name,
                                     importerstemp[importer.name],
-                                    options.importOpts[importer.name]
+                                    options.importOpts?options.importOpts[importer.name]:[:]
                             )
                             if (result) {
                                 importerErrors[importer.name] = result

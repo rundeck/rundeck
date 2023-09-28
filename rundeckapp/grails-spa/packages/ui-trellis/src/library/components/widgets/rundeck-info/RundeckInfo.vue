@@ -118,10 +118,5 @@ export default defineComponent({
 .rundeck-info-widget__heading {
     font-weight: bold;
 }
-.server-display{
-    background-color: var(--grey-400);
-    padding: 1px 8px;
-    border-radius: 1em;
-}
 
 </style>

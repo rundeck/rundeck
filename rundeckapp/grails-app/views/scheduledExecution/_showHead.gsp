@@ -102,11 +102,14 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID.substring(0,8)}"
-                        data-show-id="false"
-                        class="rundeck-server-uuid">
+                  <span class="vue-ui-socket">
+                      <ui-socket
+                              section="server-info-display"
+                              location="main"
+                              socket-data="${enc(attr:[remoteClusterNodeUUID:remoteClusterNodeUUID,showId:false,serverName:remoteClusterNodeUUID.substring(0,8)].encodeAsJSON())}"
+                      >
+                      </ui-socket>
                   </span>
-                  <i class="fas fa-dot-circle cluster-status-icon"></i>
               </g:if>
           </span>
       </g:if>

@@ -126,14 +126,14 @@
     </div>
   <g:if test="${clusterModeEnabled && execution.serverNodeUUID}">
       <span id="execRemoteServerUUID" class="execution-cluster-id">
-
-          <span data-server-uuid="${execution.serverNodeUUID}"
-                data-server-name="${execution.serverNodeUUID.substring(0,8)}"
-                data-show-id="false"
-                data-name-class="text-secondary"
-                class="rundeck-server-uuid">
+          <span class="vue-ui-socket">
+              <ui-socket
+                      section="server-info-display"
+                      location="main"
+                      socket-data="${enc(attr:[nameClass:'text-secondary',serverUuid:execution.serverNodeUUID,showId:false,serverName:execution.serverNodeUUID.substring(0,8)].encodeAsJSON())}"
+              >
+              </ui-socket>
           </span>
-          <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
       </span>
   </g:if>
 </span>

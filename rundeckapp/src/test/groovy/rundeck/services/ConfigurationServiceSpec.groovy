@@ -43,6 +43,24 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         !service.executionModeActive
     }
 
+    void "executionMode remains the same after config reload"() {
+        when:
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.executionMode = beginMode
+            service.setAppConfig(grailsApplication.config.rundeck)
+        then:
+            service.executionModeActive == expected
+        when:
+            grailsApplication.config.rundeck.executionMode = changedMode
+            service.setAppConfig(grailsApplication.config.rundeck)
+        then:
+            service.executionModeActive == expected
+        where:
+            beginMode | changedMode | expected
+            'passive' | 'active'    | false
+            'active'  | 'passive'   | true
+    }
+
     void "get string present"() {
         when:
         grailsApplication.config.clear()
