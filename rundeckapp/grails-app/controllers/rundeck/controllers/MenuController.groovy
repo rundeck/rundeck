@@ -3378,13 +3378,6 @@ Authorization required: `view` or `read` for each Job resource.
             }
         }
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         if(query.hasErrors()){
             return apiService.renderErrorFormat(response,
                     [
@@ -3479,7 +3472,7 @@ Since: v14
         @Parameter(in = ParameterIn.QUERY, explode = Explode.TRUE)
         ScheduledExecutionQuery query
     ){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
 
@@ -3675,7 +3668,7 @@ if executed in cluster mode.
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)) {
+        if(!apiService.requireApi(request,response)) {
             return
         }
 
@@ -3694,13 +3687,6 @@ if executed in cluster mode.
             if (!apiAuthorizedForEventRead(params.project)) {
                 return
             }
-        }
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all', 'xml'])) {
-            return apiService.renderErrorXml(response, [
-                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code  : 'api.error.item.unsupported-format',
-                    args  : [response.format]
-            ])
         }
 
         def projectNameAuthorized = "";
