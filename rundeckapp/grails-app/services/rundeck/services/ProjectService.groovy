@@ -191,14 +191,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePath = null) throws ProjectServiceException {
+    def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
         File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
         if (logfile && logfile.isFile()) {
             logfilepath = "output-${exec.id}.rdlog"
             zip.file logfilepath, logfile
-        } else if (remotePath != null){ // if there's a configured remote storage
-            logfilepath = "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePath)}"
+        } else if (remotePathTemplate != null){ // if there's a configured remote storage
+            logfilepath = "ext:${exec.getExecIdForLogStore()}:${exec.isRemoteOutputfilepath() ? exec.outputfilepath : logFileStorageService.getRemotePathForExecutionFromPathTemplate(exec, remotePathTemplate)}"
         }
         //convert map to xml
         zip.file("$name") { Writer writer ->
@@ -1747,7 +1747,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 String oldOutputFilePath = e.outputfilepath
                 if (oldOutputFilePath) {
                     if(e.isRemoteOutputfilepath()){
-                        log.warn("Log file for imported execution ${e.id} is not present in archive. This logs will be loaded when accessed if the path Its path \"${e.outputfilepath}\" is present in configured log storage")
+                        log.warn("Log file for imported execution \"${e.id}\" is not present in archive. This logs will be loaded when accessed if its path \"${e.outputfilepath}\" is present in configured log storage")
                     } else if (execout[oldOutputFilePath]) {
                         File oldfile = execout[oldOutputFilePath]
                         //move to appropriate location and update outputfilepath
