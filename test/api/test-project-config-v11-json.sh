@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test PUT /api/11/project/config
-#using API v11, using json
+#test PUT /api/14/project/config
+#using API v14, using json
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh

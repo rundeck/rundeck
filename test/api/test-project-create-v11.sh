@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test POST /api/11/projects
-#using API v11, no xml result wrapper
+#test POST /api/14/projects
+#using API v14, no xml result wrapper
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -13,7 +13,7 @@ source $DIR/include.sh
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: POST /api/11/projects"
+echo "TEST: POST /api/14/projects"
 
 test_proj="APICreateTest"
 
@@ -44,7 +44,7 @@ assert_xml_value "test value" "/project/config/property[@key='test.property']/@v
 
 echo "OK"
 
-echo "TEST: POST /api/11/projects (existing project results in conflict)"
+echo "TEST: POST /api/14/projects (existing project results in conflict)"
 
 # post xml
 docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out

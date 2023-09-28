@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test GET /api/11/project/name/config/key
-#using API v11, plain text
+#test GET /api/14/project/name/config/key
+#using API v14, plain text
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)

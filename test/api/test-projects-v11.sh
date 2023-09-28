@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #test /api/projects
-#using API v11, no xml result wrapper
+#using API v14, no xml result wrapper
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -13,7 +13,7 @@ source $DIR/include.sh
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: /api/11/projects "
+echo "TEST: /api/14/projects "
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
