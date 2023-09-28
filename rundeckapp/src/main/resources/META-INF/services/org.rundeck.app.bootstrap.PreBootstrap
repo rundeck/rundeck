@@ -1,3 +1,2 @@
 rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
-rundeckapp.init.prebootstrap.AddonClasspathInjectorPrebootstrap
 rundeckapp.init.prebootstrap.ServerLibInjectorPreBoostrap
