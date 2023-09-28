@@ -83,7 +83,7 @@
                                 <blocklist:pluginEnabled name="${typedeschl.name}" service="workflowNodeStep">
                                     <a data-bind="visible: isDefaultStepsVisible('${typedeschl.title}','${typedeschl.description}')"
                                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="${typedeschl.name}">
-                                        <i class="rdicon icon-small script"></i>
+                                        <i class="${typedeschl.iconClass ?: 'rdicon icon-small plugin'}"></i>
                                         <span class="text-strong">${typedeschl.title}</span>
                                         <span>- ${typedeschl.description}</span>
                                     </a>
