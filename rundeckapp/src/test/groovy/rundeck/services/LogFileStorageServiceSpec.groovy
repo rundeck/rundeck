@@ -21,11 +21,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
@@ -1466,5 +1470,68 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         results.size() == 1
         results[0].pluginName == 'blah3'
 
+    }
+
+    def "should return correctly expanded path given a path template and execution"(){
+        given:
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: serverUUID
+        )
+        e.id = execId
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        when:
+        String expandedPath = service.getRemotePathForExecutionFromPathTemplate(e, pathTemplate)
+
+        then:
+        expectedExpandedPath == expandedPath
+
+        where:
+
+        execId | projectName      | serverUUID               | pathTemplate                                      | expectedExpandedPath
+        67     | 'projectExample' | 'some-other-server-uuid' | 'rootDir/logs/${job.project}/${job.execid}.log'   | "rootDir/logs/${projectName}/${execId}.log"
+        67     | 'projectExample' | 'some-other-server-uuid' |'rootDir/logs/${job.execid}/${job.serverUUID}.log' | "rootDir/logs/${execId}/${serverUUID}.log"
+
+    }
+
+    def "should bring the path property from the defined log storage plugin"(){
+        given:
+        service.configurationService=Mock(ConfigurationService){
+            getString('execution.logs.fileStoragePlugin',_) >> pluginName
+        }
+
+        def pluginDescription = Mock(Description) {
+            getProperties() >> [PropertyUtil.string('path','path','path',true,logStoragePluginPath)]
+        }
+        PropertyResolver propertyResolver = Mock(PropertyResolver){
+            resolvePropertyValue('path', _) >> logStoragePluginPath
+        }
+        def propertyResolverFactory = Mock(PropertyResolverFactory.Factory){
+            create(_, pluginDescription) >> propertyResolver
+        }
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkPropertyResolverFactory(projectName) >> propertyResolverFactory
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginDescriptor(pluginName, _) >> Mock(DescribedPlugin){
+                getDescription() >> pluginDescription
+            }
+        }
+
+        service.executionFileStoragePluginProviderService = Mock(ExecutionFileStoragePluginProviderService)
+
+        when:
+        String returnedStoragePath = service.getStorePathForProject(projectName)
+
+        then:
+        logStoragePluginPath == returnedStoragePath
+
+        where:
+        pluginName = 'log-storage-name-example'
+        projectName = 'projectExample'
+        logStoragePluginPath = 'rootDir/logs/${job.project}/${job.execid}.log'
     }
 }
