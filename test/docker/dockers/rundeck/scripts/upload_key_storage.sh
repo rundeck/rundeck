@@ -11,7 +11,7 @@ echo "test key exists $STORAGE_PATH"
 set +e
 CODE=$(curl -w "%{http_code}" -f -s -G -H 'Accept: application/json' \
 	-H "X-rundeck-auth-token:$API_KEY" \
- "http://$HOSTNAME:4440/api/12/storage/keys/$STORAGE_PATH")
+ "http://$HOSTNAME:4440/api/14/storage/keys/$STORAGE_PATH")
 result=$?
 set -e
 if [ "$CODE" == "404" ] ; then
