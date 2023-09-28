@@ -42,6 +42,9 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ExecutionItemFactory {
+
+    public static final String SCRIPT_FILE_NODE_STEP_PLUGIN_TYPE = "script-file-node-step-plugin";
+
     public static StepExecutionItem createScriptFileItem(
             final String scriptInterpreter,
             final String fileExtension,
@@ -131,7 +134,7 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigs
     ){
         return ExecutionItemFactory.createPluginNodeStepItem(
-                "script-file-node-step-plugin",
+                SCRIPT_FILE_NODE_STEP_PLUGIN_TYPE,
                 configuration,
                 keepgoingOnSuccess,
                 handler,
