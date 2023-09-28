@@ -2170,13 +2170,6 @@ JSON response requires API v14.
         }
         def Execution e = authorizingExecution.resource
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         if (frameworkService.isFrameworkProjectDisabled(e.project)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -2685,13 +2678,6 @@ Authorization required:
             reportstate.reason= abortresult.reason
         }
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         withFormat{
             xml{
                 apiService.renderSuccessXml(request,response) {
@@ -2725,7 +2711,6 @@ Authorization requirement: Requires the `delete_execution` action allowed for a 
 
 See: [Administration - Access Control Policy - Application Scope Resources and Actions](https://docs.rundeck.com/docs/administration/security/authorization.html#application-scope-resources-and-actions)
 
-Since: V12
 """,
         method='DELETE',
         parameters = @Parameter(
@@ -2742,12 +2727,12 @@ Since: V12
     )
     @Tag(name = 'execution')
     /**
-     * DELETE /api/12/execution/[ID]
+     * DELETE /api/14/execution/[ID]
      * @return
      */
     @GrailsCompileStatic
     def apiExecutionDelete (){
-        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def eauth=authorizingExecution
@@ -2855,7 +2840,7 @@ Note: the JSON schema also supports a basic JSON array
      * @return
      */
     def apiExecutionDeleteBulk() {
-        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         return executionDeleteBulk()
@@ -3066,7 +3051,7 @@ if executed in cluster mode.""",
      * API: /api/14/project/NAME/executions
      */
     def apiExecutionsQueryv14(ExecutionQuery query){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         if(query?.hasErrors()){
@@ -3091,13 +3076,6 @@ if executed in cluster mode.""",
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
@@ -3347,7 +3325,7 @@ Since: v14
      * @return
      */
     private def apiExecutionMode(boolean active) {
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 

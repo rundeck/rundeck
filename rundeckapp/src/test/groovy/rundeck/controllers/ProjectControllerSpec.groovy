@@ -754,7 +754,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         params.filename="readme.md"
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
         }
         request.api_version=11
@@ -772,7 +772,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService){
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
 
         }
@@ -791,7 +791,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService){
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
         }
         setupAuthConfigure(false)
@@ -810,7 +810,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         setupAuthConfigure()
         request.api_version=11
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','wrong.md']})
         }
@@ -830,7 +830,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         })
         request.api_version=11
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','readme.md']})
         }
@@ -846,7 +846,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         params.project="test"
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'text'
         }
@@ -866,7 +866,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService)
 
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * renderSuccessXml(_,_,_) >> text
@@ -894,7 +894,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.frameworkService=Mock(FrameworkService)
 
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -926,7 +926,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_) >> 'xml'
         }
@@ -989,7 +989,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * parseJsonXmlWith(*_) >> {args->
@@ -1019,7 +1019,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * parseJsonXmlWith(_,_,_) >> {args->
@@ -1050,7 +1050,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * renderSuccessXml(*_)
@@ -1076,10 +1076,10 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     }
 
 
-    def "project acls require api_version 14"(){
+    def "project acls require api"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> {args->
+            1 * requireApi(_,_) >> {args->
                 args[1].status=400
                 false
             }
@@ -1093,7 +1093,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls require project parameter"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:400,code:'api.error.parameter.required',args:['project']]) >> {args->
                 args[0].status=args[1].status
@@ -1108,7 +1108,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls project not found"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['Project','monkey']]) >> {args->
                 args[0].status=args[1].status
@@ -1128,7 +1128,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls not authorized"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'ACL for Project', 'monkey']]) >> {args->
                 args[0].status=args[1].status
@@ -1160,7 +1160,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
     def "project acls invalid path"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
 
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -1215,7 +1215,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             _* existsPolicyFile(ctx,_)>>false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(_,_) >> {args->
@@ -1254,7 +1254,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -1289,7 +1289,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             1 * renderErrorFormat(_,[status:406,code:'api.error.resource.format.unsupported',args:['jambajuice']])>>{it[0].status=it[1].status}
@@ -1327,7 +1327,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             0 * _(*_)
@@ -1365,7 +1365,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * renderWrappedFileContentsXml('blah','xml',_) >> {args-> args[2]}
@@ -1403,7 +1403,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> respFormat
         }
@@ -1441,7 +1441,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * jsonRenderDirlist('',_,_,['blah.aclpolicy']) >> {args->
                     [success: true]
@@ -1480,7 +1480,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
             0*_(*_)
@@ -1526,7 +1526,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
@@ -1558,7 +1558,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
                 1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
@@ -1606,7 +1606,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'xml'
                 1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
@@ -1655,7 +1655,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -1707,7 +1707,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
             }
@@ -1774,7 +1774,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0* deletePolicyFile(ctx,'test.aclpolicy')
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -1818,7 +1818,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 1* deletePolicyFile(ctx,'test.aclpolicy')>>true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 

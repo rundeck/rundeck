@@ -839,13 +839,6 @@ Since: v11
         def metricsHealthcheckUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/healthcheck", absolute: true)
         def metricsPingUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/ping", absolute: true)
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         def extMeta = [:]
         ServiceLoader.load(ApplicationExtension).each {
             extMeta[it.name] = it.infoMetadata

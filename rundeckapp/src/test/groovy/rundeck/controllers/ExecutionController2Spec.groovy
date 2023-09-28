@@ -326,8 +326,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=400
             false
         }
@@ -343,8 +342,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.request.api_version = 10
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=400
             return false
         }
@@ -380,8 +378,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.response.format = "xml"
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=200
             return true
         }
@@ -506,8 +503,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.executionService = execControl
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=200
             return true
         }

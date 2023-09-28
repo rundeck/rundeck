@@ -2436,7 +2436,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             _ * renderErrorFormat(_, { it.status == 403 }) >> {
                 it[0].status = 403
             }
-            1 * requireApi(_,_,14)>>true
+            1 * requireApi(_,_)>>true
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -2458,7 +2458,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.apiService = Mock(ApiService) {
-            1 * requireApi(_,_,14)>>true
+            1 * requireApi(_,_)>>true
             1 * requireExists(_, false, ['project', 'aProject']) >> {
                 it[0].status=404
                 return false
@@ -2523,7 +2523,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test api executions running list all projects with a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2680,7 +2680,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with an invalid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2736,7 +2736,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with an invalid and a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2792,7 +2792,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "test list all projects with multiple valid projects"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2979,7 +2979,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then:
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
@@ -3040,7 +3040,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then: "result use default format for the api version"
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
@@ -3098,7 +3098,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.apiJobsExportv14(query)
         then:
         0 * controller.scheduledExecutionService.listWorkflows(_,_)
-        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         0 * controller.rundeckAuthContextProcessor.authResourceForJob(_)
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _)
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _)

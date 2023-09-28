@@ -3351,7 +3351,7 @@ Since: v14''',
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
@@ -3940,7 +3940,7 @@ by:
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)

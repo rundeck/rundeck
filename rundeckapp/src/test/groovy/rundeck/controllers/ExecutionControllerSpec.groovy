@@ -85,7 +85,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         when:
         def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireApi(_, _,14) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.renderErrorFormat(_, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
@@ -102,7 +102,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         when:
         def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireApi(_, _, 14) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('test') >> false
         1 * controller.apiService.requireExists(_, false,['Project','test'])>>false
         0 * controller.executionService.queryExecutions(*_)
@@ -156,7 +156,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         response.format = format
         def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireApi(_, _,14) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         0 * controller.apiService.renderErrorFormat(_, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
@@ -204,7 +204,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         null == query.startafterFilter
         null == query.startbeforeFilter
 
-        1 * controller.apiService.requireApi(_, _,14) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
@@ -236,7 +236,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         null == query.startafterFilter
         null == query.startbeforeFilter
 
-        1 * controller.apiService.requireApi(_, _,14) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
@@ -1135,7 +1135,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         when:
             controller."$endpoint"()
         then:
-            1 * controller.apiService.requireApi(_, _, ApiVersions.V14) >> true
+            1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.executionService.setExecutionsAreActive(active)
         where:
             active | endpoint

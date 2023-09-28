@@ -1493,7 +1493,7 @@ Since: v14""",
     protected def apiProjectAclsDelete_docs(){}
 
     def apiProjectAcls() {
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
@@ -1835,7 +1835,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFilePut() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
@@ -1985,7 +1985,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFileGet() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
@@ -2068,7 +2068,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             )
     )
     def apiProjectFileDelete() {
-        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def project = validateProjectConfigApiRequest()
