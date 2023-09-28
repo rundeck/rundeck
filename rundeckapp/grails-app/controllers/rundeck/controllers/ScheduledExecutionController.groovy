@@ -153,7 +153,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiFlipScheduleEnabled       : 'POST',
             apiFlipScheduleEnabledBulk   : 'POST',
             apiJobCreateSingle           : 'POST',
-            apiJobRun                    : ['POST', 'GET'],
+            apiJobRun                    : 'POST',
             apiJobFileUpload             : 'POST',
             apiJobsImportv14             : 'POST',
             apiJobDelete                 : 'DELETE',
@@ -4079,11 +4079,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         if (!apiService.requireApi(request, response)) {
             return
         }
-        //require POST for api v14
-        if (request.method == 'GET' && request.api_version >= ApiVersions.V14) {
-            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
-            return
-        }
+
         String jobid = params.id
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)

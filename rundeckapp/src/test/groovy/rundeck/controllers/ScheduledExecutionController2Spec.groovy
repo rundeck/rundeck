@@ -946,7 +946,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
     }
 
     public void testApiRunJob() {
-        when:
+        given:
         def sec = controller
         sec.response.format = "xml"
 
@@ -1017,6 +1017,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             assert 1==execs.size()
         }
         session.user='anonymous'
+        request.method='POST'
+        when:
         sec.apiJobRun()
 
         then:
@@ -1117,6 +1119,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             assert 1==execs.size()
             assert execs.contains(exec)
         }
+        request.method='POST'
 
         sec.apiJobRun()
     }
