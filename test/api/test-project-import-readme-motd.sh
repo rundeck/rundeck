@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#test GET /api/11/project/name/import
-#using API v13
-# use api V13
-API_VERSION=13
+#test GET /api/14/project/name/import
+#using API v14
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)

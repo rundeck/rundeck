@@ -1,16 +1,16 @@
 #!/bin/bash
 
-#test POST /api/11/storage/keys
-#using API v11, no xml result wrapper
+#test POST /api/14/storage/keys
+#using API v14, no xml result wrapper
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-echo "POST /api/11/storage/keys/key1.public"
+echo "POST /api/14/storage/keys/key1.public"
 
 ##
 # Post public key

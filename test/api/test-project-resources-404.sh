@@ -3,7 +3,7 @@
 #test get resources for non-existent project
 
 DIR=$(cd `dirname $0` && pwd)
-export API_VERSION=11 #/api/2/project/NAME/resources
+export API_VERSION=14
 source $DIR/include.sh
 
 file=$DIR/curl.out

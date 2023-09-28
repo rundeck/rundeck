@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #test result of /project/name metadata result
-#using API v11, no xml result wrapper
+#using API v14, no xml result wrapper
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)

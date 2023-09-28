@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test POST /api/11/projects
-#using API v11, JSON format
+#test POST /api/14/projects
+#using API v14, JSON format
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -19,7 +19,7 @@ fi
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: POST /api/11/projects"
+echo "TEST: POST /api/14/projects"
 
 test_proj="APICreateTest"
 

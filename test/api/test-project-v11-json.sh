@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #test result of /project/name JSON format
-#using API v11
+#using API v14
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh

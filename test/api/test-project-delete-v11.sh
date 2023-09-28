@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test DELETE /api/11/project/NAME
-#using API v11, no xml result wrapper
+#test DELETE /api/14/project/NAME
+#using API v14, no xml result wrapper
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -15,7 +15,7 @@ test_proj="APIDeleteTest"
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: DELETE /api/11/project/$test_proj"
+echo "TEST: DELETE /api/14/project/$test_proj"
 
 ##
 #SETUP: create project

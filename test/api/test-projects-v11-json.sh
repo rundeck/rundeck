@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #test /api/projects
-#using API v11, JSON format
+#using API v14, JSON format
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -20,7 +20,7 @@ fi
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: /api/11/projects "
+echo "TEST: /api/14/projects "
 
 # get listing
 docurl -H Accept:application/json ${runurl}?${params} > $DIR/curl.out
