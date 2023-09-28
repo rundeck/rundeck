@@ -28,7 +28,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
         }
-        withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT)
+        withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_RUNDECK_IMAGE", RUNDECK_IMAGE)
         withEnv("TEST_RUNDECK_URL", System.getProperty("TEST_RUNDECK_URL"))
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))

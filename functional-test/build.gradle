@@ -18,6 +18,7 @@ dependencies {
 }
 
 task apiTest(type: Test){
+    outputs.upToDateWhen { false }
     useJUnitPlatform()
     systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
@@ -28,6 +29,7 @@ task apiTest(type: Test){
 }
 
 task seleniumCoreTest(type: Test){
+    outputs.upToDateWhen { false }
     useJUnitPlatform()
     systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
