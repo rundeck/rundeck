@@ -228,34 +228,17 @@ class ExecutionUtilService {
                 } else {
                     args = new String[0];
                 }
-                if(filepath ==~ /^(?i:https?|file):.*$/) {
-                    return ExecutionItemFactory.createScriptURLItem(
-                            cmd.getScriptInterpreter(),
-                            cmd.getFileExtension(),
-                            !!cmd.interpreterArgsQuoted,
-                            filepath,
-                            args,
-                            handler,
-                            !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
-                    )
-                }else {
-                    //TODO: create a script-file node step item
-                    String config = cmd as JSON
-                    ObjectMapper mapper = new ObjectMapper()
-                    Map mapConfig = mapper.readValue(config, Map.class)
+                String config = cmd as JSON
+                ObjectMapper mapper = new ObjectMapper()
+                Map mapConfig = mapper.readValue(config, Map.class)
 
-                    return ExecutionItemFactory.createScriptFileItem(
-                            mapConfig,
-                            handler,
-                            !!cmd.keepgoingOnSuccess,
-                            null,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                    )
-
-                }
+                return ExecutionItemFactory.createScriptFileItem(
+                        mapConfig,
+                        handler,
+                        !!cmd.keepgoingOnSuccess,
+                        null,
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                )
             }else {
                 throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
