@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import spock.lang.Specification
@@ -175,9 +176,9 @@ class JobLifecycleComponentServiceSpec extends Specification{
             JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPersistEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', component: Mock(JobLifecycleComponent) {
+                    name: 'test', component: Mock(JobLifecyclePlugin) {
                 beforeSaveJob(_) >> {
-                    throw new JobLifecycleComponentException("oops")
+                    throw new JobLifecyclePluginException("oops")
                 }
             }
             )]
@@ -196,9 +197,9 @@ class JobLifecycleComponentServiceSpec extends Specification{
             JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPreExecutionEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', component: Mock(JobLifecycleComponent) {
+                    name: 'test', component: Mock(JobLifecyclePlugin) {
                 beforeJobExecution(_) >> {
-                    throw new JobLifecycleComponentException("oops")
+                    throw new JobLifecyclePluginException("oops")
                 }
             }
             )]
