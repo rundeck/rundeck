@@ -44,7 +44,7 @@ export default defineComponent({
   setup() {
     const items = ref<UIItem[]>([])
     const uiwatcher = ref<UIWatcher>()
-    const rootStore = getRundeckContext().rootStore
+    const rootStore = getRundeckContext()?.rootStore || null
     return {
       items,
       uiwatcher,
@@ -65,19 +65,23 @@ export default defineComponent({
   },
   methods: {
     loadItems() {
-      this.items = this.rootStore.ui.itemsForLocation(this.section, this.location).filter((a) => a.visible)
+      if(this.rootStore) {
+        this.items = this.rootStore.ui.itemsForLocation(this.section, this.location).filter((a) => a.visible)
+      }
     },
   },
   mounted() {
     this.loadItems()
-    this.uiwatcher = {
-      section: this.section,
-      location: this.location,
-      callback: (uiItems: UIItem[]) => {
-        this.items = uiItems
-      }
-    } as UIWatcher
-    this.rootStore.ui.addWatcher(this.uiwatcher)
+    if(this.rootStore) {
+      this.uiwatcher = {
+        section: this.section,
+        location: this.location,
+        callback: (uiItems: UIItem[]) => {
+          this.items = uiItems
+        }
+      } as UIWatcher
+      this.rootStore.ui.addWatcher(this.uiwatcher)
+    }
   },
   unmounted() {
     if (this.uiwatcher) {

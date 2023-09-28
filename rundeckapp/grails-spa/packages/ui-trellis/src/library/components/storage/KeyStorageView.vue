@@ -479,7 +479,25 @@ export default defineComponent({
 
         this.loading=false
       }).catch((err: Error) => {
-        this.errorMsg = err.message
+        try {
+          const jsonError = JSON.parse(err.message)
+
+          if(jsonError.message === "Error: Key browsing is not allowed in CCP mode.") {
+            // Generate sample key path string
+            const sampleKeyPath = this.rootPath.endsWith("/") ? `${this.rootPath}${this.path}` : `${this.rootPath}/${this.path}`
+
+            // Remove the Error prefix
+            const softenedMessage = jsonError.message.startsWith("Error: ") ? jsonError.message.substring("Error: ".length) : jsonError.message
+
+            this.errorMsg = `${softenedMessage} If you need to select a key, please type the path of the key with the prefix "${sampleKeyPath}" into the form field. E.g. ${sampleKeyPath}/path/to/the/key`
+          } else {
+            this.errorMsg = jsonError.message
+          }
+          
+        } catch (parseError) {
+          this.errorMsg = err.message
+        }
+
         this.loading=false
       });
     },

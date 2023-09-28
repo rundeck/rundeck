@@ -452,6 +452,7 @@ jobs:
     executor: gradle-docker
     steps:
       - checkout
+      - install-node
       - setup_remote_docker:
           version: 20.10.14
       - attach_workspace:

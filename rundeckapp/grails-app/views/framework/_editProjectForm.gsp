@@ -85,7 +85,7 @@
   </g:if>
     <div class="form-group ">
         <label for="label">
-            <g:message code="domain.Project.label.label" default="Label"/>
+            <g:message code="domain.Project.label.label" default="Project Display Name"/>
         </label>
         <g:textField name="label" size="50"  value="${projectLabel}" class="form-control"/>
     </div>
