@@ -230,33 +230,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
-        def apiv14=request.api_version>=ApiVersions.V14
+
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
-                def data=[
-                        execution: e,
-                        href: apiv14?apiService.apiHrefForExecution(e):apiService.guiHrefForExecution(e),
-                        status: getExecutionState(e),
-                        summary: summarizeJob(e.scheduledExecution, e)
-                ]
-                if(apiv14){
-                    data.permalink=apiService.guiHrefForExecution(e)
-                }
+            def data=[
+                    execution: e,
+                    href: apiService.apiHrefForExecution(e),
+                    status: getExecutionState(e),
+                    summary: summarizeJob(e.scheduledExecution, e),
+                    permalink: apiService.guiHrefForExecution(e)
+            ]
+
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
             }
-                if(e.retryExecution) {
-                    data.retryExecution = [
-                            id    : e.retryExecution.id,
-                            href  : apiv14 ? apiService.apiHrefForExecution(e.retryExecution) :
-                                    apiService.guiHrefForExecution(e.retryExecution),
-                            status: getExecutionState(e.retryExecution),
-                    ]
-                    if (apiv14) {
-                        data.retryExecution.permalink = apiService.guiHrefForExecution(e.retryExecution)
-                    }
-                }
-                data
-            }, paging)
+            if(e.retryExecution) {
+                data.retryExecution = [
+                        id    : e.retryExecution.id,
+                        href  : apiService.apiHrefForExecution(e.retryExecution),
+                        status: getExecutionState(e.retryExecution),
+                        permalink: apiService.guiHrefForExecution(e.retryExecution)
+                ]
+            }
+            data
+        }, paging)
     }
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
