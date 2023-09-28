@@ -4566,19 +4566,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         name:"command",
                         title:"Command",
                         description:"Run a command on the remote node",
-                        order: 0
+                        order: 0,
+                        iconClass: "rdicon icon-small command"
                 ],
                 [
                         name:"script",
                         title: "Script",
                         description: "Run a script on the remote node",
-                        order: 1
+                        order: 1,
+                        iconClass: "rdicon icon-small script"
                 ],
                 [
                         name: "job",
                         title: "Job Reference",
                         description: "Run a job on the remote node",
-                        order: 3
+                        order: 3,
+                        iconClass: "glyphicon glyphicon-book"
                 ]
         ].collect {new BuiltInPluginDescription(it)}
     }
@@ -4704,6 +4707,8 @@ class BuiltInPluginDescription implements Description{
     Map<String, String> propertiesMapping
     Map<String, String> fwkPropertiesMapping
     int order
+
+    String iconClass
 
     @Override
     boolean isHighlighted() {
