@@ -27,8 +27,7 @@ class ScriptNodeStepPlugin implements NodeStepPlugin, ScriptCommand  {
     @RenderingOptions(
             [
                     @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = 'CODE'),
-                    @RenderingOption(key = 'codeSyntaxMode', value = 'sh'),
-                    @RenderingOption(key = 'codeSyntaxSelectable', value = 'true'),
+                    @RenderingOption(key = 'codeSyntaxMode', value = 'sh')
             ]
     )
     String adhocLocalString
@@ -60,6 +59,7 @@ class ScriptNodeStepPlugin implements NodeStepPlugin, ScriptCommand  {
                 interpreterArgsQuoted,
                 fileExtension,
                 argString,
+                null,
                 adhocLocalString,
                 true
         );
