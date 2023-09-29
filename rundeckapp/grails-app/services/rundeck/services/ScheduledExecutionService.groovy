@@ -4495,7 +4495,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def nodeStepTypesHighlighted = frameworkService.getNodeStepPluginDescriptions()?.findAll{
             !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep) && it.isHighlighted()
-        } + BuiltInPluginDescription.builtInPlugins
+        } + getBuiltInPlugins()
 
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
             !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
@@ -4558,6 +4558,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return model
 
     }
+
+    List<Description> getBuiltInPlugins(){
+        //TODO: remove this method after all builtin plugins is migrated to a true plugin.
+        return [
+//                [
+//                        name:"command",
+//                        title:"Command",
+//                        description:"Run a command on the remote node",
+//                        order: 0,
+//                        iconClass: "rdicon icon-small command"
+//                ],
+//                [
+//                        name:"script",
+//                        title: "Script",
+//                        description: "Run a script on the remote node",
+//                        order: 1,
+//                        iconClass: "rdicon icon-small script"
+//                ],
+                [
+                        name: "job",
+                        title: "Job Reference",
+                        description: "Run a job on the remote node",
+                        order: 3,
+                        iconClass: "rdicon icon-small command"
+                ]
+        ].collect {new BuiltInPluginDescription(it)}
+    }
+
 
     JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
         JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
@@ -4690,32 +4718,5 @@ class BuiltInPluginDescription implements Description{
     @Override
     boolean isBuiltInPlugin() {
         return true
-    }
-
-    static List<Description> getBuiltInPlugins(){
-        //TODO: remove this method after all builtin plugins is migrated to a true plugin.
-        return [
-                [
-                        name:"command",
-                        title:"Command",
-                        description:"Run a command on the remote node",
-                        order: 0,
-                        iconClass: "rdicon icon-small command"
-                ],
-                [
-                        name:"script",
-                        title: "Script",
-                        description: "Run a script on the remote node",
-                        order: 1,
-                        iconClass: "rdicon icon-small script"
-                ],
-                [
-                        name: "job",
-                        title: "Job Reference",
-                        description: "Run a job on the remote node",
-                        order: 3,
-                        iconClass: "glyphicon glyphicon-book"
-                ]
-        ].collect {new BuiltInPluginDescription(it)}
     }
 }
