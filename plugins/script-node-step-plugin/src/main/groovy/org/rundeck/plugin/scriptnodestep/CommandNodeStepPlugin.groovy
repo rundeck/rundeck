@@ -11,7 +11,7 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = CommandNodeStepPlugin.EXEC_COMMAND_TYPE)
-@PluginDescription(title = "Script", description = "Run a script on the remote node", isHighlighted = true, order = 0)
+@PluginDescription(title = "Command", description = "Run a command on the remote node", isHighlighted = true, order = 0)
 class CommandNodeStepPlugin implements NodeStepPlugin, ExecCommand {
 
     @PluginProperty(title = "Command",

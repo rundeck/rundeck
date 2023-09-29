@@ -4,7 +4,7 @@ plugins {
 
 apply from: "../../gradle/java-version.gradle"
 
-ext.pluginClassNames='org.rundeck.plugin.scriptnodestep.ScriptFileNodeStepPlugin,org.rundeck.plugin.scriptnodestep.ScriptURLNodeStepPlugin'
+ext.pluginClassNames='org.rundeck.plugin.scriptnodestep.ScriptFileNodeStepPlugin,org.rundeck.plugin.scriptnodestep.ScriptNodeStepPlugin,org.rundeck.plugin.scriptnodestep.CommandNodeStepPlugin'
 ext.pluginName = 'Script Node Step Plugin'
 ext.pluginDescription = 'Runs a script file from path or remote URL on a node'
 

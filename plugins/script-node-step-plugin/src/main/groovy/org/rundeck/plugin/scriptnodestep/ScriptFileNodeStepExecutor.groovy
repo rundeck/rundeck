@@ -14,16 +14,26 @@ public class ScriptFileNodeStepExecutor {
     private final String fileExtension;
     private final String argString;
     private final String adhocFilepath;
+    private final String adhocLocalString;
     private final boolean expandTokenInScriptFile;
 
     private final DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
-    public ScriptFileNodeStepExecutor(String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath, boolean expandTokenInScriptFile) {
+public ScriptFileNodeStepExecutor(
+            String scriptInterpreter,
+            Boolean interpreterArgsQuoted,
+            String fileExtension,
+            String argString,
+            String adhocFilepath,
+            String adhocLocalString,
+            boolean expandTokenInScriptFile
+    ) {
         this.scriptInterpreter = scriptInterpreter;
         this.interpreterArgsQuoted = interpreterArgsQuoted;
         this.fileExtension = fileExtension;
         this.argString = argString;
         this.adhocFilepath = adhocFilepath;
+        this.adhocLocalString = adhocLocalString;
         this.expandTokenInScriptFile = expandTokenInScriptFile;
     }
 
