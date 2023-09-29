@@ -30,7 +30,8 @@ class ScriptURLNodeStepExecutor {
     private final Boolean interpreterArgsQuoted;
     private final String fileExtension;
     private final String argString;
-    private final String adhocFilepath;;
+    private final String adhocFilepath;
+    private final boolean expandTokenInScriptFile;
 
 
     private DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
@@ -40,12 +41,13 @@ class ScriptURLNodeStepExecutor {
     private static final boolean USE_CACHE = true;
     public static final String UTF_8 = "UTF-8";
 
-    ScriptURLNodeStepExecutor(String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath) {
+    ScriptURLNodeStepExecutor(String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath, Boolean expandTokenInScriptFile) {
         this.scriptInterpreter = scriptInterpreter
         this.interpreterArgsQuoted = interpreterArgsQuoted
         this.fileExtension = fileExtension
         this.argString = argString
         this.adhocFilepath = adhocFilepath
+        this.expandTokenInScriptFile = expandTokenInScriptFile
     }
 
     public void executeScriptURL(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) {
@@ -63,6 +65,10 @@ class ScriptURLNodeStepExecutor {
             args = OptsUtil.burst(argString);
         } else {
             args = new String[0];
+        }
+
+        if(expandTokens) {
+            expandTokens = expandTokenInScriptFile;
         }
 
         scriptUtils.executeScriptFile(

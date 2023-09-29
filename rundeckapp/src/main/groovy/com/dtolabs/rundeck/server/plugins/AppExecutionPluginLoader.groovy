@@ -137,9 +137,9 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, String project)
         throws ExecutionServiceException {
         //predefined/registered from core classes
-        if (NodeStepExecutionService.isRegistered(item.nodeStepType, rundeckPluginBlocklist)) {
-            return frameworkProviders.getNodeStepExecutorForItem(item, project);
-        }
+//        if (NodeStepExecutionService.isRegistered(item.nodeStepType, rundeckPluginBlocklist)) {
+//            return frameworkProviders.getNodeStepExecutorForItem(item, project);
+//        }
         Map<String, Object> config = new HashMap<>()
         if (item instanceof ConfiguredStepExecutionItem) {
             config = ((ConfiguredStepExecutionItem) item).stepConfiguration

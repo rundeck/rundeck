@@ -44,8 +44,6 @@ import java.util.Map;
  */
 public class ExecutionItemFactory {
 
-    public static final String SCRIPT_FILE_NODE_STEP_PLUGIN_TYPE = "script-file-node-step-plugin";
-
     public static StepExecutionItem createScriptFileItem(
             final String scriptInterpreter,
             final String fileExtension,
