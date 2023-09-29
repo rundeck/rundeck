@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.execution;
 
+import com.dtolabs.rundeck.core.execution.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
@@ -121,6 +122,7 @@ public class ExecutionItemFactory {
     }
 
     public static StepExecutionItem createScriptFileItem(
+            final String type,
             final Map configuration,
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
@@ -128,7 +130,7 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigs
     ){
         return ExecutionItemFactory.createPluginNodeStepItem(
-                SCRIPT_FILE_NODE_STEP_PLUGIN_TYPE,
+                type,
                 configuration,
                 keepgoingOnSuccess,
                 handler,

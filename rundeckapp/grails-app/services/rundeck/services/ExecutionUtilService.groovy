@@ -18,6 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
+import com.dtolabs.rundeck.core.execution.ExecCommand
+import com.dtolabs.rundeck.core.execution.ScriptCommand
+import com.dtolabs.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -185,63 +188,29 @@ class ExecutionUtilService {
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd= step as CommandExec
+            String type
             if (null != cmd.getAdhocRemoteString()) {
-
-                final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
-                final String[] args = strings.toArray(new String[strings.size()]);
-
-                return ExecutionItemFactory.createExecCommand(
-                        args,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
+                type = ExecCommand.EXEC_COMMAND_TYPE
             } else if (null != cmd.getAdhocLocalString()) {
-                final String script = cmd.getAdhocLocalString();
-                final String[] args;
-                if (null != cmd.getArgString()) {
-                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
-                    args = strings.toArray(new String[strings.size()]);
-                } else {
-                    args = new String[0];
-                }
-                //TODO: create a script node step item
-                return ExecutionItemFactory.createScriptFileItem(
-                        cmd.getScriptInterpreter(),
-                        cmd.getFileExtension(),
-                        !!cmd.interpreterArgsQuoted,
-                        script,
-                        args,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
-
+                type = ScriptCommand.SCRIPT_COMMAND_TYPE;
             } else if (null != cmd.getAdhocFilepath()) {
-                final String filepath = cmd.getAdhocFilepath();
-                final String[] args;
-                if (null != cmd.getArgString()) {
-                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
-                    args = strings.toArray(new String[strings.size()]);
-                } else {
-                    args = new String[0];
-                }
-                String config = cmd as JSON
-                ObjectMapper mapper = new ObjectMapper()
-                Map mapConfig = mapper.readValue(config, Map.class)
-
-                return ExecutionItemFactory.createScriptFileItem(
-                        mapConfig,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        null,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                )
+                type = ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE;
             }else {
                 throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
+
+            String config = cmd as JSON
+            ObjectMapper mapper = new ObjectMapper()
+            Map mapConfig = mapper.readValue(config, Map.class)
+
+            return ExecutionItemFactory.createScriptFileItem(
+                    type,
+                    mapConfig,
+                    handler,
+                    !!cmd.keepgoingOnSuccess,
+                    null,
+                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+            )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
 
