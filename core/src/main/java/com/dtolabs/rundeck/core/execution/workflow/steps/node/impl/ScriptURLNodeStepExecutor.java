@@ -114,33 +114,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
             final INodeEntry node
     ) throws NodeStepException
     {
-        final ScriptURLCommandExecutionItem script = (ScriptURLCommandExecutionItem) item;
-        File destinationTempFile = downloadURLToTempFile(context, node, script);
-        if (!USE_CACHE) {
-            destinationTempFile.deleteOnExit();
-        }
-        boolean expandTokens = true;
-        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
-            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
-        }
-        
-        if(expandTokens) {
-            expandTokens = script.isExpandTokenInScriptFile();
-        }
-
-        return scriptUtils.executeScriptFile(
-                context,
-                node,
-                null,
-                destinationTempFile.getAbsolutePath(),
-                null,
-                script.getFileExtension(),
-                script.getArgs(),
-                script.getScriptInterpreter(),
-                script.getInterpreterArgsQuoted(),
-                framework.getExecutionService(),
-                expandTokens
-        );
+        return null;
     }
 
     private File downloadURLToTempFile(
