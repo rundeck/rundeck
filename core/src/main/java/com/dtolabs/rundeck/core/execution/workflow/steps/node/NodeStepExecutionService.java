@@ -67,7 +67,6 @@ public class NodeStepExecutionService
 
     static {
         Map<String, Class<? extends NodeStepExecutor>> map = new HashMap<>();
-        map.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
     }
 
@@ -135,14 +134,14 @@ public class NodeStepExecutionService
         this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
     }
 
-    public static boolean isRegistered(String provider){
-        return PRESET_PROVIDERS.containsKey(provider);
-    }
+//    public static boolean isRegistered(String provider){
+//        return PRESET_PROVIDERS.containsKey(provider);
+//    }
 
     public static boolean isRegistered(String provider, PluginBlocklist blocklist){
-        if(!blocklist.isPluginProviderPresent(SERVICE_NAME, provider)){
-            return isRegistered(provider);
-        }
+//        if(!blocklist.isPluginProviderPresent(SERVICE_NAME, provider)){
+//            return isRegistered(provider);
+//        }
         return false;
     }
 
