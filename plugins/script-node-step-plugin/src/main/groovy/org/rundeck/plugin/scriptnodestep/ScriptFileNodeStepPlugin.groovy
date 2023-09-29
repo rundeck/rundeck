@@ -103,6 +103,7 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
                     fileExtension,
                     argString,
                     adhocFilepath,
+                    null,
                     expandTokenInScriptFile
             );
 
