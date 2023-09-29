@@ -91,7 +91,8 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
                     interpreterArgsQuoted,
                     fileExtension,
                     argString,
-                    adhocFilepath
+                    adhocFilepath,
+                    expandTokenInScriptFile
             );
 
             scriptURLNodeStepExecutor.executeScriptURL(context, configuration, entry);

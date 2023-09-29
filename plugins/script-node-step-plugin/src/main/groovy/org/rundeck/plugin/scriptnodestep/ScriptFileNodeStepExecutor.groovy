@@ -47,7 +47,7 @@ public ScriptFileNodeStepExecutor(
         }
 
         String expandedVarsInURL = SharedDataContextUtils.replaceDataReferences(
-                adhocFilepath,
+                adhocFilepath ?: "",
                 context.getExecutionContext().getSharedDataContext(),
                 //add node name to qualifier to read node-data first
                 ContextView.node(entry.getNodename()),
@@ -73,7 +73,7 @@ public ScriptFileNodeStepExecutor(
         scriptUtils.executeScriptFile(
                 context.getExecutionContext(),
                 entry,
-                null,
+                this.adhocLocalString,
                 expandedVarsInURL,
                 null,
                 fileExtension,
