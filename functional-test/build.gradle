@@ -17,8 +17,15 @@ dependencies {
     testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
 }
 
+//This prevents tasks from being cached
+gradle.taskGraph.whenReady { taskGraph ->
+    def tasks = taskGraph.getAllTasks()
+    tasks.each {
+        it.outputs.upToDateWhen { false }
+    }
+}
+
 task apiTest(type: Test){
-    outputs.upToDateWhen { false }
     useJUnitPlatform()
     systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
@@ -29,7 +36,6 @@ task apiTest(type: Test){
 }
 
 task seleniumCoreTest(type: Test){
-    outputs.upToDateWhen { false }
     useJUnitPlatform()
     systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
