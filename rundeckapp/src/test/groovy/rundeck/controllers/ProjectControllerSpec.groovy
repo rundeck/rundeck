@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
@@ -73,6 +74,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         session.subject = new Subject()
         controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
         controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+        controller.featureService = Mock(FeatureService)
     }
     private void setupAuthExport(
         boolean auth = true,
@@ -861,34 +863,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.contentType=='text/plain'
     }
-    def "project file GET xml format"(String filename,String text){
-        given:
-        controller.frameworkService=Mock(FrameworkService)
-
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderSuccessXml(_,_,_) >> text
-        }
-        setupAuthConfigure(true,true,'test',Mock(IRundeckProject){
-            1 * existsFileResource(filename) >> true
-            1 * loadFileResource(filename,!null)
-        })
-        request.api_version=11
-        when:
-        params.filename=filename
-        params.project="test"
-        def result=controller.apiProjectFileGet()
-
-        then:
-        result==text
-
-        where:
-        filename    | text
-        'readme.md' | 'test'
-        'motd.md'   | 'test2'
-    }
     def "project file GET json format"(String filename,String text){
         setup:
         controller.frameworkService=Mock(FrameworkService)
@@ -1015,45 +989,14 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         'readme.md' | 'test'
         'motd.md'   | 'test2'
     }
-    def "project file PUT xml"(String filename,String text){
-        given:
-        controller.frameworkService=Mock(FrameworkService)
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(*_) >> 'xml'
-            1 * parseJsonXmlWith(_,_,_) >> {args->
-                args[2].xml.call(args[0].XML)
-                true
-            }
-        }
-        setupAuthProjectFilePut(filename,text)
-        request.api_version=11
-        when:
-        params.filename=filename
-        params.project="test"
-        request.method='PUT'
-        request.format='xml'
-        request.content=('<contents>'+text+'</contents>').bytes
-
-        def result=controller.apiProjectFilePut()
-
-        then:
-        response.status==200
-
-        where:
-        filename    | text
-        'readme.md' | 'test'
-        'motd.md'   | 'test2'
-    }
     def "project file PUT text"(String filename,String text){
         given:
         controller.frameworkService=Mock(FrameworkService)
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_) >> true
             1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(*_) >> 'xml'
-            1 * renderSuccessXml(*_)
+            1 * extractResponseFormat(*_) >> 'json'
+            0 * renderSuccessXml(*_)
 
         }
         setupAuthProjectFilePut(filename,text)
@@ -1859,7 +1802,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
                 1 * requireRequestFormat(_, _, _) >> true
-                1 * extractResponseFormat(_, _, _, _) >> 'json'
+                _ * extractResponseFormat(_, _, _, _) >> 'json'
             }
 
             params.project="test"
@@ -1879,72 +1822,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             response.json.import_status=='failed'
             response.json.successful==false
             response.json.other_errors==['err1','err2']
-    }
-
-    def "api v35 import archive webhooks error has detail response xml"(){
-        setup:
-
-            setupGetResource()
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubjectAndProject(_,'test') >> null
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * getRundeckFramework() >> null
-
-                0 * _(*_)
-            }
-            controller.projectService=Mock(ProjectService){
-                1*importToProject(_,_,_,_, {
-                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                }
-                ) >> [success: false, importerErrors: ['err1', 'err2'], joberrors:[]]
-
-                0 * _(*_)
-            }
-            controller.apiService=Mock(ApiService){
-                1 * requireApi(_, _) >> true
-                1 * requireRequestFormat(_, _, _) >> true
-                1 * extractResponseFormat(_, _, _, _) >> 'xml'
-                1 * renderSuccessXml(_, _, _) >> { args ->
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
-                    def response = args[1]
-                    def recall = args[2]
-                    xml.with {
-                        recall.delegate = delegate
-                        recall.resolveStrategy = Closure.DELEGATE_FIRST
-                        recall()
-                    }
-                    def xmlstr = writer.toString()
-                    response.setContentType('application/xml')
-                    response.setCharacterEncoding('UTF-8')
-                    def out = response.outputStream
-                    out << xmlstr
-                    out.flush()
-                }
-            }
-
-            params.project="test"
-            params.importWebhooks='true'
-            response.format='xml'
-            request.method='PUT'
-
-            request.content='test'.bytes
-            request.api_version=35
-        when:
-
-            def result=controller.apiProjectImport()
-
-        then:
-            response.status==200
-            response.contentType.contains 'application/xml'
-            response.xml.@status=='failed'
-            response.xml.@successful==false
-            response.xml.otherErrors.@count=='2'
-            response.xml.otherErrors.size()==1
-            response.xml.otherErrors[0].error.size()==2
-            response.xml.otherErrors[0].error[0].text()=='err1'
-            response.xml.otherErrors[0].error[1].text()=='err2'
     }
 
 
@@ -2454,7 +2331,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             response.status == 200
             1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
-            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'json') >> 'json'
             1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
             1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
                 req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
@@ -2484,7 +2361,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test') >> auth
             1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
-            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework)
             1 * controller.projectService.importToProject(
                 project, _, auth, _, { ProjectArchiveImportRequest req ->

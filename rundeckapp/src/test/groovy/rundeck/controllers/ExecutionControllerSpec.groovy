@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -75,6 +76,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         mockCodec(JSONCodec)
         controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
         controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+        controller.featureService = Mock(FeatureService)
     }
     def "api execution query no project"() {
         setup:
@@ -677,166 +679,6 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         json.entries[2] == [:]
         json.entries[3] == [log: 'message3', stepctx: '1', level: 'DEBUG']
         json.entries[4] == [log: 'message4', stepctx: null]
-
-    }
-    /**
-     * compacted=true, the log entries returned will include only the changed
-     * attributes, and if only the "log" is changed, will produce only a string instead of a map.
-     * an empty map means the same entries as previously, an null map entry means remove the previous
-     * value.
-     * @return
-     */
-    def "api execution output compacted xml"() {
-        given:
-
-        def assetTaglib = mockTagLib(UtilityTagLib)
-        Execution e1 = new Execution(
-                project: 'test1',
-                user: 'bob',
-                dateStarted: new Date(),
-                dateEnded: new Date(),
-                status: 'successful'
-
-        )
-        e1.save() != null
-        controller.loggingService = Mock(LoggingService)
-        controller.configurationService = Mock(ConfigurationService)
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * isClusterModeEnabled()
-            1 * isFrameworkProjectDisabled(_) >> false
-            _ * getServerUUID()
-            0 * _(*_)
-        }
-
-        controller.apiService = Mock(ApiService) {
-            requireApi(*_) >> true
-            renderSuccessXml(_, _, _) >> { args ->
-                def writer = new StringWriter()
-                def xml = new MarkupBuilder(writer)
-                def response = args[1]
-                def recall = args[2]
-                xml.with {
-                    recall.delegate = delegate
-                    recall.resolveStrategy = Closure.DELEGATE_FIRST
-                    recall()
-                }
-                def xmlstr = writer.toString()
-                response.setContentType('application/xml')
-                response.setCharacterEncoding('UTF-8')
-                def out = response.outputStream
-                out << xmlstr
-                out.flush()
-            }
-            0 * _(*_)
-        }
-        session.subject = new Subject()
-        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
-            1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
-
-            }
-        }
-        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
-        def date1 = new Date(90000000)
-        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
-        sdf.timeZone=TimeZone.getTimeZone('GMT')
-        def abstime=sdf.format(date1)
-        def sdf2=new SimpleDateFormat('HH:mm:ss')
-//        sdf2.timeZone=TimeZone.getTimeZone('GMT')
-        def timestr=sdf2.format(date1)
-        reader.reader = new TestReader(logs:
-                                               [
-                                                       new DefaultLogEvent(
-                                                               eventType: LogUtil.EVENT_TYPE_LOG,
-                                                               datetime: date1,
-                                                               message: 'message1',
-                                                               metadata: [:],
-                                                               loglevel: LogLevel.NORMAL
-                                                       ),
-                                                       new DefaultLogEvent(
-                                                               eventType: LogUtil.EVENT_TYPE_LOG,
-                                                               datetime: date1,
-                                                               message: 'message2',
-                                                               metadata: [:],
-                                                               loglevel: LogLevel.NORMAL
-                                                       ),
-                                                       new DefaultLogEvent(
-                                                               eventType: LogUtil.EVENT_TYPE_LOG,
-                                                               datetime: date1,
-                                                               message: 'message2',
-                                                               metadata: [:],
-                                                               loglevel: LogLevel.NORMAL
-                                                       ),
-                                                       new DefaultLogEvent(
-                                                               eventType: LogUtil.EVENT_TYPE_LOG,
-                                                               datetime: date1,
-                                                               message: 'message3',
-                                                               metadata: [stepctx: '1'],
-                                                               loglevel: LogLevel.DEBUG
-                                                       ),
-                                                       new DefaultLogEvent(
-                                                               eventType: LogUtil.EVENT_TYPE_LOG,
-                                                               datetime: date1,
-                                                               message: 'message4',
-                                                               metadata: [:],
-                                                               loglevel: LogLevel.DEBUG
-                                                       ),
-                                               ]
-        )
-        when:
-        params.id = e1.id.toString()
-        params.compacted = 'true'
-        request.api_version = 21
-        response.format = 'xml'
-        controller.apiExecutionOutput()
-        def xml = response.xml
-        then:
-        1 * controller.loggingService.getLogReader(e1) >> reader
-        xml != null
-        xml.compacted.text() == 'true'
-        xml.entries.entry.size() == 5
-
-        xml.entries.entry[0]."@absolute_time".text() == abstime
-        xml.entries.entry[0]."@log".text() == 'message1'
-        xml.entries.entry[0]."@level".text() == 'NORMAL'
-        xml.entries.entry[0]."@time".text() == timestr
-        xml.entries.entry[0]."@time".size() == 1
-        xml.entries.entry[0]."@node".size() == 0
-        xml.entries.entry[0]."@stepctx".size() == 0
-        xml.entries.entry[0]."@removed".size() == 0
-
-        xml.entries.entry[1]."@absolute_time".size() == 0
-        xml.entries.entry[1]."@log".text() == 'message2'
-        xml.entries.entry[1]."@level".size() == 0
-        xml.entries.entry[1]."@time".size() == 0
-        xml.entries.entry[1]."@node".size() == 0
-        xml.entries.entry[1]."@stepctx".size() == 0
-        xml.entries.entry[0]."@removed".size() == 0
-
-        xml.entries.entry[2]."@absolute_time".size() == 0
-        xml.entries.entry[2]."@log".size() == 0
-        xml.entries.entry[2]."@level".size() == 0
-        xml.entries.entry[2]."@time".size() == 0
-        xml.entries.entry[2]."@node".size() == 0
-        xml.entries.entry[2]."@stepctx".size() == 0
-        xml.entries.entry[0]."@removed".size() == 0
-
-
-        xml.entries.entry[3]."@absolute_time"
-        xml.entries.entry[3]."@log".text() == 'message3'
-        xml.entries.entry[3]."@level".text() == 'DEBUG'
-        xml.entries.entry[3]."@time".size() == 0
-        xml.entries.entry[3]."@node".size() == 0
-        xml.entries.entry[3]."@stepctx".text() == '1'
-        xml.entries.entry[3]."@removed".size() == 0
-
-        xml.entries.entry[4]."@absolute_time".size() == 0
-        xml.entries.entry[4]."@log".text() == 'message4'
-        xml.entries.entry[4]."@level".size() == 0
-        xml.entries.entry[4]."@time".size() == 0
-        xml.entries.entry[4]."@node".size() == 0
-        xml.entries.entry[4]."@stepctx".size() == 0
-        xml.entries.entry[4]."@removed".text() == 'stepctx'
 
     }
 
