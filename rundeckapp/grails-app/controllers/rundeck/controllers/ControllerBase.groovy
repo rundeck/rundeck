@@ -17,6 +17,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
@@ -52,6 +54,7 @@ class ControllerBase {
     AppAuthorizer rundeckAppAuthorizer
     WebExceptionHandler rundeckExceptionHandler
     WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
+    FeatureService featureService
     def grailsApplication
 
     protected UserAndRolesAuthContext getSystemAuthContext(){
@@ -138,6 +141,10 @@ class ControllerBase {
      */
     protected AuthorizingProjectType getAuthorizingProjectType(String project, String type) {
         rundeckAppAuthorizer.projectType(subject,project, type)
+    }
+
+    boolean isAllowXml(){
+        return featureService.featurePresent(Features.LEGACY_XML, false)
     }
 
     protected int getApiVersion(){

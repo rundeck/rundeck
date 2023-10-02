@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -1532,9 +1534,6 @@ JSON response requires API v14.
         def apiError = { String code, List args, int status = 0 ->
             def message=code?g.message(code:code,args:args):'Unknown error'
             withFormat {
-                xml {
-                    apiService.renderErrorXml(response,[code:code,args:args,status:status])
-                }
                 json {
                     if (status > 0) {
                         response.setStatus(status)
@@ -1552,6 +1551,11 @@ JSON response requires API v14.
                         response.setStatus(status)
                     }
                     render(contentType: "text/plain", text: message)
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderErrorXml(response, [code: code, args: args, status: status])
+                    }
                 }
             }
         }
@@ -1619,10 +1623,12 @@ JSON response requires API v14.
                 dataMap.message=errmsg
             }
             withFormat {
-                xml {
-                    apiService.renderSuccessXml(request,response) {
-                        output{
-                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
                         }
                     }
                 }
@@ -1665,10 +1671,12 @@ JSON response requires API v14.
                     retryBackoff  : reader.retryBackoff
             ] + clusterInfo
             withFormat {
-                xml {
-                    apiService.renderSuccessXml(request,response) {
-                        output {
-                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
                         }
                     }
                 }
@@ -1753,10 +1761,13 @@ JSON response requires API v14.
                 ] + clusterInfo
 
                 withFormat {
-                    xml {
-                        apiService.renderSuccessXml(request,response) {
-                            output {
-                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+
+                    if(isAllowXml()) {
+                        xml {
+                            apiService.renderSuccessXml(request, response) {
+                                output {
+                                    renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                                }
                             }
                         }
                     }
@@ -1946,11 +1957,14 @@ JSON response requires API v14.
                 retryBackoff      : reader.retryBackoff,
                 compacted         : compacted
         ] + clusterInfo
+
         withFormat {
-            xml {
-                apiService.renderSuccessXml(request,response) {
-                    output {
-                        renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        output {
+                            renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
+                        }
                     }
                 }
             }
@@ -2477,14 +2491,16 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
                 }else {
                     errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: loader.errorCode, args: loader.errorData]
                 }
-                    withFormat {
-                        json {
-                            return apiService.renderErrorJson(response, errormap)
-                        }
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errormap)
+                    }
+                    if(isAllowXml()) {
                         xml {
                             return apiService.renderErrorXml(response, errormap)
                         }
                     }
+                }
                 return
             }
         }
@@ -2679,12 +2695,14 @@ Authorization required:
         }
 
         withFormat{
-            xml{
-                apiService.renderSuccessXml(request,response) {
-                    abort(reportstate) {
-                        execution(id: params.id, status: abortresult.jobstate,
-                                  href:apiService.apiHrefForExecution(e),
-                                  permalink: apiService.guiHrefForExecution(e))
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        abort(reportstate) {
+                            execution(id: params.id, status: abortresult.jobstate,
+                                    href: apiService.apiHrefForExecution(e),
+                                    permalink: apiService.guiHrefForExecution(e))
+                        }
                     }
                 }
             }
