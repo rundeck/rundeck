@@ -47,6 +47,7 @@ ext.coreGrailsPlugins = [
     ':grails-webhooks',
     ':grails-execution-mode-timer',
     ':grails-rundeck-data-shared',
+    ':grails-job-kill-handler'
 ]
 
 if(!project.findProperty('isRunning')) {
