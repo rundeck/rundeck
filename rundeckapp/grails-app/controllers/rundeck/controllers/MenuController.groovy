@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -74,7 +75,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
-import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -98,7 +98,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
-    FeatureService featureService
     StorageService storageService
 
     def configurationService
@@ -388,7 +387,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
@@ -2596,12 +2595,14 @@ Fields:
                     }
                 }
             }
-            xml {
+            if(isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
-                        for (String name : propnames) {
-                            delegate."${name}"(data[name])
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                            for (String name : propnames) {
+                                delegate."${name}"(data[name])
+                            }
                         }
                     }
                 }
@@ -2745,29 +2746,31 @@ Since: V17''',
                     }
                 }
             }
-            xml{
-                apiService.renderSuccessXml (request,response) {
-                    logstorage {
-                        incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
-                            list.each { LogFileStorageRequest req ->
-                                def data=exportRequestMap(
-                                        req,
-                                        queuedIds.contains(req.id),
-                                        failedIds.contains(req.id),
-                                        failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
-                                )
-                                execution(id:data.executionId,project:data.project,href:data.href,permalink:data.permalink){
-                                    delegate.'storage'(
-                                            incompleteFiletypes:data.filetype,
-                                            queued:data.queued,
-                                            failed:data.failed,
-                                            date: apiService.w3cDateValue(req.dateCreated),
-                                            localFilesPresent:data.localFilesPresent,
-                                    ) {
-                                        if(data.messages){
-                                            delegate.'errors' {
-                                                data.messages.each {
-                                                    delegate.'message'(it)
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        logstorage {
+                            incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
+                                list.each { LogFileStorageRequest req ->
+                                    def data = exportRequestMap(
+                                            req,
+                                            queuedIds.contains(req.id),
+                                            failedIds.contains(req.id),
+                                            failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                                    )
+                                    execution(id: data.executionId, project: data.project, href: data.href, permalink: data.permalink) {
+                                        delegate.'storage'(
+                                                incompleteFiletypes: data.filetype,
+                                                queued: data.queued,
+                                                failed: data.failed,
+                                                date: apiService.w3cDateValue(req.dateCreated),
+                                                localFilesPresent: data.localFilesPresent,
+                                        ) {
+                                            if (data.messages) {
+                                                delegate.'errors' {
+                                                    data.messages.each {
+                                                        delegate.'message'(it)
+                                                    }
                                                 }
                                             }
                                         }
@@ -2815,10 +2818,12 @@ Since: V17''',
                     resumed=true
                 }
             }
-            xml {
+            if(isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(resumed:true)
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(resumed: true)
+                    }
                 }
             }
         }
@@ -3121,7 +3126,10 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             respond(
                     data,
-                    [formats: ['xml', 'json']]
+                    [formats: isAllowXml()?
+                            ['xml', 'json']:
+                            ['json']
+                    ]
             )
             return
         }
@@ -3151,8 +3159,10 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            xml xmlresponse
-            json {
+            if(isAllowXml()) {
+                xml xmlresponse
+            }
+            def jsonresp= {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
                         def jobparams = [id         : se.extid,
@@ -3175,7 +3185,8 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            '*' xmlresponse
+            json jsonresp
+            '*' jsonresp
         }
     }
     @Get(uri='/scheduler/jobs')
@@ -3477,7 +3488,7 @@ Since: v14
         }
 
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         def supportedFormats = ['all', 'xml', 'yaml', 'html']
@@ -3505,7 +3516,8 @@ Since: v14
         }
         //don't load scm status for api response
         def results = jobsFragment(query,JobsScmInfo.NONE)
-        def defaultFormat = 'xml'//TODO: use json default in 5.0
+        def defaultFormat = 'json'
+        //NOTE: XML is supported for job export
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',

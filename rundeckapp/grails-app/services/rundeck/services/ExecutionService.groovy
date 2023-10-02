@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -103,6 +104,7 @@ import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.execution.ThresholdValue
+import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -152,6 +154,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def rundeckNodeService
     def grailsApplication
     def configurationService
+    FeatureService featureService
     def executionUtilService
     ExecutionValidator executionValidatorService
     def fileUploadService
@@ -287,22 +290,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     def renderBulkExecutionDeleteResult(request, response, result) {
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def respFormat = 'json'
+
+        if(featureService.featurePresent(Features.LEGACY_XML, false)) {
+             respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
+        }
         def total = result.successTotal + result.failures.size()
         switch (respFormat) {
-            case 'json':
-                return apiService.renderSuccessJson(response) {
-                    requestCount = total
-                    allsuccessful = result.successTotal == total
-                    successCount = result.successTotal
-                    failedCount = result.failures ? result.failures.size() : 0
-                    if (result.failures) {
-                        failures = result.failures.collect { [message: it.message, id: it.id] }
-                    }
-                }
-                break
             case 'xml':
-            default:
                 return apiService.renderSuccessXml(request, response) {
                     deleteExecutions(requestCount: total, allsuccessful: result.successTotal == total) {
                         successful(count: result.successTotal)
@@ -316,6 +311,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 break;
+            case 'json':
+            default:
+                return apiService.renderSuccessJson(response) {
+                    requestCount = total
+                    allsuccessful = result.successTotal == total
+                    successCount = result.successTotal
+                    failedCount = result.failures ? result.failures.size() : 0
+                    if (result.failures) {
+                        failures = result.failures.collect { [message: it.message, id: it.id] }
+                    }
+                }
+                break
         }
     }
 

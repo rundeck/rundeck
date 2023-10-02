@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -660,13 +662,14 @@ Authorization required: `read` for project resource
         }
         def projlist = frameworkService.projects(systemAuthContext)
         withFormat{
-
-            xml{
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'projects'(count: projlist.size()) {
-                        projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
-                            //don't include config data
-                            renderApiProjectXml(pject, delegate, false, request.api_version)
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'projects'(count: projlist.size()) {
+                            projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                                //don't include config data
+                                renderApiProjectXml(pject, delegate, false, request.api_version)
+                            }
                         }
                     }
                 }
@@ -726,10 +729,12 @@ Authorization required: `read` access for `project` resource type to get basic p
         def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
         def pject = authorizingProject.resource
         withFormat{
-            xml{
+            if(isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    renderApiProjectXml(pject, delegate, configAuth, request.api_version)
+                    apiService.renderSuccessXml(request, response) {
+                        renderApiProjectXml(pject, delegate, configAuth, request.api_version)
+                    }
                 }
             }
             json{
@@ -783,7 +788,9 @@ Authorization required: `create` for resource type `project`
             return
         }
         //allow Accept: header, but default to the request format
-        def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
+
+        def allowedFormats = allowXml?['xml', 'json']:['json']
+        def respFormat = apiService.extractResponseFormat(request,response, allowedFormats,'json')
 
         def project = null
         def description = null
@@ -899,10 +906,12 @@ Authorization required: `create` for resource type `project`
         }
         switch(respFormat) {
             case 'xml':
-                apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,request, response) {
-                    renderApiProjectXml(proj,delegate,true,request.api_version)
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, request, response) {
+                        renderApiProjectXml(proj, delegate, true, request.api_version)
+                    }
+                    break
                 }
-                break
             case 'json':
                 response.status = HttpServletResponse.SC_CREATED
                 render renderApiProjectJson(proj, true, request.api_version) as JSON
@@ -1101,7 +1110,12 @@ key2=value''')
         def proj = authorizingProject.resource
         //render project config only
 
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
+
+        def allowedFormats = ['json', 'text']
+        if (allowXml) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats, 'json')
         respondProjectConfig(respFormat, proj)
     }
 
@@ -1116,10 +1130,12 @@ key2=value''')
                 flush(response)
                 break
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    renderApiProjectConfigXml(proj, delegate)
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        renderApiProjectConfigXml(proj, delegate)
+                    }
+                    break
                 }
-                break
             case 'json':
                 def config=frameworkService.loadProjectProperties(proj)
                 render(config as JSON)
@@ -1916,15 +1932,15 @@ Authorization required: `configure` access for `project` resource type or `admin
             String respFormat
     )
     {
-        if (respFormat=='json') {
-            def jsonContent = [contents: contentString]
-            render jsonContent as JSON
-        }else{
+        if (respFormat == 'xml' && allowXml) {
             apiService.renderSuccessXml(request, response) {
                 delegate.'contents' {
                     mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
                 }
             }
+        } else {
+            def jsonContent = [contents: contentString]
+            render jsonContent as JSON
         }
     }
 
@@ -2181,7 +2197,12 @@ key2=value'''
             return
         }
         def project = authorizingProject.resource
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+
+        def allowedFormats = ['json', 'text']
+        if (isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats, 'json')
         //parse config data
         def config=null
         def configProps=new Properties()
@@ -2326,7 +2347,12 @@ key2=value''')
         }
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
+
+        def allowedFormats = ['json', 'text']
+        if(isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats,'text')
         def properties = frameworkService.loadProjectProperties(project)
         if(null==properties.get(key_)){
             return apiService.renderErrorFormat(response,[
@@ -2342,10 +2368,12 @@ key2=value''')
                 render (contentType: 'text/plain', text: value_)
                 break
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    property(key:key_,value:value_)
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        property(key: key_, value: value_)
+                    }
+                    break
                 }
-                break
             case 'json':
                 render(contentType: 'application/json') {
                     key key_
@@ -2479,7 +2507,12 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+
+        def allowedFormats = ['json', 'text']
+        if(isAllowXml()) {
+            allowedFormats << 'xml'
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats)
         def value_=null
         if(request.format in ['text']){
            value_ = request.inputStream.text
@@ -2557,10 +2590,13 @@ Authorization required: `configure` access for `project` resource type or `admin
                 render(contentType: 'text/plain', text: resultValue)
                 break
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    property(key: key_, value: resultValue)
+
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        property(key: key_, value: resultValue)
+                    }
+                    break
                 }
-                break
             case 'json':
                 render(contentType: 'application/json') {
                     key key_
@@ -3143,7 +3179,11 @@ Note: `other_errors` included since API v35""",
         if(!apiService.requireRequestFormat(request,response,['application/zip'])){
             return
         }
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+
+        def respFormat='json'
+        if(isAllowXml()) {
+            respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
+        }
 
         if(archiveParams.hasErrors()){
             return apiService.renderErrorFormat(response,[
@@ -3229,6 +3269,53 @@ Note: `other_errors` included since API v35""",
                 archiveParams
         )
         switch (respFormat) {
+
+            case 'xml':
+                if(isAllowXml()) {
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'import'(status: result.success ? 'successful' : 'failed', successful: result.success) {
+                            if (!result.success) {
+                                //list errors
+                                delegate.'errors'(count: result.joberrors.size()) {
+                                    result.joberrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.execerrors) {
+                                delegate.'executionErrors'(count: result.execerrors.size()) {
+                                    result.execerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.aclerrors) {
+                                delegate.'aclErrors'(count: result.aclerrors.size()) {
+                                    result.aclerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (result.scmerrors) {
+                                delegate.'scmErrors'(count: result.scmerrors.size()) {
+                                    result.scmerrors.each {
+                                        delegate.'error'(it)
+                                    }
+                                }
+                            }
+                            if (request.api_version > ApiVersions.V34) {
+                                if (result.importerErrors) {
+                                    delegate.'otherErrors'(count: result.importerErrors.size()) {
+                                        result.importerErrors.each {
+                                            delegate.'error'(it)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
             case 'json':
                 render(contentType: 'application/json'){
                     import_status result.success?'successful':'failed'
@@ -3255,51 +3342,6 @@ Note: `other_errors` included since API v35""",
                     }
                 }
                 break;
-            case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'import'(status: result.success ? 'successful' : 'failed', successful:result.success){
-                        if(!result.success){
-                            //list errors
-                            delegate.'errors'(count: result.joberrors.size()){
-                                result.joberrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.execerrors){
-                            delegate.'executionErrors'(count: result.execerrors.size()){
-                                result.execerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.aclerrors){
-                            delegate.'aclErrors'(count: result.aclerrors.size()){
-                                result.aclerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(result.scmerrors){
-                            delegate.'scmErrors'(count: result.scmerrors.size()){
-                                result.scmerrors.each{
-                                    delegate.'error'(it)
-                                }
-                            }
-                        }
-                        if(request.api_version> ApiVersions.V34) {
-                            if(result.importerErrors){
-                                delegate.'otherErrors'(count: result.importerErrors.size()){
-                                    result.importerErrors.each{
-                                        delegate.'error'(it)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                break;
-
         }
     }
 }
