@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -57,6 +58,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         controller.userDataProvider = provider
+        controller.featureService = Mock(FeatureService)
 
     }
 
@@ -135,7 +137,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         }
         controller.apiService = Mock(ApiService) {
             1 * requireVersion(_, _, 21) >> true
-            0 * renderErrorXml(_, _) >> { HttpServletResponse response, Map error ->
+            0 * renderErrorFormat(_, _) >> { HttpServletResponse response, Map error ->
                 response.status = error.status
                 null
             }
@@ -167,7 +169,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -202,7 +204,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -234,7 +236,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -274,7 +276,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -313,7 +315,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -356,7 +358,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -417,7 +419,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            1 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }
@@ -451,7 +453,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
-            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+            0 * renderErrorFormat(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
             }

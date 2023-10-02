@@ -106,6 +106,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -278,7 +279,48 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessXml(_,_,_)
+        1 * controller.apiService.renderSuccessJson(_,_)
+
+    }
+    def "scheduler list this servers jobs apiv18"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.jobSchedulesService = new JobSchedulesService()
+        controller.jobSchedulesService.rundeckJobSchedulesManager = new LocalJobSchedulesManager()
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+                    ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
+        job1.scheduled=true
+        job1.serverNodeUUID=testUUID
+        job1.save()
+
+        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName:'job2'))
+        job2.scheduled=true
+        job2.serverNodeUUID=UUID.randomUUID().toString()
+        job2.save()
+
+        ScheduledExecution unscheduledJob = new ScheduledExecution(createJobParams(jobName:'unscheduled'))
+        unscheduledJob.scheduled=false
+        unscheduledJob.serverNodeUUID=testUUID
+        unscheduledJob.save()
+        request.api_version=18
+
+        when:
+        def result = controller.apiSchedulerListJobs(null, true)
+
+        then:
+        1 * controller.apiService.requireApi(_, _, 17) >> true
+        _ * controller.frameworkService.getServerUUID() >> testUUID
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
+        1 * controller.frameworkService.isClusterModeEnabled()>>true
+        0 * controller.apiService.renderSuccessJson(_,_)
+        response.json.count==1
+        response.json.jobs.size()==1
+        response.json.jobs[0].id==job1.id.toString()
 
     }
     def "scheduler list other server jobs"() {
@@ -315,7 +357,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessXml(_,_,_)
+        1 * controller.apiService.renderSuccessJson(_,_)
 
     }
 
@@ -2124,7 +2166,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         def model = controller.apiJobsListv2(query)
 
         then:
-        response.xml.count == count
+        response.json.count == count
 
         where:
         guiPagEnabled | apiPagDisabled| offset | apiPagMax  | count
@@ -3054,10 +3096,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 200
         response.text=="format: $format"
         response.contentType=="$contentType;charset=UTF-8"
-        where:"default format is xml"
+        where:"default format is json"
         format | contentType        | apivers
-        'xml'  | 'text/xml'         | 14
-        'xml'  | 'text/xml'         | 44
+        'json' | 'application/json' | 14
+        'json' | 'application/json' | 44
     }
 
     @Unroll
