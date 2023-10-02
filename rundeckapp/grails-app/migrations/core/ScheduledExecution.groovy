@@ -161,46 +161,6 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-20") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                tableExists (tableName:"scheduled_execution_filter")
-            }
-        }
-        createTable(tableName: "scheduled_execution_filter") {
-            column(autoIncrement: "true", name: "id", type: '${number.type}') {
-                constraints(nullable: "false", primaryKey: "true", primaryKeyName: "scheduled_execution_filterPK")
-            }
-
-            column(name: "version", type: '${number.type}') {
-                constraints(nullable: "false")
-            }
-
-            column(name: "loglevel_filter", type: '${varchar255.type}')
-
-            column(name: "group_path", type: '${varchar255.type}')
-
-            column(name: "server_nodeuuidfilter", type: '${varchar255.type}')
-
-            column(name: "name", type: '${varchar255.type}') {
-                constraints(nullable: "false")
-            }
-
-            column(name: "idlist", type: '${varchar255.type}')
-
-            column(name: "user_id", type: '${number.type}') {
-                constraints(nullable: "false")
-            }
-
-            column(name: "scheduled_filter", type: '${varchar255.type}')
-
-            column(name: "proj_filter", type: '${varchar255.type}')
-
-            column(name: "desc_filter", type: '${varchar255.type}')
-
-            column(name: "job_filter", type: '${varchar255.type}')
-        }
-    }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-21") {
         preConditions(onFail: "MARK_RAN"){
@@ -338,12 +298,4 @@ databaseChangeLog = {
         }
     }
 
-
-    changeSet(author: "rundeckuser (generated)", id: "5.0-job-filter-1001") {
-        comment { 'remove scheduled_execution_filter table' }
-        preConditions(onFail: "MARK_RAN"){
-            tableExists (tableName:"scheduled_execution_filter")
-        }
-        dropTable(tableName: "scheduled_execution_filter")
-    }
 }
