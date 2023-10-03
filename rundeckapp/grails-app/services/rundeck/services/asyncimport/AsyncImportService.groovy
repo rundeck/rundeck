@@ -16,23 +16,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations {
 
     @Override
     Long createStatusFile(String projectName) {
-        def resource
         try {
-            def statusPersist = new AsyncImportStatusDTO()
-                statusPersist.projectName = projectName
-                statusPersist.lastUpdated = new Date().toString()
-                statusPersist.lastUpdate = AsyncImportMilestone.M1_CREATED.name
-            def jsonStatus = statusPersist as JSON
-            def inputStream = new ByteArrayInputStream(jsonStatus.toString().getBytes(StandardCharsets.UTF_8));
-            if (!statusPersist.projectName || statusPersist.projectName.size() <= 0) {
-                log.error("No project name provided in new status.")
-                throw new MissingPropertyException("No project name provided in new status.")
-            }
-            final def fwkProject = frameworkService.getFrameworkProject(statusPersist.projectName)
-            final def filename = JSON_FILE_PREFFIX + statusPersist.projectName + JSON_FILE_EXT
-            resource = fwkProject.storeFileResource(filename, inputStream)
-            inputStream.close();
-            return resource
+            saveAsyncImportStatusForProject(projectName, null)
         } catch (IOException e) {
             e.printStackTrace();
             throw e
@@ -52,5 +37,44 @@ class AsyncImportService implements AsyncImportStatusFileOperations {
             log.error("Error during the async import file extraction process: ${e.message}")
         }
         return null
+    }
+
+    @Override
+    Long updateAsyncImportStatus(AsyncImportStatusDTO updatedStatus) {
+        try {
+            return saveAsyncImportStatusForProject(null, updatedStatus)
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
+    Long saveAsyncImportStatusForProject(String projectName = null, AsyncImportStatusDTO newStatus = null){
+        def resource
+        def statusPersist
+        try {
+            if( newStatus != null ){
+                statusPersist = new AsyncImportStatusDTO(newStatus)
+            }else{
+                statusPersist = new AsyncImportStatusDTO()
+                statusPersist.projectName = projectName
+                statusPersist.lastUpdated = new Date().toString()
+                statusPersist.lastUpdate = AsyncImportMilestone.M1_CREATED.name
+            }
+            def jsonStatus = statusPersist as JSON
+            def inputStream = new ByteArrayInputStream(jsonStatus.toString().getBytes(StandardCharsets.UTF_8));
+            if (!statusPersist.projectName || statusPersist.projectName.size() <= 0) {
+                log.error("No project name provided in new status.")
+                throw new MissingPropertyException("No project name provided in new status.")
+            }
+            final def fwkProject = frameworkService.getFrameworkProject(statusPersist.projectName)
+            final def filename = JSON_FILE_PREFFIX + statusPersist.projectName + JSON_FILE_EXT
+            resource = fwkProject.storeFileResource(filename, inputStream)
+            inputStream.close();
+            return resource
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
     }
 }

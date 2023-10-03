@@ -68,6 +68,9 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -85,6 +88,7 @@ class ProjectController extends ControllerBase{
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
+    AsyncImportService asyncImportService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -3355,8 +3359,46 @@ Note: `other_errors` included since API v35""",
                 (
                         [
                                 message           : "Status file found.",
-                                status            : statusFileContent.lastUpdate,
+                                currentMilestone  : statusFileContent.milestone,
+                                lastUpdate        : statusFileContent.lastUpdate,
                                 lastUpdated       : statusFileContent.lastUpdated
+                        ]
+                ) as JSON
+        )
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectAsyncImportStatusUpdate(){
+        def statusFileContent
+        try{
+            if( !params.project ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.async.import.project.missing'
+                ])
+            }
+            def projectName = params.project as String
+            AsyncImportStatusDTO dto = new AsyncImportStatusDTO()
+                dto.projectName = projectName
+                dto.milestone = AsyncImportMilestone.M2_DISTRIBUTION.name
+                dto.lastUpdated = new Date().toString()
+                dto.lastUpdate = "Look at me, it worked!"
+            statusFileContent = asyncImportService.updateAsyncImportStatus(dto)
+            if(!statusFileContent || null == statusFileContent){
+                throw new Exception("Status file empty or non-existent.")
+            }
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.get.file.error.suffix',
+                    args: [e.message]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                message           : "Status file updated.",
                         ]
                 ) as JSON
         )
