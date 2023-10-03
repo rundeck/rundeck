@@ -98,6 +98,7 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
+            apiProjectAsyncImport: ['POST']
     ]
 
     def index () {
@@ -3299,20 +3300,30 @@ Note: `other_errors` included since API v35""",
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectAsyncImport(ProjectArchiveParams archiveParams){
-        // Create a item in storage
         try{
-            if( !params.projectName ){
+            if( !params.project ){
                 return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.async.import.project.missing'
                 ])
             }
-            def projectName = params.projectName as String
+            def projectName = params.project as String
             projectService.createStatusFile(projectName)
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.create.error.suffix',
+                    args: [e.message]
             ])
         }
-        render(status: HttpServletResponse.SC_OK)
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                message           : "Asynchronous import transaction for project: ${params.project}, started successfully.",
+                                nextStep          : "Please request the API for the status of asynchronous import transaction with a GET request to: <rundeck server url>/api/\$apiVersion/project/\$projectName/async/import-status"
+                        ]
+                ) as JSON
+        )
     }
 }
