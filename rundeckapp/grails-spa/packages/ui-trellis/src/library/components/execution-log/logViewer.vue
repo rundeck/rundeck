@@ -602,6 +602,7 @@ export default defineComponent({
 }
 
 .execution-log__settings {
+  align-self: stretch;
   display: flex;
   align-items: center;
   position: sticky;
