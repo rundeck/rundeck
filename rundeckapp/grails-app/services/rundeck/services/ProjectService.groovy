@@ -1828,12 +1828,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return result
     }
 
-    void createStatusFile(String projectName){
+    void createAsyncImportStatusFile(String projectName){
         try{
-            def status = new AsyncImportStatusDTO()
-            status.projectName = projectName
-            status.lastUpdate = AsyncImportMilestone.M1_CREATED.name
-            asyncImportService.createStatusFile(status)
+            asyncImportService.createStatusFile(projectName)
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+    }
+
+    AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
+        try{
+            def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
+            if( !dto || null == dto ) throw new Exception("Status object empty or non-existent")
+            return dto
         }catch(Exception e){
             e.printStackTrace()
         }

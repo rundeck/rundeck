@@ -5,7 +5,7 @@ class AsyncImportStatusDTO {
     String user;
     String projectName;
     AsyncImportMilestone milestone;
-    Date lastUpdated;
+    String lastUpdated;
     String ownerMemberUuid;
     Map<String, String> errors;
     Date estimatedProcessDuration;

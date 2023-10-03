@@ -98,7 +98,8 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
-            apiProjectAsyncImport: ['POST']
+            apiProjectAsyncImport: ['POST'],
+            apiProjectAsyncImportStatus: ['GET']
     ]
 
     def index () {
@@ -3308,7 +3309,7 @@ Note: `other_errors` included since API v35""",
                 ])
             }
             def projectName = params.project as String
-            projectService.createStatusFile(projectName)
+            projectService.createAsyncImportStatusFile(projectName)
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -3322,6 +3323,40 @@ Note: `other_errors` included since API v35""",
                         [
                                 message           : "Asynchronous import transaction for project: ${params.project}, started successfully.",
                                 nextStep          : "Please request the API for the status of asynchronous import transaction with a GET request to: <rundeck server url>/api/\$apiVersion/project/\$projectName/async/import-status"
+                        ]
+                ) as JSON
+        )
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectAsyncImportStatus(){
+        def statusFileContent
+        try{
+            if( !params.project ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.async.import.project.missing'
+                ])
+            }
+            def projectName = params.project as String
+            statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
+            if(!statusFileContent || null == statusFileContent){
+                throw new Exception("Status file empty or non-existent.")
+            }
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.get.file.error.suffix',
+                    args: [e.message]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                message           : "Status file found.",
+                                status            : statusFileContent.lastUpdate,
+                                lastUpdated       : statusFileContent.lastUpdated
                         ]
                 ) as JSON
         )
