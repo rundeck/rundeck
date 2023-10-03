@@ -21,7 +21,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations {
             def inputStream = new ByteArrayInputStream(jsonStatus.toString().getBytes(StandardCharsets.UTF_8));
             if (!newStatus.projectName || newStatus.projectName.size() <= 0) {
                 log.error("No project name provided in new status.")
-                return 0
+                throw new MissingPropertyException("No project name provided in new status.")
             }
             final def fwkProject = frameworkService.getFrameworkProject(newStatus.projectName)
             final def filename = JSON_FILE_PREFFIX + newStatus.projectName + JSON_FILE_EXT
@@ -29,8 +29,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations {
             inputStream.close();
             return resource
         } catch (IOException e) {
-            return 0
             e.printStackTrace();
+            throw e
         }
     }
 }
