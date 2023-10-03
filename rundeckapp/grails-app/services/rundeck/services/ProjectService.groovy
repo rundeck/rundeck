@@ -39,7 +39,6 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
-import grails.gorm.transactions.TransactionService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -67,11 +66,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+
 import rundeck.Execution
 import rundeck.JobFileRecord
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
@@ -91,6 +93,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
+    AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
     FileUploadService fileUploadService
@@ -1823,6 +1826,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             notify('projectDeleteFailed', project.name)
         }
         return result
+    }
+
+    void createStatusFile(String projectName){
+        try{
+            def status = new AsyncImportStatusDTO()
+            status.projectName = projectName
+            status.lastUpdate = AsyncImportMilestone.M1_CREATED.name
+            asyncImportService.createStatusFile(status)
+        }catch(Exception e){
+            e.printStackTrace()
+        }
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

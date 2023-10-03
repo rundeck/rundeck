@@ -3296,4 +3296,23 @@ Note: `other_errors` included since API v35""",
 
         }
     }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectAsyncImport(ProjectArchiveParams archiveParams){
+        // Create a item in storage
+        try{
+            if( !params.projectName ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                ])
+            }
+            def projectName = params.projectName as String
+            projectService.createStatusFile(projectName)
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+            ])
+        }
+        render(status: HttpServletResponse.SC_OK)
+    }
 }
