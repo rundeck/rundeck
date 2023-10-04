@@ -6,7 +6,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class ExecutionSpec extends BaseContainer {
 
-    def setup(){
+    def setupSpec(){
         startEnvironment()
         setupProject()
     }

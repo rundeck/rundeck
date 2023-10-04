@@ -8,7 +8,7 @@ import java.util.function.Function
 @APITest
 class ExecutionOutputSpec extends BaseContainer {
 
-    def setup() {
+    def setupSpec() {
         startEnvironment()
         setupProject()
     }
