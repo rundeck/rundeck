@@ -1850,8 +1850,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     /**
      * **** DELETE ME ******
      */
-    void notifyAsyncImportOperation(String event, String projectName, String update){
-        notify(event, projectName, update)
+    void notifyAsyncImportOperation(String event, Object... objects){
+        notify(event, objects)
+    }
+
+    void beginAsyncImportMilestone3(final String projectName){
+        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

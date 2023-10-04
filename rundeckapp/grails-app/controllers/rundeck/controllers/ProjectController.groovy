@@ -3381,7 +3381,7 @@ Note: `other_errors` included since API v35""",
                 ])
             }
             def projectName = params.project as String
-            projectService.notifyAsyncImportOperation(AsyncImportEvents.ASYNC_IMPORT_EVENT_TEST_UPDATE, projectName, "Notified!!!")
+            projectService.beginAsyncImportMilestone3(projectName)
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
