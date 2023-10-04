@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
+import com.dtolabs.rundeck.core.execution.workflow.state.StateExecutionFileProducer
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -164,6 +165,8 @@ import rundeck.services.audit.AuditEventsService
 import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
+import rundeck.services.workflow.DefaultStateExecutionFileProducer
+import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
@@ -914,6 +917,12 @@ beans={
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
     workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
+        logFileStorageService = ref('logFileStorageService')
+    }
+    stateExecutionFileProducer(DefaultStateExecutionFileProducer) {
+        workflowService = ref('workflowService')
+    }
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
