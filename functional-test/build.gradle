@@ -1,16 +1,19 @@
 plugins {
     id 'groovy'
+    id "com.adarshr.test-logger" version "3.2.0"
 }
+
 apply from: "../gradle/java-version.gradle"
+
 repositories {
     mavenLocal()
     mavenCentral()
 }
-dependencies {
 
-    testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
-    testImplementation "org.testcontainers:testcontainers:1.18.3"
-    testImplementation "org.testcontainers:spock:1.18.3"
+dependencies {
+    testImplementation "org.spockframework:spock-core:${spockCoreVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
+    testImplementation "org.testcontainers:spock:${testContainersVersion}"
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"

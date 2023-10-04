@@ -2,6 +2,7 @@ package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import jdk.jfr.events.ExceptionThrownEvent
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
@@ -19,7 +20,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
-    private final URI composeFilePath = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
+//    private final URI composeFilePath = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
 
 
     ClientProvider getClientProvider() {
@@ -37,10 +38,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             }
         } else if (RUNDECK == null) {
             synchronized (LOCK) {
-                RUNDECK = new RdContainer(composeFilePath)
-                log.info("Starting testcontainer: ${composeFilePath}")
-                RUNDECK.start()
-                CLIENT_PROVIDER = RUNDECK
+                try{
+                    RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
+                    log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
+                    RUNDECK.start()
+                    CLIENT_PROVIDER = RUNDECK
+                }catch(Exception e){
+                    System.exit(1)
+                }
             }
         }
         return CLIENT_PROVIDER

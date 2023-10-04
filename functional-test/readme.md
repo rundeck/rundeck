@@ -9,6 +9,7 @@ This runs the tests against the `rundeck/rundeck` docker image by default.
 ```
 ./gradlew :functional-test:{AVAILABLE_TEST_TASK}
 ```
+If additional information is needed when running the task, you can the gradle flag "-i"
 Available tasks listed below
 
 Env vars to control docker image usage:

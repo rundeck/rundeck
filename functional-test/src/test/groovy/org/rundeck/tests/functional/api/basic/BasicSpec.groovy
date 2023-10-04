@@ -6,7 +6,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class BasicSpec extends BaseContainer {
 
-    def setup() {
+    def setupSpec() {
         startEnvironment()
     }
 
