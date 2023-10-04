@@ -1,12 +1,14 @@
 package rundeck.services.asyncimport
 
 import grails.converters.JSON
+import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
 import rundeck.services.FrameworkService
 
 import java.nio.charset.StandardCharsets
 
-class AsyncImportService implements AsyncImportStatusFileOperations {
+class AsyncImportService implements AsyncImportStatusFileOperations, EventPublisher {
 
     FrameworkService frameworkService
 
@@ -72,6 +74,23 @@ class AsyncImportService implements AsyncImportStatusFileOperations {
             resource = fwkProject.storeFileResource(filename, inputStream)
             inputStream.close();
             return resource
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
+    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_TEST_UPDATE)
+    def updateAsyncImportFileLastUpdateForProject(String projectName, String lastUpdate){
+        try {
+           if( !projectName ){
+               log.error("No project name in async import event notification.")
+           }
+            def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
+            def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+                newStatusFileContent.lastUpdated = new Date().toString()
+                newStatusFileContent.lastUpdate = lastUpdate
+            saveAsyncImportStatusForProject(null, newStatusFileContent)
         } catch (IOException e) {
             e.printStackTrace();
             throw e
