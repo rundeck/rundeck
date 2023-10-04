@@ -80,6 +80,7 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportEvents
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
@@ -1973,6 +1974,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }catch(Exception e){
             e.printStackTrace()
         }
+    }
+
+    /**
+     * **** DELETE ME ******
+     */
+    void notifyAsyncImportOperation(String event, String projectName, String update){
+        notify(event, projectName, update)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
