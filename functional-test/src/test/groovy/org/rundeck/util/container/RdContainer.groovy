@@ -14,12 +14,14 @@ import java.time.Duration
 @Slf4j
 class RdContainer extends DockerComposeContainer<RdContainer> implements ClientProvider {
 
-    public static final String DEFAULT_SERVICE_TO_EXPOSE = System.getProperty("TEST_RUNDECK_CONTAINER_SERVICE") ?: 'rundeck'
-    private static final Integer DEFAULT_PORT = System.getProperty("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
-    private static final String CONTEXT_PATH = System.getProperty("TEST_RUNDECK_CONTAINER_CONTEXT") ?: ''
+    public static final String DEFAULT_SERVICE_TO_EXPOSE = System.getenv("TEST_RUNDECK_CONTAINER_SERVICE") ?: 'rundeck'
+    private static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
+    private static final String CONTEXT_PATH = System.getenv("TEST_RUNDECK_CONTAINER_CONTEXT") ?: ''
     //matches tokens.properties in src/main/resources
-    public static final String STATIC_TOKEN = System.getProperty("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
-    public static final String RUNDECK_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ?: System.getProperty("TEST_RUNDECK_IMAGE")
+    public static final String STATIC_TOKEN = System.getenv("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
+    public static final String RUNDECK_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ? System.getenv("TEST_RUNDECK_IMAGE") : System.getProperty("TEST_RUNDECK_IMAGE")
+    public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
+    public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
 
 
     RdContainer(URI composeFilePath) {
@@ -30,7 +32,8 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
         }
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_RUNDECK_IMAGE", RUNDECK_IMAGE)
-        withEnv("TEST_RUNDECK_URL", System.getProperty("TEST_RUNDECK_URL"))
+        withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
+        withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
                 Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")

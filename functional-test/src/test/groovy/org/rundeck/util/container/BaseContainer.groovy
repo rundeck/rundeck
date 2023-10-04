@@ -15,10 +15,11 @@ import java.util.function.Consumer
 @CompileStatic
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider {
+    public static final String PROJECT_NAME = 'test'
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
-    private final URI composeFilePath = getClass().getClassLoader().getResource(System.getProperty("composePath")).toURI()
+    private final URI composeFilePath = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
 
 
     ClientProvider getClientProvider() {
@@ -37,12 +38,16 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         } else if (RUNDECK == null) {
             synchronized (LOCK) {
                 RUNDECK = new RdContainer(composeFilePath)
-                log.info("Starting testcontainer: ${System.getProperty("composePath")}...")
+                log.info("Starting testcontainer: ${composeFilePath}")
                 RUNDECK.start()
                 CLIENT_PROVIDER = RUNDECK
             }
         }
         return CLIENT_PROVIDER
+    }
+
+    void setupProject() {
+        setupProject(PROJECT_NAME)
     }
 
     void setupProject(String name) {
@@ -63,6 +68,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     @Override
     RdClient clientWithToken(final String token) {
         return clientProvider.clientWithToken(token)
+    }
+
+    void startEnvironment() {
+        getClientProvider()
     }
 
     //client helpers

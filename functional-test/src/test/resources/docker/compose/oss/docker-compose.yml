@@ -6,7 +6,7 @@ services:
       args:
         IMAGE: ${TEST_RUNDECK_IMAGE}
     environment:
-      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_URL}
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"

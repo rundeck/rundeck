@@ -6,6 +6,10 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class BasicSpec extends BaseContainer {
 
+    def setup() {
+        startEnvironment()
+    }
+
     def testInvalidToken() {
         given:
         def client = clientWithToken("invalidtoken")

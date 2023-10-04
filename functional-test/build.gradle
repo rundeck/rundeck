@@ -19,28 +19,25 @@ dependencies {
 
 //This prevents tasks from being cached
 gradle.taskGraph.whenReady { taskGraph ->
-    def tasks = taskGraph.getAllTasks()
-    tasks.each {
-        it.outputs.upToDateWhen { false }
+    [Test].each {
+        project.tasks.withType(it) {
+            it.outputs.upToDateWhen { false }
+        }
     }
 }
 
 task apiTest(type: Test){
     useJUnitPlatform()
-    systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
-    systemProperty('TEST_RUNDECK_URL', "http://localhost:4440")
-    systemProperty("composePath", "docker/compose/oss/docker-compose.yml")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run API tests"
 }
 
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
-    systemProperty("TEST_RUNDECK_CONTAINER_SERVICE", "rundeck")
     systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
-    systemProperty('TEST_RUNDECK_URL', "http://localhost:4440")
-    systemProperty("composePath", "docker/compose/oss/docker-compose.yml")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"
 }
