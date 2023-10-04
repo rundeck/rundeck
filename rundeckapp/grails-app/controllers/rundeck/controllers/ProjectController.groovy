@@ -68,6 +68,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.asyncimport.AsyncImportEvents
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
@@ -3367,9 +3368,11 @@ Note: `other_errors` included since API v35""",
         )
     }
 
+    /**
+     * **** DELETE ME ******
+     */
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectAsyncImportStatusUpdate(){
-        def statusFileContent
         try{
             if( !params.project ){
                 return apiService.renderErrorFormat(response,[
@@ -3378,15 +3381,7 @@ Note: `other_errors` included since API v35""",
                 ])
             }
             def projectName = params.project as String
-            AsyncImportStatusDTO dto = new AsyncImportStatusDTO()
-                dto.projectName = projectName
-                dto.milestone = AsyncImportMilestone.M2_DISTRIBUTION.name
-                dto.lastUpdated = new Date().toString()
-                dto.lastUpdate = "Look at me, it worked!"
-            statusFileContent = asyncImportService.updateAsyncImportStatus(dto)
-            if(!statusFileContent || null == statusFileContent){
-                throw new Exception("Status file empty or non-existent.")
-            }
+            projectService.notifyAsyncImportOperation(AsyncImportEvents.ASYNC_IMPORT_EVENT_TEST_UPDATE, projectName, "Notified!!!")
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

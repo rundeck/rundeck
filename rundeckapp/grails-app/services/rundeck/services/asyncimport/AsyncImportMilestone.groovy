@@ -7,8 +7,8 @@ enum AsyncImportMilestone {
 
     String name;
 
-    private AsyncImportMilestone(String s) {
-        name = s;
+    private AsyncImportMilestone(String name) {
+        this.name = name;
     }
 
     public boolean equalsName(String otherName) {
@@ -16,6 +16,6 @@ enum AsyncImportMilestone {
     }
 
     public String toString() {
-        return this.name;
+        return "Name: ${name}";
     }
 }
