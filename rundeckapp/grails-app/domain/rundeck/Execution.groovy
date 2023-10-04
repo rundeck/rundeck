@@ -492,6 +492,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return new ExecutionReferenceImpl(
                 project: project,
                 id: id,
+                uuid: uuid,
                 retryOriginalId: retryOriginalId?.toString(),
                 retryPrevId: retryPrevId?.toString(),
                 retryNextId: retryExecution?.id?.toString(),
