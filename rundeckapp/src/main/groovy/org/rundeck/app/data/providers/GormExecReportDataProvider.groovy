@@ -23,6 +23,7 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 
+import javax.persistence.EntityNotFoundException
 import javax.sql.DataSource;
 
 @CompileStatic(TypeCheckingMode.SKIP)
@@ -42,9 +43,21 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     @Override
     SaveReportResponse createReportFromExecution(Long id) {
         Execution execution = Execution.get(id)
+        if(!execution) throw new EntityNotFoundException("Execution not found with id: ${id}")
+        createReportFromExecution(execution)
+    }
+
+    @Override
+    SaveReportResponse createReportFromExecution(String uuid) {
+        Execution execution = Execution.findByUuid(uuid)
+        if(!execution) throw new EntityNotFoundException("Execution not found with uuid: ${uuid}")
+        createReportFromExecution(execution)
+    }
+
+    SaveReportResponse createReportFromExecution(Execution execution) {
         ExecReport execReport = ExecReport.fromExec(execution)
         boolean isUpdated = execReport.save(flush: true)
-        Errors errors = execReport.errors
+        String errors = execReport.errors.hasErrors() ? execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")  : null
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
@@ -73,7 +86,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         execReport.dateCompleted = saveReportRequest.dateCompleted
         execReport.jobUuid = execution.scheduledExecution?.uuid
         boolean isUpdated = execReport.save(flush: true)
-        String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
+        String errors = execReport.errors.hasErrors() ? execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",") : null
         return new SaveReportResponseImpl(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
