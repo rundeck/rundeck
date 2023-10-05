@@ -5,13 +5,13 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import groovy.transform.CompileStatic
-import org.rundeck.app.data.exception.DataValidationException
+import rundeck.data.validation.exception.DataValidationException
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
 import rundeck.data.job.RdJob
-import org.rundeck.app.data.validation.ValidationResponse
+import rundeck.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
 import rundeck.data.job.query.RdJobQueryInput
 import rundeck.services.RdJobService
