@@ -9,12 +9,14 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import org.yaml.snakeyaml.introspector.MissingProperty
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -133,10 +135,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         ] as ProjectArchiveParams
 
         // Options
-
         try {
             if( !projectName ){
                 log.error("No project name in async import event notification.")
+                throw new MissingPropertyException("No project name passed in event.")
             }
             // For reporting
             def oldFileStatusContentAsObject = getAsyncImportStatusForProject(projectName)
@@ -146,13 +148,15 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             def distributedExecutionsFullPath = Paths.get(System.getProperty("user.home") + File.separator + distributedExecutionsPath)
             Path firstDir //First dir, for the model
             // First dir extraction
+            List<Path> executionBundles = null
+
             try {
-                List<Path> executionBundles = Files.walk(distributedExecutionsFullPath, FileVisitOption.FOLLOW_LINKS)
+                executionBundles = Files.walk(distributedExecutionsFullPath, FileVisitOption.FOLLOW_LINKS)
                         .filter(Files::isDirectory)
                         .filter(path -> path.getFileName().toString().matches("\\d+"))
                         .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                         .collect(Collectors.toList());
-                while (executionBundles.size() > 0) { // Cambiar por un While(haya carpetas)
+                if (executionBundles.size() > 0) {
                     // Executions path
                     firstDir = executionBundles[0] as Path
                     // Model path
@@ -163,7 +167,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     def modelProjectExecutionsContainerFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectExecutionsContainerPath)
                     try {
                         // Move the first dir to model project
-                        Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+                        try{
+                            Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+                        }catch(NoSuchFileException ignored){
+                            ignored.printStackTrace()
+                            throw ignored
+                        }
 
                         def zippedFilename = "${baseWorkDirPath}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
                         zipModelProject(modelProjectFullPath as String, zippedFilename);
@@ -197,23 +206,29 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             }
                         }
 
-                        // Update the status file then exit try/catch and emit M3 event
+                        // Update the status file and emit M3 event
                         projectService.beginAsyncImportMilestone3(
                                 projectName,
                                 authContext,
                                 project
                         )
 
-                    } catch (IOException e) {
-                        println("Error al mover el directorio: ${e.message}")
+                    } catch (Exception e) {
+                        e.printStackTrace()
                         throw e
                     }
+                }else{
+                    // Update the file
+
+                    // Remove all the files in the working dir and that's it!!
+                    deleteNonEmptyDir(baseWorkDirPath.toString())
                 }
             } catch (IOException e) {
-                println("Exception while reading or sorting the distributed executions list.")
+                e.printStackTrace()
+                throw e
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace()
             throw e
         }
     }
