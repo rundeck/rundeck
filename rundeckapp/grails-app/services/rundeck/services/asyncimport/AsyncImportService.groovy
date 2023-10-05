@@ -1,11 +1,17 @@
 package rundeck.services.asyncimport
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import org.rundeck.app.components.project.ProjectComponent
 import rundeck.services.FrameworkService
+import rundeck.services.ProjectService
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
@@ -20,6 +26,7 @@ import java.util.zip.ZipOutputStream
 class AsyncImportService implements AsyncImportStatusFileOperations, EventPublisher {
 
     FrameworkService frameworkService
+    ProjectService projectService
 
     // Constants
     static final String JSON_FILE_PREFFIX = 'AImport-status-'
@@ -110,7 +117,24 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
-    def beginMilestone3(final String projectName){
+    def beginMilestone3(
+            final String projectName,
+            AuthContext authContext,
+            IRundeckProject project
+    ){
+
+        def framework = frameworkService.rundeckFramework
+        def dummyOptions = [
+                importExecutions  : true,
+                importConfig      : false,
+                importACL         : false,
+                importScm         : false,
+                validateJobref    : false,
+                importNodesSources: false
+        ] as ProjectArchiveParams
+
+        // Options
+
         try {
             if( !projectName ){
                 log.error("No project name in async import event notification.")
@@ -129,23 +153,41 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         .filter(path -> path.getFileName().toString().matches("\\d+"))
                         .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                         .collect(Collectors.toList());
-                if (!executionBundles.isEmpty()) {
+                if (!executionBundles.isEmpty()) { // Cambiar por un While(haya carpetas)
+                    // Executions path
                     firstDir = executionBundles[0] as Path
-                    def modelProjectPath = "async-import-dirs${File.separator}model-project/rundeck-${projectName}"
-                    def modelProjectPathFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectPath)
+                    // Model path
+                    def modelProjectPath = "async-import-dirs${File.separator}model-project"
+                    def modelProjectFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectPath)
+                    // Executions path inside model
+                    def modelProjectExecutionsContainerPath = "async-import-dirs${File.separator}model-project/rundeck-${projectName}"
+                    def modelProjectExecutionsContainerFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectExecutionsContainerPath)
                     // Move the first dir to model project
                     try {
                         if( firstDir ){
-                            Files.move(firstDir, modelProjectPathFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+                            Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
                         }else{
                             // do something
                         }
                         println("File moved!")
                         def zippedFilename = "${baseWorkDirPath}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
-                        zipModelProject(modelProjectPathFullPath as String, zippedFilename);
+                        zipModelProject(modelProjectFullPath as String, zippedFilename);
+
+                        // Make an InputStream from the zip file
+                        FileInputStream fis = new FileInputStream(zippedFilename);
+
                         // delete the "executions from model" after upload
+                        def result = projectService.importToProject(
+                                project,
+                                framework,
+                                authContext as UserAndRolesAuthContext,
+                                fis,
+                                dummyOptions
+                        )
+                        def hi = "hello"
                     } catch (IOException e) {
                         println("Error al mover el directorio: ${e.message}")
+                        throw e
                     }
                 } else {
                     // *****PROCESS ENDED************
