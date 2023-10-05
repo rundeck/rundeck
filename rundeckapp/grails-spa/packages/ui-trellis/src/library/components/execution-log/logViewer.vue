@@ -49,9 +49,11 @@
           <input type="checkbox" v-model="settings.stats" id="logview_stats">
           <label for="logview_stats">Display Stats</label>
         </div>
-        <ui-socket section="execution-log-viewer" location="settings"
-                   :event-bus="eventBus"
-        />
+        <div class="vue-ui-socket">
+          <ui-socket section="execution-log-viewer" location="settings"
+                     :event-bus="eventBus"
+          />
+        </div>
       </form>
     </RdDrawer>
     <div 
@@ -381,9 +383,7 @@ export default defineComponent({
       Object.assign(this.settings, this.config || {})
     },
     saveConfig() {
-      // flattening nested objects to save to local storage
-      let flattenedSettings = this.flattenObj({...this.settings})
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(flattenedSettings))
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
     },
     addScrollBlocker() {
       /**
@@ -515,14 +515,6 @@ export default defineComponent({
       }
       this.totalTime = Date.now() - this.startTime
       this.populateLogsProm = undefined
-    },
-    flattenObj(obj = {}) {
-      return Object.keys(obj || {}).reduce((acc, cur) => {
-        if (typeof obj[cur] === 'object') {
-          acc = { ...acc, ...this.flattenObj(obj[cur])}
-        } else { acc[cur] = obj[cur] }
-        return acc
-      }, {})
     }
   }
 })
