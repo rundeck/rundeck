@@ -423,7 +423,6 @@ public class RundeckConfigBase {
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
-        Debug debug = new Debug();
 
 
         @Data
@@ -436,11 +435,6 @@ public class RundeckConfigBase {
         @Data
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
-        }
-
-        @Data
-        public static class Debug {
-            Boolean showTracesOnResponse = false;
         }
     }
 
