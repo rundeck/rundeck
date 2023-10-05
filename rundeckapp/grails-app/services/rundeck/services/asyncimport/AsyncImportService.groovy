@@ -9,7 +9,6 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
-import org.rundeck.app.components.project.ProjectComponent
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
@@ -153,7 +152,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         .filter(path -> path.getFileName().toString().matches("\\d+"))
                         .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                         .collect(Collectors.toList());
-                if (!executionBundles.isEmpty()) { // Cambiar por un While(haya carpetas)
+                while (executionBundles.size() > 0) { // Cambiar por un While(haya carpetas)
                     // Executions path
                     firstDir = executionBundles[0] as Path
                     // Model path
@@ -162,21 +161,15 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     // Executions path inside model
                     def modelProjectExecutionsContainerPath = "async-import-dirs${File.separator}model-project/rundeck-${projectName}"
                     def modelProjectExecutionsContainerFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectExecutionsContainerPath)
-                    // Move the first dir to model project
                     try {
-                        if( firstDir ){
-                            Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
-                        }else{
-                            // do something
-                        }
-                        println("File moved!")
+                        // Move the first dir to model project
+                        Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+
                         def zippedFilename = "${baseWorkDirPath}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
                         zipModelProject(modelProjectFullPath as String, zippedFilename);
 
-                        // Make an InputStream from the zip file
                         FileInputStream fis = new FileInputStream(zippedFilename);
 
-                        // delete the "executions from model" after upload
                         def result = projectService.importToProject(
                                 project,
                                 framework,
@@ -184,14 +177,37 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 fis,
                                 dummyOptions
                         )
-                        def hi = "hello"
+
+                        if( result.success ){
+                            def executionsDirPath = "${modelProjectExecutionsContainerFullPath.toString()}${File.separator}executions"
+                            try{
+                                if( Files.exists(Paths.get(executionsDirPath)) && Files.isDirectory(Paths.get(executionsDirPath)) ){
+                                    deleteNonEmptyDir(executionsDirPath)
+                                }else{
+                                    throw new FileNotFoundException("Executions directory don't exist or is not a directory.")
+                                }
+                                if( Files.exists(Paths.get(zippedFilename)) ){
+                                    Files.delete(Paths.get(zippedFilename))
+                                }else{
+                                    throw new FileNotFoundException("Zipped model project not found.")
+                                }
+                            }catch(Exception e){
+                                log.error("Exception while deleting files:" + e.stackTrace)
+                                throw e
+                            }
+                        }
+
+                        // Update the status file then exit try/catch and emit M3 event
+                        projectService.beginAsyncImportMilestone3(
+                                projectName,
+                                authContext,
+                                project
+                        )
+
                     } catch (IOException e) {
                         println("Error al mover el directorio: ${e.message}")
                         throw e
                     }
-                } else {
-                    // *****PROCESS ENDED************
-                    println("El directorio está vacío o no contiene carpetas.")
                 }
             } catch (IOException e) {
                 println("Exception while reading or sorting the distributed executions list.")
@@ -231,6 +247,17 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 fis.close();
                 zos.closeEntry();
             }
+        }
+    }
+
+    private static void deleteNonEmptyDir(String path){
+        try {
+            Files.walk(Paths.get(path))
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
