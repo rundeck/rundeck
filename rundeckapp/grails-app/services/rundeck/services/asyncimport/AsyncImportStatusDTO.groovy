@@ -7,7 +7,7 @@ class AsyncImportStatusDTO {
     String milestone;
     String lastUpdated;
     String ownerMemberUuid;
-    Map<String, String> errors;
+    String errors;
     Date estimatedProcessDuration;
     String lastUpdate;
 
@@ -26,7 +26,7 @@ class AsyncImportStatusDTO {
         this.lastUpdate = newStatus.lastUpdate
     }
 
-    AsyncImportStatusDTO(String path, String user, String projectName, AsyncImportMilestone milestone, String lastUpdated, String ownerMemberUuid, Map<String, String> errors, Date estimatedProcessDuration, String lastUpdate) {
+    AsyncImportStatusDTO(String path, String user, String projectName, AsyncImportMilestone milestone, String lastUpdated, String ownerMemberUuid, String errors, Date estimatedProcessDuration, String lastUpdate) {
         this.path = path
         this.user = user
         this.projectName = projectName

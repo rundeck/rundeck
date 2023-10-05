@@ -100,16 +100,38 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_TEST_UPDATE)
-    def updateAsyncImportFileLastUpdateForProject(String projectName, String lastUpdate){
+    def updateAsyncImportFileWithMilestoneAndLastUpdateForProject(String projectName, String milestone, String lastUpdate){
         try {
            if( !projectName ){
                log.error("No project name in async import event notification.")
            }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+                newStatusFileContent.milestone = milestone
                 newStatusFileContent.lastUpdated = new Date().toString()
                 newStatusFileContent.lastUpdate = lastUpdate
+            saveAsyncImportStatusForProject(null, newStatusFileContent)
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
+    def updateAsyncImportFileWithMilestoneAndLastUpdateAndErrorsForProject(
+            String projectName,
+            String milestone,
+            String lastUpdate,
+            String errors){
+        try {
+            if( !projectName ){
+                log.error("No project name in async import event notification.")
+            }
+            def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
+            def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+            newStatusFileContent.milestone = milestone
+            newStatusFileContent.lastUpdated = new Date().toString()
+            newStatusFileContent.lastUpdate = lastUpdate
+            newStatusFileContent.errors = errors
             saveAsyncImportStatusForProject(null, newStatusFileContent)
         } catch (IOException e) {
             e.printStackTrace();
@@ -124,7 +146,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             IRundeckProject project
     ){
 
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M3_IMPORTING.name,
+                "Milestone 3 in progress..."
+        )
+
         def framework = frameworkService.rundeckFramework
+        // Options
         def dummyOptions = [
                 importExecutions  : true,
                 importConfig      : false,
@@ -134,15 +163,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 importNodesSources: false
         ] as ProjectArchiveParams
 
-        // Options
         try {
             if( !projectName ){
-                log.error("No project name in async import event notification.")
                 throw new MissingPropertyException("No project name passed in event.")
             }
-            // For reporting
-            def oldFileStatusContentAsObject = getAsyncImportStatusForProject(projectName)
-
             def baseWorkDirPath = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
             def distributedExecutionsPath = "async-import-dirs${File.separator}distributed_executions"
             def distributedExecutionsFullPath = Paths.get(System.getProperty("user.home") + File.separator + distributedExecutionsPath)
@@ -179,6 +203,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                         FileInputStream fis = new FileInputStream(zippedFilename);
 
+                        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                                projectName,
+                                AsyncImportMilestone.M3_IMPORTING.name,
+                                "Uploading execution bundle #${firstDir.fileName} of #XXX."
+                        )
+
                         def result = projectService.importToProject(
                                 project,
                                 framework,
@@ -201,7 +231,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                     throw new FileNotFoundException("Zipped model project not found.")
                                 }
                             }catch(Exception e){
-                                log.error("Exception while deleting files:" + e.stackTrace)
                                 throw e
                             }
                         }
@@ -214,22 +243,46 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         )
 
                     } catch (Exception e) {
-                        e.printStackTrace()
-                        throw e
+//                        e.printStackTrace()
+                        reportError(
+                                projectName,
+                                AsyncImportMilestone.M3_IMPORTING.name,
+                                "Error in Milestone 3.",
+                                e
+                        )
+//                        throw e
                     }
                 }else{
-                    // Update the file
-
                     // Remove all the files in the working dir and that's it!!
                     deleteNonEmptyDir(baseWorkDirPath.toString())
+                    // Update the file
+                    updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                            projectName,
+                            AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name,
+                            "All Executions uploaded, async import ended. Please check the target project."
+                    )
                 }
             } catch (IOException e) {
-                e.printStackTrace()
-                throw e
+                // Report the error
+//                e.printStackTrace()
+                reportError(
+                        projectName,
+                        AsyncImportMilestone.M3_IMPORTING.name,
+                        "Error in Milestone 3.",
+                        e
+                )
+//                throw e
             }
         } catch (IOException e) {
-            e.printStackTrace()
-            throw e
+            // Report the error
+//            e.printStackTrace()
+            reportError(
+                    projectName,
+                    AsyncImportMilestone.M3_IMPORTING.name,
+                    "Error in Milestone 3.",
+                    e
+            )
+//            throw e
         }
     }
 
@@ -274,5 +327,21 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void reportError(String projectName, String milestone, String updateMessage, Exception errors){
+        updateAsyncImportFileWithMilestoneAndLastUpdateAndErrorsForProject(
+                projectName,
+                milestone,
+                updateMessage,
+                getStacktraceAsString(errors)
+        )
+    }
+
+    private static String getStacktraceAsString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
     }
 }

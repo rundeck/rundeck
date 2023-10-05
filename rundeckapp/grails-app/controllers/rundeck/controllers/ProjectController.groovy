@@ -3362,7 +3362,8 @@ Note: `other_errors` included since API v35""",
                                 message           : "Status file found.",
                                 currentMilestone  : statusFileContent.milestone,
                                 lastUpdate        : statusFileContent.lastUpdate,
-                                lastUpdated       : statusFileContent.lastUpdated
+                                lastUpdated       : statusFileContent.lastUpdated,
+                                errors            : statusFileContent.errors ? statusFileContent.errors : "No errors."
                         ]
                 ) as JSON
         )
