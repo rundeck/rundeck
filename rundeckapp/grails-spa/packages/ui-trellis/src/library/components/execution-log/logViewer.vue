@@ -49,11 +49,9 @@
           <input type="checkbox" v-model="settings.stats" id="logview_stats">
           <label for="logview_stats">Display Stats</label>
         </div>
-        <div class="vue-ui-socket">
-          <ui-socket section="execution-log-viewer" location="settings"
-                     :event-bus="eventBus"
-          />
-        </div>
+        <ui-socket section="execution-log-viewer" location="settings"
+                   :event-bus="eventBus"
+        />
       </form>
     </RdDrawer>
     <div 
