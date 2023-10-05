@@ -1,4 +1,4 @@
-package org.rundeck.app.data.exception
+package rundeck.data.validation.exception
 
 import grails.validation.Validateable
 

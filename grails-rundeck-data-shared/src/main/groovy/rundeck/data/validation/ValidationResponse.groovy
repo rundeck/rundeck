@@ -1,4 +1,4 @@
-package org.rundeck.app.data.validation
+package rundeck.data.validation
 
 import grails.validation.Validateable
 import org.springframework.context.MessageSource
