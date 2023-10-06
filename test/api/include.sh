@@ -106,7 +106,7 @@ api_request(){
     local H_UPLOAD=
     if [ -n "${POSTFILE:-}" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
-        if [ -n "$DEBUG" ] ; then
+        if [ -n "${DEBUG:-}" ] ; then
             1>&2 echo "POSTFILE=$POSTFILE"
             1>&2 echo ">>>>"
             1>&2 cat $POSTFILE
@@ -331,10 +331,10 @@ runjob(){
     params=""
 
     if [ -n "$jsondata" ] ; then
-        $CURL -H "$AUTHHEADER" -X POST --data-binary "$jsondata" -H content-type:application/json \
+        docurl -X POST --data-binary "$jsondata" -H content-type:application/json \
           -H accept:application/json ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
     else
-        $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out \
+        docurl --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out \
             || fail "failed request: ${runurl}"
     fi
 
