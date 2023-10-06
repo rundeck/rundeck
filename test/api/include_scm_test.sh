@@ -105,7 +105,7 @@ create_job(){
 END
 	METHOD=POST
 	ENDPOINT="${APIURL}/project/$project/jobs/import"
-	ACCEPT=application/xml
+	ACCEPT=application/json
 	TYPE=application/xml
 	POSTFILE=$tmp
 
@@ -114,8 +114,8 @@ END
 	api_request $ENDPOINT $DIR/curl.out
 
 
-	assert_xml_value "1" '/result/succeeded/@count' $DIR/curl.out
-	local JOBID=$( xmlsel '/result/succeeded/job/id' $DIR/curl.out )
+	assert_json_value "1" '.succeeded|length' $DIR/curl.out
+	local JOBID=$( jq -r '.succeeded[0].id' < $DIR/curl.out )
 
 	echo $JOBID
 }
