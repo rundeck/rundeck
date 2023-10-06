@@ -105,7 +105,7 @@ test_export_perform_action_json(){
 
 	assert_json_value "Commit Message" ".fields[] | select(.name == \"message\") | .title" $DIR/curl.out
 	
-	local jobId=$(jq -r '.exportItems.actionItem.job.jobId' $DIR/curl.out)
+	local jobId=$(jq -r '.exportItems[0].job.jobId' $DIR/curl.out)
 	local commitMessage="A test commit"
 
 	# perform action
