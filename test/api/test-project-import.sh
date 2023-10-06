@@ -38,7 +38,8 @@ assert_execution_count(){
         exit 2
     fi
     assert_http_status 200 $DIR/headers.out
-    assert_json_value $count 'length' $DIR/curl.out
+    assert_json_value $count '.executions|length' $DIR/curl.out
+    assert_json_value $count '.paging.total' $DIR/curl.out
 }
 
 test_proj="APIImportTest"
