@@ -894,7 +894,7 @@ setTimeout(function(){
         summary="Execution Output",
         description="""Get the output for an execution by ID. The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
-The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
+The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON includes metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
 
 Output can be selected by Node or Step Context or both as of API v10.
 
@@ -992,7 +992,7 @@ This endpoint requires that the user have `read` access to the Job or to Adhoc e
                 in=ParameterIn.QUERY,
                 description = "Specify output format",
                 schema = @Schema(
-                    allowableValues = ['xml','json','text'],
+                    allowableValues = ['json','text'],
                     type = "string"
                 )
             )
@@ -1058,8 +1058,7 @@ In JSON format, if the `compactedAttr` value is `log` in the response data, and 
 When no values changed from the previous Log Entry, the Log Entry will be an empty object.
 
 When an entry value is not present in the subsequent Log Entry, but was present in the previous
-one, in JSON this will be represented with a `null` value, and in XML the entry name will be
-included in a `removed` attribute.""",
+one, in JSON this will be represented with a `null` value.""",
         headers = [
             @Header(name='X-Rundeck-ExecOutput-Error', description='The `error` field (text format only)',schema = @Schema(type="string")),
             @Header(name='X-Rundeck-ExecOutput-Message', description='The `message` field (text format only)',schema = @Schema(type="string")),
