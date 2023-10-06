@@ -2,7 +2,6 @@ package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import jdk.jfr.events.ExceptionThrownEvent
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
@@ -20,8 +19,6 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
-//    private final URI composeFilePath = getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()
-
 
     ClientProvider getClientProvider() {
         if (System.getenv("TEST_RUNDECK_URL") != null) {
