@@ -3156,9 +3156,6 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            if(isAllowXml()) {
-                xml xmlresponse
-            }
             def jsonresp= {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
@@ -3183,6 +3180,9 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 }
             }
             json jsonresp
+            if(isAllowXml()) {
+                xml xmlresponse
+            }
             '*' jsonresp
         }
     }
@@ -3736,18 +3736,7 @@ if executed in cluster mode.
         def results = nowrunning(query)
 
         withFormat{
-            xml {
-                return executionService.respondExecutionsXml(
-                        request,
-                        response,
-                        results.nowrunning,
-                        [
-                                total: results.total,
-                                offset: results.offset,
-                                max: results.max
-                        ]
-                )
-            }
+
             json {
                 return executionService.respondExecutionsJson(
                         request,
@@ -3759,6 +3748,21 @@ if executed in cluster mode.
                                 max: results.max
                         ]
                 )
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(
+                            request,
+                            response,
+                            results.nowrunning,
+                            [
+                                    total : results.total,
+                                    offset: results.offset,
+                                    max   : results.max
+                            ]
+                    )
+                }
             }
         }
 

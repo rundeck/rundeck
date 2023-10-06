@@ -833,65 +833,13 @@ List the event history for a project.''',
             timeout: ExecutionService.EXECUTION_TIMEDOUT,
             (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
         withFormat{
-
-            if(allowXml) {
-                xml {
-                    return apiService.renderSuccessXml(request, response) {
-                        delegate.'events'(count: model.reports.size(), total: model.total, max: model.max, offset: model.offset) {
-                            model.reports.each { rpt ->
-                                def nodes = rpt.node
-                                final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
-                                def nodesum = [rpt.status == 'succeed' ? 1 : 0, rpt.status == 'succeed' ? 0 : 1, 1]
-                                if (matcher.matches()) {
-                                    nodesum[0] = matcher.group(1)
-                                    nodesum[1] = matcher.group(2)
-                                    nodesum[2] = matcher.group(3)
-                                }
-                                event(starttime: rpt.dateStarted.time, endtime: rpt.dateCompleted.time) {
-                                    title(rpt.reportId ?: 'adhoc')
-                                    status(statusMap[rpt.status] ?: ExecutionService.EXECUTION_STATE_OTHER)
-                                    statusString(rpt.status)
-                                    summary(rpt.adhocScript ?: rpt.title)
-                                    delegate.'node-summary'(succeeded: nodesum[0], failed: nodesum[1], total: nodesum[2])
-                                    user(rpt.author)
-                                    project(rpt.project)
-                                    if (rpt.status == 'cancel' && rpt.abortedByUser) {
-                                        abortedby(rpt.abortedByUser)
-                                    }
-                                    delegate.'date-started'(g.w3cDateValue(date: rpt.dateStarted))
-                                    delegate.'date-ended'(g.w3cDateValue(date: rpt.dateCompleted))
-                                    if (rpt.jobId) {
-                                        def foundjob = scheduledExecutionService.getByIDorUUID(rpt.jobId)
-                                        def jparms = [id: foundjob ? foundjob.extid : rpt.jobId]
-                                        if (foundjob) {
-                                            jparms.href = apiService.apiHrefForJob(foundjob)
-                                            jparms.permalink = apiService.guiHrefForJob(foundjob)
-                                        }
-                                        job(jparms)
-                                    }
-                                    if (rpt.executionId) {
-                                        def foundExec = Execution.get(rpt.executionId)
-                                        def execparms = [id: rpt.executionId]
-                                        if (foundExec) {
-                                            execparms.href = apiService.apiHrefForExecution(foundExec)
-                                            execparms.permalink = apiService.guiHrefForExecution(foundExec)
-                                        }
-                                        execution(execparms)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-            json{
+            def jsonClos={
                 return apiService.renderSuccessJson(response){
                     paging=[
-                        count:model.reports.size(),
-                        total:model.total,
-                        max: model.max,
-                        offset: model.offset
+                            count:model.reports.size(),
+                            total:model.total,
+                            max: model.max,
+                            offset: model.offset
                     ]
 
                     delegate.'events'=array{
@@ -944,6 +892,59 @@ List the event history for a project.''',
                     }
                 }
             }
+            json jsonClos
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'events'(count: model.reports.size(), total: model.total, max: model.max, offset: model.offset) {
+                            model.reports.each { rpt ->
+                                def nodes = rpt.node
+                                final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
+                                def nodesum = [rpt.status == 'succeed' ? 1 : 0, rpt.status == 'succeed' ? 0 : 1, 1]
+                                if (matcher.matches()) {
+                                    nodesum[0] = matcher.group(1)
+                                    nodesum[1] = matcher.group(2)
+                                    nodesum[2] = matcher.group(3)
+                                }
+                                event(starttime: rpt.dateStarted.time, endtime: rpt.dateCompleted.time) {
+                                    title(rpt.reportId ?: 'adhoc')
+                                    status(statusMap[rpt.status] ?: ExecutionService.EXECUTION_STATE_OTHER)
+                                    statusString(rpt.status)
+                                    summary(rpt.adhocScript ?: rpt.title)
+                                    delegate.'node-summary'(succeeded: nodesum[0], failed: nodesum[1], total: nodesum[2])
+                                    user(rpt.author)
+                                    project(rpt.project)
+                                    if (rpt.status == 'cancel' && rpt.abortedByUser) {
+                                        abortedby(rpt.abortedByUser)
+                                    }
+                                    delegate.'date-started'(g.w3cDateValue(date: rpt.dateStarted))
+                                    delegate.'date-ended'(g.w3cDateValue(date: rpt.dateCompleted))
+                                    if (rpt.jobId) {
+                                        def foundjob = scheduledExecutionService.getByIDorUUID(rpt.jobId)
+                                        def jparms = [id: foundjob ? foundjob.extid : rpt.jobId]
+                                        if (foundjob) {
+                                            jparms.href = apiService.apiHrefForJob(foundjob)
+                                            jparms.permalink = apiService.guiHrefForJob(foundjob)
+                                        }
+                                        job(jparms)
+                                    }
+                                    if (rpt.executionId) {
+                                        def foundExec = Execution.get(rpt.executionId)
+                                        def execparms = [id: rpt.executionId]
+                                        if (foundExec) {
+                                            execparms.href = apiService.apiHrefForExecution(foundExec)
+                                            execparms.permalink = apiService.guiHrefForExecution(foundExec)
+                                        }
+                                        execution(execparms)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            '*' jsonClos
         }
     }
 }
