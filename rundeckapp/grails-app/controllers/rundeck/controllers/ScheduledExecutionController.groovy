@@ -4696,7 +4696,7 @@ Since: v19''',
             ]
             )
         }
-        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
+        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: allowedFormats])
     }
 
     @Get(uri='/jobs/file/{id}')
@@ -4779,7 +4779,7 @@ Since: v19''',
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job File Record', params.id])
         }
 
-        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: ['xml', 'json']])
+        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: allowedFormats])
     }
     /**
      * API v19, File upload input for job
@@ -4847,7 +4847,7 @@ Since: v19''',
                         records.collect{new JobFileInfo(it.exportMap())},
                         paging + [total:total, count: records.size()]
                 ),
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 

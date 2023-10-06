@@ -2921,7 +2921,7 @@ Since: V18''',
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 
@@ -3056,7 +3056,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 
@@ -3126,10 +3126,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             respond(
                     data,
-                    [formats: isAllowXml()?
-                            ['xml', 'json']:
-                            ['json']
-                    ]
+                    [formats: allowedFormats]
             )
             return
         }

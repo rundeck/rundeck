@@ -396,7 +396,7 @@ Includes current latest API Version, and base API URL.''',
             return
         }
 
-        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
+        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: allowedFormats])
     }
 
     @CompileStatic
@@ -538,7 +538,7 @@ Includes current latest API Version, and base API URL.''',
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
 
-        respond(data, [formats: ['xml', 'json']])
+        respond(data, [formats: allowedFormats])
     }
 
 
@@ -726,7 +726,7 @@ Since: v11
             )
         }
         response.status = HttpServletResponse.SC_CREATED
-        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
+        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: allowedFormats])
     }
 
     @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
@@ -792,7 +792,7 @@ Since: v11
 
         respond(
                 new RemoveExpiredTokens(count: resultCount, message: "Removed $resultCount expired tokens"),
-                [formats: ['json', 'xml']]
+                [formats: allowedFormats]
         )
     }
 

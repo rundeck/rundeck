@@ -2884,7 +2884,7 @@ Since: v23''',
                 }
             ),
 
-            [formats: ['json', 'xml']]
+            [formats: allowedFormats]
         )
     }
 
@@ -3235,7 +3235,7 @@ Since: v23''',
                 errors: errors,
                 resources: sourceContent
             ),
-            [formats: ['json', 'xml']]
+            [formats: allowedFormats]
         )
     }
 
