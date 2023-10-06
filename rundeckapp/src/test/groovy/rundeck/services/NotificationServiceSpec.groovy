@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
@@ -57,6 +58,7 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.data.notification.SendNotificationEvent
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
@@ -90,16 +92,18 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
-                ).save(),
-                ).save()
+                ).save(flush:true),
+                ).save(flush:true)
         def execution = new Execution(
+                uuid: 'exec1',
+                jobUuid: 'test1',
                 project: 'Test',
                 scheduledExecution: job,
                 user: 'bob',
                 status: 'succeeded',
                 dateStarted: new Date(),
                 dateCompleted: new Date()
-        ).save()
+        ).save(flush:true)
         [job, execution]
     }
 
@@ -1157,6 +1161,53 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         context.exportVarGroup2.testSubject == 'test123'
         context.exportVarGroup2.testTitle == 'test2'
 
+    }
+
+    def "sendNotificationsForExecution event trigger"() {
+        given:
+        def job = new ScheduledExecution(
+                uuid: 'test1',
+                jobName: 'red color',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                user: 'bob',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ).save(flush:true),
+                notifications : [
+                    new Notification(
+                            eventTrigger: 'onstart',
+                            type: 'SimpleNotificationPlugin'
+                    )]
+        ).save(flush:true)
+        def execution = new Execution(
+                uuid: 'exec1',
+                jobUuid: 'test1',
+                project: 'Test',
+                scheduledExecution: job,
+                user: 'bob',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date()
+        ).save(flush:true)
+        UserAndRolesAuthContext ctx = Mock(UserAndRolesAuthContext)
+        boolean called = false
+        service.storageService = Mock(StorageService)
+        service.frameworkService = Mock(FrameworkService)
+        service.metaClass.triggerJobNotification = { String trigger, ScheduledExecution source, Map content ->
+            called = true
+        }
+
+        when:
+        service.sendNotificationsForExecution(new SendNotificationEvent(executionUuid: execution.uuid, jobUuid: job.uuid, authContext: ctx))
+
+        then:
+        called
     }
 
     class TestReader implements StreamingLogReader {
