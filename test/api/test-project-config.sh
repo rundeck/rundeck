@@ -67,9 +67,9 @@ assert_http_status 200 $DIR/headers.out
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-assert_json_value "Btest value" ".config.\"test.property\"" $DIR/curl.out
-assert_json_null ".config.\"test.property2\"" $DIR/curl.out
-assert_json_value "test value3" ".config.\"test.property3\"" $DIR/curl.out
+assert_json_value "Btest value" ".\"test.property\"" $DIR/curl.out
+assert_json_null ".\"test.property2\"" $DIR/curl.out
+assert_json_value "test value3" ".\"test.property3\"" $DIR/curl.out
 
 
 
