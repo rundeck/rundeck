@@ -501,26 +501,29 @@ Since: v15''',
         }
         ScmPluginConfig config = new ScmPluginConfig()
         String errormsg = ''
-        def valid = apiService.parseJsonXmlWith(request, response, [
+
+        def handlers = [
                 json: { data ->
                     config.config = data.config
                     if (!data.config) {
                         errormsg += " json: expected 'config' property"
                     }
-                },
-                xml : { xml ->
-                    def data = [:]
-                    xml?.config?.entry?.each {
-                        data[it.'@key'.text()] = it.text()
-                    }
-                    if (!data) {
-                        errormsg += " xml: expected 'config' element: ${xml.config}"
-                    } else {
-                        config.config = data
-                    }
                 }
         ]
-        )
+        if(isAllowXml()){
+            handlers.xml = { xml ->
+                def data = [:]
+                xml?.config?.entry?.each {
+                    data[it.'@key'.text()] = it.text()
+                }
+                if (!data) {
+                    errormsg += " xml: expected 'config' element: ${xml.config}"
+                } else {
+                    config.config = data
+                }
+            }
+        }
+        def valid = apiService.parseJsonXmlWith(request, response, handlers)
         if (!valid) {
             return
         }
@@ -1490,7 +1493,8 @@ Since: v15''',
     private ScmAction parseScmActionInput(boolean inputOnly = false) {
         ScmAction actionInput
         String errormsg = ''
-        boolean valid = apiService.parseJsonXmlWith(request, response, [
+
+        def handlers = [
                 json: { data ->
                     def invalid = ScmAction.validateJson(data, inputOnly)
                     if (invalid) {
@@ -1498,17 +1502,19 @@ Since: v15''',
                         return
                     }
                     actionInput = ScmAction.parseWithJson(data)
-                },
-                xml : { xml ->
-                    def invalid = ScmAction.validateXml(xml)
-                    if (invalid) {
-                        errormsg += invalid
-                        return
-                    }
-                    actionInput = ScmAction.parseWithXml(xml)
                 }
         ]
-        )
+        if(isAllowXml()){
+            handlers.xml = { xml ->
+                def invalid = ScmAction.validateXml(xml)
+                if (invalid) {
+                    errormsg += invalid
+                    return
+                }
+                actionInput = ScmAction.parseWithXml(xml)
+            }
+        }
+        boolean valid = apiService.parseJsonXmlWith(request, response, handlers)
         if (!valid) {
             return null
         }
