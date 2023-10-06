@@ -2,81 +2,18 @@
 
 # use api V44
 API_VERSION=44
-#export API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-set -euo pipefail
+set -eu
 
-#set -x
-
-create_project(){
-  local test_proj="$1"
-  # now submit req
-  local runurl="${APIURL}/projects"
-  local params=""
-
-
-
-  cat > $DIR/proj_create.post <<END
-  <project>
-      <name>$test_proj</name>
-      <description>test1</description>
-
-  </project>
-END
-
-  # post
-  docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
-  if [ 0 != $? ] ; then
-      errorMsg "ERROR: failed POST request"
-      exit 2
-  fi
-  assert_http_status 201 $DIR/headers.out
-}
-
-delete_project(){
-  local test_proj=$1;shift
-
-  # now delete the test project
-
-  runurl="${APIURL}/project/$test_proj"
-  docurl -X DELETE  ${runurl} > $DIR/curl.out
-  if [ 0 != $? ] ; then
-      errorMsg "ERROR: failed DELETE request"
-      exit 2
-  fi
-
-}
+set -x
 
 
 
 
 
-runJob(){
-    local jobid=$1;shift
-    # now run the job
-    runurl="${APIURL}/job/${jobid}/run"
-    params=""
-    execargs="-opt2 a"
-
-    # get listing
-    docurl --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-    #get execid
-
-    execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-    execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
-
-    if [ "1" != "${execcount}" -o "" == "${execid}" ] ; then
-        errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-        exit 2
-    fi
-    echo $execid
-}
 
 get_archive(){
   local test_proj=$1;shift
@@ -161,15 +98,16 @@ test_archive_executions(){
 
 END
 
+  echo "BEGIN: upload job, run twice"
   JOBID=$(uploadJob  "$DIR/temp.out" "$test_proj")
 
   #run job to completion twice
-  EXECID=$(runJob $JOBID)
+  EXECID=$(runjob $JOBID)
   api_waitfor_execution $EXECID || fail "failed to wait for job completion $EXECID"
 
 
   #run job to completion twice
-  EXECID2=$(runJob $JOBID)
+  EXECID2=$(runjob $JOBID)
   api_waitfor_execution $EXECID2 || fail "failed to wait for job completion $EXECID2"
 
   echo "TEST: Export specifying executions, 2"

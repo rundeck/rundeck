@@ -15,36 +15,13 @@ runurl="${APIURL}/projects"
 test_proj="APIConfigTest2"
 
 
-##
-# setup: create project
-##
-cat > $DIR/proj_create.post <<END
-<project>
-    <name>$test_proj</name>
-    <description>test1</description>
-    <config>
-        <property key="test.property" value="test value"/>
-        <property key="test.property2" value="test value2"/>
-    </config>
-</project>
-END
-
-# post
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed POST request"
-    exit 2
-fi
-assert_http_status 201 $DIR/headers.out
-
-API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
+create_project "$test_proj" '{"test.property":"test value", "test.property2":"test value2"}'
 #Check result
 
-assert_xml_value $test_proj /project/name $DIR/curl.out
-assert_xml_value "test value" "/project/config/property[@key='test.property']/@value" $DIR/curl.out
-assert_xml_value "test value2" "/project/config/property[@key='test.property2']/@value" $DIR/curl.out
-assert_xml_value "" "/project/config/property[@key='test.property3']/@value" $DIR/curl.out
+assert_json_value $test_proj '.name' $DIR/curl.out
+assert_json_value "test value" ".config.\"test.property\"" $DIR/curl.out
+assert_json_value "test value2" ".config.\"test.property2\"" $DIR/curl.out
+assert_json_null ".config.\"test.property3\"" $DIR/curl.out
 
 
 runurl="${APIURL}/project/$test_proj/config/test.property"
@@ -129,7 +106,7 @@ runurl="${APIURL}/project/$test_proj/config"
 
 echo "TEST: verify $runurl"
 # get all config to verify
-docurl -H Accept:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -H Accept:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
@@ -139,22 +116,11 @@ API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exi
 
 #Check result
 
-assert_xml_value "Btest value" "/config/property[@key='test.property']/@value" $DIR/curl.out
-assert_xml_value "Btest value2" "/config/property[@key='test.property2']/@value" $DIR/curl.out
-assert_xml_value "Btest value3" "/config/property[@key='test.property3']/@value" $DIR/curl.out
+assert_json_value "Btest value" ".\"test.property\"" $DIR/curl.out
+assert_json_value "Btest value2" ".\"test.property2\"" $DIR/curl.out
+assert_json_value "Btest value3" ".\"test.property3\"" $DIR/curl.out
 
 echo "OK"
 
 # now delete the test project
-
-runurl="${APIURL}/project/$test_proj"
-docurl -X DELETE  ${runurl} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed DELETE request"
-    exit 2
-fi
-
-
-rm $DIR/proj_create.post
-rm $DIR/curl.out
-
+delete_project "$test_proj"

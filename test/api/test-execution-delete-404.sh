@@ -9,27 +9,6 @@ source $DIR/include.sh
 execid="000"
 TITLE="DELETE execution/ID not found"
 
-test_execution_notfound_xml(){
-
-	####
-	# Test: request with 404 response
-	####
-
-
-	ENDPOINT="$APIURL/execution/$execid"
-	ACCEPT=application/xml
-	METHOD=DELETE
-	EXPECT_STATUS=404
-
-	test_begin "$TITLE (xml)"
-
-	api_request $ENDPOINT $DIR/curl.out
-
-	assert_xml_valid $DIR/curl.out
-
-	test_succeed
-
-}
 
 test_execution_notfound_json(){
 
@@ -48,7 +27,6 @@ test_execution_notfound_json(){
 }
 
 main(){
-	test_execution_notfound_xml
 	test_execution_notfound_json
 }
 main

@@ -62,9 +62,9 @@ fi
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
-succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
-skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
+failedcount=$(jq -r ".failed | length" $DIR/curl.out)
+succount=$(jq -r ".succeeded | length" $DIR/curl.out)
+skipcount=$(jq -r ".skipped | length" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
@@ -72,10 +72,10 @@ if [ "1" != "$succount" ] ; then
 fi
 
 # verify results
-jid=$(xmlsel "//succeeded/job/id" $DIR/curl.out)
-jname=$(xmlsel "//succeeded/job/name" $DIR/curl.out)
-jgroup=$(xmlsel "//succeeded/job/group" $DIR/curl.out)
-jproj=$(xmlsel "//succeeded/job/project" $DIR/curl.out)
+jid=$(jq -r ".succeeded[0].id" $DIR/curl.out)
+jname=$(jq -r ".succeeded[0].name" $DIR/curl.out)
+jgroup=$(jq -r ".succeeded[0].group" $DIR/curl.out)
+jproj=$(jq -r ".succeeded[0].project" $DIR/curl.out)
 
 assert "cli job" "$jname" "Wrong job name: $jname"
 assert "api-test" "$jgroup" "Wrong job group: $jgroup"
@@ -109,9 +109,9 @@ fi
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
-succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
-skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
+failedcount=$(jq -r ".failed | length" $DIR/curl.out)
+succount=$(jq -r ".succeeded | length" $DIR/curl.out)
+skipcount=$(jq -r ".skipped | length" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
@@ -119,10 +119,10 @@ if [ "1" != "$succount" ] ; then
 fi
 
 # verify results
-jid=$(xmlsel "//succeeded/job/id" $DIR/curl.out)
-jname=$(xmlsel "//succeeded/job/name" $DIR/curl.out)
-jgroup=$(xmlsel "//succeeded/job/group" $DIR/curl.out)
-jproj=$(xmlsel "//succeeded/job/project" $DIR/curl.out)
+jid=$(jq -r ".succeeded[0].id" $DIR/curl.out)
+jname=$(jq -r ".succeeded[0].name" $DIR/curl.out)
+jgroup=$(jq -r ".succeeded[0].group" $DIR/curl.out)
+jproj=$(jq -r ".succeeded[0].project" $DIR/curl.out)
 
 assert "cli job" "$jname" "Wrong job name: $jname"
 assert "api-test" "$jgroup" "Wrong job group: $jgroup"

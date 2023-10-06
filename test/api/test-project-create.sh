@@ -18,17 +18,18 @@ echo "TEST: POST /api/14/projects"
 test_proj="APICreateTest"
 
 cat > $DIR/proj_create.post <<END
-<project>
-    <name>$test_proj</name>
-    <description>test1</description>
-    <config>
-        <property key="test.property" value="test value"/>
-    </config>
+{
+    "name":"$test_proj",
+    "description":"test1",
+    "config":{
+        "test.property":"test value"
+    }
+}
 </project>
 END
 
 # post
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
@@ -39,15 +40,15 @@ assert_http_status 201 $DIR/headers.out
 API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
-assert_xml_value "$test_proj" "/project/name" $DIR/curl.out
-assert_xml_value "test value" "/project/config/property[@key='test.property']/@value" $DIR/curl.out
+assert_json_value "$test_proj" ".name" $DIR/curl.out
+assert_json_value "test value" ".config.\"test.property\"" $DIR/curl.out
 
 echo "OK"
 
 echo "TEST: POST /api/14/projects (existing project results in conflict)"
 
 # post xml
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2

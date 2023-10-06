@@ -21,11 +21,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
-
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -39,32 +36,6 @@ fi
 
 # now submit req
 runurl="${APIURL}/execution/${execid}"
-params=""
-
-
-echo "TEST: ${runurl}?${params} ..."
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-assert_xml_value "$execid" "//executions/execution/@id" $DIR/curl.out
-assert_xml_notblank "//executions/execution/@href" $DIR/curl.out
-assert_xml_notblank "//executions/execution/@permalink" $DIR/curl.out
-assert_xml_notblank "//executions/execution/@status" $DIR/curl.out
-assert_xml_notblank "//executions/execution/@project" $DIR/curl.out
-assert_xml_notblank "//executions/execution/user" $DIR/curl.out
-
-echo "OK"
-
 params=""
 
 echo "TEST: ${runurl}?${params} (json) ..."
