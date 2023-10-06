@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.data.exception.DataValidationException
 import org.rundeck.app.data.providers.GormExecutionDataProvider
 import org.springframework.context.MessageSource
 import rundeck.data.execution.RdExecution

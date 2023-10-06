@@ -17,7 +17,7 @@ import groovy.util.logging.Log4j2
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
-import org.rundeck.app.data.exception.DataValidationException
+import rundeck.data.validation.exception.DataValidationException
 import org.rundeck.app.data.job.schedule.DefaultJobDataChangeDetector
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
