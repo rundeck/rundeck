@@ -97,7 +97,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-succount=$(xmlsel "//executions/@count" $DIR/curl.out)
+succount=$(jq -r ".executions | length" $DIR/curl.out)
 
 ###
 # Wait for schedule to pass and test success
@@ -124,7 +124,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-succount2=$(xmlsel "//executions/@count" $DIR/curl.out)
+succount2=$(jq -r ".executions | length" $DIR/curl.out)
 
 ####
 # Verify the Count of executions

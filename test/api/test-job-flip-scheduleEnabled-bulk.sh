@@ -73,49 +73,6 @@ END
     echo $jobId
 }
 
-create_proj(){
-    projname=$1
-    jobname=$2
-
-    xmlproj=$($XMLSTARLET esc "$projname")
-    xmljob=$($XMLSTARLET esc "$jobname")
-
-    cat > $DIR/proj_create.post <<END
-<project>
-    <name>$xmlproj</name>
-    <description>description for $xmlproj</description>
-    <config>
-        <property key="test.property" value="test value"/>
-    </config>
-</project>
-END
-
-    runurl="${APIURL}/projects"
-
-    # post (thus creating project)
-    docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed POST request"
-        exit 2
-    fi
-    rm $DIR/proj_create.post
-    assert_http_status 201 $DIR/headers.out
-
-}
-
-delete_proj(){
-    projname=$1
-    xmlproj=$($XMLSTARLET esc "$projname")
-
-    runurl="${APIURL}/project/$projname"
-    docurl -X DELETE  ${runurl} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed DELETE request"
-        exit 2
-    fi
-}
-
-
 disable_schedule_bulk(){
     jobset=$1
 
@@ -127,7 +84,7 @@ disable_schedule_bulk(){
         errorMsg "ERROR: failed POST request (disable schedule)"
         exit 2
     fi
-    assert_xml_value 'true' '//toggleSchedule/@allsuccessful' $DIR/curl.out
+    assert_json_value 'true' '.allsuccessful' $DIR/curl.out
 }
 enable_schedule_bulk(){
     jobset=$1
@@ -140,7 +97,7 @@ enable_schedule_bulk(){
         errorMsg "ERROR: failed POST request (enable schedule)"
         exit 2
     fi
-    assert_xml_value 'true' '//toggleSchedule/@allsuccessful' $DIR/curl.out
+    assert_json_value 'true' '.allsuccessful' $DIR/curl.out
 }
 
 assert_job_schedule_enabled(){

@@ -71,10 +71,9 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+if [  "" != "${execid}" ] ; then
     :
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -101,12 +100,9 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-assert "failed-with-retry" "$status" "execution status should be succeeded"
-assert_xml_notblank "//executions/execution/retriedExecution/execution/@id" $DIR/curl.out
-retryId=$(xmlsel "//executions/execution/retriedExecution/execution/@id" $DIR/curl.out)
+assert_json_value "failed-with-retry" ".status" $DIR/curl.out
+assert_json_not_null ".retriedExecution.id" $DIR/curl.out
+retryId=$(jq -r ".retriedExecution.id" < $DIR/curl.out)
 
 
 #wait for retry 1 execution to complete
@@ -130,12 +126,9 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-assert "failed-with-retry" "$status" "execution status should be succeeded"
-assert_xml_notblank "//executions/execution/retriedExecution/execution/@id" $DIR/curl.out
-retryId=$(xmlsel "//executions/execution/retriedExecution/execution/@id" $DIR/curl.out)
+assert_json_value "failed-with-retry" ".status" $DIR/curl.out
+assert_json_not_null ".retriedExecution.id" $DIR/curl.out
+retryId=$(jq -r ".retriedExecution.id" < $DIR/curl.out)
 
 #wait for retry 2 execution to complete
 
@@ -158,11 +151,8 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-assert "failed" "$status" "execution status should be succeeded"
-assert_xml_value "" "//executions/execution/retriedExecution/execution/@id" $DIR/curl.out
+assert_json_value "failed" ".status" $DIR/curl.out
+assert_json_null ".retriedExecution" $DIR/curl.out
 
 echo "OK"
 

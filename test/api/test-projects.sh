@@ -20,7 +20,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
-assert_xml_notblank "/projects/@count" $DIR/curl.out
+assert_json_not_null "length" $DIR/curl.out
 
 echo "OK"
 

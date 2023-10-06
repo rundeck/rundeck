@@ -21,11 +21,10 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
+assert_json_not_null ".execution.id" $DIR/curl.out
 
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -36,12 +35,12 @@ fi
 #function to verify api output entry has content
 verify_entry_output(){
     file=$1
-    ocount=$(xmlsel "count(//output/entries/entry)" $file)
+    ocount=$(jq -r  ".entries|length" < $file)
 
     #output text
-    xout=$($XMLSTARLET sel -T -t -m "//output/entries/entry" -v "@log" -n $file)
-    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
+    unmod=$(jq -r ".unmodified" < $DIR/curl.out)
     if [[ $ocount > 0 && $unmod != "true" ]]; then
+        xout=$(jq -r ".entries[0].log" < $file)
         echo "OUT: $xout"
         if [ -z "$xout" ]; then
             errorMsg "ERROR: no output in content"
@@ -55,9 +54,9 @@ verify_entry_output(){
 ####
 
 # now submit req
-runurl="${APIURL}/execution/${execid}/output.xml"
+runurl="${APIURL}/execution/${execid}/output"
 
-echo "TEST: /api/execution/${execid}/output.xml using lastmod ..."
+echo "TEST: /api/execution/${execid}/output using lastmod ..."
 
 doff=0
 ddone="false"
@@ -75,14 +74,12 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
         exit 2
     fi
 
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
     verify_entry_output $DIR/curl.out
 
-    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
-    doff=$(xmlsel "//output/offset" $DIR/curl.out)
-    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
-    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
+    unmod=$(jq -r ".unmodified" < $DIR/curl.out)
+    doff=$(jq -r ".offset" < $DIR/curl.out)
+    dlast=$(jq -r ".lastModified" < $DIR/curl.out)
+    ddone=$(jq -r ".completed" < $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
         #echo "unmodifed, sleep 3..."
@@ -127,11 +124,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
-
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -144,9 +138,9 @@ fi
 ####
 
 # now submit req
-runurl="${APIURL}/execution/${execid}/output.xml"
+runurl="${APIURL}/execution/${execid}/output"
 
-echo "TEST: /api/execution/${execid}/output.xml using maxlines..."
+echo "TEST: /api/execution/${execid}/output using maxlines..."
 
 doff=0
 ddone="false"
@@ -164,14 +158,12 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
         exit 2
     fi
 
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
     verify_entry_output $DIR/curl.out
 
-    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
-    doff=$(xmlsel "//output/offset" $DIR/curl.out)
-    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
-    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
+    unmod=$(jq -r ".unmodified" < $DIR/curl.out)
+    doff=$(jq -r ".offset" < $DIR/curl.out)
+    dlast=$(jq -r ".lastModified" < $DIR/curl.out)
+    ddone=$(jq -r ".completed" < $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
         #echo "unmodifed, sleep 3..."
@@ -214,11 +206,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
-
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -226,64 +215,10 @@ if [ -z "$execid" ] ; then
 fi
 
 
-####
-# Test: receive output greedily
-####
-
-# now submit req
-runurl="${APIURL}/execution/${execid}/output.xml"
-
-echo "TEST: /api/execution/${execid}/output.xml ..."
-
-doff=0
-ddone="false"
-dlast=0
-dmax=20
-dc=0
-while [[ $ddone == "false" && $dc -lt $dmax ]]; do
-    #statements
-    params="offset=$doff"
-
-    # get listing
-    docurl ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-    verify_entry_output $DIR/curl.out
-
-    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
-    doff=$(xmlsel "//output/offset" $DIR/curl.out)
-    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
-    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
-    #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
-    if [[ $unmod == "true" ]]; then
-
-        #echo "unmodifed, sleep 3..."
-        sleep 2
-    else
-        #echo "$ocount lines, sleep 1"
-        if [[ $ddone != "true" ]]; then
-            sleep 1
-        fi
-    fi
-    dc=$(( $dc + 1 ))
-
-done
-
-if [[ $ddone != "true" ]]; then
-    errorMsg "ERROR: not all output was received in $dc requests"
-    exit 2
-fi
-
-echo "OK"
 
 
 ####
-# Test: specify xml format by default
+# Test: specify json format by default
 ####
 
 # now submit req
@@ -307,14 +242,12 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
         exit 2
     fi
 
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
     verify_entry_output $DIR/curl.out
 
-    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
-    doff=$(xmlsel "//output/offset" $DIR/curl.out)
-    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
-    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
+    unmod=$(jq -r ".unmodified" < $DIR/curl.out)
+    doff=$(jq -r ".offset" < $DIR/curl.out)
+    dlast=$(jq -r ".lastModified" < $DIR/curl.out)
+    ddone=$(jq -r ".completed" < $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
 

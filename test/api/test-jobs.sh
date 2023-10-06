@@ -3,7 +3,6 @@
 #test output from /api/jobs
 
 DIR=$(cd `dirname $0` && pwd)
-export API_XML_NO_WRAPPER=1
 source $DIR/include.sh
 
 proj="test"
@@ -25,7 +24,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
+itemcount=$(jq -r ". | length" $DIR/curl.out)
 
 if [ "" == "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -68,9 +67,7 @@ if [ 0 != $? ] ; then
 fi
 
 #wrapper expected in job import response
-export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-export API_XML_NO_WRAPPER=1
 
 cat > $DIR/temp.out <<END
 -
@@ -102,9 +99,7 @@ if [ 0 != $? ] ; then
 fi
 
 #wrapper expected in job import response
-export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-export API_XML_NO_WRAPPER=1
 
 # load a top-level job not in a group
 cat > $DIR/temp.out <<END
@@ -136,274 +131,82 @@ if [ 0 != $? ] ; then
 fi
 
 #wrapper expected in job import response
-export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-export API_XML_NO_WRAPPER=1
 
 ###
 # test query with match filter and exact filter
 ###
+testQuery(){
+  local query=${1};shift
+  local expect=${1:-1};shift
+
+  runurl="${APIURL}/project/$proj/jobs"
+
+  # get listing
+  docurl ${runurl}?${query} > $DIR/curl.out
+  if [ 0 != $? ] ; then
+      errorMsg "ERROR: failed query request"
+      exit 2
+  fi
+
+  $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+  #Check projects list
+  itemcount=$(jq -r "length" $DIR/curl.out)
+
+  if [ "${expect}" != "$itemcount" ] ; then
+      errorMsg "Wrong count: $itemcount"
+      exit 2
+  fi
+
+  rm $DIR/curl.out
+}
 
 echo "Test inexact jobs query.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobFilter=test-jobs&groupPath=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "2" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobFilter=test-jobs&groupPath=api/test-jobs" "2"
 echo "OK"
-
-rm $DIR/curl.out
 
 
 echo "Test inexact jobs query, exact group.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobFilter=test-jobs&groupPathExact=api/test-jobs"
 echo "OK"
 
-rm $DIR/curl.out
 
 
 echo "Test inexact jobs query, exact name.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs&groupPath=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs&groupPath=api/test-jobs"
 echo "OK"
 
-rm $DIR/curl.out
 
 
 echo "Test inexact jobs query, group only.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&groupPath=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "2" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&groupPath=api/test-jobs" "2"
 echo "OK"
 
-rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 echo "OK"
-
-rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
 echo "OK"
-
-rm $DIR/curl.out
 
 
 echo "Test exact name, exact group 2.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 echo "OK"
-
-rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "0" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs" "0"
 echo "OK"
 
-rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match 2.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "0" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group" "0"
 echo "OK"
-
-rm $DIR/curl.out
 
 echo "Test match name, exact group, top level.."
-
-runurl="${APIURL}/project/$proj/jobs"
-
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=-"
-
-# get listing
-docurl ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
-
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "Wrong count: $itemcount"
-    exit 2
-fi
+testQuery "project=${proj}&jobFilter=test-jobs&groupPathExact=-"
 echo "OK"
 
-rm $DIR/curl.out

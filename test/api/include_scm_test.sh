@@ -19,33 +19,6 @@ tmpdir(){
 	local TMPDIR=`mktemp -d -t ${tempfoo}.XXX` || exit 1
 	echo $TMPDIR
 }
-
-create_project(){
-	local projectName=$1
-	
-	ENDPOINT="${APIURL}/projects"
-	TMPDIR=`tmpdir`
-	tmp=$TMPDIR/create-project.xml
-	cat >$tmp <<END
-<project>
-    <name>$projectName</name>
-</project>
-END
-	TYPE=application/xml
-	POSTFILE=$tmp
-	METHOD=POST
-	EXPECT_STATUS=201
-	api_request $ENDPOINT $DIR/curl.out
-}
-remove_project(){
-	local projectName=$1
-
-	ENDPOINT="${APIURL}/project/$projectName"
-	METHOD=DELETE
-	EXPECT_STATUS=204
-	api_request $ENDPOINT $DIR/curl.out
-}
-
 baregitfile=$SRC_DIR/git-bare-init.zip
 
 setup_remote(){

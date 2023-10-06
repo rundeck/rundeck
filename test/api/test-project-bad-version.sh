@@ -30,28 +30,9 @@ test_bad_version_json(){
 
 }
 
-test_bad_version_xml(){
-
-	####
-	# Test: xml request with 400 response, unsupported version
-	####
-	ENDPOINT="$runurl"
-	ACCEPT=application/xml
-	METHOD=GET
-	EXPECT_STATUS=400
-
-	api_request $ENDPOINT $DIR/curl.out
-
-	assert_xml_valid $DIR/curl.out
-
-	test_succeed
-
-}
-
 
 
 main(){
 	test_bad_version_json
-	test_bad_version_xml
 }
 main

@@ -5,7 +5,6 @@
 
 # use api V14
 API_VERSION=14
-API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -24,12 +23,12 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 #
-assert_xml_value $proj "/project/name" $DIR/curl.out
-assert_xml_value "$CUR_APIURL/project/$proj" "/project/@url" $DIR/curl.out
+assert_json_value $proj ".name" $DIR/curl.out
+assert_json_value "$CUR_APIURL/project/$proj" ".url" $DIR/curl.out
 
 
 echo "OK"

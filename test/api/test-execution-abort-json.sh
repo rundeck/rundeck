@@ -16,11 +16,9 @@ params="exec=echo+testing+execution+abort+api%3Bsleep+120"
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
-
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+assert_json_not_null ".execution.id" $DIR/curl.out
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 [ -z "$execid" ]  && fail "expected execution id"
 
@@ -40,13 +38,8 @@ sleep 5
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-
-assert "running" $(xmlsel "//executions/execution/@status" $DIR/curl.out) "execution was not running"
+assert_json_value "$execid" ".id" $DIR/curl.out
+assert_json_value "running" ".status" $DIR/curl.out
 
 echo "OK"
 
@@ -92,14 +85,11 @@ params=""
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
+assert_json_value "$execid" ".id" $DIR/curl.out
+assert_json_value "aborted" ".status" $DIR/curl.out
 
-assert "aborted" $(xmlsel "//executions/execution/@status" $DIR/curl.out) "execution should be aborted"
-auser=$(xmlsel "//executions/execution/abortedby" $DIR/curl.out)
+auser=$(jq -r ".abortedby" < $DIR/curl.out)
 
 [ -z "$auser" ] && fail "execution did not have abortedby info"
 

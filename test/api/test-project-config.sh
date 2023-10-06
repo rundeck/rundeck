@@ -1,11 +1,10 @@
 #!/bin/bash
 
 #test PUT /api/14/project/config
-#using API v14, no xml result wrapper
+#using API v14
 
 # use api V14
 API_VERSION=14
-API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -19,32 +18,32 @@ test_proj="APIConfigTest"
 # setup: create project
 ##
 cat > $DIR/proj_create.post <<END
-<project>
-    <name>$test_proj</name>
-    <description>test1</description>
-    <config>
-        <property key="test.property" value="test value"/>
-        <property key="test.property2" value="test value2"/>
-    </config>
-</project>
+{
+    "name":"$test_proj",
+    "description":"test1",
+    "config":{
+        "test.property":"test value",
+        "test.property2":"test value2"
+    }
+}
 END
 
 # post
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
 assert_http_status 201 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
 
-assert_xml_value $test_proj /project/name $DIR/curl.out
-assert_xml_value "test value" "/project/config/property[@key='test.property']/@value" $DIR/curl.out
-assert_xml_value "test value2" "/project/config/property[@key='test.property2']/@value" $DIR/curl.out
-assert_xml_value "" "/project/config/property[@key='test.property3']/@value" $DIR/curl.out
+assert_json_value $test_proj '.name' $DIR/curl.out
+assert_json_value "test value" ".config.\"test.property\"" $DIR/curl.out
+assert_json_value "test value2" ".config.\"test.property2\"" $DIR/curl.out
+assert_json_null ".config.\"test.property3\"" $DIR/curl.out
 
 
 runurl="${APIURL}/project/$test_proj/config"
@@ -52,25 +51,25 @@ runurl="${APIURL}/project/$test_proj/config"
 echo "TEST: PUT $runurl"
 
 cat > $DIR/proj_config.post <<END
-<config>
-    <property key="test.property" value="Btest value"/>
-    <property key="test.property3" value="test value3"/>
-</config>
+{
+"test.property":"Btest value",
+"test.property3":"test value3"
+}
 END
 
 # post
-docurl -X PUT -D $DIR/headers.out --data-binary @$DIR/proj_config.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X PUT -D $DIR/headers.out --data-binary @$DIR/proj_config.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
 assert_http_status 200 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-assert_xml_value "Btest value" "/config/property[@key='test.property']/@value" $DIR/curl.out
-assert_xml_value "" "/config/property[@key='test.property2']/@value" $DIR/curl.out
-assert_xml_value "test value3" "/config/property[@key='test.property3']/@value" $DIR/curl.out
+assert_json_value "Btest value" ".config.\"test.property\"" $DIR/curl.out
+assert_json_null ".config.\"test.property2\"" $DIR/curl.out
+assert_json_value "test value3" ".config.\"test.property3\"" $DIR/curl.out
 
 
 

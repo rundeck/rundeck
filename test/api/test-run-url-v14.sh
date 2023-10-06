@@ -38,7 +38,7 @@ api_request $ENDPOINT $DIR/curl.out
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-assert_xml_notblank "//execution/@id" $DIR/curl.out
+assert_json_not_null ".execution.id" $DIR/curl.out
 
 test_succeed
 
