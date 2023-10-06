@@ -40,7 +40,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
 
@@ -190,7 +189,7 @@ Since: v15
                     )
         }
 
-        respond list, [formats: allowedFormats]
+        respond list, [formats: responseFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
@@ -260,7 +259,7 @@ Since: v15''',
 
         respond(
                 new ScmPluginSetupInput(type: pluginInputTypeReq.type, integration: pluginInputTypeReq.integration, fields: properties),
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
@@ -389,7 +388,7 @@ Since: v15''',
     private def respondActionResult(IntegrationRequest scm, result, Map messages = [:]) {
         ScmActionResult actionResult
         def secondary = scm.hasProperty('type') ? scm.type : scm.hasProperty('actionId') ? scm.actionId : null
-        def map = [formats: allowedFormats]
+        def map = [formats: responseFormats]
         if (result.error || !result.valid) {
             map.status = HttpServletResponse.SC_BAD_REQUEST
 
@@ -532,7 +531,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
                     [
-                            formats: allowedFormats,
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -923,12 +922,12 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: allowedFormats,
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmProjectStatus, [formats: allowedFormats]
+        respond scmProjectStatus, [formats: responseFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/config')
@@ -1009,7 +1008,7 @@ Since: v15''',
         )
 
 
-        respond result, [formats: allowedFormats]
+        respond result, [formats: responseFormats]
 
     }
 
@@ -1154,7 +1153,7 @@ Since: v15''',
                         importItems: importActionItems,
                         exportItems: exportActionItems
                 ),
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
@@ -1522,7 +1521,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: message(code: "invalid.format")),
                     [
-                            formats: allowedFormats,
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -1955,12 +1954,12 @@ Export plugin values for `$synchState`:
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: allowedFormats,
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobStatus, [formats: allowedFormats]
+        respond scmJobStatus, [formats: responseFormats]
     }
 
     private void loadJobStatus(
@@ -2129,12 +2128,12 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: allowedFormats,
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobDiff, [formats: allowedFormats]
+        respond scmJobDiff, [formats: responseFormats]
     }
 
     /**

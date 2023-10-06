@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -43,7 +42,6 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.ExternalDocumentation
-import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.Explode
@@ -58,7 +56,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -73,7 +70,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
-import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
 
 import javax.security.auth.Subject
@@ -2906,7 +2902,7 @@ Since: V18''',
                         extra
                 ),
 
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
@@ -3041,7 +3037,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                         extra
                 ),
 
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
@@ -3111,7 +3107,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             respond(
                     data,
-                    [formats: allowedFormats]
+                    [formats: responseFormats]
             )
             return
         }

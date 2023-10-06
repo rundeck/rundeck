@@ -147,7 +147,7 @@ class ControllerBase {
         return featureService.featurePresent(Features.LEGACY_XML, false)
     }
 
-    List<String> getAllowedFormats(){
+    List<String> getResponseFormats(){
         isAllowXml()?['xml', 'json']:['json']
     }
 

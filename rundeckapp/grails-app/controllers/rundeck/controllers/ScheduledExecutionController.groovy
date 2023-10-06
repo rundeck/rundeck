@@ -26,8 +26,6 @@ import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -40,12 +38,10 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
-import groovy.transform.TypeCheckingMode
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -69,7 +65,6 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
 import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
-import org.hibernate.criterion.Example
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -4719,7 +4714,7 @@ Since: v19''',
             ]
             )
         }
-        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: allowedFormats])
+        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: responseFormats])
     }
 
     @Get(uri='/jobs/file/{id}')
@@ -4802,7 +4797,7 @@ Since: v19''',
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job File Record', params.id])
         }
 
-        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: allowedFormats])
+        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: responseFormats])
     }
     /**
      * API v19, File upload input for job
@@ -4870,7 +4865,7 @@ Since: v19''',
                         records.collect{new JobFileInfo(it.exportMap())},
                         paging + [total:total, count: records.size()]
                 ),
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
