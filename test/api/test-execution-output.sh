@@ -37,9 +37,13 @@ verify_entry_output(){
     file=$1
     ocount=$(jq -r  ".entries|length" < $file)
 
+    assert_json_not_null ".unmodified" $DIR/curl.out
+    assert_json_not_null ".offset" $DIR/curl.out
+    assert_json_not_null ".lastModified"  $DIR/curl.out
+    assert_json_not_null ".completed"  $DIR/curl.out
     #output text
     unmod=$(jq -r ".unmodified" < $DIR/curl.out)
-    if [[ $ocount > 0 && $unmod != "true" ]]; then
+    if [[ $ocount -gt 0 && $unmod != "true" ]]; then
         xout=$(jq -r ".entries[0].log" < $file)
         echo "OUT: $xout"
         if [ -z "$xout" ]; then
