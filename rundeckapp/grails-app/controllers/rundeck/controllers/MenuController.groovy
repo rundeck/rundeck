@@ -360,22 +360,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
 
-        withFormat{
-            html {
-                results + [jobQueryComponents:jobQueryComponents]
-            }
-            yaml{
-                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
-                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
-            }
-            xml{
-                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',results.nextScheduled, writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
-            }
-        }
+        return results + [jobQueryComponents:jobQueryComponents]
     }
     /**
      *
