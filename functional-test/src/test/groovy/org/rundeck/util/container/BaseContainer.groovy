@@ -45,7 +45,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     System.exit(1)
                 }
             }
-        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION.isEmpty()) {
+        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
             synchronized (LOCK) {
                 try{
                     RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
