@@ -190,7 +190,7 @@ Since: v15
                     )
         }
 
-        respond list, [formats: ['xml', 'json']]
+        respond list, [formats: allowedFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
@@ -260,7 +260,7 @@ Since: v15''',
 
         respond(
                 new ScmPluginSetupInput(type: pluginInputTypeReq.type, integration: pluginInputTypeReq.integration, fields: properties),
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 
@@ -389,7 +389,7 @@ Since: v15''',
     private def respondActionResult(IntegrationRequest scm, result, Map messages = [:]) {
         ScmActionResult actionResult
         def secondary = scm.hasProperty('type') ? scm.type : scm.hasProperty('actionId') ? scm.actionId : null
-        def map = [formats: ['xml', 'json'],]
+        def map = [formats: allowedFormats]
         if (result.error || !result.valid) {
             map.status = HttpServletResponse.SC_BAD_REQUEST
 
@@ -529,7 +529,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
                     [
-                            formats: ['xml', 'json'],
+                            formats: allowedFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -920,12 +920,12 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: allowedFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmProjectStatus, [formats: ['xml', 'json']]
+        respond scmProjectStatus, [formats: allowedFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/config')
@@ -1006,7 +1006,7 @@ Since: v15''',
         )
 
 
-        respond result, [formats: ['xml', 'json']]
+        respond result, [formats: allowedFormats]
 
     }
 
@@ -1151,7 +1151,7 @@ Since: v15''',
                         importItems: importActionItems,
                         exportItems: exportActionItems
                 ),
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 
@@ -1516,7 +1516,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: message(code: "invalid.format")),
                     [
-                            formats: ['xml', 'json'],
+                            formats: allowedFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -1949,12 +1949,12 @@ Export plugin values for `$synchState`:
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: allowedFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobStatus, [formats: ['xml', 'json']]
+        respond scmJobStatus, [formats: allowedFormats]
     }
 
     private void loadJobStatus(
@@ -2123,12 +2123,12 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: allowedFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobDiff, [formats: ['xml', 'json']]
+        respond scmJobDiff, [formats: allowedFormats]
     }
 
     /**

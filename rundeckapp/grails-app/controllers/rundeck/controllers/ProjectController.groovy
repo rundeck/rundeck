@@ -2796,7 +2796,7 @@ Requires `export` authorization for the project resource.""",
             def percentage = projectService.promiseSummary(session.user, token).percent()
             return respond(
                     new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                    [formats: ['xml', 'json']]
+                    [formats: allowedFormats]
             )
         }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
@@ -2982,7 +2982,7 @@ Since: v19""",
         def percentage = projectService.promiseSummary(session.user, token).percent()
         respond(
                 new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                [formats: ['xml', 'json']]
+                [formats: allowedFormats]
         )
     }
 

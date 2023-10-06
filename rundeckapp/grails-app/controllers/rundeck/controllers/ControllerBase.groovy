@@ -147,6 +147,10 @@ class ControllerBase {
         return featureService.featurePresent(Features.LEGACY_XML, false)
     }
 
+    List<String> getAllowedFormats(){
+        isAllowXml()?['xml', 'json']:['json']
+    }
+
     protected int getApiVersion(){
         if(request.api_version instanceof Integer){
             return request.api_version
