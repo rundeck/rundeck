@@ -68,7 +68,7 @@ disable_schedule(){
     runurl="${APIURL}/job/$jobname/schedule/disable"
     params=""
 
-    docurl -X POST -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+    docurl -X POST -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "ERROR: failed POST request (disable execution)"
         exit 2
@@ -82,7 +82,7 @@ enable_schedule(){
     runurl="${APIURL}/job/$jobname/schedule/enable"
     params=""
 
-    docurl -X POST -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+    docurl -X POST -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "ERROR: failed POST request (disable execution)"
         exit 2

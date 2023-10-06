@@ -103,16 +103,16 @@ assert_plugin_enabled(){
 	local project=$4
 
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/plugins"
-	ACCEPT=application/xml
+	ACCEPT=application/json
 
 	api_request $ENDPOINT $DIR/curl.out
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 	#Check projects list
-	assert_xml_value $integration '/scmPluginList/integration' $DIR/curl.out
+	assert_json_value $integration '.integration' $DIR/curl.out
 
-	assert_xml_value "$value" "/scmPluginList/plugins/scmPluginDescription[type=\"$plugin\"]/enabled" $DIR/curl.out
+	assert_json_value "$value" ".plugins[] | select(.type == \"$plugin\") | .enabled" $DIR/curl.out
 }
 
 test_disable_export_json(){

@@ -83,19 +83,19 @@ test_export_perform_action_json(){
 	#list actions for status
 
 	METHOD=GET
-	ACCEPT=application/xml
+	ACCEPT=application/json
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/status"
 	api_request $ENDPOINT $DIR/curl.out
 
-	assert_xml_value "1" 'count(/scmProjectStatus/actions/string)' $DIR/curl.out
-	assert_xml_value "project-commit" '/scmProjectStatus/actions/string' $DIR/curl.out
+	assert_json_value "1" '.actions|length' $DIR/curl.out
+	assert_json_value "project-commit" '.actions[0]' $DIR/curl.out
 
 	# get status input
 	# list fields for action
 
 	METHOD=GET
-	ACCEPT=application/xml
+	ACCEPT=application/json
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/action/project-commit/input"
 	
@@ -103,9 +103,9 @@ test_export_perform_action_json(){
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-	assert_xml_value "Commit Message" '/scmActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	assert_json_value "Commit Message" ".fields[] | select(.name == \"message\") | .title" $DIR/curl.out
 	
-	local jobId=$(xmlsel '/scmActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
+	local jobId=$(jq -r '.exportItems.actionItem.job.jobId' $DIR/curl.out)
 	local commitMessage="A test commit"
 
 	# perform action

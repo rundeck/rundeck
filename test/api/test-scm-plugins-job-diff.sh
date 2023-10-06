@@ -40,19 +40,19 @@ perform_job_action(){
 	local commitMessage="blah"
 
 	METHOD=POST
-	ACCEPT=application/xml
-	TYPE=application/xml
+	ACCEPT=application/json
+	TYPE=application/json
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/action/$actionId"
 
 	TMPDIR=`tmpdir`
 	tmp=$TMPDIR/commit.xml
 	cat >$tmp <<END
-<scmAction>
-	<input>
-		<entry key="message">$commitMessage</entry>
-	</input>
-</scmAction>
+{
+	"input":{
+		"message":"$commitMessage"
+	}
+}
 END
 	POSTFILE=$tmp
 
@@ -71,14 +71,14 @@ assert_scm_job_status(){
 	local status=$4
 
 	METHOD=GET
-	ACCEPT=application/xml
+	ACCEPT=application/json
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/status"
 	api_request $ENDPOINT $DIR/curl.out
 
-	assert_xml_value "$integration" '/scmJobStatus/integration' $DIR/curl.out
-	assert_xml_value "$project" '/scmJobStatus/project' $DIR/curl.out
-	assert_xml_value "$status" '/scmJobStatus/synchState' $DIR/curl.out
+	assert_json_value "$integration" '.integration' $DIR/curl.out
+	assert_json_value "$project" '.project' $DIR/curl.out
+	assert_json_value "$status" '.synchState' $DIR/curl.out
 }
 
 
