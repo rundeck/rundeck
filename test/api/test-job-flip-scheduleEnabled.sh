@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-set -e
+#set -e
 
 # use api V44
 API_VERSION=44
