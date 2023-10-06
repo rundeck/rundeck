@@ -317,23 +317,6 @@ class ReportsController extends ControllerBase{
                 }
                 render out as JSON
             }
-            xml {
-                render(contentType:"text/xml"){
-                    if(errmsg){
-                        delegate.'error'{
-                            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,flash.error)
-                            delegate.'message'(flash.error)
-                        }
-                    }else{
-                        result(success:true){
-                            delegate.'since'{
-                                delegate.'count'(count)
-                                delegate.'time'(time)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
