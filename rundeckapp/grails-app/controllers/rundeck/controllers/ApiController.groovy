@@ -881,7 +881,12 @@ Since: v11
         SystemInfoModel systemInfoModel = new SystemInfoModel(systemInfoMap)
 
         withFormat{
-            if(isAllowXml()){
+            json{
+                return apiService.renderSuccessJson(response){
+                    systemInfoModel
+                }
+            }
+            if (isAllowXml()) {
                 xml{
                     return apiService.renderSuccessXml(request,response){
                         delegate.'system'{
@@ -954,11 +959,9 @@ Since: v11
 
                 }
             }
-            json{
-
+            '*'{
                 return apiService.renderSuccessJson(response){
                     systemInfoModel
-
                 }
             }
         }
