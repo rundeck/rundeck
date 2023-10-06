@@ -6,14 +6,7 @@ API_VERSION=44
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-set -eu
-
-set -x
-
-
-
-
-
+set -euo pipefail
 
 get_archive(){
   local test_proj=$1;shift
@@ -140,14 +133,13 @@ END
 
 
 main(){
-  create_project "Test_projectExportExecutions1"
-  test_archive_executions "Test_projectExportExecutions1"
-  delete_project "Test_projectExportExecutions1"
+  project="API-test-project-export-executions"
+  create_project "$project"
+  test_archive_executions "$project"
+  delete_project "$project"
 }
 
 
 main
 
-rm $DIR/proj_create.post
-rm $DIR/curl.out
 rm $DIR/test_archive.zip
