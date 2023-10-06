@@ -9,10 +9,10 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
-import org.yaml.snakeyaml.introspector.MissingProperty
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
+import javax.validation.constraints.Null
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
@@ -24,6 +24,10 @@ import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+/**
+ * Service that handles all the Asynchronous import functionality.
+ *
+ */
 class AsyncImportService implements AsyncImportStatusFileOperations, EventPublisher {
 
     FrameworkService frameworkService
@@ -35,17 +39,43 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static final String EXECUTION_DIR_NAME = 'executions'
     static final String MODEL_PROJECT_NAME_SUFFIX = 'rundeck-model-project'
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
+    static final def BASE_WORKING_DIR = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
 
+    /**
+     *
+     * Creates the status file that will be the main report to inform about the whole process,
+     * a project cannot have more than a single status file.
+     *
+     * The file will be stored in project's file storage (Storage table in db)
+     *
+     * @param projectName - Required param to project.
+     *
+     * @return Boolean - "true" if the status file is created.
+     */
     @Override
-    Long createStatusFile(String projectName) {
+    Boolean createStatusFile(String projectName) {
         try {
-            saveAsyncImportStatusForProject(projectName, null)
+            def fwkProject = frameworkService.getFrameworkProject(projectName)
+            def statusFilepath = "${JSON_FILE_PREFFIX}${projectName}${JSON_FILE_EXT}"
+            if( !fwkProject.existsFileResource(statusFilepath) ){
+                saveAsyncImportStatusForProject(projectName)
+                return true
+            }
+            return false
         } catch (IOException e) {
             e.printStackTrace();
             throw e
         }
     }
 
+    /**
+     *
+     * Gets the status file content as an object.
+     *
+     * @param projectName - Required param to project.
+     *
+     * @return AsyncImportStatusDTO - DTO with all the status file content.
+     */
     @Override
     AsyncImportStatusDTO getAsyncImportStatusForProject(String projectName) {
         try{
@@ -57,8 +87,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return obj
         }catch(Exception e){
             log.error("Error during the async import file extraction process: ${e.message}")
+            throw e
         }
-        return null
     }
 
     @Override
@@ -111,7 +141,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 newStatusFileContent.lastUpdated = new Date().toString()
                 newStatusFileContent.lastUpdate = lastUpdate
             saveAsyncImportStatusForProject(null, newStatusFileContent)
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw e
         }
@@ -167,13 +197,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             if( !projectName ){
                 throw new MissingPropertyException("No project name passed in event.")
             }
-            def baseWorkDirPath = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
+            // Distributed executions path
             def distributedExecutionsPath = "async-import-dirs${File.separator}distributed_executions"
             def distributedExecutionsFullPath = Paths.get(System.getProperty("user.home") + File.separator + distributedExecutionsPath)
-            Path firstDir //First dir, for the model
-            // First dir extraction
+            // The first dir of distributed executions, in other words, the next execution bundle to be uploaded
+            Path firstDir
             List<Path> executionBundles = null
-
             try {
                 executionBundles = Files.walk(distributedExecutionsFullPath, FileVisitOption.FOLLOW_LINKS)
                         .filter(Files::isDirectory)
@@ -198,7 +227,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             throw ignored
                         }
 
-                        def zippedFilename = "${baseWorkDirPath}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
+                        def zippedFilename = "${BASE_WORKING_DIR}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
                         zipModelProject(modelProjectFullPath as String, zippedFilename);
 
                         FileInputStream fis = new FileInputStream(zippedFilename);
@@ -235,6 +264,17 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             }
                         }
 
+                        if( result.execerrors ){
+                            Throwable t = new Exception(result.execerrors.toString())
+                            reportError(
+                                    projectName,
+                                    AsyncImportMilestone.M3_IMPORTING.name,
+                                    "Error in Milestone 3.",
+                                    t
+                            )
+                            throw t
+                        }
+
                         // Update the status file and emit M3 event
                         projectService.beginAsyncImportMilestone3(
                                 projectName,
@@ -243,18 +283,16 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         )
 
                     } catch (Exception e) {
-//                        e.printStackTrace()
                         reportError(
                                 projectName,
                                 AsyncImportMilestone.M3_IMPORTING.name,
                                 "Error in Milestone 3.",
                                 e
                         )
-//                        throw e
                     }
                 }else{
                     // Remove all the files in the working dir and that's it!!
-                    deleteNonEmptyDir(baseWorkDirPath.toString())
+                    deleteNonEmptyDir(BASE_WORKING_DIR.toString())
                     // Update the file
                     updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                             projectName,
@@ -264,25 +302,21 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             } catch (IOException e) {
                 // Report the error
-//                e.printStackTrace()
                 reportError(
                         projectName,
                         AsyncImportMilestone.M3_IMPORTING.name,
                         "Error in Milestone 3.",
                         e
                 )
-//                throw e
             }
         } catch (IOException e) {
             // Report the error
-//            e.printStackTrace()
             reportError(
                     projectName,
                     AsyncImportMilestone.M3_IMPORTING.name,
                     "Error in Milestone 3.",
                     e
             )
-//            throw e
         }
     }
 

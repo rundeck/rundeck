@@ -1829,11 +1829,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return result
     }
 
-    void createAsyncImportStatusFile(String projectName){
+    Boolean createAsyncImportStatusFile(String projectName){
         try{
-            asyncImportService.createStatusFile(projectName)
+            return asyncImportService.createStatusFile(projectName)
         }catch(Exception e){
             e.printStackTrace()
+            throw e
         }
     }
 
@@ -1845,13 +1846,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }catch(Exception e){
             e.printStackTrace()
         }
-    }
-
-    /**
-     * **** DELETE ME ******
-     */
-    void notifyAsyncImportOperation(String event, Object... objects){
-        notify(event, objects)
     }
 
     void beginAsyncImportMilestone3(
@@ -1892,6 +1886,7 @@ class ArchiveOptions implements ProjectArchiveExportRequest{
     boolean acls = false
     boolean scm = false
     String stripJobRef = null
+    boolean asyncImport = false
     Map<String, Map<String, String>> exportOpts = [:]
     Map<String, Boolean> exportComponents = [:]
 

@@ -53,6 +53,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     String apitoken
     String url
     Boolean preserveuuid
+    Boolean asyncImport
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -78,6 +79,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         apitoken(nullable: true)
         url(nullable: true)
         preserveuuid(nullable: true)
+        asyncImport(nullable: true)
     }
 
     void cleanComponentOpts(){
@@ -129,7 +131,8 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 scm: exportScm ?: false,
                 stripJobRef: stripJobRef,
                 exportOpts: exportOpts,
-                exportComponents: exportComponents
+                exportComponents: exportComponents,
+                asyncImport: asyncImport
         )
     }
 

@@ -151,9 +151,9 @@ class UrlMappings {
                 action: 'apiProjectExportAsyncDownload'
         )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
-        "/api/$api_version/project/$project/async/import-start"(controller: 'project',action: 'apiProjectAsyncImport')
+        "/api/$api_version/project/$project/async/import-start"(controller: 'project',action: 'apiProjectImport')
         "/api/$api_version/project/$project/async/import-status"(controller: 'project',action: 'apiProjectAsyncImportStatus')
-        "/api/$api_version/project/$project/async/import-status/update"(controller: 'project',action: 'apiProjectAsyncImportStatusUpdate')
+        "/api/$api_version/project/$project/async/import-status/create"(controller: 'project',action: 'apiProjectAsyncImportStatusCreate')
 //        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/sources"(controller: 'framework') {
             action = [GET: "apiSourcesList"]
