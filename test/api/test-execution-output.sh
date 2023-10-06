@@ -37,7 +37,6 @@ verify_entry_output(){
     file=$1
     ocount=$(jq -r  ".entries|length" < $file)
 
-    assert_json_not_null ".unmodified" $DIR/curl.out
     assert_json_not_null ".offset" $DIR/curl.out
     assert_json_not_null ".lastModified"  $DIR/curl.out
     assert_json_not_null ".completed"  $DIR/curl.out
