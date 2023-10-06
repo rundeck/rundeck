@@ -5,15 +5,20 @@
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-###
-# Setup: acquire local node name from RDECK_ETC/framework.properties#server.name
-####
-localnode=$(grep 'framework.server.name' $RDECK_ETC/framework.properties | sed 's/framework.server.name = //')
+# now submit req
+runurl="${APIURL}/system/info"
 
-if [ -z "${localnode}" ] ; then
-    errorMsg "FAIL: Unable to determine framework.server.name from $RDECK_ETC/framework.properties"
+# get listing
+docurl ${runurl} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
     exit 2
 fi
+
+#Check projects list
+localnode=$(xmlsel "/system/rundeck/node" $DIR/curl.out)
+
+
 
 ####
 # Setup: create simple adhoc command execution to provide execution ID.

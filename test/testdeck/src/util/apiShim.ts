@@ -13,7 +13,7 @@ const skipTests = [
     'test-execution-output-plain-lastlines.sh',
     'test-execution-output-plain.sh',
     'test-execution-output-utf8.sh',
-    'test-execution-state.sh', // Reads framework.properties
+    //'test-execution-state.sh', // Reads framework.properties
 
     '^test-scm',
 
