@@ -27,9 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
@@ -54,7 +52,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -97,9 +94,6 @@ import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
@@ -2886,7 +2880,7 @@ Since: v23''',
                 }
             ),
 
-            [formats: allowedFormats]
+            [formats: responseFormats]
         )
     }
 
@@ -3237,7 +3231,7 @@ Since: v23''',
                 errors: errors,
                 resources: sourceContent
             ),
-            [formats: allowedFormats]
+            [formats: responseFormats]
         )
     }
 

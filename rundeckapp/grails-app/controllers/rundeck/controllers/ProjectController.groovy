@@ -26,8 +26,6 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -2801,7 +2799,7 @@ Requires `export` authorization for the project resource.""",
             def percentage = projectService.promiseSummary(session.user, token).percent()
             return respond(
                     new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                    [formats: allowedFormats]
+                    [formats: responseFormats]
             )
         }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
@@ -2987,7 +2985,7 @@ Since: v19""",
         def percentage = projectService.promiseSummary(session.user, token).percent()
         respond(
                 new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 

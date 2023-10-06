@@ -25,8 +25,6 @@ import com.dtolabs.rundeck.app.api.tokens.Token
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import groovy.transform.CompileStatic
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Post
@@ -50,7 +48,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
-import javax.validation.constraints.Pattern
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -396,7 +393,7 @@ Includes current latest API Version, and base API URL.''',
             return
         }
 
-        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: allowedFormats])
+        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
     @CompileStatic
@@ -538,7 +535,7 @@ Includes current latest API Version, and base API URL.''',
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
 
-        respond(data, [formats: allowedFormats])
+        respond(data, [formats: responseFormats])
     }
 
 
@@ -726,7 +723,7 @@ Since: v11
             )
         }
         response.status = HttpServletResponse.SC_CREATED
-        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: allowedFormats])
+        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
     @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
@@ -792,7 +789,7 @@ Since: v11
 
         respond(
                 new RemoveExpiredTokens(count: resultCount, message: "Removed $resultCount expired tokens"),
-                [formats: allowedFormats]
+                [formats: responseFormats]
         )
     }
 
