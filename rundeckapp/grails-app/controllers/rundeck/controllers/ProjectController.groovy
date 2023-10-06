@@ -3258,6 +3258,16 @@ Note: `other_errors` included since API v35""",
                 archiveParams
         )
 
+        if( archiveParams.asyncImport && result.success ){
+            // Emit the milestone 1 event
+            projectService.beginAsyncImportMilestone1(
+                    project.name,
+                    projectAuthContext,
+                    project,
+                    stream
+            )
+        }
+
         switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){

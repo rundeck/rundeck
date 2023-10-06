@@ -55,14 +55,26 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     @Override
     Boolean createStatusFile(String projectName) {
         try {
-            def fwkProject = frameworkService.getFrameworkProject(projectName)
-            def statusFilepath = "${JSON_FILE_PREFFIX}${projectName}${JSON_FILE_EXT}"
-            if( !fwkProject.existsFileResource(statusFilepath) ){
+            if( !statusFileExists(projectName) ){
                 saveAsyncImportStatusForProject(projectName)
                 return true
             }
             return false
         } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
+    private Boolean statusFileExists(String projectName){
+        try {
+            def fwkProject = frameworkService.getFrameworkProject(projectName)
+            def statusFilepath = "${JSON_FILE_PREFFIX}${projectName}${JSON_FILE_EXT}"
+            if( !fwkProject.existsFileResource(statusFilepath) ){
+                return false
+            }
+            return true
+        } catch (Exception e) {
             e.printStackTrace();
             throw e
         }
@@ -169,11 +181,21 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1)
+    def beginMilestone1(
+            final String projectName,
+            AuthContext authContext,
+            IRundeckProject project,
+            InputStream inputStream
+    ){
+        // Copy the input stream in /tmp and if everything goes ok, report and call M2
+    }
+
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
     def beginMilestone3(
             final String projectName,
             AuthContext authContext,
-            IRundeckProject project
+            IRundeckProject project,
     ){
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
