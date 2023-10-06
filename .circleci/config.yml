@@ -450,6 +450,50 @@ jobs:
             --skip-rule=operation-4xx-response \
             --skip-rule=no-invalid-media-type-examples
 
+  test-gradle-api:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - checkout
+      - install-java
+      - restore-gradle-cache
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/circle-shim.sh
+            pull_rundeck
+      - run:
+          command: ./gradlew :functional-test:apiTest --no-daemon --stacktrace --info --parallel
+      - collect-gradle-tests
+
+  test-gradle-api-tomcat:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+
+    parameters:
+      tomcat-vers:
+        description: Tomcat image tag
+        type: string
+    steps:
+      - checkout
+      - install-java
+      - restore-gradle-cache
+      - attach_workspace:
+          at: artifacts
+      - run:
+          command: |
+            # copy war file to 
+            TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
+            WAR=$(find artifacts -name '*.war')
+            cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
+      - run:
+          command: ./gradlew :functional-test:tomcatTest --no-daemon --stacktrace --info --parallel
+          environment:
+            TEST_RUNDECK_IMAGE: TOMCAT_TAG:<< parameters.tomcat-vers >>
+      - collect-gradle-tests
+
   test-docker:
     <<: *defaults
     executor: gradle-docker
@@ -861,6 +905,29 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
+      - test-gradle-api:
+          <<: *filter-no-tags
+          name: New API Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-api-tomcat:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 8
+          requires: *stage-build
+          tomcat-vers: 8-jdk11
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-api-tomcat:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 9
+          requires: *stage-build
+          tomcat-vers: 9-jdk11
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
   nightly:
     triggers:
       - schedule:
@@ -986,5 +1053,12 @@ workflows:
           requires: *stage-build
           context:
             - tl_scan_context
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-api:
+          <<: *filter-no-tags
+          name: New API Test
+          requires: *stage-build
+          context:
             - slack-secrets
           <<: *slack-fail-post-step

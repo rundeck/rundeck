@@ -40,6 +40,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
                         .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
                         .withStartupTimeout(Duration.ofMinutes(5))
         )
+
     }
 
 

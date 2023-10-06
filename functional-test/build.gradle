@@ -44,3 +44,10 @@ task seleniumCoreTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"
 }
+
+task tomcatTest(type: Test){
+    useJUnitPlatform()
+    systemProperty("DEFAULT_DOCKERFILE_LOCATION", "docker/file/tomcat/Dockerfile")
+    systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
+    description = "Run Rundeck OSS API Tests on a tomcat environment"
+}

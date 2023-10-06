@@ -19,6 +19,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
+    private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
 
     ClientProvider getClientProvider() {
         if (System.getenv("TEST_RUNDECK_URL") != null) {
@@ -33,7 +34,18 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
                 }
             }
-        } else if (RUNDECK == null) {
+        } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null){
+            synchronized (LOCK) {
+                try{
+                    RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
+                    rdDockerContainer.start()
+                    CLIENT_PROVIDER = rdDockerContainer
+                }catch(Exception e){
+                    log.error("ERROR STARTING DOCKER", e)
+                    System.exit(1)
+                }
+            }
+        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION.isEmpty()) {
             synchronized (LOCK) {
                 try{
                     RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
@@ -41,6 +53,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     RUNDECK.start()
                     CLIENT_PROVIDER = RUNDECK
                 }catch(Exception e){
+                    log.error("ERROR STARTING DOCKER-COMPOSE", e)
                     System.exit(1)
                 }
             }
