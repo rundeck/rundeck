@@ -528,24 +528,6 @@ class ExecutionController extends ControllerBase{
     }
 
 
-    private def xmlerror() {
-        render(contentType:"text/xml",encoding:"UTF-8"){
-            result(error:"true"){
-                delegate.'error'{
-                    if(flash.error){
-                        response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,flash.error)
-                        delegate.'message'(flash.error)
-                    }
-                    if(flash.errors){
-                        def p = delegate
-                        flash.errors.each{ msg ->
-                            p.'message'(msg)
-                        }
-                    }
-                }
-            }
-        }
-    }
     def cancelExecution () {
         boolean valid=false
         withForm{
@@ -562,11 +544,6 @@ class ExecutionController extends ControllerBase{
                     render(contentType: "application/json") {
                         delegate.cancelled false
                         delegate.error request.error
-                    }
-                }
-                if (isAllowXml()) {
-                    xml {
-                        xmlerror()
                     }
                 }
             }
@@ -586,11 +563,6 @@ class ExecutionController extends ControllerBase{
                     render(contentType: "application/json") {
                         delegate.cancelled false
                         delegate.error "Execution not found for id: " + params.id
-                    }
-                }
-                if (isAllowXml()) {
-                    xml {
-                        xmlerror()
                     }
                 }
             }
@@ -629,20 +601,6 @@ class ExecutionController extends ControllerBase{
                     }
                 }
             }
-            if (isAllowXml()) {
-                xml {
-                    render(contentType: "text/xml", encoding: "UTF-8") {
-                        result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
-                            success {
-                                message("Job status: ${abortresult.status ?: (didcancel ? 'killed' : 'failed')}")
-                            }
-                            if (reasonstr) {
-                                reason(reasonstr)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -664,11 +622,6 @@ class ExecutionController extends ControllerBase{
                         delegate.error request.error
                     }
                 }
-                if (isAllowXml()) {
-                    xml {
-                        xmlerror()
-                    }
-                }
             }
         }
 
@@ -686,11 +639,6 @@ class ExecutionController extends ControllerBase{
                     render(contentType: "application/json") {
                         delegate.cancelled  false
                         delegate.error  "Execution not found for id: " + params.id
-                    }
-                }
-                if (isAllowXml()) {
-                    xml {
-                        xmlerror()
                     }
                 }
             }
