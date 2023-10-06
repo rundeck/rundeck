@@ -1056,11 +1056,10 @@ This endpoint requires that the user have `read` access to the Job or to Adhoc e
 
 The result will contain a set of data values reflecting the execution's status, as well as the status and read location in the output file.
 
-* In JSON, there will be an object containing these entries.
-* In XML, there will be an `output` element, containing these sub-elements, each with a text value.
+* In JSON, there will be an object containing these fields.
 * In plain text format, HTTP headers will include some information about the loging state, but individual log entries will only be returned in textual form without metadata.
 
-Entries:
+Contents:
 
 * `id`: ID of the execution
 * `message`: optional text message indicating why no entries were returned
@@ -1085,9 +1084,8 @@ Entries:
 Each log entry will be included in a section called `entries`.
 
 * In JSON, `entries` will contain an array of Objects, each containing the following format
-* In XML, the `entries` element will contain a sequence of `entry` elements
 
-Content of each Log Entry:
+Content of each Log Entry object:
 
 * `time`: Timestamp in format: "HH:MM:SS"
 * `absolute_time`: Timestamp in format: "yyyy-MM-dd'T'HH:mm:ssZ"
