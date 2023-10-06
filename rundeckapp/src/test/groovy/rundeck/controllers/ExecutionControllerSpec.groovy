@@ -176,8 +176,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
 
         format | respondJson | respondXml
         'json' | 1           | 0
-        'xml'  | 0           | 1
-        'all'  | 0           | 1
+        'all'  | 1           | 0
     }
 
     def "api execution query, parse recentFilter param"() {

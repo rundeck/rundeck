@@ -387,7 +387,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -426,7 +426,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['_replaceNodeFilters'] == replaceNodeFilters}
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -467,7 +467,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job now"() {
@@ -499,7 +499,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [executionType: 'user']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job at time"() {
@@ -532,7 +532,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [runAtTime: 'timetorun']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job at time json"(){
@@ -568,7 +568,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [runAtTime: 'timetorun']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api scheduler takeover cluster mode disabled"(){
@@ -2228,7 +2228,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -2301,7 +2301,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
 
@@ -2865,7 +2865,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
             ) >> [success: true]
-            0 * controller.executionService.respondExecutionsXml(_, _, _)
+            0 * controller.executionService.respondExecutionsJson(_, _, _)
             0 * controller.executionService._(*_)
     }
 
@@ -2934,7 +2934,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
 

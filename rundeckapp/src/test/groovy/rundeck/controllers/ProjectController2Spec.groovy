@@ -77,33 +77,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         return mock.proxyInstance()
     }
 
-    void apiProjectList_xml(){
-        given:
-        controller.frameworkService = mockWith(FrameworkService){
-            projects(1..1){auth->
-                [
-                        [name: 'testproject'],
-                        [name: 'testproject2'],
-                ]
-            }
-        }
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-
-        controller.apiService = mockWith(ApiService){
-            requireApi(1..1) { req, resp ->
-                true
-            }
-            renderSuccessXml(1..1) { req, resp, clos ->
-
-            }
-        }
-        when:
-        response.format='xml'
-        controller.apiProjectList()
-        then:
-        assert response.status == HttpServletResponse.SC_OK
-
-    }
 
     void apiProjectList_json(){
         when:
@@ -219,29 +192,33 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     }
 
 
-    void apiProjectList_unacceptableReceivesXml(){
+    void apiProjectList_unacceptableReceivesJson(){
         when:
-        controller.frameworkService = mockWith(FrameworkService) {
-            projects(1..1) { auth ->
-                [
-                        [name: 'testproject'],
-                        [name: 'testproject2'],
-                ]
+            def prja = new MockFor(IRundeckProject)
+            prja.demand.getName(1..3) { -> 'testproject'}
+            prja.demand.getProjectProperties(1..2){ -> [:]}
+            def prjb = new MockFor(IRundeckProject)
+            prjb.demand.getName(1..3) { -> 'testproject2'}
+            prjb.demand.getProjectProperties(1..2){ -> [:]}
+            controller.frameworkService = mockWith(FrameworkService) {
+                projects(1..1) { auth ->
+                    [
+                            prja.proxyInstance(),
+                            prjb.proxyInstance(),
+                    ]
+                }
             }
-        }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderSuccessXml(1..1) { req, resp, clos ->
-
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_,_)>>true
+                0 * renderSuccessXml(*_)
             }
-        }
 
-        response.format='text'
-        controller.apiProjectList()
+            response.format='text'
+            controller.apiProjectList()
         then:
-        assert response.status==HttpServletResponse.SC_OK
+            assert response.status==HttpServletResponse.SC_OK
 
     }
 
@@ -1107,6 +1084,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 [success: true,error: null]
             }
             1 * controller.frameworkService.handleProjectSchedulingEnabledChange(_,curExecDisabled,curSchedDisabled,newExecDisabled,newSchedDisabled)
+            1 * controller.frameworkService.loadProjectProperties(_)>>[
+                    'project.disable.executions': (newExecDisabled).toString(),
+                    'project.disable.schedule': (newSchedDisabled).toString()
+            ]
 
         where:
             curExecDisabled | curSchedDisabled | newExecDisabled | newSchedDisabled

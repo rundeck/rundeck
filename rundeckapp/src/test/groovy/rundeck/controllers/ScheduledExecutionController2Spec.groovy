@@ -929,18 +929,11 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             1 * authorizeProjectResource(_,[type: 'resource', kind: 'event'],'read',se.project)>>true
         }
 
-        sec.executionService = mockWith(ExecutionService) {
-            queryJobExecutions(1) { job, stat, offset, max ->
-                assert job == se
-                assert stat == testStatus
-                assert offset == testOffset
-                assert max == testMax
+        sec.executionService = Mock(ExecutionService) {
+            _*queryJobExecutions(se,testStatus,testOffset,testMax)>>
                 [total: 0, result: testResultList]
-            }
-            respondExecutionsXml(1) { HttpServletRequest request,HttpServletResponse response, List<Execution> executions, Map params ->
-                assertEquals(executions.size() ,testResultSize)
-                [result:true]
-            }
+
+            _*respondExecutionsJson(_,_, {it.size()==testResultSize},_)>>[result:true]
         }
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
@@ -978,20 +971,20 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = new MockFor(ExecutionService, true)
+
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
+        sec.executionService = Mock(ExecutionService) {
+            1 * executeJob(_, _, _, _) >> {
+                [executionId: exec.id, name: it[0].jobName, execution: exec, success: true]
+            }
 
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
+            1 * respondExecutionsJson(_, _, _, _) >> true
         }
-        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
-            return true
-        }
-        sec.executionService = eServiceControl.proxyInstance()
+
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req,resp ->
@@ -1067,23 +1060,19 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
-                                            String user,
-                                            Map input ->
-            assert userName == user
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
+        sec.executionService = Mock(ExecutionService) {
+            1*executeJob ( _,_,userName,_)>>{
+                [executionId: exec.id, name: it[0].jobName, execution: exec,success:true]
+            }
+
+            1*respondExecutionsJson (_,_,_,_)>> true
         }
-        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
-            return true
-        }
-        sec.executionService = eServiceControl.proxyInstance()
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
