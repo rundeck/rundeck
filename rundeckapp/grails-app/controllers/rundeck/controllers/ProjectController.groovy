@@ -536,7 +536,7 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     @PackageScope
-    def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
+    def renderApiProjectXml (IRundeckProject pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
         def pmap = [url: data.url]
         delegate.'project'(pmap) {
@@ -662,6 +662,16 @@ Authorization required: `read` for project resource
         }
         def projlist = frameworkService.projects(systemAuthContext)
         withFormat{
+            def jsonClos={
+                List details = []
+                projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                    //don't include config data
+                    details.add(basicProjectDetails(pject,request.api_version))
+                }
+
+                render details as JSON
+            }
+            json jsonClos
             if(isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
@@ -674,15 +684,7 @@ Authorization required: `read` for project resource
                     }
                 }
             }
-            json{
-                List details = []
-                projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
-                    //don't include config data
-                    details.add(basicProjectDetails(pject,request.api_version))
-                }
-
-                render details as JSON
-            }
+            '*' jsonClos
         }
 
     }
@@ -729,6 +731,9 @@ Authorization required: `read` access for `project` resource type to get basic p
         def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
         def pject = authorizingProject.resource
         withFormat{
+            json{
+                render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
+            }
             if(isAllowXml()) {
                 xml {
 
@@ -736,9 +741,6 @@ Authorization required: `read` access for `project` resource type to get basic p
                         renderApiProjectXml(pject, delegate, configAuth, request.api_version)
                     }
                 }
-            }
-            json{
-                render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
             }
         }
     }
@@ -1122,24 +1124,20 @@ key2=value''')
     @CompileStatic
     @PackageScope
     void respondProjectConfig(String respFormat, IRundeckProject proj) {
-        switch (respFormat) {
-            case 'text':
-                response.setContentType("text/plain")
-                def props = proj.getProjectProperties() as Properties
-                props.store(response.outputStream, request.forwardURI)
-                flush(response)
-                break
-            case 'xml':
-                if(isAllowXml()) {
-                    apiService.renderSuccessXml(request, response) {
-                        renderApiProjectConfigXml(proj, delegate)
-                    }
-                    break
-                }
-            case 'json':
-                def config=frameworkService.loadProjectProperties(proj)
-                render(config as JSON)
-                break
+        if (respFormat=='text') {
+
+            response.setContentType("text/plain")
+            def props = proj.getProjectProperties() as Properties
+            props.store(response.outputStream, request.forwardURI)
+            flush(response)
+        }else if( isAllowXml() && respFormat=='xml'){
+
+            apiService.renderSuccessXml(request, response) {
+                renderApiProjectConfigXml(proj, delegate)
+            }
+        }else{
+            def config=frameworkService.loadProjectProperties(proj)
+            render(config as JSON)
         }
     }
 
@@ -1624,12 +1622,12 @@ Since: v14""",
                 def j={
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
+                json j
                 xml{
                     render(contentType: 'application/xml'){
                         apiService.renderXmlAclpolicyValidation(validation,delegate)
                     }
                 }
-                json j
                 '*' j
             }
         }
@@ -1651,11 +1649,14 @@ Since: v14""",
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
-                    }
 
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                        }
+
+                    }
                 }
             }
         }
@@ -1690,11 +1691,13 @@ Since: v14""",
                         def content = [contents: baos.toString()]
                         render content as JSON
                     }
-                    xml{
-                        render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),'xml',delegate)
-                        }
+                    if (isAllowXml()) {
+                        xml {
+                            render(contentType: 'application/xml') {
+                                apiService.renderWrappedFileContentsXml(baos.toString(), 'xml', delegate)
+                            }
 
+                        }
                     }
                 }
             }else{
@@ -1733,17 +1736,19 @@ Since: v14""",
                             list
                     ) as JSON
             }
-            xml{
-                render(contentType: 'application/xml'){
-                    apiService.xmlRenderDirList(
-                            '',
-                            {p->p},
-                            {p->renderProjectAclHref(projectName,p)},
-                            list,
-                            delegate
-                    )
-                }
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        apiService.xmlRenderDirList(
+                                '',
+                                { p -> p },
+                                { p -> renderProjectAclHref(projectName, p) },
+                                list,
+                                delegate
+                        )
+                    }
 
+                }
             }
         }
     }

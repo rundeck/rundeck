@@ -165,14 +165,18 @@ class StorageController extends ControllerBase{
     private def renderDirectory(HttpServletRequest request, HttpServletResponse response, Resource resource,
                                 Set<Resource<ResourceMeta>> dirlist) {
         withFormat {
-            json {
+            def jsonClos = {
                 render jsonRenderResource(resource,dirlist) as JSON
             }
-            xml {
-                render(contentType: 'application/xml') {
-                    xmlRenderResource(delegate, resource, dirlist)
+            json  jsonClos
+            if(isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        xmlRenderResource(delegate, resource, dirlist)
+                    }
                 }
             }
+            '*' jsonClos
         }
     }
     private boolean resourceContentsMasked(Resource resource){
@@ -247,11 +251,14 @@ class StorageController extends ControllerBase{
         }
         withFormat {
             json(jsonResponseclosure)
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'error'(message)
+            if(isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'error'(message)
+                    }
                 }
             }
+            '*' jsonResponseclosure
         }
     }
 

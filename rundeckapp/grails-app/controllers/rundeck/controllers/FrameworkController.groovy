@@ -688,8 +688,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         }
                 ]) as JSON)
             }
-            xml{
-                return render (result as XML)
+            if (isAllowXml()) {
+                xml {
+                    return render(result as XML)
+                }
             }
         }
     }
@@ -4064,12 +4066,16 @@ by:
                 def j={
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderXmlAclpolicyValidation(validation,delegate)
+
+                json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderXmlAclpolicyValidation(validation, delegate)
+                        }
                     }
                 }
-                json j
                 '*' j
             }
         }
@@ -4086,17 +4092,21 @@ by:
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, baos)
             withFormat{
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
-                    }
 
-                }
                 def j={
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
                 json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                        }
+
+                    }
+                }
                 '*' j
             }
         }
@@ -4125,13 +4135,17 @@ by:
                         def content = [contents:baos.toString()]
                         render content as JSON
                     }
-                    xml{
-                        render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat, delegate)
-                        }
-
-                    }
                     json j
+
+                    if(isAllowXml()) {
+                        xml {
+                            render(contentType: 'application/xml') {
+                                apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                            }
+
+                        }
+                    }
+
                     '*' j
                 }
             }
@@ -4158,18 +4172,6 @@ by:
         //list aclpolicy files in the dir
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
         withFormat{
-            xml{
-                render(contentType: 'application/xml'){
-                    apiService.xmlRenderDirList(
-                            '',
-                            { String p -> p },
-                            { String p -> renderAclHref(p) },
-                            list,
-                            delegate
-                    )
-                }
-
-            }
             def j ={
                 render apiService.jsonRenderDirlist(
                             '',
@@ -4179,6 +4181,21 @@ by:
                     ) as JSON
             }
             json j
+
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        apiService.xmlRenderDirList(
+                                '',
+                                { String p -> p },
+                                { String p -> renderAclHref(p) },
+                                list,
+                                delegate
+                        )
+                    }
+
+                }
+            }
             '*' j
         }
     }

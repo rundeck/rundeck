@@ -726,9 +726,12 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                     workflow wfdata
                 }
             }
-            xml {
-                render(contentType: 'application/xml') {
-                    workflow wfdata
+
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        workflow wfdata
+                    }
                 }
             }
         }
@@ -1248,12 +1251,15 @@ Since: V14''',
 
         if (result && result.success) {
             return withFormat {
-                xml {
-                    render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
-                }
 
                 json {
                     render ([success: true] as JSON)
+                }
+
+                if (isAllowXml()) {
+                    xml {
+                        render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
+                    }
                 }
             }
         } else {
@@ -1357,12 +1363,15 @@ Since: V14''',
 
         if (result && result.success) {
             return withFormat {
-                xml {
-                    render(text: "<success>true</success>", contentType:"text/xml", encoding:"UTF-8")
-                }
 
                 json {
                     render ([success: true] as JSON)
+                }
+
+                if (isAllowXml()) {
+                    xml {
+                        render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
+                    }
                 }
             }
         } else {
@@ -1744,6 +1753,28 @@ Failed results will contain:
 
         withFormat{
 
+
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    enabled=params.status
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.id,message:del.message)
+                            }
+                        }
+                    }
+                    if(errors){
+                        delegate.'failed'=array {
+                            errors.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
+                            }
+                        }
+                    }
+                }
+            }
             if(isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
@@ -1773,27 +1804,6 @@ Failed results will contain:
                         }
                     }
 
-                }
-            }
-            json{
-                return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
-                    if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
-                    }
-                    if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1963,6 +1973,28 @@ Failed results will contain:
 
         withFormat{
 
+
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    enabled=params.status
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.id,message:del.message)
+                            }
+                        }
+                    }
+                    if(errors){
+                        delegate.'failed'=array {
+                            errors.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
+                            }
+                        }
+                    }
+                }
+            }
             if(isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
@@ -1992,27 +2024,6 @@ Failed results will contain:
                         }
                     }
 
-                }
-            }
-            json{
-                return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
-                    if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
-                    }
-                    if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -2149,6 +2160,27 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
         withFormat{
 
+
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.job.extid,message:del.message)
+                            }
+                        }
+                    }
+                    if(deleteerrs){
+                        delegate.'failed'=array {
+                            deleteerrs.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
+                            }
+                        }
+                    }
+                }
+            }
             if(isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
@@ -2174,26 +2206,6 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                         }
                     }
 
-                }
-            }
-            json{
-                return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    allsuccessful=(successful.size()==ids.size())
-                    if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.job.extid,message:del.message)
-                            }
-                        }
-                    }
-                    if(deleteerrs){
-                        delegate.'failed'=array {
-                            deleteerrs.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -3837,6 +3849,11 @@ Each job entry contains:
                     }
                 }
             }
+            '*'{
+                apiService.renderSuccessJson(response){
+                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
+                }
+            }
         }
     }
 
@@ -4228,10 +4245,16 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
         def e = result.execution
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,[e])
-            }
             json{
+                return executionService.respondExecutionsJson(request,response,[e],[single:true])
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, [e])
+                }
+            }
+            '*' {
                 return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
         }
@@ -5704,11 +5727,14 @@ return.''',
                 configurationService.getInteger("pagination.default.max", 20)
         def total=result.total
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,result.result,[total:total,offset:resOffset,max:resMax])
-            }
             json{
                 return executionService.respondExecutionsJson(request,response,result.result,[total:total,offset:resOffset,max:resMax])
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, result.result, [total: total, offset: resOffset, max: resMax])
+                }
             }
         }
 

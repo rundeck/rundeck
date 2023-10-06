@@ -564,8 +564,10 @@ class ExecutionController extends ControllerBase{
                         delegate.error request.error
                     }
                 }
-                xml {
-                    xmlerror()
+                if (isAllowXml()) {
+                    xml {
+                        xmlerror()
+                    }
                 }
             }
         }
@@ -586,8 +588,10 @@ class ExecutionController extends ControllerBase{
                         delegate.error "Execution not found for id: " + params.id
                     }
                 }
-                xml {
-                    xmlerror()
+                if (isAllowXml()) {
+                    xml {
+                        xmlerror()
+                    }
                 }
             }
         }catch (DataAccessResourceFailureException ex){
@@ -625,14 +629,16 @@ class ExecutionController extends ControllerBase{
                     }
                 }
             }
-            xml {
-                render(contentType:"text/xml",encoding:"UTF-8"){
-                    result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
-                        success{
-                            message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
-                        }
-                        if (reasonstr) {
-                            reason(reasonstr)
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: "text/xml", encoding: "UTF-8") {
+                        result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
+                            success {
+                                message("Job status: ${abortresult.status ?: (didcancel ? 'killed' : 'failed')}")
+                            }
+                            if (reasonstr) {
+                                reason(reasonstr)
+                            }
                         }
                     }
                 }
@@ -658,8 +664,10 @@ class ExecutionController extends ControllerBase{
                         delegate.error request.error
                     }
                 }
-                xml {
-                    xmlerror()
+                if (isAllowXml()) {
+                    xml {
+                        xmlerror()
+                    }
                 }
             }
         }
@@ -680,8 +688,10 @@ class ExecutionController extends ControllerBase{
                         delegate.error  "Execution not found for id: " + params.id
                     }
                 }
-                xml {
-                    xmlerror()
+                if (isAllowXml()) {
+                    xml {
+                        xmlerror()
+                    }
                 }
             }
         }
@@ -1623,15 +1633,6 @@ JSON response requires API v14.
                 dataMap.message=errmsg
             }
             withFormat {
-                if(isAllowXml()) {
-                    xml {
-                        apiService.renderSuccessXml(request, response) {
-                            output {
-                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                            }
-                        }
-                    }
-                }
                 json {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
@@ -1650,6 +1651,15 @@ JSON response requires API v14.
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
+                    }
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
+                        }
                     }
                 }
             }
@@ -1671,15 +1681,6 @@ JSON response requires API v14.
                     retryBackoff  : reader.retryBackoff
             ] + clusterInfo
             withFormat {
-                if(isAllowXml()) {
-                    xml {
-                        apiService.renderSuccessXml(request, response) {
-                            output {
-                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                            }
-                        }
-                    }
-                }
                 json {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
@@ -1695,6 +1696,15 @@ JSON response requires API v14.
                     response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                     render(contentType: "text/plain") {
                         ''
+                    }
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
+                        }
                     }
                 }
             }
@@ -1762,15 +1772,6 @@ JSON response requires API v14.
 
                 withFormat {
 
-                    if(isAllowXml()) {
-                        xml {
-                            apiService.renderSuccessXml(request, response) {
-                                output {
-                                    renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                                }
-                            }
-                        }
-                    }
                     json {
                         render renderOutputFormatJson(dataMap,[]) as JSON
                     }
@@ -1788,6 +1789,15 @@ JSON response requires API v14.
                         response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                         render(contentType: "text/plain") {
                             ''
+                        }
+                    }
+                    if(isAllowXml()) {
+                        xml {
+                            apiService.renderSuccessXml(request, response) {
+                                output {
+                                    renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                                }
+                            }
                         }
                     }
                 }
@@ -1959,15 +1969,6 @@ JSON response requires API v14.
         ] + clusterInfo
 
         withFormat {
-            if(isAllowXml()) {
-                xml {
-                    apiService.renderSuccessXml(request, response) {
-                        output {
-                            renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
-                        }
-                    }
-                }
-            }
             json {
                 render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
             }
@@ -1988,6 +1989,15 @@ JSON response requires API v14.
 
                 entry.each{
                     appendOutput(response, it.mesg+lineSep)
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        output {
+                            renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
+                        }
+                    }
                 }
             }
         }
@@ -2193,11 +2203,13 @@ JSON response requires API v14.
             ])
         }
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response, [e])
-            }
             json{
                 return executionService.respondExecutionsJson(request,response, [e],[single:true])
+            }
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, [e])
+                }
             }
         }
     }
@@ -2564,11 +2576,13 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             json{
                 return render(contentType: "application/json", encoding: "UTF-8",text:state.encodeAsJSON())
             }
-            xml{
-                return render(contentType: "text/xml", encoding: "UTF-8") {
-                    result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
-                        executionState(id:params.id){
-                            new BuilderUtil().mapToDom(convertXml(state), delegate)
+            if (isAllowXml()) {
+                xml {
+                    return render(contentType: "text/xml", encoding: "UTF-8") {
+                        result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                            executionState(id: params.id) {
+                                new BuilderUtil().mapToDom(convertXml(state), delegate)
+                            }
                         }
                     }
                 }
@@ -2695,17 +2709,6 @@ Authorization required:
         }
 
         withFormat{
-            if(isAllowXml()) {
-                xml {
-                    apiService.renderSuccessXml(request, response) {
-                        abort(reportstate) {
-                            execution(id: params.id, status: abortresult.jobstate,
-                                    href: apiService.apiHrefForExecution(e),
-                                    permalink: apiService.guiHrefForExecution(e))
-                        }
-                    }
-                }
-            }
             json{
                 return render ([
                         abort    : reportstate,
@@ -2717,6 +2720,18 @@ Authorization required:
                         ]
                     ] as JSON)
             }
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        abort(reportstate) {
+                            execution(id: params.id, status: abortresult.jobstate,
+                                    href: apiService.apiHrefForExecution(e),
+                                    permalink: apiService.guiHrefForExecution(e))
+                        }
+                    }
+                }
+            }
+
         }
     }
 
@@ -3174,11 +3189,13 @@ if executed in cluster mode.""",
         def filtered = rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
 
         withFormat {
-            xml {
-                return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
-            }
             json {
                 return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+            }
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                }
             }
         }
 
@@ -3257,9 +3274,11 @@ Since: V32
                     delegate.executionMode(executionStatus ? 'active' : 'passive')
                 }
             }
-            xml {
-                render(status: respStatus,contentType: "application/xml") {
-                    delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
+            if (isAllowXml()) {
+                xml {
+                    render(status: respStatus, contentType: "application/xml") {
+                        delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
+                    }
                 }
             }
         }
@@ -3349,16 +3368,20 @@ Since: v14
 
         executionService.setExecutionsAreActive(active)
         withFormat{
-            json {
+            def jsonClos={
                 render(contentType: "application/json") {
                     delegate.executionMode (active?'active':'passive')
                 }
             }
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'executions'(executionMode:active?'active':'passive')
+            json jsonClos
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'executions'(executionMode: active ? 'active' : 'passive')
+                    }
                 }
             }
+            '*' jsonClos
         }
     }
 
@@ -3663,19 +3686,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
             json {
                 render metrics as JSON
             }
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'result' {
-                        metrics.each { key, value ->
-                            if (value instanceof Map) {
-                                Map sub = value
-                                delegate."${key}" {
-                                    sub.each { k1, v1 ->
-                                        delegate."${k1}"(v1)
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'result' {
+                            metrics.each { key, value ->
+                                if (value instanceof Map) {
+                                    Map sub = value
+                                    delegate."${key}" {
+                                        sub.each { k1, v1 ->
+                                            delegate."${k1}"(v1)
+                                        }
                                     }
+                                } else {
+                                    delegate."${key}"(value)
                                 }
-                            } else {
-                                delegate."${key}"(value)
                             }
                         }
                     }
