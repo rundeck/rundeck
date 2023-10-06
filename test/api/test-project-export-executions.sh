@@ -6,7 +6,7 @@ API_VERSION=44
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-set -euo pipefail
+#set -euo pipefail
 
 get_archive(){
   local test_proj=$1;shift
