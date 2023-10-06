@@ -16,9 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
@@ -35,6 +37,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.async.Promises
 import grails.converters.JSON
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
@@ -46,7 +49,10 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
+import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
@@ -55,6 +61,7 @@ import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.data.notification.SendNotificationEvent
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -91,7 +98,9 @@ public class NotificationService implements ApplicationContextAware{
     OrchestratorPluginService orchestratorPluginService
     def featureService
     def configurationService
+    def storageService
     UserDataProvider userDataProvider
+    ExecutionDataProvider executionDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -962,5 +971,28 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
+    }
+
+    @Subscriber('trigger-notification')
+    void sendNotificationsForExecution(SendNotificationEvent evt) {
+        if(evt.jobUuid) {
+            ScheduledExecution.withNewSession {
+                def job = ScheduledExecution.findByUuid(evt.jobUuid)
+                if (job.notificationSet) {
+                    def contextBuilder = ExecutionContextImpl.builder()
+                    contextBuilder.with {
+                        storageTree(storageService.storageTreeWithContext(evt.authContext))
+                        framework(frameworkService.rundeckFramework)
+                        frameworkProject(job.project)
+                    }
+                    contextBuilder.authContext(evt.authContext)
+                    triggerJobNotification(
+                            "failure", job,
+                            [execution: Execution.findByUuid(evt.executionUuid),
+                             context  : contextBuilder.build()]
+                    )
+                }
+            }
+        }
     }
 }
