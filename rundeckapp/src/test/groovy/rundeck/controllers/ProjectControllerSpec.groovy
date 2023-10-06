@@ -1285,44 +1285,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.contentType.split(';').contains('application/json')
         response.json==[contents:"blah"]
     }
-    def "project acls GET xml"(){
-        setup:
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubject(_) >> null
-                1 * authResourceForProjectAcl('test') >> null
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                    _* getName()>>'test'
-                    0 * _(*_)
-                }
-            }
-            def ctx = AppACLContext.project('test')
-            controller.aclFileManagerService=Mock(AclFileManagerService){
-                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
-                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
-                    args[2].write('blah'.bytes)
-                    4
-                }
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
-            1 * requireApi(_,_) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderWrappedFileContentsXml('blah','xml',_) >> {args-> args[2]}
-        }
-        when:
-        params.path='blah.aclpolicy'
-        params.project="test"
-        response.format='xml'
-        controller.apiProjectAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
-    }
     def "project acls GET text/yaml"(String respFormat, String contentType){
         setup:
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
@@ -1403,40 +1365,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.contentType.split(';').contains('application/json')
         response.json==[success:true]
 
-    }
-    def "project acls GET dir XML"(){
-        setup:
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubject(_) >> null
-                1 * authResourceForProjectAcl('test') >> null
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                    _* getName()>>'test'
-                    0 * _(*_)
-                }
-            }
-            def ctx = AppACLContext.project('test')
-            controller.aclFileManagerService=Mock(AclFileManagerService){
-                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
-            1 * requireApi(_,_) >> true
-            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
-            0*_(*_)
-        }
-        when:
-        params.path=''
-        params.project="test"
-        response.format='xml'
-        def result=controller.apiProjectAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
     }
     def "project acls POST text"(){
         setup:

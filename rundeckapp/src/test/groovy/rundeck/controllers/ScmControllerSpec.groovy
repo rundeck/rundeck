@@ -19,6 +19,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
@@ -47,6 +48,9 @@ import spock.lang.Unroll
 class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmController>, DataTest {
 
     def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec }
+    def setup(){
+        controller.featureService=Mock(FeatureService)
+    }
 
     protected setupFormTokens(session) {
         def token = SynchronizerTokensHolder.store(session)
@@ -276,8 +280,6 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         ctype              | requestData         | selectedJobIds   | renamed         | deleteditems
         'application/json' | exportJsonReqString | ['job1', 'job2'] | [:]             | ['del1', 'del2']
         'application/json' | exportJsonReqString | ['job1', 'job2'] | [job2: 'path3'] | ['del1', 'del2', 'path3']
-        'application/xml'  | exportXmlReqString  | ['job1', 'job2'] | [:]             | ['del1', 'del2']
-        'application/xml'  | exportXmlReqString  | ['job1', 'job2'] | [job2: 'path3'] | ['del1', 'del2', 'path3']
         integration = 'export'
         config = [message: 'blah']
     }
@@ -436,7 +438,6 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         where:
         ctype              | requestData         | config            | tracked            | deletejobs
         'application/json' | importJsonReqString | [message: 'blah'] | ['item1', 'item2'] | ['del1', 'del2']
-        'application/xml'  | importXmlReqString  | [message: 'blah'] | ['item1', 'item2'] | ['del1', 'del2']
         integration = 'import'
     }
 
@@ -509,7 +510,7 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
             0 * _(*_)
         }
 
-        response.format = 'xml'
+        response.format = 'json'
         request.method = 'POST'
         request.contentType = ctype
         request.content = requestData.bytes
@@ -519,10 +520,10 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
 
         then:
         response.status == 200
-        response.format == 'xml'
-        response.xml != null
-        response.xml.success == 'true'
-        response.xml.message == 'api.scm.action.integration.success.message'
+        response.format == 'json'
+        response.json != null
+        response.json.success == true
+        response.json.message == 'api.scm.action.integration.success.message'
 
         where:
         ctype              | requestData
@@ -540,15 +541,6 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
 "job1",
 "job2"
 ]}'''
-    static final String importXmlReqString2 = '''<scmAction>
-    <input>
-        <entry key="message">blah</entry>
-    </input>
-    <jobs>
-        <job jobId="job1"/>
-        <job jobId="job2"/>
-    </jobs>
-</scmAction>'''
 
     @Unroll
     def 'api import action project perform with job inputs'() {
@@ -617,7 +609,6 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         where:
         ctype              | requestData          | config            | tracked      | deletejobs
         'application/json' | importJsonReqString2 | [message: 'blah'] | ['/a/path2'] | ['job1']
-        'application/xml'  | importXmlReqString2  | [message: 'blah'] | ['/a/path2'] | ['job1']
         integration = 'import'
     }
 

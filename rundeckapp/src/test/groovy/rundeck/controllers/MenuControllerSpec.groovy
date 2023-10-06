@@ -128,50 +128,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             model!=null
             model.projectNames==null
     }
-    def "api job detail xml"() {
-        given:
-        def testUUID = UUID.randomUUID().toString()
-        def testUUID2 = UUID.randomUUID().toString()
-        controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
-        job1.serverNodeUUID = testUUID2
-        job1.totalTime=200*1000
-        job1.execCount=100
-        job1.save()
-        def jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
-        }
-        controller.jobSchedulesService = jobSchedulesService
-        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
-
-        controller.executionService = new ExecutionService()
-        controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
-
-        when:
-        params.id=testUUID
-        controller.response.format = "xml"
-        def result = controller.apiJobDetail()
-
-        then:
-        1 * controller.apiService.requireApi(_, _, 18) >> true
-        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
-        1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
-        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-
-        response.xml != null
-        response.xml.id  == testUUID
-        response.xml.description  == 'a job'
-        response.xml.name  == 'job1'
-        response.xml.group  == 'some/where'
-        response.xml.href  == 'api/href'
-        response.xml.permalink  == 'gui/href'
-        response.xml.averageDuration  == '2000'
-    }
     def "api job detail json"() {
         given:
         def testUUID = UUID.randomUUID().toString()
@@ -2311,50 +2267,6 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     }
 
 
-    def "api job forecast xml"() {
-        given:
-        def testUUID = UUID.randomUUID().toString()
-        def testUUID2 = UUID.randomUUID().toString()
-        controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
-        job1.serverNodeUUID = testUUID2
-        job1.totalTime=200*1000
-        job1.execCount=100
-        job1.scheduled=true
-        job1.save()
-        def jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
-        }
-        controller.jobSchedulesService = jobSchedulesService
-        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
-
-        when:
-        controller.response.format = "xml"
-        params.id=testUUID
-        def result = controller.apiJobForecast()
-
-        then:
-        1 * controller.apiService.requireApi(_, _, 31) >> true
-        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
-        1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
-        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-
-        response.xml != null
-        response.xml.id  == testUUID
-        response.xml.description  == 'a job'
-        response.xml.name  == 'job1'
-        response.xml.group  == 'some/where'
-        response.xml.href  == 'api/href'
-        response.xml.permalink  == 'gui/href'
-        response.xml.futureScheduledExecutions != null
-        response.xml.futureScheduledExecutions.size() == 1
-
-    }
     def "api job forecast json"() {
         given:
         def testUUID = UUID.randomUUID().toString()
