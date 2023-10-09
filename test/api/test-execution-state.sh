@@ -9,14 +9,14 @@ source $DIR/include.sh
 runurl="${APIURL}/system/info"
 
 # get listing
-docurl ${runurl} > $DIR/curl.out
+docurl -H "accept: application/json" ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
 fi
 
 #Check projects list
-localnode=$(xmlsel "/system/rundeck/node" $DIR/curl.out)
+localnode=$(jq -r ".system.rundeck.node" < $DIR/curl.out)
 
 
 
