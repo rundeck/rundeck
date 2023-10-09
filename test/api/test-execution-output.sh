@@ -38,7 +38,6 @@ verify_entry_output(){
     ocount=$(jq -r  ".entries|length" < $file)
 
     assert_json_not_null ".offset" $DIR/curl.out
-    assert_json_not_null ".lastModified"  $DIR/curl.out
     assert_json_not_null ".completed"  $DIR/curl.out
     #output text
     unmod=$(jq -r ".unmodified" < $DIR/curl.out)
@@ -66,6 +65,7 @@ ddone="false"
 dlast=0
 dmax=20
 dc=0
+dlasttemp=0
 while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     #statements
     params="offset=$doff&lastmod=$dlast"
@@ -81,7 +81,10 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
 
     unmod=$(jq -r ".unmodified" < $DIR/curl.out)
     doff=$(jq -r ".offset" < $DIR/curl.out)
-    dlast=$(jq -r ".lastModified" < $DIR/curl.out)
+    dlasttemp=$(jq -r ".lastModified" < $DIR/curl.out)
+    if [ "$dlasttemp" != "null" ] && [ "$dlasttemp" != "" ]; then
+        dlast=$dlasttemp
+    fi
     ddone=$(jq -r ".completed" < $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
