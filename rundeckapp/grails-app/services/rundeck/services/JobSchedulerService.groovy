@@ -24,6 +24,7 @@ import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
+import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.quartzjobs.ExecutionJob
 
 import java.time.Instant
@@ -110,6 +111,9 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     @Autowired
     ScheduledExecutionService scheduledExecutionService
 
+    @Autowired
+    QuartzJobSpecifier quartzJobSpecifier
+
     static String TRIGGER_GROUP_PENDING = 'pending'
 
     ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
@@ -142,7 +146,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
 
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        def jobDetail = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                                   .withIdentity(quartzJobName, quartzJobGroup)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
@@ -170,7 +174,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
 
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        def jobDetail = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                                   .withIdentity(quartzJobName, quartzJobGroup)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
