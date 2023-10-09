@@ -45,6 +45,7 @@ import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -123,6 +124,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> true
         }
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
     }
 
     def setupDoValidate(boolean enabled=false){
@@ -2951,6 +2953,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -4042,6 +4045,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         assert se.id!=null
         def oldQuartzJob=se.generateJobScheduledName()
         def oldQuartzGroup=se.generateJobGroupName()
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'bob'
