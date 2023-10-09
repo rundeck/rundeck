@@ -44,7 +44,6 @@ import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
-import com.dtolabs.rundeck.core.execution.workflow.state.StateExecutionFileProducer
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -125,6 +124,7 @@ import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -923,6 +923,7 @@ beans={
     stateExecutionFileProducer(DefaultStateExecutionFileProducer) {
         workflowService = ref('workflowService')
     }
+    quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
