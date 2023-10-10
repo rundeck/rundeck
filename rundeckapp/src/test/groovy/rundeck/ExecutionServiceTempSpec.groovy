@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import spock.lang.Specification
 
@@ -69,7 +70,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -145,7 +146,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]

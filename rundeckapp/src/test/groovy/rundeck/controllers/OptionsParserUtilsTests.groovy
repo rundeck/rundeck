@@ -31,7 +31,7 @@ import spock.lang.Specification
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class OptionsUtilsTests extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
+class OptionsParserUtilsTests extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, User }

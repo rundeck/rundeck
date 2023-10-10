@@ -26,6 +26,7 @@ import org.grails.plugins.metricsweb.MetricService
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.FrameworkService
 
 import javax.security.auth.Subject
@@ -90,7 +91,7 @@ class FrameworkServiceTests  {
 
     @Test
     void testParseOptsFromString1(){
-            def m1 = FrameworkService.parseOptsFromString("-test 1")
+            def m1 = OptionsParserUtil.parseOptsFromString("-test 1")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(1, m1.size())
@@ -100,7 +101,7 @@ class FrameworkServiceTests  {
 
     @Test
     void testParseOptsFromString2() {
-            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 flamjamps")
+            def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 flamjamps")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.keySet().size())
@@ -112,7 +113,7 @@ class FrameworkServiceTests  {
 
     @Test
     void testParseOptsFromStringQuoted() {
-            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps'")
+            def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 'flam jamps'")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.size())
@@ -124,7 +125,7 @@ class FrameworkServiceTests  {
 
     @Test
     void testParseOptsFromStringIgnored() {
-            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
+            def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.size())
@@ -137,14 +138,14 @@ class FrameworkServiceTests  {
     @Test
     void testParseOptsIgnoredValues() {
         //ignores unassociated string and trailing -opt
-        def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
+        def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
         assertNotNull(m1)
         assertEquals(['test':'1',test2:'flam jamps'],m1)
     }
 
     @Test
     void testParseOptsFromStringShouldPreserveDashedValue() {
-        def m1 = FrameworkService.parseOptsFromString("-test -blah")
+        def m1 = OptionsParserUtil.parseOptsFromString("-test -blah")
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
         assertEquals(1, m1.size())
@@ -153,7 +154,7 @@ class FrameworkServiceTests  {
     }
     @Test
     void testParseOptsFromArrayShouldPreserveDashedValue() {
-        def m1 = FrameworkService.parseOptsFromArray(["-test","-blah"] as String[])
+        def m1 = OptionsParserUtil.parseOptsFromArray(["-test", "-blah"] as String[])
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
         assertEquals(1, m1.size())
