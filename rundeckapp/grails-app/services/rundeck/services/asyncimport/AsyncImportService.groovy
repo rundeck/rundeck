@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.util.ZipReader
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.events.EventPublisher
@@ -20,7 +19,6 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.FileAttribute
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -36,8 +34,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ProjectService projectService
 
     // Constants
-    static final Path BASE_WORKING_DIR = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
     static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
+    static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-working-dirs")
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
     static final String JSON_FILE_PREFFIX = 'AImport-status-'
     static final String JSON_FILE_EXT = '.json'
@@ -225,6 +223,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // b. If all is ok, persist the temp path in the status file
         updateAsyncImportFileWithTempFilepathForProject(projectName, destDir)
         //2-
+        File baseWorkingDir = new File(BASE_WORKING_DIR as String)
+        if( !baseWorkingDir.exists() ){
+            baseWorkingDir.mkdir()
+        }
+        // 3-
+
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
