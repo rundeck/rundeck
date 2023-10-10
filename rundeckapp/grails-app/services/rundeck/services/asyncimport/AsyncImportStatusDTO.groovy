@@ -1,7 +1,7 @@
 package rundeck.services.asyncimport
 
 class AsyncImportStatusDTO {
-    String path;
+    String tempFilepath;
     String user;
     String projectName;
     String milestone;
@@ -15,7 +15,7 @@ class AsyncImportStatusDTO {
     }
 
     AsyncImportStatusDTO(AsyncImportStatusDTO newStatus) {
-        this.path = newStatus.path
+        this.tempFilepath = newStatus.tempFilepath
         this.user = newStatus.user
         this.projectName = newStatus.projectName
         this.milestone = newStatus.milestone
@@ -27,7 +27,7 @@ class AsyncImportStatusDTO {
     }
 
     AsyncImportStatusDTO(String path, String user, String projectName, AsyncImportMilestone milestone, String lastUpdated, String ownerMemberUuid, String errors, Date estimatedProcessDuration, String lastUpdate) {
-        this.path = path
+        this.tempFilepath = tempFilepath
         this.user = user
         this.projectName = projectName
         this.milestone = milestone

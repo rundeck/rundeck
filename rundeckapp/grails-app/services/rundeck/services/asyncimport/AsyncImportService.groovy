@@ -163,6 +163,23 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    def updateAsyncImportFileWithTempFilepathForProject(String projectName, String tempFilePath){
+        try {
+            if( !projectName ){
+                log.error("No project name in async import event notification.")
+            }
+            def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
+            def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+            newStatusFileContent.lastUpdated = new Date().toString()
+            newStatusFileContent.lastUpdate = "Updated temp filepath."
+            newStatusFileContent.tempFilepath = tempFilePath
+            saveAsyncImportStatusForProject(null, newStatusFileContent)
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
     def updateAsyncImportFileWithMilestoneAndLastUpdateAndErrorsForProject(
             String projectName,
             String milestone,
@@ -206,7 +223,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             throw e
         }
         // b. If all is ok, persist the temp path in the status file
-
+        updateAsyncImportFileWithTempFilepathForProject(projectName, destDir)
         //2-
     }
 
