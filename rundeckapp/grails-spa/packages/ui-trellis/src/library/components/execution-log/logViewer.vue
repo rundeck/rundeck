@@ -558,10 +558,6 @@ export default defineComponent({
   transition: none !important;
 }
 
-.execution-log__node-chunk * {
-  transition: all 0.3s ease;
-}
-
 .execution-log__node-chunk {
   contain: layout;
   flex: 1;
