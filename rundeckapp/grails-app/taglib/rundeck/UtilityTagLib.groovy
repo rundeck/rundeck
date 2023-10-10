@@ -32,6 +32,7 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.springframework.context.ConfigurableApplicationContext
+import rundeck.data.util.OptionsParserUtil
 import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
 import rundeckapp.Application
@@ -97,7 +98,7 @@ class UtilityTagLib{
     }
 
     def parseOptsFromString={attrs,body->
-        return FrameworkService.parseOptsFromString(attrs.args)
+        return OptionsParserUtil.parseOptsFromString(attrs.args)
     }
     /**
      * Return the group map sorted by group path

@@ -91,6 +91,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
 
@@ -2999,7 +3000,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         if(params.retryExecId){
             Execution e = Execution.get(params.retryExecId)
             if(e && e.scheduledExecution?.id == scheduledExecution.id){
-                model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
+                model.selectedoptsmap= OptionsParserUtil.parseOptsFromString(e.argString)
                 if (e.filter != scheduledExecution.filter) {
 
                     def retryNodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
@@ -3015,7 +3016,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 }
             }
         }else if(params.argString){
-            model.selectedoptsmap = FrameworkService.parseOptsFromString(params.argString)
+            model.selectedoptsmap = OptionsParserUtil.parseOptsFromString(params.argString)
         }
         if(model.unselectedNodes && !params.retryExecId){
             def selectedNodes = model.nodes.findAll{ ! model.unselectedNodes.contains(it)  }
@@ -4417,7 +4418,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             request.JSON.asUser = request.JSON.asUser?:null
             request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
             if(request.JSON.options){
-                def map = FrameworkService.parseOptsFromString(e.argString)
+                def map = OptionsParserUtil.parseOptsFromString(e.argString)
                 map.each{k,v ->
                     if(!request.JSON.options.containsKey(k)){
                         request.JSON.options.put(k,v)
@@ -4431,7 +4432,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             params.asUser=params.asUser?:null
             params.loglevel=params.loglevel?:e.loglevel
             if(params.option){
-                def map = FrameworkService.parseOptsFromString(e.argString)
+                def map = OptionsParserUtil.parseOptsFromString(e.argString)
                 map.each{k,v ->
                     if(!params.option.containsKey(k)){
                         params.option.put(k,v)

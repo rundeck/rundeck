@@ -45,6 +45,7 @@ import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.ReportFilter
 import rundeck.ScheduledExecution
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
@@ -370,7 +371,7 @@ class ReportsController extends ControllerBase{
                 }catch(Exception e){
                 }
                 if(map.execution?.argString){
-                    map.execution.jobArguments=FrameworkService.parseOptsFromString(map.execution.argString)
+                    map.execution.jobArguments= OptionsParserUtil.parseOptsFromString(map.execution.argString)
                 }
             }
             map.user= map.remove('author')

@@ -37,6 +37,7 @@ import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import rundeck.Execution
+import rundeck.data.util.OptionsParserUtil
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -708,7 +709,7 @@ class ApiService implements WebUtilService{
                             description(e.scheduledExecution.description)
                             if(e.argString){
                                 options{
-                                    FrameworkService.parseOptsFromString(e.argString).each{k,v->
+                                    OptionsParserUtil.parseOptsFromString(e.argString).each{ k, v->
                                         option(name:k,value:v)
                                     }
                                 }
@@ -795,7 +796,7 @@ class ApiService implements WebUtilService{
                     execMap.job.project=(e.scheduledExecution.project)
                     execMap.job.description=(e.scheduledExecution.description)
                     if(e.argString){
-                        execMap.job.options=FrameworkService.parseOptsFromString(e.argString)
+                        execMap.job.options= OptionsParserUtil.parseOptsFromString(e.argString)
                     }
                     execMap.job.href=apiHrefForJob(e.scheduledExecution)
                     execMap.job.permalink=guiHrefForJob(e.scheduledExecution)

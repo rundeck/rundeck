@@ -29,7 +29,7 @@ import spock.lang.Specification
 /**
  * Created by greg on 7/14/15.
  */
-class OptionsUtilsSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest{
+class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest{
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
