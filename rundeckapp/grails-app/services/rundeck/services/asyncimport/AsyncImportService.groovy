@@ -215,7 +215,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // a. Create destination dir
         String destDir = "${TEMP_DIR}/${TEMP_PROJECT_SUFFIX}${projectName}"
         try{
-            createTempCopyOfStream(destDir, inputStream)
+            createTempCopyFromStream(destDir, inputStream)
         }catch(Exception e){
             e.printStackTrace()
             throw e
@@ -441,7 +441,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         return sw.toString();
     }
 
-    private static void createTempCopyOfStream(String destDir, InputStream inputStream){
+    private static void createTempCopyFromStream(String destDir, InputStream inputStream){
         ZipInputStream zipInputStream = new ZipInputStream(inputStream)
         try {
             File checkDir = new File(destDir)
