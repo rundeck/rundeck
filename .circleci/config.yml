@@ -491,7 +491,7 @@ jobs:
       - run:
           command: ./gradlew :functional-test:tomcatTest --no-daemon --stacktrace --info --parallel
           environment:
-            TEST_RUNDECK_IMAGE: << parameters.tomcat-vers >>
+            TEST_IMAGE: << parameters.tomcat-vers >>
       - collect-gradle-tests
 
   test-docker:

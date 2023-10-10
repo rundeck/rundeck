@@ -14,7 +14,7 @@ Available tasks listed below
 
 Env vars to control docker image usage:
 
-- `TEST_RUNDECK_IMAGE`: The docker image to use (default: `rundeck/rundeck`)
+- `TEST_IMAGE`: The docker image to use (default: `rundeck/rundeck`)
 - `TEST_RUNDECK_CONTAINER_SERVICE`: The docker service to expose (default: `rundeck`)
 - `TEST_RUNDECK_CONTAINER_PORT`: The port to expose on the host (e.g. 8080) (default: `4440`)
 - `TEST_RUNDECK_CONTAINER_CONTEXT`: The context path to use for the container (e.g. `/rundeck`). Must start with `/`. (
@@ -35,7 +35,7 @@ You can run the tests against an external Rundeck instance by setting these env 
 Create a new gradle test task where you must specify the docker compose file to use and the spock configuration
 
 * `COMPOSE_PATH`: Relative path to the docker compose file
-* `TEST_RUNDECK_IMAGE`: The docker image to use (default: `rundeck/rundeck`)
+* `TEST_IMAGE`: The docker image to use (default: `rundeck/rundeck`)
 * `spock.configuration`: Relative path to the spock configuration file (spock-configs path)
 
 ## Adding a test

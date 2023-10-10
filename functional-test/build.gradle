@@ -31,7 +31,7 @@ gradle.taskGraph.whenReady { taskGraph ->
 
 task apiTest(type: Test){
     useJUnitPlatform()
-    systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
+    systemProperty('TEST_IMAGE', "rundeck/rundeck")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run API tests"
@@ -39,7 +39,7 @@ task apiTest(type: Test){
 
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
-    systemProperty('TEST_RUNDECK_IMAGE', "rundeck/rundeck")
+    systemProperty('TEST_IMAGE', "rundeck/rundeck")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"

@@ -19,7 +19,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
     private static final String CONTEXT_PATH = System.getenv("TEST_RUNDECK_CONTAINER_CONTEXT") ?: ''
     //matches tokens.properties in src/main/resources
     public static final String STATIC_TOKEN = System.getenv("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
-    public static final String RUNDECK_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ? System.getenv("TEST_RUNDECK_IMAGE") : System.getProperty("TEST_RUNDECK_IMAGE")
+    public static final String RUNDECK_IMAGE = System.getenv("TEST_IMAGE") ?: System.getProperty("TEST_IMAGE")
     public static final String LICENSE_LOCATION = System.getenv("LICENSE_LOCATION")
     public static final String TEST_RUNDECK_GRAILS_URL = System.getenv("TEST_RUNDECK_GRAILS_URL") ?: "http://localhost:4440"
 
@@ -31,7 +31,7 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
             throw new IllegalArgumentException("Context path must start with /")
         }
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
-        withEnv("TEST_RUNDECK_IMAGE", RUNDECK_IMAGE)
+        withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))

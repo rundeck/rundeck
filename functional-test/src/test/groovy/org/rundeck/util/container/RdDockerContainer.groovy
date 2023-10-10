@@ -21,12 +21,12 @@ class RdDockerContainer extends GenericContainer<RdDockerContainer> implements C
     private static final String PORT_BINDINGS = System.getenv("TEST_RUNDECK_PORT_BINDINGS")
     private static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 8080
     private static final String CUSTOM_ENVS = System.getenv("CUSTOM_ENVS")
-    private static final String TEST_RUNDECK_IMAGE = System.getenv("TEST_RUNDECK_IMAGE") ?: "8.5.81-jdk11"
+    private static final String TEST_IMAGE = System.getenv("TEST_IMAGE") ?: "8.5.81-jdk11"
 
     RdDockerContainer(URI dockerFileLocation){
         super(new ImageFromDockerfile()
                         .withDockerfile(
-                                Paths.get(dockerFileLocation)).withBuildArg("TOMCAT_TAG", TEST_RUNDECK_IMAGE))
+                                Paths.get(dockerFileLocation)).withBuildArg("TOMCAT_TAG", TEST_IMAGE))
         withExposedPorts(DEFAULT_PORT)
         setWaitStrategy(Wait.forHttp("${CONTEXT_PATH}/api/14/system/info")
                 .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
