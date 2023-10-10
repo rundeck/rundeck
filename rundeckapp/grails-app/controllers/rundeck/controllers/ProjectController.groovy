@@ -3249,6 +3249,10 @@ Note: `other_errors` included since API v35""",
             }
         }
 
+        if( archiveParams.asyncImport ){
+            // Create a temp copy of the projects
+            asyncImportService.beginMilestone1(project.name, projectAuthContext, project, stream)
+        }
 
         def result = projectService.importToProject(
                 project,
@@ -3258,23 +3262,13 @@ Note: `other_errors` included since API v35""",
                 archiveParams
         )
 
-        if( archiveParams.asyncImport && result.success ){
-            // Emit the milestone 1 event
-            projectService.beginAsyncImportMilestone1(
-                    project.name,
-                    projectAuthContext,
-                    project,
-                    stream
-            )
-        }
-
         switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
 
                     if (archiveParams.asyncImport) {
                         // Write a notification to the user about the async import
-                        if (asyncImportErrors.size() > 0 && null !== asyncImportErrors) {
+                        if (null !== asyncImportErrors) {
                             async_import_message asyncImportErrors
                         } else {
                             async_import_message "Async Import Process started successfully, please request the endpoint: <rundeck server>/api/\$apiVersion/project/\$project/async/import-status , for live-status of the process."

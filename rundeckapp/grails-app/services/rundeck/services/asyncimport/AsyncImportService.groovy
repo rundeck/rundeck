@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.util.ZipReader
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.events.EventPublisher
@@ -12,7 +13,6 @@ import groovy.json.JsonSlurper
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
-import javax.validation.constraints.Null
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
@@ -20,8 +20,10 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.FileAttribute
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 /**
@@ -34,12 +36,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ProjectService projectService
 
     // Constants
+    static final Path BASE_WORKING_DIR = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
+    static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
+    static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
     static final String JSON_FILE_PREFFIX = 'AImport-status-'
     static final String JSON_FILE_EXT = '.json'
     static final String EXECUTION_DIR_NAME = 'executions'
     static final String MODEL_PROJECT_NAME_SUFFIX = 'rundeck-model-project'
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
-    static final def BASE_WORKING_DIR = Paths.get(System.getProperty("user.home") + File.separator + "async-import-dirs")
 
     /**
      *
@@ -188,14 +192,29 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             IRundeckProject project,
             InputStream inputStream
     ){
-        // Copy the input stream in /tmp and if everything goes ok, report and call M2
+        //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
+        //2. Create the working dir
+        //3. Create model_project
+
+        //1-
+        // a. Create destination dir
+        String destDir = "${TEMP_DIR}/${TEMP_PROJECT_SUFFIX}${projectName}"
+        try{
+            createTempCopyOfStream(destDir, inputStream)
+        }catch(Exception e){
+            e.printStackTrace()
+            throw e
+        }
+        // b. If all is ok, persist the temp path in the status file
+
+        //2-
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
     def beginMilestone3(
             final String projectName,
             AuthContext authContext,
-            IRundeckProject project,
+            IRundeckProject project
     ){
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
@@ -399,5 +418,44 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return sw.toString();
+    }
+
+    private static void createTempCopyOfStream(String destDir, InputStream inputStream){
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream)
+        try {
+            File checkDir = new File(destDir)
+            if( !checkDir.exists() ){
+                checkDir.mkdirs()
+            }
+            ZipEntry zipEntry;
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                String newFileName = zipEntry.getName();
+                File destFile = new File(destDir, newFileName);
+
+                if (zipEntry.isDirectory()) {
+                    destFile.mkdirs();
+                } else {
+                    File parent = destFile.getParentFile();
+                    if (!parent.exists()) {
+                        parent.mkdirs();
+                    }
+
+                    FileOutputStream fos = new FileOutputStream(destFile);
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+                        fos.write(buffer, 0, bytesRead);
+                    }
+                    fos.close();
+                }
+
+                zipInputStream.closeEntry();
+            }
+
+            zipInputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
