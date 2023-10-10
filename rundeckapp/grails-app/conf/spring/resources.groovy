@@ -124,6 +124,7 @@ import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -164,6 +165,8 @@ import rundeck.services.audit.AuditEventsService
 import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
+import rundeck.services.workflow.DefaultStateExecutionFileProducer
+import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
@@ -914,6 +917,13 @@ beans={
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
     workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
+        logFileStorageService = ref('logFileStorageService')
+    }
+    stateExecutionFileProducer(DefaultStateExecutionFileProducer) {
+        workflowService = ref('workflowService')
+    }
+    quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)

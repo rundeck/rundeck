@@ -16,18 +16,46 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateDataLoader
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
+import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 
 class WorkflowServiceSpec extends Specification implements ServiceUnitTest<WorkflowService>, DataTest {
 
     def setupSpec() {
         mockDomains Workflow,Execution,CommandExec
+    }
+
+    def "requestState fulfilled with stream source"() {
+        setup:
+        service.workflowStateDataLoader = Mock(WorkflowStateDataLoader)
+        service.configurationService = Mock(ConfigurationService) {
+            getString("workflowService.stateCache.spec",_) >> "maximumSize=5,expireAfterAccess=60s"
+        }
+        service.initialize()
+        def e = new Execution(uuid:'1234')
+        e.setId(1L)
+        def efl = new WorkflowStateFileLoader(
+                state: ExecutionFileState.AVAILABLE,
+                stream: new ByteArrayInputStream('{"state":"statehere"}'.bytes),
+        )
+
+        when:
+        def actual = service.requestState(e)
+
+        then:
+        1 * service.workflowStateDataLoader.loadWorkflowStateData(_, _) >> efl
+        actual.workflowState == ['state':'statehere']
+        actual.state == ExecutionFileState.AVAILABLE
+        !actual.file
     }
 
     def "state mapping"(){
