@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.execution
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.container.BaseContainer
 
 import java.util.function.Function
@@ -100,6 +101,8 @@ class ExecutionOutputSpec extends BaseContainer {
                 "line 4 final"
         ]
     }
+
+    @ExcludePro
     def "execution output plain text unicode"() {
         def params="exec=echo+%22%27testing+execution+%3Coutput%3E+api-unicode+line+1%27%22+;sleep+2;echo+line+%F0%9F%98%84;sleep+2;echo+%E4%BD%A0%E5%A5%BD;sleep+2;echo+line+4+final"
         when:
