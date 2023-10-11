@@ -36,7 +36,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     // Constants
     static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
     static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-WD-")
-    static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_automation"
+    static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_executions"
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
     static final String JSON_FILE_PREFIX = 'AImport-status-'
     static final String JSON_FILE_EXT = '.json'
@@ -50,7 +50,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static final String OUTPUT_FILE_EXT = '.rdlog'
     static final String STATE_FILE_PREFIX = 'state-'
     static final String STATE_FILE_EXT = '.state.json'
-
 
     /**
      *
@@ -251,12 +250,19 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // 3-
         def framework = frameworkService.rundeckFramework
         try {
-            copyDir(destDir, modelProjectHost.toString()) // before copy, check if model project dir is not empty
+            // before copy, check if model project dir is not empty
+            if( modelProjectHost.list().size() == 0 ){
+                copyDir(destDir, modelProjectHost.toString())
+            }
             // Then zip the model project and import it to server, then delete it
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
-            zipModelProject(modelProjectHost.toString(), zippedFilename) // before zip, check if zip file is there already
+            File zippedFileToFile = new File(zippedFilename)
+            // before zip, check if zip file is there already
+            if( !zippedFileToFile.exists() ){
+                zipModelProject(modelProjectHost.toString(), zippedFilename)
+            }
             FileInputStream fis = new FileInputStream(zippedFilename);
-            // importToProjectCall
+            // importToProject Call
             updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Uploading project w/o executions.")
             importResult = projectService.importToProject(
                     project,
@@ -322,7 +328,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             IRundeckProject project
     ){
         // 1. create "distributed_executions" folder
-        File baseWorkingDirToFile = new File(BASE_WORKING_DIR.toString())
+        File baseWorkingDirToFile = new File(BASE_WORKING_DIR.toString() + projectName)
         File distributedExecutions = new File(baseWorkingDirToFile.toString() + File.separator + DISTRIBUTED_EXECUTIONS_FILENAME)
         if( baseWorkingDirToFile.exists() ){
             distributedExecutions.mkdir()
@@ -346,13 +352,72 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // e. Move the .xml, .rdlog, .state.json files to the bundle
         // f. If the bundle reaches the max qty of executions p/bundle,
         // create a new one (existing_bundle++ for the name)
-        List<Path> xmls = Files.list(rundeckInternalProjectPath)
-                .filter {
-                    it -> {
-                        it.fileName.toString().startsWith(EXECUTION_FILE_PREFIX) && it.fileName.toString().endsWith(EXECUTION_FILE_EXT)
+        File executionsDir = new File(rundeckInternalProjectPath.toString() + File.separator + EXECUTION_DIR_NAME)
+
+        List<Path> xmls = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), EXECUTION_FILE_PREFIX, EXECUTION_FILE_EXT)
+        List<Path> logs = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), OUTPUT_FILE_PREFIX, OUTPUT_FILE_EXT)
+        List<Path> state = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), STATE_FILE_PREFIX, STATE_FILE_EXT)
+
+        long distributedExecutionBundles = Files.walk(Paths.get(executionsDir.toString()), FileVisitOption.FOLLOW_LINKS)
+                .filter(Files::isDirectory)
+                .filter(path -> path.getFileName().toString().matches("\\d+"))
+                .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
+                .count()
+
+        File distributedExecutionBundle = null
+
+        if( distributedExecutionBundles == 0 ){
+            distributedExecutionBundle = new File(distributedExecutions.toString() + File.separator + "1")
+            distributedExecutionBundle.mkdir()
+        }
+
+        if (xmls.size() > 0) {
+            try {
+                for (Path execution in xmls) {
+                    String trimmedExecutionSerial = execution.fileName.toString()
+                            .replace(EXECUTION_FILE_PREFIX, "")
+                            .replace(EXECUTION_FILE_EXT, "")
+                            .trim()
+
+                    // If there are less than <max execs> in bundle, move the exes and files to bundle
+                    List<Path> xmlInBundle = getFilesPathsByPrefixAndExtensionInPath(
+                            distributedExecutionBundle.toString(),
+                            EXECUTION_FILE_PREFIX as String,
+                            EXECUTION_FILE_EXT as String)
+
+                    if (xmlInBundle.size() == 10) { // Must be dynamic
+                        //get the bundle name to int to increase the next bundle
+                        int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
+                        File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
+                        newExecutionBundle.mkdir()
+                        distributedExecutionBundle = newExecutionBundle
                     }
-                }.collect(Collectors.toList())
-        String hey = "hello"
+                    // if the execution has logs, move the file
+                    // if the execution has state, move the file
+                    // move the execution
+                    Optional<Path> logFound = logs.stream()
+                            .filter { log -> log.toString().contains(trimmedExecutionSerial) }
+                            .findFirst()
+                    Optional<Path> stateFound = state.stream()
+                            .filter { stateFile -> stateFile.toString().contains(trimmedExecutionSerial) }
+                            .findFirst()
+                    Path distributedExecutionsPath = Paths.get(distributedExecutionBundle.toString())
+                    if (logFound.isPresent()) {
+                        //move it
+                        Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    if (stateFound.isPresent()) {
+                        //move it
+                        Files.move(stateFound.get(), distributedExecutionsPath.resolve(stateFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    // move the execution
+                    Files.move(execution, distributedExecutionsPath.resolve(execution.fileName), StandardCopyOption.REPLACE_EXISTING)
+                }
+            } catch (Exception e) {
+                e.printStackTrace()
+                throw e
+            }
+        }
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
@@ -625,6 +690,25 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 .filter { it ->
                     it.fileName.toString().startsWith("rundeck-")
                 }.collect(Collectors.toList())[0]
+    }
+
+    List<Path> getFilesPathsByPrefixAndExtensionInPath(String path, String prefix, String ext){
+        try{
+            return Files.list(Paths.get(path.toString()))
+                    .sorted((s1, s2) -> {
+                        int num1 = Integer.parseInt(s1.fileName.toString().replaceAll("\\D", ""));
+                        int num2 = Integer.parseInt(s2.fileName.toString().replaceAll("\\D", ""));
+                        return Integer.compare(num1, num2);
+                    })
+                    .filter {
+                        it -> {
+                            it.fileName.toString().startsWith(prefix) && it.fileName.toString().endsWith(ext)
+                        }
+                    }.collect(Collectors.toList())
+        }catch(Exception e){
+            e.printStackTrace()
+            throw e
+        }
     }
 
 }
