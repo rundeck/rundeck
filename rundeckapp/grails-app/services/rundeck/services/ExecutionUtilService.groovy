@@ -146,10 +146,8 @@ class ExecutionUtilService {
                 }
             }
         } finally {
-            sysThreadBoundOut.close()
-            sysThreadBoundOut.removeThreadStream()
-            sysThreadBoundErr.close()
-            sysThreadBoundErr.removeThreadStream()
+            sysThreadBoundOut.removeThreadStream()?.close()
+            sysThreadBoundErr.removeThreadStream()?.close()
             loghandler.close()
         }
     }
