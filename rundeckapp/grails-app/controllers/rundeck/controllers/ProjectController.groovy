@@ -3428,4 +3428,34 @@ Note: `other_errors` included since API v35""",
                 ) as JSON
         )
     }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectMilestone2(){
+        def statusFileContent
+        try{
+            if( !params.project ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.async.import.project.missing'
+                ])
+            }
+            def projectName = params.project as String
+            def project = frameworkService.getFrameworkProject(projectName)
+            statusFileContent = projectService.beginAsyncImportMilestone2(projectName, projectAuthContext, project)
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.get.file.error.suffix',
+                    args: [e.message]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                message           : "listo",
+                        ]
+                ) as JSON
+        )
+    }
 }

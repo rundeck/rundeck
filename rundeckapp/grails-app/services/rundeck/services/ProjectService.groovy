@@ -1855,12 +1855,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
     }
 
-    void beginAsyncImportMilestone1(
+    void beginAsyncImportMilestone2(
             final String projectName,
             final AuthContext authContext,
-            final IRundeckProject project,
-            final InputStream inputStream){
-        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1, projectName, authContext, project, inputStream)
+            final IRundeckProject project
+    ){
+        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

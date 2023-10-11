@@ -35,13 +35,22 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
     // Constants
     static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
-    static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-working-dirs")
+    static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-WD-")
+    static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_automation"
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
-    static final String JSON_FILE_PREFFIX = 'AImport-status-'
+    static final String JSON_FILE_PREFIX = 'AImport-status-'
     static final String JSON_FILE_EXT = '.json'
     static final String EXECUTION_DIR_NAME = 'executions'
     static final String MODEL_PROJECT_NAME_SUFFIX = 'rundeck-model-project'
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
+
+    static final String EXECUTION_FILE_PREFIX = 'execution-'
+    static final String EXECUTION_FILE_EXT = '.xml'
+    static final String OUTPUT_FILE_PREFIX = 'output-'
+    static final String OUTPUT_FILE_EXT = '.rdlog'
+    static final String STATE_FILE_PREFIX = 'state-'
+    static final String STATE_FILE_EXT = '.state.json'
+
 
     /**
      *
@@ -71,7 +80,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     private Boolean statusFileExists(String projectName){
         try {
             def fwkProject = frameworkService.getFrameworkProject(projectName)
-            def statusFilepath = "${JSON_FILE_PREFFIX}${projectName}${JSON_FILE_EXT}"
+            def statusFilepath = "${JSON_FILE_PREFIX}${projectName}${JSON_FILE_EXT}"
             if( !fwkProject.existsFileResource(statusFilepath) ){
                 return false
             }
@@ -95,7 +104,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try{
             final def fwkProject = frameworkService.getFrameworkProject(projectName)
             ByteArrayOutputStream output = new ByteArrayOutputStream()
-            fwkProject.loadFileResource(JSON_FILE_PREFFIX + projectName + JSON_FILE_EXT, output)
+            fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, output)
             def obj = new JsonSlurper().parseText(output.toString()) as AsyncImportStatusDTO
             log.debug("Object extracted: ${obj.toString()}")
             return obj
@@ -134,7 +143,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 throw new MissingPropertyException("No project name provided in new status.")
             }
             final def fwkProject = frameworkService.getFrameworkProject(statusPersist.projectName)
-            final def filename = JSON_FILE_PREFFIX + statusPersist.projectName + JSON_FILE_EXT
+            final def filename = JSON_FILE_PREFIX + statusPersist.projectName + JSON_FILE_EXT
             resource = fwkProject.storeFileResource(filename, inputStream)
             inputStream.close();
             return resource
@@ -210,6 +219,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
         //2. Create the working dir
         //3. Create model_project, zip it and upload it as a project
+        //4. Begin milestone 2 and
+        //5. Return the import result to view
 
         def importResult = [:]
 
@@ -228,11 +239,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
         }
         //2-
-        File baseWorkingDir = new File(BASE_WORKING_DIR as String)
+        String scopedWorkingDir = "${BASE_WORKING_DIR}${projectName}"
+        File baseWorkingDir = new File(scopedWorkingDir)
         if (!baseWorkingDir.exists()) {
             baseWorkingDir.mkdir()
         }
-        File modelProjectHost = new File(BASE_WORKING_DIR.toString() + File.separator + MODEL_PROJECT_NAME_SUFFIX)
+        File modelProjectHost = new File(baseWorkingDir.toString() + File.separator + MODEL_PROJECT_NAME_SUFFIX)
         if (!modelProjectHost.exists()) {
             modelProjectHost.mkdir()
         }
@@ -291,25 +303,56 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     }
                 }
         }
-        // Done
+        // Update
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
+        // M2 call
+//        projectService.beginAsyncImportMilestone2(
+//                projectName,
+//                authContext,
+//                project
+//        )
+        // Done
         return importResult
     }
 
-    def copyDir(String origin, String target) {
-        try {
-            Files.walk(Paths.get(origin))
-                    .forEach { path ->
-                        def destino = Paths.get(target, path.toString().substring(origin.length()))
-                        if (Files.isDirectory(path)) {
-                            Files.createDirectories(destino)
-                        } else {
-                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
-                        }
-                    }
-        } catch (IOException e) {
-            e.printStackTrace()
+    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2)
+    def beginMilestone2(
+            final String projectName,
+            AuthContext authContext,
+            IRundeckProject project
+    ){
+        // 1. create "distributed_executions" folder
+        File baseWorkingDirToFile = new File(BASE_WORKING_DIR.toString())
+        File distributedExecutions = new File(baseWorkingDirToFile.toString() + File.separator + DISTRIBUTED_EXECUTIONS_FILENAME)
+        if( baseWorkingDirToFile.exists() ){
+            distributedExecutions.mkdir()
         }
+        // 2. Extract the tmp path from the status file
+        AsyncImportStatusDTO statusFileForProject = getAsyncImportStatusForProject(projectName)
+        if( statusFileForProject == null ){
+            //error
+        }
+        File tempFile = new File(statusFileForProject.tempFilepath)
+        if( !tempFile.exists() ){
+            //error
+        }
+        // 3. locate the rundeck-<name>/executions dir in tmp project
+        Path rundeckInternalProjectPath = getInternalRundeckProjectPath(tempFile.toString())
+        //4. List all the executions, search for the corresponding files:
+        // a. If distributed_executions is empty, create the first bundle
+        // b. Set the max qty of executions per bundle dynamically
+        // c. get the XML's and for-each them, by iteration strip get the execution serial and
+        // d. get the .rdlog and .state.json filepath with the same serial if they are present
+        // e. Move the .xml, .rdlog, .state.json files to the bundle
+        // f. If the bundle reaches the max qty of executions p/bundle,
+        // create a new one (existing_bundle++ for the name)
+        List<Path> xmls = Files.list(rundeckInternalProjectPath)
+                .filter {
+                    it -> {
+                        it.fileName.toString().startsWith(EXECUTION_FILE_PREFIX) && it.fileName.toString().endsWith(EXECUTION_FILE_EXT)
+                    }
+                }.collect(Collectors.toList())
+        String hey = "hello"
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
@@ -560,4 +603,28 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             e.printStackTrace();
         }
     }
+
+    def copyDir(String origin, String target) {
+        try {
+            Files.walk(Paths.get(origin))
+                    .forEach { path ->
+                        def destino = Paths.get(target, path.toString().substring(origin.length()))
+                        if (Files.isDirectory(path)) {
+                            Files.createDirectories(destino)
+                        } else {
+                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
+                        }
+                    }
+        } catch (IOException e) {
+            e.printStackTrace()
+        }
+    }
+
+    Path getInternalRundeckProjectPath(String path){
+        return Files.list(Paths.get(path))
+                .filter { it ->
+                    it.fileName.toString().startsWith("rundeck-")
+                }.collect(Collectors.toList())[0]
+    }
+
 }
