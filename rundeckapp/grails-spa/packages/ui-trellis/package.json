@@ -10,7 +10,7 @@
     "dev:library:build": "npm install && npm run build:library",
     "ci:library:build": "npm ci && npm run build:library",
     "dev": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode development --watch && tsc -p ./tsconfig.app.json && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode development --watch",
-    "build:app": "export NODE_OPTIONS=--openssl-legacy-provider run-script-os",
+    "build:app": "export NODE_OPTIONS=--openssl-legacy-provider && run-script-os",
     "build:app:darwin:linux": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.app.json",
     "build:app:win32": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js node_modules/.bin/vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.app.json",
     "build:library": "run-script-os",
