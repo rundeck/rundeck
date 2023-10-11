@@ -288,6 +288,7 @@ commands:
           command: |
             test -f ~/.circlerc && source ~/.circlerc || true
             export NODE_VERSION=<< parameters.version >>
+            export NODE_OPTIONS=--openssl-legacy-provider
             export BASH_ENV=$HOME/.bash_profile
             nvm install $NODE_VERSION
             nvm alias default $NODE_VERSION
