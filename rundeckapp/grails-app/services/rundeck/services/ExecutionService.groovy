@@ -2595,6 +2595,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execution
     }
 
+    Execution createExecution(
+            String jobUuid,
+            UserAndRolesAuthContext authContext,
+            String runAsUser,
+            Map input = [:],
+            boolean retry=false,
+            long prevId=-1,
+            Map securedOpts = [:],
+            Map secureExposedOpts = [:]
+    )
+            throws ExecutionServiceException
+    {
+        return createExecution(ScheduledExecution.findByUuid(jobUuid), authContext, runAsUser, input, retry, prevId, securedOpts, secureExposedOpts)
+    }
 
 
     /**
