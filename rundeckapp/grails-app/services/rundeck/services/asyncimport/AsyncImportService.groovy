@@ -204,7 +204,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1)
     def beginMilestone1(
             final String projectName,
             AuthContext authContext,
@@ -245,11 +244,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         def framework = frameworkService.rundeckFramework
         try {
             copyDir(destDir, modelProjectHost.toString())
-            // Then zip the model project and import it to server (handle errors), then delete it
+            // Then zip the model project and import it to server, then delete it
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
             zipModelProject(modelProjectHost.toString(), zippedFilename)
             FileInputStream fis = new FileInputStream(zippedFilename);
             // importToProjectCall
+            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Uploading project w/o executions.")
             importResult = projectService.importToProject(
                     project,
                     framework,
@@ -257,9 +257,19 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     fis,
                     options
             )
-            // Remove the zipped jar if importResult != success
+            // Delete the zip after upload
+            Files.delete(Paths.get(zippedFilename))
+            // Remove ALL THE CREATED DIRS AND FILES if importResult != success
             if( !importResult.success ){
-                Files.delete(Paths.get(zippedFilename))
+                updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                        projectName,
+                        AsyncImportMilestone.M1_CREATED.name,
+                        "Errors while uploading the project w/o executions.",
+                )
+                // temp
+                deleteNonEmptyDir(destDir.toString())
+                // working dir
+                deleteNonEmptyDir(modelProjectHost.toString())
             }
         } catch (Exception e) {
             e.printStackTrace()
