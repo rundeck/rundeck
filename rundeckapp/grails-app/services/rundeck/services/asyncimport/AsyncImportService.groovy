@@ -327,12 +327,26 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             AuthContext authContext,
             IRundeckProject project
     ){
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M2_DISTRIBUTION.name,
+                "Starting M2. Creating required file: distributed_executions"
+        )
+
         // 1. create "distributed_executions" folder
         File baseWorkingDirToFile = new File(BASE_WORKING_DIR.toString() + projectName)
         File distributedExecutions = new File(baseWorkingDirToFile.toString() + File.separator + DISTRIBUTED_EXECUTIONS_FILENAME)
         if( baseWorkingDirToFile.exists() ){
             distributedExecutions.mkdir()
         }
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M2_DISTRIBUTION.name,
+                "Starting M2. Extracting TMP filepath from status file."
+        )
+
         // 2. Extract the tmp path from the status file
         AsyncImportStatusDTO statusFileForProject = getAsyncImportStatusForProject(projectName)
         if( statusFileForProject == null ){
@@ -353,6 +367,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // f. If the bundle reaches the max qty of executions p/bundle,
         // create a new one (existing_bundle++ for the name)
         File executionsDir = new File(rundeckInternalProjectPath.toString() + File.separator + EXECUTION_DIR_NAME)
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M2_DISTRIBUTION.name,
+                "Starting M2. Listing executions content."
+        )
 
         List<Path> xmls = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), EXECUTION_FILE_PREFIX, EXECUTION_FILE_EXT)
         List<Path> logs = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), OUTPUT_FILE_PREFIX, OUTPUT_FILE_EXT)
@@ -402,6 +422,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             .filter { stateFile -> stateFile.toString().contains(trimmedExecutionSerial) }
                             .findFirst()
                     Path distributedExecutionsPath = Paths.get(distributedExecutionBundle.toString())
+
+                    updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                            projectName,
+                            AsyncImportMilestone.M2_DISTRIBUTION.name,
+                            "Moving file: #${Integer.parseInt(distributedExecutionBundle.name)} of ${xmls}."
+                    )
+
                     if (logFound.isPresent()) {
                         //move it
                         Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
@@ -417,6 +444,24 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 e.printStackTrace()
                 throw e
             }
+
+            // Delete TMP file
+            deleteNonEmptyDir(tempFile.toString())
+
+            // Update
+            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                    projectName,
+                    AsyncImportMilestone.M2_DISTRIBUTION.name,
+                    "Executions distributed, M2 done; proceeding to call M3 event."
+            )
+
+            // Call for M3
+//            projectService.beginAsyncImportMilestone3(
+//                    projectName,
+//                    authContext,
+//                    project
+//            )
+
         }
     }
 
