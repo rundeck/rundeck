@@ -3249,23 +3249,33 @@ Note: `other_errors` included since API v35""",
             }
         }
 
+        def result
+
         if( archiveParams.asyncImport ){
             // Create a temp copy of the projects
-            asyncImportService.beginMilestone1(project.name, projectAuthContext, project, stream)
+            result = asyncImportService.beginMilestone1(project.name, projectAuthContext, project, stream)
+        }else{
+            result = projectService.importToProject(
+                    project,
+                    framework,
+                    projectAuthContext,
+                    stream,
+                    archiveParams
+            )
         }
 
-        def result = projectService.importToProject(
-                project,
-                framework,
-                projectAuthContext,
-                stream,
-                archiveParams
-        )
+        if( result == null ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.status.file.error',
+                    args: [e.stackTrace],
+                    format:respFormat
+            ])
+        }
 
         switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
-
                     if (archiveParams.asyncImport) {
                         // Write a notification to the user about the async import
                         if (null !== asyncImportErrors) {

@@ -14,12 +14,16 @@ import rundeck.services.ProjectService
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Collectors
+import java.util.stream.Stream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -206,7 +210,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             AuthContext authContext,
             IRundeckProject project,
             InputStream inputStream
-    ){
+    ) {
         //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
         //2. Create the working dir
         //3. Create model_project
@@ -214,21 +218,73 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         //1-
         // a. Create destination dir
         String destDir = "${TEMP_DIR}/${TEMP_PROJECT_SUFFIX}${projectName}"
-        try{
-            createTempCopyFromStream(destDir, inputStream)
-        }catch(Exception e){
+        File destDistToFile = new File(destDir)
+        if (!destDistToFile.exists()) {
+            try {
+                createTempCopyFromStream(destDir, inputStream)
+                // b. If all is ok, persist the temp path in the status file
+                updateAsyncImportFileWithTempFilepathForProject(projectName, destDir)
+            } catch (Exception e) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+        //2-
+        File baseWorkingDir = new File(BASE_WORKING_DIR as String)
+        if (!baseWorkingDir.exists()) {
+            baseWorkingDir.mkdir()
+        }
+        File modelProjectHost = new File(BASE_WORKING_DIR.toString() + File.separator + MODEL_PROJECT_NAME_SUFFIX)
+        if (!modelProjectHost.exists()) {
+            modelProjectHost.mkdir()
+        }
+        // 3-
+        try {
+            copyDir(destDir, modelProjectHost.toString())
+            // Then zip the model project and import it to server (handle errors)
+        } catch (Exception e) {
             e.printStackTrace()
             throw e
         }
-        // b. If all is ok, persist the temp path in the status file
-        updateAsyncImportFileWithTempFilepathForProject(projectName, destDir)
-        //2-
-        File baseWorkingDir = new File(BASE_WORKING_DIR as String)
-        if( !baseWorkingDir.exists() ){
-            baseWorkingDir.mkdir()
-        }
-        // 3-
+        Path pathToRundeckInternalProject = Files.list(Paths.get(modelProjectHost.toString()))
+                .filter { it ->
+                    it.fileName.toString().startsWith("rundeck-")
+                }.collect(Collectors.toList())[0]
 
+        List<Path> filepathsToRemove = Files.list(pathToRundeckInternalProject).filter {
+            it -> it.fileName.toString() != "executions" && it.fileName.toString() != "jobs"
+        }.collect(Collectors.toList())
+        // delete all files and dirs that are not executions and jobs in "rundeck-<project>"
+        filepathsToRemove.forEach {
+            it ->
+                {
+                    File file = new File(it.toString())
+                    if (file.isDirectory()) {
+                        deleteNonEmptyDir(file.toString())
+                    } else {
+                        Files.delete(it)
+                    }
+                }
+        }
+        // Done
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
+
+    }
+
+    def copyDir(String origin, String target) {
+        try {
+            Files.walk(Paths.get(origin))
+                    .forEach { path ->
+                        def destino = Paths.get(target, path.toString().substring(origin.length()))
+                        if (Files.isDirectory(path)) {
+                            Files.createDirectories(destino)
+                        } else {
+                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
+                        }
+                    }
+        } catch (IOException e) {
+            e.printStackTrace()
+        }
     }
 
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
