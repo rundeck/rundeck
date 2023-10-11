@@ -440,7 +440,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             EXECUTION_FILE_PREFIX as String,
                             EXECUTION_FILE_EXT as String)
 
-                    if (xmlInBundle.size() == 10) { // Must be dynamic
+                    if (xmlInBundle.size() == 1000) { // Must be dynamic
                         //get the bundle name to int to increase the next bundle
                         int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
                         File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
@@ -461,7 +461,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                             projectName,
                             AsyncImportMilestone.M2_DISTRIBUTION.name,
-                            "Moving file: #${Integer.parseInt(distributedExecutionBundle.name)} of ${xmls}."
+                            "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
                     )
 
                     if (logFound.isPresent()) {
@@ -490,7 +490,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     "Executions distributed, M2 done; proceeding to call M3 event."
             )
 
-            // Call for M3
+//             Call for M3
 //            projectService.beginAsyncImportMilestone3(
 //                    projectName,
 //                    authContext,
