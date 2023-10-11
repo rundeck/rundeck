@@ -3224,8 +3224,9 @@ Note: `other_errors` included since API v35""",
 
         String asyncImportErrors = null
 
-        // If the async import flag is true, we dont want the executions to be imported
-        if (archiveParams.asyncImport) {
+        def result
+
+        if( archiveParams.asyncImport ){
             archiveParams.importExecutions = false
             try{
                 def created = projectService.createAsyncImportStatusFile(project.name)
@@ -3247,13 +3248,17 @@ Note: `other_errors` included since API v35""",
                         format:respFormat
                 ])
             }
-        }
-
-        def result
-
-        if( archiveParams.asyncImport ){
-            // Create a temp copy of the projects
-            result = asyncImportService.beginMilestone1(project.name, projectAuthContext, project, stream)
+            // a. Creates a temp copy of the projects
+            // b. Creates the working dirs for the async import process in /tmp
+            // c. Imports the project in the same transaction
+            // d. returns the result (if anything goes wrong: rollback)
+            result = asyncImportService.beginMilestone1(
+                    project.name,
+                    projectAuthContext,
+                    project,
+                    stream,
+                    archiveParams
+            )
         }else{
             result = projectService.importToProject(
                     project,
@@ -3312,6 +3317,16 @@ Note: `other_errors` included since API v35""",
                 break;
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
+
+                    if (archiveParams.asyncImport) {
+                        // Write a notification to the user about the async import
+                        if (null !== asyncImportErrors) {
+                            delegate.'async_import_message'(error: asyncImportErrors)
+                        } else {
+                            delegate.'async_import_message'(message: "Async import process started")
+                        }
+                    }
+
                     delegate.'import'(status: result.success ? 'successful' : 'failed', successful:result.success){
                         if(!result.success){
                             //list errors

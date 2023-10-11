@@ -209,11 +209,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             final String projectName,
             AuthContext authContext,
             IRundeckProject project,
-            InputStream inputStream
+            InputStream inputStream,
+            ProjectArchiveParams options
     ) {
         //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
         //2. Create the working dir
-        //3. Create model_project
+        //3. Create model_project, zip it and upload it as a project
+
+        def importResult = [:]
 
         //1-
         // a. Create destination dir
@@ -239,9 +242,25 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             modelProjectHost.mkdir()
         }
         // 3-
+        def framework = frameworkService.rundeckFramework
         try {
             copyDir(destDir, modelProjectHost.toString())
-            // Then zip the model project and import it to server (handle errors)
+            // Then zip the model project and import it to server (handle errors), then delete it
+            String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
+            zipModelProject(modelProjectHost.toString(), zippedFilename)
+            FileInputStream fis = new FileInputStream(zippedFilename);
+            // importToProjectCall
+            importResult = projectService.importToProject(
+                    project,
+                    framework,
+                    authContext as UserAndRolesAuthContext,
+                    fis,
+                    options
+            )
+            // Remove the zipped jar if importResult != success
+            if( !importResult.success ){
+                Files.delete(Paths.get(zippedFilename))
+            }
         } catch (Exception e) {
             e.printStackTrace()
             throw e
@@ -268,7 +287,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
         // Done
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
-
+        return importResult
     }
 
     def copyDir(String origin, String target) {
