@@ -251,10 +251,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // 3-
         def framework = frameworkService.rundeckFramework
         try {
-            copyDir(destDir, modelProjectHost.toString())
+            copyDir(destDir, modelProjectHost.toString()) // before copy, check if model project dir is not empty
             // Then zip the model project and import it to server, then delete it
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
-            zipModelProject(modelProjectHost.toString(), zippedFilename)
+            zipModelProject(modelProjectHost.toString(), zippedFilename) // before zip, check if zip file is there already
             FileInputStream fis = new FileInputStream(zippedFilename);
             // importToProjectCall
             updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Uploading project w/o executions.")
@@ -277,7 +277,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 // temp
                 deleteNonEmptyDir(destDir.toString())
                 // working dir
-                deleteNonEmptyDir(modelProjectHost.toString())
+                deleteNonEmptyDir(scopedWorkingDir)
+                return importResult
             }
         } catch (Exception e) {
             e.printStackTrace()
@@ -287,7 +288,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 .filter { it ->
                     it.fileName.toString().startsWith("rundeck-")
                 }.collect(Collectors.toList())[0]
-
         List<Path> filepathsToRemove = Files.list(pathToRundeckInternalProject).filter {
             it -> it.fileName.toString() != "executions" && it.fileName.toString() != "jobs"
         }.collect(Collectors.toList())
@@ -305,12 +305,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
         // Update
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
-        // M2 call
-//        projectService.beginAsyncImportMilestone2(
-//                projectName,
-//                authContext,
-//                project
-//        )
+//         M2 call
+        projectService.beginAsyncImportMilestone2(
+                projectName,
+                authContext,
+                project
+        )
         // Done
         return importResult
     }
