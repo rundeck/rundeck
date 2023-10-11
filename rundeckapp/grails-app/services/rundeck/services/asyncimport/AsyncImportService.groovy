@@ -215,6 +215,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             InputStream inputStream,
             ProjectArchiveParams options
     ) {
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M1_CREATED.name,
+                "Starting M1... Creating required directories."
+        )
+
         //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
         //2. Create the working dir
         //3. Create model_project, zip it and upload it as a project
@@ -229,6 +236,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         File destDistToFile = new File(destDir)
         if (!destDistToFile.exists()) {
             try {
+                updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                        projectName,
+                        AsyncImportMilestone.M1_CREATED.name,
+                        "Creating a copy of the uploaded project in /tmp."
+                )
                 createTempCopyFromStream(destDir, inputStream)
                 // b. If all is ok, persist the temp path in the status file
                 updateAsyncImportFileWithTempFilepathForProject(projectName, destDir)
@@ -237,6 +249,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 throw e
             }
         }
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M1_CREATED.name,
+                "Creating the working directory in /tmp."
+        )
+
         //2-
         String scopedWorkingDir = "${BASE_WORKING_DIR}${projectName}"
         File baseWorkingDir = new File(scopedWorkingDir)
@@ -247,6 +266,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         if (!modelProjectHost.exists()) {
             modelProjectHost.mkdir()
         }
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M1_CREATED.name,
+                "Creating the project model inside working directory in /tmp."
+        )
+
         // 3-
         def framework = frameworkService.rundeckFramework
         try {
@@ -290,13 +316,22 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             e.printStackTrace()
             throw e
         }
+
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                projectName,
+                AsyncImportMilestone.M1_CREATED.name,
+                "Cleaning the project model."
+        )
+
         Path pathToRundeckInternalProject = Files.list(Paths.get(modelProjectHost.toString()))
                 .filter { it ->
                     it.fileName.toString().startsWith("rundeck-")
                 }.collect(Collectors.toList())[0]
+
         List<Path> filepathsToRemove = Files.list(pathToRundeckInternalProject).filter {
             it -> it.fileName.toString() != "executions" && it.fileName.toString() != "jobs"
         }.collect(Collectors.toList())
+
         // delete all files and dirs that are not executions and jobs in "rundeck-<project>"
         filepathsToRemove.forEach {
             it ->
@@ -311,7 +346,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
         // Update
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
-//         M2 call
+        // M2 call
         projectService.beginAsyncImportMilestone2(
                 projectName,
                 authContext,
