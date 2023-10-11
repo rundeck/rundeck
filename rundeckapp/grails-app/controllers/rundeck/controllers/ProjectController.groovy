@@ -3252,14 +3252,24 @@ Note: `other_errors` included since API v35""",
             // b. Creates the working dirs for the async import process in /tmp
             // c. Imports the project in the same transaction
             // d. returns the result (if anything goes wrong: rollback)
-            result = asyncImportService.beginMilestone1(
-                    project.name,
-                    projectAuthContext,
-                    project,
-                    stream,
-                    archiveParams
-            )
-        }else{
+            try{
+                result = asyncImportService.beginMilestone1(
+                        project.name,
+                        projectAuthContext,
+                        project,
+                        stream,
+                        archiveParams
+                )
+            }catch(Exception e){
+                e.printStackTrace()
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.async.import.status.file.error',
+                        args: [e.stackTrace],
+                        format:respFormat
+                ])
+            }
+        } else {
             result = projectService.importToProject(
                     project,
                     framework,
@@ -3281,15 +3291,6 @@ Note: `other_errors` included since API v35""",
         switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
-                    if (archiveParams.asyncImport) {
-                        // Write a notification to the user about the async import
-                        if (null !== asyncImportErrors) {
-                            async_import_message asyncImportErrors
-                        } else {
-                            async_import_message "Async Import Process started successfully, please request the endpoint: <rundeck server>/api/\$apiVersion/project/\$project/async/import-status , for live-status of the process."
-                        }
-                    }
-
                     import_status result.success ? 'successful' : 'failed'
                     successful result.success
 
@@ -3317,16 +3318,6 @@ Note: `other_errors` included since API v35""",
                 break;
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
-
-                    if (archiveParams.asyncImport) {
-                        // Write a notification to the user about the async import
-                        if (null !== asyncImportErrors) {
-                            delegate.'async_import_message'(error: asyncImportErrors)
-                        } else {
-                            delegate.'async_import_message'(message: "Async import process started")
-                        }
-                    }
-
                     delegate.'import'(status: result.success ? 'successful' : 'failed', successful:result.success){
                         if(!result.success){
                             //list errors
