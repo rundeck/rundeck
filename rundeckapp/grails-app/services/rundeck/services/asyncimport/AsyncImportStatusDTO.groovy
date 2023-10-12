@@ -8,7 +8,6 @@ class AsyncImportStatusDTO {
     String lastUpdated;
     String ownerMemberUuid;
     String errors;
-    Date estimatedProcessDuration;
     String lastUpdate;
 
     AsyncImportStatusDTO() {
@@ -22,7 +21,6 @@ class AsyncImportStatusDTO {
         this.lastUpdated = newStatus.lastUpdated
         this.ownerMemberUuid = newStatus.ownerMemberUuid
         this.errors = newStatus.errors
-        this.estimatedProcessDuration = newStatus.estimatedProcessDuration
         this.lastUpdate = newStatus.lastUpdate
     }
 
@@ -34,7 +32,6 @@ class AsyncImportStatusDTO {
         this.lastUpdated = lastUpdated
         this.ownerMemberUuid = ownerMemberUuid
         this.errors = errors
-        this.estimatedProcessDuration = estimatedProcessDuration
         this.lastUpdate = lastUpdate
     }
 

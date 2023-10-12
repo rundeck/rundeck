@@ -3248,10 +3248,6 @@ Note: `other_errors` included since API v35""",
                         format:respFormat
                 ])
             }
-            // a. Creates a temp copy of the projects
-            // b. Creates the working dirs for the async import process in /tmp
-            // c. Imports the project in the same transaction (w/o execs)
-            // d. returns the result
             try{
                 result = asyncImportService.beginMilestone1(
                         project.name,
@@ -3270,7 +3266,41 @@ Note: `other_errors` included since API v35""",
                         ]
                     }
                 }else{
-                    // handle errors
+
+                    def errors
+                    def execution_errors
+                    def acl_errors
+                    def scm_errors
+                    def other_errors
+
+                    if (!result.success) {
+                        errors = result.joberrors
+                    }
+                    if (result.execerrors) {
+                        execution_errors = result.execerrors
+                    }
+                    if (result.aclerrors) {
+                        acl_errors = result.aclerrors
+                    }
+                    if (result.scmerrors) {
+                        scm_errors = result.scmerrors
+                    }
+                    if (request.api_version > ApiVersions.V34) {
+                        if (result.importerErrors) {
+                            other_errors = result.importerErrors
+                        }
+                    }
+
+                    render(contentType: 'application/json'){
+                        [
+                                message: "There was some errors in async import process start.",
+                                errors: errors,
+                                execution_errors: execution_errors,
+                                acl_errors: acl_errors,
+                                scm_errors: scm_errors,
+                                other_errors: other_errors
+                        ]
+                    }
                 }
 
             }catch(Exception e){
