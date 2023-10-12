@@ -65,6 +65,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Long retryOriginalId
     Long retryPrevId
     String extraMetadata
+    private static final String REMOTE_LOG_FILEPATH_PREFIX = 'ext:'
 
     boolean serverNodeUUIDChanged = false
 
@@ -221,7 +222,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Long getExecIdForLogStore(){
         if(!execIdForLogStore) {
             if (isRemoteOutputfilepath()) {
-                final int extMarkPos = 'ext:'.length()
+                final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
                 execIdForLogStore = Long.parseLong(outputfilepath.substring(extMarkPos, outputfilepath.indexOf(':', extMarkPos)))
             } else
                 execIdForLogStore = id
@@ -233,7 +234,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
      * @return the path for the log ( must check {@link #isRemoteOutputfilepath()} to validate where the path is located)
      */
     String getOutputfilepath(){
-        final int extMarkPos = 'ext:'.length()
+        final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
         return isRemoteOutputfilepath() ? outputfilepath.substring(outputfilepath.indexOf(':', extMarkPos) + 1) : outputfilepath
     }
 
@@ -241,7 +242,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
      * @return true if the outputfilepath corresponds to a path in a remote storage
      */
     boolean isRemoteOutputfilepath(){
-        return this.outputfilepath?.startsWith('ext:')
+        return this.outputfilepath?.startsWith(REMOTE_LOG_FILEPATH_PREFIX)
     }
 
     void setExtraMetadataMap(Map config) {
