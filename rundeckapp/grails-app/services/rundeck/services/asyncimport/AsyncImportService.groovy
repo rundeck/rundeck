@@ -187,6 +187,25 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    def updateAsyncImportFileWithErrorsForProject(
+            String projectName,
+            String errors
+    ){
+        try {
+            if( !projectName ){
+                log.error("No project name in async import event notification.")
+            }
+            def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
+            def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+            newStatusFileContent.lastUpdated = new Date().toString()
+            newStatusFileContent.errors = oldStatusFileContent.errors + ", " + errors
+            saveAsyncImportStatusForProject(null, newStatusFileContent)
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
     def updateAsyncImportFileWithMilestoneAndLastUpdateAndErrorsForProject(
             String projectName,
             String milestone,
@@ -343,7 +362,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }.collect(Collectors.toList())[0]
 
         List<Path> filepathsToRemove = Files.list(pathToRundeckInternalProject).filter {
-            it -> it.fileName.toString() != "executions" && it.fileName.toString() != "jobs"
+            it -> it.fileName.toString() != "jobs"
         }.collect(Collectors.toList())
 
         // delete all files and dirs that are not executions and jobs in "rundeck-<project>"
@@ -559,12 +578,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     // Model path
                     def modelProjectFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${MODEL_PROJECT_NAME_SUFFIX}")
                     // Executions path inside model
-                    def modelProjectExecutionsContainerPath = "${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"
-                    def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
+                    def modelProjectExecutionsContainerPath = Paths.get("${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}")
                     try {
                         // Move the first dir to model project
                         try{
-                            Files.move(firstDir, modelProjectExecutionsContainerFullPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+                            Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
                         }catch(NoSuchFileException ignored){
                             ignored.printStackTrace()
                             throw ignored
@@ -578,22 +596,28 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                                 projectName,
                                 AsyncImportMilestone.M3_IMPORTING.name,
-                                "Uploading execution bundle #${firstDir.fileName} of #XXX."
+                                "Uploading execution bundle #${firstDir.fileName} of #${executionBundles.size()}."
                         )
 
-                        def result = projectService.importToProject(
-                                project,
-                                framework,
-                                authContext as UserAndRolesAuthContext,
-                                fis,
-                                dummyOptions
-                        )
+                        def result
+
+                        try{
+                            result = projectService.importToProject(
+                                    project,
+                                    framework,
+                                    authContext as UserAndRolesAuthContext,
+                                    fis,
+                                    dummyOptions
+                            )
+                        }catch(Exception e){
+                            e.printStackTrace()
+                        }
 
                         if( result.success ){
-                            def executionsDirPath = "${modelProjectExecutionsContainerFullPath.toString()}${File.separator}executions"
+                            def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
                             try{
-                                if( Files.exists(Paths.get(executionsDirPath)) && Files.isDirectory(Paths.get(executionsDirPath)) ){
-                                    deleteNonEmptyDir(executionsDirPath)
+                                if( Files.exists(modelProjectExecutionsContainerFullPath) && Files.isDirectory(modelProjectExecutionsContainerFullPath) ){
+                                    deleteNonEmptyDir(modelProjectExecutionsContainerFullPath.toString())
                                 }else{
                                     throw new FileNotFoundException("Executions directory don't exist or is not a directory.")
                                 }
@@ -608,14 +632,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
 
                         if( result.execerrors ){
-                            Throwable t = new Exception(result.execerrors.toString())
-                            reportError(
-                                    projectName,
-                                    AsyncImportMilestone.M3_IMPORTING.name,
-                                    "Error in Milestone 3.",
-                                    t
-                            )
-                            throw t
+                            updateAsyncImportFileWithErrorsForProject(projectName, result.execerrors?.toString())
                         }
 
                         // Update the status file and emit M3 event
