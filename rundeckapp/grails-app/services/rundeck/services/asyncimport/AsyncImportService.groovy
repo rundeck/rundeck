@@ -235,7 +235,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             InputStream inputStream,
             ProjectArchiveParams options
     ) {
-
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
                 AsyncImportMilestone.M1_CREATED.name,
@@ -596,7 +595,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                                 projectName,
                                 AsyncImportMilestone.M3_IMPORTING.name,
-                                "Uploading execution bundle #${firstDir.fileName} of #${executionBundles.size()}."
+                                "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
                         )
 
                         def result
@@ -652,7 +651,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     }
                 }else{
                     // Remove all the files in the working dir and that's it!!
-                    deleteNonEmptyDir(BASE_WORKING_DIR.toString())
+                    deleteNonEmptyDir("${BASE_WORKING_DIR.toString()}${projectName}")
                     // Update the file
                     updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                             projectName,
