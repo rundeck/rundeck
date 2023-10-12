@@ -1373,6 +1373,10 @@ class LogFileStorageService
         return null
     }
 
+    /**
+     * @param projectName of the desired project to get the storage path for logs
+     * @return the value of the framework property "framework.plugin.ExecutionFileStorage.<file-storage-plugin>.path"
+     */
     String getStorePathForProject(String projectName){
         PropertyResolverFactory.Factory resolverFactory = frameworkService.getFrameworkPropertyResolverFactory(projectName)
         String pluginName = getConfiguredPluginName()
@@ -1386,12 +1390,27 @@ class LogFileStorageService
         return storePath
     }
 
+    /**
+     * Expands the pathTemplate using the execution context
+     * @param execution
+     * @param pathTemplate
+     * @return the expanded path using the execution context
+     */
     String getRemotePathForExecutionFromPathTemplate(Execution execution, String pathTemplate){
         Map<String, String> execCtx = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
 
         return expandPath(pathTemplate, execCtx)
     }
 
+    /**
+     * Expand a path given a context:
+     * Done by replacing keys between "${}" in the pathFormat using the corresponding values from the context.
+     * Eg: ${job.execId} will be replaced with content of context['job.execId']
+     *
+     * @param pathFormat eg: path/to/${job.execId}
+     * @param context from which variable values are extracted
+     * @return an expanded path
+     */
     static String expandPath(String pathFormat, Map<String, String> context) {
         String result = pathFormat.replaceAll("^/+", "");
         if (null != context) {

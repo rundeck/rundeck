@@ -1497,6 +1497,31 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
     }
 
+    def "should expand the path template correctly"(){
+        given:
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: serverUUID
+        )
+        e.id = execId
+
+        Map<String, String> execCtx = ExecutionService.exportContextForExecution(e, Mock(LinkGenerator))
+
+        when:
+        String expandedPath = LogFileStorageService.expandPath(pathTemplate, execCtx)
+
+        then:
+        expectedExpandedPath == expandedPath
+
+        where:
+
+        execId | projectName      | serverUUID               | pathTemplate                                      | expectedExpandedPath
+        67     | 'projectExample' | 'some-other-server-uuid' | 'rootDir/logs/${job.project}/${job.execid}.log'   | "rootDir/logs/${projectName}/${execId}.log"
+        67     | 'projectExample' | 'some-other-server-uuid' |'rootDir/logs/${job.execid}/${job.serverUUID}.log' | "rootDir/logs/${execId}/${serverUUID}.log"
+    }
+
     def "should bring the path property from the defined log storage plugin"(){
         given:
         service.configurationService=Mock(ConfigurationService){

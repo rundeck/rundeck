@@ -215,6 +215,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata ? asJsonMap(extraMetadata) : [:]
     }
 
+    /**
+     * @return the execution id used to store the log files (might differ from execId since execId changes after imports)
+     */
     Long getExecIdForLogStore(){
         if(!execIdForLogStore) {
             if (isRemoteOutputfilepath()) {
@@ -226,11 +229,17 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return execIdForLogStore
     }
 
+    /**
+     * @return the path for the log ( must check {@link #isRemoteOutputfilepath()} to validate where the path is located)
+     */
     String getOutputfilepath(){
         final int extMarkPos = 'ext:'.length()
         return isRemoteOutputfilepath() ? outputfilepath.substring(outputfilepath.indexOf(':', extMarkPos) + 1) : outputfilepath
     }
 
+    /**
+     * @return true if the outputfilepath corresponds to a path in a remote storage
+     */
     boolean isRemoteOutputfilepath(){
         return this.outputfilepath?.startsWith('ext:')
     }
