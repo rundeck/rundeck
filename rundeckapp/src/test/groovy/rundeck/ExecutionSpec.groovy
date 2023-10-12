@@ -85,4 +85,89 @@ class ExecutionSpec extends Specification implements DataTest {
             e.errors.getFieldError('execution').code=='unique'
 
     }
+
+    def "the execid for logstore will be the same as the Id if the output filepath is not external or take it from the outputfilepath"() {
+        given:
+        def e1 = new Execution(
+                serverNodeUUID: 'uuid-example',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                failedNodeList: null,
+                succeededNodeList: null,
+                project: "test",
+                user: "user",
+                status: 'true'
+        )
+        e1.outputfilepath = outputFilePath
+        e1.id = execId
+
+        when:
+        Long returnedExecIdForStorage = e1.getExecIdForLogStore()
+
+        then:
+        returnedExecIdForStorage == expectedIdForLogStorage
+
+        where:
+        execId | outputFilePath            | expectedIdForLogStorage
+        5      | 'ext:11:path/to/file.log' | 11
+        5      | 'path/to/file.log'        | 5
+
+    }
+
+    def "should return true if the outputfilepath starts with \"ext:\""(){
+        given:
+        def e1 = new Execution(
+                serverNodeUUID: 'uuid-example',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                failedNodeList: null,
+                succeededNodeList: null,
+                project: "test",
+                user: "user",
+                status: 'true'
+        )
+        e1.outputfilepath = outputFilePath
+        e1.id = 1
+
+        when:
+        boolean isRemote = e1.isRemoteOutputfilepath()
+
+        then:
+        isRemote == exepected
+
+        where:
+        outputFilePath            | exepected
+        'ext:11:path/to/file.log' | true
+        'ext-11:path/to/file.log' | false
+        'path/to/file.log'        | false
+    }
+
+    def "should return the outputfilepath without any internal marking like \"ext:\""(){
+        given:
+        def e1 = new Execution(
+                serverNodeUUID: 'uuid-example',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                failedNodeList: null,
+                succeededNodeList: null,
+                project: "test",
+                user: "user",
+                status: 'true'
+        )
+        e1.outputfilepath = outputFilePath
+        e1.id = 1
+
+        when:
+        String filePath = e1.getOutputfilepath()
+
+        then:
+        filePath == exepected
+
+        where:
+        outputFilePath               | exepected
+        'ext:11:path/to/file.log'    | 'path/to/file.log'
+        'path2/to2/file2.log'        | 'path2/to2/file2.log'
+        'ext:15:path2/to2/file2.log' | 'path2/to2/file2.log'
+    }
+
 }

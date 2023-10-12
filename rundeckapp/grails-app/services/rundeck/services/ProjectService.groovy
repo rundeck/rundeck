@@ -191,6 +191,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
 
+    /**
+     * Generates log files for the given execution.
+     * output-<execId>.rdlog containing the log output
+     * state-<execId>.state.json containing the execution state
+     * <name>.xml containing the summary of the execution
+     * @param zip builder to pack the execution
+     * @param exec execution to export
+     * @param name of the target xml file
+     * @param remotePathTemplate configured path for remote log storage
+     *
+     * @throws ProjectServiceException
+     */
     def exportExecution(ZipBuilder zip, Execution exec, String name, String remotePathTemplate = null) throws ProjectServiceException {
         File logfile = loggingService.getLogFileForExecution(exec)
         String logfilepath = null
