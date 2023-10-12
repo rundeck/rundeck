@@ -986,6 +986,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionUuid = execution.uuid
+        jobcontext.execDateCompleted = execution.dateCompleted
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
