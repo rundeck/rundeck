@@ -985,6 +985,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.filter = execution.filter
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.executionUuid = execution.uuid
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
