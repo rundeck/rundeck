@@ -3250,8 +3250,8 @@ Note: `other_errors` included since API v35""",
             }
             // a. Creates a temp copy of the projects
             // b. Creates the working dirs for the async import process in /tmp
-            // c. Imports the project in the same transaction
-            // d. returns the result (if anything goes wrong: rollback)
+            // c. Imports the project in the same transaction (w/o execs)
+            // d. returns the result
             try{
                 result = asyncImportService.beginMilestone1(
                         project.name,
@@ -3260,6 +3260,19 @@ Note: `other_errors` included since API v35""",
                         stream,
                         archiveParams
                 )
+
+                // api response (async import)
+                if( result.success ){
+                    render(contentType: 'application/json'){
+                        [
+                                message: "Async import process started, please check the status endpoint.",
+                                status_endpoint: "<rundeck-server-URL>/api/\$version/project/\$project/async/import-status"
+                        ]
+                    }
+                }else{
+                    // handle errors
+                }
+
             }catch(Exception e){
                 e.printStackTrace()
                 return apiService.renderErrorFormat(response,[
@@ -3365,35 +3378,6 @@ Note: `other_errors` included since API v35""",
     }
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
-    def apiProjectAsyncImportStatusCreate(){
-        def statusFileContent
-        try{
-            if( !params.project ){
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.project.missing'
-                ])
-            }
-            def projectName = params.project as String
-            def created = projectService.createAsyncImportStatusFile(projectName)
-        }catch(Exception e){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.error.async.import.get.file.error.suffix',
-                    args: [e.message]
-            ])
-        }
-        render(
-                contentType: 'application/json', text:
-                (
-                        [
-                                message           : "Status file created.",
-                        ]
-                ) as JSON
-        )
-    }
-
-    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectAsyncImportStatus(){
         def statusFileContent
         try{
@@ -3429,32 +3413,4 @@ Note: `other_errors` included since API v35""",
         )
     }
 
-    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
-    def apiProjectMilestone3(){
-        try{
-            if( !params.project ){
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.project.missing'
-                ])
-            }
-            def projectName = params.project as String
-            def project = frameworkService.getFrameworkProject(projectName)
-            projectService.beginAsyncImportMilestone3(projectName, projectAuthContext, project)
-        }catch(Exception e){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.error.async.import.get.file.error.suffix',
-                    args: [e.message]
-            ])
-        }
-        render(
-                contentType: 'application/json', text:
-                (
-                        [
-                                message           : "listo",
-                        ]
-                ) as JSON
-        )
-    }
 }
