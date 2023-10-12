@@ -43,6 +43,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static final String EXECUTION_DIR_NAME = 'executions'
     static final String MODEL_PROJECT_NAME_SUFFIX = 'rundeck-model-project'
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
+    static final String MODEL_PROJECT_INTERNAL_PREFIX = 'rundeck-'
 
     static final String EXECUTION_FILE_PREFIX = 'execution-'
     static final String EXECUTION_FILE_EXT = '.xml'
@@ -280,6 +281,19 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             if( modelProjectHost.list().size() == 0 ){
                 copyDir(destDir, modelProjectHost.toString())
             }
+            // Change the name of the model project's internal "rundeck" dir to map
+            // current project name
+            Optional<Path> dirFound = Files.list(Paths.get(modelProjectHost.toString()))
+                                .filter {
+                                    path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
+                                }
+                                .findFirst()
+            if( dirFound.isPresent() ){
+                File modelProjectInternalRundeckProject = new File(dirFound.get().toString())
+                if( modelProjectInternalRundeckProject.exists() ){
+                    Files.move(Paths.get(dirFound.get().toString()), Paths.get(modelProjectHost.toString()).resolve("${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"))
+                }
+            }
             // Then zip the model project and import it to server, then delete it
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
             File zippedFileToFile = new File(zippedFilename)
@@ -440,7 +454,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             EXECUTION_FILE_PREFIX as String,
                             EXECUTION_FILE_EXT as String)
 
-                    if (xmlInBundle.size() == 1000) { // Must be dynamic
+                    if (xmlInBundle.size() == 10) { // Must be dynamic
                         //get the bundle name to int to increase the next bundle
                         int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
                         File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
@@ -490,12 +504,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     "Executions distributed, M2 done; proceeding to call M3 event."
             )
 
-//             Call for M3
-//            projectService.beginAsyncImportMilestone3(
-//                    projectName,
-//                    authContext,
-//                    project
-//            )
+            // Call for M3
+            projectService.beginAsyncImportMilestone3(
+                    projectName,
+                    authContext,
+                    project
+            )
 
         }
     }
@@ -529,8 +543,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 throw new MissingPropertyException("No project name passed in event.")
             }
             // Distributed executions path
-            def distributedExecutionsPath = "async-import-dirs${File.separator}distributed_executions"
-            def distributedExecutionsFullPath = Paths.get(System.getProperty("user.home") + File.separator + distributedExecutionsPath)
+            def distributedExecutionsFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${DISTRIBUTED_EXECUTIONS_FILENAME}")
             // The first dir of distributed executions, in other words, the next execution bundle to be uploaded
             Path firstDir
             List<Path> executionBundles = null
@@ -544,11 +557,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     // Executions path
                     firstDir = executionBundles[0] as Path
                     // Model path
-                    def modelProjectPath = "async-import-dirs${File.separator}model-project"
-                    def modelProjectFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectPath)
+                    def modelProjectFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${MODEL_PROJECT_NAME_SUFFIX}")
                     // Executions path inside model
-                    def modelProjectExecutionsContainerPath = "async-import-dirs${File.separator}model-project/rundeck-${projectName}"
-                    def modelProjectExecutionsContainerFullPath = Paths.get(System.getProperty("user.home") + File.separator + modelProjectExecutionsContainerPath)
+                    def modelProjectExecutionsContainerPath = "${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"
+                    def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
                     try {
                         // Move the first dir to model project
                         try{
@@ -558,8 +570,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             throw ignored
                         }
 
-                        def zippedFilename = "${BASE_WORKING_DIR}/${MODEL_PROJECT_NAME_SUFFIX}-${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
-                        zipModelProject(modelProjectFullPath as String, zippedFilename);
+                        def zippedFilename = "${BASE_WORKING_DIR}${projectName}${File.separator}${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
+                        zipModelProject(modelProjectFullPath.toString(), zippedFilename);
 
                         FileInputStream fis = new FileInputStream(zippedFilename);
 
@@ -666,7 +678,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     private static void addDirToZip(File dir, String relativePath, ZipOutputStream zos) throws IOException {
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                addDirToZip(file, relativePath + file.getName() + "/", zos);
+                addDirToZip(file, relativePath + file.getName() + File.separator, zos);
             } else {
                 FileInputStream fis = new FileInputStream(file);
                 ZipEntry zipEntry = new ZipEntry(relativePath + file.getName());

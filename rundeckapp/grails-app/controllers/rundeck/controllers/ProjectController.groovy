@@ -3430,8 +3430,7 @@ Note: `other_errors` included since API v35""",
     }
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
-    def apiProjectMilestone2(){
-        def statusFileContent
+    def apiProjectMilestone3(){
         try{
             if( !params.project ){
                 return apiService.renderErrorFormat(response,[
@@ -3441,7 +3440,7 @@ Note: `other_errors` included since API v35""",
             }
             def projectName = params.project as String
             def project = frameworkService.getFrameworkProject(projectName)
-            statusFileContent = projectService.beginAsyncImportMilestone2(projectName, projectAuthContext, project)
+            projectService.beginAsyncImportMilestone3(projectName, projectAuthContext, project)
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
