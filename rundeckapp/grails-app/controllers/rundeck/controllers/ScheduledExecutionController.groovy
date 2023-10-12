@@ -153,7 +153,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiFlipScheduleEnabled       : 'POST',
             apiFlipScheduleEnabledBulk   : 'POST',
             apiJobCreateSingle           : 'POST',
-            apiJobRun                    : ['POST', 'GET'],
+            apiJobRun                    : 'POST',
             apiJobFileUpload             : 'POST',
             apiJobsImportv14             : 'POST',
             apiJobDelete                 : 'DELETE',
@@ -1214,7 +1214,7 @@ Since: V14''',
             return
         }
 
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
@@ -1324,7 +1324,7 @@ Since: V14''',
             return
         }
 
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
@@ -2141,13 +2141,6 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             }
         }
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response) {
@@ -3747,7 +3740,7 @@ Each job entry contains:
      * API: /api/14/project/NAME/jobs/import
      */
     def apiJobsImportv14(){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
 
@@ -4086,11 +4079,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         if (!apiService.requireApi(request, response)) {
             return
         }
-        //require POST for api v14
-        if (request.method == 'GET' && request.api_version >= ApiVersions.V14) {
-            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
-            return
-        }
+
         String jobid = params.id
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
@@ -4192,13 +4181,6 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
 
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
 
         if (request.api_version > ApiVersions.V32 && params.meta instanceof Map) {
             inputOpts.meta = new HashMap<>(params.meta)
@@ -5096,7 +5078,7 @@ Since: v14''',
      * API: run simple exec: /api/14/project/PROJECT/run/command
      */
     def apiRunCommandv14(@Parameter(hidden = true) ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         runAdhocRequest.validate()
@@ -5273,7 +5255,7 @@ For Content-Type: `multipart/form-data`
      * API: run script: /api/14/project/PROJECT/run/script
      */
     def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.script) {
@@ -5363,13 +5345,6 @@ For Content-Type: `multipart/form-data`
                         code: 'api.error.execution.failed', args: [errors.join(", ")]])
             }
         } else {
-            if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-                return apiService.renderErrorFormat(response,[
-                        status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                        code: 'api.error.item.unsupported-format',
-                        args: [response.format]
-                ])
-            }
             withFormat{
                 xml{
 
@@ -5513,7 +5488,7 @@ Since: v14''',
      * API: run script: /api/14/project/PROJECT/run/url
      */
     def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.url) {
@@ -5702,13 +5677,6 @@ return.''',
             )
         }
 
-        if (apiRequest && request.api_version < ApiVersions.V14 && !(response.format in ['all', 'xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
 
         def result = executionService.queryJobExecutions(
                 scheduledExecution,
@@ -5893,7 +5861,7 @@ Since: v14''',
      * API: /api/14/scheduler/takeover
      */
     def apiJobClusterTakeoverSchedule (){
-        if (!apiService.requireApi(request,response,ApiVersions.V14)) {
+        if (!apiService.requireApi(request,response)) {
             return
         }
         def api17 = request.api_version >= ApiVersions.V17

@@ -575,7 +575,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             def msgResult=null
         def msgClos={str-> msgResult=str }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1* renderSuccessXml(_,_,_)>> {
                 def clos=it[2]
                 clos.delegate=[message:msgClos,result:{map,clos2->clos2.delegate=[message:msgClos];clos2.call()}]
@@ -606,7 +606,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
         given:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderSuccessXml(_,_,_) >> 'result'
             0 * renderErrorFormat(_,_,_) >> null
         }
@@ -3757,7 +3757,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> false
+            1 * controller.apiService.requireApi(_,_) >> false
 
     }
     def "api jobs import require project param"() {
@@ -3767,7 +3767,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> false
 
     }
@@ -3794,7 +3794,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, format) >> [
                 jobset: jobset
@@ -3837,7 +3837,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile('datacontent', (format?:fformat?:'xml')) >> [
@@ -3886,7 +3886,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, (format?:fformat?:'xml')) >> [
