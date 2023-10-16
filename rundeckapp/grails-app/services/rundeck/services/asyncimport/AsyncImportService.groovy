@@ -486,7 +486,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         if (xmls.size() > 0) {
             try {
-                for (Path execution in xmls) {
+//                for (Path execution in xmls) {
+                xmls.forEach { execution ->
                     String trimmedExecutionSerial = execution.fileName.toString()
                             .replace(EXECUTION_FILE_PREFIX, "")
                             .replace(EXECUTION_FILE_EXT, "")
@@ -526,14 +527,20 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                     if (logFound.isPresent()) {
                         //move it
-                        Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                        if( Files.exists(logFound.get()) ){
+                            Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                        }
                     }
                     if (stateFound.isPresent()) {
                         //move it
-                        Files.move(stateFound.get(), distributedExecutionsPath.resolve(stateFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                        if( Files.exists(stateFound.get()) ){
+                            Files.move(stateFound.get(), distributedExecutionsPath.resolve(stateFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                        }
                     }
                     // move the execution
-                    Files.move(execution, distributedExecutionsPath.resolve(execution.fileName), StandardCopyOption.REPLACE_EXISTING)
+                    if( Files.exists(execution) ){
+                        Files.move(execution, distributedExecutionsPath.resolve(execution.fileName), StandardCopyOption.REPLACE_EXISTING)
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace()
