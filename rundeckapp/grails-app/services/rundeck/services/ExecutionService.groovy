@@ -2597,6 +2597,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execution
     }
 
+    void ensureExecutionOutputFilePath(String executionUuid) {
+        def execution = Execution.findByUuid(executionUuid)
+        execution.outputfilepath = logFileStorageService.getFileForExecutionFiletype(execution, "rdlog", false, false)
+        execution.save()
+    }
+
     Execution createExecution(
             String jobUuid,
             UserAndRolesAuthContext authContext,
