@@ -317,7 +317,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try {
             // before copy, check if model project dir is not empty
             if( modelProjectHost.list().size() == 0 ){
-                copyDir(destDir, modelProjectHost.toString())
+                // Before copy the project model, lets omit the execution dir to avoid
+                // excessive waiting
+                copyDirExcept(destDir, modelProjectHost.toString(), EXECUTION_DIR_NAME)
             }
             // Change the name of the model project's internal "rundeck" dir to map
             // current project name
@@ -497,7 +499,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                     def maxExecutionsPerDir = configurationService.getInteger(MAX_EXECS_PER_DIR_PROP_NAME, 1000)
 
-                    if (xmlInBundle.size() == maxExecutionsPerDir) { // Must be dynamic
+                    if (xmlInBundle.size() == maxExecutionsPerDir) {
                         //get the bundle name to int to increase the next bundle
                         int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
                         File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
@@ -811,6 +813,23 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     def copyDir(String origin, String target) {
         try {
             Files.walk(Paths.get(origin))
+                    .forEach { path ->
+                        def destino = Paths.get(target, path.toString().substring(origin.length()))
+                        if (Files.isDirectory(path)) {
+                            Files.createDirectories(destino)
+                        } else {
+                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
+                        }
+                    }
+        } catch (IOException e) {
+            e.printStackTrace()
+        }
+    }
+
+    def copyDirExcept(String origin, String target, String ignored) {
+        try {
+            Files.walk(Paths.get(origin))
+                    .filter(path -> Files.isDirectory(path) && path.fileName.toString() != ignored)
                     .forEach { path ->
                         def destino = Paths.get(target, path.toString().substring(origin.length()))
                         if (Files.isDirectory(path)) {
