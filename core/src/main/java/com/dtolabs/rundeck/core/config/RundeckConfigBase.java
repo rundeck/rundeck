@@ -169,6 +169,7 @@ public class RundeckConfigBase {
 
             Checkpoint checkpoint;
             boolean generateExecutionXml;
+            boolean forcePartialChecking;
         }
 
         @Data
