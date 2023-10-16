@@ -9,6 +9,7 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import org.apache.commons.io.FileUtils
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -827,18 +828,37 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     }
 
     def copyDirExcept(String origin, String target, String ignored) {
-        try {
-            Files.walk(Paths.get(origin))
-                    .filter(path -> Files.isDirectory(path) && path.fileName.toString() != ignored)
-                    .forEach { path ->
-                        def destino = Paths.get(target, path.toString().substring(origin.length()))
-                        if (Files.isDirectory(path)) {
-                            Files.createDirectories(destino)
-                        } else {
-                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
+        def originDir = new File(origin)
+        def destDir = new File(target)
+
+        def exclude = new File(originDir, ignored)
+
+        def copyRecursively
+
+        try{
+            copyRecursively = { File originFile, File destFile ->
+                if (originFile.name != exclude.name) {
+                    if (originFile.isDirectory()) {
+                        def destination = new File(destFile, originFile.name)
+                        if (!destination.exists()) {
+                            destination.mkdirs()
                         }
+                        originFile.eachFile { File file ->
+                            copyRecursively(file, destination)
+                        }
+                    } else {
+                        FileUtils.copyFileToDirectory(originFile, destFile)
                     }
-        } catch (IOException e) {
+                }
+            }
+
+            if (originDir.exists() && originDir.isDirectory()) {
+                destDir.mkdirs()
+                originDir.eachFile { archivo ->
+                    copyRecursively(archivo, destDir)
+                }
+            }
+        }catch (Exception e){
             e.printStackTrace()
         }
     }
