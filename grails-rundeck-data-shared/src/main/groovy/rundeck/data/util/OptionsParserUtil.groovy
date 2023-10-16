@@ -33,9 +33,6 @@ class OptionsParserUtil {
                 key=tokens[i].substring(1)
             }
         }
-        if(key){
-            //ignore
-        }
         return optsmap
     }
 }
