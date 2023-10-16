@@ -1139,6 +1139,7 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
             svc.configurationService=mockWith(ConfigurationService){
                 getString{String prop,String defval->null}
+                getBoolean{String prop,Boolean defval->false}
             }
         }
 

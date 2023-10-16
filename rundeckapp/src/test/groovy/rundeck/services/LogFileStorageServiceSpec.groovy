@@ -1155,6 +1155,74 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             true  | _
     }
 
+    def "requestLogFileLoad not cluster mode force partial check with plugin async and partial support so ruuid is null"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs.part')
+        def logsDir = tempDir.resolve('rundeck.part')
+
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user2',
+                project: 'test',
+                serverNodeUUID: 'blabla'
+        )
+
+        exec.save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+            getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            getFrameworkProperties() >> (
+                    [
+                            'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                    ] as Properties
+            )
+
+
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+        }
+        boolean retrieved = false
+        def plugin = new TestEFSPlugin(
+                partialRetrieveSupported: true, available: true, retrieve: { type, stream ->
+            stream.write('data'.bytes)
+            retrieved = true
+            true
+        }
+        )
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
+            getBoolean('execution.logs.fileStorage.forcePartialChecking', false) >> true
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin(
+                    'testplugin',
+                    _,
+                    _ as PropertyResolverFactory.Factory,
+                    PropertyScope.Instance
+            ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
+        }
+        service.logFileTaskExecutor = Mock(AsyncListenableTaskExecutor)
+
+
+        when:
+        service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
+        Map task = service.retrievalRequests.take()
+        task.ruuid = null
+        def result = service.runRetrievalRequestTask(task)
+
+        then:
+        noExceptionThrown()
+        result != null
+        !result.isDone()
+        where:
+        async | _
+        true  | _
+    }
+
     def "requestLogFileLoad cluster mode with plugin async with error"() {
         given:
             def tempDir = Files.createTempDirectory('test_logs')

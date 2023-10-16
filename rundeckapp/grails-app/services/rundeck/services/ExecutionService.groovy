@@ -985,6 +985,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.filter = execution.filter
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.executionUuid = execution.uuid
+        jobcontext.execDateCompleted = execution.dateCompleted
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
@@ -2595,6 +2597,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execution
     }
 
+    void ensureExecutionOutputFilePath(String executionUuid) {
+        def execution = Execution.findByUuid(executionUuid)
+        execution.outputfilepath = logFileStorageService.getFileForExecutionFiletype(execution, "rdlog", false, false)
+        execution.save()
+    }
+
+    Execution createExecution(
+            String jobUuid,
+            UserAndRolesAuthContext authContext,
+            String runAsUser,
+            Map input = [:],
+            boolean retry=false,
+            long prevId=-1,
+            Map securedOpts = [:],
+            Map secureExposedOpts = [:]
+    )
+            throws ExecutionServiceException
+    {
+        return createExecution(ScheduledExecution.findByUuid(jobUuid), authContext, runAsUser, input, retry, prevId, securedOpts, secureExposedOpts)
+    }
 
 
     /**

@@ -1299,7 +1299,7 @@ class LogFileStorageService
             return previous
         }else if(previous!=null){
             log.debug("getRetrievalCacheResult, expired cache result: ${previous}")
-//            logFileRetrievalResults.remove(key)
+            logFileRetrievalResults.remove(key)
         }
         return null
     }
@@ -1451,10 +1451,11 @@ class LogFileStorageService
             }
         }
 
+        boolean forcePartialCheck = forcePartialCheckConfig()
         //check active request
         ExecutionFileState state
         //check the state via local file, cache results, and plugin
-        def result = getLogFileState(e, filetype, plugin, isClusterExec)
+        def result = getLogFileState(e, filetype, plugin, (isClusterExec||forcePartialCheck))
         state = result.state
         def file = null
         long retryBackoff = result.retryBackoff ?: 0
@@ -2021,6 +2022,10 @@ class LogFileStorageService
     @Override
     void onApplicationEvent(final ContextClosedEvent event) {
         cleanup()
+    }
+
+    boolean forcePartialCheckConfig() {
+        configurationService.getBoolean("execution.logs.fileStorage.forcePartialChecking", false)
     }
 }
 

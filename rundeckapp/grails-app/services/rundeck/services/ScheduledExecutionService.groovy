@@ -1252,6 +1252,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 user        : user,
                 authContext : authContext,
                 executionId : e.id.toString(),
+                executionUuid: e.uuid,
                 retryAttempt: 0
         ]
         if (secureOpts) {
@@ -1407,6 +1408,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 user        : user,
                 authContext : authContext,
                 executionId : e.id.toString(),
+                executionUuid: e.uuid,
                 retryAttempt: retryAttempt ?: 0
         ]
         if (secureOpts) {
@@ -1464,6 +1466,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         [
                             'isTempExecution': 'true',
                             'executionId': e.id.toString(),
+                            'executionUuid': e.uuid,
                             'authContext': authContext,
                             'project': e.project    
                         ]
