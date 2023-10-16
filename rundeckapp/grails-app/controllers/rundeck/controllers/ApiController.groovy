@@ -46,10 +46,8 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
-import rundeck.services.feature.FeatureService
 
 import javax.servlet.http.HttpServletResponse
-import javax.validation.constraints.Pattern
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -72,7 +70,6 @@ class ApiController extends ControllerBase{
     def frameworkService
     ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
-    FeatureService featureService
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -396,7 +393,7 @@ Includes current latest API Version, and base API URL.''',
             return
         }
 
-        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
+        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
     @CompileStatic
@@ -538,7 +535,7 @@ Includes current latest API Version, and base API URL.''',
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
 
-        respond(data, [formats: ['xml', 'json']])
+        respond(data, [formats: responseFormats])
     }
 
 
@@ -726,7 +723,7 @@ Since: v11
             )
         }
         response.status = HttpServletResponse.SC_CREATED
-        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
+        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
     @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
@@ -792,7 +789,7 @@ Since: v11
 
         respond(
                 new RemoveExpiredTokens(count: resultCount, message: "Removed $resultCount expired tokens"),
-                [formats: ['json', 'xml']]
+                [formats: responseFormats]
         )
     }
 
@@ -881,82 +878,87 @@ Since: v11
         SystemInfoModel systemInfoModel = new SystemInfoModel(systemInfoMap)
 
         withFormat{
-            xml{
-                return apiService.renderSuccessXml(request,response){
-                    delegate.'system'{
-                        timestamp(epoch:nowDate.getTime(),unit:'ms'){
-                            datetime(g.w3cDateValue(date:nowDate))
-                        }
-                        rundeck{
-                            version(appVersion)
-                            build(grailsApplication.metadata['build.ident'])
-                            buildGit(grailsApplication.metadata['build.core.git.description'])
-                            node(nodeName)
-                            base(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion(ApiVersions.API_CURRENT_VERSION)
-                            serverUUID(sUUID)
-                        }
-                        executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
-                        os {
-                            arch(osArch)
-                            name(osName)
-                            version(osVersion)
-                        }
-                        jvm {
-                            name(vmName)
-                            vendor(javaVendor)
-                            version(javaVersion)
-                            implementationVersion(vmVersion)
-                        }
-                        stats{
-                            uptime(duration:durationTime,unit: 'ms'){
-                                since(epoch: startupDate.getTime(),unit:'ms'){
-                                    datetime(g.w3cDateValue(date: startupDate))
-                                }
-                            }
-                            //                errorCount('12')
-                            //                    requestCount('12')
-                            cpu{
-                                loadAverage(unit:'percent',load)
-                                processors(processorsCount)
-                            }
-                            memory(unit:'byte'){
-                                max(Runtime.getRuntime().maxMemory())
-                                free(Runtime.getRuntime().freeMemory())
-                                total(Runtime.getRuntime().totalMemory())
-                            }
-                            scheduler{
-                                running(quartzScheduler.getCurrentlyExecutingJobs().size())
-                                threadPoolSize(quartzScheduler.getMetaData().threadPoolSize)
-                            }
-                            threads{
-                                active(threadActiveCount)
-                            }
-                        }
-                        metrics(href:metricsJsonUrl,contentType:'application/json')
-                        threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
-                        healthcheck(href:metricsHealthcheckUrl,contentType:'application/json')
-                        ping(href:metricsPingUrl,contentType:'text/plain')
-
-                        if (extMeta) {
-                            extended {
-
-                                def dl = delegate
-                                extMeta.each { k, v ->
-                                    dl."$k"(v)
-                                }
-                            }
-
-                        }
-                    }
-                }
-
-            }
             json{
-
                 return apiService.renderSuccessJson(response){
                     systemInfoModel
+                }
+            }
+            if (isAllowXml()) {
+                xml{
+                    return apiService.renderSuccessXml(request,response){
+                        delegate.'system'{
+                            timestamp(epoch:nowDate.getTime(),unit:'ms'){
+                                datetime(g.w3cDateValue(date:nowDate))
+                            }
+                            rundeck{
+                                version(appVersion)
+                                build(grailsApplication.metadata['build.ident'])
+                                buildGit(grailsApplication.metadata['build.core.git.description'])
+                                node(nodeName)
+                                base(servletContext.getAttribute("RDECK_BASE"))
+                                apiversion(ApiVersions.API_CURRENT_VERSION)
+                                serverUUID(sUUID)
+                            }
+                            executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
+                            os {
+                                arch(osArch)
+                                name(osName)
+                                version(osVersion)
+                            }
+                            jvm {
+                                name(vmName)
+                                vendor(javaVendor)
+                                version(javaVersion)
+                                implementationVersion(vmVersion)
+                            }
+                            stats{
+                                uptime(duration:durationTime,unit: 'ms'){
+                                    since(epoch: startupDate.getTime(),unit:'ms'){
+                                        datetime(g.w3cDateValue(date: startupDate))
+                                    }
+                                }
+                                //                errorCount('12')
+                                //                    requestCount('12')
+                                cpu{
+                                    loadAverage(unit:'percent',load)
+                                    processors(processorsCount)
+                                }
+                                memory(unit:'byte'){
+                                    max(Runtime.getRuntime().maxMemory())
+                                    free(Runtime.getRuntime().freeMemory())
+                                    total(Runtime.getRuntime().totalMemory())
+                                }
+                                scheduler{
+                                    running(quartzScheduler.getCurrentlyExecutingJobs().size())
+                                    threadPoolSize(quartzScheduler.getMetaData().threadPoolSize)
+                                }
+                                threads{
+                                    active(threadActiveCount)
+                                }
+                            }
+                            metrics(href:metricsJsonUrl,contentType:'application/json')
+                            threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
+                            healthcheck(href:metricsHealthcheckUrl,contentType:'application/json')
+                            ping(href:metricsPingUrl,contentType:'text/plain')
 
+                            if (extMeta) {
+                                extended {
+
+                                    def dl = delegate
+                                    extMeta.each { k, v ->
+                                        dl."$k"(v)
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                }
+            }
+            '*'{
+                return apiService.renderSuccessJson(response){
+                    systemInfoModel
                 }
             }
         }

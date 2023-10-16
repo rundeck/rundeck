@@ -1,6 +1,8 @@
 package org.rundeck.web
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import grails.artefact.controller.support.ResponseRenderer
 import grails.converters.JSON
 import groovy.transform.CompileDynamic
@@ -28,10 +30,11 @@ class WebUtil implements WebUtilService, ResponseRenderer {
     public static final String JSON_CONTENT_TYPE = 'application/json'
     @Autowired
     MessageSource messageSource
+    @Autowired
+    FeatureService featureService
     static interface ResponseErrorHandler extends BiConsumer<HttpServletResponse, Map<String, Object>> {}
     Map<String, ResponseErrorHandler> respHandlers = new HashMap<>(
         [
-            xml : this.&renderErrorXml as ResponseErrorHandler,
             json : this.&renderErrorJson as ResponseErrorHandler,
             text : this.&renderErrorText as ResponseErrorHandler
         ]
@@ -47,11 +50,14 @@ class WebUtil implements WebUtilService, ResponseRenderer {
 
     @Override
     void renderErrorFormat(HttpServletResponse response, Map<String, Object> error) {
-
+        def handlers = new HashMap(respHandlers)
+        if(featureService.featurePresent(Features.LEGACY_XML,false)){
+            handlers.put('xml', this.&renderErrorXml as ResponseErrorHandler)
+        }
         def eformat = error.format.toString()
         def rformat = response.format
         def respFormat = eformat && respHandlers[eformat] ? eformat :
-                         rformat && respHandlers[rformat] ? rformat : 'json'
+                rformat && respHandlers[rformat] ? rformat : 'json'
         respHandlers[respFormat].accept(response, error)
     }
 

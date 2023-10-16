@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
+
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
@@ -42,7 +42,6 @@ import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.ExternalDocumentation
-import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.Explode
@@ -57,7 +56,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -72,9 +70,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
-import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
-import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -98,7 +94,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
-    FeatureService featureService
     StorageService storageService
 
     def configurationService
@@ -361,22 +356,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
 
-        withFormat{
-            html {
-                results + [jobQueryComponents:jobQueryComponents]
-            }
-            yaml{
-                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
-                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
-            }
-            xml{
-                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',results.nextScheduled, writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
-            }
-        }
+        return results + [jobQueryComponents:jobQueryComponents]
     }
     /**
      *
@@ -388,7 +368,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
@@ -2596,12 +2576,14 @@ Fields:
                     }
                 }
             }
-            xml {
+            if(isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
-                        for (String name : propnames) {
-                            delegate."${name}"(data[name])
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                            for (String name : propnames) {
+                                delegate."${name}"(data[name])
+                            }
                         }
                     }
                 }
@@ -2745,29 +2727,31 @@ Since: V17''',
                     }
                 }
             }
-            xml{
-                apiService.renderSuccessXml (request,response) {
-                    logstorage {
-                        incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
-                            list.each { LogFileStorageRequest req ->
-                                def data=exportRequestMap(
-                                        req,
-                                        queuedIds.contains(req.id),
-                                        failedIds.contains(req.id),
-                                        failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
-                                )
-                                execution(id:data.executionId,project:data.project,href:data.href,permalink:data.permalink){
-                                    delegate.'storage'(
-                                            incompleteFiletypes:data.filetype,
-                                            queued:data.queued,
-                                            failed:data.failed,
-                                            date: apiService.w3cDateValue(req.dateCreated),
-                                            localFilesPresent:data.localFilesPresent,
-                                    ) {
-                                        if(data.messages){
-                                            delegate.'errors' {
-                                                data.messages.each {
-                                                    delegate.'message'(it)
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        logstorage {
+                            incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
+                                list.each { LogFileStorageRequest req ->
+                                    def data = exportRequestMap(
+                                            req,
+                                            queuedIds.contains(req.id),
+                                            failedIds.contains(req.id),
+                                            failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                                    )
+                                    execution(id: data.executionId, project: data.project, href: data.href, permalink: data.permalink) {
+                                        delegate.'storage'(
+                                                incompleteFiletypes: data.filetype,
+                                                queued: data.queued,
+                                                failed: data.failed,
+                                                date: apiService.w3cDateValue(req.dateCreated),
+                                                localFilesPresent: data.localFilesPresent,
+                                        ) {
+                                            if (data.messages) {
+                                                delegate.'errors' {
+                                                    data.messages.each {
+                                                        delegate.'message'(it)
+                                                    }
                                                 }
                                             }
                                         }
@@ -2815,10 +2799,12 @@ Since: V17''',
                     resumed=true
                 }
             }
-            xml {
+            if(isAllowXml()) {
+                xml {
 
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'logStorage'(resumed:true)
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'logStorage'(resumed: true)
+                    }
                 }
             }
         }
@@ -2916,7 +2902,7 @@ Since: V18''',
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -3051,7 +3037,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                         extra
                 ),
 
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -3121,7 +3107,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             respond(
                     data,
-                    [formats: ['xml', 'json']]
+                    [formats: responseFormats]
             )
             return
         }
@@ -3151,8 +3137,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            xml xmlresponse
-            json {
+            def jsonresp= {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
                         def jobparams = [id         : se.extid,
@@ -3175,7 +3160,11 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            '*' xmlresponse
+            json jsonresp
+            if(isAllowXml()) {
+                xml xmlresponse
+            }
+            '*' jsonresp
         }
     }
     @Get(uri='/scheduler/jobs')
@@ -3477,7 +3466,7 @@ Since: v14
         }
 
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         def supportedFormats = ['all', 'xml', 'yaml', 'html']
@@ -3505,7 +3494,8 @@ Since: v14
         }
         //don't load scm status for api response
         def results = jobsFragment(query,JobsScmInfo.NONE)
-        def defaultFormat = 'xml'//TODO: use json default in 5.0
+        def defaultFormat = 'json'
+        //NOTE: XML is supported for job export
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',
@@ -3727,18 +3717,7 @@ if executed in cluster mode.
         def results = nowrunning(query)
 
         withFormat{
-            xml {
-                return executionService.respondExecutionsXml(
-                        request,
-                        response,
-                        results.nowrunning,
-                        [
-                                total: results.total,
-                                offset: results.offset,
-                                max: results.max
-                        ]
-                )
-            }
+
             json {
                 return executionService.respondExecutionsJson(
                         request,
@@ -3750,6 +3729,21 @@ if executed in cluster mode.
                                 max: results.max
                         ]
                 )
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(
+                            request,
+                            response,
+                            results.nowrunning,
+                            [
+                                    total : results.total,
+                                    offset: results.offset,
+                                    max   : results.max
+                            ]
+                    )
+                }
             }
         }
 

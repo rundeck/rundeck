@@ -160,7 +160,7 @@ END
 params="format=xml"
 runurl="${APIURL}/project/${project}/resource/test1"
 
-echo "TEST: query result for /etc/resources/test1"
+echo "TEST: query result for /resources/test1"
 
 docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then

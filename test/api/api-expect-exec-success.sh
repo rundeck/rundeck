@@ -29,12 +29,9 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
 
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//execution[@id=$execid]/@status" $DIR/curl.out)
-assert "$expectstatus" "$status" "execution status should be succeeded"
+assert_json_value "$execid" ".id" $DIR/curl.out
+assert_json_value "$expectstatus" ".status" $DIR/curl.out
 
 exit 0

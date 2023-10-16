@@ -5,7 +5,6 @@
 
 # use api V14
 API_VERSION=14
-API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -17,41 +16,6 @@ source $DIR/include.sh
 ##
 
 
-
-create_proj(){
-    projname=$1
-    cat > $DIR/proj_create.post <<END
-<project>
-    <name>$projname</name>
-    <description>test1</description>
-    <config>
-        <property key="test.property" value="test value"/>
-    </config>
-</project>
-END
-
-    runurl="${APIURL}/projects"
-
-    # post
-    docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post \
-        -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed POST request"
-        exit 2
-    fi
-    rm $DIR/proj_create.post
-    assert_http_status 201 $DIR/headers.out
-}
-delete_proj(){
-    projname=$1
-
-    runurl="${APIURL}/project/$projname"
-    docurl -X DELETE  ${runurl} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed DELETE request"
-        exit 2
-    fi
-}
 assert_job_count(){
     projname=$1
     count=$2
@@ -62,7 +26,7 @@ assert_job_count(){
         exit 2
     fi
     assert_http_status 200 $DIR/headers.out
-    assert_xml_value $count '/jobs/@count' $DIR/curl.out
+    assert_json_value $count 'length' $DIR/curl.out
 }
 assert_execution_count(){
     projname=$1
@@ -74,7 +38,8 @@ assert_execution_count(){
         exit 2
     fi
     assert_http_status 200 $DIR/headers.out
-    assert_xml_value $count '/executions/@count' $DIR/curl.out
+    assert_json_value $count '.executions|length' $DIR/curl.out
+    assert_json_value $count '.paging.total' $DIR/curl.out
 }
 
 test_proj="APIImportTest"
@@ -98,7 +63,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-assert_xml_value 'successful' '/import/@status' $DIR/curl.out
+assert_json_value 'successful' '.import_status' $DIR/curl.out
 
 # test jobs  were imported
 
@@ -129,7 +94,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-assert_xml_value 'failed' '/import/@status' $DIR/curl.out
+assert_json_value 'failed' '.import_status' $DIR/curl.out
 
 # test 0 jobs  were imported
 
@@ -159,7 +124,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-assert_xml_value 'successful' '/import/@status' $DIR/curl.out
+assert_json_value 'successful' '.import_status' $DIR/curl.out
 
 # test jobs  were imported
 
@@ -194,7 +159,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-assert_xml_value 'successful' '/import/@status' $DIR/curl.out
+assert_json_value 'successful' '.import_status' $DIR/curl.out
 
 # test jobs  were imported
 

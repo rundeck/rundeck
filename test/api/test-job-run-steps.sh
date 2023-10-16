@@ -104,7 +104,7 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed job xml generation"
     exit 2
 fi
-jobid=$(uploadJob "$DIR/temp.out" "$project"  2 "" "//succeeded/job[@index=1]/id")
+jobid=$(uploadJob "$DIR/temp.out" "$project"  2 "" )
 if [ 0 != $? ] ; then
   errorMsg "failed job upload"
   exit 2
@@ -118,27 +118,7 @@ fi
 echo "TEST: job/id/run should succeed"
 
 
-# now submit req
-runurl="${APIURL}/job/${jobid}/run"
-params=""
-execargs="-opt2 a"
-
-# get listing
-$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#get execid
-
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
-
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
-    echo "OK"
-else
-    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-    exit 2
-fi
+execid=$(runjob "$jobid" "-opt2 a")
 
 #wait for execution to complete
 #
@@ -162,10 +142,9 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-assert "succeeded" "$status" "execution status should be succeeded"
+
+
+assert_json_value "succeeded" ".status" $DIR/curl.out
 
 echo "OK"
 

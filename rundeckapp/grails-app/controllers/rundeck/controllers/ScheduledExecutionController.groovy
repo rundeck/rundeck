@@ -38,12 +38,10 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
-import groovy.transform.TypeCheckingMode
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -67,7 +65,6 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.utils.DateUtils
 import org.apache.http.client.utils.URIBuilder
 import org.grails.web.json.JSONElement
-import org.hibernate.criterion.Example
 import org.quartz.CronExpression
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -95,7 +92,6 @@ import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.services.*
-import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
@@ -117,7 +113,6 @@ class ScheduledExecutionController  extends ControllerBase{
     def FileUploadService fileUploadService
     def StorageService storageService
     OptionValuesService optionValuesService
-    FeatureService featureService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService
@@ -726,9 +721,12 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                     workflow wfdata
                 }
             }
-            xml {
-                render(contentType: 'application/xml') {
-                    workflow wfdata
+
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        workflow wfdata
+                    }
                 }
             }
         }
@@ -1248,12 +1246,15 @@ Since: V14''',
 
         if (result && result.success) {
             return withFormat {
-                xml {
-                    render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
-                }
 
                 json {
                     render ([success: true] as JSON)
+                }
+
+                if (isAllowXml()) {
+                    xml {
+                        render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
+                    }
                 }
             }
         } else {
@@ -1357,12 +1358,15 @@ Since: V14''',
 
         if (result && result.success) {
             return withFormat {
-                xml {
-                    render(text: "<success>true</success>", contentType:"text/xml", encoding:"UTF-8")
-                }
 
                 json {
                     render ([success: true] as JSON)
+                }
+
+                if (isAllowXml()) {
+                    xml {
+                        render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
+                    }
                 }
             }
         } else {
@@ -1743,35 +1747,8 @@ Failed results will contain:
         def errors=result.errors
 
         withFormat{
-            xml{
-                return apiService.renderSuccessXml(request,response) {
-                    delegate.'toggleExecution'(
-                            enabled: params.status,
-                            requestCount: ids.size(),
-                            allsuccessful: (successful.size() == ids.size())
-                    ) {
-                        if (successful) {
-                            delegate.'succeeded'(count: successful.size()) {
-                                successful.each { del ->
-                                    delegate.'toggleExecutionResult'(id: del.id,) {
-                                        delegate.'message'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                        if (errors) {
-                            delegate.'failed'(count: errors.size()) {
-                                errors.each { del ->
-                                    delegate.'toggleExecutionResult'(id: del.id, errorCode: del.errorCode) {
-                                        delegate.'error'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
-            }
+
             json{
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
@@ -1791,6 +1768,37 @@ Failed results will contain:
                             }
                         }
                     }
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'toggleExecution'(
+                                enabled: params.status,
+                                requestCount: ids.size(),
+                                allsuccessful: (successful.size() == ids.size())
+                        ) {
+                            if (successful) {
+                                delegate.'succeeded'(count: successful.size()) {
+                                    successful.each { del ->
+                                        delegate.'toggleExecutionResult'(id: del.id,) {
+                                            delegate.'message'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                            if (errors) {
+                                delegate.'failed'(count: errors.size()) {
+                                    errors.each { del ->
+                                        delegate.'toggleExecutionResult'(id: del.id, errorCode: del.errorCode) {
+                                            delegate.'error'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -1959,35 +1967,8 @@ Failed results will contain:
         def errors=result.errors
 
         withFormat{
-            xml{
-                return apiService.renderSuccessXml(request,response) {
-                    delegate.'toggleSchedule'(
-                            enabled: params.status,
-                            requestCount: ids.size(),
-                            allsuccessful: (successful.size() == ids.size())
-                    ) {
-                        if (successful) {
-                            delegate.'succeeded'(count: successful.size()) {
-                                successful.each { del ->
-                                    delegate.'toggleScheduleResult'(id: del.id,) {
-                                        delegate.'message'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                        if (errors) {
-                            delegate.'failed'(count: errors.size()) {
-                                errors.each { del ->
-                                    delegate.'toggleScheduleResult'(id: del.id, errorCode: del.errorCode) {
-                                        delegate.'error'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
-            }
+
             json{
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
@@ -2007,6 +1988,37 @@ Failed results will contain:
                             }
                         }
                     }
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'toggleSchedule'(
+                                enabled: params.status,
+                                requestCount: ids.size(),
+                                allsuccessful: (successful.size() == ids.size())
+                        ) {
+                            if (successful) {
+                                delegate.'succeeded'(count: successful.size()) {
+                                    successful.each { del ->
+                                        delegate.'toggleScheduleResult'(id: del.id,) {
+                                            delegate.'message'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                            if (errors) {
+                                delegate.'failed'(count: errors.size()) {
+                                    errors.each { del ->
+                                        delegate.'toggleScheduleResult'(id: del.id, errorCode: del.errorCode) {
+                                            delegate.'error'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -2142,31 +2154,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
 
         withFormat{
-            xml{
-                return apiService.renderSuccessXml(request,response) {
-                    delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
-                        if(successful){
-                            delegate.'succeeded'(count:successful.size()) {
-                                successful.each{del->
-                                    delegate.'deleteJobResult'(id:del.job.extid,){
-                                        delegate.'message'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                        if(deleteerrs){
-                            delegate.'failed'(count: deleteerrs.size()) {
-                                deleteerrs.each{del->
-                                    delegate.'deleteJobResult'(id:del.id,errorCode:del.errorCode){
-                                        delegate.'error'(del.message)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
-            }
+
             json{
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
@@ -2185,6 +2174,33 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                             }
                         }
                     }
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful: (successful.size() == ids.size())) {
+                            if (successful) {
+                                delegate.'succeeded'(count: successful.size()) {
+                                    successful.each { del ->
+                                        delegate.'deleteJobResult'(id: del.job.extid,) {
+                                            delegate.'message'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                            if (deleteerrs) {
+                                delegate.'failed'(count: deleteerrs.size()) {
+                                    deleteerrs.each { del ->
+                                        delegate.'deleteJobResult'(id: del.id, errorCode: del.errorCode) {
+                                            delegate.'error'(del.message)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -3814,14 +3830,21 @@ Each job entry contains:
             session.flush()
         }
         withFormat{
-            xml{
-                apiService.renderSuccessXml(request, response) {
-                    delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
-                        renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+            json{
+                apiService.renderSuccessJson(response){
+                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                            renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                        }
                     }
                 }
             }
-            json{
+            '*'{
                 apiService.renderSuccessJson(response){
                     renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
@@ -3943,7 +3966,7 @@ Authorization required: `read` for the Job.''',
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
 
-        def defaultFormat = 'xml'//TODO: set default to json after 5.0
+        def defaultFormat = 'json'
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',
@@ -4217,10 +4240,16 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
         def e = result.execution
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,[e])
-            }
             json{
+                return executionService.respondExecutionsJson(request,response,[e],[single:true])
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, [e])
+                }
+            }
+            '*' {
                 return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
         }
@@ -4685,7 +4714,7 @@ Since: v19''',
             ]
             )
         }
-        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
+        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: responseFormats])
     }
 
     @Get(uri='/jobs/file/{id}')
@@ -4768,7 +4797,7 @@ Since: v19''',
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job File Record', params.id])
         }
 
-        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: ['xml', 'json']])
+        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: responseFormats])
     }
     /**
      * API v19, File upload input for job
@@ -4836,7 +4865,7 @@ Since: v19''',
                         records.collect{new JobFileInfo(it.exportMap())},
                         paging + [total:total, count: records.size()]
                 ),
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -5346,16 +5375,6 @@ For Content-Type: `multipart/form-data`
             }
         } else {
             withFormat{
-                xml{
-
-                    return apiService.renderSuccessXml(request,response) {
-                        delegate.'execution'(
-                                id: results.id,
-                                href: apiService.apiHrefForExecution(results.execution),
-                                permalink: apiService.guiHrefForExecution(results.execution)
-                        )
-                    }
-                }
                 json{
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("Immediate execution scheduled (${results.id})")
@@ -5364,6 +5383,18 @@ For Content-Type: `multipart/form-data`
                                 href     : apiService.apiHrefForExecution(results.execution),
                                 permalink: apiService.guiHrefForExecution(results.execution)
                         ]
+                    }
+                }
+                if(isAllowXml()) {
+                    xml {
+
+                        return apiService.renderSuccessXml(request, response) {
+                            delegate.'execution'(
+                                    id: results.id,
+                                    href: apiService.apiHrefForExecution(results.execution),
+                                    permalink: apiService.guiHrefForExecution(results.execution)
+                            )
+                        }
                     }
                 }
             }
@@ -5691,11 +5722,14 @@ return.''',
                 configurationService.getInteger("pagination.default.max", 20)
         def total=result.total
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,result.result,[total:total,offset:resOffset,max:resMax])
-            }
             json{
                 return executionService.respondExecutionsJson(request,response,result.result,[total:total,offset:resOffset,max:resMax])
+            }
+
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, result.result, [total: total, offset: resOffset, max: resMax])
+                }
             }
         }
 
@@ -5883,13 +5917,6 @@ Since: v14''',
         }
         if (!frameworkService.isClusterModeEnabled()) {
             withFormat {
-                xml {
-                    return apiService.renderSuccessXml(request, response) {
-                        delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
-                            delegate.'message'("No action performed, cluster mode is not enabled.")
-                        }
-                    }
-                }
                 json {
 
                     return apiService.renderSuccessJson(response) {
@@ -5899,7 +5926,17 @@ Since: v14''',
                         self=[server:[uuid:frameworkService.getServerUUID()]]
                     }
                 }
+                if(isAllowXml()) {
+                    xml {
+                        return apiService.renderSuccessXml(request, response) {
+                            delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                                delegate.'message'("No action performed, cluster mode is not enabled.")
+                            }
+                        }
+                    }
+                }
             }
+            return
         }
 
         String serverUUID=null
@@ -5907,21 +5944,7 @@ Since: v14''',
         String project=null
         def jobIds=[]
         def jobid=null
-        if(request.format=='json' ){
-            def data= request.JSON
-            serverUUID = data?.server?.uuid?:null
-            serverAll = data?.server?.all?true:false
-            project = data?.project?:null
-            jobid = data?.job?.id?:null
-            if(jobid){
-                jobIds << jobid
-            }
-            if(request.api_version >= ApiVersions.V32 && data?.jobs){
-                data?.jobs.each{job->
-                    jobIds << job.id
-                }
-            }
-        }else if(request.format=='xml' || !request.format){
+        if(request.format=='xml' && isAllowXml()){
             def data= request.XML
             if(data.name()=='server'){
                 serverUUID = data.'@uuid'?.text()?:null
@@ -5944,7 +5967,21 @@ Since: v14''',
                     }
                 }
             }
-        }else{
+        } else if(request.format=='json'  || !request.format){
+            def data= request.JSON
+            serverUUID = data?.server?.uuid?:null
+            serverAll = data?.server?.all?true:false
+            project = data?.project?:null
+            jobid = data?.job?.id?:null
+            if(jobid){
+                jobIds << jobid
+            }
+            if(request.api_version >= ApiVersions.V32 && data?.jobs){
+                data?.jobs.each{job->
+                    jobIds << job.id
+                }
+            }
+        } else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
@@ -5976,39 +6013,6 @@ Since: v14''',
         }
         def successMessage= "Schedule Takeover successful for ${successCount}/${reclaimMap.size()} Jobs."
         withFormat {
-            xml{
-                return apiService.renderSuccessXml(request,response) {
-                    delegate.'takeoverSchedule'{
-                        delegate.'self' {
-                            delegate.'server'(uuid: frameworkService.getServerUUID())
-                        }
-                        if(!serverAll) {
-                            delegate.'server'(uuid: serverUUID)
-                        }else{
-                            delegate.'server'(all: true)
-                        }
-                        if(project){
-                            delegate.'project'(name:project)
-                        }
-                        if(jobid){
-                            delegate.'job'(id:jobid)
-                        }
-                        if(jobIds){
-                            jobIds.each { jid ->
-                                delegate.'job'(id:jid)
-                            }
-                        }
-                        delegate.'jobs'(total: reclaimMap.size()){
-                            delegate.'successful'(count: successCount) {
-                                reclaimMap.findAll { it.value.success }.each(jobLink.curry(delegate))
-                            }
-                            delegate.'failed'(count: failedCount) {
-                                reclaimMap.findAll { !it.value.success }.each(jobLink.curry(delegate))
-                            }
-                        }
-                    }
-                }
-            }
             json{
                 def datamap=serverAll?[server:[all:true]]:[server:[uuid: serverUUID]]
                 if(project){
@@ -6028,6 +6032,42 @@ Since: v14''',
                     ]
                 ] as JSON)
             }
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'takeoverSchedule' {
+                            delegate.'self' {
+                                delegate.'server'(uuid: frameworkService.getServerUUID())
+                            }
+                            if (!serverAll) {
+                                delegate.'server'(uuid: serverUUID)
+                            } else {
+                                delegate.'server'(all: true)
+                            }
+                            if (project) {
+                                delegate.'project'(name: project)
+                            }
+                            if (jobid) {
+                                delegate.'job'(id: jobid)
+                            }
+                            if (jobIds) {
+                                jobIds.each { jid ->
+                                    delegate.'job'(id: jid)
+                                }
+                            }
+                            delegate.'jobs'(total: reclaimMap.size()) {
+                                delegate.'successful'(count: successCount) {
+                                    reclaimMap.findAll { it.value.success }.each(jobLink.curry(delegate))
+                                }
+                                delegate.'failed'(count: failedCount) {
+                                    reclaimMap.findAll { !it.value.success }.each(jobLink.curry(delegate))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
         }
     }
 

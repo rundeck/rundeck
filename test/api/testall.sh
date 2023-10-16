@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
+#set -x
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
+TEST_NAME=${TEST_NAME:-}
 cd $SRC_DIR
 URL=${1:-"http://localhost:4440"}
 FAIL_FAST=${FAIL_FAST:-0}
