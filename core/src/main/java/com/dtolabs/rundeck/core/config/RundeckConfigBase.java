@@ -90,7 +90,7 @@ public class RundeckConfigBase {
     }
 
     @Data public static class RundeckAsyncImportConfig{
-        int maxDistributedFiles;
+        int maxDistributedExecutions;
     }
 
     @Data
