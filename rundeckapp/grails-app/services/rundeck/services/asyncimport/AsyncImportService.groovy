@@ -9,6 +9,7 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
@@ -32,6 +33,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
     FrameworkService frameworkService
     ProjectService projectService
+    ConfigurationService configurationService
 
     // Constants
     static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
@@ -44,6 +46,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static final String MODEL_PROJECT_NAME_SUFFIX = 'rundeck-model-project'
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
     static final String MODEL_PROJECT_INTERNAL_PREFIX = 'rundeck-'
+    static final String MAX_EXECS_PER_DIR_PROP_NAME = "asyncImportConfig.maxDistributedFiles"
 
     static final String EXECUTION_FILE_PREFIX = 'execution-'
     static final String EXECUTION_FILE_EXT = '.xml'
@@ -148,6 +151,23 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             inputStream.close();
             return resource
         } catch (IOException e) {
+            e.printStackTrace();
+            throw e
+        }
+    }
+
+    def updateAsyncImportFileWithJobUuidOptionForProject(String projectName, String jobUuidOption){
+        try {
+            if( !projectName ){
+                log.error("No project name in async import event notification.")
+            }
+            def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
+            def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
+            newStatusFileContent.lastUpdated = new Date().toString()
+            newStatusFileContent.jobUuidOption = jobUuidOption
+            newStatusFileContent.lastUpdate = "Job uuid option saved for project: ${projectName}."
+            saveAsyncImportStatusForProject(null, newStatusFileContent)
+        } catch (Exception e) {
             e.printStackTrace();
             throw e
         }
@@ -329,6 +349,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     fis,
                     options
             )
+            // Save the job uuid option in status file to use it in M3
+            String jobUuidOption = options.jobUuidOption
+            updateAsyncImportFileWithJobUuidOptionForProject(projectName, jobUuidOption)
             // Delete the zip after upload
             Files.delete(Paths.get(zippedFilename))
             // Remove ALL THE CREATED DIRS AND FILES if importResult != success
@@ -472,7 +495,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             EXECUTION_FILE_PREFIX as String,
                             EXECUTION_FILE_EXT as String)
 
-                    if (xmlInBundle.size() == 10) { // Must be dynamic
+                    def maxExecutionsPerDir = configurationService.getInteger(MAX_EXECS_PER_DIR_PROP_NAME, 1000)
+
+                    if (xmlInBundle.size() == maxExecutionsPerDir) { // Must be dynamic
                         //get the bundle name to int to increase the next bundle
                         int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
                         File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
@@ -545,9 +570,18 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 "Milestone 3 in progress..."
         )
 
+        if( !projectName ){
+            throw new MissingPropertyException("No project name passed in event.")
+        }
+
         def framework = frameworkService.rundeckFramework
+
+        // get the jobUuid option
+        def jobUuidOption = getAsyncImportStatusForProject(projectName).jobUuidOption
+
         // Options
-        def dummyOptions = [
+        def options = [
+                jobUuidOption     :jobUuidOption,
                 importExecutions  : true,
                 importConfig      : false,
                 importACL         : false,
@@ -557,9 +591,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         ] as ProjectArchiveParams
 
         try {
-            if( !projectName ){
-                throw new MissingPropertyException("No project name passed in event.")
-            }
             // Distributed executions path
             def distributedExecutionsFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${DISTRIBUTED_EXECUTIONS_FILENAME}")
             // The first dir of distributed executions, in other words, the next execution bundle to be uploaded
@@ -606,7 +637,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                     framework,
                                     authContext as UserAndRolesAuthContext,
                                     fis,
-                                    dummyOptions
+                                    options
                             )
                         }catch(Exception e){
                             e.printStackTrace()

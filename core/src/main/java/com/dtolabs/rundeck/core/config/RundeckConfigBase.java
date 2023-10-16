@@ -46,6 +46,7 @@ public class RundeckConfigBase {
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
     RundeckProjectConfig project;
+    RundeckAsyncImportConfig asyncImportConfig;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
@@ -86,6 +87,10 @@ public class RundeckConfigBase {
         @Data public static class ProjectKeypath{
             Boolean enabled;
         }
+    }
+
+    @Data public static class RundeckAsyncImportConfig{
+        int maxDistributedFiles;
     }
 
     @Data

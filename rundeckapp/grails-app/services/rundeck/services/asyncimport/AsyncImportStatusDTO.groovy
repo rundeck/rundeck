@@ -9,6 +9,7 @@ class AsyncImportStatusDTO {
     String ownerMemberUuid;
     String errors;
     String lastUpdate;
+    String jobUuidOption;
 
     AsyncImportStatusDTO() {
     }
@@ -22,9 +23,19 @@ class AsyncImportStatusDTO {
         this.ownerMemberUuid = newStatus.ownerMemberUuid
         this.errors = newStatus.errors
         this.lastUpdate = newStatus.lastUpdate
+        this.jobUuidOption = newStatus.jobUuidOption
     }
 
-    AsyncImportStatusDTO(String path, String user, String projectName, AsyncImportMilestone milestone, String lastUpdated, String ownerMemberUuid, String errors, Date estimatedProcessDuration, String lastUpdate) {
+    AsyncImportStatusDTO(String path,
+                         String user,
+                         String projectName,
+                         AsyncImportMilestone milestone,
+                         String lastUpdated,
+                         String ownerMemberUuid,
+                         String errors,
+                         String lastUpdate,
+                         String jobUuidOption
+    ) {
         this.tempFilepath = tempFilepath
         this.user = user
         this.projectName = projectName
@@ -33,6 +44,7 @@ class AsyncImportStatusDTO {
         this.ownerMemberUuid = ownerMemberUuid
         this.errors = errors
         this.lastUpdate = lastUpdate
+        this.jobUuidOption = jobUuidOption
     }
 
 }
