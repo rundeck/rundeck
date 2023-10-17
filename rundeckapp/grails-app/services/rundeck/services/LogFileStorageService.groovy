@@ -29,10 +29,8 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.*
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
@@ -51,7 +49,6 @@ import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
-import org.springframework.transaction.annotation.Propagation
 import rundeck.Execution
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
@@ -1374,20 +1371,13 @@ class LogFileStorageService
     }
 
     /**
-     * @param projectName of the desired project to get the storage path for logs
+     * Get the path template for the remote log storage
+     * @param execution any execution to extract the path template to store log files for all the project
      * @return the value of the framework property "framework.plugin.ExecutionFileStorage.<file-storage-plugin>.path"
      */
-    String getStorePathForProject(String projectName){
-        PropertyResolverFactory.Factory resolverFactory = frameworkService.getFrameworkPropertyResolverFactory(projectName)
-        String pluginName = getConfiguredPluginName()
-        String storePath = null
-
-        if(pluginName != null) {
-            Description description = pluginService.getPluginDescriptor(pluginName, executionFileStoragePluginProviderService).getDescription()
-            storePath = PluginAdapterUtility.mapDescribedProperties(resolverFactory.create(executionFileStoragePluginProviderService.name, description), description, PropertyScope.Instance).get('path')
-        }
-
-        return storePath
+    String getStorePathTemplateForExecution(Execution execution){
+        ExecutionFileStoragePlugin plugin = getConfiguredPluginForExecution(execution, frameworkService.getFrameworkPropertyResolverFactory(execution.project))
+        return plugin?.getConfiguredPathTemplate()
     }
 
     /**
