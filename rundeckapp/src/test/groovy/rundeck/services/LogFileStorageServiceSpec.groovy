@@ -51,7 +51,6 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.A
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_PARTIAL
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE_PARTIAL
-import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.ERROR
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.NOT_FOUND
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.PENDING_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.WAITING
@@ -1524,32 +1523,46 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
     def "should bring the path property from the defined log storage plugin"(){
         given:
+        Execution e = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: 'some-other-server-uuid'
+        )
+
+
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
         service.configurationService=Mock(ConfigurationService){
             getString('execution.logs.fileStoragePlugin',_) >> pluginName
         }
 
-        def pluginDescription = Mock(Description) {
+        Description pluginDescription = Mock(Description) {
             getProperties() >> [PropertyUtil.string('path','path','path',true,logStoragePluginPath)]
         }
+
         PropertyResolver propertyResolver = Mock(PropertyResolver){
             resolvePropertyValue('path', _) >> logStoragePluginPath
         }
-        def propertyResolverFactory = Mock(PropertyResolverFactory.Factory){
+        PropertyResolverFactory.Factory propertyResolverFactory = Mock(PropertyResolverFactory.Factory){
             create(_, pluginDescription) >> propertyResolver
         }
         service.frameworkService = Mock(FrameworkService){
             getFrameworkPropertyResolverFactory(projectName) >> propertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            getPluginDescriptor(pluginName, _) >> Mock(DescribedPlugin){
-                getDescription() >> pluginDescription
+            configurePlugin(pluginName, _, propertyResolverFactory, PropertyScope.Instance) >> Mock(ConfiguredPlugin){
+                instance >> Mock(ExecutionFileStoragePlugin){
+                    getConfiguredPathTemplate() >> logStoragePluginPath
+                }
             }
         }
 
         service.executionFileStoragePluginProviderService = Mock(ExecutionFileStoragePluginProviderService)
 
         when:
-        String returnedStoragePath = service.getStorePathForProject(projectName)
+        String returnedStoragePath = service.getStorePathTemplateForExecution(e)
 
         then:
         logStoragePluginPath == returnedStoragePath

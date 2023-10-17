@@ -923,8 +923,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('executions/') {
                             //export executions
                             //export execution logs
-                            String remotePathTemplate = logFileStorageService.getStorePathForProject(project.getName())
+                            String remotePathTemplate = null
                             execs.each { Execution exec ->
+                                if(remotePathTemplate == null)
+                                    remotePathTemplate = logFileStorageService.getStorePathTemplateForExecution(exec)
+
                                 exportExecution zip, exec, "execution-${exec.id}.xml", remotePathTemplate
 
                                 jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
