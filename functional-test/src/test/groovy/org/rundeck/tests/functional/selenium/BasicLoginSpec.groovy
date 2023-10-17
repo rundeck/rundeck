@@ -1,27 +1,26 @@
 package org.rundeck.tests.functional.selenium
 
 import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.chrome.ChromeDriver
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.setup.BaseTest
 
 @SeleniumCoreTest
-class BasicLoginSpec extends BaseContainer {
+class BasicLoginSpec extends BaseTest {
 
     def "successful login"() {
-        given:
-        def client = getClient()
-        WebDriver driver = new ChromeDriver()
-        driver.get(client.baseUrl)
         when:
-        driver.findElement(By.id("login")).sendKeys("admin")
-        driver.findElement(By.id("password")).sendKeys("admin123")
-        driver.findElement(By.id("btn-login")).click()
+        doLogin('admin', 'admin')
         then:
         driver.currentUrl.contains("/menu/home")
-        cleanup:
-        driver.quit()
+    }
+
+    def "unsuccessful login with bad password"() {
+        when:
+        doLogin('admin', 'admin123')
+        def errorMessage = driver.findElement(By.cssSelector('.alert.alert-danger')).getText()
+        then:
+        driver.currentUrl.contains("/user/error")
+        errorMessage == 'Invalid username and password.'
     }
 
 }
