@@ -32,10 +32,16 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
 import grails.test.hibernate.HibernateSpec
@@ -276,6 +282,93 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
         then:
         1 * service.frameworkService.getProjectPropertyResolver(_)
+
+    }
+
+    def "custom plugin notification dynamic form contents"() {
+        given: 'notification context has some globals values, and a notification config uses a dynamic form field'
+        def (job, execution) = createTestJob()
+        def globalContext=new BaseDataContext([globals:globals])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals:globals])
+                    getSharedDataContext() >> shared
+                }
+        ]
+        def notificationConfig=[
+                testCustomFields:testCustomFieldsConfig
+        ]
+        def json = new ObjectMapper()
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestNotificationPlugin',
+                        content: json.writeValueAsString(notificationConfig)
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+
+
+        def fieldName = 'testCustomFields'
+        def desc = DescriptionBuilder.builder().name('TestNotificationPlugin')
+        .property(
+                PropertyBuilder.builder().string(fieldName).renderingOption(
+                        StringRenderingConstants.DISPLAY_TYPE_KEY,
+                        StringRenderingConstants.DisplayType.DYNAMIC_FORM
+                ).build()
+        ).build()
+        def pluginInst = Mock(NotificationPlugin)
+
+        when: 'trigger notification'
+        service.triggerJobNotification('start', job, content)
+
+        then: 'plugin is configured with the dynamic form contents with correct expansion values'
+        1* service.pluginService.getPluginDescriptor('TestNotificationPlugin',_)>>new DescribedPlugin(
+                null,
+                desc,
+                'TestNotificationPlugin',
+                null,
+                null
+        )
+        1 * service.pluginService.configurePlugin('TestNotificationPlugin',_, { PropertyResolverFactory.Factory factory->
+            //assert the factory param matches by resolving the field value
+            factory.create(
+                    ServiceNameConstants.Notification,
+                    desc
+            ).resolvePropertyValue(
+                    fieldName,
+                    PropertyScope.Instance
+            ) == expect
+        },_,_) >> new ConfiguredPlugin(pluginInst, [:])
+        1 * service.frameworkService.getProjectPropertyResolver(_)
+        1 * pluginInst.postNotification(_, _, _)
+
+        where:
+
+        testCustomFieldsConfig         | globals                     || expect
+        'plain text'                   | [:]                         || 'plain text'
+        'expand text ${globals.test1}' | [:]                         || 'expand text ${globals.test1}'
+        'expand text ${globals.test1}' | [test1: 'some value']       || 'expand text some value'
+        'expand text ${globals.test1}' | [test1: 'has "quotes" etc'] || 'expand text has "quotes" etc'
 
     }
 

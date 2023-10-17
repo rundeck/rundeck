@@ -101,6 +101,13 @@ import VueMultiselect from 'vue-multiselect'
 import { defineComponent} from "vue";
 import { Btn, Alert, Modal} from 'uiv'
 
+interface CustomField{
+  key?:string
+  label?:string
+  value?:string
+  desc?:string
+}
+
 export default defineComponent({
   name: 'DynamicFormPluginProp',
   components: {
@@ -134,7 +141,7 @@ export default defineComponent({
   emits: ['update:modelValue'],
   data() {
     return {
-      customFields: [] as any[],
+      customFields: [] as CustomField[],
       customOptions: [] as any[],
       useOptions: false,
       modalAddField: false,
@@ -150,7 +157,7 @@ export default defineComponent({
       this.modalAddField = true;
     },
     addField() {
-      let field = {} as any;
+      let field = {} as CustomField;
       this.duplicate = false;
 
       if (this.useOptions) {
@@ -200,8 +207,8 @@ export default defineComponent({
       }
     },
     removeField(row: any) {
-      const fields = [] as any;
-      this.customFields.forEach((field: any) => {
+      const fields = [] as CustomField[];
+      this.customFields.forEach((field: CustomField) => {
         if (field.key !== row.key) {
           fields.push(field);
         }
@@ -209,7 +216,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: any) {
+    changeField(field: CustomField) {
       this.refreshPlugin();
     },
     refreshPlugin() {
@@ -237,7 +244,7 @@ export default defineComponent({
       }
     }
 
-    if (this.hasOptions && this.options != null && this.options !== '') {
+    if (this.useOptions && this.options !== null && this.options !== '') {
       const optionsObject = JSON.parse(this.options);
       const options = Object.keys(optionsObject).map((key: any) => {
         const data = optionsObject[key];
