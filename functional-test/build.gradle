@@ -1,0 +1,53 @@
+plugins {
+    id 'groovy'
+    id "com.adarshr.test-logger" version "3.2.0"
+}
+
+apply from: "../gradle/java-version.gradle"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation "org.spockframework:spock-core:${spockCoreVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
+    testImplementation "org.testcontainers:spock:${testContainersVersion}"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+    testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
+}
+
+//This prevents tasks from being cached
+gradle.taskGraph.whenReady { taskGraph ->
+    [Test].each {
+        project.tasks.withType(it) {
+            it.outputs.upToDateWhen { false }
+        }
+    }
+}
+
+task apiTest(type: Test){
+    useJUnitPlatform()
+    systemProperty('TEST_IMAGE', "rundeck/rundeck")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
+    description = "Run API tests"
+}
+
+task seleniumCoreTest(type: Test){
+    useJUnitPlatform()
+    systemProperty('TEST_IMAGE', "rundeck/rundeck")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
+    description = "Run Rundeck OSS Selenium Tests"
+}
+
+task tomcatTest(type: Test){
+    useJUnitPlatform()
+    systemProperty("DEFAULT_DOCKERFILE_LOCATION", "docker/file/tomcat/Dockerfile")
+    systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
+    description = "Run Rundeck OSS API Tests on a tomcat environment"
+}
