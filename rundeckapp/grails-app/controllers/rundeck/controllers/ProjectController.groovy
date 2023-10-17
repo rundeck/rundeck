@@ -49,6 +49,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.http.protocol.HTTP
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -3259,10 +3260,9 @@ Note: `other_errors` included since API v35""",
 
                 // api response (async import)
                 if( result.success ){
-                    render(contentType: 'application/json'){
+                    render(status: 201,contentType: 'application/json'){
                         [
                                 message: "Async import process started, please check the status endpoint.",
-                                status_endpoint: "<rundeck-server-URL>/api/\$version/project/\$project/async/import-status"
                         ]
                     }
                 }else{
@@ -3291,7 +3291,7 @@ Note: `other_errors` included since API v35""",
                         }
                     }
 
-                    render(contentType: 'application/json'){
+                    render(status: 500,contentType: 'application/json'){
                         [
                                 message: "There was some errors in async import process start.",
                                 errors: errors,

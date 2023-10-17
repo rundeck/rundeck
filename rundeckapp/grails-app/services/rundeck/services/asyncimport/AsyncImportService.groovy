@@ -160,7 +160,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     def updateAsyncImportFileWithJobUuidOptionForProject(String projectName, String jobUuidOption){
         try {
             if( !projectName ){
-                log.error("No project name in async import event notification.")
+                def errorMessage = "Unable to locate async import file in db. No project name passed in method call."
+                log.error(errorMessage)
+                throw new AsyncImportException(errorMessage)
             }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
@@ -174,16 +176,38 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    def updateAsyncImportFileWithMilestoneAndLastUpdateForProject(String projectName, String milestone, String lastUpdate){
+    def updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+            String projectName,
+            String lastUpdate,
+            int milestoneNumber
+    ){
         try {
-           if( !projectName ){
-               log.error("No project name in async import event notification.")
-           }
+            if( !projectName ){
+                def errorMessage = "Unable to locate async import file in db. No project name passed in method call."
+                log.error(errorMessage)
+                throw new AsyncImportException(errorMessage)
+            }
+            def milestoneDesc = null
+            switch (milestoneNumber){
+                case 1:
+                    milestoneDesc = AsyncImportMilestone.M1_CREATED.name
+                    break
+                case 2:
+                    milestoneDesc = AsyncImportMilestone.M2_DISTRIBUTION.name
+                    break
+                case 3:
+                    milestoneDesc = AsyncImportMilestone.M3_IMPORTING.name
+                    break
+                case 4:
+                    milestoneDesc = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                    break
+            }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
-                newStatusFileContent.milestone = milestone
-                newStatusFileContent.lastUpdated = new Date().toString()
-                newStatusFileContent.lastUpdate = lastUpdate
+            newStatusFileContent.milestone = milestoneDesc
+            newStatusFileContent.lastUpdated = new Date().toString()
+            newStatusFileContent.lastUpdate = lastUpdate
+            newStatusFileContent.milestoneNumber = milestoneNumber
             saveAsyncImportStatusForProject(null, newStatusFileContent)
         } catch (Exception e) {
             e.printStackTrace();
@@ -194,7 +218,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     def updateAsyncImportFileWithTempFilepathForProject(String projectName, String tempFilePath){
         try {
             if( !projectName ){
-                log.error("No project name in async import event notification.")
+                def errorMessage = "Unable to locate async import file in db. No project name passed in method call."
+                log.error(errorMessage)
+                throw new AsyncImportException(errorMessage)
             }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
@@ -214,7 +240,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ){
         try {
             if( !projectName ){
-                log.error("No project name in async import event notification.")
+                def errorMessage = "Unable to locate async import file in db. No project name passed in method call."
+                log.error(errorMessage)
+                throw new AsyncImportException(errorMessage)
             }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
@@ -234,7 +262,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             String errors){
         try {
             if( !projectName ){
-                log.error("No project name in async import event notification.")
+                def errorMessage = "Unable to locate async import file in db. No project name passed in method call."
+                log.error(errorMessage)
+                throw new AsyncImportException(errorMessage)
             }
             def oldStatusFileContent = getAsyncImportStatusForProject(projectName)
             def newStatusFileContent = new AsyncImportStatusDTO(oldStatusFileContent)
@@ -255,11 +285,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             IRundeckProject project,
             InputStream inputStream,
             ProjectArchiveParams options
-    ) {
+    ){
+        final def milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
+
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M1_CREATED.name,
-                "Starting M1... Creating required directories."
+                "Starting M1... Creating required directories.",
+                milestoneNumber
         )
 
         //1. Copy the input stream in /tmp and if everything goes ok, report and call M2
@@ -273,13 +305,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         //1-
         // a. Create destination dir
         String destDir = "${TEMP_DIR}/${TEMP_PROJECT_SUFFIX}${projectName}"
-        File destDistToFile = new File(destDir)
-        if (!destDistToFile.exists()) {
+        if (!Files.exists(Paths.get(destDir))) {
             try {
                 updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                         projectName,
-                        AsyncImportMilestone.M1_CREATED.name,
-                        "Creating a copy of the uploaded project in /tmp."
+                        "Creating a copy of the uploaded project in /tmp.",
+                        milestoneNumber
                 )
                 createTempCopyFromStream(destDir, inputStream)
                 // b. If all is ok, persist the temp path in the status file
@@ -292,8 +323,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M1_CREATED.name,
-                "Creating the working directory in /tmp."
+                "Creating the working directory in /tmp.",
+                milestoneNumber
         )
 
         //2-
@@ -309,8 +340,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M1_CREATED.name,
-                "Creating the project model inside working directory in /tmp."
+                "Creating the project model inside working directory in /tmp.",
+                milestoneNumber
         )
 
         // 3-
@@ -330,21 +361,19 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 }
                                 .findFirst()
             if( dirFound.isPresent() ){
-                File modelProjectInternalRundeckProject = new File(dirFound.get().toString())
-                if( modelProjectInternalRundeckProject.exists() ){
+                if( Files.exists(Paths.get(dirFound.get().toString())) ){
                     Files.move(Paths.get(dirFound.get().toString()), Paths.get(modelProjectHost.toString()).resolve("${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"))
                 }
             }
             // Then zip the model project and import it to server, then delete it
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
-            File zippedFileToFile = new File(zippedFilename)
             // before zip, check if zip file is there already
-            if( !zippedFileToFile.exists() ){
+            if( !Files.exists(Paths.get(zippedFilename)) ){
                 zipModelProject(modelProjectHost.toString(), zippedFilename)
             }
             FileInputStream fis = new FileInputStream(zippedFilename);
             // importToProject Call
-            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Uploading project w/o executions.")
+            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, "Uploading project w/o executions.", milestoneNumber)
             importResult = projectService.importToProject(
                     project,
                     framework,
@@ -361,8 +390,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             if( !importResult.success ){
                 updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                         projectName,
-                        AsyncImportMilestone.M1_CREATED.name,
                         "Errors while uploading the project w/o executions.",
+                        milestoneNumber
                 )
                 // temp
                 deleteNonEmptyDir(destDir.toString())
@@ -377,8 +406,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M1_CREATED.name,
-                "Cleaning the project model."
+                "Cleaning the project model.",
+                milestoneNumber
         )
 
         Path pathToRundeckInternalProject = Files.list(Paths.get(modelProjectHost.toString()))
@@ -403,7 +432,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
         }
         // Update
-        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, AsyncImportMilestone.M1_CREATED.name, "Async import milestone 1 completed, beginning milestone 2.")
+        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(projectName, "Async import milestone 1 completed, beginning milestone 2.", milestoneNumber)
         // M2 call
         projectService.beginAsyncImportMilestone2(
                 projectName,
@@ -420,11 +449,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             AuthContext authContext,
             IRundeckProject project
     ){
+        final def milestoneNumber = AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M2_DISTRIBUTION.name,
-                "Starting M2. Creating required file: distributed_executions"
+                "Starting M2. Creating required file: distributed_executions",
+                milestoneNumber
         )
 
         // 1. create "distributed_executions" folder
@@ -436,8 +466,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M2_DISTRIBUTION.name,
-                "Starting M2. Extracting TMP filepath from status file."
+                "Starting M2. Extracting TMP filepath from status file.",
+                milestoneNumber
         )
 
         // 2. Extract the tmp path from the status file
@@ -447,7 +477,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
         File tempFile = new File(statusFileForProject.tempFilepath)
         if( !tempFile.exists() ){
-            //error
+            // If the M2 is triggered and the temp project dont exist, that means that the server
+            // has been restarted, so we have to tell the user to start from M1 (or automatically start M1)
+            // THROW CUSTOM EXCEPTION
+            throw new AsyncImportException("Unable to locate temp project during Milestone 2, please restart the process in other new project and delete current.")
         }
         // 3. locate the rundeck-<name>/executions dir in tmp project
         Path rundeckInternalProjectPath = getInternalRundeckProjectPath(tempFile.toString())
@@ -463,8 +496,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M2_DISTRIBUTION.name,
-                "Starting M2. Listing executions content."
+                "Starting M2. Listing executions content.",
+                milestoneNumber
         )
 
         List<Path> xmls = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), EXECUTION_FILE_PREFIX, EXECUTION_FILE_EXT)
@@ -486,7 +519,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         if (xmls.size() > 0) {
             try {
-//                for (Path execution in xmls) {
                 xmls.forEach { execution ->
                     String trimmedExecutionSerial = execution.fileName.toString()
                             .replace(EXECUTION_FILE_PREFIX, "")
@@ -521,8 +553,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                     updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                             projectName,
-                            AsyncImportMilestone.M2_DISTRIBUTION.name,
-                            "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
+                            "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}.",
+                            milestoneNumber
                     )
 
                     if (logFound.isPresent()) {
@@ -553,8 +585,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             // Update
             updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                     projectName,
-                    AsyncImportMilestone.M2_DISTRIBUTION.name,
-                    "Executions distributed, M2 done; proceeding to call M3 event."
+                    "Executions distributed, M2 done; proceeding to call M3 event.",
+                    milestoneNumber
             )
 
             // Call for M3
@@ -574,10 +606,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             IRundeckProject project
     ){
 
+        final def milestoneNumber = AsyncImportMilestone.M3_IMPORTING.milestoneNumber
+
         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                 projectName,
-                AsyncImportMilestone.M3_IMPORTING.name,
-                "Milestone 3 in progress..."
+                "Milestone 3 in progress...",
+                milestoneNumber
         )
 
         if( !projectName ){
@@ -589,7 +623,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // get the jobUuid option
         def jobUuidOption = getAsyncImportStatusForProject(projectName).jobUuidOption
 
-        // Options
+        // Options (false values bc we already imported the project with user's options in M1)
         def options = [
                 jobUuidOption     :jobUuidOption,
                 importExecutions  : true,
@@ -635,8 +669,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                         updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                                 projectName,
-                                AsyncImportMilestone.M3_IMPORTING.name,
-                                "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
+                                "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining.",
+                                milestoneNumber
                         )
 
                         def result
@@ -696,8 +730,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     // Update the file
                     updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
                             projectName,
-                            AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name,
-                            "All Executions uploaded, async import ended. Please check the target project."
+                            "All Executions uploaded, async import ended. Please check the target project.",
+                            AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
                     )
                 }
             } catch (IOException e) {
@@ -818,30 +852,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    def copyDir(String origin, String target) {
-        try {
-            Files.walk(Paths.get(origin))
-                    .forEach { path ->
-                        def destino = Paths.get(target, path.toString().substring(origin.length()))
-                        if (Files.isDirectory(path)) {
-                            Files.createDirectories(destino)
-                        } else {
-                            Files.copy(path, destino, StandardCopyOption.REPLACE_EXISTING)
-                        }
-                    }
-        } catch (IOException e) {
-            e.printStackTrace()
-        }
-    }
-
     def copyDirExcept(String origin, String target, String ignored) {
         def originDir = new File(origin)
         def destDir = new File(target)
-
         def exclude = new File(originDir, ignored)
-
         def copyRecursively
-
         try{
             copyRecursively = { File originFile, File destFile ->
                 if (originFile.name != exclude.name) {
