@@ -75,6 +75,8 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
@@ -94,12 +96,12 @@ import org.slf4j.MDC
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
@@ -1174,7 +1176,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(!extraParams){
                     extraParams=[:]
                 }
-                Map<String, String> args = FrameworkService.parseOptsFromString(execution.argString)
+                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
                         args, jobcontext, secureOptionNodeDeferred)
             }
@@ -2700,7 +2702,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext = null) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
-            optparams = FrameworkService.parseOptsFromString(props.argString)
+            optparams = OptionsParserUtil.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
         optparams = addRemoteOptionSelected(scheduledExec, optparams, authContext)
@@ -2711,19 +2713,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options and return a map of the values of any secure options, using defaults for required options if
      * they are not present, and selecting between exposed/hidden secure values
      */
-    def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params, Boolean exposed=false) throws ExecutionServiceException {
+    def Map selectSecureOptionInput(JobData jobData, Map params, Boolean exposed=false) throws ExecutionServiceException {
         def results=[:]
         def optparams
         if (params?.argString) {
-            optparams = FrameworkService.parseOptsFromString(params.argString)
+            optparams = OptionsParserUtil.parseOptsFromString(params.argString)
         }else if(params?.optparams){
             optparams=params.optparams
         }else{
             optparams = filterOptParams(params)
         }
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
-            options.each {Option opt ->
+            options.each { OptionData opt ->
                 if (opt.secureInput && optparams[opt.name] && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
                     results[opt.name]= optparams[opt.name]
                 }else if (opt.secureInput && opt.defaultValue && opt.required && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
@@ -2736,11 +2738,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Return a map containing all params that are not secure option parameters
      */
-    def Map removeSecureOptionEntries(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
+    def Map removeSecureOptionEntries(JobData jobData, Map params) throws ExecutionServiceException {
         def results=new HashMap(params)
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
-            options.each {Option opt ->
+            options.each {OptionData opt ->
                 if (opt.secureInput) {
                     results.remove(opt.name)
                 }
@@ -2782,13 +2784,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
-    def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
+    def Map addOptionDefaults(JobData jobData, Map optparams) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
             def defaultoptions=[:]
-            options.each {Option opt ->
+            options.each {OptionData opt ->
                 if (null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
@@ -2984,11 +2986,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param argString
      * @return map of option name to value, where value is a String or a List of Strings
      */
-    def Map parseJobOptsFromString(ScheduledExecution scheduledExecution, String argString){
-        def optparams = FrameworkService.parseOptsFromString(argString)
+    def Map parseJobOptsFromString(JobData jobData, String argString){
+        def optparams = OptionsParserUtil.parseOptsFromString(argString)
         if(optparams){
             //look for multi-valued options and try to split on delimiters
-            scheduledExecution.options.each{Option opt->
+            jobData.optionSet.each{OptionData opt->
                 if(opt.multivalued && optparams[opt.name]){
                     def arr = optparams[opt.name].split(Pattern.quote(opt.delimiter))
                     optparams[opt.name]=arr as List

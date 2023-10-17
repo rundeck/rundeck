@@ -70,6 +70,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 
 import javax.security.auth.Subject
@@ -264,7 +265,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
                 if (it.argString) {
-                    data.jobArguments = FrameworkService.parseOptsFromString(it.argString)
+                    data.jobArguments = OptionsParserUtil.parseOptsFromString(it.argString)
                 }
             }
             map + data
