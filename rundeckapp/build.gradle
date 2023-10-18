@@ -523,6 +523,7 @@ archivesBaseName = 'rundeck'
 bootWar {
     enabled=true
     it.dependsOn copyPluginLibs
+    dependsOn compileGroovyPages
 
     from("${buildDir}/WEB-INF/rundeck/plugins") {
         into("WEB-INF/rundeck/plugins")
