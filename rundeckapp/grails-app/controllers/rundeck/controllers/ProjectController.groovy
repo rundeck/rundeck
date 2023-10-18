@@ -2509,11 +2509,14 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
+        Map prop = [(key_): value_]
         Map currentProps = frameworkService.getFrameworkProject(project.name).getProjectProperties()
-        Properties projProp = new Properties(currentProps + [(key_): value_])
+        Properties mergedProjProps = new Properties(currentProps + prop)
+
+        Properties projProp = new Properties(prop)
 
         //validate plugin property values
-        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
         projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
             final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
             providers.each { String provider, Map<String, String> providerConfig ->
