@@ -14,6 +14,17 @@ enum AsyncImportMilestone {
         this.milestoneNumber = milestoneNumber
     }
 
+    static validMilestoneNumber(int milestoneNumber){
+        def validNumbers = [
+                M1_CREATED.milestoneNumber,
+                M2_DISTRIBUTION.milestoneNumber,
+                M3_IMPORTING.milestoneNumber
+        ]
+
+        return validNumbers.stream().filter {number -> number == milestoneNumber}.findAny().isPresent()
+
+    }
+
     public boolean equalsName(String otherName) {
         return name == otherName
     }

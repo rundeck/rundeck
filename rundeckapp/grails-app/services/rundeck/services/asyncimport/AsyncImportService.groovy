@@ -279,6 +279,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1)
     def beginMilestone1(
             final String projectName,
             AuthContext authContext,
@@ -635,105 +636,116 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         ] as ProjectArchiveParams
 
         try {
+            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                    projectName,
+                    "Iterating executions bundles.",
+                    milestoneNumber
+            )
+
             // Distributed executions path
             def distributedExecutionsFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${DISTRIBUTED_EXECUTIONS_FILENAME}")
             // The first dir of distributed executions, in other words, the next execution bundle to be uploaded
             Path firstDir
-            List<Path> executionBundles = null
+            def executionBundles = null
             try {
                 executionBundles = Files.walk(distributedExecutionsFullPath, FileVisitOption.FOLLOW_LINKS)
                         .filter(Files::isDirectory)
                         .filter(path -> path.getFileName().toString().matches("\\d+"))
                         .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
-                        .collect(Collectors.toList());
-                if (executionBundles.size() > 0) {
-                    // Executions path
-                    firstDir = executionBundles[0] as Path
-                    // Model path
-                    def modelProjectFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${MODEL_PROJECT_NAME_SUFFIX}")
-                    // Executions path inside model
-                    def modelProjectExecutionsContainerPath = Paths.get("${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}")
-                    try {
-                        // Move the first dir to model project
-                        try{
-                            Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
-                        }catch(NoSuchFileException ignored){
-                            ignored.printStackTrace()
-                            throw ignored
+                        .collect(Collectors.toList())
+
+                if( executionBundles.size() ){
+
+                    executionBundles.forEach{ bundle ->
+                        if (!Files.exists(bundle) || !Files.isDirectory(bundle)) {
+                            throw new AsyncImportException("Bundle corrupted or not a directory.")
                         }
-
-                        def zippedFilename = "${BASE_WORKING_DIR}${projectName}${File.separator}${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
-                        zipModelProject(modelProjectFullPath.toString(), zippedFilename);
-
-                        FileInputStream fis = new FileInputStream(zippedFilename);
-
-                        updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
-                                projectName,
-                                "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining.",
-                                milestoneNumber
-                        )
-
-                        def result
-
-                        try{
-                            result = projectService.importToProject(
-                                    project,
-                                    framework,
-                                    authContext as UserAndRolesAuthContext,
-                                    fis,
-                                    options
-                            )
-                        }catch(Exception e){
-                            e.printStackTrace()
-                        }
-
-                        if( result.success ){
-                            def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
-                            try{
-                                if( Files.exists(modelProjectExecutionsContainerFullPath) && Files.isDirectory(modelProjectExecutionsContainerFullPath) ){
-                                    deleteNonEmptyDir(modelProjectExecutionsContainerFullPath.toString())
-                                }else{
-                                    throw new FileNotFoundException("Executions directory don't exist or is not a directory.")
-                                }
-                                if( Files.exists(Paths.get(zippedFilename)) ){
-                                    Files.delete(Paths.get(zippedFilename))
-                                }else{
-                                    throw new FileNotFoundException("Zipped model project not found.")
-                                }
-                            }catch(Exception e){
-                                throw e
+                        // Executions path
+                        firstDir = bundle
+                        // Model path
+                        def modelProjectFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${MODEL_PROJECT_NAME_SUFFIX}")
+                        // Executions path inside model
+                        def modelProjectExecutionsContainerPath = Paths.get("${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}")
+                        try {
+                            // Move the first dir to model project
+                            try {
+                                Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
+                            } catch (NoSuchFileException ignored) {
+                                ignored.printStackTrace()
+                                throw ignored
                             }
+
+                            def zippedFilename = "${BASE_WORKING_DIR}${projectName}${File.separator}${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
+                            zipModelProject(modelProjectFullPath.toString(), zippedFilename);
+
+                            FileInputStream fis = new FileInputStream(zippedFilename);
+
+                            updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                                    projectName,
+                                    "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining.",
+                                    milestoneNumber
+                            )
+
+                            def result
+
+                            try {
+                                result = projectService.importToProject(
+                                        project,
+                                        framework,
+                                        authContext as UserAndRolesAuthContext,
+                                        fis,
+                                        options
+                                )
+                            } catch (Exception e) {
+                                e.printStackTrace()
+                            }
+
+                            if (result.success) {
+                                def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
+                                try {
+                                    if (Files.exists(modelProjectExecutionsContainerFullPath) && Files.isDirectory(modelProjectExecutionsContainerFullPath)) {
+                                        deleteNonEmptyDir(modelProjectExecutionsContainerFullPath.toString())
+                                    } else {
+                                        throw new FileNotFoundException("Executions directory don't exist or is not a directory.")
+                                    }
+                                    if (Files.exists(Paths.get(zippedFilename))) {
+                                        Files.delete(Paths.get(zippedFilename))
+                                    } else {
+                                        throw new FileNotFoundException("Zipped model project not found.")
+                                    }
+                                } catch (Exception e) {
+                                    reportError(
+                                            projectName,
+                                            AsyncImportMilestone.M3_IMPORTING.name,
+                                            "Error in Milestone 3.",
+                                            e
+                                    )
+                                    throw e
+                                }
+                            }
+                            if (result.execerrors) {
+                                updateAsyncImportFileWithErrorsForProject(projectName, result.execerrors?.toString())
+                            }
+                        } catch (Exception e) {
+                            reportError(
+                                    projectName,
+                                    AsyncImportMilestone.M3_IMPORTING.name,
+                                    "Error in Milestone 3.",
+                                    e
+                            )
                         }
-
-                        if( result.execerrors ){
-                            updateAsyncImportFileWithErrorsForProject(projectName, result.execerrors?.toString())
-                        }
-
-                        // Update the status file and emit M3 event
-                        projectService.beginAsyncImportMilestone3(
-                                projectName,
-                                authContext,
-                                project
-                        )
-
-                    } catch (Exception e) {
-                        reportError(
-                                projectName,
-                                AsyncImportMilestone.M3_IMPORTING.name,
-                                "Error in Milestone 3.",
-                                e
-                        )
                     }
-                }else{
-                    // Remove all the files in the working dir and that's it!!
-                    deleteNonEmptyDir("${BASE_WORKING_DIR.toString()}${projectName}")
-                    // Update the file
-                    updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
-                            projectName,
-                            "All Executions uploaded, async import ended. Please check the target project.",
-                            AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
-                    )
                 }
+
+                // Remove all the files in the working dir and that's it!!
+                deleteNonEmptyDir("${BASE_WORKING_DIR.toString()}${projectName}")
+                // Update the file
+                updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
+                        projectName,
+                        "All Executions uploaded, async import ended. Please check the target project.",
+                        AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
+                )
+
             } catch (IOException e) {
                 // Report the error
                 reportError(

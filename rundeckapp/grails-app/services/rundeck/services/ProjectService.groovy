@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -72,6 +73,7 @@ import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.asyncimport.AsyncImportEvents
+import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
@@ -1848,19 +1850,70 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
-    void beginAsyncImportMilestone3(
-            final String projectName,
-            final AuthContext authContext,
-            final IRundeckProject project){
-        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
-    }
-
     void beginAsyncImportMilestone2(
             final String projectName,
             final AuthContext authContext,
             final IRundeckProject project
     ){
         notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+    }
+
+    void beginAsyncImportMilestone3(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project
+    ){
+        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+    }
+
+    void resumeAsyncImportMilestone(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project,
+            final int milestoneNumber,
+            final InputStream inputStream = null,
+            final ProjectArchiveParams params = null
+    ){
+        def warningMessage = "Requesting to resume milestone no. ${milestoneNumber}"
+
+        if( !AsyncImportMilestone.validMilestoneNumber(milestoneNumber) ){
+            throw new AsyncImportException("Invalid milestone number: ${milestoneNumber}")
+        }
+
+        switch (milestoneNumber){
+            case 1:
+                if( inputStream == null ){
+                    throw new AsyncImportException("${warningMessage} w/o providing an input stream.")
+                }
+                if( params == null ){
+                    log.warn("${warningMessage} w/o import params.")
+                }
+                notify(
+                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1,
+                        projectName,
+                        authContext,
+                        project,
+                        inputStream,
+                        params
+                )
+                break
+            case 2:
+                notify(
+                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2,
+                        projectName,
+                        authContext,
+                        project
+                )
+                break
+            case 3:
+                notify(
+                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3,
+                        projectName,
+                        authContext,
+                        project
+                )
+                break
+        }
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
