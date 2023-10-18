@@ -473,10 +473,12 @@ jobs:
           name: Fetch Artifacts
           command: |
             source .circleci/circle-shim.sh
-            pull_rundeck
+            if [ -z "<< parameters.copy-war >>" ]; then
+              pull_rundeck
+            fi
       - run:
           command: |
-            if [ ! -z "<< parameters.copy-war >>"]; then
+            if [ ! -z "<< parameters.copy-war >>" ]; then
               # copy war file to 
               TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
               WAR=$(find artifacts -name '*.war')
