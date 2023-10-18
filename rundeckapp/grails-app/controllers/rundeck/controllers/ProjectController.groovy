@@ -2181,6 +2181,7 @@ key2=value'''
         //parse config data
         def config=null
         def configProps=new Properties()
+        def errors=[]
         if (request.format in ['text']) {
             def error=null
             try{
@@ -2477,6 +2478,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         def value_=null
+        def errors=[]
         if(request.format in ['text']){
            value_ = request.inputStream.text
         }else{
@@ -2507,7 +2509,8 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
-        Properties projProp = new Properties([(key_): value_])
+        Map currentProps = frameworkService.getFrameworkProject(project.name).getProjectProperties()
+        Properties projProp = new Properties(currentProps + [(key_): value_])
 
         //validate plugin property values
         def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
