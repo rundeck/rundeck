@@ -469,6 +469,8 @@ jobs:
       - checkout
       - install-java
       - restore-gradle-cache
+      - attach_workspace:
+          at: artifacts
       - run:
           name: Fetch Artifacts
           command: |
@@ -480,8 +482,9 @@ jobs:
           command: |
             if [ ! -z "<< parameters.copy-war >>" ]; then
               # copy war file to docker build destination
+              TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
               WAR=$(find artifacts -name '*.war')
-              cp $WAR functional-test/src/test/resources/docker/file/tomcat/data/rundeck-launcher.war
+              cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
             fi
       - run:
           command: ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
