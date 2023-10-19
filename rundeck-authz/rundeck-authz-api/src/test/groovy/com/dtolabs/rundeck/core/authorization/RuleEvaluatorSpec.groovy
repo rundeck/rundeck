@@ -560,6 +560,19 @@ class RuleEvaluatorSpec extends Specification {
 
     }
 
+
+    def "matches any pattern skips null group"() {
+        expect:
+        expect == RuleEvaluator.matchesAnyPatterns(input, pattern)
+        where:
+        input          | pattern | expect
+        [null]         | 'd'     | false
+        [null, 'asdf'] | '..d.'  | true
+        [null, 'asdf'] | '..x.'  | false
+        ['asdf', null] | '..d.'  | true
+        ['asdf', null] | '..x.'  | false
+    }
+
     def "narrow contexts"() {
         given:
 
