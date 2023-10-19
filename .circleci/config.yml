@@ -19,53 +19,53 @@ upstream-env: &upstream
 slack-fail-post-step: &slack-fail-post-step
   post-steps:
     - slack/notify:
-          channel: C01D89KV4JX
-          branch_pattern: main
-          event: fail
-          custom: |
-            {
-            	"blocks": [
-            		{
-            			"type": "section",
-            			"fields": [
-            				{
-            					"type": "mrkdwn",
-            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
-            				}
-            			]
-            		},
-            		{
-            			"type": "context",
-            			"elements": [
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Branch*: $CIRCLE_BRANCH"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Author*: $CIRCLE_USERNAME"
-            				}
-            			]
-            		},
-            		{
-            			"type": "actions",
-            			"elements": [
-            				{
-            					"type": "button",
-            					"text": {
-            						"type": "plain_text",
-            						"text": "View Job"
-            					},
-            					"url": "${CIRCLE_BUILD_URL}"
-            				}
-            			]
-            		}
-            	]
-            }
+        channel: C01D89KV4JX
+        branch_pattern: main
+        event: fail
+        custom: |
+          {
+          	"blocks": [
+          		{
+          			"type": "section",
+          			"fields": [
+          				{
+          					"type": "mrkdwn",
+          					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
+          				}
+          			]
+          		},
+          		{
+          			"type": "context",
+          			"elements": [
+          				{
+          					"type": "mrkdwn",
+          					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+          				},
+          				{
+          					"type": "mrkdwn",
+          					"text": "*Branch*: $CIRCLE_BRANCH"
+          				},
+          				{
+          					"type": "mrkdwn",
+          					"text": "*Author*: $CIRCLE_USERNAME"
+          				}
+          			]
+          		},
+          		{
+          			"type": "actions",
+          			"elements": [
+          				{
+          					"type": "button",
+          					"text": {
+          						"type": "plain_text",
+          						"text": "View Job"
+          					},
+          					"url": "${CIRCLE_BUILD_URL}"
+          				}
+          			]
+          		}
+          	]
+          }
 
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
@@ -450,31 +450,20 @@ jobs:
             --skip-rule=operation-4xx-response \
             --skip-rule=no-invalid-media-type-examples
 
-  test-gradle-api:
+  test-gradle-functional:
     <<: *defaults
     machine:
       image: ubuntu-2004:202201-02
-    steps:
-      - checkout
-      - install-java
-      - restore-gradle-cache
-      - run:
-          name: Fetch Artifacts
-          command: |
-            source .circleci/circle-shim.sh
-            pull_rundeck
-      - run:
-          command: ./gradlew :functional-test:apiTest --no-daemon --stacktrace --info --parallel
-      - collect-gradle-tests
-
-  test-gradle-api-tomcat:
-    <<: *defaults
-    machine:
-      image: ubuntu-2004:202201-02
-
     parameters:
-      tomcat-vers:
-        description: Tomcat image tag
+      test-image:
+        description: Test image tag
+        default: "rundeck/rundeck"
+        type: string
+      copy-war:
+        description: Copy rundeck war file to build image
+        default: ""
+        type: string
+      gradle-task:
         type: string
     steps:
       - checkout
@@ -483,15 +472,24 @@ jobs:
       - attach_workspace:
           at: artifacts
       - run:
+          name: Fetch Artifacts
           command: |
-            # copy war file to 
-            TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
-            WAR=$(find artifacts -name '*.war')
-            cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
+            source .circleci/circle-shim.sh
+            if [ -z "<< parameters.copy-war >>" ]; then
+              pull_rundeck
+            fi
       - run:
-          command: ./gradlew :functional-test:tomcatTest --no-daemon --stacktrace --info --parallel
+          command: |
+            if [ ! -z "<< parameters.copy-war >>" ]; then
+              # copy war file to docker build destination
+              TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
+              WAR=$(find artifacts -name '*.war')
+              cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
+            fi
+      - run:
+          command: ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
           environment:
-            TEST_IMAGE: << parameters.tomcat-vers >>
+            TEST_IMAGE: << parameters.test-image >>
       - collect-gradle-tests
 
   test-docker:
@@ -712,18 +710,22 @@ jobs:
 
 stages:
   test: &stage-test
-  - Gradle Test
-  - Docker Test
-  - Tomcat 8 API Test
-  - Tomcat 9 API Test
-  - API Test
-  - Selenium Test
-  - SSL Test
-  - Ansible Test
-  - LDAP Test
-  - LDAP Bind Test
-  - PAM Test
-  - Twistlock Scan
+    - Gradle Test
+    - Docker Test
+    - Tomcat 8 API Test
+    - Tomcat 9 API Test
+    - API Test
+    - Selenium Test
+    - SSL Test
+    - Ansible Test
+    - LDAP Test
+    - LDAP Bind Test
+    - PAM Test
+    - Twistlock Scan
+    - New Selenium Test
+    - New API Test
+    - New API Test Tomcat 8
+    - New API Test Tomcat 9
   build: &stage-build
     - Build
 
@@ -905,26 +907,39 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - test-gradle-api:
+      - test-gradle-functional:
+          <<: *filter-no-tags
+          name: New Selenium Test
+          requires: *stage-build
+          gradle-task: seleniumCoreTest
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-functional:
           <<: *filter-no-tags
           name: New API Test
           requires: *stage-build
+          gradle-task: apiTest
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-      - test-gradle-api-tomcat:
+      - test-gradle-functional:
           <<: *filter-no-tags
           name: New API Test Tomcat 8
           requires: *stage-build
-          tomcat-vers: 8-jdk11
+          test-image: 8-jdk11
+          copy-war: "true"
+          gradle-task: tomcatTest
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-      - test-gradle-api-tomcat:
+      - test-gradle-functional:
           <<: *filter-no-tags
           name: New API Test Tomcat 9
           requires: *stage-build
-          tomcat-vers: 9-jdk11
+          test-image: 9-jdk11
+          copy-war: "true"
+          gradle-task: tomcatTest
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -1036,18 +1051,18 @@ workflows:
             - slack-secrets
           <<: *slack-fail-post-step
       - test-selenium:
-            name: Selenium Test
-            requires: *stage-build
-            context:
-              - slack-secrets
-            <<: *slack-fail-post-step
+          name: Selenium Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: *stage-build
-            continue: 'false'
-            context:
-              - slack-secrets
-            <<: *slack-fail-post-step
+          name: OWASP Dependency Checks
+          requires: *stage-build
+          continue: 'false'
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - twistlock-scan-image:
           name: Twistlock Scan
           requires: *stage-build
@@ -1055,10 +1070,39 @@ workflows:
             - tl_scan_context
             - slack-secrets
           <<: *slack-fail-post-step
-      - test-gradle-api:
+      - test-gradle-functional:
+          <<: *filter-no-tags
+          name: New Selenium Test
+          requires: *stage-build
+          gradle-task: seleniumCoreTest
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-functional:
           <<: *filter-no-tags
           name: New API Test
           requires: *stage-build
+          gradle-task: apiTest
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-functional:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 8
+          requires: *stage-build
+          test-image: 8-jdk11
+          copy-war: "true"
+          gradle-task: tomcatTest
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - test-gradle-functional:
+          <<: *filter-no-tags
+          name: New API Test Tomcat 9
+          requires: *stage-build
+          test-image: 9-jdk11
+          copy-war: "true"
+          gradle-task: tomcatTest
           context:
             - slack-secrets
           <<: *slack-fail-post-step
