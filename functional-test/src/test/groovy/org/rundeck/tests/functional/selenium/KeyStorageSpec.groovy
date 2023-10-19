@@ -9,7 +9,7 @@ class KeyStorageSpec extends BaseTest {
 
     def "create and delete key storage"() {
         when:
-        doLogin('admin', 'admin123')
+        doLogin()
         then:
         addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
         deleteKeyStorage('git', 'git.pass')
@@ -17,7 +17,7 @@ class KeyStorageSpec extends BaseTest {
 
     def "overwrite and delete key storage"() {
         when:
-        doLogin('admin', 'admin123')
+        doLogin()
         then:
         addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
         overwriteKeyStorage('new-root', 'git', 'git.pass')

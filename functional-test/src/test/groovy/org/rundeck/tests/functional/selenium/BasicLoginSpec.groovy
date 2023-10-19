@@ -9,14 +9,15 @@ class BasicLoginSpec extends BaseTest {
 
     def "successful login"() {
         when:
-        doLogin('admin', 'admin123')
+        doLogin()
         then:
         driver.currentUrl.contains("/menu/home")
     }
 
     def "unsuccessful login with bad password"() {
+        pass = 'admin123' //Bad pass
         when:
-        doLogin('admin', 'admin')
+        doLogin()
         def errorMessage = driver.findElement(By.cssSelector('.alert.alert-danger')).getText()
         then:
         driver.currentUrl.contains("/user/error")

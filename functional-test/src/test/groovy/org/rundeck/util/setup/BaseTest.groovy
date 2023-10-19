@@ -21,6 +21,8 @@ import java.time.Duration
 class BaseTest extends BaseContainer {
 
     WebDriver driver = new ChromeDriver()
+    def user = 'admin' //Default user
+    def pass = 'admin' //Default pass
 
     def setup() {
         def client = getClient()
@@ -31,9 +33,9 @@ class BaseTest extends BaseContainer {
         driver.quit()
     }
 
-    void doLogin(String user, String password) {
-        driver.findElement(By.id('login')).sendKeys(user)
-        driver.findElement(By.id('password')).sendKeys(password)
+    void doLogin() {
+        driver.findElement(By.id('login')).sendKeys(user as CharSequence)
+        driver.findElement(By.id('password')).sendKeys(pass as CharSequence)
         driver.findElement(By.id('btn-login')).click()
     }
 
