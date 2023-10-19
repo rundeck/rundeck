@@ -321,7 +321,6 @@ export default defineComponent({
       days: [],
       months: [],
       crontabpos: -1,
-      crontabInput: null
     }
   },
   computed: {
@@ -381,8 +380,9 @@ export default defineComponent({
     crontabBlur() {
       this.validateCronExpression()
       this.crontabpos = -1
-    }, updateCrontabPosition() {
-      this.crontabpos = getCaretPos(this.crontabInput);
+    },
+    updateCrontabPosition() {
+      this.crontabpos = getCaretPos();
     },
   },
   beforeMount() {
@@ -458,7 +458,8 @@ export default defineComponent({
    * nb: there's probably a better/modern way to do this, this is old code
    * @param el input element
    */
- function getCaretPos(el:any) {
+ function getCaretPos() {
+    let el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
     let rng, ii = -1;
     if (typeof el.selectionStart == "number") {
       return  el.selectionStart;
