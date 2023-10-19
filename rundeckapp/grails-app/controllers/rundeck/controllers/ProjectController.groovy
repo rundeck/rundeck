@@ -70,6 +70,7 @@ import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
@@ -3445,6 +3446,7 @@ Note: `other_errors` included since API v35""",
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiResumeAsyncImport(ProjectArchiveParams archiveParams){
         def statusFileContent
+        def milestoneNumber = params.milestoneNumber ? params.milestoneNumber : null
         AuthContext authContext = systemAuthContext
         def project = authorizingProject.resource
         def stream = request.getInputStream()
@@ -3455,17 +3457,19 @@ Note: `other_errors` included since API v35""",
                         code: 'api.error.async.import.project.missing'
                 ])
             }
-            if( !params.milestoneNumber ){
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.milestone.missing'
-                ])
-            }
-            def milestoneNumber = params.milestoneNumber as int
             def projectName = params.project as String
             statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
             if(!statusFileContent || null == statusFileContent){
                 throw new AsyncImportException("Status file empty or non-existent.")
+            }
+            if( milestoneNumber == null ){
+                if( !statusFileContent.milestoneNumber ){
+                    return apiService.renderErrorFormat(response,[
+                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            code: 'api.error.async.import.milestone.missing'
+                    ])
+                }
+                milestoneNumber = statusFileContent.milestoneNumber
             }
             projectService.resumeAsyncImportMilestone(
                     projectName,

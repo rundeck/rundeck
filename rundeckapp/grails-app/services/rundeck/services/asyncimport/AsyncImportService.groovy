@@ -305,7 +305,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         //1-
         // a. Create destination dir
-        String destDir = "${TEMP_DIR}/${TEMP_PROJECT_SUFFIX}${projectName}"
+        String destDir = "${TEMP_DIR}${File.separator}${TEMP_PROJECT_SUFFIX}${projectName}"
         if (!Files.exists(Paths.get(destDir))) {
             try {
                 updateAsyncImportFileWithMilestoneAndLastUpdateForProject(
