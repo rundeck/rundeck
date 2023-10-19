@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
@@ -34,6 +35,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
+import grails.web.mapping.LinkGenerator
 import org.hibernate.sql.JoinType
 import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequestData
 import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
@@ -47,7 +49,6 @@ import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
-import org.springframework.transaction.annotation.Propagation
 import rundeck.Execution
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
@@ -94,7 +95,7 @@ class LogFileStorageService
     TaskExecutor logFileStorageDeleteRemoteTask
     def executorService
     def grailsApplication
-    def grailsLinkGenerator
+    LinkGenerator grailsLinkGenerator
     ApplicationContext applicationContext
     def metricService
     def configurationService
@@ -999,7 +1000,7 @@ class LogFileStorageService
             boolean partial = false
     )
     {
-        if (useStoredPath && execution.outputfilepath) {
+        if (useStoredPath && execution.outputfilepath && !execution.isRemoteOutputfilepath()) {
             //use previously stored outputfilepath if present, substitute correct filetype
             String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
             return new File(path + '.' + filetype + (partial ? '.part' : ''))
@@ -1367,6 +1368,53 @@ class LogFileStorageService
             }
         }
         return null
+    }
+
+    /**
+     * Get the path template for the remote log storage
+     * @param execution any execution to extract the path template to store log files for all the project
+     * @return the value of the framework property "framework.plugin.ExecutionFileStorage.<file-storage-plugin>.path"
+     */
+    String getStorePathTemplateForExecution(Execution execution){
+        ExecutionFileStoragePlugin plugin = getConfiguredPluginForExecution(execution, frameworkService.getFrameworkPropertyResolverFactory(execution.project))
+        return plugin?.getConfiguredPathTemplate()
+    }
+
+    /**
+     * Expands the pathTemplate using the execution context
+     * @param execution
+     * @param pathTemplate
+     * @return the expanded path using the execution context
+     */
+    String getRemotePathForExecutionFromPathTemplate(Execution execution, String pathTemplate){
+        Map<String, String> execCtx = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
+
+        return expandPath(pathTemplate, execCtx)
+    }
+
+    /**
+     * Expand a path given a context:
+     * Done by replacing keys between "${}" in the pathFormat using the corresponding values from the context.
+     * Eg: ${job.execId} will be replaced with content of context['job.execId']
+     *
+     * @param pathFormat eg: path/to/${job.execId}
+     * @param context from which variable values are extracted
+     * @return an expanded path
+     */
+    static String expandPath(String pathFormat, Map<String, String> context) {
+        String result = pathFormat.replaceAll("^/+", "");
+        if (null != context) {
+            result = DataContextUtils.replaceDataReferencesInString(
+                    result,
+                    DataContextUtils.addContext("job", context, new HashMap<>()),
+                    null,
+                    false,
+                    true
+            );
+        }
+        result = result.replaceAll("/+", "/");
+
+        return result;
     }
 
     /**
