@@ -104,8 +104,7 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
-            apiProjectAsyncImportStatus: ['GET'],
-            apiResumeAsyncImport: ['GET']
+            apiProjectAsyncImportStatus: ['GET']
     ]
 
     def index () {
@@ -3438,62 +3437,6 @@ Note: `other_errors` included since API v35""",
                                 lastUpdate        : statusFileContent.lastUpdate,
                                 lastUpdated       : statusFileContent.lastUpdated,
                                 errors            : statusFileContent.errors ? statusFileContent.errors : "No errors."
-                        ]
-                ) as JSON
-        )
-    }
-
-    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
-    def apiResumeAsyncImport(ProjectArchiveParams archiveParams){
-        def statusFileContent
-        def milestoneNumber = params.milestoneNumber ? params.milestoneNumber : null
-        AuthContext authContext = systemAuthContext
-        def project = authorizingProject.resource
-        def stream = request.getInputStream()
-        try{
-            if( !params.project ){
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.project.missing'
-                ])
-            }
-            def projectName = params.project as String
-            statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
-            if(!statusFileContent || null == statusFileContent){
-                throw new AsyncImportException("Status file empty or non-existent.")
-            }
-            if( milestoneNumber == null ){
-                if( !statusFileContent.milestoneNumber ){
-                    return apiService.renderErrorFormat(response,[
-                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                            code: 'api.error.async.import.milestone.missing'
-                    ])
-                }
-                milestoneNumber = statusFileContent.milestoneNumber
-            }
-            projectService.resumeAsyncImportMilestone(
-                    projectName,
-                    authContext,
-                    project,
-                    milestoneNumber,
-                    stream,
-                    archiveParams
-            )
-        }catch(Exception e){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.error.async.import.get.file.error.suffix',
-                    args: [e.message]
-            ])
-        }
-        render(
-                contentType: 'application/json', text:
-                (
-                        [
-                                message           : "Milestone resumed, request the status through endpoint.",
-                                currentMilestone  : statusFileContent.milestoneNumber,
-                                lastUpdate        : statusFileContent.lastUpdate,
-                                lastUpdated       : statusFileContent.lastUpdated,
                         ]
                 ) as JSON
         )

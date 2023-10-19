@@ -1866,56 +1866,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
     }
 
-    void resumeAsyncImportMilestone(
-            final String projectName,
-            final AuthContext authContext,
-            final IRundeckProject project,
-            final int milestoneNumber,
-            final InputStream inputStream = null,
-            final ProjectArchiveParams params = null
-    ){
-        def warningMessage = "Requesting to resume milestone no. ${milestoneNumber}"
-
-        if( !AsyncImportMilestone.validMilestoneNumber(milestoneNumber) ){
-            throw new AsyncImportException("Invalid milestone number: ${milestoneNumber}")
-        }
-
-        switch (milestoneNumber){
-            case 1:
-                if( inputStream == null ){
-                    throw new AsyncImportException("${warningMessage} w/o providing an input stream.")
-                }
-                if( params == null ){
-                    log.warn("${warningMessage} w/o import params.")
-                }
-                notify(
-                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1,
-                        projectName,
-                        authContext,
-                        project,
-                        inputStream,
-                        params
-                )
-                break
-            case 2:
-                notify(
-                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2,
-                        projectName,
-                        authContext,
-                        project
-                )
-                break
-            case 3:
-                notify(
-                        AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3,
-                        projectName,
-                        authContext,
-                        project
-                )
-                break
-        }
-    }
-
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
