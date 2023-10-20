@@ -15,7 +15,7 @@ class BasicLoginSpec extends BaseTest {
     }
 
     def "unsuccessful login with bad password"() {
-        pass = 'admin123' //Bad pass
+        pass = 'password' //Bad pass
         when:
         doLogin()
         def errorMessage = driver.findElement(By.cssSelector('.alert.alert-danger')).getText()

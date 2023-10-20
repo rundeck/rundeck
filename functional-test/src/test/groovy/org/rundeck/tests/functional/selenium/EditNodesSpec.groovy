@@ -8,13 +8,14 @@ import org.rundeck.util.setup.NavLinkTypes
 @SeleniumCoreTest
 class EditNodesSpec extends BaseTest {
 
-    def "create and delete key storage"() {
+    def "go to edit nodes"() {
         when:
         doLogin()
         createProject(toCamelCase(specificationContext.currentFeature.name), null)
         then:
         intoProjectGoTo(NavLinkTypes.EDIT_NODES)
-        driver.findElement(By.xpath("//button[contains(.,'Add a new Node Source ')]"))
+        driver.findElement(By.xpath("//button[contains(.,'Add a new Node Source')]"))
+        cleanup:
         deleteProject(true)
     }
 

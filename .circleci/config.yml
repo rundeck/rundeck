@@ -118,6 +118,8 @@ commands:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit
+      - store_artifacts:
+          path: ~/test-results/images
 
   install-packages:
     description: Install apt packages

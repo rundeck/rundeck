@@ -29,8 +29,11 @@ class ScreenShot implements MethodRule{
             }
             void captureScreenshot(String fileName) {
                 try {
-                    new File(System.getProperty("screen.shoot.folder")).mkdirs()
-                    new FileOutputStream("${System.getProperty('screen.shoot.folder')}/${driver.class.simpleName}-$fileName.png").withStream { out ->
+                    File testResourcesDir = new File(System.getProperty("user.home") + "/test-results/images")
+                    if (!testResourcesDir.exists()) {
+                        testResourcesDir.mkdirs()
+                    }
+                    new FileOutputStream(System.getProperty("user.home") + "/test-results/images" + "/${driver.class.simpleName}-$fileName.png").withStream { out ->
                         out.write(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES) as byte)
                     }
                 } catch (Exception ignored) {

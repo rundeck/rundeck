@@ -2,17 +2,12 @@ package org.rundeck.util.setup
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.junit.Rule
-import org.openqa.selenium.By
-import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.StaleElementReferenceException
-import org.openqa.selenium.WebDriver
+import org.openqa.selenium.*
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.rule.ScreenShot
 
 import java.time.Duration
 
@@ -26,9 +21,6 @@ class BaseTest extends BaseContainer {
     private static final int maxRetries = 5
     public static JavascriptExecutor js
 
-    @Rule
-    ScreenShot screenshotTestRule = new ScreenShot(driver)
-
     WebDriver driver = new ChromeDriver()
     def user = 'admin' //Default user
     def pass = 'admin123' //Default pass
@@ -39,6 +31,7 @@ class BaseTest extends BaseContainer {
     }
 
     def cleanup() {
+        takeScreenshot(toCamelCase(specificationContext.currentFeature.name))
         driver.quit()
     }
 
@@ -78,7 +71,7 @@ class BaseTest extends BaseContainer {
     }
 
     void intoProjectGoTo(NavLinkTypes navLink) {
-        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(15))
         (0..<maxRetries).any {
             try {
                 if (navLink.projectConfig) {
@@ -131,10 +124,11 @@ class BaseTest extends BaseContainer {
     }
 
     void addKeyStorage(StorageKeyType keyType, String keyValue, String storagePath, String name) {
-        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(15))
         outsideProjectGoTo(NavBarTypes.KEYSTORAGE)
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(.,'Add or Upload a Key')]")))
         driver.findElement(By.xpath("//button[contains(.,'Add or Upload a Key')]")).click()
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@class=\"modal-content\"]")))
+        waitForModal(1)
         def select = new Select(driver.findElement(By.name("uploadKeyType")))
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("uploadKeyType")))
         select.selectByValue(keyType.type)
@@ -223,5 +217,14 @@ class BaseTest extends BaseContainer {
         }
     }
 
+    void takeScreenshot(String fileName) {
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)
+        File testResourcesDir = new File(System.getProperty("user.home") + "/test-results/images")
+        if (!testResourcesDir.exists()) {
+            testResourcesDir.mkdirs()
+        }
+        File destination = new File(testResourcesDir, "${driver.class.simpleName}-$fileName" + ".png")
+        screenshot.renameTo(destination)
+    }
 
 }
