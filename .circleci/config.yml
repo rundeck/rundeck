@@ -163,9 +163,7 @@ commands:
       - run:
           name: Install package cloud
           command: |
-            rvm install 2.4.10
-            echo . $(rvm 2.4.10 do rvm env --path) >> $BASH_ENV
-            rvm use ruby-2.4.10
+            sudo apt install ruby-dev
             gem install package_cloud
 
   echo-package-cloud:
@@ -211,7 +209,7 @@ commands:
       - run:
           name: Publish packages
           command: |
-            rvm use ruby-2.4.10
+            sudo apt install ruby-dev
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh publish
   publish-war:
@@ -220,7 +218,7 @@ commands:
       - run:
           name: Publish war
           command: |
-            rvm use ruby-2.4.10
+            sudo apt install ruby-dev
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh publish_war
   setup-environment:
