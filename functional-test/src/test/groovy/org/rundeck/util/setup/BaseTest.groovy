@@ -2,7 +2,9 @@ package org.rundeck.util.setup
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.junit.Rule
 import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
@@ -10,6 +12,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.Select
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.rule.ScreenShot
 
 import java.time.Duration
 
@@ -20,9 +23,15 @@ import java.time.Duration
 @Slf4j
 class BaseTest extends BaseContainer {
 
+    private static final int maxRetries = 5
+    public static JavascriptExecutor js
+
+    @Rule
+    ScreenShot screenshotTestRule = new ScreenShot(driver)
+
     WebDriver driver = new ChromeDriver()
     def user = 'admin' //Default user
-    def pass = 'admin' //Default pass
+    def pass = 'admin123' //Default pass
 
     def setup() {
         def client = getClient()
@@ -39,6 +48,29 @@ class BaseTest extends BaseContainer {
         driver.findElement(By.id('btn-login')).click()
     }
 
+    void createProject(String projectName, Map<String, String> attributes) {
+        (0..<maxRetries).any {
+            try {
+                if (driver.findElements(By.linkText("Create New Project")).size() == 0)
+                    driver.findElement(By.linkText("New Project")).click()
+                else
+                    driver.findElement(By.linkText("Create New Project")).click()
+                return true
+            } catch (StaleElementReferenceException ignored) {
+            }
+        }
+        driver.findElement(By.id("newproject")).click()
+        driver.findElement(By.id("newproject")).sendKeys(projectName)
+
+        if (attributes != null && !attributes.isEmpty()) {
+            attributes.each { key, value ->
+                driver.findElement(By.id(key)).sendKeys(value)
+            }
+        }
+
+        driver.findElement(By.id("create")).click()
+    }
+
     void outsideProjectGoTo(NavBarTypes navBar) {
         driver.findElement(By.id('appAdmin')).click()
         driver.findElement(By.linkText(navBar.linkText)).click();
@@ -47,7 +79,7 @@ class BaseTest extends BaseContainer {
 
     void intoProjectGoTo(NavLinkTypes navLink) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
-        (0..<5).each {
+        (0..<maxRetries).any {
             try {
                 if (navLink.projectConfig) {
                     wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector('.nav-drawer')))
@@ -62,6 +94,7 @@ class BaseTest extends BaseContainer {
                 Thread.sleep(3000)
                 driver.findElement(By.id(navLink.id)).click()
                 wait.until(ExpectedConditions.urlContains(navLink.url))
+                return true
             } catch (StaleElementReferenceException ignored) {
             } catch (InterruptedException e) {
                 e.printStackTrace()
@@ -130,5 +163,65 @@ class BaseTest extends BaseContainer {
             )
         }
     }
+
+    void deleteProject(boolean skipActivityValidation) {
+        driver.findElement(By.id("nav-project-settings")).click()
+        new WebDriverWait(driver, Duration.ofSeconds(2)).until {
+            ExpectedConditions.visibilityOf(driver.findElement(By.cssSelector(".navbar__item-container.active")))
+        }
+
+        if (!skipActivityValidation) {
+            js.executeScript("location.href = '#nav-project-settings-edit-project';")
+            driver.findElement(By.id("nav-project-settings-edit-project")).click()
+            driver.findElement(By.linkText("Execution Mode")).click()
+
+            if (!driver.findElement(By.name("extraConfig.scheduledExecutionService.disableSchedule")).isSelected()) {
+                driver.findElement(By.name("extraConfig.scheduledExecutionService.disableSchedule")).click()
+            }
+
+            if (!driver.findElement(By.name("extraConfig.scheduledExecutionService.disableExecution")).isSelected()) {
+                driver.findElement(By.name("extraConfig.scheduledExecutionService.disableExecution")).click()
+            }
+
+            driver.findElement(By.id("save")).click()
+            driver.findElement(By.id("nav-activity-link")).click()
+            driver.findElement(By.id("auto-refresh")).click()
+
+            new WebDriverWait(driver, Duration.ofSeconds(10)).until {
+                ExpectedConditions.numberOfElementsToBe(By.cssSelector("progress-bar.progress-bar-striped.active.progress-bar-info"), 0)
+            }
+
+            js.executeScript("location.href = '#nav-project-settings';")
+            driver.findElement(By.id("nav-project-settings")).click()
+
+            new WebDriverWait(driver, Duration.ofSeconds(2)).until {
+                ExpectedConditions.visibilityOf(driver.findElement(By.cssSelector(".navbar__item-container.active")))
+            }
+        }
+
+        driver.findElement(By.id("nav-project-settings-delete-project")).click()
+        driver.findElement(By.partialLinkText("Delete this Project")).click()
+
+        // wait for deleteProjectModal css to be block
+        new WebDriverWait(driver, Duration.ofSeconds(2)).until {
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='deleteProjectModal'][contains(@style, 'display: block')]"))
+        }
+
+        driver.findElement(By.xpath("//button[text()='Delete Project Now']")).click()
+        waitForModal(0)
+        driver.getCurrentUrl().contains("/menu/home")
+    }
+
+    String toCamelCase(String str) {
+        def result = str.split(" ").collect { it.capitalize() }.join("")
+        return result[0].toLowerCase() + result[1..-1]
+    }
+
+    void waitForModal(int expected) {
+        new WebDriverWait(driver, Duration.ofSeconds(15)).until {
+            ExpectedConditions.numberOfElementsToBe(By.cssSelector(".modal.fade.in"), expected)
+        }
+    }
+
 
 }
