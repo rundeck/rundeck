@@ -1,9 +1,9 @@
 package rundeck.services.asyncimport
 
 enum AsyncImportMilestone {
-    M1_CREATED ("Milestone 1: Transaction creation.", 1),
-    M2_DISTRIBUTION ("Milestone 2: Files distribution.", 2),
-    M3_IMPORTING ("Milestone 3: Importing files to project.", 3),
+    M1_CREATED ("Milestone 1: Transaction Requirements.", 1),
+    M2_DISTRIBUTION ("Milestone 2: Files Distribution.", 2),
+    M3_IMPORTING ("Milestone 3: Files Import.", 3),
     ASYNC_IMPORT_COMPLETED ("Process completed.", 4);
 
     String name
