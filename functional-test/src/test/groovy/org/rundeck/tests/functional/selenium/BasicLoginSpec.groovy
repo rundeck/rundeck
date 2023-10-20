@@ -14,32 +14,32 @@ class BasicLoginSpec extends SeleniumBase {
     def "successful login"() {
 
         when:
-            get(client.baseUrl)
             def page = page LoginPage
             page.login(TEST_USER, TEST_PASS)
 
         then:
             currentUrl.contains("/menu/home")
+            pageSource =~ ~/\d+ Projects?/
     }
 
     def "login failed wrong pass"() {
 
         when:
-            get(client.baseUrl)
             def page = page LoginPage
             page.login(TEST_USER, TEST_PASS + ":nope,wrong-password")
         then:
             currentUrl.contains("/user/error")
+            page.error.text == "Invalid username and password."
     }
 
     def "login failed empty pass"() {
 
         when:
-            get(client.baseUrl)
             def page = page LoginPage
             page.login(TEST_USER, "")
         then:
             currentUrl.contains("/user/error")
+            page.error.text == "Invalid username and password."
     }
 
 }

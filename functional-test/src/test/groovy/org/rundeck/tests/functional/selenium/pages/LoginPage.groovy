@@ -12,6 +12,7 @@ class LoginPage extends BasePage {
     By loginFieldBy = By.id("login")
     By passwordFieldBy = By.id("password")
     By loginBtnBy = By.id("btn-login")
+    By errorBy = By.cssSelector(".alert.alert-danger > span")
 
     static final String PAGE_PATH = "/user/login"
 
@@ -35,6 +36,10 @@ class LoginPage extends BasePage {
 
     WebElement getLoginBtn() {
         el loginBtnBy
+    }
+
+    WebElement getError() {
+        el errorBy
     }
 
     void login(String username, String password) {
