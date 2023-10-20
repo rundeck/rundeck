@@ -1,27 +1,45 @@
 package org.rundeck.tests.functional.selenium
 
-import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.chrome.ChromeDriver
+
+import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.container.SeleniumBase
 
 @SeleniumCoreTest
-class BasicLoginSpec extends BaseContainer {
+class BasicLoginSpec extends SeleniumBase {
+    //override env var if necessary to run with different credentials
+    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
+    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
 
     def "successful login"() {
-        given:
-        def client = getClient()
-        WebDriver driver = new ChromeDriver()
-        driver.get(client.baseUrl)
+
         when:
-        driver.findElement(By.id("login")).sendKeys("admin")
-        driver.findElement(By.id("password")).sendKeys("admin123")
-        driver.findElement(By.id("btn-login")).click()
+            get(client.baseUrl)
+            def page = page LoginPage
+            page.login(TEST_USER, TEST_PASS)
+
         then:
-        driver.currentUrl.contains("/menu/home")
-        cleanup:
-        driver.quit()
+            currentUrl.contains("/menu/home")
+    }
+
+    def "login failed wrong pass"() {
+
+        when:
+            get(client.baseUrl)
+            def page = page LoginPage
+            page.login(TEST_USER, TEST_PASS + ":nope,wrong-password")
+        then:
+            currentUrl.contains("/user/error")
+    }
+
+    def "login failed empty pass"() {
+
+        when:
+            get(client.baseUrl)
+            def page = page LoginPage
+            page.login(TEST_USER, "")
+        then:
+            currentUrl.contains("/user/error")
     }
 
 }

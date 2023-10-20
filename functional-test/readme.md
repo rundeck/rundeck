@@ -29,6 +29,8 @@ You can run the tests against an external Rundeck instance by setting these env 
 * `TEST_RUNDECK_URL`: The URL of the Rundeck instance
     * This should be the base URL of the server, but not include the `/api` path
 * `TEST_RUNDECK_TOKEN`: The API token to use for authentication
+* `RUNDECK_TEST_USER`: The username to use for authentication (default: `admin`)
+* `RUNDECK_TEST_PASS`: The password to use for authentication (default: `admin123`)
 
 ## Adding a new test task
 
