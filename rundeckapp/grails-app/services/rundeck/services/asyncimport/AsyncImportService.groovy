@@ -366,7 +366,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * 1) Creates the distributed executions dir in working directory for project
      * 2) Extracts the project copy in temp for a given project and list each execution of the project, then moves the executions
      * and its corresponding files to a bundle, which will have a maximum of 1000 executions per bundle or by the number passed to the prop
-     * "rundeck.asyncImportConfig.maxDistributedFiles". If the max is reached a next bundle will be created
+     * "rundeck.asyncImportConfig.maxDistributedExecutions". If the max is reached a next bundle will be created
      * 2) Removes the copy of the uploaded project in /tmp path
      * 3) Calls for the Milestone 3.
      *
