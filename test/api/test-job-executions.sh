@@ -5,11 +5,6 @@
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-## Create project
-project="TestJobExecutionsProject"
-
-create_project $project
-
 ###
 # setup: create a new job and acquire the ID
 ###
@@ -17,6 +12,7 @@ create_project $project
 # job exec
 args="echo testing /job/ID/executions result"
 
+project="test"
 
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
@@ -293,6 +289,7 @@ echo "OK"
 # job exec
 args="/bin/false this should fail"
 
+project="test"
 
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
@@ -399,6 +396,7 @@ echo "OK"
 args="echo this job will be killed..."
 args2="sleep 240"
 
+project="test"
 
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
