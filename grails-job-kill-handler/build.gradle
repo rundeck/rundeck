@@ -1,0 +1,94 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+    }
+}
+
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.grails.grails-gsp"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+configurations{
+    //define libs needed to be bundled into the WEB-INF/lib dir of the war
+    exportedLibs
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
+    }
+}
+
+apply from: "../gradle/java-version.gradle"
+
+dependencies {
+    implementation project(":core")
+
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:cache"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    implementation "org.grails.plugins:hibernate5"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    console "org.grails:grails-console"
+    profile "org.grails.profiles:web-plugin"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
+}
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+        '-Dspring.output.ansi.enabled=always',
+        '-noverify',
+        '-XX:TieredStopAtLevel=1',
+        '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+
+bootJar.enabled = false
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+
+jar {
+    enabled = true
+    archiveClassifier = '' //use empty string
+}
