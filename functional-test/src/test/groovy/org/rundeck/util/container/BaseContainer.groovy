@@ -23,15 +23,17 @@ abstract class BaseContainer extends Specification implements ClientProvider {
 
     ClientProvider getClientProvider() {
         if (System.getenv("TEST_RUNDECK_URL") != null) {
-            return new ClientProvider() {
-                @Override
-                RdClient getClient() {
-                    return RdClient.create(System.getenv("TEST_RUNDECK_URL"), System.getenv("TEST_RUNDECK_TOKEN"))
-                }
+            if (CLIENT_PROVIDER == null) {
+                CLIENT_PROVIDER = new ClientProvider() {
+                    @Override
+                    RdClient getClient() {
+                        return RdClient.create(System.getenv("TEST_RUNDECK_URL"), System.getenv("TEST_RUNDECK_TOKEN"))
+                    }
 
-                @Override
-                RdClient clientWithToken(String token) {
-                    return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
+                    @Override
+                    RdClient clientWithToken(String token) {
+                        return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
+                    }
                 }
             }
         } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null){
@@ -75,14 +77,26 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    RdClient _client
     @Override
     RdClient getClient() {
+        if (null == _client) {
+            _client = createClient()
+        }
+        return _client
+    }
+
+    RdClient createClient() {
         return clientProvider.getClient()
     }
+    Map<String, RdClient> tokenProviders = [:]
 
     @Override
     RdClient clientWithToken(final String token) {
-        return clientProvider.clientWithToken(token)
+        if (!tokenProviders.containsKey(token)) {
+            tokenProviders[token] = clientProvider.clientWithToken(token)
+        }
+        return tokenProviders[token]
     }
 
     void startEnvironment() {

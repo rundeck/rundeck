@@ -987,6 +987,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.filter = execution.filter
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.outputfilepath = execution.outputfilepath
+        jobcontext.execIdForLogStore = execution.getExecIdForLogStore().toString()
+        jobcontext.isRemoteFilePath = execution.isRemoteOutputfilepath().toString()
         jobcontext.executionUuid = execution.uuid
         jobcontext.execDateCompleted = execution.dateCompleted
         jobcontext.executionType = execution.executionType
@@ -1076,6 +1079,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
+        boolean logsInstalled=false
         try{
             def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
@@ -1225,7 +1229,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             logOutFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
-            );
+            )
             sysThreadBoundErr.installThreadStream(
                     loggingService.createLogOutputStream(
                             workflowoverride,
@@ -1234,7 +1238,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             logErrFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
-            );
+            )
+            logsInstalled=true
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
 
@@ -1266,10 +1271,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             metricService.markMeter(this.class.name,'executionJobStartFailedMeter')
-            sysThreadBoundOut.close()
-            sysThreadBoundOut.removeThreadStream()
-            sysThreadBoundErr.close()
-            sysThreadBoundErr.removeThreadStream()
+            if(logsInstalled) {
+                sysThreadBoundOut.removeThreadStream()?.close()
+                sysThreadBoundErr.removeThreadStream()?.close()
+            }
             loghandler.close()
             return null
         }

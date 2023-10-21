@@ -178,7 +178,7 @@ class UserService {
             }
         }
 
-        return roles
+        return roles.findAll { it != null }
     }
 
     def getLoginStatus(RdUser user){

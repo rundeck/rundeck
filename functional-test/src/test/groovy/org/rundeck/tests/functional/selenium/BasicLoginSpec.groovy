@@ -1,27 +1,44 @@
 package org.rundeck.tests.functional.selenium
 
-import org.openqa.selenium.By
+import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.setup.BaseTest
+import org.rundeck.util.container.SeleniumBase
 
 @SeleniumCoreTest
-class BasicLoginSpec extends BaseTest {
+class BasicLoginSpec extends SeleniumBase {
+    //override env var if necessary to run with different credentials
+    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
+    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
 
     def "successful login"() {
+
         when:
-        doLogin()
+            def page = page LoginPage
+            page.login(TEST_USER, TEST_PASS)
+
         then:
-        driver.currentUrl.contains("/menu/home")
+            currentUrl.contains("/menu/home")
+            pageSource =~ ~/\d+ Projects?/
     }
 
-    def "unsuccessful login with bad password"() {
-        pass = 'password' //Bad pass
+    def "login failed wrong pass"() {
+
         when:
-        doLogin()
-        def errorMessage = driver.findElement(By.cssSelector('.alert.alert-danger')).getText()
+            def page = page LoginPage
+            page.login(TEST_USER, TEST_PASS + ":nope,wrong-password")
         then:
-        driver.currentUrl.contains("/user/error")
-        errorMessage == 'Invalid username and password.'
+            currentUrl.contains("/user/error")
+            page.error.text == "Invalid username and password."
+    }
+
+    def "login failed empty pass"() {
+
+        when:
+            def page = page LoginPage
+            page.login(TEST_USER, "")
+        then:
+            currentUrl.contains("/user/error")
+            page.error.text == "Invalid username and password."
     }
 
 }

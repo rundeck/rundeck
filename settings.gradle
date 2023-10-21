@@ -55,7 +55,8 @@ include	'rundeck-storage',
     'grails-execution-mode-timer',
     'grails-rundeck-data-shared',
     'docker',
-    'functional-test'
+    'functional-test',
+    'grails-job-kill-handler'
 
 def projectFeatureEnabled = { String feature, Boolean defaultVal ->
     try {
