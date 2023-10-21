@@ -1,5 +1,6 @@
 plugins {
     id 'groovy'
+    id "com.adarshr.test-logger" version "4.0.0"
 }
 
 apply from: "../gradle/java-version.gradle"
