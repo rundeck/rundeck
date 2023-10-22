@@ -489,7 +489,7 @@ jobs:
           command: ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
           environment:
             TEST_IMAGE: << parameters.test-image >>
-            WAR_FILE_LOCATION: $WAR_FILE
+            WAR_FILE_LOCATION: ${WAR_FILE}
       - collect-gradle-tests
 
   test-docker:
