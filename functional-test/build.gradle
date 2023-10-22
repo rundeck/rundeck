@@ -49,8 +49,10 @@ def checkWarFile(destination, fileName) {
     def warFile
     if(System.getenv("WAR_FILE_LOCATION")){
         warFile = file(System.getenv("WAR_FILE_LOCATION"))
+        println "From system env File to copy from ${warFile} to ${destination + fileName}"
     }else{
         warFile = file(rundeckapp.war.archiveFile.get().toString().replace("-plain", ""))
+        println "From rundeck build File to copy from ${warFile} to ${destination + fileName}"
     }
     if (!warFile.exists()) {
         throw new GradleException("War file does not exist")
