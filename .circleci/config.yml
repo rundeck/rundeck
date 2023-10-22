@@ -472,20 +472,18 @@ jobs:
       - attach_workspace:
           at: artifacts
       - run:
-          name: Fetch Artifacts
+          name: Pull docker image if needed
           command: |
             source .circleci/circle-shim.sh
             if [ ! -z "<< parameters.pull-image >>" ]; then
               pull_rundeck
             fi
       - run:
+          name: Runs gradle test task << parameters.gradle-task >>
           command: |
+            # Not a very pretty way to setup the rundeck war file location if needed
             if [ -z "<< parameters.pull-image >>" ]; then
-              TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
               WAR=$(find artifacts -name '*.war')
-              echo "######## for testing"
-              echo ${PWD}
-              echo $WAR
               export WAR_FILE_LOCATION=${PWD}/$WAR
             fi
             ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
