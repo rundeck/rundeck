@@ -459,8 +459,8 @@ jobs:
         description: Test image tag
         default: "rundeck/rundeck"
         type: string
-      copy-war:
-        description: Copy rundeck war file to build image
+      pull-image:
+        description: Indicates whether the docker imager should be pulled
         default: ""
         type: string
       gradle-task:
@@ -475,17 +475,15 @@ jobs:
           name: Fetch Artifacts
           command: |
             source .circleci/circle-shim.sh
-            if [ -z "<< parameters.copy-war >>" ]; then
+            if [ ! -z "<< parameters.pull-image >>" ]; then
               pull_rundeck
             fi
       - run:
           command: |
-            if [ ! -z "<< parameters.copy-war >>" ]; then
-              # copy war file to docker build destination
-              TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
-              WAR=$(find artifacts -name '*.war')
-              cp $WAR $TOMCAT_DIR/data/rundeck-launcher.war
-            fi
+            # copy war file to docker build destination
+            TOMCAT_DIR='functional-test/src/test/resources/docker/file/tomcat'
+            WAR=$(find artifacts -name '*.war')
+            echo $WAR
       - run:
           command: ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
           environment:
@@ -912,6 +910,7 @@ workflows:
           name: New Selenium Test
           requires: *stage-build
           gradle-task: seleniumCoreTest
+          pull-image: "true"
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -920,6 +919,7 @@ workflows:
           name: New API Test
           requires: *stage-build
           gradle-task: apiTest
+          pull-image: "true"
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -928,7 +928,6 @@ workflows:
           name: New API Test Tomcat 8
           requires: *stage-build
           test-image: 8-jdk11
-          copy-war: "true"
           gradle-task: tomcatTest
           context:
             - slack-secrets
@@ -938,7 +937,6 @@ workflows:
           name: New API Test Tomcat 9
           requires: *stage-build
           test-image: 9-jdk11
-          copy-war: "true"
           gradle-task: tomcatTest
           context:
             - slack-secrets
@@ -1075,6 +1073,7 @@ workflows:
           name: New Selenium Test
           requires: *stage-build
           gradle-task: seleniumCoreTest
+          pull-image: "true"
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -1083,6 +1082,7 @@ workflows:
           name: New API Test
           requires: *stage-build
           gradle-task: apiTest
+          pull-image: "true"
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -1091,7 +1091,6 @@ workflows:
           name: New API Test Tomcat 8
           requires: *stage-build
           test-image: 8-jdk11
-          copy-war: "true"
           gradle-task: tomcatTest
           context:
             - slack-secrets
@@ -1101,7 +1100,6 @@ workflows:
           name: New API Test Tomcat 9
           requires: *stage-build
           test-image: 9-jdk11
-          copy-war: "true"
           gradle-task: tomcatTest
           context:
             - slack-secrets

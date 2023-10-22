@@ -53,7 +53,7 @@ def checkWarFile(destination, fileName) {
         warFile = file(rundeckapp.war.archiveFile.get().toString().replace("-plain", ""))
     }
     if (!warFile.exists()) {
-        throw new StopExecutionException("War file does not exist")
+        throw new GradleException("War file does not exist")
     }
     copyFile(warFile, destination, fileName)
     println "File copied from ${warFile} to ${destination + fileName}"
