@@ -1850,20 +1850,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
-    void beginAsyncImportMilestone2(
+    void beginAsyncImportMilestone(
             final String projectName,
             final AuthContext authContext,
-            final IRundeckProject project
+            final IRundeckProject project,
+            final int milestoneNumber
     ){
-        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
-    }
-
-    void beginAsyncImportMilestone3(
-            final String projectName,
-            final AuthContext authContext,
-            final IRundeckProject project
-    ){
-        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+        switch (milestoneNumber){
+            case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+                break
+            case AsyncImportMilestone.M3_IMPORTING.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+                break
+            default:
+                throw new AsyncImportException("Invalid milestone number: ${milestoneNumber} please, provide a valid async import milestone number.")
+        }
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

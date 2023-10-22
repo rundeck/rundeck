@@ -349,10 +349,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return it
         })
 
-        projectService.beginAsyncImportMilestone2(
+        projectService.beginAsyncImportMilestone(
                 projectName,
                 authContext,
-                project
+                project,
+                AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
         )
 
         return importResult
@@ -517,10 +518,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 return it
             })
 
-            projectService.beginAsyncImportMilestone3(
+            projectService.beginAsyncImportMilestone(
                     projectName,
                     authContext,
-                    project
+                    project,
+                    AsyncImportMilestone.M3_IMPORTING.milestoneNumber
             )
 
         }
