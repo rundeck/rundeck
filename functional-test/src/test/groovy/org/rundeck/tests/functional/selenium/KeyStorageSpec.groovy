@@ -1,27 +1,31 @@
 package org.rundeck.tests.functional.selenium
 
+import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.setup.BaseTest
+import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.setup.BaseSpec
 import org.rundeck.util.setup.StorageKeyType
 
 @SeleniumCoreTest
-class KeyStorageSpec extends BaseTest {
+class KeyStorageSpec extends BaseSpec {
 
     def "create and delete key storage"() {
         when:
-        doLogin()
+            doLogin()
         then:
-        addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
-        deleteKeyStorage('git', 'git.pass')
+            addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
+        cleanup:
+            deleteKeyStorage('git', 'git.pass')
     }
 
     def "overwrite and delete key storage"() {
         when:
-        doLogin()
+            doLogin()
         then:
-        addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
-        overwriteKeyStorage('new-root', 'git', 'git.pass')
-        deleteKeyStorage('git', 'git.pass')
+            addKeyStorage(StorageKeyType.PASSWORD, 'root', 'git', 'git.pass')
+            overwriteKeyStorage('new-root', 'git', 'git.pass')
+        cleanup:
+            deleteKeyStorage('git', 'git.pass')
     }
 
 }

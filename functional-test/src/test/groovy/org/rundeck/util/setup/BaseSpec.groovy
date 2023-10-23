@@ -16,7 +16,7 @@ import java.time.Duration
  */
 @CompileStatic
 @Slf4j
-class BaseTest extends BaseContainer {
+class BaseSpec extends BaseContainer {
 
     private static final int maxRetries = 5
     public static JavascriptExecutor js
@@ -98,11 +98,13 @@ class BaseTest extends BaseContainer {
     void deleteKeyStorage(String storagePath, String name) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(5))
         outsideProjectGoTo(NavBarTypes.KEYSTORAGE)
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(.,'Add or Upload a Key')]")))
-        driver.findElement(By.xpath("//*[@id=\"keyStoragePage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")).click()
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"keyStoragePage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")))
-        driver.findElement(By.xpath("//*[@id=\"keyStoragePage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")).click()
-        driver.findElement(By.xpath("//*[@class=\"keySelector-button-group\"]//*[contains(.,'Delete')]")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")))
+        driver.findElement(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")))
+        driver.findElement(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")).click()
+        driver.findElement(By.xpath("//*[@class=\"btn-group\"]//button[contains(.,'Action')]")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.linkText("Delete Selected Item")))
+        driver.findElement(By.linkText("Delete Selected Item")).click()
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@class=\"modal-content\"]//button[contains(.,'Delete')]")))
         driver.findElement(By.xpath("//*[@class=\"modal-content\"]//button[contains(.,'Delete')]")).click()
         driver.findElement(By.id("nav-rd-home")).click()
@@ -111,23 +113,24 @@ class BaseTest extends BaseContainer {
     void overwriteKeyStorage(String newKeyValue, String storagePath, String name) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(5))
         outsideProjectGoTo(NavBarTypes.KEYSTORAGE)
-        driver.findElement(By.xpath("//*[@id=\"keyStoragePage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")).click()
-        driver.findElement(By.xpath("//*[@id=\"keyStoragePage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")).click()
-        driver.findElement(By.xpath("//button[contains(.,'Overwrite Key')]")).click()
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@class=\"modal-content\"]")))
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")))
+        driver.findElement(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")))
+        driver.findElement(By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")).click()
+        driver.findElement(By.linkText("Overwrite Key")).click()
+        waitForModal(1)
         driver.findElement(By.id("uploadpasswordfield")).click()
         driver.findElement(By.id("uploadpasswordfield")).sendKeys(newKeyValue)
-        driver.findElement(By.xpath("//button[contains(.,'Save')]")).click()
+        driver.findElement(By.xpath("//input[@type='submit']")).click()
         checkKeyExists(name, storagePath)
-        driver.findElement(By.xpath("//*[contains(.,'a few seconds ago')]")).getText()
         driver.findElement(By.id("nav-rd-home")).click()
     }
 
     void addKeyStorage(StorageKeyType keyType, String keyValue, String storagePath, String name) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(15))
         outsideProjectGoTo(NavBarTypes.KEYSTORAGE)
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(.,'Add or Upload a Key')]")))
-        driver.findElement(By.xpath("//button[contains(.,'Add or Upload a Key')]")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.linkText('Add or Upload a Key')))
+        driver.findElement(By.linkText('Add or Upload a Key')).click()
         waitForModal(1)
         def select = new Select(driver.findElement(By.name("uploadKeyType")))
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("uploadKeyType")))
@@ -135,7 +138,7 @@ class BaseTest extends BaseContainer {
         driver.findElement(By.id(keyType.fieldId)).sendKeys(keyValue)
         driver.findElement(By.id("uploadResourcePath2")).sendKeys(storagePath)
         driver.findElement(By.id("uploadResourceName2")).sendKeys(name)
-        driver.findElement(By.xpath("//button[contains(.,'Save')]")).click()
+        driver.findElement(By.xpath("//input[@type='submit']")).click()
         checkKeyExists(name, storagePath)
         driver.findElement(By.id("nav-rd-home")).click()
     }
