@@ -104,12 +104,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @return AsyncImportStatusDTO - DTO with all the status file content.
      */
     @Override
-    AsyncImportStatusDTO getAsyncImportStatusForProject(String projectName) {
+    AsyncImportStatusDTO getAsyncImportStatusForProject(String projectName, ByteArrayOutputStream out = null) {
         try{
+            if( out == null ){
+                out = new ByteArrayOutputStream()
+            }
             final def fwkProject = frameworkService.getFrameworkProject(projectName)
-            ByteArrayOutputStream output = new ByteArrayOutputStream()
-            fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, output)
-            def obj = new JsonSlurper().parseText(output.toString()) as AsyncImportStatusDTO
+            fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, out)
+            def obj = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
             log.debug("Object extracted: ${obj.toString()}")
             return obj
         }catch(Exception e){
@@ -171,8 +173,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param newStatus
      * @return Long (bytes written)
      */
-    def asyncImportStatusFileUpdater( AsyncImportStatusDTO newStatus ){
-        def oldStatus = getAsyncImportStatusForProject(newStatus.projectName)
+    def asyncImportStatusFileUpdater( AsyncImportStatusDTO newStatus, ByteArrayOutputStream out = null ){
+        if( out == null ){
+            out = new ByteArrayOutputStream()
+        }
+        def oldStatus = getAsyncImportStatusForProject(newStatus.projectName, out)
         if( oldStatus == null ) throw new AsyncImportException("No status file for project: ${newStatus.projectName}")
         if( oldStatus.errors != null ){
             def oldStatusErrors = oldStatus.errors

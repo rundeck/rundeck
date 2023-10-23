@@ -3262,16 +3262,13 @@ Note: `other_errors` included since API v35""",
                 render(contentType: 'application/json') {
                     import_status result.success ? 'successful' : 'failed'
                     successful result.success
-
                     if (!result.success) {
                         //list errors
                         errors result.joberrors
                     }
-
                     if (result.execerrors) {
                         execution_errors result.execerrors
                     }
-
                     if (result.aclerrors) {
                         acl_errors result.aclerrors
                     }

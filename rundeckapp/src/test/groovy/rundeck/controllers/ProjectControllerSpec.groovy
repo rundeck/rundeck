@@ -50,6 +50,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportService
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -2462,6 +2463,34 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
                 req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
             }) >> [success:true]
+    }
+
+    def "import via api with async import flag true"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+            aparams.asyncImport = true
+        request.method = 'PUT'
+        request.api_version = 34
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService)
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
     }
 
     def "api import component options"() {
