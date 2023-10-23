@@ -5,16 +5,18 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.setup.BaseSpec
 import org.rundeck.util.setup.NavLinkTypes
 
-@SeleniumCoreTest
-class EditNodesSpec extends BaseSpec {
+//@SeleniumCoreTest
+class JobsSpec extends BaseSpec {
 
-    def "go to edit nodes"() {
+    def "edit job and set groups"() {
         when:
             doLogin()
             createProject(toCamelCase(specificationContext.currentFeature.name), null)
+            intoProjectGoTo(NavLinkTypes.JOBS)
         then:
-            intoProjectGoTo(NavLinkTypes.EDIT_NODES)
-            driver.findElement(By.xpath("//button[contains(.,'Add a new Node Source')]"))
+            createSimpleJob('simpleJob', 'echo ${job.id}')
+            driver.findElement(By.linkText("Action"))
+            driver.findElement(By.linkText("Edit this Job"))
         cleanup:
             deleteProject(true)
     }

@@ -121,6 +121,7 @@ class BaseSpec extends BaseContainer {
         waitForModal(1)
         driver.findElement(By.id("uploadpasswordfield")).click()
         driver.findElement(By.id("uploadpasswordfield")).sendKeys(newKeyValue)
+        driver.findElement(By.id("uploadpasswordfield")).sendKeys(Keys.TAB)
         driver.findElement(By.xpath("//input[@type='submit']")).click()
         checkKeyExists(name, storagePath)
         driver.findElement(By.id("nav-rd-home")).click()
@@ -207,6 +208,40 @@ class BaseSpec extends BaseContainer {
         driver.findElement(By.xpath("//button[text()='Delete Project Now']")).click()
         waitForModal(0)
         driver.getCurrentUrl().contains("/menu/home")
+    }
+
+    void createSimpleJob(String jobName, String customCommand) {
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.linkText("Create a new Job")))
+        driver.findElement(By.linkText("Create a new Job")).click()
+        wait.until(ExpectedConditions.urlContains("job/create"))
+        driver.findElement(By.id("schedJobName")).click()
+        driver.findElement(By.id("schedJobName")).sendKeys(jobName)
+        driver.findElement(By.linkText("Workflow")).click()
+        wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.cssSelector(".add_step_buttons.panel-body"))))
+        js.executeScript("location.href = \"#addnodestep\";")
+        selectStep("command", StepType.NODE)
+        wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("adhocRemoteStringField"))))
+        Thread.sleep(3000)
+        if (customCommand != null && !customCommand.isEmpty())
+            driver.findElement(By.id("adhocRemoteStringField")).sendKeys(customCommand)
+        else
+            driver.findElement(By.id("adhocRemoteStringField")).sendKeys("echo \"This is a Sample Job\"")
+        saveStep(0)
+        driver.findElement(By.id("Create")).click()
+    }
+
+    void selectStep(String dataNodeStepType, StepType stepType) {
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        js.executeScript("location.href = \"#addnodestep\";")
+        driver.findElement(By.xpath("//*[@" + stepType.getStepType() + "='" + dataNodeStepType + "']")).click()
+        wait.until(ExpectedConditions.numberOfElementsToBe(By.className("floatr"), 1))
+    }
+
+    void saveStep(Integer stepNumber){
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
+        driver.findElement(By.className("floatr")).findElement(By.cssSelector(".btn.btn-cta.btn-sm")).click();
+        wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("wfitem_"+stepNumber))));
     }
 
     String toCamelCase(String str) {
