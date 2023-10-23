@@ -1,12 +1,6 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.common.FilesystemFramework
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkFactory
-import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.storage.StorageManager
-import grails.converters.JSON
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.json.JsonSlurper
