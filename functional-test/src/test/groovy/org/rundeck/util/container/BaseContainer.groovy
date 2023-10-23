@@ -135,4 +135,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     <T> T post(String path, Object body = null, Class<T> clazz) {
         return client.post(path, body, clazz)
     }
+
+    def setupSpec() {
+        startEnvironment()
+    }
 }

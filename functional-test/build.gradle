@@ -14,6 +14,8 @@ testlogger {
     slowThreshold 10000
 }
 
+project.evaluationDependsOn(":rundeckapp")
+
 dependencies {
     testImplementation "org.spockframework:spock-core:${spockCoreVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
@@ -33,9 +35,35 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
+def copyFile(source, destination, newFileName){
+    copy {
+        from source
+        into destination
+        rename "$source.name", newFileName
+    }
+}
+
+def checkWarFile(destination, fileName) {
+    def rundeckapp = project(":rundeckapp")
+    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
+    def warFile
+    if(System.getenv("WAR_FILE_LOCATION")){
+        warFile = file(System.getenv("WAR_FILE_LOCATION"))
+        println "From system env File to copy from ${warFile} to ${destination + fileName}"
+    }else{
+        warFile = file(rundeckapp.war.archiveFile.get().toString().replace("-plain", ""))
+        println "From rundeck build File to copy from ${warFile} to ${destination + fileName}"
+    }
+    if (!warFile.exists()) {
+        throw new GradleException("War file does not exist")
+    }
+    copyFile(warFile, destination, fileName)
+    println "File copied from ${warFile} to ${destination + fileName}"
+}
+
 task apiTest(type: Test){
     useJUnitPlatform()
-    systemProperty('TEST_IMAGE', "rundeck/rundeck")
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run API tests"
@@ -43,7 +71,7 @@ task apiTest(type: Test){
 
 task seleniumCoreTest(type: Test){
     useJUnitPlatform()
-    systemProperty('TEST_IMAGE', "rundeck/rundeck")
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests"
@@ -54,4 +82,7 @@ task tomcatTest(type: Test){
     systemProperty("DEFAULT_DOCKERFILE_LOCATION", "docker/file/tomcat/Dockerfile")
     systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run Rundeck OSS API Tests on a tomcat environment"
+    doFirst{
+        checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data", "rundeck-launcher.war")
+    }
 }
