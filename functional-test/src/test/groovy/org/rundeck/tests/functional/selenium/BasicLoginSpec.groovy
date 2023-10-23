@@ -18,7 +18,7 @@ class BasicLoginSpec extends SeleniumBase {
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
-            currentUrl.contains("/menu/home")
+            currentUrl.contains(ProjectListPage.PAGE_PATH)
     }
 
     def "login failed wrong pass"() {
