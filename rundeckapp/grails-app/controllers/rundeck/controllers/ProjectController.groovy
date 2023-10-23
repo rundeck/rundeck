@@ -3259,47 +3259,29 @@ Note: `other_errors` included since API v35""",
                 )
 
                 // api response (async import)
-                if( result.success ){
-                    render(status: 201,contentType: 'application/json'){
-                        [
-                                message: "Async import process started, please check the status endpoint.",
-                        ]
-                    }
-                }else{
-
-                    def errors
-                    def execution_errors
-                    def acl_errors
-                    def scm_errors
-                    def other_errors
+                render(contentType: 'application/json') {
+                    import_status result.success ? 'successful' : 'failed'
+                    successful result.success
 
                     if (!result.success) {
-                        errors = result.joberrors
+                        //list errors
+                        errors result.joberrors
                     }
+
                     if (result.execerrors) {
-                        execution_errors = result.execerrors
+                        execution_errors result.execerrors
                     }
+
                     if (result.aclerrors) {
-                        acl_errors = result.aclerrors
+                        acl_errors result.aclerrors
                     }
                     if (result.scmerrors) {
-                        scm_errors = result.scmerrors
+                        scm_errors result.scmerrors
                     }
                     if (request.api_version > ApiVersions.V34) {
                         if (result.importerErrors) {
-                            other_errors = result.importerErrors
+                            other_errors result.importerErrors
                         }
-                    }
-
-                    render(status: 500,contentType: 'application/json'){
-                        [
-                                message: "There was some errors in async import process start.",
-                                errors: errors,
-                                execution_errors: execution_errors,
-                                acl_errors: acl_errors,
-                                scm_errors: scm_errors,
-                                other_errors: other_errors
-                        ]
                     }
                 }
 
