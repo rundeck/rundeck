@@ -18,22 +18,20 @@ abstract class BasePage {
      * @param context
      */
     BasePage(final SeleniumContext context) {
-        this(context, null)
-    }
-    /**
-     * Create a new page, will load the loadPath if present and validate with {@link #validatePage()}
-     * @param context
-     */
-    BasePage(final SeleniumContext context, String loadPath) {
         this.context = context
-        if (loadPath) {
+    }
+    abstract String getLoadPath()
+    /**
+     * Go to the page and validate
+     */
+    void go(){
+        if(loadPath){
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
     }
-
     /**
-     * Validate the page is loaded correctly, e.g. thrown an exception if not valid.
+     * Validate the page is loaded
      */
     void validatePage() {
 

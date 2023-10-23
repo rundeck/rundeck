@@ -3,6 +3,7 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
+import org.rundeck.tests.functional.selenium.pages.BasePage
 
 /**
  * Utility Base for selenium test specs
@@ -28,11 +29,22 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     }
 
     /**
-     * Get a page object for the type
+     * Get a page object for the type, does not automatically load the page
      * @param clazz Page object type, must have a constructor that takes a WebDriver
      * @return
      */
-    <T> T page(Class<T> clazz) {
+    <T extends BasePage> T page(Class<T> clazz) {
         return clazz.getDeclaredConstructor(SeleniumContext).newInstance(this)
+    }
+
+    /**
+     * Load the page and return the page object
+     * @param clazz Page object type, must have a constructor that takes a WebDriver
+     * @return
+     */
+    <T extends BasePage> T go(Class<T> clazz) {
+        T page = page(clazz)
+        page.go()
+        return page
     }
 }
