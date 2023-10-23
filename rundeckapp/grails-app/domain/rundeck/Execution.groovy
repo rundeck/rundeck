@@ -274,8 +274,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
             (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
-                    (null == dateCompleted && status!=ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.EXECUTION_RUNNING :
-                        (status == ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.AVERAGE_DURATION_EXCEEDED:
+                    (null == dateCompleted) ? ExecutionService.EXECUTION_RUNNING :
                             (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
                                 cancelled ? ExecutionService.EXECUTION_ABORTED :
                                     willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
@@ -301,8 +300,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                                                  ExecutionService.EXECUTION_SUCCEEDED,
                                                  ExecutionService.EXECUTION_FAILED,
                                                  ExecutionService.EXECUTION_QUEUED,
-                                                 ExecutionService.EXECUTION_SCHEDULED,
-                                                 ExecutionService.AVERAGE_DURATION_EXCEEDED])
+                                                 ExecutionService.EXECUTION_SCHEDULED])
     }
 
     // various utility methods helpful to the presentation layer

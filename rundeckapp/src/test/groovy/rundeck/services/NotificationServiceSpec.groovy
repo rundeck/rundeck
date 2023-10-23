@@ -537,7 +537,6 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                     getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
                 }
         ]
-        content.execution.status = ExecutionService.AVERAGE_DURATION_EXCEEDED
 
         job.notifications = [
                 new Notification(

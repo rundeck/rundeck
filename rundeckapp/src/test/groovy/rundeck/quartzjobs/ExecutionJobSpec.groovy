@@ -779,7 +779,6 @@ class ExecutionJobSpec extends Specification implements DataTest {
             latch.countDown()
         }
         result != null
-        se.executions.status.get(0) == ExecutionService.AVERAGE_DURATION_EXCEEDED
     }
 
     def "scheduled job quartz checking the same format of dates"() {
