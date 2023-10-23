@@ -21,7 +21,7 @@ Env vars to control docker image usage:
   default: blank)
 - `TEST_RUNDECK_CONTAINER_TOKEN`: The API token to use for authentication. (default: `admintoken`)
 - `TEST_RUNDECK_GRAILS_URL`: This value is used as `RUNDECK_GRAILS_URL` (default: `http://localhost:4440`)
-- `WAR_FILE_LOCATION`: (optional for tomcatTest task) If set, it will use this path to get the war file and run the tomcatTest
+- `TEST_WAR_FILE_LOCATION`: (optional for tomcatTest task) If set, it will use this path to get the war file and run the tomcatTest
   task, if not it will try to get the war from the build process
 
 ## Running against external URL

@@ -482,7 +482,7 @@ jobs:
             # Not a very pretty way to setup the rundeck war file location if needed
             if [ -z "<< parameters.pull-image >>" ]; then
               WAR=$(find artifacts -name '*.war')
-              export WAR_FILE_LOCATION=${PWD}/$WAR
+              export TEST_WAR_FILE_LOCATION=${PWD}/$WAR
             fi
             ./gradlew :functional-test:<< parameters.gradle-task >> --no-daemon --stacktrace --info --parallel
           environment:
