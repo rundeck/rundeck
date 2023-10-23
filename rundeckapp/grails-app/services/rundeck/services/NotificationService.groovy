@@ -304,14 +304,18 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                             (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
                             (ExecutionService.EXECUTION_MISSED):'MISSED',
-                            (ExecutionService.EXECUTION_FAILED_WITH_RETRY):'FAILED WITH RETRY',
-                            (ExecutionService.AVERAGE_DURATION_EXCEEDED):'AVERAGE DURATION EXCEEDED',
+                            (ExecutionService.EXECUTION_FAILED_WITH_RETRY):'FAILED WITH RETRY'
                     ]
+
+                    String eventStatus = statMsg[state]
+                    if(trigger=='avgduration'){
+                        eventStatus='AVERAGE DURATION EXCEEDED'
+                    }
 
                     def execMap = null
                     Map context = null
                     (context, execMap) = generateNotificationContext(content.execution, content, source)
-                    context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
+                    context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: eventStatus], context)
 
                     def destarr=[]
                     def destrecipients=mailConfig.recipients
