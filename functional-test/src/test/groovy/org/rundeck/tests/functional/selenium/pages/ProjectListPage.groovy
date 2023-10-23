@@ -16,8 +16,7 @@ class ProjectListPage extends BasePage {
     }
     String loadPath = PAGE_PATH
 
-    @Override
-    void validate() {
+    void validatePage() {
         if (!driver.currentUrl.contains(PAGE_PATH)) {
             throw new IllegalStateException("Not on Project List page: " + driver.currentUrl)
         }
