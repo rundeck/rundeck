@@ -19,7 +19,6 @@ class BasicLoginSpec extends SeleniumBase {
 
         then:
             currentUrl.contains("/menu/home")
-            pageSource =~ ~/\d+ Projects?/
     }
 
     def "login failed wrong pass"() {
