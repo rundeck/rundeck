@@ -1,6 +1,5 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
@@ -8,8 +7,6 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.json.JsonSlurper
-import org.apache.commons.io.IOUtils
-import org.grails.plugins.testing.GrailsMockMultipartFile
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
@@ -30,8 +27,12 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
     }
 
-    def mockStatusFileBytes(){
+    private def mockStatusFileBytes(){
         return "{\"errors\":null,\"jobUuidOption\":\"remove\",\"lastUpdate\":\"Movingfile:#897of1037.\",\"lastUpdated\":\"MonOct2310:30:40ART2023\",\"milestone\":null,\"milestoneNumber\":2,\"projectName\":\"test3\",\"tempFilepath\":\"/tmp/AImportTMP-test3\"}".bytes
+    }
+
+    private def mockStatusFileBytesWithPath(String path){
+        return "{\"errors\":null,\"jobUuidOption\":\"remove\",\"lastUpdate\":\"Movingfile:#897of1037.\",\"lastUpdated\":\"MonOct2310:30:40ART2023\",\"milestone\":null,\"milestoneNumber\":2,\"projectName\":\"test3\",\"tempFilepath\":\"${path}\"}".bytes
     }
 
     private def statusFileResourcepath = (projectName) -> "${AsyncImportService.JSON_FILE_PREFIX}${projectName}${AsyncImportService.JSON_FILE_EXT}"
@@ -399,6 +400,273 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         !Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be deleted if the import is not successful
         !Files.exists(Paths.get(workingDirs.projectCopy)) // As well uploaded project
 
+    }
+
+    def "Invoke async import milestone 2 not having tmp filepath in status file, gets an error"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFileBytes())
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
+        }
+
+        when: "The method gets invoked"
+        service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
+        service.beginMilestone2(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        then:
+        Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be created
+        Files.exists(Paths.get(workingDirs.projectCopy)) // The copy of the uploaded project will be created
+        thrown AsyncImportException
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+    }
+
+    def "Invoke async import milestone 2"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def distributedExecutionsPath = "${workingDirs.workingDir}${File.separator}${service.DISTRIBUTED_EXECUTIONS_FILENAME}"
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFileBytesWithPath(workingDirs.projectCopy))
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
+        }
+
+        when: "The method gets invoked"
+        service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
+        service.beginMilestone2(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        then: "Working dir will be created and inside, the distributed executions dir"
+        Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be created
+        !Files.exists(Paths.get(workingDirs.projectCopy)) // The copy of the uploaded project will be deleted after distribution
+        Files.exists(Paths.get(distributedExecutionsPath))
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+    }
+
+    def "Invoke async import milestone 2, executions get distributed by config flag"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def distributedExecutionsPath = "${workingDirs.workingDir}${File.separator}${service.DISTRIBUTED_EXECUTIONS_FILENAME}"
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFileBytesWithPath(workingDirs.projectCopy))
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> configDistributionFlag
+        }
+
+        when: "The method gets invoked"
+        service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        // then we invoke the milestone 2 programmatically (bc there's no context in tests and events doesn't work)
+        service.beginMilestone2(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        then: "Working dir will be created and inside, the distributed executions dir"
+        Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be created
+        !Files.exists(Paths.get(workingDirs.projectCopy)) // The copy of the uploaded project will be deleted after distribution
+        Files.exists(Paths.get(distributedExecutionsPath)) // Distributed executions dir exist
+        Files.list(Paths.get(distributedExecutionsPath)).collect(Collectors.toList()).size() == dirQty // Bundles by the flag
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+
+        where:
+        configDistributionFlag | dirQty
+        1                      | 10
+        5                      | 2
+        1000                   | 1
+
+    }
+
+    def "Invoke async import milestone 2 not having status file, gets an exception"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                return null
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
+        }
+
+        when: "The method gets invoked"
+        service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
+        service.beginMilestone2(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        then:
+        thrown NullPointerException
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
     }
 
     private def getTempDirsPath(String projectName) {

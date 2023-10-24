@@ -530,6 +530,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     AsyncImportMilestone.M3_IMPORTING.milestoneNumber
             )
 
+        }else{
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.lastUpdate = "No executions to iterate, asynchronous import process ended."
+                it.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
+                it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                return it
+            })
         }
     }
 
