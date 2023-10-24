@@ -50,6 +50,9 @@ import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -2902,5 +2905,53 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         assertEquals(localFile, executionFile.localFile)
         assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
+    }
+
+    def "Async import events calls"(){
+        given:
+        def projectName = "test"
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject)
+        def eventBusMock = Mock(EventBus)
+        service.setTargetEventBus(eventBusMock)
+
+        when: "we invoke the milestones events"
+        service.beginAsyncImportMilestone(projectName, auth, project, AsyncImportMilestone.M1_CREATED.milestoneNumber)
+
+        then: "the event bus notifies"
+        1 * eventBusMock.notify(*_)
+    }
+
+    def "Get async status file for project"(){
+        given:
+        def projectName = "test"
+        def mockedStatus = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = "Its a mock!"
+            return it
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            it.getAsyncImportStatusForProject(projectName) >> mockedStatus
+        }
+
+        when:
+        def status = service.getAsyncImportStatusFileForProject(projectName)
+
+        then:
+        status != null
+    }
+
+    def "Get async status file for project"(){
+        given:
+        def projectName = "test"
+        service.asyncImportService = Mock(AsyncImportService){
+            it.createStatusFile(projectName) >> true
+        }
+
+        when:
+        def created = service.createAsyncImportStatusFile(projectName)
+
+        then:
+        created
+
     }
 }

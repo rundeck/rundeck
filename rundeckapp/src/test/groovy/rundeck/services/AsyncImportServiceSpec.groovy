@@ -20,14 +20,6 @@ import java.util.stream.Collectors
 
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
 
-    def setup() {
-
-    }
-
-    def cleanup() {
-
-    }
-
     private def mockStatusFile(String projectName, String tempPath = null){
         def statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {
             it.errors = null
@@ -43,8 +35,8 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         return new JsonBuilder(statusFile).toString()
     }
 
-    private def statusFileResourcepath = (projectName) -> "${AsyncImportService.JSON_FILE_PREFIX}${projectName}${AsyncImportService.JSON_FILE_EXT}"
-    private def sampleProjectInternalProjectPath = "rundeck-test"
+    private final def statusFileResourcepath = (projectName) -> "${AsyncImportService.JSON_FILE_PREFIX}${projectName}${AsyncImportService.JSON_FILE_EXT}"
+    private final def sampleProjectInternalProjectPath = "rundeck-test"
 
     def "Try to create a status file without a project name or updated data, get an error"(){
         given:
