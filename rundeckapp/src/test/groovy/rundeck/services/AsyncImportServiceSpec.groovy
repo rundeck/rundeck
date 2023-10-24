@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
+import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
@@ -27,12 +28,19 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
     }
 
-    private def mockStatusFileBytes(){
-        return "{\"errors\":null,\"jobUuidOption\":\"remove\",\"lastUpdate\":\"Movingfile:#897of1037.\",\"lastUpdated\":\"MonOct2310:30:40ART2023\",\"milestone\":null,\"milestoneNumber\":2,\"projectName\":\"test3\",\"tempFilepath\":\"/tmp/AImportTMP-test3\"}".bytes
-    }
-
-    private def mockStatusFileBytesWithPath(String path){
-        return "{\"errors\":null,\"jobUuidOption\":\"remove\",\"lastUpdate\":\"Movingfile:#897of1037.\",\"lastUpdated\":\"MonOct2310:30:40ART2023\",\"milestone\":null,\"milestoneNumber\":2,\"projectName\":\"test3\",\"tempFilepath\":\"${path}\"}".bytes
+    private def mockStatusFile(String projectName, String tempPath = null){
+        def statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {
+            it.errors = null
+            it.milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
+            it.jobUuidOption = "remove"
+            it.lastUpdate = "This is a test"
+            it.lastUpdated = new Date().toString()
+            it.milestone = AsyncImportMilestone.M1_CREATED.milestoneNumber
+            it.projectName = projectName
+            it.tempFilepath = tempPath ? tempPath : "unknown-path"
+            return it
+        }
+        return new JsonBuilder(statusFile).toString()
     }
 
     private def statusFileResourcepath = (projectName) -> "${AsyncImportService.JSON_FILE_PREFIX}${projectName}${AsyncImportService.JSON_FILE_EXT}"
@@ -86,7 +94,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def projectName = "test"
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(statusFileResourcepath(projectName), _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -109,7 +117,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def projectName = "test"
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(statusFileResourcepath(projectName), _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -145,7 +153,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -199,7 +207,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -256,7 +264,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -312,7 +320,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -368,7 +376,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -417,7 +425,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytes())
+                it[1].write(mockStatusFile(projectName).bytes)
                 return 4L
             }
         }
@@ -438,7 +446,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
             getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
         }
 
-        when: "The method gets invoked"
+        when: "The methods get invoked"
         service.beginMilestone1(
                 projectName,
                 auth,
@@ -483,7 +491,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytesWithPath(workingDirs.projectCopy))
+                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
@@ -504,7 +512,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
             getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
         }
 
-        when: "The method gets invoked"
+        when: "The methods get invoked"
         service.beginMilestone1(
                 projectName,
                 auth,
@@ -549,7 +557,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFileBytesWithPath(workingDirs.projectCopy))
+                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
@@ -570,7 +578,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
             getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> configDistributionFlag
         }
 
-        when: "The method gets invoked"
+        when: "The methods get invoked"
         service.beginMilestone1(
                 projectName,
                 auth,
@@ -642,7 +650,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
             getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
         }
 
-        when: "The method gets invoked"
+        when: "The methods get invoked"
         service.beginMilestone1(
                 projectName,
                 auth,
@@ -667,6 +675,69 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
             service.deleteNonEmptyDir(workingDirs.projectCopy)
         }
+    }
+
+    def "Gracefully invoke async import milestone 3"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
+        }
+
+        when: "The methods get invoked"
+        service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        service.beginMilestone2(
+                projectName,
+                auth,
+                fwkProject
+        )
+        service.beginMilestone3(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        then:
+        3 * service.projectService.importToProject(_,_,_,_,_) >> [success: true] // one invocation from m1 call and two from m3 (10 execs divided by 5 = 2 dirs)
+        // All temp dirs cleaned
+        !Files.exists(Paths.get(workingDirs.workingDir))
+        !Files.exists(Paths.get(workingDirs.projectCopy))
+
     }
 
     private def getTempDirsPath(String projectName) {
