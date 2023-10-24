@@ -1140,6 +1140,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiService=Mock(ApiService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
+                getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    getName()>>'test1'
+                    getProjectProperties()>>["prop1": "value1"]
+                }
             }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
