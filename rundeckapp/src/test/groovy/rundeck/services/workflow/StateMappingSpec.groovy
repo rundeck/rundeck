@@ -526,8 +526,8 @@ class StateMappingSpec extends Specification {
             def result = sut.mapOf(1, state)
             def summarized = sut.summarize(result, ['localhost'], true)
         then: "node has states for step 1 only"
-            summarized.nodeSteps['localhost'].size() == 1
-            summarized.nodeSteps['localhost'].find { it.stepctx == '1/1' } == null
+            summarized.nodeSteps['localhost'].size() == 2
+            summarized.nodeSteps['localhost'].find { it.stepctx == '1/1' } != null
             summarized.nodeSteps['localhost'].find { it.stepctx == '1' } != null
     }
 
