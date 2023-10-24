@@ -35,7 +35,12 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.fasterxml.jackson.databind.ObjectMapper
+import grails.config.Config
 import grails.plugins.mail.MailMessageBuilder
+import grails.plugins.mail.MailMessageContentRenderer
 import grails.plugins.mail.MailService
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
@@ -50,6 +55,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
+import org.springframework.mail.MailMessage
+import org.springframework.mail.MailSender
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -445,7 +452,7 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                 new Notification(
                         eventTrigger: 'onavgduration',
                         type: 'email',
-                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true}'
+                        content: '{"recipients":"mail@example.com","attachLog":true}'
                 )
         ]
         job.save()
@@ -456,6 +463,8 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
             _ * getPluginControlService(_) >> Mock(PluginControlService)
 
         }
+        service.pluginService = Mock(PluginService)
+        service.orchestratorPluginService = Mock(OrchestratorPluginService)
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
@@ -478,13 +487,26 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                 ]
         )
         service.loggingService=Mock(LoggingService)
+        MailMessageBuilder mailMessageBuilder = Mock(MailMessageBuilder)//new MailMessageBuilder(Mock(MailSender), Mock(Config))
+        MailMessage mailMessage = Mock(MailMessage)
+
+        String expectedSubject = null
 
         when:
         def result = service.triggerJobNotification('avgduration', job, content)
 
         then:
         1 * service.loggingService.getLogReader(_) >> reader
-        1 * service.mailService.sendMail(_)
+        1 * service.mailService.sendMail(_)>>{args->
+            args[0].delegate= mailMessageBuilder
+            args[0].call()
+            return mailMessage
+        }
+        1 * mailMessageBuilder.subject(_)>>{args->
+            expectedSubject = args[0]
+        }
+
+        expectedSubject.contains('AVERAGE DURATION EXCEEDED')
         result
     }
 
