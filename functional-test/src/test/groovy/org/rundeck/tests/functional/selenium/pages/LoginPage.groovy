@@ -9,6 +9,9 @@ import org.rundeck.util.container.SeleniumContext
  */
 @CompileStatic
 class LoginPage extends BasePage {
+    def user = 'admin' //Default user
+    def pass = 'admin123' //Default pass
+
     By loginFieldBy = By.id("login")
     By passwordFieldBy = By.id("password")
     By loginBtnBy = By.id("btn-login")
@@ -45,6 +48,12 @@ class LoginPage extends BasePage {
     void login(String username, String password) {
         loginField.sendKeys(username)
         passwordField.sendKeys(password)
+        loginBtn.click()
+    }
+
+    void login() {
+        loginField.sendKeys(user as CharSequence)
+        passwordField.sendKeys(pass as CharSequence)
         loginBtn.click()
     }
 }
