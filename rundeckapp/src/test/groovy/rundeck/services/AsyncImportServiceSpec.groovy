@@ -1,16 +1,33 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.json.JsonSlurper
+import org.apache.commons.io.IOUtils
+import org.grails.plugins.testing.GrailsMockMultipartFile
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
+
+    def setup() {
+
+    }
+
+    def cleanup() {
+
+    }
 
     def mockStatusFileBytes(){
         return "{\"errors\":null,\"jobUuidOption\":\"remove\",\"lastUpdate\":\"Movingfile:#897of1037.\",\"lastUpdated\":\"MonOct2310:30:40ART2023\",\"milestone\":null,\"milestoneNumber\":2,\"projectName\":\"test3\",\"tempFilepath\":\"/tmp/AImportTMP-test3\"}".bytes
@@ -37,8 +54,8 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         when: "The method is called"
         def bytes = service.saveAsyncImportStatusForProject(projectName, null)
         then: "The framework resource will be created"
-        1 * fwkProject.storeFileResource(_,_) >> -1
-        bytes == -1
+        1 * fwkProject.storeFileResource(_,_) >> 4L
+        bytes == 4L
     }
 
     def "Update gracefully a existing status file"(){
@@ -57,8 +74,8 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def bytes = service.saveAsyncImportStatusForProject(null, newStatus)
 
         then: "The framework resource will be updated"
-        1 * fwkProject.storeFileResource(_,_) >> -1
-        bytes == -1
+        1 * fwkProject.storeFileResource(_,_) >> 4L
+        bytes == 4L
     }
 
     def "Get info about the status file in storage"(){
@@ -110,5 +127,66 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
     }
 
+    def "Gracefully invoke async import milestone 1"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFileBytes())
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+
+        when: "The method gets invoked"
+        def result = service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+
+        then: "the will be results"
+        result.success == true // The project w/o executions will be imported (import to project invoked)
+        Files.exists(Paths.get(workingDirs.workingDir)) // The working dir will be created
+        Files.exists(Paths.get(workingDirs.projectCopy)) // The copy of the uploaded project will be created
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+    }
+
+    private def getTempDirsPath(String projectName) {
+        def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
+        def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
+        return [projectCopy: tmpCopy, workingDir: tmpWorkingDir]
+    }
 
 }

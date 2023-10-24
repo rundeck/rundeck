@@ -741,7 +741,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    private static void deleteNonEmptyDir(String path){
+    static void deleteNonEmptyDir(String path){
         try {
             Files.walk(Paths.get(path))
                     .sorted(Comparator.reverseOrder())
