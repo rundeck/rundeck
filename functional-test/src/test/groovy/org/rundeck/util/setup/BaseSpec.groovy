@@ -84,7 +84,7 @@ class BaseSpec extends BaseContainer {
                     driver.findElement(By.id("overflow")).click()
                     wait.until(ExpectedConditions.attributeContains(driver.findElement(By.id('overflow')), 'class', 'active'))
                 }
-                Thread.sleep(3000)
+                sleep(3000)
                 driver.findElement(By.id(navLink.id)).click()
                 wait.until(ExpectedConditions.urlContains(navLink.url))
                 return true
@@ -200,7 +200,6 @@ class BaseSpec extends BaseContainer {
         driver.findElement(By.id("nav-project-settings-delete-project")).click()
         driver.findElement(By.partialLinkText("Delete this Project")).click()
 
-        // wait for deleteProjectModal css to be block
         new WebDriverWait(driver, Duration.ofSeconds(2)).until {
             ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='deleteProjectModal'][contains(@style, 'display: block')]"))
         }
@@ -219,10 +218,9 @@ class BaseSpec extends BaseContainer {
         driver.findElement(By.id("schedJobName")).sendKeys(jobName)
         driver.findElement(By.linkText("Workflow")).click()
         wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.cssSelector(".add_step_buttons.panel-body"))))
-        js.executeScript("location.href = \"#addnodestep\";")
         selectStep("command", StepType.NODE)
         wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("adhocRemoteStringField"))))
-        Thread.sleep(3000)
+        sleep(3000)
         if (customCommand != null && !customCommand.isEmpty())
             driver.findElement(By.id("adhocRemoteStringField")).sendKeys(customCommand)
         else
@@ -233,15 +231,14 @@ class BaseSpec extends BaseContainer {
 
     void selectStep(String dataNodeStepType, StepType stepType) {
         def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
-        js.executeScript("location.href = \"#addnodestep\";")
         driver.findElement(By.xpath("//*[@" + stepType.getStepType() + "='" + dataNodeStepType + "']")).click()
         wait.until(ExpectedConditions.numberOfElementsToBe(By.className("floatr"), 1))
     }
 
-    void saveStep(Integer stepNumber){
-        def wait = new WebDriverWait(driver, Duration.ofSeconds(10))
-        driver.findElement(By.className("floatr")).findElement(By.cssSelector(".btn.btn-cta.btn-sm")).click();
-        wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("wfitem_"+stepNumber))));
+    void saveStep(Integer stepNumber) {
+        def wait = new WebDriverWait(driver, Duration.ofSeconds(15))
+        driver.findElement(By.className("floatr")).findElement(By.cssSelector(".btn.btn-cta.btn-sm")).click()
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("wfitem_" + stepNumber)))
     }
 
     String toCamelCase(String str) {
