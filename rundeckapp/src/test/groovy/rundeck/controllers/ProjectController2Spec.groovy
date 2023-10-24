@@ -22,6 +22,10 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
@@ -45,6 +49,7 @@ import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -1192,6 +1197,98 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             'text' |'value1'                                |'value1'
     }
 
+    @Unroll
+    void "apiProjectConfigKeyPut should validate all plugin settings values"() {
+
+        given:
+            controller.apiService=Mock(ApiService)
+            Map prop = ["project.plugin.provider1.prop1": "value1"]
+            Map currentProps = ["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
+            Properties mergedProjProps = new Properties(currentProps + prop)
+            controller.frameworkService =Mock(FrameworkService){
+                updateFrameworkProjectConfig(_, prop,_)>> [success: true]
+                getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    getName()>>'test1'
+                    getProjectProperties()>>["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
+                }
+                discoverScopedConfiguration(mergedProjProps, 'project.plugin')>>[
+                    'svcName': ["provider1": ["prop1": "value1", "prop2": "value2"]]
+                ]
+            }
+
+
+            Description desc = new AbstractBaseDescription() {
+                public String getName() {
+                    return "provider1";
+                }
+
+                public String getTitle() {
+                    return "Script Execution";
+                }
+
+                public String getDescription() {
+                    return "Delegates file copying to an external script. Can be configured project-wide or on a per-node basis.";
+                }
+
+                public List<Property> getProperties() {
+                    List<Property> properties = new ArrayList<Property>();
+                    properties.add(PropertyUtil.string("prop1", "Prop1", "", true, null));
+                    properties.add(PropertyUtil.string("prop2", "Prop2", "", true, null));
+                    return properties;
+                }
+
+                @Override
+                public Map<String, String> getPropertiesMapping() {
+                    return new HashMap<String, String>();
+                }
+
+                @Override
+                public Map<String, String> getFwkPropertiesMapping() {
+                    return new HashMap<String, String>();
+                }
+            }
+
+            controller.pluginService = Mock(PluginService) {
+                listPluginDescriptions("svcName") >> [desc]
+            }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                1 * project(_, _) >> Mock(AuthorizingProject) {
+                    1 * getResource() >> Stub(IRundeckProject){
+                        getName()>>'test1'
+                        getProperty('prop1') >>> [null, 'value1']
+                    }
+                    0*_(*_)
+                }
+                0*_(*_)
+            }
+
+            with(controller.apiService) {
+                requireApi(_, _) >> true
+                restoreUriPath(_, _) >> 'project.plugin.provider1.prop1'
+                extractResponseFormat(_, _, _) >> 'JSON'
+                parseJsonXmlWith(_,_,_)>>{
+                    it[2].get('json').call(it[0].JSON)
+                    true
+                }
+            }
+
+            request.api_version = 11
+            params.project = 'test1'
+            params.keypath = 'project.plugin.provider1.prop1'
+            request.setContent('{"key":"project.plugin.provider1.prop1","value":"value1"}'.bytes)
+            request.format='JSON'
+            request.method='PUT'
+        when:
+            controller.apiProjectConfigKeyPut()
+        then:
+            assertEquals HttpServletResponse.SC_OK, response.status
+            with(controller.frameworkService) {
+                1 * validateDescription(desc, "", ["prop1": "value1", "prop2": "value2"])>>[valid:true]
+            }
+
+    }
 
 
     void apiProjectConfigKeyDelete_success() {
