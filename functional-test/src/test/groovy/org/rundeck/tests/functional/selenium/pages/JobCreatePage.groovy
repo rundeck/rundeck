@@ -21,7 +21,7 @@ class JobCreatePage extends BasePage {
 
     String loadPath = PAGE_PATH
 
-    JobCreatePage(SeleniumContext context) {
+    JobCreatePage(final SeleniumContext context) {
         super(context)
     }
 

@@ -11,7 +11,7 @@ class JobsListPage extends BasePage{
 
     String loadPath = PAGE_PATH
 
-    JobsListPage(SeleniumContext context) {
+    JobsListPage(final SeleniumContext context) {
         super(context)
     }
 

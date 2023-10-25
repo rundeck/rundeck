@@ -12,7 +12,7 @@ import java.time.Duration
 @CompileStatic
 class SideBar extends BasePage {
 
-    SideBar(SeleniumContext context) {
+    SideBar(final SeleniumContext context) {
         super(context)
     }
 
@@ -22,7 +22,7 @@ class SideBar extends BasePage {
     }
 
     WebElement goTo(SideBarNavLinks sideBarLink){
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.visibilityOf(el(By.id(sideBarLink.getId()))))
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(By.id(sideBarLink.getId()), 1))
         el By.id(sideBarLink.getId())
     }
 }

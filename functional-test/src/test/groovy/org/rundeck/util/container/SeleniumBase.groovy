@@ -3,6 +3,7 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
+import org.rundeck.tests.functional.selenium.TestResultExtension
 import org.rundeck.tests.functional.selenium.pages.BasePage
 
 /**
@@ -29,6 +30,12 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
 
     def cleanup() {
+        specificationContext.currentSpec.listeners
+                .findAll { it instanceof TestResultExtension.ErrorListener }
+                .each {
+                    def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
+                    //HERE IT SHOULD TAKE A SCREENSHOT when errorInfo is not null
+                }
         driver?.quit()
     }
 

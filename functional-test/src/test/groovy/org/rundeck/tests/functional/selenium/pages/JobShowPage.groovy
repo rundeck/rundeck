@@ -7,7 +7,7 @@ class JobShowPage extends BasePage{
     static final String PAGE_PATH = "/job/show"
     String loadPath = PAGE_PATH
 
-    JobShowPage(SeleniumContext context) {
+    JobShowPage(final SeleniumContext context) {
         super(context)
     }
 

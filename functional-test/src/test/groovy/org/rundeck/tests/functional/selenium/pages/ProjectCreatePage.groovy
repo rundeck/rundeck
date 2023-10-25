@@ -16,7 +16,7 @@ class ProjectCreatePage extends BasePage {
 
     String loadPath = PAGE_PATH
 
-    ProjectCreatePage(SeleniumContext context) {
+    ProjectCreatePage(final SeleniumContext context) {
         super(context)
     }
 
