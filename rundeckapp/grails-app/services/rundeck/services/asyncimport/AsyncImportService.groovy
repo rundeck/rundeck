@@ -858,28 +858,16 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    @CompileStatic
     static String translateTempPathByOs(){
-        def OS_LINUX = "linux"
-        def OS_WINDOWS = "windows"
-        def os = System.getProperty("os.name").toLowerCase()
-        def tmpProp = null
-
-        switch (os){
-            case OS_LINUX:
-                tmpProp = System.getProperty("java.io.tmpdir")
-                break
-            case OS_WINDOWS:
-                def prop = System.getProperty("java.io.tmpdir")
-                if( prop.endsWith("\\") ) {
-                    tmpProp = prop.substring(0, prop.size() - 1)
-                }
-                break
-            default:
-                tmpProp = System.getProperty("java.io.tmpdir")
-                break
+        def tempProp = null
+        def prop = System.getProperty("java.io.tmpdir")
+        if( prop.endsWith('\\') ){
+            def trimmedProp = prop.substring(0, prop.size() -1)
+            tempProp = trimmedProp
+        }else{
+            tempProp = prop
         }
-        return tmpProp
+        return tempProp
     }
 
 }

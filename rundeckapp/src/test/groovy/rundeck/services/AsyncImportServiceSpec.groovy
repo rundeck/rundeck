@@ -19,6 +19,11 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
+//
+//    def setup(){
+//        System.setProperty("os.name", "Windows")
+//        System.setProperty("java.io.tmpdir", "C:\\\\User\\path\\to\\temp\\")
+//    }
 
     private def mockStatusFile(String projectName, String tempPath = null){
         def statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {
@@ -131,6 +136,60 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
     }
 
     def "Gracefully invoke async import milestone 1"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFile(projectName).bytes)
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+
+        when: "The method gets invoked"
+        def result = service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+
+        then: "the will be results"
+        result.success == true // The project w/o executions will be imported (import to project invoked)
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+    }
+
+    def "Gracefully invoke async import milestone 1, OS independent"(){
         // This test will create real files in /tmp
         given: "The invocation through controller (with context)"
         def projectName = "test"
