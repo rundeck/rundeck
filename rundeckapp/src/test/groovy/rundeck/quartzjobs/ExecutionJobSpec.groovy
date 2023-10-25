@@ -710,6 +710,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 dateCompleted: null,
                 project: se.project,
                 user: 'bob',
+                status: ExecutionService.EXECUTION_RUNNING,
                 workflow: new Workflow(commands: [new CommandExec(
                         [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                 )]
@@ -779,6 +780,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             latch.countDown()
         }
         result != null
+        se.executions.status.get(0) == ExecutionService.EXECUTION_RUNNING
     }
 
     def "scheduled job quartz checking the same format of dates"() {
