@@ -19,11 +19,6 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
-//
-//    def setup(){
-//        System.setProperty("os.name", "Windows")
-//        System.setProperty("java.io.tmpdir", "C:\\\\User\\path\\to\\temp\\")
-//    }
 
     private def mockStatusFile(String projectName, String tempPath = null){
         def statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {

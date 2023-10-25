@@ -641,16 +641,15 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             def zippedFilename = "${BASE_WORKING_DIR}${projectName}${File.separator}${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
                             zipModelProject(modelProjectFullPath.toString(), zippedFilename);
 
-                            FileInputStream fis = new FileInputStream(zippedFilename);
-
-                            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                                it.lastUpdate = "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
-                                return it
-                            })
-
                             def result
 
-                            try {
+                            try (FileInputStream fis = new FileInputStream(zippedFilename)) {
+
+                                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                                    it.lastUpdate = "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
+                                    return it
+                                })
+
                                 result = projectService.importToProject(
                                         project,
                                         framework,
@@ -658,8 +657,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                         fis,
                                         options
                                 )
-                            } catch (Exception e) {
+
+                            } catch (IOException e) {
                                 e.printStackTrace()
+                                throw e
                             }
 
                             if (result.success) {
