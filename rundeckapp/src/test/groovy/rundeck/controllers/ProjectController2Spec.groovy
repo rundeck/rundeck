@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
@@ -1423,7 +1424,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
         given:
             controller.apiService=Mock(ApiService)
-            Map prop = ["project.plugin.provider1.prop1": "value1"]
+            Map prop = ["project.plugin.provider1.prop1": inputValue]
             Map currentProps = ["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
             Properties mergedProjProps = new Properties(currentProps + prop)
             controller.frameworkService =Mock(FrameworkService){
@@ -1433,7 +1434,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     getProjectProperties()>>["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
                 }
                 discoverScopedConfiguration(mergedProjProps, 'project.plugin')>>[
-                    'svcName': ["provider1": ["prop1": "value1", "prop2": "value2"]]
+                    'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
                 ]
             }
 
@@ -1478,7 +1479,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 1 * project(_, _) >> Mock(AuthorizingProject) {
                     1 * getResource() >> Stub(IRundeckProject){
                         getName()>>'test1'
-                        getProperty('prop1') >>> [null, 'value1']
+                        getProperty('prop1') >>> [null, inputValue]
                     }
                     0*_(*_)
                 }
@@ -1498,16 +1499,27 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             request.api_version = 11
             params.project = 'test1'
             params.keypath = 'project.plugin.provider1.prop1'
-            request.setContent('{"key":"project.plugin.provider1.prop1","value":"value1"}'.bytes)
+            request.setContent(('{"key":"project.plugin.provider1.prop1","value":"' + inputValue + '"}').bytes)
             request.format='JSON'
             request.method='PUT'
         when:
             controller.apiProjectConfigKeyPut()
         then:
-            assertEquals HttpServletResponse.SC_OK, response.status
             with(controller.frameworkService) {
-                1 * validateDescription(desc, "", ["prop1": "value1", "prop2": "value2"])>>[valid:true]
+                1 * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
             }
+            with(controller.apiService){
+                (valid ? 0 : 1) * renderErrorFormat(_, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message:["provider1 configuration was invalid: " + reportError?.errors],
+                        format: 'JSON'
+                ])
+            }
+
+        where:
+        inputValue     | valid | reportError
+        "value1"       | true  | null
+        "invalidValue" | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
 
     }
 
