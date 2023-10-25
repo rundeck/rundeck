@@ -2940,7 +2940,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         status != null
     }
 
-    def "Get async status file for project"(){
+    def "Create async status file for project"(){
         given:
         def projectName = "test"
         service.asyncImportService = Mock(AsyncImportService){

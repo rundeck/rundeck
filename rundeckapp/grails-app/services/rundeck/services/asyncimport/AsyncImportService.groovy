@@ -9,6 +9,7 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
@@ -37,7 +38,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ConfigurationService configurationService
 
     // Constants
-    static final String TEMP_DIR = System.getProperty("java.io.tmpdir")
+    static final String TEMP_DIR = translateTempPathByOs()
     static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-WD-")
     static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_executions"
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
@@ -855,6 +856,30 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             e.printStackTrace()
             throw e
         }
+    }
+
+    @CompileStatic
+    static String translateTempPathByOs(){
+        def OS_LINUX = "linux"
+        def OS_WINDOWS = "windows"
+        def os = System.getProperty("os.name").toLowerCase()
+        def tmpProp = null
+
+        switch (os){
+            case OS_LINUX:
+                tmpProp = System.getProperty("java.io.tmpdir")
+                break
+            case OS_WINDOWS:
+                def prop = System.getProperty("java.io.tmpdir")
+                if( prop.endsWith("\\") ) {
+                    tmpProp = prop.substring(0, prop.size() - 1)
+                }
+                break
+            default:
+                tmpProp = System.getProperty("java.io.tmpdir")
+                break
+        }
+        return tmpProp
     }
 
 }
