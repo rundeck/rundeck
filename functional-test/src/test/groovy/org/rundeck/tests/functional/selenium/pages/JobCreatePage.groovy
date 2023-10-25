@@ -45,6 +45,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getCreateButton(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobCreateButton))
         el jobCreateButton
     }
 

@@ -3,7 +3,11 @@ package org.rundeck.tests.functional.selenium.pages
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 @CompileStatic
 class ProjectCreatePage extends BasePage {
@@ -21,6 +25,8 @@ class ProjectCreatePage extends BasePage {
     }
 
     WebElement getCreateNewProjectButton(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(createNewProjectButton, 1))
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(createNewProjectButton))
         el createNewProjectButton
     }
 

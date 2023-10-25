@@ -3,7 +3,7 @@ package org.rundeck.util.container
 import groovy.transform.CompileStatic
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
-import org.rundeck.tests.functional.selenium.TestResultExtension
+import org.rundeck.util.extensions.TestResultExtension
 import org.rundeck.tests.functional.selenium.pages.BasePage
 
 /**
