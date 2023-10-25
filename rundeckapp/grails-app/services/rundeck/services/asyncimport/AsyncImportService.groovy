@@ -286,27 +286,32 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 zipModelProject(modelProjectHost.toString(), zippedFilename)
             }
 
-            FileInputStream fis = new FileInputStream(zippedFilename);
+            try (FileInputStream fis = new FileInputStream(zippedFilename)){
 
-            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.lastUpdate = "Uploading project w/o executions."
-                return it
-            })
+                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                    it.lastUpdate = "Uploading project w/o executions."
+                    return it
+                })
 
-            importResult = projectService.importToProject(
-                    project,
-                    framework,
-                    authContext as UserAndRolesAuthContext,
-                    fis,
-                    options
-            )
+                importResult = projectService.importToProject(
+                        project,
+                        framework,
+                        authContext as UserAndRolesAuthContext,
+                        fis,
+                        options
+                )
 
-            String jobUuidOption = options.jobUuidOption
+                String jobUuidOption = options.jobUuidOption
 
-            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.jobUuidOption = jobUuidOption
-                return it
-            })
+                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                    it.jobUuidOption = jobUuidOption
+                    return it
+                })
+
+            }catch (IOException e){
+                e.printStackTrace()
+                throw e
+            }
 
             Files.delete(Paths.get(zippedFilename))
 
