@@ -10,6 +10,10 @@ import org.rundeck.tests.functional.selenium.pages.BasePage
  */
 @CompileStatic
 class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
+
+    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
+    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
+
     /**
      * Create a driver
      */

@@ -9,11 +9,8 @@ import org.rundeck.util.container.SeleniumBase
 @SeleniumCoreTest
 class BasicLoginSpec extends SeleniumBase {
     //override env var if necessary to run with different credentials
-    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
-    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
 
     def "successful login"() {
-
         when:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
