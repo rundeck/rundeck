@@ -5,7 +5,7 @@ import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
-import org.rundeck.tests.functional.selenium.TestResultExtension
+import org.rundeck.util.extensions.TestResultExtension
 import org.rundeck.tests.functional.selenium.pages.BasePage
 
 /**
@@ -36,7 +36,15 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
                 .findAll { it instanceof TestResultExtension.ErrorListener }
                 .each {
                     def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
-                    //HERE IT SHOULD TAKE A SCREENSHOT when errorInfo is not null
+                    if(errorInfo){
+                        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)
+                        File testResourcesDir = new File("build/test-results/images")
+                        if (!testResourcesDir.exists()) {
+                            testResourcesDir.mkdirs()
+                        }
+                        File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}" + ".png")
+                        screenshot.renameTo(destination)
+                    }
                 }
         driver?.quit()
     }

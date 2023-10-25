@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.selenium
+package org.rundeck.util.extensions
 
 import org.spockframework.runtime.AbstractRunListener
 import org.spockframework.runtime.extension.IGlobalExtension

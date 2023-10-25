@@ -50,6 +50,7 @@ class JobNotificationSpec extends SeleniumBase {
         jobCreatePage.getNotificationByType(NotificationType.MAIL).click()
         jobCreatePage.getNotificationConfigByPropName("recipients").sendKeys('test@rundeck.com')
         jobCreatePage.getNotificationSaveButton().click()
+        jobCreatePage.waitNotificationModal(0)
         jobCreatePage.getCreateButton().click()
         jobCreatePage.waitForJobShow()
         jobCreatePage.getJobDefinitionModal().click()

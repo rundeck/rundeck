@@ -45,6 +45,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getCreateButton(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobCreateButton))
         el jobCreateButton
     }
 
@@ -97,6 +98,10 @@ class JobCreatePage extends BasePage {
 
     void waitForStepToBeShown(By stepElementToWait){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(stepElementToWait, 1))
+    }
+
+    void waitNotificationModal(Integer totalNotificationModals){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, totalNotificationModals))
     }
 }
 
