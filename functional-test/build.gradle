@@ -47,8 +47,8 @@ def checkWarFile(destination, fileName) {
     def rundeckapp = project(":rundeckapp")
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile
-    if(System.getenv("WAR_FILE_LOCATION")){
-        warFile = file(System.getenv("WAR_FILE_LOCATION"))
+    if(System.getenv("TEST_WAR_FILE_LOCATION")){
+        warFile = file(System.getenv("TEST_WAR_FILE_LOCATION"))
         println "From system env File to copy from ${warFile} to ${destination + fileName}"
     }else{
         warFile = file(rundeckapp.war.archiveFile.get().toString().replace("-plain", ""))

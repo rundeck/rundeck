@@ -18,9 +18,11 @@ class LoginPage extends BasePage {
     By errorBy = By.cssSelector(".alert.alert-danger > span")
 
     static final String PAGE_PATH = "/user/login"
+    static final String LOAD_PATH = "/"
+    String loadPath = LOAD_PATH
 
     LoginPage(final SeleniumContext context) {
-        super(context, "/")
+        super(context)
     }
 
     void validatePage() {
