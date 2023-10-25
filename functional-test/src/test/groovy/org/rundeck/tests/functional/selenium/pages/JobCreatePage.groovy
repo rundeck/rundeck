@@ -65,6 +65,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationConfigByPropName(String propName){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(By.cssSelector('#notification-edit-config div.form-group[data-prop-name=\'' + propName + '\']'), 1))
         def groupConfig = el By.cssSelector('#notification-edit-config div.form-group[data-prop-name=\'' + propName + '\']')
         groupConfig.findElement(By.cssSelector('input[type=text]'))
     }
