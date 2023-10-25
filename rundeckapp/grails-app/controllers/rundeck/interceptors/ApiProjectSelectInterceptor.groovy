@@ -1,5 +1,8 @@
 package rundeck.interceptors
 
+import grails.web.servlet.mvc.GrailsParameterMap
+import groovy.transform.builder.Builder
+
 import javax.servlet.http.HttpServletResponse
 
 
@@ -12,9 +15,25 @@ class ApiProjectSelectInterceptor {
     def apiService
     def frameworkService
 
+    Closure<Boolean> projectWithWildcard = {
+        WildcardValidator validator = WildcardValidator.builder()
+                .action('apiExecutionsRunningv14')
+                .controller('menu')
+                .project('*')
+                .map(params)
+                .build()
+
+        for (property in validator.ITEMS) {
+            if (!validator.validate(property, validator[property] as String)) { return false }
+        }
+        return true
+    }
+
     ApiProjectSelectInterceptor() {
         match(uri: '/api/**')
                 .excludes(controller: 'project', action: 'apiProjectCreate', method: 'POST')
+        match(controller: 'menu')
+                .excludes(projectWithWildcard)
     }
 
     /**
@@ -49,5 +68,18 @@ class ApiProjectSelectInterceptor {
 
     void afterView() {
         // no-op
+    }
+
+    @Builder
+    class WildcardValidator {
+        static final List<String> ITEMS = ['controller', 'project', 'action']
+        String controller
+        String project
+        String action
+        GrailsParameterMap map
+
+        boolean validate(String param, String value) {
+            return map[param] && map[param] == value
+        }
     }
 }
