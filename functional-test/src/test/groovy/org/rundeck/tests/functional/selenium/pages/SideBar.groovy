@@ -27,7 +27,7 @@ class SideBar extends BasePage {
     }
 }
 
-public enum SideBarNavLinks {
+enum SideBarNavLinks {
 
     JOBS("nav-jobs-link", "jobs", false)
 

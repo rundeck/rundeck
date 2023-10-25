@@ -1,39 +1,47 @@
 package org.rundeck.tests.functional.selenium
 
-import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
+import org.rundeck.tests.functional.selenium.pages.JobListPage
+import org.rundeck.tests.functional.selenium.pages.HomePage
+import org.rundeck.tests.functional.selenium.pages.JobPage
+import org.rundeck.tests.functional.selenium.pages.LoginPage
+import org.rundeck.tests.functional.selenium.pages.ProjectCreatePage
 import org.rundeck.util.annotations.SeleniumCoreTest
-import org.rundeck.util.setup.BaseSpec
+import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.setup.NavLinkTypes
 
-import java.time.Duration
-
 //@SeleniumCoreTest
-class JobsSpec extends BaseSpec {
+class JobsSpec extends SeleniumBase {
+
+    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
+    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin"
 
     def "edit job and set groups"() {
         when:
-            def description = "description demo"
-            doLogin()
-            createProject(toCamelCase(specificationContext.currentFeature.name), null)
-            intoProjectGoTo(NavLinkTypes.JOBS)
+            def description = 'demo description'
+            def loginPage = page LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+            def homePage = page HomePage
+            homePage.createProject()
         then:
-            createSimpleJob('simpleJob', 'echo ${job.id}')
-            driver.findElement(By.linkText("Action")).click()
-            driver.findElement(By.linkText("Edit this Job…")).click()
-            new WebDriverWait(driver, Duration.ofSeconds(10)).until {
-                ExpectedConditions.visibilityOfElementLocated {
-                    By.className("ace_text-input")}
-            }
-            sleep(5000)
-            driver.findElement(By.className("ace_text-input")).sendKeys(description)
-            driver.findElement(By.id("jobUpdateSaveButton")).click()
-            description == driver.findElement(By
-                    .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")).getText()
+            def projectCreatePage = page ProjectCreatePage
+            projectCreatePage.createProject(toCamelCase specificationContext.currentFeature.name)
+            projectCreatePage.goTo NavLinkTypes.JOBS
+            sleep 5000
+            def jobListPage = page JobListPage
+            jobListPage.createJobButton.click()
+            def jobPage = page JobPage
+            jobPage.createSimpleJob "simpleJob", null
+            jobPage.actionField.click()
+            jobPage.editJobField.click()
+            sleep 5000
+            jobPage.descriptionField.sendKeys description
+            jobPage.waitForElementVisible jobPage.updateJob
+            jobPage.updateJobButton.click()
+            description == jobPage.descriptionTextLabel.getText()
         cleanup:
-            deleteProject(true)
+            projectCreatePage.deleteProject()
+            projectCreatePage.waitForModal 1
+            projectCreatePage.validatePage()
     }
 
 }

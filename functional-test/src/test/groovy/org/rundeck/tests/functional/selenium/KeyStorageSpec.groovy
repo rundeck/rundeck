@@ -14,15 +14,14 @@ class KeyStorageSpec extends SeleniumBase {
     public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
 
-    def loginPage = page LoginPage
-    def homePage = page HomePage
-    def keyStoragePage = page KeyStoragePage
-
     def "1 add key storage"() {
         when:
+            def loginPage = page LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
+            def homePage = page HomePage
             homePage.goToKeyStorage()
+            def keyStoragePage = page KeyStoragePage
             keyStoragePage.waitForElementVisible keyStoragePage.addUploadKeyField
             keyStoragePage.addUploadKeyField.click()
             keyStoragePage.waitForModal 1
@@ -32,9 +31,12 @@ class KeyStorageSpec extends SeleniumBase {
 
     def "2 overwrite key storage"() {
         when:
+            def loginPage = page LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
+            def homePage = page HomePage
             homePage.goToKeyStorage()
+            def keyStoragePage = page KeyStoragePage
             keyStoragePage.clickOverwriteKey 'git', 'git.pass'
             keyStoragePage.waitForModal 1
             keyStoragePage.overwriteKey 'new-root'
@@ -43,9 +45,12 @@ class KeyStorageSpec extends SeleniumBase {
 
     def "3 delete key storage"() {
         when:
+            def loginPage = page LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
+            def homePage = page HomePage
             homePage.goToKeyStorage()
+            def keyStoragePage = page KeyStoragePage
             keyStoragePage.deleteKey 'git.pass', 'git'
     }
 
