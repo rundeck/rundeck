@@ -119,26 +119,7 @@ echo "TEST: job/id/run should succeed"
 
 
 # now submit req
-runurl="${APIURL}/job/${jobid}/run"
-params=""
-execargs="-opt2 a"
-
-# get listing
-$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#get execid
-
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
-
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
-    echo "OK"
-else
-    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-    exit 2
-fi
+execid=$(runjob "$jobid" "-opt2 a")
 
 #wait for nc to finish, should close after RunDeck server reads response
 #check if pid has finished after 5 secs

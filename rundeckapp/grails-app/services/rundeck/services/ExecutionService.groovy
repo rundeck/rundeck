@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -74,6 +75,8 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
@@ -93,16 +96,17 @@ import org.slf4j.MDC
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.execution.ThresholdValue
+import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -152,6 +156,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def rundeckNodeService
     def grailsApplication
     def configurationService
+    FeatureService featureService
     def executionUtilService
     ExecutionValidator executionValidatorService
     def fileUploadService
@@ -230,33 +235,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
-        def apiv14=request.api_version>=ApiVersions.V14
+
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
-                def data=[
-                        execution: e,
-                        href: apiv14?apiService.apiHrefForExecution(e):apiService.guiHrefForExecution(e),
-                        status: getExecutionState(e),
-                        summary: summarizeJob(e.scheduledExecution, e)
-                ]
-                if(apiv14){
-                    data.permalink=apiService.guiHrefForExecution(e)
-                }
+            def data=[
+                    execution: e,
+                    href: apiService.apiHrefForExecution(e),
+                    status: getExecutionState(e),
+                    summary: summarizeJob(e.scheduledExecution, e),
+                    permalink: apiService.guiHrefForExecution(e)
+            ]
+
             if(e.customStatusString){
                 data.customStatus=e.customStatusString
             }
-                if(e.retryExecution) {
-                    data.retryExecution = [
-                            id    : e.retryExecution.id,
-                            href  : apiv14 ? apiService.apiHrefForExecution(e.retryExecution) :
-                                    apiService.guiHrefForExecution(e.retryExecution),
-                            status: getExecutionState(e.retryExecution),
-                    ]
-                    if (apiv14) {
-                        data.retryExecution.permalink = apiService.guiHrefForExecution(e.retryExecution)
-                    }
-                }
-                data
-            }, paging)
+            if(e.retryExecution) {
+                data.retryExecution = [
+                        id    : e.retryExecution.id,
+                        href  : apiService.apiHrefForExecution(e.retryExecution),
+                        status: getExecutionState(e.retryExecution),
+                        permalink: apiService.guiHrefForExecution(e.retryExecution)
+                ]
+            }
+            data
+        }, paging)
     }
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
@@ -291,22 +292,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     def renderBulkExecutionDeleteResult(request, response, result) {
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def respFormat = 'json'
+
+        if(featureService.featurePresent(Features.LEGACY_XML, false)) {
+             respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
+        }
         def total = result.successTotal + result.failures.size()
         switch (respFormat) {
-            case 'json':
-                return apiService.renderSuccessJson(response) {
-                    requestCount = total
-                    allsuccessful = result.successTotal == total
-                    successCount = result.successTotal
-                    failedCount = result.failures ? result.failures.size() : 0
-                    if (result.failures) {
-                        failures = result.failures.collect { [message: it.message, id: it.id] }
-                    }
-                }
-                break
             case 'xml':
-            default:
                 return apiService.renderSuccessXml(request, response) {
                     deleteExecutions(requestCount: total, allsuccessful: result.successTotal == total) {
                         successful(count: result.successTotal)
@@ -320,6 +313,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 break;
+            case 'json':
+            default:
+                return apiService.renderSuccessJson(response) {
+                    requestCount = total
+                    allsuccessful = result.successTotal == total
+                    successCount = result.successTotal
+                    failedCount = result.failures ? result.failures.size() : 0
+                    if (result.failures) {
+                        failures = result.failures.collect { [message: it.message, id: it.id] }
+                    }
+                }
+                break
         }
     }
 
@@ -982,6 +987,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.filter = execution.filter
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.outputfilepath = execution.outputfilepath
+        jobcontext.execIdForLogStore = execution.getExecIdForLogStore().toString()
+        jobcontext.isRemoteFilePath = execution.isRemoteOutputfilepath().toString()
+        jobcontext.executionUuid = execution.uuid
+        jobcontext.execDateCompleted = execution.dateCompleted
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
@@ -1069,6 +1079,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
+        boolean logsInstalled=false
         try{
             def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
@@ -1169,7 +1180,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(!extraParams){
                     extraParams=[:]
                 }
-                Map<String, String> args = FrameworkService.parseOptsFromString(execution.argString)
+                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
                         args, jobcontext, secureOptionNodeDeferred)
             }
@@ -1218,7 +1229,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             logOutFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
-            );
+            )
             sysThreadBoundErr.installThreadStream(
                     loggingService.createLogOutputStream(
                             workflowoverride,
@@ -1227,7 +1238,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             logErrFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
-            );
+            )
+            logsInstalled=true
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
 
@@ -1259,10 +1271,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             metricService.markMeter(this.class.name,'executionJobStartFailedMeter')
-            sysThreadBoundOut.close()
-            sysThreadBoundOut.removeThreadStream()
-            sysThreadBoundErr.close()
-            sysThreadBoundErr.removeThreadStream()
+            if(logsInstalled) {
+                sysThreadBoundOut.removeThreadStream()?.close()
+                sysThreadBoundErr.removeThreadStream()?.close()
+            }
             loghandler.close()
             return null
         }
@@ -1450,7 +1462,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SCHEDULED = "scheduled"
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
-    public static String AVERAGE_DURATION_EXCEEDED = "average-duration-exceeded"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -2592,6 +2603,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execution
     }
 
+    void ensureExecutionOutputFilePath(String executionUuid) {
+        def execution = Execution.findByUuid(executionUuid)
+        execution.outputfilepath = logFileStorageService.getFileForExecutionFiletype(execution, "rdlog", false, false)
+        execution.save()
+    }
+
+    Execution createExecution(
+            String jobUuid,
+            UserAndRolesAuthContext authContext,
+            String runAsUser,
+            Map input = [:],
+            boolean retry=false,
+            long prevId=-1,
+            Map securedOpts = [:],
+            Map secureExposedOpts = [:]
+    )
+            throws ExecutionServiceException
+    {
+        return createExecution(ScheduledExecution.findByUuid(jobUuid), authContext, runAsUser, input, retry, prevId, securedOpts, secureExposedOpts)
+    }
 
 
     /**
@@ -2675,7 +2706,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext = null) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
-            optparams = FrameworkService.parseOptsFromString(props.argString)
+            optparams = OptionsParserUtil.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
         optparams = addRemoteOptionSelected(scheduledExec, optparams, authContext)
@@ -2686,19 +2717,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options and return a map of the values of any secure options, using defaults for required options if
      * they are not present, and selecting between exposed/hidden secure values
      */
-    def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params, Boolean exposed=false) throws ExecutionServiceException {
+    def Map selectSecureOptionInput(JobData jobData, Map params, Boolean exposed=false) throws ExecutionServiceException {
         def results=[:]
         def optparams
         if (params?.argString) {
-            optparams = FrameworkService.parseOptsFromString(params.argString)
+            optparams = OptionsParserUtil.parseOptsFromString(params.argString)
         }else if(params?.optparams){
             optparams=params.optparams
         }else{
             optparams = filterOptParams(params)
         }
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
-            options.each {Option opt ->
+            options.each { OptionData opt ->
                 if (opt.secureInput && optparams[opt.name] && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
                     results[opt.name]= optparams[opt.name]
                 }else if (opt.secureInput && opt.defaultValue && opt.required && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
@@ -2711,11 +2742,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Return a map containing all params that are not secure option parameters
      */
-    def Map removeSecureOptionEntries(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
+    def Map removeSecureOptionEntries(JobData jobData, Map params) throws ExecutionServiceException {
         def results=new HashMap(params)
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
-            options.each {Option opt ->
+            options.each {OptionData opt ->
                 if (opt.secureInput) {
                     results.remove(opt.name)
                 }
@@ -2757,13 +2788,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
-    def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
+    def Map addOptionDefaults(JobData jobData, Map optparams) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
-        final options = scheduledExecution.options
+        final options = jobData.optionSet
         if (options) {
             def defaultoptions=[:]
-            options.each {Option opt ->
+            options.each {OptionData opt ->
                 if (null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
@@ -2959,11 +2990,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param argString
      * @return map of option name to value, where value is a String or a List of Strings
      */
-    def Map parseJobOptsFromString(ScheduledExecution scheduledExecution, String argString){
-        def optparams = FrameworkService.parseOptsFromString(argString)
+    def Map parseJobOptsFromString(JobData jobData, String argString){
+        def optparams = OptionsParserUtil.parseOptsFromString(argString)
         if(optparams){
             //look for multi-valued options and try to split on delimiters
-            scheduledExecution.options.each{Option opt->
+            jobData.optionSet.each{OptionData opt->
                 if(opt.multivalued && optparams[opt.name]){
                     def arr = optparams[opt.name].split(Pattern.quote(opt.delimiter))
                     optparams[opt.name]=arr as List

@@ -25,22 +25,28 @@ END
 
 [ -f $OUTF ] && rm $OUTF
 
+run_script(){
+  local SCRIPTF=${1};shift
+  local params=${1};shift
+  # make api request
+  docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
+  if [ 0 != $? ] ; then
+      errorMsg "FAIL: failed query request"
+      exit 2
+  fi
+
+  $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+  execid=$(jq -r ".execution.id" < $DIR/curl.out)
+  if [ "" == "${execid}" ] ; then
+      errorMsg "FAIL: expected execution id in result: ${execid}"
+      exit 2
+  fi
+  echo $execid
+}
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=true"
 params="scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=true"
-# make api request
-docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "FAIL: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
-if [ "" == "${execid}" ] ; then
-    errorMsg "FAIL: expected execution id in result: ${execid}"
-    exit 2
-fi
+execid=$(run_script $SCRIPTF $params)
 
 ##wait for script to execute...
 api_waitfor_execution $execid || fail "Waiting for $execid to finish"
@@ -64,20 +70,7 @@ rm $OUTF
 
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=false"
 params="scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=false"
-# make api request
-docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "FAIL: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
-if [ "" == "${execid}" ] ; then
-    errorMsg "FAIL: expected execution id in result: ${execid}"
-    exit 2
-fi
+execid=$(run_script $SCRIPTF $params)
 
 ##wait for script to execute...
 api_waitfor_execution $execid || fail "Waiting for $execid to finish"

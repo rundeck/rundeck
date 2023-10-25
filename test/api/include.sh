@@ -106,7 +106,7 @@ api_request(){
     local H_UPLOAD=
     if [ -n "${POSTFILE:-}" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
-        if [ -n "$DEBUG" ] ; then
+        if [ -n "${DEBUG:-}" ] ; then
             1>&2 echo "POSTFILE=$POSTFILE"
             1>&2 echo ">>>>"
             1>&2 cat $POSTFILE
@@ -152,10 +152,9 @@ api_waitfor_execution(){
 
 
         #Check projects list
-        assert_xml_valid $DIR/curl.out
-        assert_xml_value "1" "//executions/@count" $DIR/curl.out
+        assert_json_value "$execid" ".id" $DIR/curl.out
 
-        status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
+        status=$(jq -r  ".status" < $DIR/curl.out)
 
         if [[ $status == 'running' ]] ; then
             rc=$(( $rc + 1 ))
@@ -323,30 +322,60 @@ json_val(){
     fi
     echo $propval
 }
+runjob(){
+    local jobid=$1;shift
+    local execargs=${1:-};shift
+    local jsondata=${1:-};shift
+    # now submit req
+    runurl="${APIURL}/job/${jobid}/run"
+    params=""
 
+    if [ -n "$jsondata" ] ; then
+        docurl -X POST --data-binary "$jsondata" -H content-type:application/json \
+          -H accept:application/json ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+    else
+        docurl --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out \
+            || fail "failed request: ${runurl}"
+    fi
+
+    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+    #get execid
+
+    assert_json_not_null ".id"  "$DIR/curl.out"
+    local execid
+    execid=$(jq -r ".id" < "$DIR/curl.out")
+    if [ "" != "${execid}" ] && [ "null" != "${execid}" ] ; then
+        echo $execid
+    else
+        errorMsg "FAIL: expected run success message for execution id. ( id: ${execid})"
+        exit 2
+    fi
+}
 uploadJob(){
     local file=$1;shift
     local proj=$1;shift
     local count=${1:-1};shift
     local params=${1:-dupeOption=update};shift
-    local select=${1:-//succeeded/job/id};shift
+    local select=${1:-.succeeded[0].id};shift
 
     # now submit req
     runurl="${APIURL}/project/$proj/jobs/import"
 
     # specify the file for upload with curl, named "xmlBatch"
-    local ulopts="-F xmlBatch=@$file -H Accept:application/xml"
+    local ulopts="-F xmlBatch=@$file -H Accept:application/json"
 
     # get listing
     docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "ERROR: failed query request"
+        cat $file 1>&2
         exit 2
     fi
 
-    assert_xml_value "$count" '/result/succeeded/@count' $DIR/curl.out
+    assert_json_value "$count" '.succeeded | length' $DIR/curl.out
     local jobid
-    jobid=$(xmlsel "$select" $DIR/curl.out)
+    jobid=$(jq -r "$select" < $DIR/curl.out)
 
     if [ "" == "$jobid" ] ; then
         errorMsg  "Upload was not successful for file $file"
@@ -355,4 +384,46 @@ uploadJob(){
     fi
 
     echo $jobid
+}
+create_project(){
+	local projectName=$1;shift
+	local config=${1:-};shift
+
+	ENDPOINT="${APIURL}/projects"
+	tmp=$DIR/create-project-temp.json
+	cat >$tmp <<END
+{
+    "name":"$projectName"
+END
+  if [ -n "$config" ] ; then
+    cat >>$tmp <<END
+    ,"config": $config
+END
+  fi
+  cat >>$tmp <<END
+}
+END
+	TYPE=application/json
+	POSTFILE=$tmp
+	METHOD=POST
+	EXPECT_STATUS=201
+	api_request $ENDPOINT $DIR/curl.out
+	rm $tmp
+}
+create_proj(){
+  create_project "$*"
+}
+delete_project(){
+	local projectName=$1
+
+	ENDPOINT="${APIURL}/project/$projectName"
+	METHOD=DELETE
+	EXPECT_STATUS=204
+	api_request $ENDPOINT $DIR/curl.out
+}
+remove_project(){
+  delete_project "$*"
+}
+delete_proj(){
+  delete_project "$*"
 }

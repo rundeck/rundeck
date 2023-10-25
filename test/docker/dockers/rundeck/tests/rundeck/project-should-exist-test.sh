@@ -29,7 +29,7 @@ it_should_contain_remote_node() {
     IFS=$'\n\t'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    rawout=($(bash -c "rd nodes -p $RUNDECK_PROJECT -% \"%nodename\" -F tags:remote"))
+    rawout=($(bash -c "rd nodes list -p $RUNDECK_PROJECT -% \"%nodename\" -F tags:remote"))
 
     test "${rawout[0]}" = $REMOTE_NODE
 

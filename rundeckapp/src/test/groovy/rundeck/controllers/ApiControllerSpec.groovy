@@ -45,7 +45,7 @@ import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
-import rundeck.services.feature.FeatureService
+import com.dtolabs.rundeck.core.config.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -65,6 +65,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.featureService = Mock(FeatureService)
     }
 
     def "api token list does not include webhook tokens"() {
@@ -484,7 +485,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     @Unroll
     def "api system info should return only basic data if user doesnt have read authorizarion"() {
         given:
-        request.api_version = ApiVersions.V14
+        request.api_version = ApiVersions.API_CURRENT_VERSION
         request.addHeader('accept', 'application/json')
         session.subject = new Subject()
         controller.apiService = Mock(ApiService)

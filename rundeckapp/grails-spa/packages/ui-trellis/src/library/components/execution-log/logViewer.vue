@@ -381,9 +381,7 @@ export default defineComponent({
       Object.assign(this.settings, this.config || {})
     },
     saveConfig() {
-      // flattening nested objects to save to local storage
-      let flattenedSettings = this.flattenObj({...this.settings})
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(flattenedSettings))
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
     },
     addScrollBlocker() {
       /**
@@ -515,14 +513,6 @@ export default defineComponent({
       }
       this.totalTime = Date.now() - this.startTime
       this.populateLogsProm = undefined
-    },
-    flattenObj(obj = {}) {
-      return Object.keys(obj || {}).reduce((acc, cur) => {
-        if (typeof obj[cur] === 'object') {
-          acc = { ...acc, ...this.flattenObj(obj[cur])}
-        } else { acc[cur] = obj[cur] }
-        return acc
-      }, {})
     }
   }
 })
@@ -566,10 +556,6 @@ export default defineComponent({
 
 .execution-log--no-transition * {
   transition: none !important;
-}
-
-.execution-log__node-chunk * {
-  transition: all 0.3s ease;
 }
 
 .execution-log__node-chunk {

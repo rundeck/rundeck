@@ -52,7 +52,7 @@ jobid=$(uploadJob "$DIR/temp.out" "$project" 1)
 # Test result of /job/ID/executions is 0 list
 ###
 
-echo "TEST: job/id/executions should succeed with 0 results"
+echo "TEST: job/${jobid}/executions should succeed with 0 results"
 
 # now submit req
 runurl="${APIURL}/job/${jobid}/executions"
@@ -65,7 +65,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 0 results
 
-assert "0" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
+assert_json_value "0"  ".executions|length" $DIR/curl.out
 echo "OK"
 
 ###
@@ -86,10 +86,11 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+assert_json_not_null ".id" $DIR/curl.out
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+
+if [  "" != "${execid}" ] ; then
     echo "OK"
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -113,8 +114,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 ###
@@ -139,8 +140,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 
@@ -164,10 +165,11 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+assert_json_not_null ".id" $DIR/curl.out
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+
+if [  "" != "${execid}" ] ; then
     echo "OK"
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -195,7 +197,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "2" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
+assert_json_value "2" ".executions | length" $DIR/curl.out
 echo "OK"
 
 
@@ -216,8 +218,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "$execid" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong exec id"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 
@@ -238,8 +240,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "$origexecid" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong exec id"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${origexecid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 #############
@@ -263,7 +265,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
 
-assert "0" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
+assert_json_value "0" ".executions | length" $DIR/curl.out
 
 echo "OK"
 
@@ -344,10 +346,10 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+assert_json_not_null ".id" $DIR/curl.out
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+if [ "" != "${execid}" ] ; then
     echo "OK"
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -380,8 +382,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 
@@ -454,10 +456,10 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+assert_json_not_null ".id" $DIR/curl.out
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-[ "1" == "${execcount}" -a "" != "${execid}" ] || fail "expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+[ "" != "${execid}" ] || fail "expected run success message for execution id. (id: ${execid})"
 
 ###
 # Test result of /job/ID/executions?status=running is 1 list
@@ -476,8 +478,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"
 
 
@@ -520,6 +522,6 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"

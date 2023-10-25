@@ -70,13 +70,13 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.sql.Time
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
@@ -2927,7 +2927,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
 
@@ -4107,7 +4107,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -4185,7 +4185,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]

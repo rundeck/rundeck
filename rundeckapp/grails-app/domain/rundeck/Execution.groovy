@@ -47,6 +47,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Date dateCompleted
     String status
     String outputfilepath
+    Long execIdForLogStore
     String failedNodeList
     String succeededNodeList
     String abortedby
@@ -64,11 +65,12 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Long retryOriginalId
     Long retryPrevId
     String extraMetadata
+    private static final String REMOTE_LOG_FILEPATH_PREFIX = 'ext:'
 
     boolean serverNodeUUIDChanged = false
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore']
     static constraints = {
         importFrom SharedExecutionConstraints
         importFrom SharedNodeConfigConstraints
@@ -214,6 +216,35 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata ? asJsonMap(extraMetadata) : [:]
     }
 
+    /**
+     * @return the execution id used to store the log files (might differ from execId since execId changes after imports)
+     */
+    Long getExecIdForLogStore(){
+        if(!execIdForLogStore) {
+            if (isRemoteOutputfilepath()) {
+                final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
+                execIdForLogStore = Long.parseLong(outputfilepath.substring(extMarkPos, outputfilepath.indexOf(':', extMarkPos)))
+            } else
+                execIdForLogStore = id
+        }
+        return execIdForLogStore
+    }
+
+    /**
+     * @return the path for the log ( must check {@link #isRemoteOutputfilepath()} to validate where the path is located)
+     */
+    String getOutputfilepath(){
+        final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
+        return isRemoteOutputfilepath() ? outputfilepath.substring(outputfilepath.indexOf(':', extMarkPos) + 1) : outputfilepath
+    }
+
+    /**
+     * @return true if the outputfilepath corresponds to a path in a remote storage
+     */
+    boolean isRemoteOutputfilepath(){
+        return this.outputfilepath?.startsWith(REMOTE_LOG_FILEPATH_PREFIX)
+    }
+
     void setExtraMetadataMap(Map config) {
         extraMetadata = config ? serializeJsonMap(config) : null
     }
@@ -243,8 +274,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
             (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
-                    (null == dateCompleted && status!=ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.EXECUTION_RUNNING :
-                        (status == ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.AVERAGE_DURATION_EXCEEDED:
+                    (null == dateCompleted) ? ExecutionService.EXECUTION_RUNNING :
                             (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
                                 cancelled ? ExecutionService.EXECUTION_ABORTED :
                                     willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
@@ -270,8 +300,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                                                  ExecutionService.EXECUTION_SUCCEEDED,
                                                  ExecutionService.EXECUTION_FAILED,
                                                  ExecutionService.EXECUTION_QUEUED,
-                                                 ExecutionService.EXECUTION_SCHEDULED,
-                                                 ExecutionService.AVERAGE_DURATION_EXCEEDED])
+                                                 ExecutionService.EXECUTION_SCHEDULED])
     }
 
     // various utility methods helpful to the presentation layer
@@ -322,6 +351,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         map.dateCompleted=dateCompleted
         map.status=status
         map.outputfilepath=outputfilepath
+        map.execIdForLogStore = getExecIdForLogStore()
         map.failedNodeList = failedNodeList
         map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
@@ -395,6 +425,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         exec.dateCompleted=data.dateCompleted
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
+        exec.execIdForLogStore = data.execIdForLogStore ? Long.parseLong(data.execIdForLogStore as String) : null
         exec.failedNodeList = data.failedNodeList
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
@@ -492,6 +523,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return new ExecutionReferenceImpl(
                 project: project,
                 id: id,
+                uuid: uuid,
                 retryOriginalId: retryOriginalId?.toString(),
                 retryPrevId: retryPrevId?.toString(),
                 retryNextId: retryExecution?.id?.toString(),

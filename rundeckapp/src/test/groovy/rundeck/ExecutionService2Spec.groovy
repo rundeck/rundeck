@@ -2576,4 +2576,17 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         // asserts validate above
         1 == 1
     }
+
+    def "ensureExecutionOutputFilePath"() {
+        given:
+        Execution e = new Execution(uuid:"execution-uuid",project:"AProject",user:'bob',dateStarted: new Date(),dateCompleted: null,jobUuid: "job-uuid",workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        e.save()
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+        when:
+        service.ensureExecutionOutputFilePath("execution-uuid")
+
+        then:
+        1 * service.logFileStorageService.getFileForExecutionFiletype(e,"rdlog", false, false) >> new File("/tmp/rdlogout")
+    }
 }

@@ -17,6 +17,10 @@ public interface PreparedExecutionReference {
     String getId();
 
     /**
+     * @return execution UUID
+     */
+    String getUuid();
+    /**
      * @return job reference, or null if not associated with a job
      */
     JobReference getJob();

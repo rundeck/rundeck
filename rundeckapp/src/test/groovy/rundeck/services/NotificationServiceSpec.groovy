@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
@@ -31,11 +32,19 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.fasterxml.jackson.databind.ObjectMapper
+import grails.config.Config
 import grails.plugins.mail.MailMessageBuilder
+import grails.plugins.mail.MailMessageContentRenderer
 import grails.plugins.mail.MailService
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
@@ -50,6 +59,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
+import org.springframework.mail.MailMessage
+import org.springframework.mail.MailSender
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -57,6 +68,7 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.data.notification.SendNotificationEvent
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
@@ -90,16 +102,18 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
-                ).save(),
-                ).save()
+                ).save(flush:true),
+                ).save(flush:true)
         def execution = new Execution(
+                uuid: 'exec1',
+                jobUuid: 'test1',
                 project: 'Test',
                 scheduledExecution: job,
                 user: 'bob',
                 status: 'succeeded',
                 dateStarted: new Date(),
                 dateCompleted: new Date()
-        ).save()
+        ).save(flush:true)
         [job, execution]
     }
 
@@ -275,6 +289,93 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
     }
 
+    def "custom plugin notification dynamic form contents"() {
+        given: 'notification context has some globals values, and a notification config uses a dynamic form field'
+        def (job, execution) = createTestJob()
+        def globalContext=new BaseDataContext([globals:globals])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals:globals])
+                    getSharedDataContext() >> shared
+                }
+        ]
+        def notificationConfig=[
+                testCustomFields:testCustomFieldsConfig
+        ]
+        def json = new ObjectMapper()
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestNotificationPlugin',
+                        content: json.writeValueAsString(notificationConfig)
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+
+
+        def fieldName = 'testCustomFields'
+        def desc = DescriptionBuilder.builder().name('TestNotificationPlugin')
+        .property(
+                PropertyBuilder.builder().string(fieldName).renderingOption(
+                        StringRenderingConstants.DISPLAY_TYPE_KEY,
+                        StringRenderingConstants.DisplayType.DYNAMIC_FORM
+                ).build()
+        ).build()
+        def pluginInst = Mock(NotificationPlugin)
+
+        when: 'trigger notification'
+        service.triggerJobNotification('start', job, content)
+
+        then: 'plugin is configured with the dynamic form contents with correct expansion values'
+        1* service.pluginService.getPluginDescriptor('TestNotificationPlugin',_)>>new DescribedPlugin(
+                null,
+                desc,
+                'TestNotificationPlugin',
+                null,
+                null
+        )
+        1 * service.pluginService.configurePlugin('TestNotificationPlugin',_, { PropertyResolverFactory.Factory factory->
+            //assert the factory param matches by resolving the field value
+            factory.create(
+                    ServiceNameConstants.Notification,
+                    desc
+            ).resolvePropertyValue(
+                    fieldName,
+                    PropertyScope.Instance
+            ) == expect
+        },_,_) >> new ConfiguredPlugin(pluginInst, [:])
+        1 * service.frameworkService.getProjectPropertyResolver(_)
+        1 * pluginInst.postNotification(_, _, _)
+
+        where:
+
+        testCustomFieldsConfig         | globals                     || expect
+        'plain text'                   | [:]                         || 'plain text'
+        'expand text ${globals.test1}' | [:]                         || 'expand text ${globals.test1}'
+        'expand text ${globals.test1}' | [test1: 'some value']       || 'expand text some value'
+        'expand text ${globals.test1}' | [test1: 'has "quotes" etc'] || 'expand text has "quotes" etc'
+
+    }
+
     def "custom plugin notification no configuration"() {
         given:
         def (job, execution) = createTestJob()
@@ -440,13 +541,12 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                     getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
                 }
         ]
-        content.execution.status = ExecutionService.AVERAGE_DURATION_EXCEEDED
 
         job.notifications = [
                 new Notification(
                         eventTrigger: 'onavgduration',
                         type: 'email',
-                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true}'
+                        content: '{"recipients":"mail@example.com","attachLog":true}'
                 )
         ]
         job.save()
@@ -457,6 +557,8 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
             _ * getPluginControlService(_) >> Mock(PluginControlService)
 
         }
+        service.pluginService = Mock(PluginService)
+        service.orchestratorPluginService = Mock(OrchestratorPluginService)
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
@@ -479,13 +581,26 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
                 ]
         )
         service.loggingService=Mock(LoggingService)
+        MailMessageBuilder mailMessageBuilder = Mock(MailMessageBuilder)//new MailMessageBuilder(Mock(MailSender), Mock(Config))
+        MailMessage mailMessage = Mock(MailMessage)
+
+        String expectedSubject = null
 
         when:
         def result = service.triggerJobNotification('avgduration', job, content)
 
         then:
         1 * service.loggingService.getLogReader(_) >> reader
-        1 * service.mailService.sendMail(_)
+        1 * service.mailService.sendMail(_)>>{args->
+            args[0].delegate= mailMessageBuilder
+            args[0].call()
+            return mailMessage
+        }
+        1 * mailMessageBuilder.subject(_)>>{args->
+            expectedSubject = args[0]
+        }
+
+        expectedSubject.contains('AVERAGE DURATION EXCEEDED')
         result
     }
 
@@ -1157,6 +1272,53 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         context.exportVarGroup2.testSubject == 'test123'
         context.exportVarGroup2.testTitle == 'test2'
 
+    }
+
+    def "sendNotificationsForExecution event trigger"() {
+        given:
+        def job = new ScheduledExecution(
+                uuid: 'test1',
+                jobName: 'red color',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                user: 'bob',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ).save(flush:true),
+                notifications : [
+                    new Notification(
+                            eventTrigger: 'onstart',
+                            type: 'SimpleNotificationPlugin'
+                    )]
+        ).save(flush:true)
+        def execution = new Execution(
+                uuid: 'exec1',
+                jobUuid: 'test1',
+                project: 'Test',
+                scheduledExecution: job,
+                user: 'bob',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date()
+        ).save(flush:true)
+        UserAndRolesAuthContext ctx = Mock(UserAndRolesAuthContext)
+        boolean called = false
+        service.storageService = Mock(StorageService)
+        service.frameworkService = Mock(FrameworkService)
+        service.metaClass.triggerJobNotification = { String trigger, ScheduledExecution source, Map content ->
+            called = true
+        }
+
+        when:
+        service.sendNotificationsForExecution(new SendNotificationEvent(executionUuid: execution.uuid, jobUuid: job.uuid, authContext: ctx))
+
+        then:
+        called
     }
 
     class TestReader implements StreamingLogReader {

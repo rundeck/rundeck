@@ -76,41 +76,6 @@ END
 }
 
 
-runjob(){
-  jobid=$1
-  shift
-  ###
-  # Run the chosen id, expect success message
-  ###
-errorMsg "RUN JOB $jobid"
-  # now submit req
-  runurl="${APIURL}/job/${jobid}/run"
-  params=""
-
-  # get listing
-  docurl -X POST ${runurl}?${params} > $DIR/curl.out
-  if [ 0 != $? ] ; then
-      errorMsg "ERROR: failed query request"
-      exit 2
-  fi
-
-  #test success result
-  $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-  #get execid
-
-  execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-  execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
-
-  if [ "1" != "${execcount}" -o "" == "${execid}" ] ; then
-      errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-      exit 2
-  fi
-
-  echo $execid
-}
-
-
 
 
 waitexecstatus(){

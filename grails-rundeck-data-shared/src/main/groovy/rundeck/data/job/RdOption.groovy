@@ -2,6 +2,7 @@ package rundeck.data.job
 
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.validation.Validateable
@@ -30,6 +31,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     Boolean secureInput = false
     Boolean secureExposed = false
     String optionType
+    @JsonIgnore
     JobOptionConfigData configData
     Boolean multivalueAllSelected = false
     String optionValuesPluginType

@@ -77,7 +77,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     def "system acls require api_version 14"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> {args->
+            1 * requireApi(_,_) >> {args->
                 args[1].status=400
                 false
             }
@@ -91,7 +91,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     def "system acls not authorized"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'Rundeck System ACLs','']]) >> {args->
                 args[0].status=args[1].status
             }
@@ -122,7 +122,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     def "system acls invalid path"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
 
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -164,7 +164,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(_,_) >> {args->
                 args[0].status=args[1].status
@@ -196,7 +196,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -209,36 +209,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         response.status==200
         response.contentType.split(';').contains('application/json')
         response.json == [contents:"blah"]
-    }
-    def "system acls GET xml"(){
-        setup:
-        controller.aclFileManagerService=Mock(ContextACLManager){
-            1 * existsPolicyFile(AppACLContext.system(), _) >> true
-            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
-                args[2].write('blah'.bytes)
-                4
-            }
-        }
-        controller.frameworkService=Mock(FrameworkService){
-        }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderWrappedFileContentsXml('blah','xml',_)
-        }
-        when:
-        params.path='blah.aclpolicy'
-        params.project="test"
-        response.format='xml'
-        controller.apiSystemAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
     }
     def "system acls GET text/yaml"(String respFormat, String contentType){
         setup:
@@ -255,7 +225,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * getAuthContextForSubject(_) >> null
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> respFormat
         }
         when:
@@ -288,7 +258,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * jsonRenderDirlist('',_,_,['blah.aclpolicy'])>>{args-> [success: true] }
             0*_(*_)
@@ -304,39 +274,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         response.status==200
         response.contentType.split(';').contains('application/json')
         response.json==[success:true]
-
-    }
-    def "system acls GET dir XML"(){
-        setup:
-            controller.aclFileManagerService=Mock(ContextACLManager){
-            1 * listStoredPolicyFiles(AppACLContext.system()) >> ['blah.aclpolicy']
-
-            0*_(*_)
-        }
-        controller.frameworkService=Mock(FrameworkService){
-            0*_(*_)
-        }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
-            0*_(*_)
-        }
-        when:
-        params.path=''
-        params.project="test"
-        response.format='xml'
-        def result=controller.apiSystemAcls()
-
-        then:
-        response.status==200
-        response.contentType.split(';').contains('application/xml')
-//        response.contentAsString==''
-        response.xml.'@ok'.text()=='true'
 
     }
     def "system acls POST text"(){
@@ -359,7 +296,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -394,7 +331,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:409,code:'api.error.item.alreadyexists',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -430,7 +367,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -474,7 +411,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -508,7 +445,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -537,7 +474,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
         }
@@ -570,7 +507,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderJsonAclpolicyValidation(_)>>{args->
@@ -595,55 +532,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         response.status==400
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blahz']
-    }
-    /**
-     * Policy validation failure
-     * @return
-     */
-    def "system acls POST text invalid (xml response)"(){
-        setup:
-        controller.aclFileManagerService=Mock(ContextACLManager){
-            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
-
-            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
-                isValid() >> false
-            }
-        }
-            controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-
-            1 * renderXmlAclpolicyValidation(_,_)>>{args->
-                args[1].contents {
-                    'data'('value')
-                }
-            }
-        }
-        when:
-        params.path='test.aclpolicy'
-        params.project="test"
-        response.format='xml'
-        request.format='yaml'
-        request.method='POST'
-        request.contentType='application/yaml'
-        request.content=('{ description: \'\', \n' +
-                'context: { project: \'test\' }, \n' +
-                'by: { username: \'test\' }, \n' +
-                'for: { resource: [ { allow: \'x\' } ] } }').bytes
-        controller.response.format = "xml"
-        def result=controller.apiSystemAcls()
-
-        then:
-        response.status==400
-        response.contentType.split(';').contains('application/xml')
-        response.xml!=null
-        response.xml.data.text()=='value'
-
     }
 
     def "save project with description"(){
@@ -1093,7 +981,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, 14) >> true
+            1 * requireApi(_,_) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1140,7 +1028,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, 14) >> true
+            1 * requireApi(_,_) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1187,7 +1075,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _, 14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
         }
         def query = new ExtNodeFilters(project: projectName)

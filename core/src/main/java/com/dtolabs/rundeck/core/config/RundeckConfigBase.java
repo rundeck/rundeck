@@ -169,6 +169,7 @@ public class RundeckConfigBase {
 
             Checkpoint checkpoint;
             boolean generateExecutionXml;
+            boolean forcePartialChecking;
         }
 
         @Data
@@ -423,6 +424,7 @@ public class RundeckConfigBase {
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
+        Enabled legacyXml = new Enabled(false);
 
 
         @Data

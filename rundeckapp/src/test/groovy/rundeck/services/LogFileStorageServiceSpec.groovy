@@ -21,11 +21,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
@@ -47,7 +51,6 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.A
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_PARTIAL
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE_PARTIAL
-import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.ERROR
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.NOT_FOUND
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.PENDING_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.WAITING
@@ -1155,6 +1158,74 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             true  | _
     }
 
+    def "requestLogFileLoad not cluster mode force partial check with plugin async and partial support so ruuid is null"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs.part')
+        def logsDir = tempDir.resolve('rundeck.part')
+
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user2',
+                project: 'test',
+                serverNodeUUID: 'blabla'
+        )
+
+        exec.save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+            getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            getFrameworkProperties() >> (
+                    [
+                            'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                    ] as Properties
+            )
+
+
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+        }
+        boolean retrieved = false
+        def plugin = new TestEFSPlugin(
+                partialRetrieveSupported: true, available: true, retrieve: { type, stream ->
+            stream.write('data'.bytes)
+            retrieved = true
+            true
+        }
+        )
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
+            getBoolean('execution.logs.fileStorage.forcePartialChecking', false) >> true
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin(
+                    'testplugin',
+                    _,
+                    _ as PropertyResolverFactory.Factory,
+                    PropertyScope.Instance
+            ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
+        }
+        service.logFileTaskExecutor = Mock(AsyncListenableTaskExecutor)
+
+
+        when:
+        service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
+        Map task = service.retrievalRequests.take()
+        task.ruuid = null
+        def result = service.runRetrievalRequestTask(task)
+
+        then:
+        noExceptionThrown()
+        result != null
+        !result.isDone()
+        where:
+        async | _
+        true  | _
+    }
+
     def "requestLogFileLoad cluster mode with plugin async with error"() {
         given:
             def tempDir = Files.createTempDirectory('test_logs')
@@ -1398,5 +1469,107 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         results.size() == 1
         results[0].pluginName == 'blah3'
 
+    }
+
+    def "should return correctly expanded path given a path template and execution"(){
+        given:
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: serverUUID
+        )
+        e.id = execId
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        when:
+        String expandedPath = service.getRemotePathForExecutionFromPathTemplate(e, pathTemplate)
+
+        then:
+        expectedExpandedPath == expandedPath
+
+        where:
+
+        execId | projectName      | serverUUID               | pathTemplate                                      | expectedExpandedPath
+        67     | 'projectExample' | 'some-other-server-uuid' | 'rootDir/logs/${job.project}/${job.execid}.log'   | "rootDir/logs/${projectName}/${execId}.log"
+        67     | 'projectExample' | 'some-other-server-uuid' |'rootDir/logs/${job.execid}/${job.serverUUID}.log' | "rootDir/logs/${execId}/${serverUUID}.log"
+
+    }
+
+    def "should expand the path template correctly"(){
+        given:
+        def e = new Execution(dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: serverUUID
+        )
+        e.id = execId
+
+        Map<String, String> execCtx = ExecutionService.exportContextForExecution(e, Mock(LinkGenerator))
+
+        when:
+        String expandedPath = LogFileStorageService.expandPath(pathTemplate, execCtx)
+
+        then:
+        expectedExpandedPath == expandedPath
+
+        where:
+
+        execId | projectName      | serverUUID               | pathTemplate                                      | expectedExpandedPath
+        67     | 'projectExample' | 'some-other-server-uuid' | 'rootDir/logs/${job.project}/${job.execid}.log'   | "rootDir/logs/${projectName}/${execId}.log"
+        67     | 'projectExample' | 'some-other-server-uuid' |'rootDir/logs/${job.execid}/${job.serverUUID}.log' | "rootDir/logs/${execId}/${serverUUID}.log"
+    }
+
+    def "should bring the path property from the defined log storage plugin"(){
+        given:
+        Execution e = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: projectName,
+                serverNodeUUID: 'some-other-server-uuid'
+        )
+
+
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        service.configurationService=Mock(ConfigurationService){
+            getString('execution.logs.fileStoragePlugin',_) >> pluginName
+        }
+
+        Description pluginDescription = Mock(Description) {
+            getProperties() >> [PropertyUtil.string('path','path','path',true,logStoragePluginPath)]
+        }
+
+        PropertyResolver propertyResolver = Mock(PropertyResolver){
+            resolvePropertyValue('path', _) >> logStoragePluginPath
+        }
+        PropertyResolverFactory.Factory propertyResolverFactory = Mock(PropertyResolverFactory.Factory){
+            create(_, pluginDescription) >> propertyResolver
+        }
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkPropertyResolverFactory(projectName) >> propertyResolverFactory
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin(pluginName, _, propertyResolverFactory, PropertyScope.Instance) >> Mock(ConfiguredPlugin){
+                instance >> Mock(ExecutionFileStoragePlugin){
+                    getConfiguredPathTemplate() >> logStoragePluginPath
+                }
+            }
+        }
+
+        service.executionFileStoragePluginProviderService = Mock(ExecutionFileStoragePluginProviderService)
+
+        when:
+        String returnedStoragePath = service.getStorePathTemplateForExecution(e)
+
+        then:
+        logStoragePluginPath == returnedStoragePath
+
+        where:
+        pluginName = 'log-storage-name-example'
+        projectName = 'projectExample'
+        logStoragePluginPath = 'rootDir/logs/${job.project}/${job.execid}.log'
     }
 }

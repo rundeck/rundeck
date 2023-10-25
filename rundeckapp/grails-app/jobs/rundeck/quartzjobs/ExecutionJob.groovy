@@ -36,6 +36,7 @@ import org.quartz.JobExecutionContext
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
@@ -284,7 +285,7 @@ class ExecutionJob implements InterruptableJob {
             if (! initMap.execution instanceof Execution) {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
-            def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
+            def jobArguments= OptionsParserUtil.parseOptsFromString(initMap.execution?.argString)
             if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
                 initMap.timeout = expandTimeout(initMap)
             }
@@ -352,7 +353,7 @@ class ExecutionJob implements InterruptableJob {
 
     @CompileStatic
     private long expandTimeout(RunContext initMap){
-        def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
+        def jobArguments=OptionsParserUtil.parseOptsFromString(initMap.execution?.argString)
         def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
                 DataContextUtils.addContext("option", jobArguments, null))
         return timeout ? Sizes.parseTimeDuration(timeout) : -1
@@ -423,9 +424,6 @@ class ExecutionJob implements InterruptableJob {
             def duration = System.currentTimeMillis() - startTime
             if(!avgNotificationSent && jobAverageDurationFinal>0){
                 if(duration > jobAverageDurationFinal){
-                    if(execmap.execution){
-                        execmap.execution.status=ExecutionService.AVERAGE_DURATION_EXCEEDED
-                    }
                     runContext.executionService.avgDurationExceeded(
                             execmap.scheduledExecution.uuid,
                             [

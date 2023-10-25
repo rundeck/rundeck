@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -526,24 +528,6 @@ class ExecutionController extends ControllerBase{
     }
 
 
-    private def xmlerror() {
-        render(contentType:"text/xml",encoding:"UTF-8"){
-            result(error:"true"){
-                delegate.'error'{
-                    if(flash.error){
-                        response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,flash.error)
-                        delegate.'message'(flash.error)
-                    }
-                    if(flash.errors){
-                        def p = delegate
-                        flash.errors.each{ msg ->
-                            p.'message'(msg)
-                        }
-                    }
-                }
-            }
-        }
-    }
     def cancelExecution () {
         boolean valid=false
         withForm{
@@ -561,9 +545,6 @@ class ExecutionController extends ControllerBase{
                         delegate.cancelled false
                         delegate.error request.error
                     }
-                }
-                xml {
-                    xmlerror()
                 }
             }
         }
@@ -583,9 +564,6 @@ class ExecutionController extends ControllerBase{
                         delegate.cancelled false
                         delegate.error "Execution not found for id: " + params.id
                     }
-                }
-                xml {
-                    xmlerror()
                 }
             }
         }catch (DataAccessResourceFailureException ex){
@@ -623,18 +601,6 @@ class ExecutionController extends ControllerBase{
                     }
                 }
             }
-            xml {
-                render(contentType:"text/xml",encoding:"UTF-8"){
-                    result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
-                        success{
-                            message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
-                        }
-                        if (reasonstr) {
-                            reason(reasonstr)
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -656,9 +622,6 @@ class ExecutionController extends ControllerBase{
                         delegate.error request.error
                     }
                 }
-                xml {
-                    xmlerror()
-                }
             }
         }
 
@@ -677,9 +640,6 @@ class ExecutionController extends ControllerBase{
                         delegate.cancelled  false
                         delegate.error  "Execution not found for id: " + params.id
                     }
-                }
-                xml {
-                    xmlerror()
                 }
             }
         }
@@ -934,7 +894,7 @@ setTimeout(function(){
         summary="Execution Output",
         description="""Get the output for an execution by ID. The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
-The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
+The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON includes metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
 
 Output can be selected by Node or Step Context or both as of API v10.
 
@@ -1032,7 +992,7 @@ This endpoint requires that the user have `read` access to the Job or to Adhoc e
                 in=ParameterIn.QUERY,
                 description = "Specify output format",
                 schema = @Schema(
-                    allowableValues = ['xml','json','text'],
+                    allowableValues = ['json','text'],
                     type = "string"
                 )
             )
@@ -1044,11 +1004,10 @@ This endpoint requires that the user have `read` access to the Job or to Adhoc e
 
 The result will contain a set of data values reflecting the execution's status, as well as the status and read location in the output file.
 
-* In JSON, there will be an object containing these entries.
-* In XML, there will be an `output` element, containing these sub-elements, each with a text value.
+* In JSON, there will be an object containing these fields.
 * In plain text format, HTTP headers will include some information about the loging state, but individual log entries will only be returned in textual form without metadata.
 
-Entries:
+Contents:
 
 * `id`: ID of the execution
 * `message`: optional text message indicating why no entries were returned
@@ -1073,9 +1032,8 @@ Entries:
 Each log entry will be included in a section called `entries`.
 
 * In JSON, `entries` will contain an array of Objects, each containing the following format
-* In XML, the `entries` element will contain a sequence of `entry` elements
 
-Content of each Log Entry:
+Content of each Log Entry object:
 
 * `time`: Timestamp in format: "HH:MM:SS"
 * `absolute_time`: Timestamp in format: "yyyy-MM-dd'T'HH:mm:ssZ"
@@ -1100,8 +1058,7 @@ In JSON format, if the `compactedAttr` value is `log` in the response data, and 
 When no values changed from the previous Log Entry, the Log Entry will be an empty object.
 
 When an entry value is not present in the subsequent Log Entry, but was present in the previous
-one, in JSON this will be represented with a `null` value, and in XML the entry name will be
-included in a `removed` attribute.""",
+one, in JSON this will be represented with a `null` value.""",
         headers = [
             @Header(name='X-Rundeck-ExecOutput-Error', description='The `error` field (text format only)',schema = @Schema(type="string")),
             @Header(name='X-Rundeck-ExecOutput-Message', description='The `message` field (text format only)',schema = @Schema(type="string")),
@@ -1532,9 +1489,6 @@ JSON response requires API v14.
         def apiError = { String code, List args, int status = 0 ->
             def message=code?g.message(code:code,args:args):'Unknown error'
             withFormat {
-                xml {
-                    apiService.renderErrorXml(response,[code:code,args:args,status:status])
-                }
                 json {
                     if (status > 0) {
                         response.setStatus(status)
@@ -1552,6 +1506,11 @@ JSON response requires API v14.
                         response.setStatus(status)
                     }
                     render(contentType: "text/plain", text: message)
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderErrorXml(response, [code: code, args: args, status: status])
+                    }
                 }
             }
         }
@@ -1619,13 +1578,6 @@ JSON response requires API v14.
                 dataMap.message=errmsg
             }
             withFormat {
-                xml {
-                    apiService.renderSuccessXml(request,response) {
-                        output{
-                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                        }
-                    }
-                }
                 json {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
@@ -1644,6 +1596,15 @@ JSON response requires API v14.
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
+                    }
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
+                        }
                     }
                 }
             }
@@ -1665,13 +1626,6 @@ JSON response requires API v14.
                     retryBackoff  : reader.retryBackoff
             ] + clusterInfo
             withFormat {
-                xml {
-                    apiService.renderSuccessXml(request,response) {
-                        output {
-                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                        }
-                    }
-                }
                 json {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
@@ -1687,6 +1641,15 @@ JSON response requires API v14.
                     response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                     render(contentType: "text/plain") {
                         ''
+                    }
+                }
+                if(isAllowXml()) {
+                    xml {
+                        apiService.renderSuccessXml(request, response) {
+                            output {
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                            }
+                        }
                     }
                 }
             }
@@ -1753,13 +1716,7 @@ JSON response requires API v14.
                 ] + clusterInfo
 
                 withFormat {
-                    xml {
-                        apiService.renderSuccessXml(request,response) {
-                            output {
-                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
-                            }
-                        }
-                    }
+
                     json {
                         render renderOutputFormatJson(dataMap,[]) as JSON
                     }
@@ -1777,6 +1734,15 @@ JSON response requires API v14.
                         response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                         render(contentType: "text/plain") {
                             ''
+                        }
+                    }
+                    if(isAllowXml()) {
+                        xml {
+                            apiService.renderSuccessXml(request, response) {
+                                output {
+                                    renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
+                                }
+                            }
                         }
                     }
                 }
@@ -1946,14 +1912,8 @@ JSON response requires API v14.
                 retryBackoff      : reader.retryBackoff,
                 compacted         : compacted
         ] + clusterInfo
+
         withFormat {
-            xml {
-                apiService.renderSuccessXml(request,response) {
-                    output {
-                        renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
-                    }
-                }
-            }
             json {
                 render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
             }
@@ -1974,6 +1934,15 @@ JSON response requires API v14.
 
                 entry.each{
                     appendOutput(response, it.mesg+lineSep)
+                }
+            }
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        output {
+                            renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
+                        }
+                    }
                 }
             }
         }
@@ -2170,13 +2139,6 @@ JSON response requires API v14.
         }
         def Execution e = authorizingExecution.resource
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         if (frameworkService.isFrameworkProjectDisabled(e.project)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -2186,11 +2148,13 @@ JSON response requires API v14.
             ])
         }
         withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response, [e])
-            }
             json{
                 return executionService.respondExecutionsJson(request,response, [e],[single:true])
+            }
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, [e])
+                }
             }
         }
     }
@@ -2484,14 +2448,16 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
                 }else {
                     errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: loader.errorCode, args: loader.errorData]
                 }
-                    withFormat {
-                        json {
-                            return apiService.renderErrorJson(response, errormap)
-                        }
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errormap)
+                    }
+                    if(isAllowXml()) {
                         xml {
                             return apiService.renderErrorXml(response, errormap)
                         }
                     }
+                }
                 return
             }
         }
@@ -2555,11 +2521,13 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             json{
                 return render(contentType: "application/json", encoding: "UTF-8",text:state.encodeAsJSON())
             }
-            xml{
-                return render(contentType: "text/xml", encoding: "UTF-8") {
-                    result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
-                        executionState(id:params.id){
-                            new BuilderUtil().mapToDom(convertXml(state), delegate)
+            if (isAllowXml()) {
+                xml {
+                    return render(contentType: "text/xml", encoding: "UTF-8") {
+                        result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                            executionState(id: params.id) {
+                                new BuilderUtil().mapToDom(convertXml(state), delegate)
+                            }
                         }
                     }
                 }
@@ -2685,23 +2653,7 @@ Authorization required:
             reportstate.reason= abortresult.reason
         }
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         withFormat{
-            xml{
-                apiService.renderSuccessXml(request,response) {
-                    abort(reportstate) {
-                        execution(id: params.id, status: abortresult.jobstate,
-                                  href:apiService.apiHrefForExecution(e),
-                                  permalink: apiService.guiHrefForExecution(e))
-                    }
-                }
-            }
             json{
                 return render ([
                         abort    : reportstate,
@@ -2713,6 +2665,18 @@ Authorization required:
                         ]
                     ] as JSON)
             }
+            if(isAllowXml()) {
+                xml {
+                    apiService.renderSuccessXml(request, response) {
+                        abort(reportstate) {
+                            execution(id: params.id, status: abortresult.jobstate,
+                                    href: apiService.apiHrefForExecution(e),
+                                    permalink: apiService.guiHrefForExecution(e))
+                        }
+                    }
+                }
+            }
+
         }
     }
 
@@ -2725,7 +2689,6 @@ Authorization requirement: Requires the `delete_execution` action allowed for a 
 
 See: [Administration - Access Control Policy - Application Scope Resources and Actions](https://docs.rundeck.com/docs/administration/security/authorization.html#application-scope-resources-and-actions)
 
-Since: V12
 """,
         method='DELETE',
         parameters = @Parameter(
@@ -2742,12 +2705,12 @@ Since: V12
     )
     @Tag(name = 'execution')
     /**
-     * DELETE /api/12/execution/[ID]
+     * DELETE /api/14/execution/[ID]
      * @return
      */
     @GrailsCompileStatic
     def apiExecutionDelete (){
-        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def eauth=authorizingExecution
@@ -2855,7 +2818,7 @@ Note: the JSON schema also supports a basic JSON array
      * @return
      */
     def apiExecutionDeleteBulk() {
-        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         return executionDeleteBulk()
@@ -3066,7 +3029,7 @@ if executed in cluster mode.""",
      * API: /api/14/project/NAME/executions
      */
     def apiExecutionsQueryv14(ExecutionQuery query){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         if(query?.hasErrors()){
@@ -3091,13 +3054,6 @@ if executed in cluster mode.""",
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
@@ -3178,11 +3134,13 @@ if executed in cluster mode.""",
         def filtered = rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
 
         withFormat {
-            xml {
-                return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
-            }
             json {
                 return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+            }
+            if (isAllowXml()) {
+                xml {
+                    return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                }
             }
         }
 
@@ -3261,9 +3219,11 @@ Since: V32
                     delegate.executionMode(executionStatus ? 'active' : 'passive')
                 }
             }
-            xml {
-                render(status: respStatus,contentType: "application/xml") {
-                    delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
+            if (isAllowXml()) {
+                xml {
+                    render(status: respStatus, contentType: "application/xml") {
+                        delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
+                    }
                 }
             }
         }
@@ -3347,22 +3307,26 @@ Since: v14
      * @return
      */
     private def apiExecutionMode(boolean active) {
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
         executionService.setExecutionsAreActive(active)
         withFormat{
-            json {
+            def jsonClos={
                 render(contentType: "application/json") {
                     delegate.executionMode (active?'active':'passive')
                 }
             }
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'executions'(executionMode:active?'active':'passive')
+            json jsonClos
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'executions'(executionMode: active ? 'active' : 'passive')
+                    }
                 }
             }
+            '*' jsonClos
         }
     }
 
@@ -3667,19 +3631,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
             json {
                 render metrics as JSON
             }
-            xml {
-                render(contentType: "application/xml") {
-                    delegate.'result' {
-                        metrics.each { key, value ->
-                            if (value instanceof Map) {
-                                Map sub = value
-                                delegate."${key}" {
-                                    sub.each { k1, v1 ->
-                                        delegate."${k1}"(v1)
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: "application/xml") {
+                        delegate.'result' {
+                            metrics.each { key, value ->
+                                if (value instanceof Map) {
+                                    Map sub = value
+                                    delegate."${key}" {
+                                        sub.each { k1, v1 ->
+                                            delegate."${k1}"(v1)
+                                        }
                                     }
+                                } else {
+                                    delegate."${key}"(value)
                                 }
-                            } else {
-                                delegate."${key}"(value)
                             }
                         }
                     }

@@ -30,11 +30,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #select id
-
-execid=$(xmlsel "//execution/@id" $DIR/curl.out)
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"

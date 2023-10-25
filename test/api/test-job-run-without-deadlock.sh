@@ -133,32 +133,10 @@ jobid="06ba3dce-ba4f-4964-8ac2-349c3a2267bd"
 echo "TEST: POST job/id/run should succeed"
 
 
-# now submit req
-runurl="${APIURL}/job/${jobid}/run"
-params=""
-execargs="-opt2 a"
-
-# get listing
-$CURL -H "$AUTHHEADER" -X POST  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#get execid
-
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
-
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
-    :
-else
-    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-    exit 2
-fi
-
-#running in parallel the same job to force concurrency.
-$CURL -H "$AUTHHEADER" -X POST  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-$CURL -H "$AUTHHEADER" -X POST  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-$CURL -H "$AUTHHEADER" -X POST  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+# run in parallel
+execid=$(runjob "$jobid" "-opt2 a")
+execid2=$(runjob "$jobid" "-opt2 a")
+execid3=$(runjob "$jobid" "-opt2 a")
 
 #wait for execution to complete
 echo "TEST: POST job/id/run should succeed $execid"
@@ -179,11 +157,7 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-#Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-assert "succeeded" "$status" "execution status should be succeeded"
+assert_json_value "succeeded" ".status" $DIR/curl.out
 
 
 grep -i "Deadlock" $RDECK_BASE/var/log/service.log -q

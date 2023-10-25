@@ -4,7 +4,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Log4j2
-import org.rundeck.app.data.exception.DataValidationException
+import rundeck.data.validation.exception.DataValidationException
 import org.rundeck.app.data.job.converters.ExecutionFromRdExecutionUpdater
 import org.rundeck.app.data.job.converters.ExecutionToRdExecutionConverter
 import org.rundeck.app.data.model.v1.DeletionResult
