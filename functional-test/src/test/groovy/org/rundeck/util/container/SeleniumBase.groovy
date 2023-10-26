@@ -64,7 +64,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
      * @return
      */
     <T extends BasePage> T go(Class<T> clazz) {
-        T page = page(clazz)
+        T page = page clazz
         page.go()
         return page
     }

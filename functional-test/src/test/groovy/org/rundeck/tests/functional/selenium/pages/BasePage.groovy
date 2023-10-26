@@ -5,7 +5,6 @@ import org.openqa.selenium.By
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.FindBy
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
@@ -20,7 +19,6 @@ import java.util.concurrent.TimeoutException
 abstract class BasePage {
     final SeleniumContext context
     By modalField = By.cssSelector(".modal.fade.in")
-    @FindBy(id = "nav-rd-home") WebElement home
 
     /**
      * Create a new page
@@ -59,6 +57,11 @@ abstract class BasePage {
     void waitForNumberOfElementsToBe(By locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(15))
                 .until(ExpectedConditions.numberOfElementsToBe(locator, 1))
+    }
+
+    void waitForNumberOfElementsToBe(By locator, Integer number) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.numberOfElementsToBe(locator, number))
     }
 
     WebElement waitIgnoringForElementVisible(WebElement locator) {

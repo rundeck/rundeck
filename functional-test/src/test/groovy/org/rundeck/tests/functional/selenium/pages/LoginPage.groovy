@@ -9,24 +9,20 @@ import org.rundeck.util.container.SeleniumContext
  */
 @CompileStatic
 class LoginPage extends BasePage {
-    def user = 'admin' //Default user
-    def pass = 'admin123' //Default pass
 
     By loginFieldBy = By.id("login")
     By passwordFieldBy = By.id("password")
     By loginBtnBy = By.id("btn-login")
     By errorBy = By.cssSelector(".alert.alert-danger > span")
 
-    static final String PAGE_PATH = "/user/login"
-    static final String LOAD_PATH = "/"
-    String loadPath = LOAD_PATH
+    String loadPath = "/user/login"
 
     LoginPage(final SeleniumContext context) {
         super(context)
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(PAGE_PATH)) {
+        if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on login page: " + driver.currentUrl)
         }
     }
@@ -50,12 +46,6 @@ class LoginPage extends BasePage {
     void login(String username, String password) {
         loginField.sendKeys(username)
         passwordField.sendKeys(password)
-        loginBtn.click()
-    }
-
-    void login() {
-        loginField.sendKeys(user as CharSequence)
-        passwordField.sendKeys(pass as CharSequence)
         loginBtn.click()
     }
 }

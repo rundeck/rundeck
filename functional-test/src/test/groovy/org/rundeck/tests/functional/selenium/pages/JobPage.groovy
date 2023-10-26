@@ -20,20 +20,15 @@ class JobPage extends BasePage {
     By descriptionText = By
             .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")
 
-    static final String PAGE_PATH = "/job/create"
+    String loadPath = "/job/create"
 
     JobPage(final SeleniumContext context) {
         super(context)
     }
 
-    @Override
-    String getLoadPath() {
-        PAGE_PATH
-    }
-
     void validatePage() {
-        if (!driver.currentUrl.contains(PAGE_PATH)) {
-            throw new IllegalStateException("Not on all jobs page: " + driver.currentUrl)
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
         }
     }
 

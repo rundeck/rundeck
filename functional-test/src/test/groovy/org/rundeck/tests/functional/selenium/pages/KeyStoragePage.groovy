@@ -23,8 +23,16 @@ class KeyStoragePage extends BasePage {
     By uploadResourceName = By.id("uploadResourceName2")
     By save = By.xpath("//input[@type='submit']")
 
+    String loadPath = "/menu/storage"
+
     KeyStoragePage(final SeleniumContext context) {
-        super(context, "/")
+        super(context)
+    }
+
+    void validatePage() {
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on key storage page: " + driver.currentUrl)
+        }
     }
 
     def goToKey(String name, String storagePath) {

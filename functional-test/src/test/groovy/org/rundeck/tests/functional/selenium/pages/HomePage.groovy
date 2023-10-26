@@ -17,19 +17,19 @@ class HomePage extends BasePage {
     By createNewProject = By.linkText("Create New Project")
     By newProject = By.linkText("New Project")
 
-    static final String PAGE_PATH = "/menu/home"
+    String loadPath = "/menu/home"
 
     HomePage(final SeleniumContext context) {
-        super(context, "/")
+        super(context)
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(PAGE_PATH)) {
+        if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on home page: " + driver.currentUrl)
         }
     }
 
-    void createProject() {
+    void createProjectButton() {
         if (createNewProjectFields.size() == 0)
             newProjectField.click()
         else

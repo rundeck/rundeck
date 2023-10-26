@@ -11,12 +11,9 @@ import spock.lang.Stepwise
 @Stepwise
 class KeyStorageSpec extends SeleniumBase {
 
-    public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
-    public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
-
     def "1 add key storage"() {
         when:
-            def loginPage = page LoginPage
+            def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
             def homePage = page HomePage
@@ -31,7 +28,7 @@ class KeyStorageSpec extends SeleniumBase {
 
     def "2 overwrite key storage"() {
         when:
-            def loginPage = page LoginPage
+            def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
             def homePage = page HomePage
@@ -45,7 +42,7 @@ class KeyStorageSpec extends SeleniumBase {
 
     def "3 delete key storage"() {
         when:
-            def loginPage = page LoginPage
+            def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
             def homePage = page HomePage

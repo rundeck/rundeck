@@ -8,15 +8,15 @@ class JobListPage extends BasePage {
 
     By createJob = By.linkText("Create a new Job")
 
-    static final String PAGE_PATH = "/jobs"
+    String loadPath = "/jobs"
 
     JobListPage(final SeleniumContext context) {
-        super(context, null)
+        super(context)
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(PAGE_PATH)) {
-            throw new IllegalStateException("Not on all jobs page: " + driver.currentUrl)
+        if (!driver.currentUrl.contains(loadPath)) {
+            throw new IllegalStateException("Not on job list page: " + driver.currentUrl)
         }
     }
 
