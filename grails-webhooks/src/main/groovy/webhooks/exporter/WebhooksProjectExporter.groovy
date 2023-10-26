@@ -45,7 +45,7 @@ class WebhooksProjectExporter implements ProjectDataExporter {
     @Override
     void export(String project, def zipBuilder, Map<String, String> exportOptions) {
         logger.info("Project Webhook export running")
-        Yaml yaml = new Yaml(new LoaderOptions())
+        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()))
         def export = [webhooks:[]]
         webhookService.listWebhooksByProject(project).each { hk ->
             logger.debug("exporting hook: " + hk.name)

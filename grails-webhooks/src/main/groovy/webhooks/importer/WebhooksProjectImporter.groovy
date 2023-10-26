@@ -60,7 +60,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
             return ["Import file ${WebhooksProjectExporter.WEBHOOKS_YAML_FILE} was not found"]
         }
         def errors = []
-        Yaml yaml = new Yaml(new LoaderOptions())
+        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()))
         def data = yaml.load(new FileReader(file))
         if(data instanceof Map) {
             data.webhooks.each { hook ->
