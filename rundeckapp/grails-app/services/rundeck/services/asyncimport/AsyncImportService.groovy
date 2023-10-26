@@ -286,12 +286,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 zipModelProject(modelProjectHost.toString(), zippedFilename)
             }
 
-            try (FileInputStream fis = new FileInputStream(zippedFilename)){
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.lastUpdate = "Uploading project w/o executions."
+                return it
+            })
 
-                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                    it.lastUpdate = "Uploading project w/o executions."
-                    return it
-                })
+            try {
+                FileInputStream fis = new FileInputStream(zippedFilename)
 
                 importResult = projectService.importToProject(
                         project,
@@ -301,17 +302,17 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         options
                 )
 
-                String jobUuidOption = options.jobUuidOption
-
-                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                    it.jobUuidOption = jobUuidOption
-                    return it
-                })
-
             }catch (IOException e){
                 e.printStackTrace()
                 throw e
             }
+
+            String jobUuidOption = options.jobUuidOption
+
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.jobUuidOption = jobUuidOption
+                return it
+            })
 
             Files.delete(Paths.get(zippedFilename))
 
@@ -643,12 +644,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                             def result
 
-                            try (FileInputStream fis = new FileInputStream(zippedFilename)) {
+                            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                                it.lastUpdate = "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
+                                return it
+                            })
 
-                                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                                    it.lastUpdate = "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
-                                    return it
-                                })
+                            try {
+
+                                FileInputStream fis = new FileInputStream(zippedFilename)
 
                                 result = projectService.importToProject(
                                         project,
