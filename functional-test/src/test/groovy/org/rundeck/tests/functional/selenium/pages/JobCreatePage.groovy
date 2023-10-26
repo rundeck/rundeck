@@ -4,6 +4,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
+
 import org.rundeck.util.container.SeleniumContext
 
 import java.time.Duration
@@ -21,6 +22,9 @@ class JobCreatePage extends BasePage {
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
     By updateJob = By.id("jobUpdateSaveButton")
+    By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
+    By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
+    By descriptionTextareaBy = By.cssSelector("form textarea[name=\"description\"]")
 
     String loadPath = "/job/create"
 
@@ -94,6 +98,10 @@ class JobCreatePage extends BasePage {
         el popBy findElement By.cssSelector('input[type=text]')
     }
 
+    void waitForJobShow(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.urlContains("/job/show/"))
+    }
+
     WebElement getNotificationSaveButton() {
         el notificationSaveBy
     }
@@ -117,6 +125,19 @@ class JobCreatePage extends BasePage {
     void waitNotificationModal(Integer totalNotificationModals) {
         waitForNumberOfElementsToBe notificationModalBy, totalNotificationModals
     }
+
+    WebElement getJobNameInput() {
+        el jobNameInputBy
+    }
+
+    WebElement getGroupPathInput() {
+        el groupPathInputBy
+    }
+
+    WebElement getDescriptionTextarea() {
+        el descriptionTextareaBy
+    }
+
 }
 
 enum NotificationType {
