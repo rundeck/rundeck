@@ -283,7 +283,16 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
 
             if( !Files.exists(Paths.get(zippedFilename)) ){
-                zipModelProject(modelProjectHost.toString(), zippedFilename)
+                try(FileOutputStream fos = new FileOutputStream(zippedFilename)){
+
+                    ZipOutputStream zos = new ZipOutputStream(fos)
+
+                    zipDir(modelProjectHost.toString(), "", zos)
+
+                }catch(IOException ignored){
+                    ignored.printStackTrace()
+                    throw ignored
+                }
             }
 
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
@@ -642,7 +651,17 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             }
 
                             def zippedFilename = "${BASE_WORKING_DIR}${projectName}${File.separator}${firstDir.fileName}${MODEL_PROJECT_NAME_EXT}"
-                            zipModelProject(modelProjectFullPath.toString(), zippedFilename);
+
+                            try(FileOutputStream fos = new FileOutputStream(zippedFilename)){
+
+                                ZipOutputStream zos = new ZipOutputStream(fos)
+
+                                zipDir(modelProjectFullPath.toString(), "", zos)
+
+                            }catch(IOException ignored){
+                                ignored.printStackTrace()
+                                throw ignored
+                            }
 
                             def result
 
@@ -730,34 +749,22 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    @GrailsCompileStatic
-    private static void zipModelProject(String unzippedFile, String zippedFile) throws IOException {
-        FileOutputStream fos = new FileOutputStream(zippedFile);
-        ZipOutputStream zos = new ZipOutputStream(fos);
-
-        addDirToZip(new File(unzippedFile), "", zos);
-
-        zos.close();
-        fos.close();
-    }
-
-    @GrailsCompileStatic
-    private static void addDirToZip(File dir, String relativePath, ZipOutputStream zos) throws IOException {
+    private static void zipDir(String unzippedFilepath, String zippedFilePath, ZipOutputStream zos) throws IOException {
+        File dir = new File(unzippedFilepath);
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                addDirToZip(file, relativePath + file.getName() + File.separator, zos);
+                zipDir(file.getAbsolutePath(), zippedFilePath + file.getName() + File.separator, zos);
             } else {
-                FileInputStream fis = new FileInputStream(file);
-                ZipEntry zipEntry = new ZipEntry(relativePath + file.getName());
-                zos.putNextEntry(zipEntry);
-
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    zos.write(buffer, 0, bytesRead);
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    ZipEntry zipEntry = new ZipEntry(zippedFilePath + file.getName());
+                    zos.putNextEntry(zipEntry);
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, len);
+                    }
+                    zos.closeEntry();
                 }
-                fis.close();
-                zos.closeEntry();
             }
         }
     }
