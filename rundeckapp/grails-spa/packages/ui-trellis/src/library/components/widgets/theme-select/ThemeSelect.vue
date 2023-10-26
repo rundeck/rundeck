@@ -12,35 +12,25 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-import {Component, Inject, Prop, Watch} from 'vue-property-decorator'
-import {Observer} from 'mobx-vue'
-
-import {RootStore} from '../../../stores/RootStore'
-import { ThemeStore } from '../../../stores/Theme'
-
-
-@Observer
-@Component({components: {}})
-export default class ThemeSelect extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    themes = ['system', 'light', 'dark']
-
-    theme = ''
-
-    themeStore!: ThemeStore
-
-    created() {
-        this.themeStore = this.rootStore.theme
+export default defineComponent({
+    name:"ThemeSelect",
+    data() {
+        return {
+            themes : ['system', 'light', 'dark'],
+            theme : '',
+            themeStore : window._rundeck.rootStore.theme
+        }
+    },
+    beforeMount() {
         this.theme = this.themeStore.userPreferences.theme!
+    },
+    watch: {
+        theme(newVal: any) {
+            this.themeStore.setUserTheme(newVal)
+        }
     }
+})
 
-    @Watch('theme')
-    handleThemeChange(newVal: any) {
-        this.themeStore.setUserTheme(newVal)
-    }
-}
 </script>

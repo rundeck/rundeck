@@ -19,7 +19,7 @@ buildscript {
 plugins {
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
-    id "com.github.node-gradle.node" version "3.1.1"
+    id "com.github.node-gradle.node" version "7.0.1"
     id "java-library"
     id "war"
 }
@@ -47,6 +47,7 @@ ext.coreGrailsPlugins = [
     ':grails-webhooks',
     ':grails-execution-mode-timer',
     ':grails-rundeck-data-shared',
+    ':grails-job-kill-handler'
 ]
 
 if(!project.findProperty('isRunning')) {
@@ -79,6 +80,13 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
+    pluginLibs
+
+    //declare implementation to extend from pluginLibs so it inherits the dependencies
+    implementation {
+        extendsFrom pluginLibs
+    }
+
     implementation.exclude module: "spring-boot-starter-tomcat"
     implementation.exclude module: "spring-boot-cli"
 
@@ -103,6 +111,14 @@ sourceSets {
 dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
+    pluginLibs("org.rundeck.api:rd-api-client:2.0.5"){
+        exclude group: 'javax.xml.bind'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.dataformat'
+        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
+    }
+
+    testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '2.9.0'
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
@@ -245,7 +261,7 @@ dependencies {
     runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
-    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.3.8'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'

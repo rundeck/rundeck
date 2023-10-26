@@ -155,7 +155,12 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
     public static synchronized ThreadBoundOutputStream bindSystemOut() {
         if (null== boundOutPrint) {
             origSystemOut = System.out;
-            final ThreadBoundOutputStream boundOut = new ThreadBoundOutputStream(origSystemOut);
+            final ThreadBoundOutputStream boundOut = new ThreadBoundOutputStream(new FilterOutputStream(origSystemOut){
+                @Override
+                public void close() {
+                    //don't close System.out
+                }
+            });
             boundOutPrint = new ThreadBoundPrintStream(boundOut);
             System.setOut(boundOutPrint);
             return boundOut;
@@ -197,7 +202,12 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
     public static synchronized ThreadBoundOutputStream bindSystemErr() {
         if (null== boundErrPrint) {
             origSystemErr = System.err;
-            final ThreadBoundOutputStream newErr = new ThreadBoundOutputStream(origSystemErr);
+            final ThreadBoundOutputStream newErr = new ThreadBoundOutputStream(new FilterOutputStream(origSystemErr){
+                @Override
+                public void close() {
+                    //don't close System.err
+                }
+            });
             boundErrPrint = new ThreadBoundPrintStream(newErr);
             System.setErr(boundErrPrint);
             return newErr;

@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import { addons } from '@storybook/addons'
 
 
@@ -6,7 +5,7 @@ export default {
     title: 'Data/List'
 }
 
-export const ListHorizontal = () => (Vue.extend({
+export const ListHorizontal = () => ({
     render(h) {
         return (
             <div class="rs-container">
@@ -31,4 +30,4 @@ export const ListHorizontal = () => (Vue.extend({
             </div>
         )
     }
-}))
+})

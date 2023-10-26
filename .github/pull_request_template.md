@@ -1,3 +1,4 @@
+<!--
 IMPORTANT: Before submitting your Pull Request, please review the following instructions:
 
 1. Please follow the [Developer Guidelines](https://github.com/rundeck/rundeck/wiki/Developer-Guidelines) document.
@@ -8,15 +9,16 @@ IMPORTANT: Before submitting your Pull Request, please review the following inst
    and get feedback from maintainers and the community *before* submitting an Pull request to implement it.
 3. Please be sure the issue you are addressing is referenced in a commit, or the body of your PR,
    using [github keywords](https://help.github.com/articles/closing-issues-using-keywords/), e.g. "fixes #123".
+-->
 
 **Is this a bugfix, or an enhancement? Please describe.**
-A clear and concise description of the bug you are fixing (reference issue number), or enhancement you are implementing.
+<!-- Include a clear and concise description of the bug you are fixing (reference issue number), or enhancement you are implementing. -->
 
 **Describe the solution you've implemented**
-A clear and concise description of what you want to happen.
+<!-- A clear and concise description of what you want to happen. -->
 
 **Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+<!-- A clear and concise description of any alternative solutions or features you've considered. -->
 
 **Additional context**
-Add any other context or screenshots about the change here.
+<!-- Add any other context or screenshots about the change here. -->

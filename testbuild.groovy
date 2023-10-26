@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import groovy.cli.commons.CliBuilder
 
 
 //Test the result of the build to verify expected artifacts are created
@@ -45,7 +46,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.51.v20230217',
+        jetty:'9.4.53.v20231009',
         servlet:'api-3.1.0',
         log4j:'2.17.1'
 ]

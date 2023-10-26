@@ -36,6 +36,7 @@ import org.quartz.JobExecutionContext
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
@@ -128,7 +129,11 @@ class ExecutionJob implements InterruptableJob {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}", es)
                 throw es
             }
-        }catch(Throwable t){
+        }catch(ScheduledExecutionDeletedException sede){
+            log.error("ScheduledExecution not found on DB: ${sede.message?sede.message:'no message'}",sede)
+            throw sede
+        }
+        catch(Throwable t){
             markStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
@@ -223,7 +228,7 @@ class ExecutionJob implements InterruptableJob {
                 initMap.executionId = executionId
             }
         } else {
-            initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
+            initMap.scheduledExecution = fetchScheduledExecution(jobDataMap, context)
             if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
@@ -280,11 +285,9 @@ class ExecutionJob implements InterruptableJob {
             if (! initMap.execution instanceof Execution) {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
-            def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
+            def jobArguments= OptionsParserUtil.parseOptsFromString(initMap.execution?.argString)
             if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
-                def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
-                        DataContextUtils.addContext("option", jobArguments, null))
-                initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
+                initMap.timeout = expandTimeout(initMap)
             }
             initMap.authContext = requireEntry(jobDataMap, 'authContext', UserAndRolesAuthContext)
         }else{
@@ -312,7 +315,7 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
 
-            def fwProject = frameworkService.getFrameworkProject(project)
+            def fwProject = frameworkService.getProjectConfigReloaded(project)
             def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
             def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
             def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')
@@ -338,6 +341,9 @@ class ExecutionJob implements InterruptableJob {
                 inputMap.argString = triggerData
             }
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
+            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
+                initMap.timeout = expandTimeout(initMap)
+            }
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
@@ -345,6 +351,13 @@ class ExecutionJob implements InterruptableJob {
         return initMap
     }
 
+    @CompileStatic
+    private long expandTimeout(RunContext initMap){
+        def jobArguments=OptionsParserUtil.parseOptsFromString(initMap.execution?.argString)
+        def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
+                DataContextUtils.addContext("option", jobArguments, null))
+        return timeout ? Sizes.parseTimeDuration(timeout) : -1
+    }
 
     @CompileStatic
     static class RunResult{
@@ -411,9 +424,6 @@ class ExecutionJob implements InterruptableJob {
             def duration = System.currentTimeMillis() - startTime
             if(!avgNotificationSent && jobAverageDurationFinal>0){
                 if(duration > jobAverageDurationFinal){
-                    if(execmap.execution){
-                        execmap.execution.status=ExecutionService.AVERAGE_DURATION_EXCEEDED
-                    }
                     runContext.executionService.avgDurationExceeded(
                             execmap.scheduledExecution.uuid,
                             [
@@ -645,16 +655,17 @@ class ExecutionJob implements InterruptableJob {
     }
 
 
-    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
+    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap, JobExecutionContext context) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
         def se=null
-        se = ScheduledExecution.findByUuid(seid)
+        se = ScheduledExecution.findByUUID(seid).find()
         if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }
 
         if (!se) {
-            throw new RuntimeException("failed to lookup scheduledException object from job data map: id: ${seid}")
+            context.getScheduler().deleteJob(context.jobDetail.key)
+            throw new ScheduledExecutionDeletedException("Failed to lookup scheduledException object from job data map: id: ${seid} , job will be unscheduled")
         }
         if (! se instanceof ScheduledExecution) {
             throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())

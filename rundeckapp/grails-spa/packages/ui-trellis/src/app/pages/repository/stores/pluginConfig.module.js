@@ -64,7 +64,7 @@ const actions = {
   }, serviceName) {
     commit("SET_SERVICE_FACET", serviceName)
   },
-  getProvidersInfo({
+  async getProvidersInfo({
     commit,
     dispatch
   }, providers) {
@@ -76,21 +76,22 @@ const actions = {
     })
     let providersDetails = []
 
-    providers.forEach(provider => {
-      axios({
-        method: "get",
-        headers: {
-          "x-rundeck-ajax": true
-        },
-        url: `${state.rdBase}plugin/detail/${provider.serviceName}/${provider.providerName}`,
-        withCredentials: true
-      }).then(response => {
-        providersDetails.push({
-          provider: provider,
-          response: response.data
+    await Promise.all(
+        providers.map(async (provider) => {
+          const response = await axios.request({
+            method: "get",
+            headers: {
+              "x-rundeck-ajax": true
+            },
+            url: `${state.rdBase}plugin/detail/${provider.serviceName}/${provider.providerName}`,
+            withCredentials: true
+          })
+          providersDetails.push({
+            provider: provider,
+            response: response.data
+          })
         })
-      });
-    });
+    )
     commit("SET_PROVIDERS_DETAILS", providersDetails)
     setTimeout(() => {
       dispatch('overlay/closeOverlay', false, {
@@ -108,7 +109,7 @@ const actions = {
     }, {
       root: true
     })
-    axios({
+    axios.request({
       method: "get",
       headers: {
         "x-rundeck-ajax": true
@@ -135,7 +136,7 @@ const actions = {
       if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
         const rdBase = window._rundeck.rdBase;
         const apiVersion = window._rundeck.apiVersion
-        axios({
+        axios.request({
           method: "get",
           headers: {
             "x-rundeck-ajax": true
@@ -154,7 +155,7 @@ const actions = {
   }) {
     if (window._rundeck && window._rundeck.rdBase) {
       const rdBase = window._rundeck.rdBase;
-      axios({
+      axios.request({
         method: "get",
         headers: {
           "x-rundeck-ajax": true
@@ -179,7 +180,7 @@ const actions = {
       })
       if (window._rundeck && window._rundeck.rdBase) {
         const rdBase = window._rundeck.rdBase;
-        axios({
+        axios.request({
           method: "get",
           headers: {
             "x-rundeck-ajax": true
@@ -215,7 +216,7 @@ const actions = {
     }, {
       root: true
     })
-    axios({
+    axios.request({
         method: "post",
         headers: {
           "x-rundeck-ajax": true

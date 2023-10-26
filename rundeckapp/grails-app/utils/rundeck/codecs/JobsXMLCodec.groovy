@@ -351,9 +351,6 @@ class JobsXMLCodec {
                     if (notifData.type==null) {
                         throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
                     }
-                    if (notifData.configuration==null) {
-                        throw new JobXMLException("${trigger} plugin had blank or missing 'configuration' element")
-                    }
                     convertPluginToMap(notifData)
                     Map plugNotifs = map.notification[trigger].find {notif -> notif.plugin}
                     if(!plugNotifs)  map.notification[trigger].add(['plugin':[notifData]])

@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -82,6 +83,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -385,7 +387,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -424,7 +426,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['_replaceNodeFilters'] == replaceNodeFilters}
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -465,7 +467,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job now"() {
@@ -497,7 +499,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [executionType: 'user']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job at time"() {
@@ -530,7 +532,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [runAtTime: 'timetorun']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api run job at time json"(){
@@ -566,19 +568,19 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 [runAtTime: 'timetorun']
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
     def "api scheduler takeover cluster mode disabled"(){
         given:
         def serverUUID1 = TEST_UUID1
             def msgResult=null
-        def msgClos={str-> msgResult=str }
+        def data=[:]
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1* renderSuccessXml(_,_,_)>> {
-                def clos=it[2]
-                clos.delegate=[message:msgClos,result:{map,clos2->clos2.delegate=[message:msgClos];clos2.call()}]
+            1 * requireApi(_,_) >> true
+            1* renderSuccessJson(_,_)>> {
+                def clos=it[1]
+                clos.delegate=data
                 clos.call()
                 null
             }
@@ -593,56 +595,72 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }
         when:
         request.method='PUT'
-        request.XML="<server uuid='${serverUUID1}' />"
-        response.format='xml'
+        request.JSON=[server:[uuid:serverUUID1]]
+        response.format='json'
         def result=controller.apiJobClusterTakeoverSchedule()
 
         then:
         response.status==200
-        msgResult=='No action performed, cluster mode is not enabled.'
+        data.message == 'No action performed, cluster mode is not enabled.'
     }
 
     @Unroll
-    def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
+    def "api scheduler takeover JSON input"(Object requestJson, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
         given:
-        controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_,14) >> true
-            1 * renderSuccessXml(_,_,_) >> 'result'
-            0 * renderErrorFormat(_,_,_) >> null
-        }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * isClusterModeEnabled()>>true
-        }
+            def SERVER_UUID=UUID.randomUUID().toString()
+            def JOB_ID=UUID.randomUUID().toString()
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_,_) >> true
+                0 * renderSuccessXml(_,_)
+                0 * renderErrorFormat(_,_,_) >> null
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * isClusterModeEnabled()>>true
+                _*getServerUUID()>>SERVER_UUID
+            }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])>>true
 
                 1 * getAuthContextForSubject(_)>>null
             }
-        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[:]
-            0 * _(*_)
-        }
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[(JOB_ID):[
+                        success:true,
+                        job:[:]
+                ]]
+                0 * _(*_)
+            }
         when:
         request.method='PUT'
-        request.XML=requestXml
+        request.JSON=requestJson
         request.api_version = api_version
-        response.format='xml'
+        response.format='json'
         def result=controller.apiJobClusterTakeoverSchedule()
 
         then:
         response.status==200
+        response.json
+        response.json.success == true
+        response.json.message == 'Schedule Takeover successful for 1/1 Jobs.'
+        response.json.self == [server: [uuid: SERVER_UUID]]
+        response.json.takeoverSchedule.server == requestJson.'server'
+        response.json.takeoverSchedule.jobs == [
+                total     : 1,
+                failed    : [],
+                successful: [[id: JOB_ID, href: null, permalink: null, 'previous-owner': null]]
+        ]
+        response.json.takeoverSchedule.project == requestJson.project
+
 
         where:
-        requestXml                                                                                              | requestUUID | allserver | project | jobid             | api_version
-        "<server uuid='${TEST_UUID1}' />".toString()                                                            | TEST_UUID1  | false     | null    | null              | 17
-        "<server all='true' />".toString()                                                                      | null        | true      | null    | null              | 17
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null    | null              | 17
-        "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null    | null              | 17
-        '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null              | 17
-        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                          | null        | true      | null    | ['ajobid']          | 17
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null              | 17
-        '<takeoverSchedule><server all="true" /><job id="ajobid"/><job id="ajobidb"/></takeoverSchedule>'       | null        | true      | null    | ['ajobid','ajobidb']  | 32
+        requestJson                                             | requestUUID | allserver | project | jobid                 | api_version
+        [server:[uuid:TEST_UUID1]]                              | TEST_UUID1  | false     | null    | null                  | 17
+        [server:[all:true]]                                     | null        | true      | null    | null                  | 17
+        [server:[all:true],project:'asdf']                      | null        | true      | 'asdf'  | null                  | 17
+        [server:[all:true],job:[id:'ajobid']]                   | null        | true      | null    | ['ajobid']            | 17
+        [server:[uuid:TEST_UUID1],project:'asdf']               | TEST_UUID1  | false     | 'asdf'  | null                  | 17
+        [server:[all:true],jobs:[[id:'ajobid'],[id:'ajobidb']]] | null        | true      | null    | ['ajobid','ajobidb']  | 32
 
     }
 
@@ -2210,7 +2228,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
         where:
@@ -2283,7 +2301,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
     }
 
@@ -2847,7 +2865,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
             ) >> [success: true]
-            0 * controller.executionService.respondExecutionsXml(_, _, _)
+            0 * controller.executionService.respondExecutionsJson(_, _, _)
             0 * controller.executionService._(*_)
     }
 
@@ -2916,7 +2934,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 _,
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
-        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        1 * controller.executionService.respondExecutionsJson(_,_,_,_)
         0 * controller.executionService._(*_)
 
 
@@ -3757,7 +3775,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> false
+            1 * controller.apiService.requireApi(_,_) >> false
 
     }
     def "api jobs import require project param"() {
@@ -3767,7 +3785,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> false
 
     }
@@ -3794,7 +3812,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, format) >> [
                 jobset: jobset
@@ -3803,7 +3821,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 scheduledExecutionService.
                 loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
             1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
-            1 * controller.apiService.renderSuccessXml(_, _, _)
+            1 * controller.apiService.renderSuccessJson(_, _)
             job.project == 'aproj'
         where:
             type               | format | dupeoption | uuidoption | validateJobref | apivers
@@ -3837,7 +3855,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile('datacontent', (format?:fformat?:'xml')) >> [
@@ -3847,7 +3865,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 scheduledExecutionService.
                 loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
             1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
-            1 * controller.apiService.renderSuccessXml(_, _, _)
+            1 * controller.apiService.renderSuccessJson(_, _)
             job.project == 'aproj'
         where:
             format |fformat | dupeoption | uuidoption | validateJobref
@@ -3886,7 +3904,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         when:
             controller.apiJobsImportv14()
         then:
-            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireApi(_,_) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, (format?:fformat?:'xml')) >> [
@@ -3896,7 +3914,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 scheduledExecutionService.
                 loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
             1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
-            1 * controller.apiService.renderSuccessXml(_, _, _)
+            1 * controller.apiService.renderSuccessJson(_, _)
             job.project == 'aproj'
         where:
             format |fformat | dupeoption | uuidoption | validateJobref
@@ -3963,8 +3981,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             'xml'  | 14      | 'xml'          | 'text/xml'
             'yaml' | 14      | 'yaml'         | 'text/yaml'
             'json' | 44      | 'json'         | 'application/json'
-            'all'  | 43      | 'xml'          | 'text/xml'
-            'all'  | 44      | 'xml'          | 'text/xml'
+            'all'  | 43      | 'json'         | 'application/json'
+            'all'  | 44      | 'json'         | 'application/json'
     }
     def "api job export unsupported format"(){
         given:

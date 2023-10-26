@@ -24,35 +24,6 @@ setup_export_job(){
 }
 
 
-test_job_status_xml(){
-	local project=$1
-	local integration=export
-
-	local JOBID=$(setup_export_job $project)
-	
-	sleep 2
-
-	#get job status
-
-	METHOD=GET
-	ACCEPT=application/xml
-	EXPECT_STATUS=200
-	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/status"
-	test_begin "SCM Job Status (xml)"
-	api_request $ENDPOINT $DIR/curl.out
-
-	assert_xml_value "1" 'count(/scmJobStatus/actions/string)' $DIR/curl.out
-	assert_xml_value "job-commit" '/scmJobStatus/actions/string' $DIR/curl.out
-	assert_xml_value "" '/scmJobStatus/commit' $DIR/curl.out
-	assert_xml_value "$integration" '/scmJobStatus/integration' $DIR/curl.out
-	assert_xml_value "Created" '/scmJobStatus/message' $DIR/curl.out
-	assert_xml_value "$project" '/scmJobStatus/project' $DIR/curl.out
-	assert_xml_value "CREATE_NEEDED" '/scmJobStatus/synchState' $DIR/curl.out
-
-	test_succeed
-
-	remove_project $project
-}
 
 
 test_job_status_json(){
@@ -86,7 +57,6 @@ test_job_status_json(){
 }
 
 main(){
-	test_job_status_xml "testscm-job-status-1"
 	test_job_status_json "testscm-job-status-2"
 }
 

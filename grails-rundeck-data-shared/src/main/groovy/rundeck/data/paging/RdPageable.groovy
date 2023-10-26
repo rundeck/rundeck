@@ -1,9 +1,15 @@
 package rundeck.data.paging
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.validation.Validateable
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import org.rundeck.app.data.model.v1.page.Pageable
 import org.rundeck.app.data.model.v1.page.SortOrder
 
+@ToString
+@EqualsAndHashCode
+@JsonIgnoreProperties(["errors"])
 class RdPageable implements Pageable, Validateable {
     Integer max = 200
     Integer offset = 0

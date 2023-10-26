@@ -27,9 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
@@ -54,7 +52,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -97,9 +94,6 @@ import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
@@ -147,7 +141,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    FeatureService featureService
 
     // the delete, save and update actions only
     // accept POST requests
@@ -689,8 +682,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         }
                 ]) as JSON)
             }
-            xml{
-                return render (result as XML)
+            if (isAllowXml()) {
+                xml {
+                    return render(result as XML)
+                }
             }
         }
     }
@@ -844,8 +839,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopy = configurationService.getString("project.defaults.filecopier", "sshj-scp")
 
         if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
             def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
@@ -1028,8 +1023,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
         }
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        final defaultNodeExec = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        final defaultFileCopy = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services
 
@@ -1043,8 +1039,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
             defaultNodeExec:defaultNodeExec,
-            nodeexecconfig: ['keypath': sshkeypath],
-            fcopyconfig: ['keypath': sshkeypath],
+            nodeexecconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
+            fcopyconfig: includeSshKeypath ? ['keypath': sshkeypath] : [:],
             defaultFileCopy: defaultFileCopy,
             pluginGroupConfig: pluginGroupConfig,
             nodeExecDescriptions: nodeexecdescriptions,
@@ -2884,7 +2880,7 @@ Since: v23''',
                 }
             ),
 
-            [formats: ['json', 'xml']]
+            [formats: responseFormats]
         )
     }
 
@@ -3235,7 +3231,7 @@ Since: v23''',
                 errors: errors,
                 resources: sourceContent
             ),
-            [formats: ['json', 'xml']]
+            [formats: responseFormats]
         )
     }
 
@@ -3350,27 +3346,27 @@ Since: v14''',
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(!params.name){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['name']])
         }
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 AuthConstants.ACTION_READ, params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
@@ -3939,7 +3935,7 @@ by:
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -4064,12 +4060,16 @@ by:
                 def j={
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderXmlAclpolicyValidation(validation,delegate)
+
+                json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderXmlAclpolicyValidation(validation, delegate)
+                        }
                     }
                 }
-                json j
                 '*' j
             }
         }
@@ -4086,17 +4086,21 @@ by:
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, baos)
             withFormat{
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
-                    }
 
-                }
                 def j={
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
                 json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                        }
+
+                    }
+                }
                 '*' j
             }
         }
@@ -4125,13 +4129,17 @@ by:
                         def content = [contents:baos.toString()]
                         render content as JSON
                     }
-                    xml{
-                        render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat, delegate)
-                        }
-
-                    }
                     json j
+
+                    if(isAllowXml()) {
+                        xml {
+                            render(contentType: 'application/xml') {
+                                apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                            }
+
+                        }
+                    }
+
                     '*' j
                 }
             }
@@ -4158,18 +4166,6 @@ by:
         //list aclpolicy files in the dir
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
         withFormat{
-            xml{
-                render(contentType: 'application/xml'){
-                    apiService.xmlRenderDirList(
-                            '',
-                            { String p -> p },
-                            { String p -> renderAclHref(p) },
-                            list,
-                            delegate
-                    )
-                }
-
-            }
             def j ={
                 render apiService.jsonRenderDirlist(
                             '',
@@ -4179,6 +4175,21 @@ by:
                     ) as JSON
             }
             json j
+
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        apiService.xmlRenderDirList(
+                                '',
+                                { String p -> p },
+                                { String p -> renderAclHref(p) },
+                                list,
+                                delegate
+                        )
+                    }
+
+                }
+            }
             '*' j
         }
     }

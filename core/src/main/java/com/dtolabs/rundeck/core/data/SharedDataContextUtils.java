@@ -450,21 +450,55 @@ public class SharedDataContextUtils {
             final Map<String,Boolean> blankIfUnexpandedFieldMap
     )
     {
+        return replaceDataReferences(
+                input,
+                currentContext,
+                viewMap,
+                converter,
+                data,
+                failOnUnexpanded,
+                blankIfUnexpandedFieldMap,
+                null,
+                null
+        );
+    }
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferences(
+            final Map<String, Object> input,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            final Map<String,Boolean> blankIfUnexpandedFieldMap,
+            final BiFunction<String,Object,Object> inputConverter,
+            final BiFunction<String,Object,Object> outputConverter
+    )
+    {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Boolean blankIfUnexpanded = blankIfUnexpandedFieldMap.getOrDefault(s,true);
             Object o = input.get(s);
-            output.put(
-                    s,
-                    replaceDataReferencesInObject(o,
-                                                  currentContext,
-                                                  viewMap,
-                                                  converter,
-                                                  data,
-                                                  failOnUnexpanded,
-                                                  blankIfUnexpanded
-                    )
+            if(null!=inputConverter){
+                o = inputConverter.apply(s,o);
+            }
+            Object value = replaceDataReferencesInObject(o,
+                    currentContext,
+                    viewMap,
+                    converter,
+                    data,
+                    failOnUnexpanded,
+                    blankIfUnexpanded
             );
+            output.put(s, outputConverter!=null?outputConverter.apply(s,value):value);
         }
         return output;
     }

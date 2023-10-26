@@ -1,9 +1,9 @@
 <template>
-    <div class="widget-wrapper">
+    <div class="widget-wrapper" ref="root">
         <div class="widget-section" style="flex-grow: 1; flex-shrink: 1;">
             <div>
                 <div class="form-group form-group-sm has-feedback has-search">
-                    <i class="fas fa-search form-control-feedback"/>
+                    <i class="fas fa-search form-control-feedback"></i>
                     <input
                         ref="search"
                         type="text" 
@@ -15,107 +15,99 @@
             <Skeleton :loading="loading">
                 <RecycleScroller
                     ref="scroller"
-                    :items="filtered()"
+                    :items="filtered"
                     :item-size="itemSize"
                     :key="items.length"
-                    v-slot="{ item }"
                     key-field="id"
                     class="scroller"
                 >
-                    <div style="height: 100%;" :ref="item[idField]" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item[idField] == selected}" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
-                        <slot name="item" :item="item" scope="item"/>
+                  <template v-slot:default="{ item }">
+                    <div style="height: 100%;" :ref="item[idField]" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item[idField] === selected}" @click="itemClicked(item)" @keypress.enter="itemClicked(item)">
+                      <slot name="item" :item="item"></slot>
                     </div>
+                  </template>
                 </RecycleScroller>
             </Skeleton>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0; padding-left: 10px">
-            <slot name="footer"/>
+          <slot name="footer"></slot>
             <!-- <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a> -->
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import {Component, Inject, Prop} from 'vue-property-decorator'
-import { autorun } from 'mobx'
-import {Observer} from 'mobx-vue'
-import PerfectScrollbar from 'perfect-scrollbar'
-import { RecycleScroller } from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import {defineComponent, nextTick} from 'vue'
+import type {PropType} from 'vue'
+import {RecycleScroller} from 'vue-virtual-scroller'
+import Skeleton from "../skeleton/Skeleton.vue";
+import {Webhook} from '../../stores/Webhooks'
 
-import Skeleton from '../skeleton/Skeleton.vue'
-
-RecycleScroller.updated = function() {
-    if (!this.ps)
-        this.$nextTick().then(() => {this.ps = new PerfectScrollbar(this.$el, {minScrollbarLength: 20})})
-    else
-        this.ps.update()
-}
-
-const destroy = RecycleScroller.beforeDestroy
-RecycleScroller.beforeDestroy = function() {
-    destroy.bind(this)()
-    if (this.ps) {
-        try {
-            this.ps.destroy()
-            this.ps = null
-        } catch {}
-    }
-}
-
-@Observer
-@Component({components: {
-    RecycleScroller,
-    Skeleton
-}})
-export default class FilterList extends Vue {
-    ps!: PerfectScrollbar
-
-    searchTerm: string = ''
-
-    @Prop({default: false})
-    loading!: boolean
-
-    @Prop({default: ''})
-    searchText!: String
-
-    @Prop()
-    items!: Array<any>
-
-    @Prop({default: 25})
-    itemSize!: Number 
-
-    @Prop({default: ''})
-    selected!: string
-
-    @Prop({default: 'id'})
-    idField!: string
-
-    filtered() {
-        return this.items.filter(i => i.name.includes(this.searchTerm))
-    }
-
+export default defineComponent({
+    name:"FilterList",
+    components: {
+        RecycleScroller,
+        Skeleton
+    },
+    emits: ['item:selected'],
+    data() {
+        return {
+            searchTerm: ''
+        }
+    },
+    props: {
+        loading: {
+            type:Boolean,
+            required: false,
+        },
+        searchText: {
+            type: String,
+            default: ''
+        },
+        items: {
+            type: Array as PropType<Webhook[]>,
+            required: true
+        },
+        itemSize: {
+            type: Number,
+            default: 25
+        },
+        selected: {
+          type: String,
+          default: ''
+        },
+        idField: {
+            type: String,
+            default: 'id'
+        }
+    },
+    computed: {
+        filtered() {
+            return this.items.filter(i => i.name.toLowerCase().includes(this.searchTerm.toLowerCase()))
+        },
+    },
+    methods: {
+        itemClicked(item: any) {
+            (<HTMLElement>this.$refs[item[this.idField]]).blur()
+            this.$emit('item:selected', item)
+        }
+    },
     mounted() {
-        autorun(() => {
-            if (this.items.length) {
-                /** May be necessary for virtual scroller to update */
-                this.$forceUpdate()
-            }
-        })
-        this.$nextTick().then(() => {
+        if (this.items.length) {
+            /** May be necessary for virtual scroller to update */
+            this.$forceUpdate()
+        }
+        nextTick().then(() => {
             (<HTMLElement>this.$refs['search']).focus()
         })
     }
+})
 
-    itemClicked(item: any) {
-        (<HTMLElement>this.$refs[item[this.idField]]).blur()
-        this.$emit('item:selected', item)
-    }
-}
 </script>
 
 <style scoped lang="scss">
+@import '~vue-virtual-scroller/dist/vue-virtual-scroller.css';
+
 .widget-wrapper {
     display: flex;
     flex-direction: column;

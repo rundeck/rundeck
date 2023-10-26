@@ -274,12 +274,14 @@
           
                 </div>
 
-                <ui-socket class="vue-ui-socket" section="job-list-page" location="action-buttons">
-                  <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="btn btn-primary">
-                    <i class="glyphicon glyphicon-plus"></i>
-                    <g:message code="new.job.button.label" />
-                  </g:link>
-                </ui-socket>
+                <div class="vue-ui-socket">
+                  <ui-socket section="job-list-page" location="action-buttons">
+                    <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="btn btn-primary">
+                      <i class="glyphicon glyphicon-plus"></i>
+                      <g:message code="new.job.button.label" />
+                    </g:link>
+                  </ui-socket>
+                </div>
               </div>
             </div>
           </g:if>
@@ -495,20 +497,22 @@
             </g:form>
             <g:if test="${!jobgroups}">
               <div class="presentation">
-                <ui-socket class="vue-ui-socket" section="job-list-page" location="empty-state">
-                <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
-                  <g:link controller="scheduledExecution" action="create"
-                    params="[project: params.project ?: request.project]"
-                    class="btn btn-cta">
-                      <g:message code="job.create.button" />
-                  </g:link>
-                  <g:link controller="scheduledExecution" action="upload"
-                    params="[project: params.project ?: request.project]"
-                    class="btn btn-default">
-                    <g:message code="job.upload.button.title" />
-                  </g:link>
-                </auth:resourceAllowed>
-                </ui-socket>
+                <div class="vue-ui-socket">
+                  <ui-socket section="job-list-page" location="empty-state">
+                  <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
+                    <g:link controller="scheduledExecution" action="create"
+                      params="[project: params.project ?: request.project]"
+                      class="btn btn-cta">
+                        <g:message code="job.create.button" />
+                    </g:link>
+                    <g:link controller="scheduledExecution" action="upload"
+                      params="[project: params.project ?: request.project]"
+                      class="btn btn-default">
+                      <g:message code="job.upload.button.title" />
+                    </g:link>
+                  </auth:resourceAllowed>
+                  </ui-socket>
+                </div>
               </div>
             </g:if>
             <g:timerStart key="tail"/>

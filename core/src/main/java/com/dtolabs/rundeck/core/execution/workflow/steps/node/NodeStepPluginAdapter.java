@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -132,7 +133,12 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             this(ServiceNameConstants.WorkflowNodeStep, true);
         }
 
-        public NodeStepExecutor convert(final NodeStepPlugin plugin) {
+        public NodeStepExecutor convert(final NodeStepPlugin plugin, final boolean blankIfUnexpanded) {
+            return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
+        }
+
+        @Override
+        public NodeStepExecutor convert(NodeStepPlugin plugin) {
             return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
         }
     }
@@ -192,6 +198,7 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             });
         }
         if (null != instanceConfiguration) {
+            CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
             instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                     instanceConfiguration,
                     ContextView.node(node.getNodename()),
@@ -199,7 +206,9 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                     null,
                     context.getSharedDataContext(),
                     false,
-                    blankIfUnexMap
+                    blankIfUnexMap,
+                    customFieldsAdapter::convertInput,
+                    customFieldsAdapter::convertOutput
             );
         }
         return instanceConfiguration;

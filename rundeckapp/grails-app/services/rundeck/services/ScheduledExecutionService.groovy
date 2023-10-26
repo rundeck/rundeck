@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
-import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
@@ -107,6 +106,7 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
@@ -139,6 +139,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuditEventsService auditEventsService
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
+    QuartzJobSpecifier quartzJobSpecifier
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -1251,6 +1252,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 user        : user,
                 authContext : authContext,
                 executionId : e.id.toString(),
+                executionUuid: e.uuid,
                 retryAttempt: 0
         ]
         if (secureOpts) {
@@ -1406,6 +1408,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 user        : user,
                 authContext : authContext,
                 executionId : e.id.toString(),
+                executionUuid: e.uuid,
                 retryAttempt: retryAttempt ?: 0
         ]
         if (secureOpts) {
@@ -1455,7 +1458,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def ident = getJobIdent(null, e);
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        def jobDetail = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                 .withIdentity(ident.jobname, ident.groupname)
                 .withDescription("Execute command: " + e)
                 .usingJobData(
@@ -1463,6 +1466,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         [
                             'isTempExecution': 'true',
                             'executionId': e.id.toString(),
+                            'executionUuid': e.uuid,
                             'authContext': authContext,
                             'project': e.project    
                         ]
@@ -1505,7 +1509,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     @NotTransactional
     JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup) {
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob)
+        def jobDetailBuilder = JobBuilder.newJob(quartzJobSpecifier.getJobClass())
                                          .withIdentity(jobname, jobgroup)
                                          .withDescription(se.description)
                                          .usingJobData(new JobDataMap(createJobDetailMap(se)))
@@ -2457,6 +2461,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v10
         failed |= validateDefinitionComponents(importedJob, params, validation)
         //v11
+        if(failed){
+            scheduledExecution.errors.fieldErrors.each{err->
+                validation.put(
+                    err.field,
+                    [reason: messageSource.getMessage(err, Locale.default), value: err.rejectedValue?.toString()]
+                )
+            }
+        }
 
         !failed
     }

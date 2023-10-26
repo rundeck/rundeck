@@ -32,6 +32,7 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
+import rundeck.services.ScheduledExecutionDeletedException
 import spock.lang.Specification
 
 import java.sql.Timestamp
@@ -48,18 +49,22 @@ class ExecutionJobSpec extends Specification implements DataTest {
         given:
         def datamap = new JobDataMap([scheduledExecutionId: '123'])
         ExecutionJob job = new ExecutionJob()
+        def quartzScheduler = Mock(Scheduler){
+            1 * deleteJob(_) >> void
+        }
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
                 getJobDataMap() >> datamap
             }
+            1 * getScheduler() >> quartzScheduler
         }
 
         when:
         job.execute(context)
 
         then:
-        RuntimeException e = thrown()
-        e.message == 'failed to lookup scheduledException object from job data map: id: 123'
+        ScheduledExecutionDeletedException e = thrown()
+        e.message == "Failed to lookup scheduledException object from job data map: id: 123 , job will be unscheduled"
     }
 
     def "execute retrieves execution id"() {
@@ -405,7 +410,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
-            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+            getProjectConfigReloaded('AProject') >> Mock(IRundeckProject) {
                 getProjectProperties() >> [:]
             }
         }
@@ -705,6 +710,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 dateCompleted: null,
                 project: se.project,
                 user: 'bob',
+                status: ExecutionService.EXECUTION_RUNNING,
                 workflow: new Workflow(commands: [new CommandExec(
                         [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                 )]
@@ -774,7 +780,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             latch.countDown()
         }
         result != null
-        se.executions.status.get(0) == ExecutionService.AVERAGE_DURATION_EXCEEDED
+        se.executions.status.get(0) == ExecutionService.EXECUTION_RUNNING
     }
 
     def "scheduled job quartz checking the same format of dates"() {
@@ -786,7 +792,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
-            getFrameworkProject('AProject')>>Mock(IRundeckProject){
+            getProjectConfigReloaded('AProject')>>Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
         }

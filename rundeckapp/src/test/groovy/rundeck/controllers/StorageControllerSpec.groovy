@@ -575,7 +575,6 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         where:
             format | ctype
             'json' | 'application/json;charset=UTF-8'
-            'xml' | 'application/xml;charset=utf-8'
 
     }
 

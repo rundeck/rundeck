@@ -20,7 +20,7 @@
             <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
         </btn>
         <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
-          <key-storage-view ref="keyStorageViewRef" @input="onSelectedKeyChange" :read-only="readOnly" :root-path="rootPath" :allow-upload="allowUpload" :value="value" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
+          <key-storage-view ref="keyStorageViewRef" @update:modelValue="onSelectedKeyChange" :read-only="readOnly" :root-path="rootPath" :allow-upload="allowUpload" :model-value="modelValue" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
         </modal>
         <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" :footer="false" auto-focus append-to-body>
           <key-storage-edit :uploadSetting="uploadSetting" :root-path="rootPath" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing" ></key-storage-edit>
@@ -30,20 +30,22 @@
 
 
 <script lang="ts">
-    import Vue from 'vue';
+import {defineComponent} from 'vue';
 
     import KeyStorageView from "../../components/storage/KeyStorageView.vue"
     import KeyStorageEdit from "../../components/storage/KeyStorageEdit.vue"
+import {UploadSetting} from "../storage/KeyStorageEdit.vue"
 
-    export default Vue.extend({
+    export default defineComponent({
       name: 'KeyStorageSelector',
       components: { KeyStorageEdit, KeyStorageView },
       props: [
-        'value',
+        'modelValue',
         'storageFilter',
         'allowUpload',
         'readOnly'
       ],
+      emits: ['update:modelValue'],
       data() {
           return {
               modalOpen: false,
@@ -53,11 +55,8 @@
               inputPath: '',
               invalid: false,
               errorMsg: '',
-              uploadSetting: {}
+              uploadSetting: {} as UploadSetting
           };
-      },
-      mounted() {
-        console.log("==> initial value: ", this.value)
       },
       methods: {
         cleanPath(path: any) {
@@ -71,33 +70,33 @@
           return path;
         },
         allowedResource(meta: any) {
-          const filterArray = this.storageFilter.split('=');
-          const key = filterArray[0];
-          const value = filterArray[1];
-          if (key == 'Rundeck-key-type') {
-            if (value === meta['rundeckKeyType']) {
-              return true;
+            const filterArray = this.storageFilter.split('=');
+            const key = filterArray[0];
+            const value = filterArray[1];
+            if (key === 'Rundeck-key-type') {
+                if (value === meta['rundeckKeyType']) {
+                    return true;
+                }
+            } else {
+                if (key === 'Rundeck-data-type') {
+                    if (value === meta['Rundeck-data-type']) {
+                        return true;
+                    }
+                }
             }
-          } else {
-            if (key == 'Rundeck-data-type') {
-              if (value === meta['Rundeck-data-type']) {
-                return true;
-              }
-            }
-          }
-          return false;
+            return false;
         },
         beforeModalClose(args: string | Array<any>) {
           if(args === "ok") {
-            // Save the selected value - Emit a key changd event with the selected value
-            if(this.selectedKey !== this.value) {
-              this.$emit("input", this.selectedKey)
+            // Save the selected value - Emit a key changed event with the selected value
+            if(this.selectedKey !== this.modelValue) {
+              this.$emit("update:modelValue", this.selectedKey)
             }
-          } 
+          }
           return true
         },
-        clean() {            
-          this.selectedKey = this.value;
+        clean() {
+          this.selectedKey = this.modelValue;
           this.inputPath = '';
           this.invalid = false;
           this.errorMsg = '';
@@ -116,7 +115,7 @@
         openSelector() {
           this.modalOpen = true;
         },
-        openEditor(uploadSetting: {}) {
+        openEditor(uploadSetting: UploadSetting) {
           this.uploadSetting = uploadSetting
           this.modalEdit = true
         },

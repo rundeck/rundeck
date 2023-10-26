@@ -16,10 +16,13 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
@@ -35,6 +38,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.async.Promises
 import grails.converters.JSON
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
@@ -46,7 +50,10 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
+import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
@@ -55,6 +62,7 @@ import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.data.notification.SendNotificationEvent
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -91,7 +99,9 @@ public class NotificationService implements ApplicationContextAware{
     OrchestratorPluginService orchestratorPluginService
     def featureService
     def configurationService
+    def storageService
     UserDataProvider userDataProvider
+    ExecutionDataProvider executionDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -304,14 +314,18 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                             (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
                             (ExecutionService.EXECUTION_MISSED):'MISSED',
-                            (ExecutionService.EXECUTION_FAILED_WITH_RETRY):'FAILED WITH RETRY',
-                            (ExecutionService.AVERAGE_DURATION_EXCEEDED):'AVERAGE DURATION EXCEEDED',
+                            (ExecutionService.EXECUTION_FAILED_WITH_RETRY):'FAILED WITH RETRY'
                     ]
+
+                    String eventStatus = statMsg[state]
+                    if(trigger=='avgduration'){
+                        eventStatus='AVERAGE DURATION EXCEEDED'
+                    }
 
                     def execMap = null
                     Map context = null
                     (context, execMap) = generateNotificationContext(content.execution, content, source)
-                    context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
+                    context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: eventStatus], context)
 
                     def destarr=[]
                     def destrecipients=mailConfig.recipients
@@ -565,18 +579,8 @@ public class NotificationService implements ApplicationContextAware{
                     Map context = null
                     (context, execMap) = generateNotificationContext(content.execution, content, source)
 
-                    Map config= n.configuration
-                    if (context && config) {
-                        config = DataContextUtils.replaceDataReferences(config, context)
-                    }
 
-                    config = config?.each {
-                        if(!it.value){
-                            it.value=null
-                        }
-                    }
-
-                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,config, content)
+                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,n.configuration, content,context)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -770,8 +774,28 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, String project, Map config, Map content){
+    private boolean triggerPlugin(String trigger, Map data,String type, String project, Map config, Map content, Map context){
+        if (context && config) {
+            DescribedPlugin described = pluginService.getPluginDescriptor(type, notificationPluginProviderService)
+            if(described?.description) {
+                CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(described.description)
+                config = DataContextUtils.replaceDataReferences(
+                        config,
+                        context,
+                        null,
+                        false,
+                        false,
+                        customFieldsAdapter.&convertInput,
+                        customFieldsAdapter.&convertOutput
+                )
+            }
+        }
 
+        config = config?.each {
+            if(!it.value){
+                it.value=null
+            }
+        }
         Map<Class, Object> servicesMap = [:]
         servicesMap.put(KeyStorageTree, content.context.storageTree)
 
@@ -962,5 +986,28 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
+    }
+
+    @Subscriber('trigger-notification')
+    void sendNotificationsForExecution(SendNotificationEvent evt) {
+        if(evt.jobUuid) {
+            ScheduledExecution.withNewSession {
+                def job = ScheduledExecution.findByUuid(evt.jobUuid)
+                if (job.notificationSet) {
+                    def contextBuilder = ExecutionContextImpl.builder()
+                    contextBuilder.with {
+                        storageTree(storageService.storageTreeWithContext(evt.authContext))
+                        framework(frameworkService.rundeckFramework)
+                        frameworkProject(job.project)
+                    }
+                    contextBuilder.authContext(evt.authContext)
+                    triggerJobNotification(
+                            "failure", job,
+                            [execution: Execution.findByUuid(evt.executionUuid),
+                             context  : contextBuilder.build()]
+                    )
+                }
+            }
+        }
     }
 }

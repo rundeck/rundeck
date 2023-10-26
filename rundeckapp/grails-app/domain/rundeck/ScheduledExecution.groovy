@@ -200,6 +200,11 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         withProject { project ->
             eq 'project', project
         }
+        findByUUID{ uuid ->
+            eq 'uuid', uuid
+            cache false
+            setUniqueResult true
+        }
     }
 
 

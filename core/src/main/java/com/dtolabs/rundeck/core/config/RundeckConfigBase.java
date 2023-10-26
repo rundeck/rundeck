@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
@@ -44,6 +45,7 @@ public class RundeckConfigBase {
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
+    RundeckProjectConfig project;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
@@ -71,6 +73,19 @@ public class RundeckConfigBase {
 
     @Data public static class RundeckJobsConfig{
         JobOptionsConfig options;
+    }
+
+    @Data public static class RundeckProjectConfig{
+
+        ProjectConfigDefaults defaults;
+        @Data public static class ProjectConfigDefaults{
+            String nodeExecutor;
+            String fileCopier;
+            ProjectKeypath sshKeypath;
+        }
+        @Data public static class ProjectKeypath{
+            Boolean enabled;
+        }
     }
 
     @Data
@@ -154,6 +169,7 @@ public class RundeckConfigBase {
 
             Checkpoint checkpoint;
             boolean generateExecutionXml;
+            boolean forcePartialChecking;
         }
 
         @Data
@@ -408,7 +424,7 @@ public class RundeckConfigBase {
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
-        Debug debug = new Debug();
+        Enabled legacyXml = new Enabled(false);
 
 
         @Data
@@ -422,11 +438,6 @@ public class RundeckConfigBase {
         public static class RepositoryInstalledPlugins {
             String storageTreePath;
         }
-
-        @Data
-        public static class Debug {
-            Boolean showTracesOnResponse = false;
-        }
     }
 
     @Data
@@ -438,7 +449,7 @@ public class RundeckConfigBase {
         Boolean syncLdapUser;
         String requiredRole;
         String jaasRolePrefix;
-        Boolean syncOauthUser = Boolean.valueOf(false);
+        Boolean syncOauthUser = false;
 
         ApiCookieAccess apiCookieAccess;
         Authorization authorization;
@@ -447,7 +458,6 @@ public class RundeckConfigBase {
         HttpHeaders headers;
         HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
-        Oauth oauth;
 
         @Data
         public static class InterceptorHelperConfig {
@@ -524,23 +534,6 @@ public class RundeckConfigBase {
             String allowedHostnames;
         }
 
-        @Data
-        public static class Oauth {
-            Okta okta;
-            Ping ping;
-        }
-        @Data
-        public static class Okta {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
-        @Data
-        public static class Ping {
-            String clientId;
-            String clientSecret;
-            String autoConfigUrl;
-        }
     }
 
     @Data

@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
@@ -64,6 +65,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.frameworkService=Mock(FrameworkService)
         controller.executionService=Mock(ExecutionService)
         controller.apiService=Mock(ApiService)
+        controller.featureService = Mock(FeatureService)
         session.subject = new Subject()
 
         grailsApplication.config.clear()
@@ -326,8 +328,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=400
             false
         }
@@ -343,8 +344,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.request.api_version = 10
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=400
             return false
         }
@@ -380,8 +380,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.response.format = "xml"
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=200
             return true
         }
@@ -506,8 +505,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.executionService = execControl
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response, version ->
-            version=14
+        svcMock.requireApi(*_)>>{ request, response ->
             response.status=200
             return true
         }
@@ -608,13 +606,16 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
-        controller.response.format = "xml"
+        controller.response.format = format
 
             controller.apiService = Mock(ApiService) {
             1 * requireApi(_,_) >> true
-            1 * renderSuccessXml(*_) >> { request, response, Closure clos ->
+            0 * renderSuccessXml(*_) >> { request, response, Closure clos ->
                 return true
             }
+            1* apiHrefForExecution(_)
+            1* guiHrefForExecution(_)
+
             0 * _(*_)
         }
         session.subject = new Subject()
@@ -629,8 +630,19 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         then:
         1 * controller.executionService.abortExecution(_,'testuser',_)>>[abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
 
-        assert 200 == controller.response.status
-        assert null == controller.request.apiErrorCode
+        controller.response.status == 200
+        controller.request.apiErrorCode == null
+        response.json == [
+                abort:[status:'aborted'],
+                execution:[
+                        id:execs[2].id.toString(),
+                        status:'running',
+                        href:null,
+                        permalink:null
+                ]
+        ]
+        where: "xml is not allowed so any requested format returns json"
+        format<<['xml','json']
     }
     /**
      * Test abort as user, abortAs denied

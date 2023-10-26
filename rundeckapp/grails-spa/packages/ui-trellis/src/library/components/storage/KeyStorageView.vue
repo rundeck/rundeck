@@ -1,227 +1,252 @@
 <template>
-<div>
-  <div class="alert alert-warning" v-if="errorMsg!==''">
-    <span>{{errorMsg}}</span>
-  </div>
+  <div>
+    <div class="alert alert-warning" v-if="errorMsg!==''">
+      <span>{{errorMsg}}</span>
+    </div>
 
-  <div class="card">
-    <div class="card-content">
-  <div class="row text-info ">
-    <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
-      <div class="input-group">
-        <div class="input-group-addon bg-3" v-if="staticRoot">
-          <span>{{rootPath}}</span>
-        </div>
-        <input type="text" class="form-control bg-2" style="padding-left:18px;"
-               v-model="inputPath" @keyup.enter="loadDirInputPath()"
-               :disabled="readOnly"
-               placeholder="Enter a path"/>
-        <div v-if="!this.isProject" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
-          <button
-              type="button"
-              class="btn btn-default dropdown-toggle"
-              @click="toggleDropdown"
-              :aria-expanded="isDropdownOpen"
-          >
-            <span>{{ linksTitle }}</span>
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
-            <li v-for="link in jumpLinks" :key="link.path">
-              <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
-            </li>
-          </ul>
+    <div class="card">
+      <div class="card-content">
+    <div class="row text-info ">
+      <div class="form-group col-sm-12" :class="[invalid===true ? 'has-error' : '']">
+        <div class="input-group">
+          <div class="input-group-addon bg-3" v-if="staticRoot">
+            <span>{{rootPath}}</span>
+          </div>
+          <input type="text" class="form-control bg-2" style="padding-left:18px;"
+                v-model="inputPath" @keyup.enter="loadDirInputPath()"
+                placeholder="Enter a path"/>
+          <div v-if="!isProject && !readOnly" class="input-group-btn" :class="isDropdownOpen ? 'open input-group-btn' : 'input-group-btn'">
+            <button
+                type="button"
+                class="btn btn-default dropdown-toggle"
+                @click="toggleDropdown"
+                :aria-expanded="isDropdownOpen"
+            >
+              <span>{{ linksTitle }}</span>
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right" v-if="isDropdownOpen">
+              <li v-for="link in jumpLinks" :key="link.path">
+                <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
+              </li>
+            </ul>
+          </div>
+          <div v-if="isRunner" class="input-group-btn">
+            <button
+                type="button"
+                class="btn btn-default"
+                @click="loadDir(path, true)"
+            >
+              <span>{{ "Reload" }}</span>
+            </button>
+
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row keySelector">
-    <div class="col-sm-12">
-      <div class="keySelector-button-group" style="margin-bottom:1em;">
-        <button type="button" class="btn btn-sm btn-default"
-                @click="loadDir(upPath)" :disabled="upPath===''">
-          <i class="glyphicon glyphicon-folder-open"></i>
-          <i class="glyphicon glyphicon-arrow-up"></i>
-          <span>{{showUpPath()}}</span>
-        </button>
-        <button @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
-          <i class="glyphicon glyphicon-plus"></i>
-          Add or Upload a Key
-        </button>
+    <div class="row keySelector">
+      <div class="col-sm-12">
+        <div class="keySelector-button-group" style="margin-bottom:1em;">
+          <button type="button" class="btn btn-sm btn-default"
+                  @click="loadDir(upPath)" :disabled="upPath===''">
+            <i class="glyphicon glyphicon-folder-open"></i>
+            <i class="glyphicon glyphicon-arrow-up"></i>
+            <span>{{showUpPath()}}</span>
+          </button>
+          <button v-if="!readOnly || allowUpload===true"  @click="actionUpload" class="btn btn-sm btn-cta">
+            <i class="glyphicon glyphicon-plus"></i>
+            Add or Upload a Key
+          </button>
 
-        <button @click="actionUploadModify()" class="btn btn-sm btn-warning"
-                v-if="this.allowUpload===true && this.isSelectedKey===true">
-          <i class="glyphicon glyphicon-pencil"></i>
-          Overwrite Key
-        </button>
-        <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="this.selectedKey && this.selectedKey.path && isSelectedKey">
-                <i class="glyphicon glyphicon-trash"></i>
-                {{"Delete"}}</button>
-      </div>
+          <button @click="actionUploadModify" class="btn btn-sm btn-warning"
+                  v-if="allowUpload===true && isSelectedKey===true && !readOnly">
+            <i class="glyphicon glyphicon-pencil"></i>
+            Overwrite Key
+          </button>
+          <button class="btn btn-sm btn-danger" @click="deleteKey" v-if="selectedKey && selectedKey.path && isSelectedKey && !readOnly">
+                  <i class="glyphicon glyphicon-trash"></i>
+                  {{"Delete"}}</button>
+        </div>
 
 
-      <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
-        <i class="glyphicon glyphicon-time"></i>
-        {{ "Loading..." }}
-      </div>
-      <table class="table table-hover table-condensed" v-else>
-        <tbody>
-        <tr>
-          <td colspan="2" class="text-strong">
-            <span v-if="files.length<1">No keys</span>
-            <span v-if="files.length>0">
-              <span>{{files.length}}</span>
-              keys
+        <div class="loading-area text-info " v-if="loading" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
+          <i class="glyphicon glyphicon-time">{{ "Loading..." }}</i>
+          <div v-if="isRunner">
+            <span v-if="countDownLimit > 0">
+              Reload from the remote Runner in {{ countDownLimit }} seconds
             </span>
-          </td>
-        </tr>
-        </tbody>
-        <tbody>
-        <tr v-for="key in files" :class="[selectedKey && key.path=== selectedKey.path ? selectedClass : '','action']"
-            :key="key.name" @click="selectKey(key)">
-          <td>
-            <i :class="[key.path=== selectedKey.path ? 'glyphicon glyphicon-ok' :'glyphicon glyphicon-unchecked']"></i>
+            <span v-if="countDownLimit === 0">
+              Reload
+            </span>
+          </div>
+        </div>
+        <table class="table table-hover table-condensed" v-if="!loading">
+          <tbody>
+          <tr>
+            <td colspan="2" class="text-strong">
+              <span v-if="files.length<1">No keys</span>
+              <span v-if="files.length>0">
+                <span>{{files.length}}</span>
+                keys
+              </span>
+            </td>
+          </tr>
+          </tbody>
+          <tbody>
+          <tr v-for="key in files" :class="[selectedKey && key.path=== selectedKey.path ? selectedClass : '','action']"
+              :key="key.name" @click="selectKey(key)">
+            <td>
+              <i :class="[key.path=== selectedKey.path ? 'glyphicon glyphicon-ok' :'glyphicon glyphicon-unchecked']"></i>
 
-            <span v-if="isPrivateKey(key)"
-                  title="This path contains a private key that can be used for remote node execution.">
-                                  <i class="glyphicon glyphicon-lock"></i>
-                                </span>
-            <span v-if="isPublicKey(key)">
-                                  <i class="glyphicon glyphicon-eye-open"></i>
-                                </span>
-            <span v-if="isPassword(key)"
-                  title="This path contains a password that can be used for remote node execution.">
-                                  <i class="glyphicon glyphicon-lock"></i>
-                                </span>
-            <span>{{key.name}}</span>
-          </td>
-          <td class="text-strong">
-            <span class="pull-right">
               <span v-if="isPrivateKey(key)"
                     title="This path contains a private key that can be used for remote node execution.">
-                Private Key
-              </span>
+                                    <i class="glyphicon glyphicon-lock"></i>
+                                  </span>
               <span v-if="isPublicKey(key)">
-                Public Key
-              </span>
+                                    <i class="glyphicon glyphicon-eye-open"></i>
+                                  </span>
               <span v-if="isPassword(key)"
                     title="This path contains a password that can be used for remote node execution.">
-                Password
+                                    <i class="glyphicon glyphicon-lock"></i>
+                                  </span>
+              <span>{{key.name}}</span><span v-if="key.expired">{{"[CACHE EXPIRED]"}}</span>
+            </td>
+            <td class="text-strong">
+              <span class="pull-right">
+                <span v-if="isPrivateKey(key)"
+                      title="This path contains a private key that can be used for remote node execution.">
+                  Private Key
+                </span>
+                <span v-if="isPublicKey(key)">
+                  Public Key
+                </span>
+                <span v-if="isPassword(key)"
+                      title="This path contains a password that can be used for remote node execution.">
+                  Password
+                </span>
               </span>
+            </td>
+          </tr>
+          </tbody>
+
+          <tbody v-if="notFound()===true">
+          <tr>
+            <td colspan="2">
+                <span class="text-strong">Nothing found at this path.
+                </span>
+            </td>
+          </tr>
+          </tbody>
+          <tbody>
+          <tr v-for="directory in directories" :key="directory.name">
+            <td class="action" @click="loadDir(directory.path)" colspan="2">
+              <i class="glyphicon glyphicon-arrow-down"></i>
+              <i class="glyphicon glyphicon-folder-close"></i>
+              <span>{{dirNameString(directory.path)}}</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <modal v-if="isConfirmingDeletion === true" v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
+      <div class="modal-body">
+        <p>{{"Really delete the selected key at this path?"}} </p>
+
+        <p>
+          <strong class="text-info"> {{selectedKey.path}}</strong>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" @click="confirmDeleteKey" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
+        <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
+      </div>
+    </modal>
+    <div class="row" v-if="isSelectedKey && selectedKey.type === 'file'">
+      <div class="col-sm-12">
+        <div class="well">
+          <div>
+            Storage path:
+            <code class="text-success">{{selectedKey.path}}</code>
+            <a href="#" data-bind="attr: { href: selectedPathUrl() }">
+              <i class="glyphicon glyphicon-link"></i>
+            </a>
+          </div>
+          <div v-if="createdTime!==''">
+            <div>
+              Created:
+              <span class="timeabs text-strong">
+                {{ formatKeyStorageCreatedTime }}
+              </span>
+
+              <span v-if="createdUsername()!==''">
+                by:
+                <span class="text-strong">{{createdUsername()}}</span>
+              </span>
+
+            </div>
+          </div>
+          <div v-if="wasModified()!==''">
+            <div>
+              Modified:
+              <span class="timeago text-strong">
+                {{ formatHumanizedModifiedTimeAgoDuration }} ago
+              </span>
+
+              <span v-if="modifiedUsername()!==''">
+                by:
+                <span class="text-strong">{{modifiedUsername()}}</span>
+              </span>
+            </div>
+          </div>
+          <div v-if="selectedKey && isPublicKey(selectedKey)" class="pull-right">
+            <span>
+              <a :href="downloadUrl()">
+                    <i class="glyphicon glyphicon-download"></i>
+                    {{"Download"}}</a>
             </span>
-          </td>
-        </tr>
-        </tbody>
-
-        <tbody v-if="notFound()===true">
-        <tr>
-          <td colspan="2">
-              <span class="text-strong">Nothing found at this path.
-              </span>
-          </td>
-        </tr>
-        </tbody>
-        <tbody>
-        <tr v-for="directory in directories" :key="directory.name">
-          <td class="action" @click="loadDir(directory.path)" colspan="2">
-            <i class="glyphicon glyphicon-arrow-down"></i>
-            <i class="glyphicon glyphicon-folder-close"></i>
-            <span>{{dirNameString(directory.path)}}</span>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <modal v-model="isConfirmingDeletion" title="Delete Selected Key" id="storagedeletekey" ref="modalDelete" auto-focus append-to-body :footer="false">
-    <div class="modal-body">
-      <p>{{"Really delete the selected key at this path?"}} </p>
-
-      <p>
-        <strong class="text-info"> {{this.selectedKey.path}}</strong>
-      </p>
-    </div>
-    <div class="modal-footer">
-      <button type="button" @click="confirmDeleteKey" class="btn btn-sm btn-danger obs-storagedelete-select"> {{"Delete"}}</button>
-      <button type="button" @click="cancelDeleteKey" class="pull-right btn btn-sm btn-default">{{"Cancel"}}</button>
-    </div>
-  </modal>
-  <div class="row" v-if="isSelectedKey">
-    <div class="col-sm-12">
-      <div class="well">
-        <div>
-          Storage path:
-          <code class="text-success">{{selectedKey.path}}</code>
-          <a href="#" data-bind="attr: { href: selectedPathUrl() }">
-            <i class="glyphicon glyphicon-link"></i>
-          </a>
-        </div>
-        <div v-if="createdTime()!==''">
-          <div>
-            Created:
-            <span class="timeabs text-strong">
-                                    {{createdTime() | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
-                                </span>
-
-            <span v-if="createdUsername()!==''">
-                                    by:
-                                    <span class="text-strong">{{createdUsername()}}</span>
-                                </span>
-
           </div>
-        </div>
-        <div v-if="wasModified()!==''">
-          <div>
-            Modified:
-            <span class="timeago text-strong">
-                                    {{modifiedTimeAgoText()| duration('humanize') }} ago
-                                </span>
-
-            <span v-if="modifiedUsername()!==''">
-                                by:
-                                <span class="text-strong">{{modifiedUsername()}}</span>
-                              </span>
+          <div v-if="selectedKey && selectedKey.expired" class="pull-right">
+            <span>
+              <a :href="'javascript:void(0)'" @click="loadKeys(selectedKey)">
+                    <i class="glyphicon glyphicon-download"></i>
+                    {{"Refresh Expired Key"}}</a>
+            </span>
           </div>
-        </div>
-        <div v-if="this.selectedKey && isPublicKey(this.selectedKey)" class="pull-right">
-          <span>
-            <a :href="downloadUrl()">
-                  <i class="glyphicon glyphicon-download"></i>
-                  {{"Download"}}</a>
-          </span>
         </div>
       </div>
     </div>
-  </div>
+      </div>
+      <div class="card-footer">
+        <hr>
+        <span class="text-info">
+            {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
+        </span>
+      </div>
     </div>
-    <div class="card-footer">
-      <hr>
-      <span class="text-info">
-          {{ $t('Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.') }}
-      </span>
-    </div>
   </div>
-</div>
 </template>
 
 <script lang="ts">
-import InputType from "./InputType"
-import KeyType from "./KeyType";
 import moment from 'moment'
 import {getRundeckContext} from "../../index"
-import Vue from "vue"
-import axios from "axios";
+import {defineComponent} from "vue"
+import KeyType from "../../types/KeyType";
+import InputType from "../../types/InputType";
+import { formatHumanizedDuration, formatKeyStorageDate } from "../../utilities/DateTimeFormatters";
 
-export default Vue.extend({
+export default defineComponent({
   name: "KeyStorageView",
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
-    value: String,
+    modelValue: String,
     storageFilter: String,
     rootPath: String,
-    createdKey: {}
+    createdKey: {},
+    runnerId: String
   } ,
+  emits: ['update:modelValue','openEditor'],
   data() {
     return {
       errorMsg: '',
@@ -247,23 +272,66 @@ export default Vue.extend({
       linksTitle: '',
       projectList: [],
       jumpLinks: [] as Array<{ name: string | undefined; path: string }>,
+      countDownLimit: 0,
+      countDownInterval: 0
     }
   },
   mounted() {
     this.loadKeys()
     this.loadProjectNames()
   },
+  unmounted() {
+    if(this.countDownInterval > 0) {
+      clearInterval(this.countDownInterval)
+      this.countDownInterval = 0
+    }
+  },
   watch : {
-    createdKey : function (newValue, oldValue) {
+    createdKey : function (newValue) {
       if(newValue !== null){
         this.selectKey(newValue)
       }
+    },
+    rootPath: function(newValue: string) {
+      // Reset current path when rootPath changed.
+      this.path = ''
+      this.inputPath = ''
+      this.selectedKey = {}
+      this.loadKeys()
     }
   },
   computed: {
-    isProject(): boolean {
-      return this.rootPath.startsWith("keys/project");
+    formatKeyStorageCreatedTime() {
+      return formatKeyStorageDate(this.createdTime)
     },
+    formatHumanizedModifiedTimeAgoDuration() {
+      return formatHumanizedDuration(this.modifiedTimeAgoText)
+    },
+    isProject(): boolean {
+      return this.rootPath?.startsWith("keys/project") || false;
+    },
+    createdTime() {
+      let value = '';
+      if (this.selectedKey != null &&
+          this.selectedKey.meta != null &&
+          this.selectedKey.meta['Rundeck-content-creation-time'] != null) {
+        value = this.selectedKey.meta['Rundeck-content-creation-time'];
+      }
+      return value;
+    },
+    modifiedTimeAgoText() {
+      let value = 0;
+      if (this.selectedKey != null &&
+          this.selectedKey.meta != null &&
+          this.selectedKey.meta['Rundeck-content-modify-time'] != null) {
+        const time = this.selectedKey.meta['Rundeck-content-modify-time'];
+        value = this.duration(time);
+      }
+      return value;
+    },
+    isRunner(): boolean {
+      return this.rootPath.startsWith('runner:')
+    }
   },
   methods: {
     downloadUrl(): string {
@@ -312,13 +380,38 @@ export default Vue.extend({
     },
     calcBrowsePath(path: string){
       let browse=path
+
+      if(this.isRunner) {
+      return path
+      }
+
       if (this.rootPath != 'keys/' && this.rootPath != 'keys') {
         browse = (this.rootPath) + "/" + path
         browse = browse.substring(5)
       }
       return browse
     },
-    loadKeys(selectedKey?: any) {
+    countDown(selectedKey?: any) {
+      if(this.countDownLimit > 0) return
+      this.countDownLimit = 5
+      // @ts-ignore
+      this.countDownInterval = setInterval(() => {
+        this.countDownLimit--;
+
+        if(this.countDownLimit <= 0) {
+          // @ts-ignore
+          clearInterval(this.countDownInterval);
+          this.countDownInterval = 0
+
+          const delayExec = setTimeout(() => {
+            this.loadKeys(selectedKey)
+            clearTimeout(delayExec)
+          }, 600) // Delay 600ms to execute to give better user experience.
+        }
+
+      },1000);
+    },
+    loadKeys(selectedKey?: any, forceRefresh?: boolean) {
       if(selectedKey) {
         this.selectedKey = selectedKey
       }
@@ -326,9 +419,21 @@ export default Vue.extend({
 
       const rundeckContext = getRundeckContext();
       const getPath = this.calcBrowsePath(this.path)
-      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath).then((result: any) => {
+      
+
+      const requestOptions = {
+        queryParameters: forceRefresh? { refresh: "true" } : { }
+      }
+
+      rundeckContext.rundeckClient.storageKeyGetMetadata(getPath, requestOptions).then((result: any) => {
         this.directories = [];
         this.files = [];
+
+        if(result.cacheStatus === 'LOADING') {
+          this.loading = true
+          this.countDown(selectedKey)
+          return
+        }
 
         if (result.resources != null) {
           result.resources.forEach((resource: any) => {
@@ -349,7 +454,8 @@ export default Vue.extend({
             }
 
             if (resource.type === 'file') {
-              if (this.storageFilter != null) {
+
+              if (this.storageFilter != null && this.storageFilter !== '') {
                 if (this.allowedResource(resource.meta)) {
                   this.files.push(resource);
                 }
@@ -370,18 +476,37 @@ export default Vue.extend({
             }
           });
         }
+
         this.loading=false
       }).catch((err: Error) => {
-        this.errorMsg = err.message
+        try {
+          const jsonError = JSON.parse(err.message)
+
+          if(jsonError.message === "Error: Key browsing is not allowed in CCP mode.") {
+            // Generate sample key path string
+            const sampleKeyPath = this.rootPath.endsWith("/") ? `${this.rootPath}${this.path}` : `${this.rootPath}/${this.path}`
+
+            // Remove the Error prefix
+            const softenedMessage = jsonError.message.startsWith("Error: ") ? jsonError.message.substring("Error: ".length) : jsonError.message
+
+            this.errorMsg = `${softenedMessage} If you need to select a key, please type the path of the key with the prefix "${sampleKeyPath}" into the form field. E.g. ${sampleKeyPath}/path/to/the/key`
+          } else {
+            this.errorMsg = jsonError.message
+          }
+          
+        } catch (parseError) {
+          this.errorMsg = err.message
+        }
+
         this.loading=false
       });
     },
     allowedResource(meta: any) {
-      const filterArray = this.storageFilter.split('=');
+      const filterArray = this.storageFilter?.split('=') || ["", ""];
       const key = filterArray[0];
       const value = filterArray[1];
       if (key == 'Rundeck-key-type') {
-        if (value === meta['rundeckKeyType']) {
+        if (value === meta['rundeckKeyType'] || value === meta['Rundeck-key-type']) {
           return true;
         }
       } else {
@@ -397,21 +522,11 @@ export default Vue.extend({
       return moment().diff(moment(start));
     },
     modifiedUsername() {
-      var value = '';
+      let value = '';
       if (this.selectedKey != null &&
           this.selectedKey.meta != null &&
           this.selectedKey.meta['Rundeck-auth-modified-username']) {
         return this.selectedKey.meta['Rundeck-auth-modified-username'];
-      }
-      return value;
-    },
-    modifiedTimeAgoText() {
-      var value = 0;
-      if (this.selectedKey != null &&
-          this.selectedKey.meta != null &&
-          this.selectedKey.meta['Rundeck-content-modify-time'] != null) {
-        var time = this.selectedKey.meta['Rundeck-content-modify-time'];
-        value = this.duration(time);
       }
       return value;
     },
@@ -433,15 +548,6 @@ export default Vue.extend({
       }
       return value;
     },
-    createdTime() {
-      var value = '';
-      if (this.selectedKey != null &&
-          this.selectedKey.meta != null &&
-          this.selectedKey.meta['Rundeck-content-creation-time'] != null) {
-        value = this.selectedKey.meta['Rundeck-content-creation-time'];
-      }
-      return value;
-    },
     dirNameString(path: any) {
       if (path.lastIndexOf('/') >= 0) {
         return path.substring(path.lastIndexOf('/') + 1);
@@ -450,15 +556,22 @@ export default Vue.extend({
       }
     },
     isPrivateKey(key: any) {
-      return key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'private';
-
+      let keyType = key.meta['rundeckKeyType'];
+      if(keyType==null){
+        keyType = key.meta['Rundeck-key-type'];
+      }
+      return key && key.meta && keyType && keyType === 'private';
     },
     isPublicKey(key: any) {
-      return key.meta['rundeckKeyType'] && key.meta["rundeckKeyType"] === 'public';
+      let keyType = key.meta['rundeckKeyType'];
+      if(keyType==null){
+        keyType = key.meta['Rundeck-key-type'];
+      }
+      return key && key.meta && keyType && keyType === 'public';
 
     },
     isPassword(key: any) {
-      return key.meta["Rundeck-data-type"] === 'password';
+      return key && key.meta && key.meta["Rundeck-data-type"] === 'password';
     },
     notFound() {
       return false;
@@ -476,7 +589,7 @@ export default Vue.extend({
         this.isSelectedKey = true;
       }
 
-      this.$emit('input', this.selectedKey ? this.selectedKey.path : '');
+      this.$emit('update:modelValue', this.selectedKey ? this.selectedKey.path : '');
     },
     parentDirString(path: any) {
       if (null != path && path.lastIndexOf('/') >= 0) {
@@ -526,7 +639,11 @@ export default Vue.extend({
       this.uploadErrors = {} as any;
     },
     loadDirInputPath() {
-      this.loadDir(this.rootPath + "/" + this.inputPath)
+      if(this.isRunner) {
+        this.loadDir(this.inputPath)
+      } else {
+        this.loadDir(this.rootPath + "/" + this.inputPath)
+      }
     },
     defaultSelectKey(path: any) {
       const rundeckContext = getRundeckContext();
@@ -547,43 +664,70 @@ export default Vue.extend({
     },
     loadUpPath() {
       let upPath = '';
-      if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
-        if (this.path.indexOf('/') >= 0) {
-          upPath = this.parentDirString(this.path);
-        } else {
-          upPath = this.rootPath;
-        }
-
-        if (upPath != this.rootPath) {
-          this.upPath = this.absolutePath(upPath);
-        } else {
-          this.upPath = this.rootPath;
+      if(this.isRunner) {
+        // upPath is the path without trailing part
+        if(!this.path)
+          this.upPath = ""
+        else {
+          const lastIndexOfSlash = this.path.lastIndexOf("/")
+          if(lastIndexOfSlash >= 0)
+            this.upPath = this.path.substring(0, lastIndexOfSlash)
+          else
+            this.upPath = ""
         }
       } else {
-        this.upPath = upPath;
+        if (this.path != '' && this.path != this.rootPath && this.path != this.rootPath + '/') {
+                if (this.path.indexOf('/') >= 0) {
+                  upPath = this.parentDirString(this.path);
+                } else {
+                  upPath = this.rootPath || '';
+                }
+
+                if (upPath != this.rootPath) {
+                  this.upPath = this.absolutePath(upPath);
+                } else {
+                  this.upPath = this.rootPath;
+                }
+              } else {
+                this.upPath = upPath;
+              }
       }
     },
     absolutePath(relpath: any) {
+      if(this.isRunner) {
+        return "/" + relpath
+      }
+
       if (this.staticRoot === false) {
         return relpath;
       }
       return this.rootPath + "/" + relpath;
     },
-    loadDir(selectedPath: any) {
+    loadDir(selectedPath: any, forceRefresh?: boolean) {
       this.isDropdownOpen=false
       this.clean();
       let path = '';
-      if (selectedPath != null) {
-        path = this.relativePath(selectedPath);
+
+      if(this.isRunner) {
+        path = selectedPath
+      } else {
+        if (selectedPath != null) {
+          path = this.relativePath(selectedPath);
+        }
       }
 
       this.path = path;
       this.inputPath = path;
 
       this.loadUpPath();
-      this.loadKeys();
+
+      this.loadKeys(path, forceRefresh);
     },
     showUpPath() {
+      if(this.isRunner) {
+        return this.upPath
+      }
+
       if (this.upPath != this.rootPath) {
         return this.relativePath(this.upPath);
       } else {
@@ -635,7 +779,7 @@ export default Vue.extend({
 </script>
 
 <style>
-  .keySelector span {
+   .keySelector span {
         content: " ";
         margin: 0 2px;
     }
@@ -650,7 +794,11 @@ export default Vue.extend({
         margin: 0 2px;
     }
 
-    label-key {
+    .label-key {
         vertical-align: middle
+    }
+
+    .input-group-addon {
+      color: var(--font-color)
     }
 </style>

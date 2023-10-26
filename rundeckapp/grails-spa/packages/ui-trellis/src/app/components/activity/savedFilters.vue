@@ -11,7 +11,7 @@
         {{$t('Filters')}}
         <span class="caret"></span>
       </span>
-      <template slot="dropdown">
+      <template v-slot:dropdown>
 
         <li v-if="query && query.filterName">
           <a role="button"  @click="deleteFilter" >
@@ -35,11 +35,12 @@
 
   </span>
 </template>
-<script>
-import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "../../../library";
+<script lang="ts">
+import { defineComponent } from "vue";
+import { getRundeckContext } from "../../../library";
+import {  MessageBox } from 'uiv';
 
-export default {
+export default defineComponent({
   props: ["query", "hasQuery","eventBus"],
   data() {
     return {
@@ -49,9 +50,13 @@ export default {
       filterSaveUrl: "",
       filterDeleteUrl: "",
       loadError: "",
-      filters: []
+      filters: [],
+      promptTitle: this.$t('Save Filter'),
+      promptContent: this.$t("filter.save.name.prompt"),
+      promptError: this.$t("filter.save.validation.name.blank" ),
     };
   },
+  emits: ['select_filter'],
   methods: {
     async loadFilters() {
       const client = getRundeckContext().rundeckClient;
@@ -131,20 +136,19 @@ export default {
       }
     },
     saveFilterPrompt() {
-      this.$prompt({
-        title: this.$t("Save Filter"),
-        content: this.$t("filter.save.name.prompt"),
-        // A simple input validator
-        // returns the err msg (not valid) or null (valid)
+      MessageBox.prompt({
+        title: this.promptTitle,
+        content: this.promptContent,
         validator(value) {
-          return /.+/.test(value) ? null : this.$t('filter.save.validation.name.blank');
+          return /.+/.test(value) ? null : this.promptError;
         }
       })
         .then(value => {
           console.log("save value", value);
           this.doSaveFilter(value);
         })
-        .catch(() => {
+        .catch((e) => {
+          console.log(e);
           //this.$notify("Save canceled.");
         });
     }
@@ -158,9 +162,12 @@ export default {
       this.filterDeleteUrl = window._rundeck.data["filterDeleteUrl"];
       this.loadFilters();
     }
-    this.eventBus && this.eventBus.$on('invoke-save-filter',this.saveFilterPrompt)
+    this.eventBus && this.eventBus.on('invoke-save-filter',this.saveFilterPrompt)
+  },
+  beforeUnmount() {
+    this.eventBus && this.eventBus.off('invoke-save-filter')
   }
-};
+})
 </script>
 <style lang="scss">
 .modal-footer .btn-primary{

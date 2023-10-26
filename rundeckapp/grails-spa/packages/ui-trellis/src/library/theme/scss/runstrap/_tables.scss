@@ -482,12 +482,12 @@ th {
 
 // VGT TABLE
 
-@import 'vue-good-table/src/styles/style.scss';
+@import '~vue-good-table-next/dist/vue-good-table-next.css';
 
 
 
 
-.vgt-responsive {
+div.vgt-responsive {
     width: 100%;
     overflow-x: inherit;
     position: relative;
@@ -588,19 +588,22 @@ th {
     border-bottom: 5px solid var(--background-color-accent);
   }
 }
+
+
 // control bar
-.vgt-global-search{
+.vgt-inner-wrap .vgt-global-search{
   border-top:  1px solid var(--background-color-accent);
   border-left:  1px solid var(--background-color-accent);
   border-right:  1px solid var(--background-color-accent);
   background: linear-gradient(var(--background-color-lvl2), var(--background-color-lvl2));
 }
-.vgt-global-search__input{
+
+.vgt-inner-wrap .vgt-global-search__input{
   .input__icon{
     .magnifying-glass{
-      border: 2px solid var(--background-color-accent);
+      border: 2px solid var(--background-color-accent) !important;
       &:before{
-        background: var(--background-color-accent);
+        background: var(--background-color-accent) !important;
       }
     }
   }
@@ -614,7 +617,8 @@ th {
     border: 1px solid var(--background-color-accent);
   }
 }
-.vgt-wrap__footer{
+
+.vgt-inner-wrap .vgt-wrap__footer{
   background: var(--background-color);
   border:  1px solid var(--background-color-accent);
   color: var(--font-color);
@@ -622,6 +626,8 @@ th {
     color: var(--font-color);
   }
 }
+
+
 .vgt-table.rd-table td{
   color: var(--font-color);
   background: var(--background-color-lvl2);

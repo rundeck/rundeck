@@ -1,6 +1,7 @@
 package org.rundeck.web
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.util.slurpersupport.GPathResult
@@ -20,6 +21,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
 
         mockCodec(JSONCodec)
         service = new WebUtil()
+        service.featureService=Mock(FeatureService)
     }
 
     void "require version success"() {
@@ -98,49 +100,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
 
     }
 
-    def "testRenderErrorXmlBuilderList"() {
-        given:
-            service.messageSource = messageSource
-        when:
-            def xml = service.renderErrorXml(['message1', 'message2'], 'test.code')
-        then:
-            xml != null
-            def gpath = assertXmlErrorText(xml)
-            'test.code' == gpath.error['@code'].text()
-            ['message1', 'message2'] == gpath.error.messages[0].message*.text()
-    }
 
-    def "requre version invalid xml"() {
-        given:
-            service.messageSource = Mock(MessageSource) {
-                getMessage(_, _,_, _) >> { it[0] +":"+ (it[1].join(":") ?: '') }
-            }
-        when:
-            request.addHeader('accept','application/xml')
-            def check = service.requireVersion(Mock(HttpServletRequest){
-                _*getAttribute('api_version')>>1
-                _*getRequestURI()>> '/test/uri'
-            }, response, 2)
-
-        then:
-            def result = assertXmlErrorText(response.text)
-            !check
-            response.contentType == "application/xml;charset=UTF-8"
-            response.characterEncoding == "UTF-8"
-            response.status == 400
-            response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
-            result.error.message.text() == 'api.error.api-version.unsupported:1:/test/uri:Minimum supported version: 2'
-    }
-
-
-    private GPathResult assertXmlErrorText(String result) {
-        def slurper = new XmlSlurper()
-        def gpath = slurper.parseText(result)
-        'result' == gpath.name()
-        'true' == gpath['@error'].text()
-        ApiVersions.API_CURRENT_VERSION.toString() == gpath['@apiversion'].text()
-        gpath
-    }
     def "requre version invalid default json"() {
         given:
             service.messageSource = Mock(MessageSource) {

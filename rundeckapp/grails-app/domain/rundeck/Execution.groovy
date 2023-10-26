@@ -24,11 +24,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.fasterxml.jackson.core.JsonParseException
-import com.google.gson.Gson
 import grails.gorm.DetachedCriteria
-import groovy.json.JsonOutput
-import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
+import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
+import rundeck.data.execution.RdExecutionDataSummary
+import rundeck.data.job.RdNodeConfig
+import rundeck.data.validation.shared.SharedExecutionConstraints
+import rundeck.data.validation.shared.SharedNodeConfigConstraints
+import rundeck.data.validation.shared.SharedProjectNameConstraints
+import rundeck.data.validation.shared.SharedServerNodeUuidConstraints
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
@@ -37,10 +41,13 @@ import rundeck.services.execution.ExecutionReferenceImpl
 */
 class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionData {
     ScheduledExecution scheduledExecution
+    String uuid = UUID.randomUUID().toString()
+    String jobUuid
     Date dateStarted
     Date dateCompleted
     String status
     String outputfilepath
+    Long execIdForLogStore
     String failedNodeList
     String succeededNodeList
     String abortedby
@@ -51,77 +58,35 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Integer retryAttempt=0
     Boolean willRetry=false
     Execution retryExecution
-    Orchestrator orchestrator;
+    Orchestrator orchestrator
     String userRoleList
     String serverNodeUUID
     Integer nodeThreadcount=1
     Long retryOriginalId
     Long retryPrevId
     String extraMetadata
+    private static final String REMOTE_LOG_FILEPATH_PREFIX = 'ext:'
 
     boolean serverNodeUUIDChanged = false
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore']
     static constraints = {
-        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
+        importFrom SharedExecutionConstraints
+        importFrom SharedNodeConfigConstraints
+        importFrom SharedServerNodeUuidConstraints
+        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{ val, Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
                 return 'job.project.mismatch.error'
             }
         })
         logFileStorageRequest(nullable:true)
         workflow(nullable:true)
-        argString(nullable:true)
-        dateStarted(nullable:true)
-        dateCompleted(nullable:true)
-        status(nullable:true)
-        outputfilepath(nullable:true)
         scheduledExecution(nullable:true)
-        loglevel(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
-        nodeKeepgoing(nullable:true)
-        doNodedispatch(nullable:true)
-        nodeThreadcount(nullable:true)
-        nodeRankOrderAscending(nullable: true)
-        nodeRankAttribute(nullable: true)
-        orchestrator(nullable: true);
-        failedNodeList(nullable:true, blank:true)
-        succeededNodeList(nullable:true, blank:true)
-        abortedby(nullable:true, blank:true)
-        serverNodeUUID(maxSize: 36, size:36..36, blank: true, nullable: true, validator: { val, obj ->
-            if (null == val) return true;
-            try { return null!= UUID.fromString(val) } catch (IllegalArgumentException e) {
-                return false
-            }
-        })
-        timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,matches: /^\d+$/)
-        timedOut(nullable: true)
-        executionType(nullable: true, maxSize: 30)
-        retryAttempt(nullable: true)
+        orchestrator(nullable: true)
         retryExecution(nullable: true)
-        willRetry(nullable: true)
-        nodeFilterEditable(nullable: true)
-        userRoleList(nullable: true)
-        retryDelay(nullable:true)
-        successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
         retryPrevId(nullable: true)
-        excludeFilterUncheck(nullable: true)
         extraMetadata(nullable: true)
     }
 
@@ -203,6 +168,45 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
     }
 
+    @Override
+    Serializable getRetryExecutionId() {
+        return retryExecution?.id
+    }
+
+    @Override
+    Serializable getLogFileStorageRequestId() {
+        return logFileStorageRequest?.id
+    }
+
+    RdNodeConfig getNodeConfig() {
+        new RdNodeConfig(
+                nodeInclude : nodeInclude,
+                nodeExclude : nodeExclude,
+                nodeIncludeName : nodeIncludeName,
+                nodeExcludeName : nodeExcludeName,
+                nodeIncludeTags : nodeIncludeTags,
+                nodeExcludeTags : nodeExcludeTags,
+                nodeIncludeOsName : nodeIncludeOsName,
+                nodeExcludeOsName : nodeExcludeOsName,
+                nodeIncludeOsFamily : nodeIncludeOsFamily,
+                nodeExcludeOsFamily : nodeExcludeOsFamily,
+                nodeIncludeOsArch : nodeIncludeOsArch,
+                nodeExcludeOsArch : nodeExcludeOsArch,
+                nodeIncludeOsVersion : nodeIncludeOsVersion,
+                nodeExcludeOsVersion : nodeExcludeOsVersion,
+                nodeExcludePrecedence : nodeExcludePrecedence,
+                successOnEmptyNodeFilter: successOnEmptyNodeFilter,
+                filter: filter,
+                filterExclude: filterExclude,
+                excludeFilterUncheck: excludeFilterUncheck,
+                nodeKeepgoing : nodeKeepgoing,
+                doNodedispatch : doNodedispatch,
+                nodeRankAttribute : nodeRankAttribute,
+                nodeRankOrderAscending : nodeRankOrderAscending,
+                nodeFilterEditable : nodeFilterEditable,
+                nodeThreadcount : nodeThreadcount
+        )
+    }
 
     public String toString() {
         return "Workflow execution: ${workflow}"
@@ -210,6 +214,35 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     Map getExtraMetadataMap() {
         extraMetadata ? asJsonMap(extraMetadata) : [:]
+    }
+
+    /**
+     * @return the execution id used to store the log files (might differ from execId since execId changes after imports)
+     */
+    Long getExecIdForLogStore(){
+        if(!execIdForLogStore) {
+            if (isRemoteOutputfilepath()) {
+                final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
+                execIdForLogStore = Long.parseLong(outputfilepath.substring(extMarkPos, outputfilepath.indexOf(':', extMarkPos)))
+            } else
+                execIdForLogStore = id
+        }
+        return execIdForLogStore
+    }
+
+    /**
+     * @return the path for the log ( must check {@link #isRemoteOutputfilepath()} to validate where the path is located)
+     */
+    String getOutputfilepath(){
+        final int extMarkPos = REMOTE_LOG_FILEPATH_PREFIX.length()
+        return isRemoteOutputfilepath() ? outputfilepath.substring(outputfilepath.indexOf(':', extMarkPos) + 1) : outputfilepath
+    }
+
+    /**
+     * @return true if the outputfilepath corresponds to a path in a remote storage
+     */
+    boolean isRemoteOutputfilepath(){
+        return this.outputfilepath?.startsWith(REMOTE_LOG_FILEPATH_PREFIX)
     }
 
     void setExtraMetadataMap(Map config) {
@@ -241,8 +274,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
             (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
-                    (null == dateCompleted && status!=ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.EXECUTION_RUNNING :
-                        (status == ExecutionService.AVERAGE_DURATION_EXCEEDED) ? ExecutionService.AVERAGE_DURATION_EXCEEDED:
+                    (null == dateCompleted) ? ExecutionService.EXECUTION_RUNNING :
                             (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
                                 cancelled ? ExecutionService.EXECUTION_ABORTED :
                                     willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
@@ -268,8 +300,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                                                  ExecutionService.EXECUTION_SUCCEEDED,
                                                  ExecutionService.EXECUTION_FAILED,
                                                  ExecutionService.EXECUTION_QUEUED,
-                                                 ExecutionService.EXECUTION_SCHEDULED,
-                                                 ExecutionService.AVERAGE_DURATION_EXCEEDED])
+                                                 ExecutionService.EXECUTION_SCHEDULED])
     }
 
     // various utility methods helpful to the presentation layer
@@ -320,6 +351,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         map.dateCompleted=dateCompleted
         map.status=status
         map.outputfilepath=outputfilepath
+        map.execIdForLogStore = getExecIdForLogStore()
         map.failedNodeList = failedNodeList
         map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
@@ -393,6 +425,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         exec.dateCompleted=data.dateCompleted
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
+        exec.execIdForLogStore = data.execIdForLogStore ? Long.parseLong(data.execIdForLogStore as String) : null
         exec.failedNodeList = data.failedNodeList
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
@@ -490,6 +523,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return new ExecutionReferenceImpl(
                 project: project,
                 id: id,
+                uuid: uuid,
                 retryOriginalId: retryOriginalId?.toString(),
                 retryPrevId: retryPrevId?.toString(),
                 retryNextId: retryExecution?.id?.toString(),
@@ -510,6 +544,20 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     void beforeUpdate() {
         serverNodeUUIDChanged = this.isDirty('serverNodeUUID')
+    }
+
+    ExecutionDataSummary toSummary() {
+        return new RdExecutionDataSummary(
+                uuid: this.uuid,
+                jobUuid: this.jobUuid,
+                project: this.project,
+                status: this.status,
+                executionType: this.executionType,
+                executionState: this.executionState,
+                dateStarted: this.dateStarted,
+                dateCompleted: this.dateCompleted,
+                serverNodeUUID: this.serverNodeUUID
+        )
     }
 }
 

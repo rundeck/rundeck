@@ -230,12 +230,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         def roles = service.getUserGroupSourcePluginRoles(userA)
 
         then:
-        roles == groups
+        roles == expect
 
         where:
-        userA | groups
-        "any" | ["one","two"]
-        "any" | []
+        userA | groups           | expect
+        "any" | ["one", "two"]   | ["one", "two"]
+        "any" | []               | []
+        //make sure nulls are filtered
+        "any" | ["a", null, "b"] | ["a", "b"]
     }
 
     def "User Group Source Plugin doesn't process misconfigured plugin"() {

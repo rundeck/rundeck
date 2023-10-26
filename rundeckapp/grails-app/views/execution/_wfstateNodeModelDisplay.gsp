@@ -57,15 +57,8 @@
       </div>
     </div>
     <div class="row row-space">
-      <div class="col-sm-3">
+      <div class="col-sm-6">
           <strong><g:message code="execution.show.mode.column.node" /></strong>
-      </div>
-      <div class="col-sm-3">
-          <div class="vue-ui-socket">
-              <div>
-                  <ui-socket section="job-runner-execution-column" location="section-title-column" :event-bus="EventBus"/>
-              </div>
-          </div>
       </div>
       <div class="col-sm-2 col-sm-offset-2">
           <strong><g:message code="start.time" /></strong>
@@ -78,20 +71,12 @@
   <div data-bind="foreach: activeNodes()">
     <div class="wfnodestate" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
       <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
-          <div class="col-sm-3  nodectx"
+          <div class="col-sm-6  nodectx"
                data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
               <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                   <i class="auto-caret text-muted"></i>
                   <i class="fas fa-hdd"></i>
                   <span data-bind="text: name"></span>
-              </div>
-          </div>
-
-          <div class="col-sm-3">
-              <div class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
-                  <div>
-                      <ui-socket section="job-runner-execution" location="top" :event-bus="EventBus" />
-                  </div>
               </div>
           </div>
 
@@ -142,6 +127,7 @@
                                 attr: { 'data-execstate': executionState },
                                 css: { 'auto-caret-container': followingOutput(), active: followingOutput() }
                                 ">
+                              <span data-bind="text: $data.stepctx[0] + '. '"></span>
                               <i class="auto-caret text-muted"></i>
 
                               <feature:disabled name="workflowDynamicStepSummaryGUI">

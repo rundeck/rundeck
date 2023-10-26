@@ -6,13 +6,11 @@
 
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
 import PluginInfo from '../../../../library/components/plugins/PluginInfo.vue'
 
-import {Webhook} from '../../../../library/stores/Webhooks'
-
-export default Vue.extend({
+export default defineComponent({
     components: {
         PluginInfo
     },
@@ -23,7 +21,7 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
-::v-deep .plugin-icon {
+:deep(.plugin-icon) {
     border-radius: 4px;
     height: 35px !important;
     width: 35px !important;

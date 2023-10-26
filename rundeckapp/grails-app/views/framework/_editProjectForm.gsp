@@ -85,7 +85,7 @@
   </g:if>
     <div class="form-group ">
         <label for="label">
-            <g:message code="domain.Project.label.label" default="Label"/>
+            <g:message code="domain.Project.label.label" default="Project Display Name"/>
         </label>
         <g:textField name="label" size="50"  value="${projectLabel}" class="form-control"/>
     </div>
@@ -249,7 +249,7 @@
                                 <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                                 <i class="rdicon icon-small plugin"></i>
                                 <!-- /ko -->
-                                <span data-bind="text: title"></span>
+                                <span data-test-id="node-executor-selected" data-bind="text: title"></span>
                                 </span>
                             </span>
                         </span>
@@ -340,16 +340,16 @@
 
     <div class=" form-group spacing-lg">
         <div class="col-sm-12">
-            <plugin-set-config
-                    class="project-config-plugins-vue"
-                    :event-bus="EventBus"
-                    service-name="PluginGroup"
-                    :mode-toggle="false"
-                    :config-list="[]"
-                    config-prefix="pluginValues.PluginGroup."
-                    @modified="EventBus.$emit('page-modified','Plugins')"
-                    @reset="EventBus.$emit('page-reset','Plugins')"
-            ></plugin-set-config>
+            <div class="project-config-plugins-vue">
+                <plugin-set-config :event-bus="EventBus"
+                                   service-name="PluginGroup"
+                                   :mode-toggle="false"
+                                   :config-list="[]"
+                                   config-prefix="pluginValues.PluginGroup."
+                                   @modified="EventBus.emit('page-modified','Plugins')"
+                                   @reset="EventBus.emit('page-reset','Plugins')"
+                ></plugin-set-config>
+            </div>
         </div>
     </div>
 </div>

@@ -41,6 +41,7 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import com.sun.org.apache.xpath.internal.operations.Bool
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
@@ -565,16 +566,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         create.expand()
         return create
     }
-    public static final Map<String, String> DEFAULT_PROJ_PROPS = Collections.unmodifiableMap(
-        [
-            'resources.source.1.type'              : 'local',
-            'service.NodeExecutor.default.provider': 'jsch-ssh',
-            'service.FileCopier.default.provider'  : 'jsch-scp',
-            'project.ssh-keypath'                  :
-                new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath(),
-            'project.ssh-authentication'           : 'privateKey'
-        ]
-    )
 
     @CompileStatic(TypeCheckingMode.SKIP)
     @Override
@@ -586,6 +577,17 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
 
         def description = properties.get('project.description')
+        String defaultExecutor = configurationService.getString("project.defaults.nodeExecutor", "sshj-ssh")
+        String defaultFileCopier = configurationService.getString("project.defaults.fileCopier", "sshj-scp")
+        boolean includeSshKeypath = configurationService.getBoolean("project.defaults.sshKeypath.enabled", false)
+        Map<String, String> projectDefaults = ['service.NodeExecutor.default.provider':defaultExecutor,
+                                               'service.FileCopier.default.provider':defaultFileCopier,
+                                               'project.ssh-authentication':'privateKey',
+                                               'resources.source.1.type':'local']
+        if(includeSshKeypath){
+            projectDefaults.put('project.ssh-keypath', new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath())
+        }
+
         boolean generateInitProps = false
         if (!projectData) {
             projectData = new SimpleProjectBuilder()
@@ -599,7 +601,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         storedProps.putAll(properties)
         if (generateInitProps) {
             Properties newProps = new Properties()
-            DEFAULT_PROJ_PROPS.each { k, v ->
+            projectDefaults.each { k, v ->
                 if (null == properties || !properties.containsKey(k)) {
                     newProps.setProperty(k, v);
                 }

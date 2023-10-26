@@ -3,7 +3,7 @@
     <button
       @click="isSubscribeModalActive = true"
       class="btn red-button"
-    >{{$t("message.subscribe")}}</button>
+    >{{$t("message_subscribe")}}</button>
     <modal v-model="isSubscribeModalActive" ref="modal" :header="false" :footer="false" append-to-body>
       <div class="modal-body">
         <div v-if="!showConfirmation">
@@ -37,9 +37,10 @@
 </template>
 
 <script>
+import { defineComponent } from "vue";
 import axios from "axios";
 
-export default {
+export default defineComponent({
   name: "NewsletterSubscribeButton",
   data() {
     return {
@@ -82,7 +83,7 @@ export default {
     }
   },
   mounted() {}
-};
+})
 </script>
 
 <style lang="scss" scoped>

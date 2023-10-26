@@ -179,7 +179,7 @@ class WebhookService {
     }
 
     def saveHook(UserAndRolesAuthContext authContext, def hookData) {
-        RdWebhook hook
+        RdWebhook hook = null
         SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
         boolean shouldUpdate = false
         if(saveWebhookRequest.id) {
@@ -211,6 +211,8 @@ class WebhookService {
             saveWebhookRequest.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
             saveWebhookRequest.setAuthConfigJson(null)
+        } else if(shouldUpdate && hookData.useAuth == true && hookData.regenAuth == false) {
+            saveWebhookRequest.setAuthConfigJson(hook?.authConfigJson)
         }
 
         if(hookData.enabled != null) saveWebhookRequest.setEnabled(hookData.enabled)
@@ -262,7 +264,7 @@ class WebhookService {
         }
 
         if(saveWebhookResponse.isSaved) {
-            def responsePayload = [msg: "Saved webhook"]
+            def responsePayload = [msg: "Saved webhook", uuid: saveWebhookResponse.webhook.uuid]
             if(generatedSecureString) responsePayload.generatedSecurityString = generatedSecureString
             return responsePayload
         } else {

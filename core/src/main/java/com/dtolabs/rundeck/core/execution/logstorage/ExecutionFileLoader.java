@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.execution.logstorage;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -47,4 +48,9 @@ public interface ExecutionFileLoader {
      * @return time in milliseconds the requestor should wait before requesting again
      */
     long getRetryBackoff();
+
+    /**
+     * @return the data as a stream
+     */
+    default InputStream getStream() { return null; }
 }

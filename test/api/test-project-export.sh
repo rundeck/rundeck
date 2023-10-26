@@ -23,17 +23,17 @@ if [ -d $RDECK_PROJECTS/$test_proj ] ; then
 fi
 
 cat > $DIR/proj_create.post <<END
-<project>
-    <name>$test_proj</name>
-    <description>test1</description>
-    <config>
-        <property key="test.property" value="test value"/>
-    </config>
-</project>
+{
+    "name":"$test_proj",
+    "description":"test1",
+    "config":{
+        "test.property":"test value"
+    }
+  }
 END
 
 # post
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2

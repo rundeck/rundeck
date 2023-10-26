@@ -708,6 +708,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             stringRoles = [role1, role2, nestedRole1]
             module._nestedGroups = true
             module.rolesPerPage = 1000
+            module._allGroups = true
         } else {
             stringRoles = [role1, role2]
             module.rolesPerPage = 1000

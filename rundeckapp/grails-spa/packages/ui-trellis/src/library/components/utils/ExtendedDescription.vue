@@ -7,7 +7,7 @@
               <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
           </summary>
           <div class="more-info-content">
-            <markdown-it-vue class="markdown-body" :content="extraDescription"/>
+            <VMarkdownView class="markdown-body" mode="light" :content="extraDescription"/>
           </div>
       </details>
       <span :class="basicCss" v-else>{{text}}</span>
@@ -15,12 +15,12 @@
 </template>
 <script lang="ts">
 
-import MarkdownItVue from 'markdown-it-vue'
-import Vue from 'vue'
+import {VMarkdownView} from 'vue3-markdown'
+import {defineComponent} from 'vue'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'ExtendedDescription',
-  components: {MarkdownItVue},
+  components: {VMarkdownView},
   computed:{
     shortDescription() :string{
       const desc = this.text
@@ -62,3 +62,6 @@ export default Vue.extend({
 })
 
 </script>
+<style>
+@import '~vue3-markdown/dist/style.css';
+</style>

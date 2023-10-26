@@ -104,11 +104,14 @@ $SHELL "$SRC_DIR/api-test-success.sh" "$DIR/curl.out" || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" "$DIR/curl.out")
-execid=$(xmlsel "//executions/execution/@id" "$DIR/curl.out")
-actualDateTime=$(xmlsel "//executions/execution/date-started" "$DIR/curl.out")
+assert_json_not_null ".id"  "$DIR/curl.out"
+execid=$(jq -r ".id" < "$DIR/curl.out")
+actualDateTime=$(jq -r '."date-started".date' < "$DIR/curl.out")
 
-# <date-started unixtime='1470324418000'>2016-08-04T15:26:58Z</date-started>
+# {
+#  "unixtime": 1696451160000,
+#  "date": "2023-10-04T20:26:00Z"
+#}
 expectedDateTime="${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z"
 
 if [ "${expectedDateTime}" != "${actualDateTime}" ] ; then
@@ -116,10 +119,10 @@ if [ "${expectedDateTime}" != "${actualDateTime}" ] ; then
     exit 2
 fi
 
-if [ "1" == "${execcount}" ] && [ "" != "${execid}" ] ; then
+if  [ "" != "${execid}" ] ; then
     :
 else
-    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    errorMsg "FAIL: expected run success message for execution id. ( id: ${execid})"
     exit 2
 fi
 
@@ -151,11 +154,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#Check projects list
-itemcount=$(xmlsel "//executions/@count" "$DIR/curl.out")
-assert "1" "$itemcount" "execution count should be 1"
-status=$(xmlsel "//executions/execution/@status" "$DIR/curl.out")
-assert "succeeded" "$status" "execution status should be succeeded"
+assert_json_value "succeeded" ".status" $DIR/curl.out
 
 echo "OK"
 
