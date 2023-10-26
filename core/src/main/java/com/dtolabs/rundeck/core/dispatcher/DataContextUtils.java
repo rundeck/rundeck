@@ -80,10 +80,8 @@ public class DataContextUtils {
                 final Map<String, String> map = entry.getValue();
                 if(null!=map){
                     for (final Map.Entry<String, String> entry2 : map.entrySet()) {
-                        if (null != map.get(entry2.getKey())) {
-                            res.put(p + entry2.getKey(), Optional.ofNullable(entry2.getValue())
-                                    .map(String::valueOf)
-                                    .orElse(null));
+                        if(null!=map.get(entry2.getKey())){
+                            res.put(p + entry2.getKey(), entry2.getValue());
                         }
                     }
                 }
