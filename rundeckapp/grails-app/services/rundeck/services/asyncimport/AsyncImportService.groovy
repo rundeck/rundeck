@@ -753,7 +753,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         File dir = new File(unzippedFilepath);
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                zipDir(file.getAbsolutePath(), zippedFilePath + file.getName() + File.separator, zos);
+                zipDir(file.getAbsolutePath(), zippedFilePath + file.getName() + "/", zos);
             } else {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     ZipEntry zipEntry = new ZipEntry(zippedFilePath + file.getName());
