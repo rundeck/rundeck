@@ -33,7 +33,7 @@ class RundeckPluginBlocklist implements PluginBlocklist {
     @CompileDynamic
     private load() {
         if (!loaded) {
-            Yaml yaml = new Yaml(new LoaderOptions());
+            Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()))
             Map data = yaml.load(new FileReader(blockListFileName));
             fileNameEntries = data.get("fileNameEntries")
             providerNameEntries = data.get("providerNameEntries")
