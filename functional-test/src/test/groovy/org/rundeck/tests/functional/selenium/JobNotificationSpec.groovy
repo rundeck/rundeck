@@ -7,7 +7,7 @@ import org.rundeck.tests.functional.selenium.pages.JobsListPage
 import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.tests.functional.selenium.pages.NotificationEvent
 import org.rundeck.tests.functional.selenium.pages.NotificationType
-import org.rundeck.tests.functional.selenium.pages.ProjectCreatePage
+import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
 import org.rundeck.tests.functional.selenium.pages.SideBar
 import org.rundeck.tests.functional.selenium.pages.SideBarNavLinks
 import org.rundeck.tests.functional.selenium.pages.StepName
@@ -20,21 +20,23 @@ import spock.lang.Unroll
 @SeleniumCoreTest
 class JobNotificationSpec extends SeleniumBase {
 
+    def setupSpec(){
+        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
+    }
+
     @Unroll
     def "create job with notifications"() {
         setup:
         LoginPage loginPage = page LoginPage
-        ProjectCreatePage projectCreatePage = page ProjectCreatePage
         SideBar sideBar = page SideBar
         JobsListPage jobListPage = page JobsListPage
         JobCreatePage jobCreatePage = page JobCreatePage
+        ProjectHomePage projectHomePage = page ProjectHomePage
 
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        projectCreatePage.getCreateNewProjectButton().click()
-        projectCreatePage.getProjectNameField().sendKeys("SeleniumBasic")
-        projectCreatePage.getCreateProjectButton().click()
+        projectHomePage.goProjectHome("SeleniumBasic")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
         jobListPage.getCreateJobButton().click()
         jobCreatePage.getJobNameField().sendKeys("a job with notifications")
@@ -50,7 +52,7 @@ class JobNotificationSpec extends SeleniumBase {
         jobCreatePage.getNotificationByType(NotificationType.MAIL).click()
         jobCreatePage.getNotificationConfigByPropName("recipients").sendKeys('test@rundeck.com')
         jobCreatePage.getNotificationSaveButton().click()
-        jobCreatePage.waitNotificationModal(0)
+        jobCreatePage.waitForModal(0)
         jobCreatePage.getCreateButton().click()
         jobCreatePage.waitForJobShow()
         jobCreatePage.getJobDefinitionModal().click()

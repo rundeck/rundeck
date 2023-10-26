@@ -77,6 +77,19 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    void setupProject(String name, String projectImportLocation) {
+        def getProject = client.doGet("/project/${name}")
+        if (getProject.code() == 404) {
+            def post = client.doPost("/projects", [name: name])
+            if (!post.successful) {
+                throw new RuntimeException("Failed to create project: ${post.body().string()}")
+            }
+            client.doPut("/project/${name}/import?importConfig=true&importACL=true", new File(getClass().getResource(projectImportLocation).getPath()))
+        }else if(getProject.code() == 200){
+            client.doPut("/project/${name}/import?importConfig=true&importACL=true", new File(getClass().getResource(projectImportLocation).getPath()))
+        }
+    }
+
     RdClient _client
     @Override
     RdClient getClient() {

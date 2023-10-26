@@ -100,8 +100,8 @@ class JobCreatePage extends BasePage {
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(stepElementToWait, 1))
     }
 
-    void waitNotificationModal(Integer totalNotificationModals){
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, totalNotificationModals))
+    void waitForModal(Integer totalModals){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, 0))
     }
 }
 
