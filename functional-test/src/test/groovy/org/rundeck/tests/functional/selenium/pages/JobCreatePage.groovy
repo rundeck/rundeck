@@ -57,30 +57,30 @@ class JobCreatePage extends BasePage {
         waitForElementVisible By.id("wfitem_" + stepNumber)
     }
 
-    WebElement getJobNameField(){
+    WebElement getJobNameField() {
         el jobName
     }
 
-    WebElement tab(JobTab tab){
+    WebElement tab(JobTab tab) {
         def tabBy = By.linkText(tab.getTabName())
         waitForNumberOfElementsToBe tabBy
         el tabBy
     }
 
-    WebElement getCreateButton(){
+    WebElement getCreateButton() {
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobCreateButtonBy))
         el jobCreateButtonBy
     }
 
-    WebElement addNotificationButtonByType(NotificationEvent notificationType){
+    WebElement addNotificationButtonByType(NotificationEvent notificationType) {
         el notificationType.notificationEvent
     }
 
-    WebElement getNotificationDropDown(){
+    WebElement getNotificationDropDown() {
         el notificationDropDownBy
     }
 
-    WebElement notificationByType(NotificationType notificationType){
+    WebElement notificationByType(NotificationType notificationType) {
         el notificationType.notificationType
     }
 
@@ -88,13 +88,13 @@ class JobCreatePage extends BasePage {
         el floatBy
     }
 
-    WebElement notificationConfigByPropName(String propName){
+    WebElement notificationConfigByPropName(String propName) {
         def popBy = By.cssSelector('#notification-edit-config div.form-group[data-prop-name=\'' + propName + '\']')
         waitForNumberOfElementsToBe popBy
         el popBy findElement By.cssSelector('input[type=text]')
     }
 
-    WebElement getNotificationSaveButton(){
+    WebElement getNotificationSaveButton() {
         el notificationSaveBy
     }
 
@@ -114,7 +114,7 @@ class JobCreatePage extends BasePage {
         el updateJob
     }
 
-    void waitNotificationModal(Integer totalNotificationModals){
+    void waitNotificationModal(Integer totalNotificationModals) {
         waitForNumberOfElementsToBe notificationModalBy, totalNotificationModals
     }
 }

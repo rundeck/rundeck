@@ -95,6 +95,15 @@ class RdClient {
         ).execute()
     }
 
+    Response doPut(final String path, final File file) {
+        RequestBody body = RequestBody.create(file, MediaType.parse("application/zip"))
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("PUT", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
         jsonValue(doPost(path, body).body(), clazz)
     }

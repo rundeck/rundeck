@@ -6,7 +6,8 @@ import org.rundeck.util.container.SeleniumContext
 
 class JobListPage extends BasePage {
 
-    By createJob = By.linkText("Create a new Job")
+    By createNewJob = By.linkText("Create a new Job")
+    By newJob = By.partialLinkText('New Job')
 
     String loadPath = "/jobs"
 
@@ -21,6 +22,10 @@ class JobListPage extends BasePage {
     }
 
     WebElement getCreateJobButton() {
-        el createJob
+        el createNewJob
+    }
+
+    WebElement getNewJobButton() {
+        el newJob
     }
 }

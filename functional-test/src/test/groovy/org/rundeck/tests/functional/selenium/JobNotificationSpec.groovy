@@ -1,7 +1,5 @@
 package org.rundeck.tests.functional.selenium
 
-
-import org.rundeck.tests.functional.selenium.pages.HomePage
 import org.rundeck.tests.functional.selenium.pages.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.JobListPage
 import org.rundeck.tests.functional.selenium.pages.JobShowPage
@@ -10,7 +8,7 @@ import org.rundeck.tests.functional.selenium.pages.JobTab
 import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.tests.functional.selenium.pages.NotificationEvent
 import org.rundeck.tests.functional.selenium.pages.NotificationType
-import org.rundeck.tests.functional.selenium.pages.ProjectCreatePage
+import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
 import org.rundeck.tests.functional.selenium.pages.SideBarPage
 import org.rundeck.tests.functional.selenium.pages.StepName
 import org.rundeck.tests.functional.selenium.pages.StepType
@@ -23,19 +21,21 @@ import spock.lang.Unroll
 @SeleniumCoreTest
 class JobNotificationSpec extends SeleniumBase {
 
+    def setupSpec(){
+        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
+    }
+
     @Unroll
     def "create job with notifications"() {
         when:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.createProjectButton()
-            def projectCreatePage = page ProjectCreatePage
-            projectCreatePage.createProject(toCamelCase specificationContext.currentFeature.name)
+            def projectHomePage = page ProjectHomePage
+            projectHomePage.goProjectHome"SeleniumBasic"
             def sideBarPage = page SideBarPage
             sideBarPage.goTo NavLinkTypes.JOBS
             def jobListPage = page JobListPage
-            jobListPage.createJobButton.click()
+            jobListPage.newJobButton.click()
             def jobCreatePage = page JobCreatePage
             jobCreatePage.jobNameField.sendKeys "a job with notifications"
             jobCreatePage.tab JobTab.WORKFLOW click()
