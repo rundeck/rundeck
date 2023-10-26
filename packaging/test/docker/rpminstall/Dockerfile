@@ -1,7 +1,6 @@
 # original https://hub.docker.com/r/bwits/rundeck-build/
 FROM rdpro-centos7-util:latest
-RUN yum -y update
-RUN yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel initscripts openssh openssl
+
 RUN useradd rundeck
 #USER rundeck
 
@@ -13,7 +12,8 @@ ENV USERNAME=rundeck \
 
 ENV JAVA_HOME=/etc/alternatives/java_sdk
 
-ADD entry.sh /entry.sh
+COPY --chown=rundeck:root rundeck.rpm /rundeck/rundeck.rpm
+COPY entry.sh /entry.sh
 RUN chmod +x /entry.sh
 
 VOLUME $HOME/rundeck
