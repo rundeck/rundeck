@@ -302,6 +302,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         options
                 )
 
+                fis.close()
+
             }catch (IOException e){
                 e.printStackTrace()
                 throw e
@@ -660,6 +662,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                         fis,
                                         options
                                 )
+
+                                fis.close()
 
                             } catch (IOException e) {
                                 e.printStackTrace()
