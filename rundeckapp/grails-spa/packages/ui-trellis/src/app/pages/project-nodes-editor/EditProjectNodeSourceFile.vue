@@ -17,7 +17,7 @@
                 <div class="col-sm-10">
                     <p class="form-control-static">
                         <span v-if="provider">
-                            <plugin-config mode="title" service-name="ResourceModelSource" :provider="provider">
+                            <plugin-config mode="title" service-name="ResourceModelSource" :provider="provider" :use-runner-selector="true" :event-bus="eventBus">
                                 <template v-slot:titlePrefix>{{ index }}. </template>
                             </plugin-config>
                         </span>

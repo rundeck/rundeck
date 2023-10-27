@@ -80,7 +80,9 @@
                   >
                       <plugin-prop-edit v-model="inputValues[prop.name]"
                                         :prop="prop"
+                                        :event-bus="eventBus"
                                         :input-values="inputValues"
+                                        :use-runner-selector="useRunnerSelector"
                                         :context-autocomplete="inputContextAutocomplete"
                                         @pluginPropsMounted="notifyHandleAutoComplete"
                                         :validation="validation"
@@ -116,9 +118,11 @@
                   >
                       <plugin-prop-edit v-model="inputValues[prop.name]"
                                         :prop="prop"
+                                        :use-runner-selector="useRunnerSelector"
                                         :input-values="inputValues"
                                         :validation="validation"
                                         :readOnly="readOnly"
+                                        :event-bus="eventBus"
                                         :rkey="'g_'+gindex+'_'+rkey"
                                         :pindex="pindex"
                                         :selector-data="propsComputedSelectorData"
@@ -187,7 +191,9 @@ export default defineComponent({
     'scope',
     'defaultScope',
     'contextAutocomplete',
-    'autocompleteCallback'
+    'autocompleteCallback',
+    'useRunnerSelector',
+    'eventBus'
   ],
   emits: ['update:modelValue','change','handleAutocomplete','hasKeyStorageAccess'],
   data () {
