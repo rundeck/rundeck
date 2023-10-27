@@ -317,10 +317,20 @@
         <job-config-picker v-model="currentValue" :btnClass="`btn-primary`"></job-config-picker>
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
-        <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                              :allow-upload="true"
-                              :value="keyPath"
-                              :read-only="renderReadOnly"/>
+        <div v-if="useRunnerSelector===true">
+          <ui-socket section="plugin-runner-key-selector" location="nodes">
+          <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                :allow-upload="true"
+                                :value="keyPath"
+                                :read-only="renderReadOnly"/>
+          </ui-socket>
+        </div>
+        <div v-else>
+          <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                :allow-upload="true"
+                                :value="keyPath"
+                                :read-only="renderReadOnly"/>
+        </div>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -365,6 +375,7 @@ import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import TextAutocomplete from '../utils/TextAutocomplete.vue'
 import type {PropType} from "vue";
 import { getRundeckContext } from "../../rundeckService";
+import { EventBus} from "@/library";
 
 interface Prop {
   type: string
@@ -402,6 +413,11 @@ export default defineComponent({
       required:false,
       default:''
      },
+    'useRunnerSelector':{
+      type:Boolean,
+      default:false,
+      required:false
+    },
     'inputValues':{
       type:Object,
       required:false
@@ -410,6 +426,10 @@ export default defineComponent({
       type:Object as PropType<any>,
       required:false
      },
+    'eventBus':{
+      type:Object as PropType<typeof EventBus>,
+      required:false
+    },
     'rkey':{
       type:String,
       required:false,
