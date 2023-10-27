@@ -3412,8 +3412,6 @@ Note: `other_errors` included since API v35""",
                 contentType: 'application/json', text:
                 (
                         [
-                                message           : "Status file found.",
-                                currentMilestone  : statusFileContent.milestone,
                                 lastUpdate        : statusFileContent.lastUpdate,
                                 lastUpdated       : statusFileContent.lastUpdated,
                                 errors            : statusFileContent.errors ? statusFileContent.errors : "No errors."
