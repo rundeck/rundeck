@@ -36,7 +36,7 @@
     "@rundeck/client": "^0.2.5",
     "@storybook/vue3": "^6.5.16",
     "ace-builds": "^1.23.4",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "core-js": "^3.6.5",
     "deep-object-diff": "^1.1.9",
     "dompurify": "^3.0.3",
