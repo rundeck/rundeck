@@ -4,12 +4,10 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
-import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
@@ -216,7 +214,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         final def milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Starting M1... Creating required directories."
+            it.lastUpdate = "${AsyncImportMessages.inProcess} Starting M1... Creating required directories."
             return it
         })
 
@@ -226,7 +224,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         if (!Files.exists(Paths.get(destDir))) {
             try {
                 asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                    it.lastUpdate = "Creating a copy of the uploaded project in /tmp."
+                    it.lastUpdate = "${AsyncImportMessages.save} Creating a copy of the uploaded project in /tmp."
                     return it
                 })
                 createTempCopyFromStream(destDir, inputStream)
@@ -241,7 +239,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Creating the working directory in /tmp."
+            it.lastUpdate = "${AsyncImportMessages.creating} Creating the working directory in /tmp."
             return it
         })
 
@@ -256,7 +254,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Creating the project model inside working directory in /tmp."
+            it.lastUpdate = "${AsyncImportMessages.creating} Creating the project model inside working directory in /tmp."
             return it
         })
 
@@ -296,7 +294,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.lastUpdate = "Uploading project w/o executions."
+                it.lastUpdate = "${AsyncImportMessages.importing}  Uploading project w/o executions."
                 return it
             })
 
@@ -342,7 +340,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Cleaning the model project."
+            it.lastUpdate = "${AsyncImportMessages.cleaning} Cleaning the model project."
             return it
         })
 
@@ -368,7 +366,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 1 completed, calling Milestone 2 in process..."
+            it.lastUpdate = "${AsyncImportMessages.check} Milestone 1 completed, calling Milestone 2 in process..."
             return it
         })
 
@@ -408,7 +406,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         final def milestoneNumber = AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 2 in process..."
+            it.lastUpdate = "${AsyncImportMessages.inProcess} Milestone 2 in process..."
             return it
         })
 
@@ -442,7 +440,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         File executionsDir = new File(rundeckInternalProjectPath.toString() + File.separator + EXECUTION_DIR_NAME)
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Listing executions and corresponding filepaths."
+            it.lastUpdate = "${AsyncImportMessages.waitingAnimationInLogs()} Listing executions and corresponding filepaths."
             return it
         })
 
@@ -508,7 +506,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     Path distributedExecutionsPath = Paths.get(distributedExecutionBundle.toString())
 
                     asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                        it.lastUpdate = "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
+                        it.lastUpdate = "${AsyncImportMessages.waitingAnimationInLogs()} Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
                         return it
                     })
 
@@ -537,7 +535,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             deleteNonEmptyDir(tempFile.toString())
 
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.lastUpdate = "Executions distributed, M2 done; proceeding to call M3 event."
+                it.lastUpdate = "${AsyncImportMessages.check} Executions distributed, M2 done; proceeding to call M3 event."
                 return it
             })
 
@@ -582,7 +580,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         final def milestoneNumber = AsyncImportMilestone.M3_IMPORTING.milestoneNumber
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 3 started...."
+            it.lastUpdate = "${AsyncImportMessages.inProcess} Milestone 3 started...."
             return it
         })
 
@@ -666,7 +664,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             def result
 
                             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                                it.lastUpdate = "Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size()} bundles remaining."
+                                it.lastUpdate = "${AsyncImportMessages.importing} Uploading execution bundle #${firstDir.fileName}, ${executionBundles.size() - 1} bundles remaining."
                                 return it
                             })
 
@@ -729,7 +727,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                 asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                     it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
-                    it.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
+                    it.lastUpdate = "${AsyncImportMessages.done} All Executions uploaded, async import ended. Please check the target project."
                     return it
                 })
 
