@@ -376,7 +376,7 @@ import TextAutocomplete from '../utils/TextAutocomplete.vue'
 import type {PropType} from "vue";
 import { getRundeckContext } from "../../rundeckService";
 import { EventBus} from "@/library";
-
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 interface Prop {
   type: string
   defaultValue: any
@@ -397,7 +397,8 @@ export default defineComponent({
     VMarkdownView,
     PluginPropVal,
     KeyStorageSelector,
-    TextAutocomplete
+    TextAutocomplete,
+    UiSocket
   },
   props:{
     'prop':{
