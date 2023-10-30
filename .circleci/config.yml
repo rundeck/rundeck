@@ -403,7 +403,7 @@ jobs:
         type: string
       war-destination-folder:
         type: string
-        default: "~/workspace/functional-test/resources/test/docker/file/tomcat/data/rundeck-launcher.war"
+        default: "~/workspace/functional-test/build/resources/test/docker/file/tomcat/data/rundeck-launcher.war"
     steps:
       - checkout
       - install-build-dependencies
