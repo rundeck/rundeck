@@ -20,11 +20,13 @@ class ApiProjectSelectInterceptor {
                 .action('apiExecutionsRunningv14')
                 .controller('menu')
                 .project('*')
-                .map(params)
                 .build()
 
-        for (property in validator.ITEMS) {
-            if (!validator.validate(property, validator[property] as String)) { return false }
+        for (property in validator.keyProps()) {
+            def res = validator.validate(property, validator[property] as String, params)
+            if (!validator.validate(property, validator[property] as String, params)) {
+                return false
+            }
         }
         return true
     }
@@ -32,7 +34,7 @@ class ApiProjectSelectInterceptor {
     ApiProjectSelectInterceptor() {
         match(uri: '/api/**')
                 .excludes(controller: 'project', action: 'apiProjectCreate', method: 'POST')
-        match(controller: 'menu')
+        //match(controller: 'menu')
                 .excludes(projectWithWildcard)
     }
 
@@ -72,14 +74,16 @@ class ApiProjectSelectInterceptor {
 
     @Builder
     class WildcardValidator {
-        static final List<String> ITEMS = ['controller', 'project', 'action']
         String controller
         String project
         String action
-        GrailsParameterMap map
 
-        boolean validate(String param, String value) {
+        boolean validate(String param, String value, GrailsParameterMap map) {
             return map[param] && map[param] == value
+        }
+
+        Set<String> keyProps() {
+            return getProperties().keySet().findAll {prop -> prop != 'class'}
         }
     }
 }
