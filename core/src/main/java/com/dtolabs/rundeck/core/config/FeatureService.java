@@ -44,8 +44,4 @@ public interface FeatureService {
      * @param enable
      */
     void toggleFeature(String name, boolean enable);
-
-    Object getFeatureConfig(FeaturesDefinition feature);
-
-    Object getFeatureConfig(String name);
 }

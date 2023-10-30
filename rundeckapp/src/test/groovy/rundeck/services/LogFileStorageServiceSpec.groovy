@@ -17,10 +17,12 @@
 package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
+import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -32,20 +34,25 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.config.ConfigService
 import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
+import org.springframework.context.ApplicationContext
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
+import rundeck.services.logging.ProducedExecutionFile
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_PARTIAL
@@ -66,25 +73,22 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
         tempDir.deleteOnExit()
+        service.configurationService=Mock(ConfigService){
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'delayed'
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> 'test1'
+        }
         service.logFileStorageRequestProvider = new GormLogFileStorageRequestProvider()
     }
 
     def "resume incomplete delayed"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
-        service.configurationService=Mock(ConfigurationService){
-            getString('logFileStorageService.resumeIncomplete.strategy',_)>>'delayed'
-            getString('execution.logs.fileStoragePlugin',_)>>'blah'
-        }
         def mockPlugin = Mock(ExecutionFileStoragePlugin){
             1 * initialize({args->
                 args.username==testuser
             })
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin(
                     mockPlugin,
                     [:]
             )
@@ -103,7 +107,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         def l = new LogFileStorageRequest(
                 execution: e1,
-                pluginName: 'blah',
+                pluginName: 'test1',
                 filetype: '*',
                 completed: false
         ).save()
@@ -116,7 +120,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         ).save()
         def l2 = new LogFileStorageRequest(
                 execution: e2,
-                pluginName: 'blah',
+                pluginName: 'test1',
                 filetype: '*',
                 completed: false
         ).save()
@@ -142,15 +146,8 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
     def "resume incomplete delayed project does not exist"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
-        service.configurationService = Mock(ConfigurationService) {
-            getString('logFileStorageService.resumeIncomplete.strategy', _) >> 'delayed'
-            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
-        }
         service.pluginService = Mock(PluginService) {
-            0 * configurePlugin('blah', _, _, PropertyScope.Instance)
+            0 * configurePlugin(_, _, _, PropertyScope.Instance)
         }
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkPropertyResolver('test') >> {
@@ -168,7 +165,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         def l = new LogFileStorageRequest(
             execution: e1,
-            pluginName: 'blah',
+            pluginName: 'test1',
             filetype: '*',
             completed: false
         ).save()
@@ -182,7 +179,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         ).save()
         def l2 = new LogFileStorageRequest(
             execution: e2,
-            pluginName: 'blah',
+            pluginName: 'test1',
             filetype: '*',
             completed: false
         ).save()
@@ -208,13 +205,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
     def "resume incomplete delayed mixed project exist/does not exist"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
-        service.configurationService = Mock(ConfigurationService) {
-            getString('logFileStorageService.resumeIncomplete.strategy', _) >> 'delayed'
-            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
-        }
         def mockPlugin = Mock(ExecutionFileStoragePlugin) {
             1 * initialize(
                 { args ->
@@ -227,7 +217,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             1 * getFrameworkPropertyResolverFactory('test2') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('test1', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -243,7 +233,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         def l = new LogFileStorageRequest(
             execution: e1,
-            pluginName: 'blah',
+            pluginName: 'test1',
             filetype: '*',
             completed: false
         ).save()
@@ -257,7 +247,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         ).save()
         def l2 = new LogFileStorageRequest(
             execution: e2,
-            pluginName: 'blah',
+            pluginName: 'test1',
             filetype: '*',
             completed: false
         ).save()
@@ -284,11 +274,11 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
     @Unroll
     def "resume incomplete periodic using serverUuid #serverUUID"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        service.configurationService=Mock(ConfigurationService){
-            getString('logFileStorageService.resumeIncomplete.strategy',_)>>'periodic'
+        service.configurationService=Mock(ConfigService){
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'periodic'
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> 'test1'
         }
+
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
         def e1 = new Execution(dateStarted: new Date(),
@@ -300,7 +290,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         def l = new LogFileStorageRequest(
                 execution: e1,
-                pluginName: 'blah',
+                pluginName: 'test1',
                 filetype: '*',
                 completed: false
         ).save()
@@ -342,9 +332,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         given:
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
-        service.configurationService = Mock(ConfigurationService) {
-            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
-        }
         def mockPlugin = Mock(ExecutionFileStoragePlugin) {
             1 * initialize(_)
         }
@@ -353,7 +340,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             1 * getFrameworkPropertyResolverFactory('test') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('test1', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -413,15 +400,12 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         given:
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
-        service.configurationService = Mock(ConfigurationService) {
-            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
-        }
         def test2PropertyResolver = Mock(PropertyResolver)
         service.frameworkService = Mock(FrameworkService) {
             0 * getFrameworkPropertyResolver('test') >> test2PropertyResolver
         }
         service.pluginService = Mock(PluginService) {
-            0 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance)
+            0 * configurePlugin(_, _, test2PropertyResolver, PropertyScope.Instance)
         }
         def e1 = new Execution(dateStarted: new Date(),
                                dateCompleted: null,
@@ -478,9 +462,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        service.configurationService=Mock(ConfigurationService){
-            getString('logFileStorageService.resumeIncomplete.strategy',_)>>'periodic'
-        }
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
         def e1 = new Execution(dateStarted: new Date(),
@@ -546,9 +527,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        service.configurationService=Mock(ConfigurationService){
-            getString('logFileStorageService.resumeIncomplete.strategy',_)>>'periodic'
-        }
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
         def e1 = new Execution(dateStarted: new Date(),
@@ -696,9 +674,9 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProperties() >> (['framework.logs.dir': tempDir.getAbsolutePath()] as Properties)
         }
-        service.configurationService = Mock(ConfigurationService) {
-            getTimeDuration('execution.logs.fileStorage.checkpoint.time.interval', '30s', _) >> 30
-            getInteger('execution.logs.fileStorage.remotePendingDelay', _) >> pend
+        service.configurationService = Mock(ConfigService) {
+            _ * getTimeDuration(LogFileStorageService.CHECKPOINT_TIME_INTERVAL, '30s', _) >> 30
+            _ * getInteger(LogFileStorageService.REMOTE_PENDING_DELAY, _) >> pend
         }
         when:
         def result = service.getLogFileState(exec, filetype, plugin, getPart)
@@ -793,7 +771,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             )
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-        service.configurationService = Mock(ConfigurationService)
         when:
 
             def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
@@ -836,7 +813,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             )
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-        service.configurationService = Mock(ConfigurationService)
         when:
 
             def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
@@ -921,7 +897,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             )
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-        service.configurationService = Mock(ConfigurationService)
         when:
 
             def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
@@ -962,11 +937,8 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-        service.configurationService = Mock(ConfigurationService) {
-            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-        }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('testplugin', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
+            1 * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
         }
         when:
 
@@ -1012,7 +984,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             )
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-        service.configurationService = Mock(ConfigurationService)
         when:
 
             def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
@@ -1063,12 +1034,9 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             }
             )
             service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-            service.configurationService = Mock(ConfigurationService) {
-                getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-            }
             service.pluginService = Mock(PluginService) {
                 1 * configurePlugin(
-                        'testplugin',
+                        'test1',
                         _,
                         _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
@@ -1084,7 +1052,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         then:
             result != null
 //            service.retrievalRequests.size() == 1
-            result.get().state == AVAILABLE
+            result.get(10, TimeUnit.SECONDS).state == AVAILABLE
             retrieved == async
         where:
             async | _
@@ -1129,12 +1097,9 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             }
             )
             service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-            service.configurationService = Mock(ConfigurationService) {
-                getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-            }
             service.pluginService = Mock(PluginService) {
                 configurePlugin(
-                        'testplugin',
+                        'test1',
                         _,
                         _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
@@ -1197,8 +1162,8 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         )
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
         service.configurationService = Mock(ConfigurationService) {
-            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-            getBoolean('execution.logs.fileStorage.forcePartialChecking', false) >> true
+            getString(LogFileStorageService.FILE_STORAGE_PLUGIN, null) >> 'testplugin'
+            getBoolean(LogFileStorageService.FORCE_PARTIAL_CHECKING, false) >> true
         }
         service.pluginService = Mock(PluginService) {
             configurePlugin(
@@ -1265,12 +1230,9 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             }
             )
             service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
-            service.configurationService = Mock(ConfigurationService) {
-                getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-            }
             service.pluginService = Mock(PluginService) {
                 configurePlugin(
-                        'testplugin',
+                        'test1',
                         _,
                         _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
@@ -1359,9 +1321,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             service.frameworkService = Mock(FrameworkService){
 
                 2 * getFrameworkPropertyResolverFactory(_) >> Mock(PropertyResolverFactory.Factory)
-            }
-            service.configurationService=Mock(ConfigurationService){
-                _ * getString('execution.logs.fileStoragePlugin',null)>>'test1'
             }
             def instance = Mock(ExecutionFileStoragePlugin)
             service.pluginService=Mock(PluginService){
@@ -1535,7 +1494,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         service.grailsLinkGenerator = Mock(LinkGenerator)
 
         service.configurationService=Mock(ConfigurationService){
-            getString('execution.logs.fileStoragePlugin',_) >> pluginName
+            getString(LogFileStorageService.FILE_STORAGE_PLUGIN,_) >> pluginName
         }
 
         Description pluginDescription = Mock(Description) {
@@ -1572,4 +1531,256 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         projectName = 'projectExample'
         logStoragePluginPath = 'rootDir/logs/${job.project}/${job.execid}.log'
     }
+    def "default getConfiguredStorageRetryCount"(){
+        expect:
+            1==service.getConfiguredStorageRetryCount()
+    }
+    def "default getConfiguredStorageRetryDelay"(){
+        expect:
+            60==service.getConfiguredStorageRetryDelay()
+    }
+    def "default getConfiguredRetrievalRetryCount"(){
+        expect:
+            3==service.getConfiguredRetrievalRetryCount()
+    }
+    def "default getConfiguredRetrievalRetryDelay"(){
+        expect:
+            60==service.getConfiguredRetrievalRetryDelay()
+    }
+
+    def testIsCachedItemFresh() {
+
+        expect:
+            service.isResultCacheItemFresh([time: new Date(), count: 0])
+            service.isResultCacheItemAllowedRetry([time: new Date(), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (61 * 1000)), count: 0])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+    }
+
+    def "test cache refreshness with retry delay"() {
+
+        given:
+            service.configurationService = Mock(ConfigService) {
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_DELAY, _) >> 30
+            }
+        expect:
+            service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+    }
+
+    def "test cache refreshness with retry delay count"() {
+
+        given:
+            service.configurationService = Mock(ConfigService) {
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_DELAY, _) >> 30
+                _ * getInteger(LogFileStorageService.RETRIEVAL_RETRY_COUNT, _) >> 10
+            }
+        expect:
+
+            service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0])
+            !service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0])
+            service.isResultCacheItemAllowedRetry([time: new Date(), count: 3])
+            !service.isResultCacheItemAllowedRetry([time: new Date(), count: 10])
+    }
+
+
+    def "testCacheResult"(){
+        when:
+            def result = service
+                .cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', 'errorCode', ['errorData'])
+            Map result1 = service.getRetrievalCacheResult("1")
+        then:
+            result != null
+            "1" == result.id
+            0 == result.count
+            'errorCode' == result.errorCode
+            ['errorData'] == result.errorData
+            'error' == result.error
+            'test1' == result.name
+            LogFileState.NOT_FOUND == result.state
+            1 == service.getCurrentRetrievalResults().size()
+
+            result1 != null
+    }
+
+    def testCacheResultDefaults() {
+        when:
+            def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
+            Map result1 = service.getRetrievalCacheResult("1")
+        then:
+            result != null
+            "1" == result.id
+            0 == result.count
+            'execution.log.storage.retrieval.ERROR' == result.errorCode
+            ['test1', 'error'] == result.errorData
+            'error' == result.error
+            'test1' == result.name
+            LogFileState.NOT_FOUND == result.state
+            1 == service.getCurrentRetrievalResults().size()
+    }
+
+    def testRunStorageRequestFailureWithRetry(){
+        given:
+
+            def testPlugin = Mock(ExecutionFileStoragePlugin)
+
+            boolean queued=false
+
+            service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+            service.configurationService=Mock(ConfigService){
+                1*getInteger(LogFileStorageService.STORAGE_RETRY_DELAY,_)>>30
+                1*getInteger(LogFileStorageService.STORAGE_RETRY_COUNT,_)>>2
+                0 * getInteger(_, _)
+                _*getString(LogFileStorageService.FILE_STORAGE_PLUGIN,_)>>'test1'
+            }
+            def e = new Execution(dateStarted: new Date(),
+                                   dateCompleted: null,
+                                   user: 'user1',
+                                   project: 'test',
+                                   serverNodeUUID: null
+            ).save()
+
+            def testfile = File.createTempFile("LogFileStorageServiceTests", ".txt")
+            testfile<<'some content'
+            testfile.deleteOnExit()
+            long length=testfile.length()
+            Date modified=new Date(testfile.lastModified())
+
+            service.executorService=Mock(ThreadPoolTaskScheduler){
+                0 * execute(_)
+            }
+            Map<String,ExecutionFileProducer> loggingBeans=[:]
+            loggingBeans[filetype] = Mock(ExecutionFileProducer){
+                _*getExecutionFileType()>>filetype
+                1 *  produceStorageFileForExecution(_)>> {
+                    new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
+                }
+                _*produceStorageCheckpointForExecution(_)>> {
+                    new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
+                }
+            }
+
+
+            def appmock = Mock(ApplicationContext){
+              _*  getBeansOfType(ExecutionFileProducer)>>loggingBeans
+            }
+            service.applicationContext=appmock
+
+
+            LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
+            request.validate()
+            request.save(flush:true)
+            def task = [execId: e.id.toString(), file: testfile, storage: testPlugin, filetype: filetype,request:request,requestId:request.id]
+
+        when:
+            def result=service.runStorageRequest(task)
+
+
+        then:
+            1*testPlugin.store(filetype,_, length, {it== modified })>>storeSuccess
+
+            task.count == 1
+//            !svc.executorService.executeCalled
+            service.getCurrentRequests().size() == 0
+            1 * service.logFileStorageTaskScheduler.schedule(_, _ as Date)>>{
+                assert it[1]>new Date()
+            }
+        cleanup:
+            testfile.delete()
+        where:
+
+             filetype = 'rdlog'
+            storeSuccess=false
+
+    }
+
+    def testSubmitForStorage_plugin_storeSupported() {
+        given:
+            def test = new LogFileStorageServiceTests.testOptionsStoragePlugin()
+            test.storeSupported=true
+
+            def execution = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: null
+            ).save()
+
+
+            service.frameworkService = Mock(FrameworkService) {
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+            }
+            service.pluginService = Mock(PluginService) {
+                _ * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >>
+                new ConfiguredPlugin(test, [:])
+            }
+            service.executorService = Mock(ExecutionService)
+            service.grailsLinkGenerator=Mock(grails.web.mapping.LinkGenerator){
+
+            }
+        when:
+            service.submitForStorage(execution)
+        then:
+            1 == service.storageRequests.size()
+
+    }
+
+    def testRequestLogFileReaderFileExists(){
+
+        given:
+            def testfile = File.createTempFile("LogFileStorageServiceTests", ".txt")
+            testfile<<'some content'
+            testfile.deleteOnExit()
+
+            def execution = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'user1',
+                project: 'test',
+                serverNodeUUID: null
+            ).save()
+
+            service.frameworkService = Mock(FrameworkService) {
+                _ * isClusterModeEnabled() >> false
+                _ * getServerUUID() >> UUID.randomUUID()
+
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+                _ * getFrameworkProperties() >> (['framework.logs.dir': '/tmp/dir'] as Properties)
+            }
+            service.pluginService = Mock(PluginService) {
+                0*configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance)
+            }
+            List useStoredValues = [true, true]
+            List partialValues = [false, false]
+            int useStoredNdx=0
+            service.metaClass.getFileForExecutionFiletype = {
+                Execution e2, String filetype, boolean useStored, boolean partial ->
+                    assert execution == e2
+                    assert "rdlog"==filetype
+                    assert useStored==useStoredValues[useStoredNdx]
+                    assert partial == partialValues[useStoredNdx]
+                    useStoredNdx++
+                    testfile
+            }
+
+
+            service.grailsLinkGenerator=Mock(grails.web.mapping.LinkGenerator){
+
+            }
+            service.configurationService=Mock(ConfigService)
+
+        when:
+            def reader =  service.requestLogFileReader(execution, LoggingService.LOG_FILE_FILETYPE, false)
+        then:
+             null != (reader)
+             ExecutionFileState.AVAILABLE == reader.state
+            null != (reader.reader)
+            reader.reader instanceof FSStreamingLogReader
+        cleanup:
+            testfile.delete()
+
+    }
+
 }
