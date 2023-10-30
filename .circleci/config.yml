@@ -388,6 +388,42 @@ jobs:
           step-name: Publish to Sonatype
           command: packaging_publish_maven
 
+  test-gradle-functional:
+    <<: *job-defaults
+    executor:
+      name: machine-builder
+      docker_layer_caching: true
+      resource_class: medium
+    parameters:
+      test-image:
+        description: Test image tag
+        default: "rundeck/testdeck"
+        type: string
+      gradle-task:
+        type: string
+      war-destination-folder:
+        type: string
+        default: "~/workspace/functional-test/resources/test/docker/file/tomcat/data/rundeck-launcher.war"
+    steps:
+      - checkout
+      - install-build-dependencies
+      - restore-build-cache
+      - attach_workspace:
+          at: ~/workspace
+      - run-build-step:
+          step-name: Pull images
+          command: testdeck_pull_rundeck
+      - run-build-step:
+          step-name: Copy rundeck war file to destination << parameters.war-destination-folder >>
+          command: copy_rundeck_war << parameters.war-destination-folder >>
+      - run-build-step:
+          step-name: Runs gradle test task << parameters.gradle-task >>
+          command: |
+            TEST_IMAGE=<< parameters.test-image >>
+            GRADLE_TASK=<< parameters.gradle-task >>
+            rundeck_gradle_functional_tests
+      - collect-gradle-tests
+
   # Publish all packages to packagecloud
   packaging-publish:
     <<: *job-defaults
@@ -691,5 +727,27 @@ workflows:
           name: Selenium Test
           workdir: test/selenium
           command: testdeck_selenium_test
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New Selenium Test
+          gradle-task: seleniumCoreTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test
+          gradle-task: apiTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test Tomcat 8
+          test-image: 8-jdk11
+          gradle-task: tomcatTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test Tomcat 9
+          test-image: 9-jdk11
+          gradle-task: tomcatTest
           <<: *require-build
           <<: *slack-defaults

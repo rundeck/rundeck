@@ -58,3 +58,7 @@ rundeck_docker_publish() {
 rundeck_verify_build() {
     groovy testbuild.groovy --buildType="${ENV}" -debug
 }
+
+rundeck_gradle_functional_tests() {
+    ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} --info
+}
