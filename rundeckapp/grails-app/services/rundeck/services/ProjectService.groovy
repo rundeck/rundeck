@@ -78,6 +78,7 @@ import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.asyncimport.AsyncImportEvents
+import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
@@ -1954,11 +1955,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return result
     }
 
-    void createAsyncImportStatusFile(String projectName){
+    Boolean createAsyncImportStatusFile(String projectName){
         try{
-            asyncImportService.createStatusFile(projectName)
+            return asyncImportService.createStatusFile(projectName)
         }catch(Exception e){
             e.printStackTrace()
+            throw e
         }
     }
 
@@ -1972,15 +1974,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
-    /**
-     * **** DELETE ME ******
-     */
-    void notifyAsyncImportOperation(String event, Object... objects){
-        notify(event, objects)
-    }
-
-    void beginAsyncImportMilestone3(final String projectName){
-        notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName)
+    void beginAsyncImportMilestone(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project,
+            final int milestoneNumber
+    ){
+        switch (milestoneNumber){
+            case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+                break
+            case AsyncImportMilestone.M3_IMPORTING.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+                break
+            default:
+                throw new AsyncImportException("Invalid milestone number: ${milestoneNumber} please, provide a valid async import milestone number.")
+        }
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
@@ -2014,6 +2023,7 @@ class ArchiveOptions implements ProjectArchiveExportRequest{
     boolean acls = false
     boolean scm = false
     String stripJobRef = null
+    boolean asyncImport = false
     Map<String, Map<String, String>> exportOpts = [:]
     Map<String, Boolean> exportComponents = [:]
 
