@@ -403,7 +403,10 @@ jobs:
         type: string
       war-destination-folder:
         type: string
-        default: "~/workspace/functional-test/build/resources/test/docker/file/tomcat/data/rundeck-launcher.war"
+        default: "~/workspace/functional-test/build/resources/test/docker/file/tomcat/data/"
+      war-file-name:
+        type: string
+        default: "rundeck-launcher.war"
     steps:
       - checkout
       - install-build-dependencies
@@ -413,9 +416,12 @@ jobs:
       - run-build-step:
           step-name: Pull images
           command: testdeck_pull_rundeck
+      - run:
+          name: Create war destination folder
+          command: mkdir << parameters.war-destination-folder >>
       - run-build-step:
-          step-name: Copy rundeck war file to destination << parameters.war-destination-folder >>
-          command: copy_rundeck_war << parameters.war-destination-folder >>
+          step-name: Copy rundeck war file to destination << parameters.war-destination-folder >><< parameters.war-destination-folder >>
+          command: copy_rundeck_war << parameters.war-destination-folder >><< parameters.war-destination-folder >>
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
