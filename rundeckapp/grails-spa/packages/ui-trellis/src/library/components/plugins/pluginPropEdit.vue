@@ -318,7 +318,7 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <div v-if="useRunnerSelector===true">
-          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus">
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{ storageFilter: prop.options['storage-file-meta-filter']}">
             <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                                   :allow-upload="true"
                                   :value="keyPath"
@@ -506,6 +506,8 @@ export default defineComponent({
   },
   watch:{
     currentValue:function(newval){
+      console.log("Emitting update:modelValue in plugin prop edit")
+      console.log(newval)
       this.$emit('update:modelValue',newval)
       this.setJobName(newval)
     },
@@ -550,6 +552,11 @@ export default defineComponent({
     if (getRundeckContext() && getRundeckContext().projectName) {
       this.keyPath = 'keys/project/' + getRundeckContext().projectName +'/'
     }
+
+    this.eventBus.on('update-key',(data: any)=>{
+      console.log("update-key reached in pluginPropEdit")
+      this.keyPath = data
+    })
 
     if(this.autocompleteCallback && this.contextAutocomplete){
       let vars = this.autocompleteCallback(this.rkey  +'prop_' + this.pindex)
