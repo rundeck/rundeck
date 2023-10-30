@@ -25,6 +25,9 @@ class JobCreatePage extends BasePage {
     By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
     By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
     By descriptionTextareaBy = By.cssSelector("form textarea[name=\"description\"]")
+    By saveButtonBy  = By.cssSelector(  '#Create')
+    By errorAlertBy  = By.cssSelector(   '#error')
+    By formValidationAlertBy= By.cssSelector('#page_job_edit > div.list-group-item > div.alert.alert-danger')
 
     String loadPath = "/job/create"
 
@@ -137,6 +140,28 @@ class JobCreatePage extends BasePage {
     WebElement getDescriptionTextarea() {
         el descriptionTextareaBy
     }
+
+    def void setJobNameInput(String value) {
+        getJobNameInput().sendKeys(value)
+    }
+
+    void clickSaveBtn() {
+        def saveButtonWebElement = el saveButtonBy
+        saveButtonWebElement.click()
+    }
+
+    void errorAlert() {
+        def errorAlertWebElement = el errorAlertBy
+    }
+
+    void formValidationAlert() {
+        def formValidationAlertWebElement = el formValidationAlertBy
+    }
+
+
+
+
+
 
 }
 
