@@ -141,6 +141,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
@@ -174,6 +175,63 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
         then: "the will be results"
         result.success == true // The project w/o executions will be imported (import to project invoked)
+        1 * service.projectService.beginAsyncImportMilestone(_,_,_,_)
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+    }
+
+    def "Milestone 1 doesn't trigger M2 if 'import executions' flag is false"(){
+        // This test will create real files in /tmp
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            it.importExecutions = false
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFile(projectName).bytes)
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+
+        when: "The method gets invoked with import executions to false"
+        def result = service.beginMilestone1(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+
+        then: "The milestone wont be triggering the M2"
+        result.success == true
+        0 * service.projectService.beginAsyncImportMilestone(_,_,_,_)
 
         cleanup:
         if( Files.exists(Paths.get(workingDirs.workingDir)) ){
@@ -467,6 +525,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
@@ -533,6 +592,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
@@ -599,6 +659,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
@@ -672,6 +733,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
@@ -734,6 +796,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         def is = new FileInputStream(file)
         def params = new ProjectArchiveParams().with {
             it.asyncImport = true
+            it.importExecutions = true
             return it
         }
         def fwkProject = Mock(IRundeckProject){
