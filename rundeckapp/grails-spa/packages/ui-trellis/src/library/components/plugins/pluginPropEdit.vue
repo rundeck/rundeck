@@ -318,7 +318,7 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <div v-if="useRunnerSelector===true">
-          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{ storageFilter: prop.options['storage-file-meta-filter']}">
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{storageFilter: prop.options['storage-file-meta-filter'], readOnly: renderReadOnly, value: currentValue, handleUpdate: (val)=>this.currentValue=val}">
             <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                                   :allow-upload="true"
                                   :value="keyPath"
@@ -389,6 +389,10 @@ interface Prop {
   staticTextDefaultValue: string
 }
 
+const handleUpdate = (val) => {
+  this.currentValue = val
+};
+
 export default defineComponent({
   components:{
     DynamicFormPluginProp,
@@ -456,6 +460,11 @@ export default defineComponent({
         default:false,
         required:false
     },
+    'isStorageProp':{
+      type:Boolean,
+      default:false,
+      required:false
+    },
     'autocompleteCallback':{
       type:Function,
       required:false
@@ -487,6 +496,9 @@ export default defineComponent({
     },
     parseAllowedValues(){
       return JSON.stringify(this.prop.allowed);
+    },
+    handleUpdate(val: any){
+      this.currentValue= val;
     },
     hasAllowedValues(){
       if(this.prop.allowed!=null){
@@ -552,10 +564,12 @@ export default defineComponent({
     if (getRundeckContext() && getRundeckContext().projectName) {
       this.keyPath = 'keys/project/' + getRundeckContext().projectName +'/'
     }
-
     this.eventBus.on('update-key',(data: any)=>{
+
       console.log("update-key reached in pluginPropEdit")
-      this.keyPath = data
+      if(this.isStorageProp){
+        this.currentValue = data
+      }
     })
 
     if(this.autocompleteCallback && this.contextAutocomplete){
