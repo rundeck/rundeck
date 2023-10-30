@@ -100,7 +100,6 @@ class ProjectController extends ControllerBase{
             apiProjectCreate:['POST'],
             apiProjectDelete:['DELETE'],
             apiProjectImport: ['PUT'],
-            apiProjectAsyncImportStatusCreate: ['GET'],
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
