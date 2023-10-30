@@ -318,11 +318,11 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <div v-if="useRunnerSelector===true">
-          <ui-socket section="plugin-runner-key-selector" location="nodes">
-          <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                                :allow-upload="true"
-                                :value="keyPath"
-                                :read-only="renderReadOnly"/>
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus">
+            <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                  :allow-upload="true"
+                                  :value="keyPath"
+                                  :read-only="renderReadOnly"/>
           </ui-socket>
         </div>
         <div v-else>
@@ -375,8 +375,8 @@ import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import TextAutocomplete from '../utils/TextAutocomplete.vue'
 import type {PropType} from "vue";
 import { getRundeckContext } from "../../rundeckService";
-import { EventBus} from "@/library";
-import UiSocket from "@/library/components/utils/UiSocket.vue";
+import {EventBus} from "@/library";
+import UiSocket from "../utils/UiSocket.vue";
 interface Prop {
   type: string
   defaultValue: any
