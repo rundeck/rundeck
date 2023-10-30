@@ -1162,8 +1162,8 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         )
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
         service.configurationService = Mock(ConfigurationService) {
-            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
-            getBoolean('execution.logs.fileStorage.forcePartialChecking', false) >> true
+            getString(LogFileStorageService.FILE_STORAGE_PLUGIN, null) >> 'testplugin'
+            getBoolean(LogFileStorageService.FORCE_PARTIAL_CHECKING, false) >> true
         }
         service.pluginService = Mock(PluginService) {
             configurePlugin(
@@ -1494,7 +1494,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         service.grailsLinkGenerator = Mock(LinkGenerator)
 
         service.configurationService=Mock(ConfigurationService){
-            getString('execution.logs.fileStoragePlugin',_) >> pluginName
+            getString(LogFileStorageService.FILE_STORAGE_PLUGIN,_) >> pluginName
         }
 
         Description pluginDescription = Mock(Description) {

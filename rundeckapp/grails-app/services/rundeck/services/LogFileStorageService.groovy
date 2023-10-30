@@ -188,6 +188,14 @@ class LogFileStorageService
         defaultValue 'true'
     }
 
+    static final SysConfigProp FORCE_PARTIAL_CHECKING = config {
+        key 'rundeck.execution.logs.fileStorage.forcePartialChecking'
+        label 'Force partial logs checking'
+        description 'Whether to always check for partial logs even for executions local to the cluster member'
+        datatype 'boolean'
+        defaultValue 'false'
+    }
+
     static final SysConfigProp RETRIEVAL_RETRY_COUNT = config {
         key 'rundeck.execution.logs.fileStorage.retrievalRetryCount'
         label 'Max Retrieval Retry Count'
@@ -264,6 +272,7 @@ class LogFileStorageService
         STORAGE_RETRY_COUNT,
         STORAGE_RETRY_DELAY,
         CANCEL_ON_STORAGE_FAILURE,
+        FORCE_PARTIAL_CHECKING,
         RETRIEVAL_RETRY_COUNT,
         RETRIEVAL_RETRY_DELAY,
         REMOTE_PENDING_DELAY,
@@ -2229,7 +2238,7 @@ class LogFileStorageService
     }
 
     boolean forcePartialCheckConfig() {
-        configurationService.getBoolean("execution.logs.fileStorage.forcePartialChecking", false)
+        configurationService.getBoolean(FORCE_PARTIAL_CHECKING, false)
     }
 }
 
