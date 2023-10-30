@@ -212,6 +212,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             ProjectArchiveParams options
     ){
         final def milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
+        final def importExecutions = options.importExecutions
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Starting M1... Creating required directories."
@@ -370,12 +371,21 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return it
         })
 
-        projectService.beginAsyncImportMilestone(
-                projectName,
-                authContext,
-                project,
-                AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
-        )
+        if( importExecutions ){
+            projectService.beginAsyncImportMilestone(
+                    projectName,
+                    authContext,
+                    project,
+                    AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
+            )
+        }else{
+            // End the async import
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                it.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
+                return it
+            })
+        }
 
         return importResult
     }
