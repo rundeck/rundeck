@@ -120,6 +120,7 @@
                                         :prop="prop"
                                         :use-runner-selector="useRunnerSelector"
                                         :input-values="inputValues"
+                                        :is-storage-prop="isStorageProperty(prop)"
                                         :validation="validation"
                                         :readOnly="readOnly"
                                         :event-bus="eventBus"
@@ -218,6 +219,9 @@ export default defineComponent({
   methods: {
     setVal(target: any, prop: any, val: any) {
       target[prop] = val
+    },
+    isStorageProperty(prop: any){
+      return prop.options && prop.options['selectionAccessor'] === 'STORAGE_PATH'
     },
     prepareInputs () {
       if (!this.isShowConfigForm) {
