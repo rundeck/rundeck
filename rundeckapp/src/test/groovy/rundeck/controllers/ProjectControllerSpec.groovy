@@ -2273,6 +2273,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         def aparams = new ProjectArchiveParams()
             aparams.asyncImport = true
+            aparams.importExecutions = true
         request.method = 'PUT'
         request.api_version = 34
         params.project = 'test'
@@ -2292,7 +2293,6 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.status == 200
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
-        1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
         1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
     }
 

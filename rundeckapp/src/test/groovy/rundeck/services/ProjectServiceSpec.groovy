@@ -3055,7 +3055,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.setTargetEventBus(eventBusMock)
 
         when: "we invoke the milestones events"
-        service.beginAsyncImportMilestone(projectName, auth, project, AsyncImportMilestone.M1_CREATED.milestoneNumber)
+        service.beginAsyncImportMilestone(projectName, auth, project, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber)
 
         then: "the event bus notifies"
         1 * eventBusMock.notify(*_)
