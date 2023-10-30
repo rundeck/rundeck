@@ -3282,7 +3282,6 @@ Note: `other_errors` included since API v35""",
         def result
 
         if( archiveParams.asyncImport ){
-            archiveParams.importExecutions = false
             try{
                 def created = projectService.createAsyncImportStatusFile(project.name)
                 if (!created) {
