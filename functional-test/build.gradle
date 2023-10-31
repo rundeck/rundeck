@@ -83,6 +83,6 @@ task tomcatTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
     description = "Run Rundeck OSS API Tests on a tomcat environment"
     doFirst{
-        checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data", "rundeck-launcher.war")
+        checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data/", "rundeck-launcher.war")
     }
 }
