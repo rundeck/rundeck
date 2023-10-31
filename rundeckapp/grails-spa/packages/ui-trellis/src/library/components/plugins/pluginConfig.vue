@@ -407,9 +407,6 @@ export default defineComponent({
     inputValues: {
       handler (newValue, oldValue) {
         if (this.isShowConfigForm) {
-          console.log("Emitting update:modelValue in plugin config")
-          console.log(this.inputSaved)
-          console.log(this.exportedValues)
           this.$emit('update:modelValue', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
         }
       },
