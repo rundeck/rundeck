@@ -11,7 +11,7 @@ class ProjectHomePage extends BasePage {
         super(context)
     }
 
-    void goProjectHome(String projectName){
-        driver.get(context.client.baseUrl+loadPath.replaceAll('\\$PROJECT', projectName))
+    void goProjectHome(String projectName) {
+        driver.get("${context.client.baseUrl}${loadPath.replaceAll('\\$PROJECT', projectName)}")
     }
 }

@@ -1,19 +1,20 @@
 package org.rundeck.tests.functional.selenium
 
-import org.openqa.selenium.By
+import org.rundeck.tests.functional.selenium.pages.HomePage
 import org.rundeck.tests.functional.selenium.pages.JobCreatePage
+import org.rundeck.tests.functional.selenium.pages.JobListPage
+import org.rundeck.tests.functional.selenium.pages.JobShowPage
 import org.rundeck.tests.functional.selenium.pages.JobTab
-import org.rundeck.tests.functional.selenium.pages.JobsListPage
+
 import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.tests.functional.selenium.pages.NotificationEvent
 import org.rundeck.tests.functional.selenium.pages.NotificationType
-import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
-import org.rundeck.tests.functional.selenium.pages.SideBar
-import org.rundeck.tests.functional.selenium.pages.SideBarNavLinks
+import org.rundeck.tests.functional.selenium.pages.SideBarPage
 import org.rundeck.tests.functional.selenium.pages.StepName
 import org.rundeck.tests.functional.selenium.pages.StepType
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.setup.NavLinkTypes
 import spock.lang.Unroll
 
 
@@ -27,38 +28,36 @@ class JobNotificationSpec extends SeleniumBase {
     @Unroll
     def "create job with notifications"() {
         setup:
-        LoginPage loginPage = page LoginPage
-        SideBar sideBar = page SideBar
-        JobsListPage jobListPage = page JobsListPage
-        JobCreatePage jobCreatePage = page JobCreatePage
-        ProjectHomePage projectHomePage = page ProjectHomePage
-
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+            def homePage = page HomePage
+            homePage.goProjectHome"SeleniumBasic"
         when:
-        loginPage.go()
-        loginPage.login(TEST_USER, TEST_PASS)
-        projectHomePage.goProjectHome("SeleniumBasic")
-        sideBar.goTo(SideBarNavLinks.JOBS).click()
-        jobListPage.getCreateJobButton().click()
-        jobCreatePage.getJobNameField().sendKeys("a job with notifications")
-        jobCreatePage.getTab(JobTab.WORKFLOW).click()
-        jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
-        jobCreatePage.waitForStepToBeShown(By.id("adhocRemoteStringField"))
-        jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("echo 'example job'")
-        jobCreatePage.getSaveStepButton().click()
-        jobCreatePage.waitForSavedStep(0)
-        jobCreatePage.getTab(JobTab.NOTIFICATIONS).click()
-        jobCreatePage.getAddNotificationButtonByType(NotificationEvent.START).click()
-        jobCreatePage.getNotificationDropDown().click()
-        jobCreatePage.getNotificationByType(NotificationType.MAIL).click()
-        jobCreatePage.getNotificationConfigByPropName("recipients").sendKeys('test@rundeck.com')
-        jobCreatePage.getNotificationSaveButton().click()
-        jobCreatePage.waitForModal(0)
-        jobCreatePage.getCreateButton().click()
-        jobCreatePage.waitForJobShow()
-        jobCreatePage.getJobDefinitionModal().click()
+            def sideBarPage = page SideBarPage
+            sideBarPage.goTo NavLinkTypes.JOBS
+            def jobListPage = page JobListPage
+            jobListPage.newJobButton.click()
+            def jobCreatePage = page JobCreatePage
+            jobCreatePage.jobNameField.sendKeys "a job with notifications"
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.selectStep StepName.COMMAND, StepType.NODE
+            jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.commandBy
+            jobCreatePage.commandField.sendKeys "echo 'example job'"
+            jobCreatePage.saveStep 0
+            jobCreatePage.tab JobTab.NOTIFICATIONS click()
+            jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
+            jobCreatePage.notificationDropDown.click()
+            jobCreatePage.notificationByType NotificationType.MAIL click()
+            jobCreatePage.notificationConfigByPropName "recipients" sendKeys 'test@rundeck.com'
+            jobCreatePage.notificationSaveButton.click()
+            jobCreatePage.waitNotificationModal 0
+            jobCreatePage.createButton.click()
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobDefinitionModal.click()
 
         then:
-        jobCreatePage.getNotificationDefinition().getText() == 'mail to: test@rundeck.com'
+            jobShowPage.notificationDefinition.getText() == 'mail to: test@rundeck.com'
+            jobShowPage.closeJobDefinitionModalButton.click()
 
     }
 
