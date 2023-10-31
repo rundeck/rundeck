@@ -23,7 +23,6 @@ class ApiProjectSelectInterceptor {
                 .build()
 
         for (property in validator.keyProps()) {
-            def res = validator.validate(property, validator[property] as String, params)
             if (!validator.validate(property, validator[property] as String, params)) {
                 return false
             }
@@ -34,7 +33,6 @@ class ApiProjectSelectInterceptor {
     ApiProjectSelectInterceptor() {
         match(uri: '/api/**')
                 .excludes(controller: 'project', action: 'apiProjectCreate', method: 'POST')
-        //match(controller: 'menu')
                 .excludes(projectWithWildcard)
     }
 

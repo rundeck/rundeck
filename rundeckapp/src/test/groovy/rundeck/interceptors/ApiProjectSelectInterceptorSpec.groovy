@@ -1,6 +1,9 @@
 package rundeck.interceptors
 
 import grails.testing.web.interceptor.InterceptorUnitTest
+import rundeck.controllers.MenuController
+import rundeck.services.ApiService
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 
 /**
@@ -13,6 +16,7 @@ class ApiProjectSelectInterceptorSpec extends Specification implements Intercept
         params.project = project
         params.action = action
         params.controller = controller
+        request.requestURI = '/api/apiVersion'
 
         when:
         withRequest(controller: controller, action: action)
