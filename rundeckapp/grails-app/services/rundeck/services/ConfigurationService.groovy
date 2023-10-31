@@ -50,6 +50,10 @@ class ConfigurationService implements InitializingBean, ConfigService {
         this.appCfg = configMap
     }
 
+    public Map<String, Object> getConfig(String path){
+        return (Map)getValue(path);
+    }
+
     void setExecutionModeActive(boolean active) {
         executionModeActiveValue = active
     }
