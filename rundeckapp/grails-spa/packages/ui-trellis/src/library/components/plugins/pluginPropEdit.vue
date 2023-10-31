@@ -509,8 +509,6 @@ export default defineComponent({
   },
   watch:{
     currentValue:function(newval){
-      console.log("Emitting update:modelValue in plugin prop edit")
-      console.log(newval)
       this.$emit('update:modelValue',newval)
       this.setJobName(newval)
     },
