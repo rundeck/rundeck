@@ -1,29 +1,29 @@
-package org.rundeck.tests.functional.selenium.pages
+package org.rundeck.tests.functional.selenium.pages.login
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 /**
  * Login page
  */
 @CompileStatic
 class LoginPage extends BasePage {
+
     By loginFieldBy = By.id("login")
     By passwordFieldBy = By.id("password")
     By loginBtnBy = By.id("btn-login")
     By errorBy = By.cssSelector(".alert.alert-danger > span")
 
-    static final String PAGE_PATH = "/user/login"
-    static final String LOAD_PATH = "/"
-    String loadPath = LOAD_PATH
+    String loadPath = "/user/login"
 
     LoginPage(final SeleniumContext context) {
         super(context)
     }
 
     void validatePage() {
-        if (!driver.currentUrl.contains(PAGE_PATH)) {
+        if (!driver.currentUrl.contains(loadPath)) {
             throw new IllegalStateException("Not on login page: " + driver.currentUrl)
         }
     }
