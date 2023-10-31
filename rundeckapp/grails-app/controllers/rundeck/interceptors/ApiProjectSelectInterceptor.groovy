@@ -23,9 +23,7 @@ class ApiProjectSelectInterceptor {
                 .build()
 
         for (property in validator.keyProps()) {
-            if (!validator.validate(property, validator[property] as String, params)) {
-                return false
-            }
+            if (!validator.validate(property, validator[property] as String, params)) { return false }
         }
         return true
     }
