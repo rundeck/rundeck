@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: 16.20.2
+    default: 18.18.1
 
 
 orbs:
