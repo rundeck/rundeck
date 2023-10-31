@@ -11,7 +11,7 @@ import spock.lang.Specification
  */
 class ApiProjectSelectInterceptorSpec extends Specification implements InterceptorUnitTest<ApiProjectSelectInterceptor> {
 
-    void "validate execution running endpoints"() {
+    void "excluded wildcard on projects"() {
         given:
         params.project = project
         params.action = action
