@@ -20,6 +20,12 @@ public interface ConfigService {
      */
     String getString(String property);
 
+    /**
+     * get config map for a path
+     * @param path path
+     * @return 
+     */
+    public Map<String, Object> getConfig(String path);
 
     /**
      * get string config value
