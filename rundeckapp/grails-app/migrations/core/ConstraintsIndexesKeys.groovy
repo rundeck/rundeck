@@ -507,16 +507,6 @@ databaseChangeLog = {
         addForeignKeyConstraint(baseColumnNames: "orchestrator_id", baseTableName: "execution", constraintName: "FKgm5hu46fmti2jpbj1d7xlyw65", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "orchestrator", validate: "true")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-70") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                foreignKeyConstraintExists (foreignKeyTableName: "node_filter", foreignKeyName: "FKhuj3n3gy2kqoie8d8oucay4b3")
-            }
-            tableExists (tableName:"node_filter")
-        }
-        addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "node_filter", constraintName: "FKhuj3n3gy2kqoie8d8oucay4b3", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
-    }
-
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-71") {
         preConditions(onFail: "MARK_RAN"){
             not{
