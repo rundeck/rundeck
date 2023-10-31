@@ -389,10 +389,6 @@ interface Prop {
   staticTextDefaultValue: string
 }
 
-const handleUpdate = (val) => {
-  this.currentValue = val
-};
-
 export default defineComponent({
   components:{
     DynamicFormPluginProp,
@@ -459,11 +455,6 @@ export default defineComponent({
         type:Boolean,
         default:false,
         required:false
-    },
-    'isStorageProp':{
-      type:Boolean,
-      default:false,
-      required:false
     },
     'autocompleteCallback':{
       type:Function,
@@ -564,13 +555,6 @@ export default defineComponent({
     if (getRundeckContext() && getRundeckContext().projectName) {
       this.keyPath = 'keys/project/' + getRundeckContext().projectName +'/'
     }
-    this.eventBus.on('update-key',(data: any)=>{
-
-      console.log("update-key reached in pluginPropEdit")
-      if(this.isStorageProp){
-        this.currentValue = data
-      }
-    })
 
     if(this.autocompleteCallback && this.contextAutocomplete){
       let vars = this.autocompleteCallback(this.rkey  +'prop_' + this.pindex)
