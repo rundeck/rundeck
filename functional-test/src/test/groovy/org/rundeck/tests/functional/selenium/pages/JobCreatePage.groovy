@@ -72,6 +72,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationSaveButton(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(notificationSaveButton))
         el notificationSaveButton
     }
 
@@ -84,7 +85,6 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationDefinition(){
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(notificationDefinition))
         el notificationDefinition
     }
 
@@ -102,7 +102,7 @@ class JobCreatePage extends BasePage {
     }
 
     void waitForModal(Integer totalModals){
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, 0))
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, totalModals))
     }
 }
 
