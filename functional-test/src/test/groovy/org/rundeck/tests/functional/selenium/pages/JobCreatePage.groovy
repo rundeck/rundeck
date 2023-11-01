@@ -84,6 +84,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationDefinition(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(notificationDefinition))
         el notificationDefinition
     }
 
