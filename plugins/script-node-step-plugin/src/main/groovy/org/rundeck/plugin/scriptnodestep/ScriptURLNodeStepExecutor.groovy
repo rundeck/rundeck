@@ -159,7 +159,7 @@ class ScriptURLNodeStepExecutor {
                 throw new NodeStepException(
                         "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(),
                         e,
-                        com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor.Reason.URLDownloadFailure,
+                        Reason.URLDownloadFailure,
                         node.getNodename());
             } else {
                 logger.error(

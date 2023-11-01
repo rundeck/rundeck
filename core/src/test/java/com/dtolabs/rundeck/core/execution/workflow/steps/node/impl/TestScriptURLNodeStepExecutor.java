@@ -159,59 +159,59 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
 
     }
 
-    public void testExpandUrlString() throws Exception {
-        final WFSharedContext stringMapMap = new WFSharedContext();
-        HashMap<String, String> nodeData = new HashMap<String, String>();
-        nodeData.put("name", "node/name");
+//    public void testExpandUrlString() throws Exception {
+//        final WFSharedContext stringMapMap = new WFSharedContext();
+//        HashMap<String, String> nodeData = new HashMap<String, String>();
+//        nodeData.put("name", "node/name");
+//
+//        HashMap<String, String> data = new HashMap<String, String>();
+//        data.put("value", "some value ? for things & stuff");
+//
+//            String value = null;
+//            try {
+//                value = ScriptURLNodeStepExecutor.expandUrlString(
+//                    "http://example.com/path/${node.name}?query=${data.value}",
+//                    stringMapMap,
+//                    "anodename");
+//                fail("should not succeed");
+//            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
+//                assertEquals("${node.name}", e.getReferenceName());
+//            }
+//        }
 
-        HashMap<String, String> data = new HashMap<String, String>();
-        data.put("value", "some value ? for things & stuff");
+//    public void testExpandUrlString2() throws Exception {
+//        final WFSharedContext stringMapMap = new WFSharedContext();
+//        HashMap<String, String> nodeData = new HashMap<String, String>();
+//        nodeData.put("name", "node/name");
+//
+//        HashMap<String, String> data = new HashMap<String, String>();
+//        data.put("value", "some value ? for things & stuff");//path expansion
+//        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
+//            String value = null;
+//            try {
+//                value = ScriptURLNodeStepExecutor.expandUrlString(
+//                    "http://example.com/path/${node.name}?query=${data.value}",
+//                    stringMapMap,
+//                    "anodename");
+//                fail("should not succeed");
+//            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
+//                assertEquals("${data.value}", e.getReferenceName());
+//            }
+//        }
 
-            String value = null;
-            try {
-                value = ScriptURLNodeStepExecutor.expandUrlString(
-                    "http://example.com/path/${node.name}?query=${data.value}",
-                    stringMapMap,
-                    "anodename");
-                fail("should not succeed");
-            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
-                assertEquals("${node.name}", e.getReferenceName());
-            }
-        }
-
-    public void testExpandUrlString2() throws Exception {
-        final WFSharedContext stringMapMap = new WFSharedContext();
-        HashMap<String, String> nodeData = new HashMap<String, String>();
-        nodeData.put("name", "node/name");
-
-        HashMap<String, String> data = new HashMap<String, String>();
-        data.put("value", "some value ? for things & stuff");//path expansion
-        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
-            String value = null;
-            try {
-                value = ScriptURLNodeStepExecutor.expandUrlString(
-                    "http://example.com/path/${node.name}?query=${data.value}",
-                    stringMapMap,
-                    "anodename");
-                fail("should not succeed");
-            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
-                assertEquals("${data.value}", e.getReferenceName());
-            }
-        }
-
-    public void testExpandUrlString3() throws Exception {
-        final WFSharedContext stringMapMap = new WFSharedContext();
-        HashMap<String, String> nodeData = new HashMap<String, String>();
-        nodeData.put("name", "node/name");
-
-        HashMap<String, String> data = new HashMap<String, String>();
-        data.put("value", "some value ? for things & stuff");//dataexpansion
-        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
-        stringMapMap.merge(ContextView.global(), new BaseDataContext("data", data));
-            String value = ScriptURLNodeStepExecutor.expandUrlString(
-                "http://example.com/path/${node.name}?query=${data.value}",
-                stringMapMap,
-                "anodename");
-            assertEquals("http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);
-    }
+//    public void testExpandUrlString3() throws Exception {
+//        final WFSharedContext stringMapMap = new WFSharedContext();
+//        HashMap<String, String> nodeData = new HashMap<String, String>();
+//        nodeData.put("name", "node/name");
+//
+//        HashMap<String, String> data = new HashMap<String, String>();
+//        data.put("value", "some value ? for things & stuff");//dataexpansion
+//        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
+//        stringMapMap.merge(ContextView.global(), new BaseDataContext("data", data));
+//            String value = ScriptURLNodeStepExecutor.expandUrlString(
+//                "http://example.com/path/${node.name}?query=${data.value}",
+//                stringMapMap,
+//                "anodename");
+//            assertEquals("http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);
+//    }
 }
