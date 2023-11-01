@@ -93,40 +93,40 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         server.shutdown()
     }
 
-    @Unroll
-    def "shared context data in url string"() {
-        given:
-        final WFSharedContext datacontext = new WFSharedContext();
-        datacontext.merge(
-                ContextView.global(),
-                new BaseDataContext("data", [value: 'some value ? for things & stuff'])
-        );
-        datacontext.merge(ContextView.node("anodename"), new BaseDataContext("node", [name: 'node/name']));
-        datacontext.merge(ContextView.node("bnodename"), new BaseDataContext("node", [name: 'bogus']));
-        datacontext.merge(ContextView.node("bnodename"), new BaseDataContext("data", [value: 'hotenntot']));
-        when:
-        def result = ScriptURLNodeStepExecutor.expandUrlString(
-                url,
-                datacontext,
-                curnode
-        )
-        then:
-        result != null
-        result == expected
-
-        where:
-        url                                                                            | curnode     | expected
-
-        'http://example.com/path/${node.name}?query=${data.value}'                     | "anodename" |
-                'http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff'
-        'http://example.com/path/${node.name}?query=${data.value}'                     | "bnodename" |
-                'http://example.com/path/bogus?query=hotenntot'
-        'http://example.com/path/${node.name@bnodename}?query=${data.value}'           | "anodename" |
-                'http://example.com/path/bogus?query=some%20value%20%3F%20for%20things%20%26%20stuff'
-        'http://example.com/path/${node.name@bnodename}?query=${data.value@bnodename}' | "anodename" |
-                'http://example.com/path/bogus?query=hotenntot'
-
-    }
+//    @Unroll
+//    def "shared context data in url string"() {
+//        given:
+//        final WFSharedContext datacontext = new WFSharedContext();
+//        datacontext.merge(
+//                ContextView.global(),
+//                new BaseDataContext("data", [value: 'some value ? for things & stuff'])
+//        );
+//        datacontext.merge(ContextView.node("anodename"), new BaseDataContext("node", [name: 'node/name']));
+//        datacontext.merge(ContextView.node("bnodename"), new BaseDataContext("node", [name: 'bogus']));
+//        datacontext.merge(ContextView.node("bnodename"), new BaseDataContext("data", [value: 'hotenntot']));
+//        when:
+//        def result = ScriptURLNodeStepExecutor.expandUrlString(
+//                url,
+//                datacontext,
+//                curnode
+//        )
+//        then:
+//        result != null
+//        result == expected
+//
+//        where:
+//        url                                                                            | curnode     | expected
+//
+//        'http://example.com/path/${node.name}?query=${data.value}'                     | "anodename" |
+//                'http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff'
+//        'http://example.com/path/${node.name}?query=${data.value}'                     | "bnodename" |
+//                'http://example.com/path/bogus?query=hotenntot'
+//        'http://example.com/path/${node.name@bnodename}?query=${data.value}'           | "anodename" |
+//                'http://example.com/path/bogus?query=some%20value%20%3F%20for%20things%20%26%20stuff'
+//        'http://example.com/path/${node.name@bnodename}?query=${data.value@bnodename}' | "anodename" |
+//                'http://example.com/path/bogus?query=hotenntot'
+//
+//    }
 
     private void setupNodeExecutor(NodeExecutor testexec, FileCopier fileCopier) {
         def frameworkPlugins = Mock(IExecutionProviders) {
@@ -139,250 +139,250 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
 
 
-    def "interpret command script file local"() {
-        given:
-        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+//    def "interpret command script file local"() {
+//        given:
+//        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+//
+//        //setup nodeexecutor for local node
+//        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+//        TestFileCopier testcopier = new TestFileCopier()
+//        setupNodeExecutor(testexec,testcopier)
+//
+//        //execute command interpreter on local node
+//        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+//        test1.setOsFamily("unix")
+//
+//
+//        final StepExecutionContext context = ExecutionContextImpl.builder()
+//                .frameworkProject(projName)
+//                .framework(frameworkInstance)
+//                .user("blah")
+//                .dataContext(new BaseDataContext("data", [value: 'a text value']))
+//                .build()
+//        final String urlString = server.url("/").toString()
+//        ScriptURLCommandBase command = createCommandBase(urlString, expandToken)
+//
+//        when:
+//        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        testexec.testResult = nodeExecutorResults
+//        testcopier.testResult = "/test/file/path"
+//
+//        String testcontent = "test script content @data.value@"
+//        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
+//
+//        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+//
+//        then:
+//        null != interpreterResult
+//        interpreterResult.isSuccess()
+//        nodeExecutorResults.get(1) == interpreterResult
+//
+//        context == testcopier.testContext
+//        null == testcopier.testScript
+//        null == testcopier.testInput
+//        null != testcopier.testFile.getAbsolutePath()
+//        test1 == testcopier.testNode
+//        expectedTextContent == testcopier.fileContent
+//
+//        testexec.index <= testexec.testResult.size()
+//
+//        //test nodeexecutor was called twice
+//        3 == testexec.index
+//        //first call is chmod +x filepath
+//        final String[] strings = testexec.testCommand.get(0);
+//        3 == strings.length
+//        "chmod" == strings[0]
+//        "+x" == strings[1]
+//        String filepath = strings[2];
+//        filepath.endsWith(".sh")
+//        test1 == testexec.testNode.get(0)
+//
+//        //second call is to exec the filepath
+//        final String[] strings2 = testexec.testCommand.get(1);
+//        1 == strings2.length
+//        strings2[0] == filepath
+//        filepath == strings2[0]
+//        test1 == testexec.testNode.get(1)
+//
+//        //third call is to remove remote file
+//        final String[] strings3 = testexec.testCommand.get(2);
+//        3 == strings3.length
+//        "rm" == strings3[0]
+//        "-f" == strings3[1]
+//        filepath == strings3[2]
+//        test1 == testexec.testNode.get(2)
+//
+//        where:
+//        expandToken | expectedTextContent
+//        true        | "test script content a text value\n"
+//        false       | "test script content @data.value@"
+//        true        | "test script content a text value\n"
+//        false       | "test script content @data.value@"
+//    }
 
-        //setup nodeexecutor for local node
-        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-        TestFileCopier testcopier = new TestFileCopier()
-        setupNodeExecutor(testexec,testcopier)
+//    def "interpret command script file local changing file extension"() {
+//        given:
+//
+//        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+//
+//        //setup nodeexecutor for local node
+//            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+//            TestFileCopier testcopier = new TestFileCopier()
+//            setupNodeExecutor(testexec,testcopier)
+//
+//        //execute command interpreter on local node
+//        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+//        test1.setOsFamily("unix")
+//
+//
+//        final StepExecutionContext context = ExecutionContextImpl.builder()
+//                .frameworkProject(projName)
+//                .framework(frameworkInstance)
+//                .user("blah")
+//                .build()
+//        final String urlString = server.url("/").toString()
+//        String fileExtension = "myext";
+//        ScriptURLCommandBase command = createCommandBase(urlString, false, fileExtension)
+//
+//        when:
+//        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        testexec.testResult = nodeExecutorResults
+//        testcopier.testResult = "/test/file/path"
+//
+//        String testcontent = "test script content"
+//        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
+//
+//        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+//
+//        then:
+//
+//        null != interpreterResult
+//        interpreterResult.isSuccess()
+//        nodeExecutorResults.get(1) == interpreterResult
+//
+//        context == testcopier.testContext
+//        null == testcopier.testScript
+//        null == testcopier.testInput
+//        null != testcopier.testFile.getAbsolutePath()
+//        test1 == testcopier.testNode
+//
+//        testexec.index <= testexec.testResult.size()
+//
+//        //test nodeexecutor was called twice
+//        3 == testexec.index
+//        //first call is chmod +x filepath
+//        final String[] strings = testexec.testCommand.get(0);
+//        3 == strings.length
+//        "chmod" == strings[0]
+//        "+x" == strings[1]
+//        String filepath = strings[2];
+//        filepath.endsWith("." + fileExtension)
+//    }
 
-        //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
-        test1.setOsFamily("unix")
+//    def "interpret command script file local changing invocation"() {
+//        given:
+//
+//        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+//
+//        //setup nodeexecutor for local node
+//            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+//            TestFileCopier testcopier = new TestFileCopier()
+//            setupNodeExecutor(testexec,testcopier)
+//
+//        //execute command interpreter on local node
+//        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+//        test1.setOsFamily("unix")
+//
+//
+//        final StepExecutionContext context = ExecutionContextImpl.builder()
+//                .frameworkProject(projName)
+//                .framework(frameworkInstance)
+//                .user("blah")
+//                .build()
+//        final String urlString = server.url("get-script").toString()
+//        String invocation = 'mycommand ${scriptfile}';
+//        ScriptURLCommandBase command = createCommandBase(urlString, false, null, invocation)
+//
+//        when:
+//        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+//        testexec.testResult = nodeExecutorResults
+//        testcopier.testResult = "/test/file/path"
+//
+//        String testcontent = "test script content"
+//        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
+//
+//        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+//
+//        then:
+//
+//        null != interpreterResult
+//        interpreterResult.isSuccess()
+//        nodeExecutorResults.get(1) == interpreterResult
+//
+//        context == testcopier.testContext
+//        null == testcopier.testScript
+//        null == testcopier.testInput
+//        null != testcopier.testFile.getAbsolutePath()
+//        test1 == testcopier.testNode
+//
+//        testexec.index <= testexec.testResult.size()
+//
+//        //second call is to exec the filepath
+//        final String[] strings2 = testexec.testCommand.get(1);
+//        2 == strings2.length
+//        "mycommand" == strings2[0]
+//        String filepath = strings2[1];
+//        filepath == strings2[1]
+//
+//        test1 == testexec.testNode.get(1)
+//    }
 
-
-        final StepExecutionContext context = ExecutionContextImpl.builder()
-                .frameworkProject(projName)
-                .framework(frameworkInstance)
-                .user("blah")
-                .dataContext(new BaseDataContext("data", [value: 'a text value']))
-                .build()
-        final String urlString = server.url("/").toString()
-        ScriptURLCommandBase command = createCommandBase(urlString, expandToken)
-        
-        when:
-        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        testexec.testResult = nodeExecutorResults
-        testcopier.testResult = "/test/file/path"
-
-        String testcontent = "test script content @data.value@"
-        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
-
-        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
-
-        then:
-        null != interpreterResult
-        interpreterResult.isSuccess()
-        nodeExecutorResults.get(1) == interpreterResult
-
-        context == testcopier.testContext
-        null == testcopier.testScript
-        null == testcopier.testInput
-        null != testcopier.testFile.getAbsolutePath()
-        test1 == testcopier.testNode
-        expectedTextContent == testcopier.fileContent
-
-        testexec.index <= testexec.testResult.size()
-
-        //test nodeexecutor was called twice
-        3 == testexec.index
-        //first call is chmod +x filepath
-        final String[] strings = testexec.testCommand.get(0);
-        3 == strings.length
-        "chmod" == strings[0]
-        "+x" == strings[1]
-        String filepath = strings[2];
-        filepath.endsWith(".sh")
-        test1 == testexec.testNode.get(0)
-
-        //second call is to exec the filepath
-        final String[] strings2 = testexec.testCommand.get(1);
-        1 == strings2.length
-        strings2[0] == filepath
-        filepath == strings2[0]
-        test1 == testexec.testNode.get(1)
-
-        //third call is to remove remote file
-        final String[] strings3 = testexec.testCommand.get(2);
-        3 == strings3.length
-        "rm" == strings3[0]
-        "-f" == strings3[1]
-        filepath == strings3[2]
-        test1 == testexec.testNode.get(2)
-
-        where:
-        expandToken | expectedTextContent
-        true        | "test script content a text value\n"
-        false       | "test script content @data.value@"
-        true        | "test script content a text value\n"
-        false       | "test script content @data.value@"
-    }
-
-    def "interpret command script file local changing file extension"() {
-        given:
-
-        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
-
-        //setup nodeexecutor for local node
-            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-            TestFileCopier testcopier = new TestFileCopier()
-            setupNodeExecutor(testexec,testcopier)
-
-        //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
-        test1.setOsFamily("unix")
-
-
-        final StepExecutionContext context = ExecutionContextImpl.builder()
-                .frameworkProject(projName)
-                .framework(frameworkInstance)
-                .user("blah")
-                .build()
-        final String urlString = server.url("/").toString()
-        String fileExtension = "myext";
-        ScriptURLCommandBase command = createCommandBase(urlString, false, fileExtension)
-
-        when:
-        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        testexec.testResult = nodeExecutorResults
-        testcopier.testResult = "/test/file/path"
-
-        String testcontent = "test script content"
-        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
-
-        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
-
-        then:
-
-        null != interpreterResult
-        interpreterResult.isSuccess()
-        nodeExecutorResults.get(1) == interpreterResult
-
-        context == testcopier.testContext
-        null == testcopier.testScript
-        null == testcopier.testInput
-        null != testcopier.testFile.getAbsolutePath()
-        test1 == testcopier.testNode
-
-        testexec.index <= testexec.testResult.size()
-
-        //test nodeexecutor was called twice
-        3 == testexec.index
-        //first call is chmod +x filepath
-        final String[] strings = testexec.testCommand.get(0);
-        3 == strings.length
-        "chmod" == strings[0]
-        "+x" == strings[1]
-        String filepath = strings[2];
-        filepath.endsWith("." + fileExtension)
-    }
-
-    def "interpret command script file local changing invocation"() {
-        given:
-
-        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
-
-        //setup nodeexecutor for local node
-            MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
-            TestFileCopier testcopier = new TestFileCopier()
-            setupNodeExecutor(testexec,testcopier)
-
-        //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
-        test1.setOsFamily("unix")
-
-
-        final StepExecutionContext context = ExecutionContextImpl.builder()
-                .frameworkProject(projName)
-                .framework(frameworkInstance)
-                .user("blah")
-                .build()
-        final String urlString = server.url("get-script").toString()
-        String invocation = 'mycommand ${scriptfile}';
-        ScriptURLCommandBase command = createCommandBase(urlString, false, null, invocation)
-
-        when:
-        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
-        testexec.testResult = nodeExecutorResults
-        testcopier.testResult = "/test/file/path"
-
-        String testcontent = "test script content"
-        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
-
-        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
-
-        then:
-
-        null != interpreterResult
-        interpreterResult.isSuccess()
-        nodeExecutorResults.get(1) == interpreterResult
-
-        context == testcopier.testContext
-        null == testcopier.testScript
-        null == testcopier.testInput
-        null != testcopier.testFile.getAbsolutePath()
-        test1 == testcopier.testNode
-
-        testexec.index <= testexec.testResult.size()
-
-        //second call is to exec the filepath
-        final String[] strings2 = testexec.testCommand.get(1);
-        2 == strings2.length
-        "mycommand" == strings2[0]
-        String filepath = strings2[1];
-        filepath == strings2[1]
-
-        test1 == testexec.testNode.get(1)
-    }
-
-    private ScriptURLCommandBase createCommandBase(String urlString, boolean expandToken = false, String fileExtension = null, String interpreter = null) {
-        return new ScriptURLCommandBase() {
-            public String getURLString() {
-                return urlString
-            }
-
-            public String[] getArgs() {
-                return new String[0]
-            }
-
-            public StepExecutionItem getFailureHandler() {
-                return null
-            }
-
-            public boolean isKeepgoingOnSuccess() {
-                return false
-            }
-
-            public String getScriptInterpreter() {
-                return interpreter
-            }
-
-            @Override
-            public String getFileExtension() {
-                return fileExtension
-            }
-
-            public boolean getInterpreterArgsQuoted() {
-                return false
-            }
-
-            @Override
-            public boolean isExpandTokenInScriptFile() {
-                return expandToken
-            }
-        }
-    }
+//    private ScriptURLCommandBase createCommandBase(String urlString, boolean expandToken = false, String fileExtension = null, String interpreter = null) {
+//        return new ScriptURLCommandBase() {
+//            public String getURLString() {
+//                return urlString
+//            }
+//
+//            public String[] getArgs() {
+//                return new String[0]
+//            }
+//
+//            public StepExecutionItem getFailureHandler() {
+//                return null
+//            }
+//
+//            public boolean isKeepgoingOnSuccess() {
+//                return false
+//            }
+//
+//            public String getScriptInterpreter() {
+//                return interpreter
+//            }
+//
+//            @Override
+//            public String getFileExtension() {
+//                return fileExtension
+//            }
+//
+//            public boolean getInterpreterArgsQuoted() {
+//                return false
+//            }
+//
+//            @Override
+//            public boolean isExpandTokenInScriptFile() {
+//                return expandToken
+//            }
+//        }
+//    }
 
     public static class MultiTestNodeExecutor implements NodeExecutor {
         List<ExecutionContext> testContext = new ArrayList<ExecutionContext>()

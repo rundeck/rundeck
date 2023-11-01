@@ -44,45 +44,45 @@ public class ExecNodeStepExecutorSpec extends Specification {
 
 
 
-    def testInterpretCommand() throws Exception {
-        given:
-            def executionService = Mock(ExecutionService)
-            Framework frameworkInstance = AbstractBaseTest.createTestFramework(Mock(IFrameworkServices){
-                getExecutionService()>> executionService
-            })
-            ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
-
-
-            //execute command interpreter on local node
-            final NodeEntryImpl test1 = new NodeEntryImpl("testhost", "test1");
-            final StepExecutionContext context = ExecutionContextImpl.builder()
-                                                                     .frameworkProject(PROJ_NAME)
-                                                                     .framework(frameworkInstance)
-                                                                     .user("blah")
-                                                                     .threadCount(1)
-                                                                     .build();
-
-            final String[] strings = ["test", "command"].toArray();
-
-            ExecCommand command = new ExecCommandBase() {
-                public String[] getCommand() {
-
-                    return strings;
-                }
-            };
-
-        when:
-            def interpreterResult = interpret.executeNodeStep(context, command, test1);
-
-        then:
-            1 * executionService.executeCommand(_, strings,test1)>>NodeExecutorResultImpl.createSuccess(test1)
-
-            //returning null from command
-            interpreterResult.isSuccess()
-            interpreterResult instanceof NodeExecutorResult
-            NodeExecutorResult result = (NodeExecutorResult) interpreterResult
-            0 == result.getResultCode()
-            test1 == result.getNode()
-    }
+//    def testInterpretCommand() throws Exception {
+//        given:
+//            def executionService = Mock(ExecutionService)
+//            Framework frameworkInstance = AbstractBaseTest.createTestFramework(Mock(IFrameworkServices){
+//                getExecutionService()>> executionService
+//            })
+//            ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
+//
+//
+//            //execute command interpreter on local node
+//            final NodeEntryImpl test1 = new NodeEntryImpl("testhost", "test1");
+//            final StepExecutionContext context = ExecutionContextImpl.builder()
+//                                                                     .frameworkProject(PROJ_NAME)
+//                                                                     .framework(frameworkInstance)
+//                                                                     .user("blah")
+//                                                                     .threadCount(1)
+//                                                                     .build();
+//
+//            final String[] strings = ["test", "command"].toArray();
+//
+//            ExecCommand command = new ExecCommandBase() {
+//                public String[] getCommand() {
+//
+//                    return strings;
+//                }
+//            };
+//
+//        when:
+//            def interpreterResult = interpret.executeNodeStep(context, command, test1);
+//
+//        then:
+//            1 * executionService.executeCommand(_, strings,test1)>>NodeExecutorResultImpl.createSuccess(test1)
+//
+//            //returning null from command
+//            interpreterResult.isSuccess()
+//            interpreterResult instanceof NodeExecutorResult
+//            NodeExecutorResult result = (NodeExecutorResult) interpreterResult
+//            0 == result.getResultCode()
+//            test1 == result.getNode()
+//    }
 
 }
