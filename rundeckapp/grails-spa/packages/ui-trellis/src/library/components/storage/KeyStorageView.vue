@@ -277,9 +277,6 @@ export default defineComponent({
     }
   },
   mounted() {
-    console.log("mounted")
-    console.log(this.modelValue)
-    this.selectKeyFromModelValue(this.modelValue)
     this.loadKeys()
     this.loadProjectNames()
   },
@@ -301,11 +298,6 @@ export default defineComponent({
       this.inputPath = ''
       this.selectedKey = {}
       this.loadKeys()
-    },
-    modelValue: function(newValue: string) {
-      console.log("modelValue changed")
-      console.log(newValue)
-      this.selectKeyFromModelValue(newValue)
     }
   },
   computed: {
@@ -661,32 +653,6 @@ export default defineComponent({
           result.resources.forEach((resource: any) => {
             if (resource.type === 'file') {
               if (resource.path === path) {
-                this.selectedKey = resource;
-                this.isSelectedKey = true;
-              }
-            }
-          });
-        }
-      });
-
-    },
-    selectKeyFromModelValue(modelPath: any) {
-      const rundeckContext = getRundeckContext();
-      const lastIndexOfSlash = modelPath.lastIndexOf("/")
-      let upPath = ''
-      if(lastIndexOfSlash >= 0)
-        upPath = modelPath.substring(0, lastIndexOfSlash)
-      else
-        upPath = ""
-
-      console.log("selectKeyFromModelValue")
-      console.log("upPath: " + upPath)
-      console.log("path: " + modelPath)
-      rundeckContext.rundeckClient.storageKeyGetMetadata(this.calcBrowsePath(upPath.slice(this.rootPath.length))).then((result: any) => {
-        if (result.resources != null) {
-          result.resources.forEach((resource: any) => {
-            if (resource.type === 'file') {
-              if (resource.path === modelPath) {
                 this.selectedKey = resource;
                 this.isSelectedKey = true;
               }
