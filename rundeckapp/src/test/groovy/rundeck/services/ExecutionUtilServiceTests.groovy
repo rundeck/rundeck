@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
+import com.dtolabs.rundeck.execution.PluginNodeStepExecutionItemImpl
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
@@ -38,7 +40,7 @@ import static org.junit.Assert.*
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest{
+class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest, GrailsWebUnitTest{
 
     def setupSpec() { mockDomains Execution, CommandExec, JobExec, Workflow }
 
@@ -51,9 +53,9 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ExecCommandExecutionItem)
-        ExecCommandExecutionItem item=(ExecCommandExecutionItem) res
-        assertEquals(['exec','command'],item.command as List)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item=(PluginNodeStepExecutionItemImpl) res
+        assertEquals(item.stepConfiguration.adhocRemoteString, "exec command")
 
         then:
         // above asserts have validation
@@ -68,15 +70,14 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item=(PluginNodeStepExecutionItemImpl) res
 
         then:
-        assertEquals('local script',item.script)
-        assertNull(item.scriptAsStream)
-        assertNull(item.serverScriptFilePath)
-        assertNotNull(item.args)
-        assertEquals(0,item.args.length)
+        assertEquals('local script',item.stepConfiguration.adhocLocalString)
+        assertNull(item.stepConfiguration.adhocRemoteString)
+        assertNull(item.stepConfiguration.adhocFilepath)
+        assertNull(item.stepConfiguration.argString)
     }
 
     void testItemForWFCmdItem_script_fileextension() {
@@ -87,16 +88,15 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item=(PluginNodeStepExecutionItemImpl) res
 
         then:
-        assertEquals('local script',item.script)
-        assertNull(item.scriptAsStream)
-        assertNull(item.serverScriptFilePath)
-        assertNotNull(item.args)
-        assertEquals(0,item.args.length)
-        assertEquals('abc',item.fileExtension)
+        assertEquals('local script',item.stepConfiguration.adhocLocalString)
+        assertNull(item.stepConfiguration.adhocRemoteString)
+        assertNull(item.stepConfiguration.adhocFilepath)
+        assertNull(item.stepConfiguration.argString)
+        assertEquals('abc',item.stepConfiguration.fileExtension)
     }
 
     void testItemForWFCmdItem_scriptArgs() {
@@ -107,15 +107,15 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item=(PluginNodeStepExecutionItemImpl) res
 
         then:
-        assertEquals('local script',item.script)
-        assertNull(item.scriptAsStream)
-        assertNull(item.serverScriptFilePath)
-        assertNotNull(item.args)
-        assertEquals(['some', 'args'], item.args as List)
+        assertEquals('local script',item.stepConfiguration.adhocLocalString)
+        assertNull(item.stepConfiguration.adhocRemoteString)
+        assertNull(item.stepConfiguration.adhocFilepath)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
     }
 
     void testItemForWFCmdItem_scriptfile() {
@@ -126,15 +126,15 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
         then:
-        assertEquals('/some/path', item.serverScriptFilePath)
-        assertNull(item.scriptAsStream)
-        assertNull(item.script)
-        assertNotNull(item.args)
-        assertEquals(['some', 'args'], item.args as List)
+        assertEquals('/some/path', item.stepConfiguration.adhocFilepath)
+        assertNull(item.stepConfiguration.adhocRemoteString)
+        assertNull(item.stepConfiguration.adhocLocalString)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
     }
     void testItemForWFCmdItem_scriptfile_fileextension() {
         when:
@@ -144,206 +144,205 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
         assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
         then:
-        assertEquals('/some/path', item.serverScriptFilePath)
-        assertNull(item.scriptAsStream)
-        assertNull(item.script)
-        assertNotNull(item.args)
-        assertEquals(['some', 'args'], item.args as List)
-        assertEquals('xyz', item.fileExtension)
+        assertEquals('/some/path', item.stepConfiguration.adhocFilepath)
+        assertNull(item.stepConfiguration.adhocRemoteString)
+        assertNull(item.stepConfiguration.adhocLocalString)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
+        assertEquals('xyz', item.stepConfiguration.fileExtension)
     }
 
-//    void testItemForWFCmdItem_scripturl() {
-//        when:
-//        def testService = service
-//        //http url script path
-//        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertTrue(res instanceof ScriptURLCommandExecutionItem)
-//        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-//
-//        then:
-//        assertEquals('http://example.com/script', item.URLString)
-//        assertNotNull(item.args)
-//        assertEquals(['some', 'args'], item.args as List)
-//    }
-//    void testItemForWFCmdItem_scripturl_fileextension() {
-//        when:
-//        def testService = service
-//        //http url script path
-//        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args',fileExtension: 'mdd')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertTrue(res instanceof ScriptURLCommandExecutionItem)
-//        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-//
-//        then:
-//        assertEquals('http://example.com/script', item.URLString)
-//        assertNotNull(item.args)
-//        assertEquals(['some', 'args'], item.args as List)
-//        assertEquals('mdd', item.fileExtension)
-//    }
+    void testItemForWFCmdItem_scripturl() {
+        when:
+        def testService = service
+        //http url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
-//    void testItemForWFCmdItem_scripturl_https() {
-//        when:
-//        def testService = service
-//        //https url script path
-//        CommandExec ce = new CommandExec(adhocFilepath: 'https://example.com/script', argString: 'some args')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertTrue(res instanceof ScriptURLCommandExecutionItem)
-//        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-//
-//        then:
-//        assertEquals('https://example.com/script', item.URLString)
-//        assertNotNull(item.args)
-//        assertEquals(['some', 'args'], item.args as List)
-//    }
+        then:
+        assertEquals('http://example.com/script', item.stepConfiguration.adhocFilepath)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
+    }
+    void testItemForWFCmdItem_scripturl_fileextension() {
+        when:
+        def testService = service
+        //http url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args',fileExtension: 'mdd')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
-//    void testItemForWFCmdItem_scripturl_file() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertTrue(res instanceof ScriptURLCommandExecutionItem)
-//        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-//
-//        then:
-//        assertEquals('file:/some/script', item.URLString)
-//        assertNotNull(item.args)
-//        assertEquals(0, item.args.length)
-//    }
+        then:
+        assertEquals('http://example.com/script', item.stepConfiguration.adhocFilepath)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
+        assertEquals('mdd', item.stepConfiguration.fileExtension)
+    }
 
-//    void testItemForWFCmdItem_scripturl_file_args() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script', argString: 'some args')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertTrue(res instanceof ScriptURLCommandExecutionItem)
-//        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-//
-//        then:
-//        assertEquals('file:/some/script', item.URLString)
-//        assertNotNull(item.args)
-//        assertEquals(['some', 'args'], item.args as List)
-//    }
+    void testItemForWFCmdItem_scripturl_https() {
+        when:
+        def testService = service
+        //https url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'https://example.com/script', argString: 'some args')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
-//    void testItemForWFCmdItem_jobref() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertFalse(res instanceof ScriptURLCommandExecutionItem)
-//        assertTrue(res instanceof JobExecutionItem)
-//        JobExecutionItem item = (JobExecutionItem) res
-//
-//        then:
-//        assertEquals('xyz/abc', item.getJobIdentifier())
-//        assertNotNull(item.args)
-//        assertEquals([], item.args as List)
-//    }
+        then:
+        assertEquals('https://example.com/script', item.stepConfiguration.adhocFilepath)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
+    }
 
-//    void testItemForWFCmdItem_jobref_args() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        JobExec ce = new JobExec(
-//                jobName: 'abc',
-//                jobGroup: 'xyz',
-//                argString: 'abc def',
-//                nodeFilter: 'def',
-//                nodeIntersect: true
-//        )
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertFalse(res instanceof ScriptURLCommandExecutionItem)
-//        assertTrue(res instanceof JobExecutionItem)
-//        JobExecutionItem item = (JobExecutionItem) res
-//
-//        then:
-//        assertEquals('xyz/abc', item.getJobIdentifier())
-//        assertNotNull(item.args)
-//        assertEquals(['abc', 'def'], item.args as List)
-//        assertEquals('def', item.getNodeFilter())
-//        assertEquals(true, item.getNodeIntersect())
-//
-//    }
+    void testItemForWFCmdItem_scripturl_file() {
+        when:
+        def testService = service
+        //file url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
 
-//    void testItemForWFCmdItem_jobref_externalProject() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertFalse(res instanceof ScriptURLCommandExecutionItem)
-//        assertTrue(res instanceof JobRefCommand)
-//        JobRefCommand item = (JobRefCommand) res
-//
-//        then:
-//        assertEquals('xyz/abc', item.getJobIdentifier())
-//        assertNotNull(item.args)
-//        assertEquals([], item.args as List)
-//    }
-//
-//    void testItemForWFCmdItem_jobref_args_externalProject() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
-//        def res = testService.itemForWFCmdItem(ce)
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertFalse(res instanceof ScriptURLCommandExecutionItem)
-//        assertTrue(res instanceof JobRefCommand)
-//        JobRefCommand item = (JobRefCommand) res
-//
-//        then:
-//        assertEquals('xyz/abc', item.getJobIdentifier())
-//        assertEquals('anotherProject', item.getProject())
-//        assertNotNull(item.args)
-//        assertEquals([], item.args as List)
-//    }
-//
-//    void testItemForWFCmdItem_jobref_sameproject() {
-//        when:
-//        def testService = service
-//        //file url script path
-//        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'jobProject')
-//        def res = testService.itemForWFCmdItem(ce, null,'jobProject')
-//        assertNotNull(res)
-//        assertTrue(res instanceof StepExecutionItem)
-//        assertFalse(res instanceof ScriptURLCommandExecutionItem)
-//        assertTrue(res instanceof JobExecutionItem)
-//        JobExecutionItem item = (JobExecutionItem) res
-//        assertEquals('xyz/abc', item.getJobIdentifier())
-//        assertNotNull(item.args)
-//        assertEquals([], item.args as List)
-//        JobRefCommand jrc = (JobRefCommand) res
-//        jrc.project=='jobProject'
-//
-//        then:
-//        // above asserts have validation
-//        1 == 1
-//    }
+        then:
+        assertEquals('file:/some/script', item.stepConfiguration.adhocFilepath)
+        assertNull(item.stepConfiguration.argString)
+    }
+
+    void testItemForWFCmdItem_scripturl_file_args() {
+        when:
+        def testService = service
+        //file url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script', argString: 'some args')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
+
+        then:
+        assertEquals('file:/some/script', item.stepConfiguration.adhocFilepath)
+        assertNotNull(item.stepConfiguration.argString)
+        assertEquals('some args', item.stepConfiguration.argString)
+    }
+
+    void testItemForWFCmdItem_jobref() {
+        when:
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof PluginNodeStepExecutionItemImpl)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+
+        then:
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_args() {
+        when:
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(
+                jobName: 'abc',
+                jobGroup: 'xyz',
+                argString: 'abc def',
+                nodeFilter: 'def',
+                nodeIntersect: true
+        )
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof PluginNodeStepExecutionItemImpl)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+
+        then:
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals(['abc', 'def'], item.args as List)
+        assertEquals('def', item.getNodeFilter())
+        assertEquals(true, item.getNodeIntersect())
+
+    }
+
+    void testItemForWFCmdItem_jobref_externalProject() {
+        when:
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof PluginNodeStepExecutionItemImpl)
+        assertTrue(res instanceof JobRefCommand)
+        JobRefCommand item = (JobRefCommand) res
+
+        then:
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_args_externalProject() {
+        when:
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof PluginNodeStepExecutionItemImpl)
+        assertTrue(res instanceof JobRefCommand)
+        JobRefCommand item = (JobRefCommand) res
+
+        then:
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertEquals('anotherProject', item.getProject())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_sameproject() {
+        when:
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'jobProject')
+        def res = testService.itemForWFCmdItem(ce, null,'jobProject')
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof PluginNodeStepExecutionItemImpl)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project=='jobProject'
+
+        then:
+        // above asserts have validation
+        1 == 1
+    }
 
     void testItemForWFCmdItem_jobref_otherproject() {
         when:
