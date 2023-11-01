@@ -418,7 +418,7 @@ jobs:
             rundeck_gradle_functional_tests
       - collect-gradle-tests
       - store_artifacts:
-          path: ~/functional-test/build/test-results/images
+          path: ~/workspace/functional-test/build/test-results/images
 
   # Publish all packages to packagecloud
   packaging-publish:
