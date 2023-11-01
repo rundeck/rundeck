@@ -254,6 +254,7 @@ public class ExecutionItemFactory {
      *
      * @deprecated
      */
+    @Deprecated
     public static StepExecutionItem createJobRef(
             final String jobIdentifier,
             final String[] args,
