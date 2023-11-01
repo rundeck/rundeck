@@ -86,6 +86,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     boolean existsByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath) {
         return ScheduledExecution.countByProjectAndJobNameAndGroupPath(project, jobName, groupPath) == 1
     }
@@ -144,6 +145,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     DeletionResult deleteByUuid(String uuid) throws DataAccessException {
         _deleteJob(ScheduledExecution.findByUuid(uuid))
     }

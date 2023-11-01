@@ -43,6 +43,7 @@ import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
+import groovy.transform.TypeCheckingMode
 import groovy.xml.MarkupBuilder
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
@@ -1882,7 +1883,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    @GrailsCompileStatic
+    @CompileStatic(TypeCheckingMode.SKIP)
     protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         log.info("Starting deletion of project ${project.name} by username $username")
         notify('projectWillBeDeleted', project.name)

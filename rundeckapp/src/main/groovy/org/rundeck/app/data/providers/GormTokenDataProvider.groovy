@@ -1,5 +1,6 @@
 package org.rundeck.app.data.providers
 
+import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import grails.compiler.GrailsCompileStatic
 import groovy.transform.TypeCheckingMode
@@ -21,6 +22,7 @@ import javax.transaction.Transactional
 @GrailsCompileStatic
 @Slf4j
 @Transactional
+@CompileStatic(TypeCheckingMode.SKIP)
 class GormTokenDataProvider implements TokenDataProvider {
     @Autowired
     AuthTokenDataService authTokenDataService

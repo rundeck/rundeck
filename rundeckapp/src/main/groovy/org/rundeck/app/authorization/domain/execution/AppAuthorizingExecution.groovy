@@ -4,6 +4,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.AuthConstants
@@ -43,6 +46,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, Proje
         )
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
     @Override
     boolean exists() {
         if(identifier.project){
@@ -54,6 +58,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, Proje
     private Execution found
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     protected Optional<Execution> retrieve() {
         if (null != found) {
             return Optional.of(found)

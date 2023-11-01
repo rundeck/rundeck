@@ -1,19 +1,11 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
-import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
-import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.jobs.JobLifecycleStatusImpl
-import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.jobs.JobPersistEvent
-import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
+import com.dtolabs.rundeck.core.jobs.*
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import spock.lang.Specification
-
 
 class JobLifecycleComponentServiceSpec extends Specification{
 
@@ -176,9 +168,9 @@ class JobLifecycleComponentServiceSpec extends Specification{
             JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPersistEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', component: Mock(JobLifecyclePlugin) {
+                    name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeSaveJob(_) >> {
-                    throw new JobLifecyclePluginException("oops")
+                    throw new JobLifecycleComponentException("oops")
                 }
             }
             )]
@@ -197,9 +189,9 @@ class JobLifecycleComponentServiceSpec extends Specification{
             JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPreExecutionEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', component: Mock(JobLifecyclePlugin) {
+                    name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeJobExecution(_) >> {
-                    throw new JobLifecyclePluginException("oops")
+                    throw new JobLifecycleComponentException("oops")
                 }
             }
             )]
