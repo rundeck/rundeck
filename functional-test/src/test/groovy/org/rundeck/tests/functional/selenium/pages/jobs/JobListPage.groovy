@@ -1,9 +1,15 @@
-package org.rundeck.tests.functional.selenium.pages
+package org.rundeck.tests.functional.selenium.pages.jobs
 
+import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
+/**
+ * Job list page
+ */
+@CompileStatic
 class JobListPage extends BasePage {
 
     By newJob = By.partialLinkText('New Job')
@@ -16,6 +22,10 @@ class JobListPage extends BasePage {
 
     void loadPathToEditJob(String projectName, String jobId) {
         loadPath = "/project/${projectName}/job/edit/${jobId}"
+    }
+
+    void loadPathToShowJob(String projectName, String jobId) {
+        loadPath = "/project/${projectName}/job/show/${jobId}"
     }
 
     void validatePage() {

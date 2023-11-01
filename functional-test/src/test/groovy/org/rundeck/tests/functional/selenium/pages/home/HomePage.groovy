@@ -1,19 +1,17 @@
-package org.rundeck.tests.functional.selenium.pages
+package org.rundeck.tests.functional.selenium.pages.home
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
-import org.openqa.selenium.StaleElementReferenceException
-import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.FindBy
+import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
+/**
+ * Home page
+ */
 @CompileStatic
 class HomePage extends BasePage {
 
-    By appAdmin = By.id("appAdmin")
-    By keyStorage = By.linkText("Key Storage")
-    By navHome = By.id("nav-rd-home")
     By createNewProject = By.linkText("Create New Project")
     By newProject = By.linkText("New Project")
 
@@ -41,25 +39,6 @@ class HomePage extends BasePage {
             newProjectField.click()
         else
             createNewProjectField.click()
-    }
-
-    void goToKeyStorage() {
-        waitForElementVisible appAdminField
-        appAdminField.click()
-        keyStorageField.click()
-    }
-
-    WebElement getAppAdminField() {
-        el appAdmin
-    }
-
-    WebElement getKeyStorageField() {
-        el keyStorage
-    }
-
-    WebElement getNavHome() {
-        waitForElementVisible navHome
-        el navHome
     }
 
     List<WebElement> getCreateNewProjectFields() {

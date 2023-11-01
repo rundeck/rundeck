@@ -1,9 +1,9 @@
-package org.rundeck.tests.functional.selenium
+package org.rundeck.tests.functional.selenium.tests.project
 
-import org.rundeck.tests.functional.selenium.pages.HomePage
-import org.rundeck.tests.functional.selenium.pages.LoginPage
-import org.rundeck.tests.functional.selenium.pages.ProjectPage
-import org.rundeck.tests.functional.selenium.pages.SideBarPage
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
+import org.rundeck.tests.functional.selenium.pages.project.ProjectPage
+import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.setup.NavLinkTypes

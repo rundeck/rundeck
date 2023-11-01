@@ -1,6 +1,6 @@
-package org.rundeck.tests.functional.selenium
+package org.rundeck.tests.functional.selenium.tests.login
 
-import org.rundeck.tests.functional.selenium.pages.LoginPage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase

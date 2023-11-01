@@ -1,8 +1,7 @@
-package org.rundeck.tests.functional.selenium
+package org.rundeck.tests.functional.selenium.tests.appadmin
 
-import org.rundeck.tests.functional.selenium.pages.HomePage
-import org.rundeck.tests.functional.selenium.pages.KeyStoragePage
-import org.rundeck.tests.functional.selenium.pages.LoginPage
+import org.rundeck.tests.functional.selenium.pages.appadmin.KeyStoragePage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import spock.lang.Stepwise
@@ -11,14 +10,12 @@ import spock.lang.Stepwise
 @Stepwise
 class KeyStorageSpec extends SeleniumBase {
 
-    def "1 add key storage"() {
+    def "add key storage"() {
         when:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
-            def homePage = page HomePage
-            homePage.goToKeyStorage()
-            def keyStoragePage = page KeyStoragePage
+            def keyStoragePage = go KeyStoragePage
             keyStoragePage.waitForElementVisible keyStoragePage.addUploadKeyField
             keyStoragePage.addUploadKeyField.click()
             keyStoragePage.waitForModal 1
@@ -26,28 +23,23 @@ class KeyStorageSpec extends SeleniumBase {
             keyStoragePage.checkKeyExists 'git.pass', 'git'
     }
 
-    def "2 overwrite key storage"() {
+    def "overwrite key storage"() {
         when:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
-            def homePage = page HomePage
-            homePage.goToKeyStorage()
-            def keyStoragePage = page KeyStoragePage
+            def keyStoragePage = go KeyStoragePage
             keyStoragePage.clickOverwriteKey 'git', 'git.pass'
             keyStoragePage.waitForModal 1
             keyStoragePage.overwriteKey 'new-root'
-            homePage.navHome
     }
 
-    def "3 delete key storage"() {
+    def "delete key storage"() {
         when:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
         then:
-            def homePage = page HomePage
-            homePage.goToKeyStorage()
-            def keyStoragePage = page KeyStoragePage
+            def keyStoragePage = go KeyStoragePage
             keyStoragePage.deleteKey 'git.pass', 'git'
     }
 

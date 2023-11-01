@@ -1,8 +1,9 @@
-package org.rundeck.tests.functional.selenium.pages
+package org.rundeck.tests.functional.selenium.pages.login
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 /**
  * Login page

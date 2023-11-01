@@ -1,22 +1,23 @@
-package org.rundeck.tests.functional.selenium.pages
+package org.rundeck.tests.functional.selenium.pages.jobs
 
+import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
-
+import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
 import java.time.Duration
 
+/**
+ * Job create page
+ */
+@CompileStatic
 class JobCreatePage extends BasePage {
 
-    By jobName = By.id('schedJobName')
-    By jobCreateButtonBy = By.id("Create")
-    By commandBy = By.id("adhocRemoteStringField")
     By floatBy = By.className("floatr")
-    By btnBy = By.cssSelector(".btn.btn-cta.btn-sm")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -24,10 +25,7 @@ class JobCreatePage extends BasePage {
     By jobNameInputBy = By.cssSelector("form input[name=\"jobName\"]")
     By groupPathInputBy = By.cssSelector("form input[name=\"groupPath\"]")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
-    By descriptionText = By
-            .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
-    By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
     By scheduleRunYesBy = By.cssSelector('input#scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
@@ -47,42 +45,10 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    void createSimpleJob(String jobName, String command) {
-        jobNameField.click()
-        jobNameField.sendKeys(jobName)
-        tab JobTab.WORKFLOW click()
-        selectStep StepName.COMMAND, StepType.NODE
-        waitForElementVisible commandBy
-        commandField.click()
-        commandField.sendKeys(command ?: "echo \"This is a Sample Job\"")
-        saveStep 0
-    }
-
-    void selectStep(StepName stepName, StepType stepType) {
-        def step = el By.xpath("//*[@${stepType.getStepType()}='${stepName.getStepName()}']")
-        step.click()
-        waitForNumberOfElementsToBe floatBy
-    }
-
-    void saveStep(Integer stepNumber) {
-        def aux = floatField.findElement btnBy
-        aux.click()
-        waitForElementVisible By.id("wfitem_" + stepNumber)
-    }
-
-    WebElement getJobNameField() {
-        el jobName
-    }
-
     WebElement tab(JobTab tab) {
         def tabBy = By.linkText(tab.getTabName())
         waitForNumberOfElementsToBe tabBy
         el tabBy
-    }
-
-    WebElement getCreateButton() {
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobCreateButtonBy))
-        el jobCreateButtonBy
     }
 
     WebElement addNotificationButtonByType(NotificationEvent notificationType) {
@@ -111,18 +77,9 @@ class JobCreatePage extends BasePage {
         el notificationSaveBy
     }
 
-    WebElement getCommandField() {
-        el commandBy
-    }
-
     WebElement getJobGroupField() {
         waitForElementVisible jobGroupBy
         el jobGroupBy
-    }
-
-    WebElement getJobInfoGroupLabel() {
-        waitForElementVisible jobInfoGroupBy
-        el jobInfoGroupBy
     }
 
     WebElement getUpdateJobButton() {
@@ -147,10 +104,6 @@ class JobCreatePage extends BasePage {
         ((JavascriptExecutor) driver).executeScript(js, element)
         waitForElementVisible element
         element
-    }
-
-    WebElement getDescriptionTextLabel() {
-        el descriptionText
     }
 
     WebElement getScheduleRunYesField() {

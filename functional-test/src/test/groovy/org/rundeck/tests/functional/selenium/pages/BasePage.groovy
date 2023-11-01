@@ -35,6 +35,7 @@ abstract class BasePage {
      */
     void go(){
         if(loadPath){
+            sleep 1000
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
