@@ -4562,20 +4562,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     List<Description> getBuiltInPlugins(){
         //TODO: remove this method after all builtin plugins is migrated to a true plugin.
         return [
-//                [
-//                        name:"command",
-//                        title:"Command",
-//                        description:"Run a command on the remote node",
-//                        order: 0,
-//                        iconClass: "rdicon icon-small command"
-//                ],
-//                [
-//                        name:"script",
-//                        title: "Script",
-//                        description: "Run a script on the remote node",
-//                        order: 1,
-//                        iconClass: "rdicon icon-small script"
-//                ],
                 [
                         name: "job",
                         title: "Job Reference",

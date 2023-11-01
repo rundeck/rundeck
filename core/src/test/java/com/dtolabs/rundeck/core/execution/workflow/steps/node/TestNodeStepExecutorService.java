@@ -69,41 +69,6 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance(),getFrameworkInstance());
 
-//        {
-//            //exec item should return default ExecNodeStepExecutor
-//            final NodeStepExecutionItem item = new BaseNodeStepExecutionItem() {
-//                public String getType() {
-//                    return "NodeDispatch";
-//                }
-//
-//                @Override
-//                public String getNodeStepType() {
-//                    return "exec";
-//                }
-//            };
-//            final NodeStepExecutor interpreterForExecutionItem = service.getExecutorForExecutionItem(
-//                item);
-//            assertNotNull(interpreterForExecutionItem);
-//            assertTrue(interpreterForExecutionItem instanceof ExecNodeStepExecutor);
-//        }
-//        {
-//            //script item should return default ScriptFileNodeStepExecutor
-//            final NodeStepExecutionItem item = new BaseNodeStepExecutionItem() {
-//                public String getType() {
-//                    return "NodeDispatch";
-//                }
-//
-//                @Override
-//                public String getNodeStepType() {
-//                    return "script";
-//                }
-//            };
-//
-//            final NodeStepExecutor interpreter2 = service.getExecutorForExecutionItem(item);
-//            assertNotNull(interpreter2);
-//            assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
-//        }
-
         //test invalid provider name
         try {
             service.getExecutorForExecutionItem(new BaseNodeStepExecutionItem() {

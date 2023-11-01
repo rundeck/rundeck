@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
@@ -5659,7 +5660,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
                 getProjectGlobals(_) >> [:]
                 getPluginControlService(_) >> pluginControlService
-                getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
+                getNodeStepPluginDescriptions() >> [
+                        DescriptionBuilder.builder().name("test").isHighlighted(false).build(),
+                        DescriptionBuilder.builder().name("test2").isHighlighted(false).build()
+                ]
             }
 
             service.frameworkService = frameworkService
