@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.Dimension
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
@@ -19,6 +20,7 @@ abstract class BasePage {
      */
     BasePage(final SeleniumContext context) {
         this.context = context
+        this.context.driver.manage().window().setSize(new Dimension(1200,1050))
     }
     abstract String getLoadPath()
     /**

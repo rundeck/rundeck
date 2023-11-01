@@ -72,7 +72,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationSaveButton(){
-        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(notificationSaveButton))
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.attributeContains(driver.findElement(notificationSaveButton), "class", "btn btn-primary"))
         el notificationSaveButton
     }
 
