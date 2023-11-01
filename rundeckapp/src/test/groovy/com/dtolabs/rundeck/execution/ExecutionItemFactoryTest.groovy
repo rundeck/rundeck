@@ -74,9 +74,6 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void creatScriptFileWithScript_withHandler(){
-        new CommandExec(
-                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-        )
         StepExecutionItem handler = ExecutionItemFactory.createScriptFileItem(
                 ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
                 [script: 'script string'],null,false,null, null)
@@ -368,7 +365,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRef_withHandler(){
-        StepExecutionItem handler = null//ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
@@ -431,7 +431,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRefNodeStep_withHandler(){
-        StepExecutionItem handler = null//ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
@@ -517,7 +520,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginStep_withHandler(){
-        StepExecutionItem handler = null //ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createPluginStepItem(
                 "myplugin",
                 [a:'b'],
@@ -568,7 +574,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginNodeStep_withHandler(){
-        StepExecutionItem handler = null //ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createPluginNodeStepItem(
                 "myplugin",
                 [a:'b'],
