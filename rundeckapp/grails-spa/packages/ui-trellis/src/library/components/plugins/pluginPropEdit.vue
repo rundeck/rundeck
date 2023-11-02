@@ -318,7 +318,7 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <div v-if="useRunnerSelector===true">
-          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{storageFilter: prop.options['storage-file-meta-filter'], readOnly: renderReadOnly, value: currentValue, handleUpdate: (val)=>this.currentValue=val}">
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{storageFilter: prop.options['storage-file-meta-filter'], allowUpload: true, readOnly: renderReadOnly, value: currentValue, handleUpdate: (val)=>this.currentValue=val}">
             <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                                   :allow-upload="true"
                                   :value="keyPath"
