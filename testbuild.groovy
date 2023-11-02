@@ -124,7 +124,6 @@ def manifest=[
         "WEB-INF/lib/slf4j-api-1.7.36.jar",
         "WEB-INF/lib/libpam4j-1.11.jar"
     ],
-    "plugins/script-node-step-plugin/${target}/rundeck-script-node-step-plugin-${version}.jar":[:],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
     "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
