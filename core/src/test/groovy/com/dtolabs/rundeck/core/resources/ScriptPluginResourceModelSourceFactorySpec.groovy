@@ -179,7 +179,7 @@ class ScriptPluginResourceModelSourceFactorySpec  extends Specification{
         Properties configuration = new Properties()
         configuration.put("project",PROJECT_NAME)
         configuration.put("token","keys/token")
-        configuration.put(ScriptPluginResourceModelSourceFactory.DISABLE_CONTENT_CONVERSION, "true")
+        configuration.put(ScriptPluginResourceModelSourceFactory.DISABLE_CONTENT_CONVERSION, disableContentConversion)
 
         TestScriptResourceModel resourceModelProvider = new TestScriptResourceModel()
         resourceModelProvider.name = "test-script-resource-model"
@@ -229,6 +229,11 @@ class ScriptPluginResourceModelSourceFactorySpec  extends Specification{
         resource !=null
         resource.configuration.getProperty("token") != null
         resource.configuration.getProperty("token") == "keys/token"
+
+        where:
+        disableContentConversion| _
+        true| _
+        "true"| _
 
     }
 
