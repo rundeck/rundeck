@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
@@ -71,8 +72,11 @@ public ScriptFileNodeStepExecutor(
             args = new String[0];
         }
 
+        StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
+        final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
+
         scriptUtils.executeScriptFile(
-                context.getExecutionContext() as StepExecutionContext,
+                stepExecutionContext,
                 entry,
                 this.adhocLocalString,
                 expandedVarsInURL,
@@ -81,7 +85,7 @@ public ScriptFileNodeStepExecutor(
                 args,
                 scriptInterpreter,
                 interpreterArgsQuoted,
-                context.getFramework().getExecutionService(),
+                executionService,
                 expandTokens
         );
     }
