@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
@@ -81,8 +82,11 @@ class ScriptURLNodeStepExecutor {
             expandTokens = expandTokenInScriptFile;
         }
 
+        StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
+        final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
+
         scriptUtils.executeScriptFile(
-                context.getExecutionContext() as StepExecutionContext,
+                stepExecutionContext,
                 entry,
                 null,
                 destinationTempFile.getAbsolutePath(),
@@ -91,7 +95,7 @@ class ScriptURLNodeStepExecutor {
                 args,
                 scriptInterpreter,
                 interpreterArgsQuoted,
-                context.getFramework().getExecutionService(),
+                executionService,
                 expandTokens
         );
     }
