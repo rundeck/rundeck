@@ -87,6 +87,7 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
 
         if(adhocFilepath ==~ /^(?i:https?|file):.*$/) {
             ScriptURLNodeStepExecutor scriptURLNodeStepExecutor = new ScriptURLNodeStepExecutor(
+                    context,
                     scriptInterpreter,
                     interpreterArgsQuoted,
                     fileExtension,
@@ -95,7 +96,7 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
                     expandTokenInScriptFile
             );
 
-            scriptURLNodeStepExecutor.executeScriptURL(context, configuration, entry);
+            scriptURLNodeStepExecutor.executeScriptURL(configuration, entry);
 
         } else {
             ScriptFileNodeStepExecutor scriptFileNodeStepExecutor = new ScriptFileNodeStepExecutor(

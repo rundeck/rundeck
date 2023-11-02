@@ -51,7 +51,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     private int stepNumber;
     private List<Integer> stepContext;
     private Framework framework;
-    private ExecutionContext executionContext;
+    private StepExecutionContext executionContext;
     private FlowControl flowControl;
     private SharedOutputContext outputContext;
 
@@ -110,7 +110,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         return framework;
     }
 
-    public ExecutionContext getExecutionContext() {
+    public StepExecutionContext getExecutionContext() {
         return executionContext;
     }
 
