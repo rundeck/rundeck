@@ -107,7 +107,7 @@ dependencies {
         'org.mockito:mockito-all:1.10.19'
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
+    testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
