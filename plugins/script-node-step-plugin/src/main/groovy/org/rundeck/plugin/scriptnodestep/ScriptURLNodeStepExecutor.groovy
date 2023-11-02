@@ -21,12 +21,15 @@ import com.dtolabs.rundeck.core.utils.Converter
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import org.apache.commons.codec.binary.Hex
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 class ScriptURLNodeStepExecutor {
+    static Logger logger = LoggerFactory.getLogger(ScriptURLNodeStepExecutor.class);
 
     private final String scriptInterpreter;
     private final Boolean interpreterArgsQuoted;
