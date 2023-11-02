@@ -14,7 +14,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32'
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
