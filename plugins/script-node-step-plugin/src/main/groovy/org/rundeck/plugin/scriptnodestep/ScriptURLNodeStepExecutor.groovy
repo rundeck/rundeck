@@ -1,5 +1,6 @@
 package org.rundeck.plugin.scriptnodestep
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.UpdateUtils
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater
@@ -10,6 +11,7 @@ import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
@@ -36,21 +38,26 @@ class ScriptURLNodeStepExecutor {
 
     private DefaultScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
+    PluginStepContext context
     private File cacheDir;
     private static final int DEFAULT_TIMEOUT = 30;
     private static final boolean USE_CACHE = true;
     public static final String UTF_8 = "UTF-8";
 
-    ScriptURLNodeStepExecutor(String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath, Boolean expandTokenInScriptFile) {
+    ScriptURLNodeStepExecutor(PluginStepContext context, String scriptInterpreter, Boolean interpreterArgsQuoted, String fileExtension, String argString, String adhocFilepath, Boolean expandTokenInScriptFile) {
         this.scriptInterpreter = scriptInterpreter
         this.interpreterArgsQuoted = interpreterArgsQuoted
         this.fileExtension = fileExtension
         this.argString = argString
         this.adhocFilepath = adhocFilepath
         this.expandTokenInScriptFile = expandTokenInScriptFile
+        this.context = context
+
+        cacheDir = new File(Constants.getBaseVar(context.getFramework().getBaseDir().getAbsolutePath())
+                + "/cache/ScriptURLNodeStepExecutor");
     }
 
-    public void executeScriptURL(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) {
+    public void executeScriptURL(Map<String, Object> configuration, INodeEntry entry) {
         File destinationTempFile = downloadURLToTempFile(context, entry);
         if (!USE_CACHE) {
             destinationTempFile.deleteOnExit();
@@ -72,7 +79,7 @@ class ScriptURLNodeStepExecutor {
         }
 
         scriptUtils.executeScriptFile(
-                context,
+                context.getExecutionContext() as StepExecutionContext,
                 entry,
                 null,
                 destinationTempFile.getAbsolutePath(),
@@ -81,7 +88,7 @@ class ScriptURLNodeStepExecutor {
                 args,
                 scriptInterpreter,
                 interpreterArgsQuoted,
-                context.getFramework().getStepExecutionService(),
+                context.getFramework().getExecutionService(),
                 expandTokens
         );
     }
