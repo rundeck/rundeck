@@ -284,13 +284,12 @@ public class Option implements Comparable, OptionData {
             opt.regex=data.regex
         }
         if(data.values){
-            def values = data.values instanceof Collection ? data.values : new TreeSet([data.values])
+            opt.optionValues = data.values instanceof Collection ? new ArrayList<String>(data.values) : new ArrayList<String>([data.values])
             if(data.valuesListDelimiter){
                 opt.valuesListDelimiter=data.valuesListDelimiter
             }else{
                 opt.valuesListDelimiter=DEFAULT_DELIMITER
             }
-            opt.optionValues=new ArrayList<String>(values);
             opt.valuesList = opt.produceValuesList()
         }
         if(data.multivalued){
