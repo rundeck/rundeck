@@ -4495,7 +4495,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def nodeStepTypesHighlighted = frameworkService.getNodeStepPluginDescriptions()?.findAll{
             !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep) && it.isHighlighted()
-        } + getBuiltInPlugins()
+        }
+
+        nodeStepTypesHighlighted = getBuiltInPlugins() + nodeStepTypesHighlighted //include built-in plugins to highlighted list
 
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
             !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
