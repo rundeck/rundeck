@@ -3,6 +3,7 @@ package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
+import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.hibernate.StaleStateException
 import org.rundeck.app.data.model.v1.user.LoginStatus
@@ -23,7 +24,7 @@ import rundeck.services.data.UserDataService
 
 import javax.transaction.Transactional
 
-@GrailsCompileStatic
+@GrailsCompileStatic(TypeCheckingMode.SKIP)
 @Slf4j
 @Transactional
 class GormUserDataProvider implements UserDataProvider {

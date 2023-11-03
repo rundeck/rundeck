@@ -202,7 +202,7 @@ providers:
 
         then: "should throw exception"
             YAMLException e = thrown()
-            e.message.contains 'could not determine a constructor for the tag tag:yaml.org,2002:java.lang.Object'
+            e.message.contains 'Global tag is not allowed: tag:yaml.org,2002:java.lang.Object'
         where:
             testYaml<<[
                 TEST_YAML1,

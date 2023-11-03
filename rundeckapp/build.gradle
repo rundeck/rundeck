@@ -397,6 +397,11 @@ tasks.withType(Test).configureEach {
     forkEvery = 500
 }
 
+// To make Spring boot bootWar task work, we need to declare the duplicateStrategy explicitly
+tasks.withType(Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 assets {
     minifyJs = false
     minifyCss = false
@@ -515,6 +520,9 @@ assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
 
+tasks.withType(War).configureEach { War war ->
+    war.dependsOn compileGroovyPages
+}
 
 bootWar {
     enabled=true
@@ -537,6 +545,7 @@ artifacts {
     war war
     bootWar bootWar
 }
+
 //install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {

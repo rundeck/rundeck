@@ -4317,6 +4317,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch(JobLifecycleComponentException e) {
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            log.debug("beforeJobExecution check failure: " + e.getMessage(), e)
             def jobEventStatus = new JobEventStatusImpl(
                     successful: false,
                     eventType: event.getClass(),
