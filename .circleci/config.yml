@@ -73,7 +73,7 @@ executors:
   # Main docker executor
   docker-builder:
     docker:
-      - image: cimg/base:2023.09-22.04
+      - image: cimg/base:2023.10-22.04
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -87,7 +87,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2023.10.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -232,7 +232,7 @@ job-defaults: &job-defaults
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
     GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_OPTS: -XX:MaxRAMPercentage=80.0
-    JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+    JAVA_HOME: /usr/lib/jvm/zulu11
 
 jobs:
 
