@@ -72,7 +72,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 
 import retrofit2.Converter
-
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
