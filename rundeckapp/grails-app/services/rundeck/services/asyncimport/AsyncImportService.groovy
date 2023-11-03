@@ -213,6 +213,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ){
         final def milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
         final def importExecutions = options.importExecutions
+        def executionsDirFound = true
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Starting M1... Creating required directories."
@@ -264,6 +265,23 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try {
 
             if( modelProjectHost.list().size() == 0 ){
+                // check if the executions dir exists, if not, false a flag to prevent M2 trigger
+                Optional<Path> dirFound = Files.list(Paths.get(destDir.toString()))
+                        .filter {
+                            path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
+                        }
+                        .findFirst()
+                if( dirFound.isPresent() ){
+                    def internalProject = dirFound.get()
+                    Optional<Path> executionsDir = Files.list(internalProject)
+                            .filter {
+                                path -> path.fileName.toString() == EXECUTION_DIR_NAME
+                            }
+                            .findFirst()
+                    if( !executionsDir.isPresent() ){
+                        executionsDirFound = false
+                    }
+                }
                 copyDirExcept(destDir, modelProjectHost.toString(), EXECUTION_DIR_NAME)
             }
 
@@ -371,7 +389,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return it
         })
 
-        if( importExecutions ){
+        if( importExecutions && executionsDirFound ){
             projectService.beginAsyncImportMilestone(
                     projectName,
                     authContext,
