@@ -85,6 +85,8 @@ class ScriptURLNodeStepExecutor {
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
         final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
 
+        boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
+
         scriptUtils.executeScriptFile(
                 stepExecutionContext,
                 entry,
@@ -94,7 +96,7 @@ class ScriptURLNodeStepExecutor {
                 fileExtension,
                 args,
                 scriptInterpreter,
-                interpreterArgsQuoted,
+                argsQuoted,
                 executionService,
                 expandTokens
         );

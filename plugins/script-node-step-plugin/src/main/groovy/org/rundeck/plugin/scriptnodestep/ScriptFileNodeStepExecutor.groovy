@@ -44,7 +44,7 @@ public ScriptFileNodeStepExecutor(
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
             expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
         }
-        if(null != adhocFilepath){
+        if (null != adhocFilepath) {
             expandTokens = expandTokenInScriptFile;
         }
 
@@ -59,7 +59,7 @@ public ScriptFileNodeStepExecutor(
                 false
         );
 
-        if( DataContextUtils.hasOptionsInString(expandedVarsInURL) ){
+        if (DataContextUtils.hasOptionsInString(expandedVarsInURL)) {
             Map<String, Map<String, String>> optionsContext = new HashMap();
             optionsContext.put("option", context.getDataContext().get("option"));
             expandedVarsInURL = DataContextUtils.replaceDataReferencesInString(expandedVarsInURL, optionsContext);
@@ -75,6 +75,8 @@ public ScriptFileNodeStepExecutor(
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
         final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
 
+        boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
+
         scriptUtils.executeScriptFile(
                 stepExecutionContext,
                 entry,
@@ -84,7 +86,7 @@ public ScriptFileNodeStepExecutor(
                 fileExtension,
                 args,
                 scriptInterpreter,
-                interpreterArgsQuoted,
+                argsQuoted,
                 executionService,
                 expandTokens
         );
