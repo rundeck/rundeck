@@ -7,6 +7,9 @@ dependencies_build_setup() {
     sudo apt-get update
     sudo apt-get -y --no-install-recommends install \
         openjdk-11-jdk-headless
+    sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+    sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+
 
     # Node and aws installed by orb.
 

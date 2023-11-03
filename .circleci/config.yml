@@ -232,6 +232,7 @@ job-defaults: &job-defaults
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
     GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_OPTS: -XX:MaxRAMPercentage=80.0
+    JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
 jobs:
 
