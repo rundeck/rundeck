@@ -12,6 +12,9 @@ class ErrorController {
 
     def fiveHundred() {
         response.status = 500
+        if(request.api_version && !response.format){
+            response.format='json'
+        }
         withFormat {
             html {
                 response.contentType = MimeType.HTML.name

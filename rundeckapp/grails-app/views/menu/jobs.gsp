@@ -554,11 +554,11 @@ search
 
             <div class="card-content">
 
-                <div  class="_history_content vue-project-activity">
+%{--                <div  class="_history_content vue-project-activity">--}%
 
-                    <activity-list :event-bus="EventBus"></activity-list>
+%{--                    <activity-list :event-bus="EventBus"></activity-list>--}%
 
-                </div>
+%{--                </div>--}%
 
             </div>
       </div>

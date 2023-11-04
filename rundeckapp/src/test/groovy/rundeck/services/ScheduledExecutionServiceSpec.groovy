@@ -42,9 +42,12 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.providers.GormJobQueryProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
@@ -62,6 +65,7 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.RdJobDataSummary
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -105,7 +109,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
                                       WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
-
+    def setup(){
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+    }
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
         rundeckJobSchedulesManager.frameworkService = Mock(FrameworkService){
@@ -6001,6 +6007,56 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         "parallel"       | "parallel"          | false
     }
 
+    def "basicQueryJobs"(){
+        given:
+            service.jobDataProvider=Mock(JobDataProvider)
+            def authContext=Mock(UserAndRolesAuthContext)
+
+            def project = 'test'
+            def path = 'some/path'
+        when:
+            def result=service.basicQueryJobs(project, path, authContext)
+        then:
+            1 * service.jobDataProvider.queryJobsAndGroups({
+                it.project==project
+                it.path==path
+            })>>new GormJobQueryProvider.GormPage<JobDataSummary>(results:[
+                new RdJobDataSummary(uuid:'1', jobName:'test1', groupPath: path+'/test1', project:project),
+                new RdJobDataSummary(uuid:'2', jobName:'test2', groupPath: path+'/test2/authok', project:project),
+                new RdJobDataSummary(uuid:'3', jobName:'test3', groupPath: path+'/test3/noauth', project:project),
+                new RdJobDataSummary(uuid:'4', jobName:'test4', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'5', jobName:'test5', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'6', jobName:'test6', groupPath: path+'/test3/other', project:project),
+            ])
+            _ * service.rundeckAuthContextProcessor.authResourceForJob(_,_,_)>>{
+                [
+                    jobName:it[0],
+                    groupPath:it[1],
+                    uuid:it[2],
+                ]
+            }
+            _ * service.rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authContext,
+                _,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                project
+            ) >> {
+                return (it[1].uuid in authorized)
+            }
+
+            result.findAll{it.job}.collect{it.jobData.uuid}==expectedJobs
+            result.findAll{!it.job}.collect{it.groupPath}.sort()==expectedGroups
+        where:
+            authorized                | expectedJobs | expectedGroups
+            ['1', '4']                | ['4']        | ['some/path/test1']
+            ['2', '4']                | ['4']        | ['some/path/test2']
+            ['3', '4']                | ['4']        | ['some/path/test3']
+            ['1', '2', '4']           | ['4']        | ['some/path/test1', 'some/path/test2']
+            ['1', '2', '5']           | ['5']        | ['some/path/test1', 'some/path/test2']
+            ['1', '4', '5']           | ['4', '5']   | ['some/path/test1']
+            ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
+
+    }
 }
 
 @CompileStatic

@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
+import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseItemData
+import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseResponse
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
@@ -70,6 +72,7 @@ import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
@@ -78,6 +81,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
+import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -91,6 +95,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
@@ -98,6 +103,7 @@ import rundeck.services.optionvalues.OptionValuesService
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 @Controller()
 class ScheduledExecutionController  extends ControllerBase{
@@ -6047,6 +6053,62 @@ Since: v14''',
             }
 
         }
+    }
+
+
+    @Get(uri="/project/{project}/jobs/browse")
+    @Operation(
+        method = 'GET',
+        summary = 'Browse jobs at a path',
+        description = '''Browse the jobs at a specific group path.
+
+Authorization required: `read` or `view` for the Job.
+
+Since: v45''',
+        tags = ['jobs'],
+        parameters = [
+
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = JobBrowseResponse)
+                    )
+                ]
+
+            )
+        ]
+    )
+    def apiJobBrowse(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'path',
+            in = ParameterIn.QUERY,
+            description = 'Group path root, or blank for the root',
+            schema = @Schema(type = 'string')
+        ) String path
+    ) {
+        List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
+            project,
+            path,
+            projectAuthContext
+        )
+        respond(
+            new JobBrowseResponse(
+                path: path,
+                items: result.stream().map (JobBrowseItemData.&from).collect(Collectors.toList())
+            )
+        )
     }
 
 }
