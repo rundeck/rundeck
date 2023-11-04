@@ -50,6 +50,10 @@ import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
+import org.rundeck.app.data.model.v1.job.JobBrowseItem
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.page.Page
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -106,6 +110,8 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.RdJobBrowseItem
+import rundeck.data.job.query.RdJobBrowseInput
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
@@ -438,7 +444,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 order("jobName","asc")
             }
-        };
+        }
         def schedlist = [];
         scheduled.each{
             schedlist << it
@@ -515,6 +521,82 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
+    /**
+     * Browse jobs within the project at the specified group path.
+     * This only returns jobs with read/view authorization, or sub group paths where a job exists
+     * that the user has authorization to view.
+     *
+     * @param project project
+     * @param path root of the path to search
+     * @param authContext auth context
+     * @return
+     */
+    List<JobBrowseItem> basicQueryJobs(String project, String path, UserAndRolesAuthContext authContext){
+        //returns all jobs under the specified path
+        def result = jobDataProvider.queryJobsAndGroups(new RdJobBrowseInput(project: project, path: path))
+        //filter results for authorization read/view
+        //remove subpath results and convert to simple groups
+        List<JobBrowseItem> filtered = new ArrayList<JobBrowseItem>()
+        Set<String> seenChildPath = new HashSet<String>()
+        for (JobDataSummary item : result.results) {
+            //include an item if the job is authorized, and the path matches the query path
+            //include an item's group if the job is authorized, and the sub path of the group has not already been added
+            //only check authorization of a job, if the group matches the path OR the group has not already been authorized
+            def isAuthorized = false
+            //exact path match, should include this job if it is authorized
+            if(item.groupPath==path || (!item.groupPath && !path)){
+                if(rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                    authContext,
+                    rundeckAuthContextProcessor.authResourceForJob(item.jobName, item.groupPath, item.uuid),
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                    project
+                )){
+                    filtered << new RdJobBrowseItem(jobData:item,job:true)
+                }
+                continue
+            }
+
+            //path of the single child group of the query, also include as a group if authorized
+            String childPath = null
+            if (
+                //note, this should be trivially true because we queried for this path, but check anyway
+                path && item.groupPath.startsWith(path + '/')
+                || (!path && item.groupPath)
+            ) {
+                if(path){
+                    def base = item.groupPath.substring(path.length()+1)
+                    def parts = base.split('/')
+                    childPath=path+'/'+parts[0]
+                }else{
+                    def parts = item.groupPath.split('/')
+                    childPath=parts[0]
+                }
+            }
+            if(!childPath){
+                //unexpected
+                continue
+            }
+            if(seenChildPath.contains(childPath)){
+                //we have already authorized another job matching this child path, no need to check again
+                continue
+            }
+
+            //have not yet seen this child subpath, so check authorization
+            if (rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForJob(item.jobName, item.groupPath, item.uuid),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                project
+            )) {
+                //job was authorized, we can include the childPath in the results
+                filtered << new RdJobBrowseItem(groupPath:childPath)
+
+                //mark as seen so we do not need to check again
+                seenChildPath<<childPath
+            }
+        }
+        return filtered
+    }
 
     /**
      * return a map of defined group path to count of the number of jobs with that exact path

@@ -4,17 +4,22 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.datastore.mapping.query.api.BuildableCriteria
+import org.hibernate.criterion.CriteriaSpecification
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.page.Page
 import org.rundeck.app.data.model.v1.page.Pageable
+import org.rundeck.app.data.model.v1.query.JobBrowseInput
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.job.JobQueryProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeck.ScheduledExecution
+import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.query.JobQueryConstants
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.paging.RdPageable
 import rundeck.services.JobSchedulesService
 
@@ -25,6 +30,17 @@ class GormJobQueryProvider implements JobQueryProvider {
     @Autowired
     JobSchedulesService jobSchedulesService
 
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Page<JobDataSummary> queryJobsAndGroups(JobBrowseInput input) {
+        return queryJobs(
+            new RdJobQueryInput(
+                projFilter:input.project,
+                groupPath:input.path,
+                inputParamMap: [:]
+            )
+        )
+    }
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
     Page<JobDataSummary> queryJobs(JobQueryInputData jobQueryInput) {
@@ -57,11 +73,22 @@ class GormJobQueryProvider implements JobQueryProvider {
             applyGroupPathCriteria(query, delegate)
             applyJobComponentCriteria(query, delegate)
             applySort(query, delegate)
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections{
+                property 'uuid', 'uuid'
+                property 'jobName', 'jobName'
+                property 'groupPath','groupPath'
+                property 'project','project'
+                property 'scheduled','scheduled'
+                property 'scheduleEnabled', 'scheduleEnabled'
+                property 'executionEnabled', 'executionEnabled'
+                property 'serverNodeUUID', 'serverNodeUUID'
+            }
         }
         def schedlist = scheduled.collect { se ->
-            def summary = se.toJobDataSummary()
-            summary.scheduled = jobSchedulesService.isScheduled(se.uuid)
-            summary
+            return new RdJobDataSummary(
+                se
+            )
         }
         def total = schedlist.size()
         if(queryMax && queryMax>0) {

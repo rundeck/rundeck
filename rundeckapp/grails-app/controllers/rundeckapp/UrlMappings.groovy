@@ -112,6 +112,7 @@ class UrlMappings {
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
+        "/api/$api_version/project/$project/jobs/browse"(controller: 'scheduledExecution', action: 'apiJobBrowse')
         "/api/$api_version/project/$project/jobs/export"(controller: 'menu', action: 'apiJobsExportv14')
         "/api/$api_version/project/$project/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImportv14')
         "/api/$api_version/project/$project"(controller: 'project'){
