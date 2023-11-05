@@ -280,6 +280,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             .findFirst()
                     if( !executionsDir.isPresent() ){
                         executionsDirFound = false
+                    }else{
+                        // If the dir exists but there are no executions, dont start M2
+                        def hasExecutions = Files.list(executionsDir.get()).count()
+                        if( hasExecutions <=0  ){
+                            executionsDirFound = false
+                        }
                     }
                 }
                 copyDirExcept(destDir, modelProjectHost.toString(), EXECUTION_DIR_NAME)
@@ -398,6 +404,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             )
         }else{
             // End the async import
+            if( Files.exists(Paths.get(destDir)) ) deleteNonEmptyDir(destDir)
+            if( Files.exists(Paths.get(scopedWorkingDir)) ) deleteNonEmptyDir(scopedWorkingDir)
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                 it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
                 it.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
