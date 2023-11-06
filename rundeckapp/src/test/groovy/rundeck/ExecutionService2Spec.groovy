@@ -1294,6 +1294,58 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         1 == 1
     }
 
+    /**
+     * Test createContext method supplying the execution uuid and auth context
+     */
+    void testCreateContextForExecutionUuid(){
+
+        service.frameworkService = mockWith(FrameworkService) {
+            getDefaultInputCharsetForProject(1..1) { project -> "UTF-8" }
+            getRundeckFramework(1..1) { -> null }
+            getProjectGlobals(1..1) { project ->
+                [:]
+            }
+            filterNodeSet(1..1) { sel, proj ->
+                new NodeSetImpl()
+            }
+        }
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
+        }
+
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext{ctx->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
+
+        service.executionLifecycleComponentService = mockWith(ExecutionLifecycleComponentService){}
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+        String uuid = UUID.randomUUID().toString()
+        Execution se = new Execution(uuid: uuid,argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        se.save()
+        def val= service.createContext(uuid, null)
+
+        expect:
+        val
+        !val.nodeSelector
+        val.frameworkProject == "testproj"
+        val.user == "testuser"
+        val.loglevel == 1
+        !val.framework
+        !val.executionListener
+    }
+
     private def makeFrameworkMock(Map argsMap) {
         def fcontrol = new MockFor(FrameworkService, true)
         fcontrol.demand.getProjectGlobals(1..1) { project ->
