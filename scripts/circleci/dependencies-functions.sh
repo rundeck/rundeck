@@ -4,9 +4,13 @@ set -e
 # Install dependencies needed for building
 dependencies_build_setup() {
 
+    # Azul Zulu JDK Install
+    sudo apt install gnupg ca-certificates curl
+    curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
+    echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
+
     sudo apt-get update
-    sudo apt-get -y --no-install-recommends install \
-        openjdk-11-jdk-headless
+    sudo apt-get -y --no-install-recommends install zulu11-jdk-headless
 
     # Node and aws installed by orb.
 

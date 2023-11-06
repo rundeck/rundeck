@@ -1,6 +1,7 @@
 package org.rundeck.app.data.providers.logstorage
 
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
 import org.hibernate.type.IntegerType
@@ -90,6 +91,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     LogFileStorageRequestData findByExecutionId(Long executionId) {
         return LogFileStorageRequest.findByExecution(Execution.get(executionId))
     }

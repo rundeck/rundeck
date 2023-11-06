@@ -228,7 +228,7 @@ public class TestNodesYamlGenerator extends TestCase {
     }
 
     private Map parseYamlMap(String outputString) {
-        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+        Yaml yaml = new Yaml(new LoaderOptions());
         final Object load = yaml.load(new StringReader(outputString));
         assertNotNull(load);
         assertTrue(load instanceof Map);
