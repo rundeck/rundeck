@@ -323,8 +323,6 @@ export default defineComponent({
     },
   },
   methods: {
-    selectedFilterLink(link: any) {
-    },
     filterWithoutAll() {
       if (this.outputValue === '.*' && this.hideAll) {
         return ''
