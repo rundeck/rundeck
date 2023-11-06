@@ -286,7 +286,7 @@ export default defineComponent({
   },
   computed: {
     filterNameDisplay() {
-      return this.outputValue === '.*' ? 'All Nodes' : this.selectedFilterName
+      return this.outputValue === '.*' || this.selectedFilterName === '.*'? 'All Nodes' : this.selectedFilterName
     },
     canSaveFilter() {
       return !this.selectedFilterName && this.filterWithoutAll()
@@ -306,6 +306,9 @@ export default defineComponent({
         if (found) {
           return found.filterName
         }
+      }
+      if(this.outputValue && this.outputValue==='.*'){
+        return this.outputValue
       }
       return null
     },
