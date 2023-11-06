@@ -5,7 +5,9 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionService
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -77,7 +79,7 @@ public ScriptFileNodeStepExecutor(
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
-        scriptUtils.executeScriptFile(
+        NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
                 stepExecutionContext,
                 entry,
                 this.adhocLocalString,
@@ -90,5 +92,9 @@ public ScriptFileNodeStepExecutor(
                 executionService,
                 expandTokens
         );
+
+        if(nodeExecutorResult.resultCode != 0){
+            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
+        }
     }
 }
