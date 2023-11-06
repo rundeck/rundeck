@@ -27,7 +27,7 @@ export const Elems = {
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
     addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=exec-command]'),
-    wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
+    wfStepCommandRemoteText: By.css('#wfli_0 > div.wfitemEditForm input[type=text][name=pluginConfig.adhocRemoteString]'),
     wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
     optionNewButton: By.css('#optnewbutton > span'),
