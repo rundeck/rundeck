@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecCommand
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -27,11 +29,15 @@ class CommandNodeStepPlugin implements NodeStepPlugin, ExecCommand {
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
 
-        context.getFramework().getExecutionService().executeCommand(
+        NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(
                 context.getExecutionContext(),
                 ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
                 .stringContainsPropertyReferencePredicate, adhocRemoteString),
                 entry
         );
+
+        if(nodeExecutorResult.resultCode != 0){
+            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
+        }
     }
 }
