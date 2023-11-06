@@ -19,6 +19,15 @@ class AccessControlPage extends BasePage {
     By fileRequiredBy = By.xpath("//*[@id=\"aclStorageUpload_content\"]/div[1]/div/span")
     By namePolicyBy = By.xpath("//*[@id=\"aclStorageUpload_content\"]/div[2]/div/span[1]")
     By nameRequiredBy = By.xpath("//*[@id=\"aclStorageUpload_content\"]/div[2]/div/span[2]")
+    By uploadFileBy = By.cssSelector("#aclStorageUploadForm input#aclStorageUpload_input_file")
+    By uploadNameBy = By.cssSelector("#aclStorageUploadForm input#aclStorageUpload_input_name")
+    By alertBy = By.cssSelector(".alert.alert-danger")
+    By uploadedPolicyValidationTitleBy = By.cssSelector("#uploadedPolicyValidation .alert h4")
+    By policiesTitleBy = By.cssSelector("span.h4 > span[data-bind=\"text: name\"]")
+    By aclUploadOverwriteBy = By.cssSelector("#aclStorageUploadForm input#acl_upload_overwrite")
+    By storedPoliciesListBy = By.cssSelector("#storedPolicies_list")
+    By storedPoliciesHeaderBy = By.cssSelector("#storedPolicies_header")
+    By deleteModalBy = By.cssSelector("#deleteStorageAclPolicy")
 
     String loadPath = "/menu/acls"
 
@@ -54,6 +63,54 @@ class AccessControlPage extends BasePage {
 
     WebElement getNameRequiredLabel() {
         el nameRequiredBy
+    }
+
+    WebElement getUploadFileField() {
+        el uploadFileBy
+    }
+
+    WebElement getUploadNameField() {
+        el uploadNameBy
+    }
+
+    WebElement getAlertField() {
+        el alertBy
+    }
+
+    List<WebElement> getAlertFields() {
+        els alertBy
+    }
+
+    WebElement getUploadedPolicyValidationTitleField() {
+        el uploadedPolicyValidationTitleBy
+    }
+
+    List<WebElement> getPoliciesTitleList() {
+        el storedPoliciesListBy findElements policiesTitleBy
+    }
+
+    WebElement getActionDropdown() {
+        el storedPoliciesListBy findElement By.cssSelector("div:nth-of-type(1)") findElement By.cssSelector(" a[data-toggle='dropdown']")
+    }
+
+    WebElement getDeleteButton() {
+        actionDropdown.findElement By.xpath('./..') findElement By.cssSelector("a.acl_menu__action_delete")
+    }
+
+    List<WebElement> getOverwriteHelpField() {
+        el aclUploadOverwriteBy findElement By.xpath("./../..") findElements By.cssSelector("span.help-block")
+    }
+
+    WebElement getCountBadge() {
+        el storedPoliciesHeaderBy findElement By.cssSelector("h3 .badge")
+    }
+
+    WebElement getDeleteModal() {
+        el deleteModalBy
+    }
+
+    WebElement getDeleteButtonConfirm() {
+        deleteModal.findElement By.cssSelector("#deleteStorageAclPolicy_btn_0")
     }
 
 }
