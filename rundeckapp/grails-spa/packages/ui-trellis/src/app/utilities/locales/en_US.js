@@ -280,6 +280,11 @@ const messages = {
     "scheduledExecution.property.timezone.description": "A valid Time Zone, either an abbreviation such as \"PST\", a full name such as \"America/Los_Angeles\",or a custom ID such as \"GMT-8{':'}00\".",
     "documentation.reference.cron.url": "https{':'}//www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html",
     "set.as.default.filter": "Set as Default Filter",
+    "remove.default.filter":"Remove Default Filter",
+    "delete.this.filter.ellipsis": "Delete this Filter …",
+    "all.nodes":"All Nodes",
+    "set.all.nodes.as.default.filter":"Set All Nodes as Default Filter",
+    "remove.all.nodes.as.default.filter":"Remove All Nodes as Default Filter",
     "show.all.nodes": "Show all nodes",
     "yes": "Yes",
     // job query field labels
