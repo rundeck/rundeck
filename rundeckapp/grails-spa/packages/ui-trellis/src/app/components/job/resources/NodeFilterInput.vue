@@ -390,12 +390,8 @@ export default defineComponent({
       this.selectedFilterName=filterName
       this.deleteFilterModal=true
     },
-    handleSetDefaultFilter(filterName: string) {
-      this.selectedFilterName=filterName
-      this.setDefaultFilter()
-    },
     handleSetDefaultAllFilter() {
-      this.handleSetDefaultFilter('.*')
+      this.setDefaultFilterValue('.*')
     },
     async onMount() {
       this.outputValue = this.modelValue
@@ -405,7 +401,7 @@ export default defineComponent({
       this.selectedFilterName = this.filterName
       this.loadNodeFilters()
       this.eventBus.on('nodefilter:action:deleteSavedFilter',this.handleDeleteSavedFilter)
-      this.eventBus.on('nodefilter:action:setDefault',this.handleSetDefaultFilter)
+      this.eventBus.on('nodefilter:action:setDefault',this.setDefaultFilterValue)
       this.eventBus.on('nodefilter:action:setDefaultAll',this.handleSetDefaultAllFilter)
       this.eventBus.on('nodefilter:action:removeDefault',this.removeDefaultFilter)
     }
