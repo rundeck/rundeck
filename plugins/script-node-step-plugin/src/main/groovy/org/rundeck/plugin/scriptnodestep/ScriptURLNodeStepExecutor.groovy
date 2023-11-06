@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
@@ -87,7 +88,7 @@ class ScriptURLNodeStepExecutor {
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
-        scriptUtils.executeScriptFile(
+        NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
                 stepExecutionContext,
                 entry,
                 null,
@@ -100,6 +101,10 @@ class ScriptURLNodeStepExecutor {
                 executionService,
                 expandTokens
         );
+
+        if(nodeExecutorResult.resultCode != 0){
+            throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
+        }
     }
 
     private static String hashURL(final String url) {
