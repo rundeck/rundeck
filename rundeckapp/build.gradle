@@ -407,33 +407,33 @@ assets {
     minifyCss = false
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
 }
-
-buildProperties.doLast {
-    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
-    if (!grailsBuildInfoFile) return
-    Properties properties = new Properties()
-
-    grailsBuildInfoFile.withInputStream {
-        properties.load(it)
-    }
-
-    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
-    properties.setProperty("core.version",properties.getProperty("info.app.version"))
-
-    if (project.gitDescribeInfo) {
-        properties.setProperty("build.core.git.description", project.gitDescribeInfo)
-    }
-    if (project.gitCommit) {
-        properties.setProperty("build.core.git.commit", project.gitCommit)
-    }
-    if (project.gitBranch) {
-        properties.setProperty("build.core.git.branch", project.gitBranch)
-    }
-
-    grailsBuildInfoFile.withOutputStream {
-        properties.store(it,null)
-    }
-}
+//
+//buildProperties.doLast {
+//    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
+//    if (!grailsBuildInfoFile) return
+//    Properties properties = new Properties()
+//
+//    grailsBuildInfoFile.withInputStream {
+//        properties.load(it)
+//    }
+//
+//    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
+//    properties.setProperty("core.version",properties.getProperty("info.app.version"))
+//
+//    if (project.gitDescribeInfo) {
+//        properties.setProperty("build.core.git.description", project.gitDescribeInfo)
+//    }
+//    if (project.gitCommit) {
+//        properties.setProperty("build.core.git.commit", project.gitCommit)
+//    }
+//    if (project.gitBranch) {
+//        properties.setProperty("build.core.git.branch", project.gitBranch)
+//    }
+//
+//    grailsBuildInfoFile.withOutputStream {
+//        properties.store(it,null)
+//    }
+//}
 
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     println "copying plugin libs"
