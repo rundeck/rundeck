@@ -17,6 +17,9 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecCommand
+import com.dtolabs.rundeck.core.execution.ScriptFileCommand
+import com.dtolabs.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -787,6 +790,8 @@ class WorkflowController extends ControllerBase {
                 if (params.nodeStep instanceof String) {
                     item.nodeStep = params.nodeStep == 'true'
                 }
+            } else if([ExecCommand.EXEC_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE].contains(params.type)){
+                item = PluginStep.fromMap(params)
             } else {
                 item = new CommandExec(params)
 
