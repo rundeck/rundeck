@@ -111,8 +111,8 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         @Override
         StepExecutionResult executeWorkflowStep(
-            final StepExecutionContext executionContext,
-            final StepExecutionItem item
+                final StepExecutionContext executionContext,
+                final StepExecutionItem item
         ) throws StepException {
             new StepExecutionResultImpl()
         }
@@ -133,7 +133,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             }
             _ * getNodes() >> Mock(INodeSet) {
                 _ * getNodes() >> {
-                return     [new NodeEntryImpl("set1node1")]
+                    return     [new NodeEntryImpl("set1node1")]
                 }
             }
             _*getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
@@ -148,6 +148,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -166,11 +167,11 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     def "build operations"() {
         given:
-            def engine = new EngineWorkflowExecutor(framework)
+        def engine = new EngineWorkflowExecutor(framework)
 
-            def state = States.mutable()
+        def state = States.mutable()
         when:
-            def result = EngineWorkflowExecutor.buildOperations(
+        def result = EngineWorkflowExecutor.buildOperations(
                 engine,
                 Mock(StepExecutionContext){
                     getStepNumber() >> 1
@@ -178,8 +179,12 @@ class EngineWorkflowExecutorSpec extends Specification {
                 Mock(WorkflowExecutionItem),
                 Mock(IWorkflow){
                     _ * getCommands()>>[
-                        Mock(StepExecutionItem),
-                        Mock(StepExecutionItem)
+                            Mock(StepExecutionItem) {
+                                isEnabled() >> true
+                            },
+                            Mock(StepExecutionItem) {
+                                isEnabled() >> true
+                            }
                     ]
                 },
                 Mock(WorkflowExecutionListener),
@@ -196,12 +201,12 @@ class EngineWorkflowExecutorSpec extends Specification {
                     1 * getSkipConditionsForStep(_,2,false)>>[].toSet()
                 },
                 Mock(EngineWorkflowExecutor.LogOut)
-            )
+        )
         then:
-            result.size() == 2
-            result.every {
-                it.stepNum > 0
-            }
+        result.size() == 2
+        result.every {
+            it.stepNum > 0
+        }
     }
 
     def "basic success on empty node filter"() {
@@ -235,6 +240,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -282,6 +288,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -349,6 +356,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-skip-strategy'
@@ -370,11 +378,11 @@ class EngineWorkflowExecutorSpec extends Specification {
         @Override
         WorkflowStrategyProfile getProfile() {
             new SkipProfile(
-                [(3): Rules.conditionSet(
-                    Condition.not(
-                        Rules.equalsCondition('step.1.state', 'failed')
-                    )
-                )]
+                    [(3): Rules.conditionSet(
+                            Condition.not(
+                                    Rules.equalsCondition('step.1.state', 'failed')
+                            )
+                    )]
             )
         }
     }
@@ -388,7 +396,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
         })
         framework.getWorkflowStrategyService().
-            registerClass('test-skip-3-not-strategy', TestSkipProfileWorkflowStrategy)
+                registerClass('test-skip-3-not-strategy', TestSkipProfileWorkflowStrategy)
 
 
         def context = Mock(StepExecutionContext) {
@@ -408,12 +416,15 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah2'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-skip-3-not-strategy'
@@ -435,14 +446,14 @@ class EngineWorkflowExecutorSpec extends Specification {
         @Override
         WorkflowStrategyProfile getProfile() {
             new SkipProfile(
-                (3): Rules.conditionSet(
-                    Condition.not(
-                        Condition.and(
-                            Rules.equalsCondition('step.1.state', 'success'),
-                            Rules.equalsCondition('step.2.state', 'success')
-                        )
+                    (3): Rules.conditionSet(
+                            Condition.not(
+                                    Condition.and(
+                                            Rules.equalsCondition('step.1.state', 'success'),
+                                            Rules.equalsCondition('step.2.state', 'success')
+                                    )
+                            )
                     )
-                )
             )
         }
     }
@@ -461,7 +472,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
         })
         framework.getWorkflowStrategyService().
-            registerClass('test-skip-3-not-both-strategy', TestSkip3NotBothWorkflowStrategy)
+                registerClass('test-skip-3-not-both-strategy', TestSkip3NotBothWorkflowStrategy)
 
 
 
@@ -482,12 +493,15 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah2'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-skip-3-not-both-strategy'
@@ -509,11 +523,11 @@ class EngineWorkflowExecutorSpec extends Specification {
         @Override
         WorkflowStrategyProfile getProfile() {
             new SkipProfile(
-                (2): Rules.conditionSet(
-                    Condition.not(
-                        Rules.equalsCondition('step.1.state', 'success')
+                    (2): Rules.conditionSet(
+                            Condition.not(
+                                    Rules.equalsCondition('step.1.state', 'success')
+                            )
                     )
-                )
             )
         }
     }
@@ -527,7 +541,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
         })
         framework.getWorkflowStrategyService().
-            registerClass('test-skip-2-not-success-1-strategy', TestSkip2NotSuccess1WorkflowStrategy)
+                registerClass('test-skip-2-not-success-1-strategy', TestSkip2NotSuccess1WorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -546,9 +560,11 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah2'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-skip-2-not-success-1-strategy'
@@ -588,8 +604,8 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         @Override
         StepExecutionResult executeWorkflowStep(
-            final StepExecutionContext executionContext,
-            final StepExecutionItem item
+                final StepExecutionContext executionContext,
+                final StepExecutionItem item
         ) throws StepException {
             new StepExecutionResultImpl(null, new MyReason("test failure"), "a failure")
         }
@@ -618,6 +634,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -768,8 +785,8 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         @Override
         StepExecutionResult executeWorkflowStep(
-            final StepExecutionContext executionContext,
-            final StepExecutionItem item
+                final StepExecutionContext executionContext,
+                final StepExecutionItem item
         ) throws StepException {
             //will start after step 1
             println('-> 2 Starting...')
@@ -815,9 +832,11 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         },
                         Mock(StepExecutionItem) {
                             getType() >> 'blah2'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -880,6 +899,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 getCommands() >> [
                         Mock(StepExecutionItem) {
                             getType() >> 'blah'
+                            isEnabled() >> true
                         }
                 ]
                 getStrategy() >> 'test-strategy'
@@ -912,22 +932,22 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     def "default augmentor initial state should not include shared data in state"(){
         given:
-            def sut = new EngineWorkflowExecutor.DefaultAugmentor()
-            def item = Mock(WorkflowExecutionItem){
-                getWorkflow()>>Mock(IWorkflow){
-                    isKeepgoing()>>keepgoing
-                }
+        def sut = new EngineWorkflowExecutor.DefaultAugmentor()
+        def item = Mock(WorkflowExecutionItem){
+            getWorkflow()>>Mock(IWorkflow){
+                isKeepgoing()>>keepgoing
             }
-            def context = Mock(StepExecutionContext)
+        }
+        def context = Mock(StepExecutionContext)
         when:
-            def result=sut.getInitialState(item,context)
+        def result=sut.getInitialState(item,context)
         then:
-            result.getState().size()==2
-            result.getState().get(Workflows.WORKFLOW_STATE_ID_KEY)!= null
-            result.getState().get(EngineWorkflowExecutor.WORKFLOW_KEEPGOING_KEY)==keepgoing.toString()
+        result.getState().size()==2
+        result.getState().get(Workflows.WORKFLOW_STATE_ID_KEY)!= null
+        result.getState().get(EngineWorkflowExecutor.WORKFLOW_KEEPGOING_KEY)==keepgoing.toString()
 
         where:
-            keepgoing<<[true,false]
+        keepgoing<<[true,false]
 
     }
 }

@@ -22,6 +22,7 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
+<g:set var="scheduledExecutionUuid" value="${(context === null) ? (context instanceof rundeck.Workflow ? null: null) : (context instanceof rundeck.ScheduledExecution ? context?.uuid : null) }" />
 <g:unless test="${isAdhoc}">
 <g:if test="${edit}">
 <div>
@@ -185,6 +186,19 @@ jQuery(function(){
         <div id="wfundoredo" class="undoredocontrols">
             <g:render template="/common/undoRedoControls" model="[key:'workflow']"/>
         </div>
+    </g:if>
+    <g:if test="${true}">
+        <div id="stepsDashboard_container" style="width: 100%; height: 150px; margin-bottom: 2rem;">
+            <g:render template="/execution/stepsDashboard" model="${[workflow: workflow]}" />
+        </div>
+        <script>
+            fireWhenReady('stepsDashboard_container', function (){
+                if( '${scheduledExecutionUuid}'.length > 1 ){
+                    jQuery('#stepsDashboard_container').data('SeUuid', '${scheduledExecutionUuid}')
+                }
+                _loadDashboard('${scheduledExecutionUuid}');
+            })
+        </script>
     </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">
         <g:render template="/execution/wflistContent" model="${[workflow:workflow,edit:edit,noimgs:noimgs,project:project]}"/>

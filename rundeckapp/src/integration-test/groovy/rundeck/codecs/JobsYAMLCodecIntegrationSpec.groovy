@@ -382,22 +382,22 @@ class JobsYAMLCodecIntegrationSpec extends Specification {
 
             //test handlers
             doc[0].sequence.commands[0].errorhandler != null
-            doc[0].sequence.commands[0].errorhandler == [exec: 'err exec']
+            doc[0].sequence.commands[0].errorhandler == [enabled:true, exec: 'err exec']
 
             doc[0].sequence.commands[1].errorhandler != null
-            doc[0].sequence.commands[1].errorhandler == [script: 'err script', args: 'err script args']
+            doc[0].sequence.commands[1].errorhandler == [script: 'err script', enabled:true, args: 'err script args']
 
             doc[0].sequence.commands[2].errorhandler != null
             doc[0].
                 sequence.
                 commands[2].
-                errorhandler == [scriptfile: 'err file path', args: 'err file args', keepgoingOnSuccess: true]
+                errorhandler == [scriptfile: 'err file path', enabled:true, args: 'err file args', keepgoingOnSuccess: true]
 
             doc[0].sequence.commands[3].errorhandler != null
             doc[0].
                 sequence.
                 commands[3].
-                errorhandler == [jobref: [name: 'err job', group: 'err group', args: 'err job args'], keepgoingOnSuccess: true]
+                errorhandler == [enabled:true, jobref: [name: 'err job', group: 'err group', args: 'err job args'], keepgoingOnSuccess: true]
 
     }
 

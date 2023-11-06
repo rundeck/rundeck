@@ -96,7 +96,7 @@ class BuilderUtilTests {
         def map = [a:new CommandExec([adhocLocalString:'test',argString:'blah'])]
 
         final String string = assertObjToDom(map)
-        assertEquals("<test><a><script>test</script><args>blah</args></a></test>",string)
+        assertEquals("<test><a><script>test</script><args>blah</args><enabled>true</enabled></a></test>",string)
     }
     @Test
     void testAttributes(){

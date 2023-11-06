@@ -24,6 +24,7 @@ public class JobReferenceItem extends JobRefCommandBase {
     private final Boolean useName;
     private final Boolean ignoreNotifications;
     private final Boolean childNodes;
+    private final boolean enabled;
 
     @Override
     public Boolean isFailOnDisable() {
@@ -48,6 +49,11 @@ public class JobReferenceItem extends JobRefCommandBase {
     @Override
     public Boolean isChildNodes() {
         return getChildNodes();
+    }
+
+    @Override
+    public Boolean isEnabled() {
+        return this.enabled;
     }
 
     @Override

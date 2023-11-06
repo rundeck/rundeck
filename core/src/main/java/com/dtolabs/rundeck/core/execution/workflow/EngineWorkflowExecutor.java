@@ -533,7 +533,15 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             //add a rule to start the step when conditions are met
             ruleEngine.addRule(Rules.conditionsRule(stepStartTriggerConditions, stepRunTriggerState));
 
-            Set<Condition> stepSkipTriggerConditions = profile.getSkipConditionsForStep(item, stepNum, i == 0);
+            Set<Condition> stepSkipTriggerConditions;
+            if(workflow.getCommands().get(i).isEnabled()){
+                stepSkipTriggerConditions = profile.getSkipConditionsForStep(item, stepNum, i == 0);
+            }else{
+                stepSkipTriggerConditions = Collections.singleton(Rules.equalsCondition(stepKey(STEP_BEFORE_KEY, stepNum), VALUE_TRUE));
+            }
+
+
+
             StateObj stepSkipTriggerState = null;
             if (null != stepSkipTriggerConditions && !stepSkipTriggerConditions.isEmpty()) {
                 // State that will skip the step

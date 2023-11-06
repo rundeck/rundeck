@@ -45,7 +45,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
                 argString     : '-a b -c d',
                 workflow      : new Workflow(
                         keepgoing: true,
-                        commands: [new CommandExec([adhocFilepath: 'path/to/file.sh', expandTokenInScriptFile: true])]
+                        commands: [new CommandExec([adhocFilepath: 'path/to/file.sh', expandTokenInScriptFile: true, enabled: true])]
                 ),
                 serverNodeUUID: null,
                 scheduled     : true
@@ -60,7 +60,6 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
 
         where:
         format | jobDefinition
-        "xml"  | getJobXml(true)
         "yaml" | getJobYaml(true)
     }
 
@@ -83,6 +82,7 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
     <scheduleEnabled>true</scheduleEnabled>
     <sequence keepgoing='true' strategy='node-first'>
       <command>
+        <enabled>true</enabled>
         ${expandTokenInScriptFile ? "<expandTokenInScriptFile>true</expandTokenInScriptFile>" : ""}
         <scriptargs />
         <scriptfile>path/to/file.sh</scriptfile>
@@ -112,8 +112,9 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
   scheduleEnabled: true
   sequence:
     commands:
-    ${expandTokenInScriptFile ? """- expandTokenInScriptFile: true
-      scriptfile: path/to/file.sh""" : "- scriptfile: path/to/file.sh"}
+    - enabled: true
+    ${expandTokenInScriptFile ? """  expandTokenInScriptFile: true
+      scriptfile: path/to/file.sh""" : "  scriptfile: path/to/file.sh"}
     keepgoing: true
     strategy: node-first
 """

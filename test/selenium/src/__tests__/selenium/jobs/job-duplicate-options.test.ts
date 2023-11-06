@@ -98,8 +98,9 @@ describe('job', () => {
         expect(duplicateOptionName).toEqual(optionName + '_2')
 
         // save the job
-        const save = await jobCreatePage.saveButton()
-        await save.click()
+        const saveButton = await jobCreatePage.saveButton()
+        await ctx.driver.executeScript('arguments[0].scrollIntoView(true);', saveButton)
+        await saveButton.click()
 
     })
 })
