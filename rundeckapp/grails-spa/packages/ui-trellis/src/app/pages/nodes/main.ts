@@ -40,7 +40,9 @@ const FilterInputComp = defineComponent(
         `,
         methods: {
             updatedValue(val: string) {
+              if(val) {
                 this.nodeFilterKo()?.selectNodeFilter({filter: val}, false)
+              }
             },
             filterClicked(filter: any) {
                 this.nodeFilterKo()?.selectNodeFilter(filter, false)
