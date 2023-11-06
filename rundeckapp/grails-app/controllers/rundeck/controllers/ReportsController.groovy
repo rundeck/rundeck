@@ -43,7 +43,6 @@ import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ReportFilter
 import rundeck.ScheduledExecution
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.ExecutionService
@@ -64,10 +63,7 @@ class ReportsController extends ControllerBase{
     def MetricService metricService
     def ReferencedExecutionDataProvider referencedExecutionDataProvider
     static allowedMethods = [
-            deleteFilter    : 'POST',
-            storeFilter     : 'POST',
-            saveFilterAjax  : 'POST',
-            deleteFilterAjax: 'POST',
+
     ]
 
     public def index(){
@@ -100,7 +96,6 @@ class ReportsController extends ControllerBase{
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         //find previous executions
-        def usedFilter
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if(unauthorizedResponse(
@@ -118,25 +113,7 @@ class ReportsController extends ControllerBase{
         }
         def RdUser u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
-        if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
-            if(filterPref['events']){
-                params.filterName=filterPref['events']
-            }
-        }
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
+
         def options = [:]
         if (params['execRptCustomView']) {
             params.each {String k, v ->
@@ -153,7 +130,6 @@ class ReportsController extends ControllerBase{
             query=new ExecQuery()
             //no default filter
             params.recentFilter=null
-            usedFilter=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
@@ -206,7 +182,6 @@ class ReportsController extends ControllerBase{
                 } ?: reportService.getExecutionReports(query, true)
 
 //        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
-//        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
         if(model.lastDate<1 && query.recentFilter ){
             model.lastDate=curdate.time
         }else if (model.lastDate<1 && query.doendafterFilter  && (!query.doendbeforeFilter || curdate.time<query.endbeforeFilter.time)){
@@ -217,17 +192,12 @@ class ReportsController extends ControllerBase{
         }
 //        System.err.println("lastDatex: "+model.lastDate);
         model = reportService.finishquery(query,params,model)
-        if(usedFilter){
-            model.filterName=usedFilter
-            model.paginateParams['filterName']=usedFilter
-        }
         model.filterPref=filterPref
         return model
     }
 
     def since(ExecQuery query){
        //find previous executions
-        def usedFilter
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
@@ -249,20 +219,6 @@ class ReportsController extends ControllerBase{
         }
         def RdUser u = userService.findOrCreateUser(session.user)
 
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
-                }
-            }
-        }
         def options = [:]
 
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
@@ -383,205 +339,6 @@ class ReportsController extends ControllerBase{
 
         render(contentType: 'application/json', text: results as JSON)
     }
-
-
-    public def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
-        withForm{
-        if(storeFilterCommand.hasErrors()){
-            request.errors=storeFilterCommand.errors
-            return renderErrorView([:])
-        }
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def ReportFilter filter
-        def boolean saveuser=false
-        if(params.newFilterName && !params.existsFilterName){
-            filter= new ReportFilter(query.properties)
-            filter.name=params.newFilterName
-            u.addToReportfilters(filter)
-            saveuser=true
-        }else if(params.existsFilterName){
-            filter = ReportFilter.findByNameAndUser(params.existsFilterName,u)
-            if(filter){
-                filter.properties=query.properties
-            }
-        }else if(!params.newFilterName && !params.existsFilterName){
-            flash.error="Filter name not specified"
-            params.saveFilter=true
-            chain(controller:'reports',action:'index',params:params)
-        }
-        filter.fillProperties()
-        if(!filter.save(flush:true)){
-            flash.errors = filter.errors
-            params.saveFilter=true
-            chain(controller:'reports',action:'index',params:params)
-        }
-        if(saveuser){
-            if(!u.save(flush:true)){
-                return renderErrorView([beanErrors: u.errors])
-            }
-        }
-            redirect(controller: 'reports', action: 'index', params: [filterName: filter.name, project: params.project])
-        }.invalidToken {
-            flash.error=g.message(code:'request.error.invalidtoken.message')
-            redirect(controller: 'reports', action: 'index', params: [project: params.project])
-        }
-    }
-
-    public def saveFilterAjax(ExecQueryFilterCommand query) {
-        withForm {
-
-            g.refreshFormTokensHeader()
-            if (query.hasErrors()) {
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-
-            def RdUser u = userService.findOrCreateUser(session.user)
-            def ReportFilter filter
-            def boolean saveuser = false
-            if (query.newFilterName && !query.existsFilterName) {
-                if (ReportFilter.findByNameAndUser(query.newFilterName, u)) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'request.error.conflict.already-exists.message',
-                            args  : ["Job Filter", query.newFilterName]
-                    ]
-                    )
-                }
-                filter = ReportFilter.fromQuery(query)
-                filter.name = query.newFilterName
-                filter.user = u
-                if (!filter.validate()) {
-                    return apiService.renderErrorFormat(
-                            response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code  : 'api.error.invalid.request',
-                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                    ]
-                    )
-                }
-                u.addToReportfilters(filter)
-                saveuser = true
-            } else if (query.existsFilterName) {
-                filter = ReportFilter.findByNameAndUser(query.existsFilterName, u)
-                if (filter) {
-                    filter.properties = query.properties
-//                    filter.fix()
-                }
-            }
-
-            if (!filter.save(flush: true)) {
-                flash.errors = filter.errors
-//                params.saveFilter = true
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
-                ]
-                )
-            }
-            if (saveuser) {
-                if (!u.save(flush: true)) {
-                    return renderErrorView([beanErrors: filter.errors])
-                }
-            }
-
-            render(contentType: 'application/json') {
-                success true
-                filterName query.newFilterName
-            }
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
-    def listFiltersAjax(String project) {
-        if(!project){
-
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'api.error.parameter.required',
-                    args  : ['project']
-            ]
-            )
-        }
-        def RdUser u = userService.findOrCreateUser(session.user)
-        def filterset = u.reportfilters?.findAll { it.projFilter == project } ?: []
-
-        render(contentType: 'application/json') {
-            success true
-            filters filterset*.toMap()
-        }
-    }
-
-
-    def deleteFilter(){
-        withForm{
-            def RdUser u = userService.findOrCreateUser(session.user)
-            def filtername=params.delFilterName
-            final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
-            if(ffilter){
-                ffilter.delete(flush:true)
-                flash.message="Filter deleted: ${filtername}"
-            }
-            redirect(controller: 'reports', action: 'index', params: [project: params.project])
-        }.invalidToken {
-            flash.error= g.message(code: 'request.error.invalidtoken.message')
-            redirect(
-                    controller: 'reports',
-                    action: 'index',
-                    params: [filterName: params.delFilterName, project: params.project]
-            )
-        }
-    }
-
-    def deleteFilterAjax(String project) {
-        withForm {
-            g.refreshFormTokensHeader()
-
-            if(!params.delFilterName){
-
-                return apiService.renderErrorFormat(
-                        response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.parameter.required',
-                        args  : ['delFilterName']
-                ]
-                )
-            }
-            def RdUser u = userService.findOrCreateUser(session.user)
-            def filtername = params.delFilterName
-            final def ffilter = ReportFilter.findByNameAndUserAndProjFilter(filtername, u, project)
-            if (ffilter) {
-                ffilter.delete(flush: true)
-            }
-
-            render(contentType: 'application/json') {
-                success true
-            }
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-    }
-
 
     /**
      * API actions

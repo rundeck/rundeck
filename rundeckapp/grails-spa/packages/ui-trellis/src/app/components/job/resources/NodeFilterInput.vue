@@ -1,8 +1,7 @@
 <template>
-  <div>
-    <div class="input-group nodefilters multiple-control-input-group">
+    <div class="input-group nodefilters multiple-control-input-group"  v-bind="$attrs">
       <span class="input-group-addon input-group-addon-title" v-if="showTitle">{{ $t('nodes') }}</span>
-      <div class="input-group-btn">
+      <div class="input-group-btn input-btn-toggle">
         <button type="button" class="btn btn-default dropdown-toggle job_edit__node_filter__filter_select_dropdown"
                 :class="{'btn-success':selectedFilterName,'btn-default':!selectedFilterName}" data-toggle="dropdown">
           <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
@@ -57,11 +56,11 @@
             <li class="dropdown-header"> {{ $t('saved.filters') }}</li>
             <li v-for="filter in nodeSummary.filters">
               <node-filter-link
-                  :node-filter-name="filter.name"
+                  :node-filter-name="filter.filterName"
                   :node-filter="filter.filter"
                   @nodefilterclick="handleNodefilter"
               >
-                <template v-slot:suffix v-if="selectedFilterName===filter.name">
+                <template v-slot:suffix v-if="selectedFilterName===filter.filterName">
                   <span>
                     <i class="fa fa-check"></i>
                   </span>
@@ -72,7 +71,6 @@
         </ul>
       </div>
 
-      <!--    <g:jsonToken id="filter_select_tokens" url="${request.forwardURI}"/>-->
       <input type='search'
              :name="filterFieldName"
              class="schedJobNodeFilter form-control"
@@ -82,47 +80,51 @@
              v-on:keydown.enter.prevent="doSearch"
              v-on:blur="doSearch"
              :id="filterFieldId"/>
-      <div class="input-group-btn">
-        <btn id="filterSearchHelpBtn" tabindex="0" v-if="helpButton">
+
+      <div class="input-group-btn input-btn-toggle" v-if="helpButton">
+        <btn id="filterSearchHelpBtn" tabindex="0" class="dropdown-toggle">
           <i class="glyphicon glyphicon-question-sign"></i>
         </btn>
+      </div>
+      <div class="input-group-btn">
         <btn :type="`${searchBtnType} btn-fill`" @click="doSearch" :disabled="!outputValue" class="node_filter__dosearch">
-          {{ $t('search') }}
+          {{ $t('Search') }}
         </btn>
       </div>
-      <popover target="#filterSearchHelpBtn" trigger="focus" placement="bottom" v-if="helpButton">
-        <template v-slot:popover>
-          <div class="help-block">
-            <strong>{{ $t('select.nodes.by.name') }}:</strong>
-            <p>
-              <code>{{ $t('mynode1.mynode2') }}</code>
-            </p>
-            <p>
-              {{ $t('this.will.select.both.nodes') }}
-            </p>
-
-            <strong>{{ $t('filter.nodes.by.attribute.value') }}:</strong>
-            <ul>
-              <li>{{ $t('include') }}: <code>{{ $t('attribute') }}: {{ $t('value') }}</code></li>
-
-              <li>{{ $t('exclude') }}: <code>!{{ $t('attribute') }}: {{ $t('value') }}</code></li>
-            </ul>
-
-
-            <strong>{{ $t('use.regular.expressions') }}</strong>
-            <p>
-              <code>{{ $t('node.metadata.hostname') }}: dev(\d+).test.com</code>.
-            </p>
-
-            <strong>{{ $t('regex.syntax.checking') }}:</strong>
-            <p>
-              <code>{{ $t('attribute') }}: /regex/</code>
-            </p>
-
-          </div>
-        </template>
-      </popover>
     </div>
+
+  <popover target="#filterSearchHelpBtn" trigger="focus" placement="bottom" v-if="helpButton">
+    <template v-slot:popover>
+      <div class="help-block">
+        <strong>{{ $t('select.nodes.by.name') }}:</strong>
+        <p>
+          <code>{{ $t('mynode1.mynode2') }}</code>
+        </p>
+        <p>
+          {{ $t('this.will.select.both.nodes') }}
+        </p>
+
+        <strong>{{ $t('filter.nodes.by.attribute.value') }}:</strong>
+        <ul>
+          <li>{{ $t('include') }}: <code>{{ $t('attribute') }}: {{ $t('value') }}</code></li>
+
+          <li>{{ $t('exclude') }}: <code>!{{ $t('attribute') }}: {{ $t('value') }}</code></li>
+        </ul>
+
+
+        <strong>{{ $t('use.regular.expressions') }}</strong>
+        <p>
+          <code>{{ $t('node.metadata.hostname') }}: dev(\d+).test.com</code>.
+        </p>
+
+        <strong>{{ $t('regex.syntax.checking') }}:</strong>
+        <p>
+          <code>{{ $t('attribute') }}: /regex/</code>
+        </p>
+
+      </div>
+    </template>
+  </popover>
     <modal v-model="saveFilterModal" :title="$t('save.node.filter')">
 
       <div>
@@ -187,30 +189,17 @@
         </div>
       </template>
     </modal>
-  </div>
 </template>
 <script lang="ts">
-import {_genUrl} from '../../../utilities/genUrl'
-import {RundeckBrowser} from '@rundeck/client'
-import axios from 'axios'
-import {defineComponent, PropType, ref } from 'vue'
+import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterStore'
+import {defineComponent, ref} from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
-import {
-  getAppLinks,
-  getRundeckContext
-} from '../../../../library'
-import Trellis from '../../../../library'
 
-const client: RundeckBrowser = getRundeckContext().rundeckClient
-const rdBase = getRundeckContext().rdBase
 
-interface NodeSummary {
-  filters: any[]
-  defaultFilter: any
-}
 
 export default defineComponent({
   name: 'NodeFilterInput',
+  inheritAttrs: false,
   components: {
     NodeFilterLink,
   },
@@ -244,6 +233,10 @@ export default defineComponent({
       required: false,
       default: '',
     },
+    project: {
+      type: String,
+      required: true
+    },
     filterFieldName: {
       type: String,
       required: false,
@@ -266,11 +259,6 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: false,
-    },
-    nodeSummary: {
-      type: Object as PropType<NodeSummary>,
-      required: false,
-      default: () => {}
     }
   },
   emits: ['filters-updated', 'filter', 'update:modelValue'],
@@ -282,6 +270,8 @@ export default defineComponent({
     const saveFilterModalError = ref('')
     const newFilterName = ref('')
     const deleteFilterModal = ref(false)
+    const nodeSummary = ref({} as ProjectFilters)
+    const nodeFilterStore = new NodeFilterStore()
     return {
       outputValue,
       selectedFilterName,
@@ -290,11 +280,13 @@ export default defineComponent({
       saveFilterModalError,
       newFilterName,
       deleteFilterModal,
+      nodeSummary,
+      nodeFilterStore
     }
   },
   computed: {
     filterNameDisplay() {
-      return this.selectedFilterName === '.*' ? 'All Nodes' : this.selectedFilterName
+      return this.outputValue === '.*' ? 'All Nodes' : this.selectedFilterName
     },
     canSaveFilter() {
       return !this.selectedFilterName && this.filterWithoutAll()
@@ -312,14 +304,14 @@ export default defineComponent({
       if (this.outputValue && this.nodeSummary.filters) {
         let found = this.nodeSummary.filters.find((a: any) => a.filter === this.outputValue)
         if (found) {
-          return found
+          return found.filterName
         }
       }
       return null
     },
     selectedSavedFilter() {
       if (this.selectedFilterName && this.nodeSummary.filters) {
-        let found = this.nodeSummary.filters.find((a: any) => a.name === this.selectedFilterName)
+        let found = this.nodeSummary.filters.find((a: any) => a.filterName === this.selectedFilterName)
         if (found) {
           return found
         }
@@ -337,46 +329,30 @@ export default defineComponent({
       return this.outputValue
     },
     async saveFilter() {
-      let result = await client.sendRequest({
-        method: 'POST',
-        url: _genUrl(
-            getAppLinks().frameworkStoreFilterAjax,
-            {
-              newFilterName: this.newFilterName,
-              isJobEdit: true,
-              filter: this.outputValue
-            })
+      this.nodeFilterStore.saveFilter(this.project,{
+        filterName: this.newFilterName,
+        isJobEdit: true,
+        filter: this.outputValue
       })
-      if (result.status == 200) {
         this.saveFilterModal = false
         this.selectedFilterName = this.newFilterName
         this.newFilterName = ''
+        this.loadNodeFilters()
         this.$emit('filters-updated')
-      } else {
-        this.saveFilterModalError = 'Error saving filter: ' + result.status + ': ' + (result.parsedBody?.msg || 'Unknown error')
-      }
     },
     async deleteFilter() {
-      let result = await client.sendRequest(
-          {
-            method: 'POST',
-            url: _genUrl(getAppLinks().frameworkDeleteNodeFilterAjax, {filtername: this.selectedFilterName})
-          }
-      )
-
-      if (result.status == 200) {
+      this.nodeFilterStore.removeFilter(this.project, this.selectedFilterName)
         this.deleteFilterModal = false
         this.selectedFilterName = ''
+        this.loadNodeFilters()
         this.$emit('filters-updated')
-      }
     },
     async setDefaultFilter() {
-      let result = await Trellis.FilterPrefs.setFilterPref('nodes', this.selectedFilterName)
-
+      this.nodeFilterStore.setStoredDefaultFilter(this.project,this.selectedFilterName)
       this.nodeSummary.defaultFilter = this.selectedFilterName
     },
     async removeDefaultFilter() {
-      let result = await Trellis.FilterPrefs.unsetFilterPref('nodes')
+      this.nodeFilterStore.removeStoredDefaultFilter(this.project)
       this.nodeSummary.defaultFilter = null
     },
     doSearch() {
@@ -393,13 +369,16 @@ export default defineComponent({
       }
       this.$emit('filter', val)
     },
+    loadNodeFilters(){
+      this.nodeSummary = this.nodeFilterStore.loadStoredProjectNodeFilters(this.project)
+    },
     async onMount() {
       this.outputValue = this.modelValue
       if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
         this.selectedFilterName = ''
       }
       this.selectedFilterName = this.filterName
-
+      this.loadNodeFilters()
     }
   },
   watch: {

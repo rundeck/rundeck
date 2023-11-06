@@ -6,7 +6,7 @@ import {Page} from '@rundeck/testdeck/page'
 export const Elems = {
   abortButton: By.css('#runcontent .executionshow .execution-action-links span.btn.btn-danger[data-bind=\'click: killExecAction\']'),
   commandInputText: By.css('input#runFormExec'),
-  filterNodesButton: By.css('#searchForm  a.btn.btn-cta.btn-fill'),
+  filterNodesButton: By.css('#searchForm  .btn.btn-cta.btn-fill'),
   nodeFilterText: By.css('#schedJobNodeFilter'),
   runCommandButton: By.css('form > #runbox a.btn-cta.runbutton'),
   runningContent: By.css('#runcontent'),
