@@ -184,47 +184,12 @@
                         </div>
                     </div>
 
-                    <div class="col-xs-6">
+                    <div class="col-xs-6 vue-ui-socket">
 
                         <h5 class="column-title text-uppercase text-strong">
                           <g:message code="filters" />
                         </h5>
-
-                        <ul class="list-unstyled">
-                            <li>
-                                <a href="#" class="nodefilterlink btn btn-default btn-xs" data-node-filter=".*" data-node-filter-all="true">
-                                  <g:message code="all.nodes" />
-                                  <span data-bind="text: nodeSummary().totalCount">0</span>
-                                </a>
-                                <div class="btn-group">
-                                    <button type="button"
-                                            class="btn btn-default btn-xs btn-simple dropdown-toggle"
-                                            style="padding: 0 5px;"
-                                            title="Filter Actions"
-                                            data-toggle="dropdown"
-                                            aria-expanded="false">
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li data-bind="visible: '.*'!=$root.nodeSummary().defaultFilter()">
-                                            <a href="#"
-                                               data-bind="click: $root.nodeSummary().setDefaultAll">
-
-                                                <i class="glyphicon glyphicon-filter"></i>
-                                                <g:message code="set.all.nodes.as.default.filter" />
-                                            </a>
-                                        </li>
-                                        <li data-bind="visible: '.*'==$root.nodeSummary().defaultFilter()">
-                                            <a href="#"
-                                               data-bind="click: $root.nodeSummary().removeDefault">
-                                                <i class="glyphicon glyphicon-ban-circle"></i>
-                                                <g:message code="remove.all.nodes.as.default.filter" />
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                        </ul>
+                        <ui-socket section="nodes-page" location="node-filter-summary-list" />
 
                     </div>
                 </div>

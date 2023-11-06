@@ -1,8 +1,10 @@
 import {defineComponent, markRaw} from 'vue'
 import {getRundeckContext} from '../../../library'
 import NodeFilterInput from '../../components/job/resources/NodeFilterInput.vue'
+import NodeFilterSummaryList from '../../components/job/resources/NodeFilterSummaryList.vue'
 
 let rundeckContext = getRundeckContext()
+let eventBus = rundeckContext.eventBus
 const FilterInputComp = defineComponent(
     {
         data() {
@@ -80,25 +82,47 @@ const FilterInputComp = defineComponent(
 function init() {
     rundeckContext.rootStore.ui.addItems([
         {
+          section: 'nodes-page',
+          location: 'node-filter-input',
+          visible: true,
+          widget: markRaw(defineComponent(
+            {
+              data() {
+                return {
+                  project: rundeckContext.projectName,
+                }
+              },
+              props: ['itemData'],
+              components: {FilterInputComp},
+              template: `
+                        <filter-input-comp :project="project"
+                                           :item-data="itemData"
+                                           :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
+                        />
+                      `,
+            }
+          ))
+        },
+        {
             section: 'nodes-page',
-            location: 'node-filter-input',
+            location: 'node-filter-summary-list',
             visible: true,
             widget: markRaw(defineComponent(
-                {
-                    data() {
-                        return {
-                            project: rundeckContext.projectName,
-                        }
-                    },
-                    props: ['itemData'],
-                    components: {FilterInputComp},
-                    template: `
-                      <filter-input-comp :project="project"
-                                         :item-data="itemData"
-                                         :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
-                      />
-                    `,
-                }
+              {
+                data() {
+                  return {
+                    project: rundeckContext.projectName,
+                    nodesBaseUrl: rundeckContext.rdBase + '/project/' + rundeckContext.projectName + '/nodes'
+                  }
+                },
+                components: {NodeFilterSummaryList},
+                template: `
+                  <node-filter-summary-list
+                    :project="project"
+                    :nodesBaseUrl="nodesBaseUrl"
+                  />
+                `,
+              }
             ))
         },
         {
