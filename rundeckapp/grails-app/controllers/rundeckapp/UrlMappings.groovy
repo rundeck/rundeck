@@ -48,12 +48,6 @@ class UrlMappings {
         }
         "/api/$api_version/incubator/executions/$id"(controller: 'rdExecution', action: "listForJob")
 
-        "/api/$api_version/incubator/job/$id?"(controller: 'rdJob') {
-            action = [GET: 'get', POST: 'save', DELETE: 'delete']
-        }
-
-        "/api/$api_version/incubator/jobs"(controller: 'rdJob', action: "query")
-
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }
