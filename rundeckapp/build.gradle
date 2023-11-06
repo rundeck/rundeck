@@ -258,9 +258,9 @@ dependencies {
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-    runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
+    runtimeOnly "com.h2database:h2:2.2.220"
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.3.8'
