@@ -39,6 +39,7 @@ task noop() {
 
 tasks.register("runNpmBuild", NpmTask) {
     // dependsOn configurations.uiTrellis
+    dependsOn ':rundeckapp:grails-spa:packages:ui-trellis:runNpmBuild'
 
     // inputs.files(configurations.uiTrellis.allArtifacts)
     // inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'
