@@ -3277,91 +3277,13 @@ Note: `other_errors` included since API v35""",
             archiveParams.importNodesSources = archiveParams.importConfig
         }
 
-        String asyncImportErrors = null
-
-        def result
-
-        if( archiveParams.asyncImport ){
-            try{
-                def created = projectService.createAsyncImportStatusFile(project.name)
-                if (!created) {
-                    asyncImportErrors = "There was errors while creating the status file for async import process, the executions will not be imported to rundeck server."
-                    return apiService.renderErrorFormat(response,[
-                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                            code: 'api.error.async.import.status.file.error',
-                            args: [asyncImportErrors],
-                            format:respFormat
-                    ])
-                }
-            }catch(Exception e){
-                e.printStackTrace()
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.status.file.error',
-                        args: [e.stackTrace],
-                        format:respFormat
-                ])
-            }
-            try{
-                result = asyncImportService.beginMilestone1(
-                        project.name,
-                        projectAuthContext,
-                        project,
-                        stream,
-                        archiveParams
-                )
-
-                // api response (async import)
-                render(contentType: 'application/json') {
-                    import_status result.success ? 'successful' : 'failed'
-                    successful result.success
-                    if (!result.success) {
-                        //list errors
-                        errors result.joberrors
-                    }
-                    if (result.execerrors) {
-                        execution_errors result.execerrors
-                    }
-                    if (result.aclerrors) {
-                        acl_errors result.aclerrors
-                    }
-                    if (result.scmerrors) {
-                        scm_errors result.scmerrors
-                    }
-                    if (request.api_version > ApiVersions.V34) {
-                        if (result.importerErrors) {
-                            other_errors result.importerErrors
-                        }
-                    }
-                }
-
-            }catch(Exception e){
-                e.printStackTrace()
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.status.file.error',
-                        args: [e.stackTrace],
-                        format:respFormat
-                ])
-            }
-        } else {
-            result = projectService.importToProject(
-                    project,
-                    framework,
-                    projectAuthContext,
-                    stream,
-                    archiveParams
-            )
-        }
-
-        if( result == null ){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.error.async.import.status.file.error',
-                    args: [e.stackTrace],
-                    format:respFormat
-            ])
-        }
+        def result = projectService.handleApiImport(
+                framework,
+                projectAuthContext,
+                project,
+                stream,
+                archiveParams
+        )
 
         switch (respFormat) {
 
