@@ -1995,6 +1995,49 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
+    /**
+     * Handles project api import, returns the import result.
+     *
+     * Based on the params, the method will handle async or regular import.
+     *
+     * @param framework - Rundeck framework from Framework service
+     * @param userAndRolesAuthContext - Auth context from controller
+     * @param project - Rundeck project
+     * @param is - Stream made with uploaded project
+     * @param params - Archive params passed in request
+     */
+    def handleApiImport(
+            IFramework framework,
+            UserAndRolesAuthContext userAndRolesAuthContext,
+            IRundeckProject project,
+            InputStream is,
+            ProjectArchiveParams params
+    ) {
+        if (params.asyncImport) {
+            // Creates the async import status file
+            def created = createAsyncImportStatusFile(project.name)
+            if( created ){
+                // Start the process synchronously
+                return asyncImportService.beginMilestone1(
+                        project.name,
+                        userAndRolesAuthContext,
+                        project,
+                        is,
+                        params
+                )
+            }
+        }else{
+            return importToProject(
+                    project,
+                    framework,
+                    userAndRolesAuthContext,
+                    is,
+                    params
+            )
+        }
+
+    }
+
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
