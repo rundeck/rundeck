@@ -51,7 +51,6 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
-import rundeck.services.asyncimport.AsyncImportService
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -2294,6 +2293,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
         1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
     }
 
     def "api import component options"() {
