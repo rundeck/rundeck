@@ -6,6 +6,7 @@ ENV USERNAME=rundeck \
     LOGNAME=$USERNAME \
     TERM=xterm-256color
 
+COPY --chown=rundeck:root rundeck.deb /rundeck/rundeck.deb
 COPY --chown=rundeck:root entry.sh /entry.sh
 RUN chmod +x /entry.sh
 VOLUME $HOME/rundeck

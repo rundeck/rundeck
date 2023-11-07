@@ -173,10 +173,6 @@ class ExecutionTest extends Specification implements DataTest  {
         se.status = "any string"
         then:
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
-        when:
-        se.status ="average-duration-exceeded"
-        then:
-        assertEquals(ExecutionService.AVERAGE_DURATION_EXCEEDED,se.executionState)
     }
 
     void testIsCustomStatusString() {
@@ -198,7 +194,6 @@ class ExecutionTest extends Specification implements DataTest  {
         ExecutionService.EXECUTION_FAILED               | false
         ExecutionService.EXECUTION_QUEUED               | false
         ExecutionService.EXECUTION_SCHEDULED            | false
-        ExecutionService.AVERAGE_DURATION_EXCEEDED      | false
         "CUSTOM STRING"                                 | true
     }
 

@@ -2209,6 +2209,7 @@ key2=value'''
         //parse config data
         def config=null
         def configProps=new Properties()
+        def errors=[]
         if (request.format in ['text']) {
             def error=null
             try{
@@ -2517,6 +2518,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
         def respFormat = apiService.extractResponseFormat(request, response, allowedFormats)
         def value_=null
+        def errors=[]
         if(request.format in ['text']){
            value_ = request.inputStream.text
         }else{
@@ -2547,10 +2549,14 @@ Authorization required: `configure` access for `project` resource type or `admin
             propValueBefore = new Properties([(key_): ''])
         }
 
-        Properties projProp = new Properties([(key_): value_])
+        Map prop = [(key_): value_]
+        Map currentProps = frameworkService.getFrameworkProject(project.name).getProjectProperties()
+        Properties mergedProjProps = new Properties(currentProps + prop)
+
+        Properties projProp = new Properties(prop)
 
         //validate plugin property values
-        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProp, "project.plugin")
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
         projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
             final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
             providers.each { String provider, Map<String, String> providerConfig ->

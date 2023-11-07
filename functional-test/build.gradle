@@ -1,0 +1,88 @@
+plugins {
+    id 'groovy'
+    id "com.adarshr.test-logger" version "4.0.0"
+}
+
+apply from: "../gradle/java-version.gradle"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+testlogger {
+    slowThreshold 10000
+}
+
+project.evaluationDependsOn(":rundeckapp")
+
+dependencies {
+    testImplementation "org.spockframework:spock-core:${spockCoreVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
+    testImplementation "org.testcontainers:spock:${testContainersVersion}"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+    testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
+}
+
+//This prevents tasks from being cached
+gradle.taskGraph.whenReady { taskGraph ->
+    [Test].each {
+        project.tasks.withType(it) {
+            it.outputs.upToDateWhen { false }
+        }
+    }
+}
+
+def copyFile(source, destination, newFileName){
+    copy {
+        from source
+        into destination
+        rename "$source.name", newFileName
+    }
+}
+
+def checkWarFile(destination, fileName) {
+    def rundeckapp = project(":rundeckapp")
+    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
+    def warFile
+    if(System.getenv("TEST_WAR_FILE_LOCATION")){
+        warFile = file(System.getenv("TEST_WAR_FILE_LOCATION"))
+        println "From system env File to copy from ${warFile} to ${destination + fileName}"
+    }else{
+        warFile = file(rundeckapp.war.archiveFile.get().toString().replace("-plain", ""))
+        println "From rundeck build File to copy from ${warFile} to ${destination + fileName}"
+    }
+    if (!warFile.exists()) {
+        throw new GradleException("War file does not exist")
+    }
+    copyFile(warFile, destination, fileName)
+    println "File copied from ${warFile} to ${destination + fileName}"
+}
+
+task apiTest(type: Test){
+    useJUnitPlatform()
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration','spock-configs/IncludeAPITestsConfig.groovy')
+    description = "Run API tests"
+}
+
+task seleniumCoreTest(type: Test){
+    useJUnitPlatform()
+    systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeSeleniumCoreTestsConfig.groovy')
+    description = "Run Rundeck OSS Selenium Tests"
+}
+
+task tomcatTest(type: Test){
+    useJUnitPlatform()
+    systemProperty("DEFAULT_DOCKERFILE_LOCATION", "docker/file/tomcat/Dockerfile")
+    systemProperty('spock.configuration', 'spock-configs/IncludeAPITestsConfig.groovy')
+    description = "Run Rundeck OSS API Tests on a tomcat environment"
+    doFirst{
+        checkWarFile("${buildDir}/resources/test/docker/file/tomcat/data/", "rundeck-launcher.war")
+    }
+}

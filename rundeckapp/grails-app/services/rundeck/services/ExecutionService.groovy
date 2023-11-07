@@ -991,7 +991,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.execIdForLogStore = execution.getExecIdForLogStore().toString()
         jobcontext.isRemoteFilePath = execution.isRemoteOutputfilepath().toString()
         jobcontext.executionUuid = execution.uuid
-        jobcontext.execDateCompleted = execution.dateCompleted
+        jobcontext.execDateCompleted = execution.dateCompleted?.toString()
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
@@ -1462,7 +1462,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SCHEDULED = "scheduled"
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
-    public static String AVERAGE_DURATION_EXCEEDED = "average-duration-exceeded"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
