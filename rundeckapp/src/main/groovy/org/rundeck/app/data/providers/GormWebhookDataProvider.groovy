@@ -1,6 +1,7 @@
 package org.rundeck.app.data.providers
 
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse;
@@ -12,7 +13,7 @@ import webhooks.Webhook
 
 import javax.transaction.Transactional;
 
-@GrailsCompileStatic
+@GrailsCompileStatic(TypeCheckingMode.SKIP)
 @Slf4j
 @Transactional
 class GormWebhookDataProvider implements WebhookDataProvider {

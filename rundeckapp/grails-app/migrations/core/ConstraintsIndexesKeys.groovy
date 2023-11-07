@@ -102,21 +102,8 @@ databaseChangeLog = {
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", forIndexName: "PROJECT_IDX_NAME", tableName: "project")
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-32", dbms:"mysql,postgresql,mariadb,oracle,h2") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                uniqueConstraintExists (catalogName: '${catalogName}', tableName:"report_filter", constraintName:"UC_REPORT_FILTERNAME_COL")
-            }
-        }
-        addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
-    }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-32", dbms:"mssql"){
-        preConditions(onFail: "MARK_RAN"){
-            sqlCheck(expectedResult: '0', "select count(*) from sys.key_constraints where name = 'UC_REPORT_FILTERNAME_COL'")
-        }
-        addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
-    }
+
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-33", dbms:"mysql,postgresql,mariadb,oracle,h2") {
         preConditions(onFail: "MARK_RAN"){
@@ -410,14 +397,6 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-56") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution_filter", foreignKeyName: "FK22545y15qs4iqod1ljyqsm1fi")
-            }
-        }
-        addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "scheduled_execution_filter", constraintName: "FK22545y15qs4iqod1ljyqsm1fi", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
-    }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-57") {
         preConditions(onFail: "MARK_RAN"){
@@ -500,16 +479,6 @@ databaseChangeLog = {
         addForeignKeyConstraint(baseColumnNames: "execution_id", baseTableName: "job_file_record", constraintName: "FK9u6t22sfe6v8hfj3kj2sjg9rg", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "execution", validate: "true")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-66") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                foreignKeyConstraintExists (foreignKeyTableName: "report_filter", foreignKeyName: "FKcdly7hl8164nfb0e5908ch64n")
-            }
-        }
-        addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "report_filter", constraintName: "FKcdly7hl8164nfb0e5908ch64n", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
-    }
-
-
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-67") {
         preConditions(onFail: "MARK_RAN"){
             not{
@@ -536,15 +505,6 @@ databaseChangeLog = {
             }
         }
         addForeignKeyConstraint(baseColumnNames: "orchestrator_id", baseTableName: "execution", constraintName: "FKgm5hu46fmti2jpbj1d7xlyw65", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "orchestrator", validate: "true")
-    }
-
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-70") {
-        preConditions(onFail: "MARK_RAN"){
-            not{
-                foreignKeyConstraintExists (foreignKeyTableName: "node_filter", foreignKeyName: "FKhuj3n3gy2kqoie8d8oucay4b3")
-            }
-        }
-        addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "node_filter", constraintName: "FKhuj3n3gy2kqoie8d8oucay4b3", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-71") {

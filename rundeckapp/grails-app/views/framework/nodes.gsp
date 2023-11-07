@@ -25,17 +25,17 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
+    <asset:stylesheet src="static/css/pages/nodes.css"/>
     <g:embedJSON id="filterParamsJSON"
-                 data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
+                 data="${[ filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams"
                  data="${[pagingMax:params.int('max')?:20, project:params.project?:request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-<user:getNodeFilters user="${session.user}">
-    <g:set var="filterset" value="${filters}"/>
-</user:getNodeFilters>
+
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
@@ -45,22 +45,17 @@
     <span class="text-h3"><i class="fas fa-sitemap"></i> ${g.message(code:"gui.menu.Nodes")}</span>
   </div>
 <div class="row" style="margin-bottom: 20px;">
-    <div class="col-xs-12 subtitle-head">
-        <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">
-            <g:render template="nodeFilterInputGroup"
-                      model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
-        </div>
+    <div class="col-xs-12 subtitle-head vue-ui-socket">
+        <ui-socket section="nodes-page" location="node-filter-input"
+                   socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: true].encodeAsJSON())}">
+
+        </ui-socket>
     </div>
 </div>
 <div id="nodesContent">
 
   <g:render template="/common/messages"/>
 
-  <div class=" collapse" id="queryFilterHelp">
-      <div class="help-block">
-          <g:render template="/common/nodefilterStringHelp"/>
-      </div>
-  </div>
 
   <div class="container-fluid">
     <div class="row">
@@ -76,7 +71,7 @@
                         <g:message code="browse" />
                     </a>
                 </li>
-                <li id="tab_link_result" data-bind="visible: filterIsSet()||allcount()>=0">
+                <li id="tab_link_result" data-bind="visible: allcount()>=0">
                     <a href="#result" data-toggle="tab" data-bind="visible: filterIsSet() ">
                         <g:message code="result" />
                         <span data-bind="visible: allcount()>=0">
@@ -93,7 +88,7 @@
 
             </ul>
           </div>
-              <span data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
+              <span data-bind="visible: allcount()>=0" class="pull-right">
                   <span class="tabs-sibling tabs-sibling-compact">
                       <div class="btn-group pull-right ">
                           <button class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -229,52 +224,7 @@
                                     </ul>
                                 </div>
                             </li>
-
-                            <!-- ko foreach: nodeSummary().filters -->
-                            <li>
-                                <a href="#" class=" nodefilterlink btn btn-default btn-xs" data-bind="attr: { 'data-node-filter-name': name(), 'data-node-filter': filter(), 'title': filter(), 'href': $root.nodeSummary().linkForFilterName($data)}">
-                                    <span data-bind="text: name"></span>
-                                </a>
-                                <div class="btn-group">
-                                    <button type="button"
-                                            class="btn btn-default btn-sm btn-simple dropdown-toggle"
-                                            title="Filter Actions"
-                                            data-toggle="dropdown"
-                                            aria-expanded="false">
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li>
-                                            <a href="#"
-                                               data-bind="click: $root.nodeSummary().deleteFilterConfirm">
-                                                <i class="glyphicon glyphicon-remove"></i>
-                                                <g:message code="delete.this.filter.ellipsis" />
-                                            </a>
-                                        </li>
-                                        <li data-bind="visible: name()!=$root.nodeSummary().defaultFilter()">
-                                            <a href="#"
-                                               data-bind="click: $root.nodeSummary().setDefault">
-
-                                                <i class="glyphicon glyphicon-filter"></i>
-                                                <g:message code="set.as.default.filter" />
-                                            </a>
-                                        </li>
-                                        <li data-bind="visible: name()==$root.nodeSummary().defaultFilter()">
-                                            <a href="#"
-                                               data-bind="click: $root.nodeSummary().removeDefault">
-                                                <i class="glyphicon glyphicon-ban-circle"></i>
-                                                <g:message code="remove.default.filter" />
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                            </li>
-                            <!-- /ko -->
                         </ul>
-                        <div data-bind="visible: !nodeSummary().filters">
-                            <g:message code="none" />
-                        </div>
 
                     </div>
                 </div>
@@ -287,15 +237,6 @@
     </div>
   </div>
 </div>
-
-    %{--Form for saving/deleting node filters--}%
-
-        <g:form class="form form-horizontal" useToken="true">
-            <g:hiddenField name="project" value="${params.project}"/>
-            <g:render template="nodeFiltersHidden"/>
-            <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
-        </g:form>
 </div>
 </div>
 </body>

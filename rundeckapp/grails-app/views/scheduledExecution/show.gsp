@@ -29,6 +29,8 @@
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="vendor/jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
+    <asset:stylesheet src="static/css/pages/nodes.css"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -163,9 +165,6 @@ search
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
-            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
-            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
-            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
             autorefreshms:30000,
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}

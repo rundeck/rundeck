@@ -1504,6 +1504,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public StepExecutionContext createContext(
+            String executionUuid,
+            UserAndRolesAuthContext authContext
+    )
+    {
+        def execution = Execution.findByUuid(executionUuid)
+        def job = execution.jobUuid ? ScheduledExecution.findByUuid(execution.jobUuid) : null
+        def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
+        def secureOptionNodeDeferred = [:]
+        def extraParamsExposed = [:]
+        def extraParams = [:]
+        if(job) {
+            Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+            loadSecureOptionStorageDefaults(job, extraParamsExposed, extraParams, authContext, true,
+                    args, jobcontext, secureOptionNodeDeferred)
+        }
+        String charsetEncoding=frameworkService.getDefaultInputCharsetForProject(execution.project)
+
+        return createContext(execution,
+                null,
+                frameworkService.rundeckFramework,
+                authContext,
+                null,
+                jobcontext,
+                null,
+                null,
+                null,
+                extraParams,
+                extraParamsExposed,
+                charsetEncoding,
+                null,
+                secureOptionNodeDeferred
+        )
+    }
+    /**
+     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     */
+    public StepExecutionContext createContext(
             ExecutionContext execMap,
             StepExecutionContext origContext,
             IFramework framework,
@@ -4317,6 +4354,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch(JobLifecycleComponentException e) {
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            log.debug("beforeJobExecution check failure: " + e.getMessage(), e)
             def jobEventStatus = new JobEventStatusImpl(
                     successful: false,
                     eventType: event.getClass(),

@@ -29,7 +29,7 @@ import java.util.*;
  */
 public class YamlPolicyDocConstructor extends Constructor {
     public YamlPolicyDocConstructor() {
-        super(ACLPolicyDoc.class,new LoaderOptions());
+        super(ACLPolicyDoc.class, new LoaderOptions());
         this.yamlConstructors.put(null, undefinedConstructor);
         yamlConstructors.put(new Tag(ACLPolicyDoc.class), new ACLPolicyDocConstructYamlObject());
         yamlClassConstructors.put(NodeId.mapping, new YamlPolicyDocConstruct());
