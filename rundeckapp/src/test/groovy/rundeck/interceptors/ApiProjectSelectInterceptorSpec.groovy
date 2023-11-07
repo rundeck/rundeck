@@ -28,6 +28,9 @@ class ApiProjectSelectInterceptorSpec extends Specification implements Intercept
         project    | controller    | action                    | match
         'xProject' | 'menu'        | 'apiExecutionsRunningv14' | true
         '*'        | 'menu'        | 'apiExecutionsRunningv14' | false
+        '***'      | 'menu'        | 'apiExecutionsRunningv14' | true
+        '*Project' | 'menu'        | 'apiExecutionsRunningv14' | true
+        '*Project' | 'anyMenu'     | 'anyAction'               | true
     }
 }
 
