@@ -7,10 +7,6 @@ rundeck_war_build() {
     echo "NPM=$(npm -version)"
     echo "Node=$(node --version)"
     echo "Groovy=$(groovy --version)"
-    echo "== Launch SPA build =="
-    # It appears npm has issues with parallel builds, so we build grails-spa first without parallelism.
-    ./gradlew -Penvironment="${ENV}" ${GRADLE_BASE_OPTS} -x check --no-parallel --max-workers 1 \
-        rundeckapp:grails-spa:build runNpmBuild
 
     echo "== Launch War build =="
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} publishToMavenLocal build -x check
