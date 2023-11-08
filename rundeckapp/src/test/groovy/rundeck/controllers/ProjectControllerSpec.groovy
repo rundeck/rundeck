@@ -60,6 +60,7 @@ import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 import static org.rundeck.core.auth.AuthConstants.ACTION_CREATE
@@ -2327,6 +2328,25 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         response.json.lastUpdate == dto.lastUpdate
         response.json.lastUpdated == dto.lastUpdated
         response.json.errors == 'No errors.'
+    }
+
+    def "async import status requested and no status file is found in db"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        controller.projectService = Mock(ProjectService){
+            it.getAsyncImportStatusFileForProject(projectName) >> null
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        1 * controller.apiService.renderErrorFormat(_,[status:404,code:'api.error.async.import.status.file.retrieval.error',args:['No Status file in db.']])>>{it[0].status=it[1].status}
     }
 
     def "api import component options"() {
