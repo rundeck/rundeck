@@ -3376,7 +3376,7 @@ Note: `other_errors` included since API v35""",
             if( !params.project ){
                 return apiService.renderErrorFormat(response,[
                         status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.project.missing'
+                        code: 'api.error.async.import.projectName.param.missing'
                 ])
             }
             def projectName = params.project as String
@@ -3387,7 +3387,7 @@ Note: `other_errors` included since API v35""",
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.error.async.import.get.file.error.suffix',
+                    code: 'api.error.async.import.status.file.retrieval.error',
                     args: [e.message]
             ])
         }
