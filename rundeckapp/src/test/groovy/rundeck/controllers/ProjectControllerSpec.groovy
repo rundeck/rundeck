@@ -1720,11 +1720,12 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0 * _(*_)
             }
             controller.projectService=Mock(ProjectService){
-                1*importToProject(_,_,_,_, {
-                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                }
-                ) >> [success: false, importerErrors: ['err1', 'err2']]
-
+//                **Deprecated**
+//                1*importToProject(_,_,_,_, {
+//                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
+//                }
+//                ) >> [success: false, importerErrors: ['err1', 'err2']]
+                handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: ['err1', 'err2']]
                 0 * _(*_)
             }
             controller.apiService=Mock(ApiService){
@@ -2261,7 +2262,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
             0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'json') >> 'json'
             1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
-            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
+            1 * controller.projectService.handleApiImport(_,_,project,_,{ ProjectArchiveImportRequest req->
                 req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
                 req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
             }) >> [success:true]
@@ -2320,8 +2323,10 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
             0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework)
-            1 * controller.projectService.importToProject(
-                project, _, auth, _, { ProjectArchiveImportRequest req ->
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(
+            1 * controller.projectService.handleApiImport(
+                _, auth, project, _, { ProjectArchiveImportRequest req ->
                 req.importComponents.mycomponent
                 req.importOpts.mycomponent?.someoption == 'avalue'
             } ) >> [success: true]
