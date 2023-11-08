@@ -79,6 +79,7 @@ class GormJobQueryProvider implements JobQueryProvider {
                 property 'jobName', 'jobName'
                 property 'groupPath','groupPath'
                 property 'project','project'
+                property 'description', 'description'
                 property 'scheduled','scheduled'
                 property 'scheduleEnabled', 'scheduleEnabled'
                 property 'executionEnabled', 'executionEnabled'
