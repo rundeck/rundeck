@@ -26,7 +26,7 @@ RUN apt-get update && \
         gnupg2 \
         ssh-client \
         sudo \
-        openjdk-11-jre-headless \
+        openjdk-17-jre-headless \
         uuid-runtime \
         wget \
         unzip && \
