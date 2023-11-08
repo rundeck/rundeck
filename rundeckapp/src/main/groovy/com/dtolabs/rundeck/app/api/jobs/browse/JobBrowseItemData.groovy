@@ -17,13 +17,14 @@ class JobBrowseItemData {
     @Ignore(onlyIfNull = true)
     List<JobItemMeta> meta
 
-    static JobBrowseItemData from(JobBrowseItem model) {
+    static JobBrowseItemData from(JobBrowseItem model, List<JobItemMeta> meta) {
         new JobBrowseItemData(
             job: model.job,
             groupPath: model.groupPath ?: model.jobData?.groupPath,
             jobName: model.jobData?.jobName,
             id: model.jobData?.uuid,
             description: model.jobData?.description,
+            meta: meta
             )
     }
 }
