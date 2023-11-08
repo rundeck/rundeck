@@ -65,6 +65,7 @@ import retrofit2.mock.Calls
 import retrofit2.mock.NetworkBehavior
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
@@ -3059,6 +3060,22 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then: "the event bus notifies"
         1 * eventBusMock.notify(*_)
+    }
+
+    def "Async import events calls with a invalid milestone number"(){
+        given:
+        def projectName = "test"
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject)
+        def eventBusMock = Mock(EventBus)
+        service.setTargetEventBus(eventBusMock)
+
+        when: "we invoke the milestones events"
+        service.beginAsyncImportMilestone(projectName, auth, project, 999)
+
+        then: "the event bus notifies"
+        0 * eventBusMock.notify(*_)
+        thrown AsyncImportException
     }
 
     def "Get async status file for project"(){
