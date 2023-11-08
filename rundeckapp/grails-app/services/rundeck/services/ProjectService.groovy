@@ -1991,6 +1991,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
+    /**
+     * Starts async import milestones 1 and 2.
+     *
+     * @param projectName
+     * @param authContext
+     * @param project
+     * @param milestoneNumber
+     */
     void beginAsyncImportMilestone(
             final String projectName,
             final AuthContext authContext,
