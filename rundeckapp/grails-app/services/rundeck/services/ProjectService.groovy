@@ -1958,6 +1958,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return result
     }
 
+    /**
+     * Creates the status file in db storage, the status file is the document that will have all the information
+     * about what is going on in the whole import operation. Will be requested in 'apiProjectAsyncImportStatus'
+     * endpoint.
+     *
+     * @param projectName
+     * @return true/false if its created or not
+     */
     Boolean createAsyncImportStatusFile(String projectName){
         try{
             return asyncImportService.createStatusFile(projectName)
