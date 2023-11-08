@@ -454,7 +454,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             throw new AsyncImportException("Unable to locate temp project during Milestone 2, please restart the process in other new project and delete current.")
         }
 
-        Path rundeckInternalProjectPath = getInternalRundeckProjectPath(tempFile.toString())
+        Predicate<? super Path> internalProjectMatcher = path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
+        Path rundeckInternalProjectPath = getPathWithLogic(Paths.get(tempFile.toString()), internalProjectMatcher)
 
         File executionsDir = new File(rundeckInternalProjectPath.toString() + File.separator + EXECUTION_DIR_NAME)
 
@@ -766,6 +767,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Zips recursively a directory
+     *
+     * @param unzippedFilepath - the filepath in which the zip-to-be dir is
+     * @param zippedFilePath - the path in which we want to have the zipped dir
+     * @param zos - output stream
+     * @throws IOException
+     */
     private static void zipDir(String unzippedFilepath, String zippedFilePath, ZipOutputStream zos) throws IOException {
         File dir = new File(unzippedFilepath);
         for (File file : dir.listFiles()) {
@@ -786,6 +795,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Deletes non-empty dir recursively
+     *
+     * @param path
+     */
     static void deleteNonEmptyDir(String path){
         try {
             Files.walk(Paths.get(path))
@@ -797,6 +811,30 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Parses a input stream as a dir and copy it to given path.
+     *
+     * @param destinationDir
+     * @param is
+     * @return
+     */
+    static def createProjectCopy(Path destinationDir, InputStream is){
+        if (!Files.exists(destinationDir)) {
+            try {
+                createTempCopyFromStream(destinationDir.toString(), is)
+            } catch (Exception e) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+    }
+
+    /**
+     * Takes a input stream and writes it like a directory in given destination dir
+     *
+     * @param destDir
+     * @param inputStream
+     */
     private static void createTempCopyFromStream(String destDir, InputStream inputStream){
         ZipInputStream zipInputStream = new ZipInputStream(inputStream)
         try {
@@ -836,6 +874,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Copies a directory recursively into a another except a string-matched dir and its content
+     *
+     * @param origin
+     * @param target
+     * @param ignored
+     * @return
+     */
     def copyDirExcept(String origin, String target, String ignored) {
         def originDir = new File(origin)
         def destDir = new File(target)
@@ -869,13 +915,15 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
-    Path getInternalRundeckProjectPath(String path){
-        return Files.list(Paths.get(path))
-                .filter { it ->
-                    it.fileName.toString().startsWith("rundeck-")
-                }.collect(Collectors.toList())[0]
-    }
-
+    /**
+     * Given file prefix and extention, returns the full path of matched files,
+     * this method is handy when we seek inside a dir with files with the same name and different prefix/extensions.
+     *
+     * @param path
+     * @param prefix
+     * @param ext
+     * @return
+     */
     List<Path> getFilesPathsByPrefixAndExtensionInPath(String path, String prefix, String ext){
         try{
             return Files.list(Paths.get(path.toString()))
@@ -895,6 +943,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Strips the last slash from the temp dir path to allow the async importer to work in windows and linux
+     *
+     * @return
+     */
     static String translateTempPathByOs(){
         def tempProp = null
         def prop = System.getProperty("java.io.tmpdir")
@@ -907,6 +960,17 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         return tempProp
     }
 
+    /**
+     * Given a path, iterates through the file tree and applies the logic passed as an argument,
+     * if the logic matches, returns the first path that match.
+     *
+     * this method reduce some lines of code when we have to search in the file tree of a
+     * dir for a path with different logic blocks.
+     *
+     * @param checked
+     * @param logic
+     * @return
+     */
     static Path getPathWithLogic(Path checked, Predicate<? super Path> logic){
         Path path = null
         try{
@@ -917,17 +981,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             e.printStackTrace()
         }
         return path
-    }
-
-    static def createProjectCopy(Path destinationDir, InputStream is){
-        if (!Files.exists(destinationDir)) {
-            try {
-                createTempCopyFromStream(destinationDir.toString(), is)
-            } catch (Exception e) {
-                e.printStackTrace()
-                throw e
-            }
-        }
     }
 
 }
