@@ -64,7 +64,6 @@
     </style>
     <asset:javascript src="menu/projectHome.js"/>
     <asset:javascript src="static/pages/project-dashboard.js" defer="defer"/>
-    <asset:javascript src="static/pages/job/tree.js" defer="defer"/>
 </head>
 
 <body>
@@ -105,9 +104,6 @@
       <App :event-bus="EventBus" show-description="false" show-summary="false"/>
     </div>
 
-      <div class="vue-ui-socket">
-          <ui-socket section="job-group-browser" location="main"/>
-      </div>
   </div>
 </div>
 </div>
