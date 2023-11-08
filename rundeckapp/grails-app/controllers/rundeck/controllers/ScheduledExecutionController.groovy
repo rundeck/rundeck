@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseItemData
 import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseResponse
+import com.dtolabs.rundeck.app.api.jobs.browse.JobItemMeta
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
@@ -6083,6 +6084,7 @@ Since: v45''',
             )
         ]
     )
+    @GrailsCompileStatic
     def apiJobBrowse(
         @Parameter(
             name = 'project',
@@ -6096,19 +6098,100 @@ Since: v45''',
             in = ParameterIn.QUERY,
             description = 'Group path root, or blank for the root',
             schema = @Schema(type = 'string')
-        ) String path
+        ) String path,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all',
+            schema = @Schema(type = 'string')
+        ) String meta
     ) {
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
             path,
             projectAuthContext
         )
+        Map<String, List<JobItemMeta>> jobMetaItems = [:]
+        if (meta) {
+            jobMetaItems = scheduledExecutionService.loadJobMetaItems(
+                project,
+                path,
+                new HashSet<>(meta.split(',').toList()),
+                result,
+                projectAuthContext
+            )
+        }
         respond(
             new JobBrowseResponse(
                 path: path,
-                items: result.stream().map (JobBrowseItemData.&from).collect(Collectors.toList())
+                items: result.stream().map { JobBrowseItem item ->
+                    JobBrowseItemData.from(item, item.job ? jobMetaItems[item.jobData.uuid]  : null)
+                }.collect(Collectors.toList())
             )
         )
+    }
+
+    @Get(uri="/project/{project}/job/{id}/meta")
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job Metadata',
+        description = '''Get metadata for a specific job.
+
+Authorization required: `read` or `view` for the Job.
+
+Since: v45''',
+        tags = ['jobs'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        array = @ArraySchema(schema = @Schema(implementation = JobItemMeta))
+                    )
+                ]
+
+            )
+        ]
+    )
+    @RdAuthorizeJob(
+        RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+    )
+    @GrailsCompileStatic
+    def apiJobMeta(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'id',
+            in = ParameterIn.QUERY,
+            description = 'Job ID',
+            schema = @Schema(type = 'string')
+        ) String id,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all (default)',
+            schema = @Schema(type = 'string')
+        ) String meta
+    ) {
+        if (!meta) {
+            meta = '*'
+        }
+
+        def result = scheduledExecutionService.loadJobMetaItems(
+            project,
+            new HashSet<>(meta.split(',').toList()),
+            id,
+            projectAuthContext
+        )
+
+        respond result
     }
 
 }
