@@ -108,7 +108,7 @@ public class ScriptPluginResourceModelSourceFactory extends AbstractDescribableS
         boolean disableContentConversion = false;
 
         if(configuration.containsKey(DISABLE_CONTENT_CONVERSION)){
-            disableContentConversion = (Boolean)configuration.get(DISABLE_CONTENT_CONVERSION);
+            disableContentConversion = Boolean.parseBoolean(configuration.get(DISABLE_CONTENT_CONVERSION).toString());
         }
 
         if(!disableContentConversion){
