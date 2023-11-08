@@ -2003,9 +2003,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final String projectName,
             final AuthContext authContext,
             final IRundeckProject project,
-            final int milestoneNumber
+            final int asyncImportStep
     ){
-        switch (milestoneNumber){
+        switch (asyncImportStep){
             case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
                 notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
                 break
