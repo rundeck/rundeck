@@ -17,7 +17,6 @@ import java.time.Duration
 @CompileStatic
 class JobCreatePage extends BasePage {
 
-    By floatBy = By.className("floatr")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -31,12 +30,24 @@ class JobCreatePage extends BasePage {
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
+    By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
+    By strategyPluginParallelBy = By.xpath('//*[@id="strategyPluginparallel"]')
+    By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span/span')
+    By strategyPluginSequentialBy = By.xpath('//*[@id="strategyPluginsequential"]')
+    By strategyPluginSequentialMsgBy = By.xpath('//*[@id="strategyPluginsequential"]/span/span')
+    By adhocRemoteStringBy = By.id("adhocRemoteStringField")
+    By floatBy = By.className("floatr")
+    By createJobBy = By.id("Create")
+    By cancelBy = By.id('createFormCancelButton')
+    By optionBy = By.cssSelector("#optnewbutton > span")
+    By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
+    By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
 
     String loadPath = "/job/create"
 
-
-    JobCreatePage(final SeleniumContext context) {
+    JobCreatePage(final SeleniumContext context, String project) {
         super(context)
+        this.loadPath = "/${project ? project + '/' : ''}job/create"
     }
 
     void validatePage() {
@@ -61,10 +72,6 @@ class JobCreatePage extends BasePage {
 
     WebElement notificationByType(NotificationType notificationType) {
         el notificationType.notificationType
-    }
-
-    WebElement getFloatField() {
-        el floatBy
     }
 
     WebElement notificationConfigByPropName(String propName) {
@@ -124,6 +131,76 @@ class JobCreatePage extends BasePage {
 
     WebElement getMultiExecTrueField() {
         el multiExecTrueBy
+    }
+
+    WebElement getWorkFlowStrategyField() {
+        el workFlowStrategyBy
+    }
+
+    WebElement getStrategyPluginParallelField() {
+        el strategyPluginParallelBy
+    }
+
+    WebElement getStrategyPluginParallelMsgField() {
+        el strategyPluginParallelMsgBy
+    }
+
+    WebElement getStrategyPluginSequentialField() {
+        el strategyPluginSequentialBy
+    }
+
+    WebElement getStrategyPluginSequentialMsgField() {
+        el strategyPluginSequentialMsgBy
+    }
+
+    WebElement stepLink(String dataNodeStepType, StepType stepType) {
+        el By.xpath("//*[@${stepType.getStepType()}='$dataNodeStepType']")
+    }
+
+    WebElement getAdhocRemoteStringField() {
+        el adhocRemoteStringBy
+    }
+
+    WebElement getCreateJobButton() {
+        el createJobBy
+    }
+
+    WebElement getCancelButton() {
+        el cancelBy
+    }
+
+    WebElement getOptionButton() {
+        el optionBy
+    }
+
+    WebElement optionName(int index) {
+        el By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
+    }
+
+    WebElement getSeparatorOption() {
+        el separatorOptionBy
+    }
+
+    WebElement getSaveOptionButton() {
+        el saveOptionBy
+    }
+
+    void waitFotOptLi(int index) {
+        waitForElementVisible By.cssSelector("#optli_$index")
+    }
+
+    WebElement optionNameSaved(int index) {
+        el By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
+    }
+
+    WebElement duplicateButton(String nameOpt) {
+        el By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
+    }
+
+    void saveStep(Integer stepNumber) {
+        def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
+        button?.click()
+        waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
 }

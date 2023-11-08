@@ -59,12 +59,33 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     }
 
     /**
+     * Get a page object for the type, does not automatically load the page and send additional args
+     * @param clazz Page object type, must have a constructor that takes a WebDriver
+     * @return
+     */
+    <T extends BasePage> T page(Class<T> clazz, Object args) {
+        return clazz.getDeclaredConstructor(SeleniumContext, args.getClass()).newInstance(this, args)
+    }
+
+
+    /**
      * Load the page and return the page object
      * @param clazz Page object type, must have a constructor that takes a WebDriver
      * @return
      */
     <T extends BasePage> T go(Class<T> clazz) {
         T page = page(clazz)
+        page.go()
+        return page
+    }
+
+    /**
+     * Load the page and return the page object
+     * @param clazz Page object type, must have a constructor that takes a WebDriver
+     * @return
+     */
+    <T extends BasePage> T go(Class<T> clazz, Object args) {
+        T page = page(clazz, args)
         page.go()
         return page
     }

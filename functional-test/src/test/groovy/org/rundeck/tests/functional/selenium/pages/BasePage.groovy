@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.selenium.pages
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
@@ -106,6 +107,10 @@ abstract class BasePage {
 
     WebDriver getDriver() {
         context.driver
+    }
+
+    void executor(String script) {
+        ((JavascriptExecutor) context.driver).executeScript(script)
     }
 
     WebElement el(By by) {

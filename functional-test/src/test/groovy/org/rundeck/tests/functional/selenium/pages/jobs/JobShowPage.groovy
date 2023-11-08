@@ -22,6 +22,7 @@ class JobShowPage extends BasePage{
     By scheduleTimeBy = By.xpath("//*[@class='scheduletime']")
     By multipleExecBy = By.xpath("//*[@id=\"detailtable\"]//td[text()='Multiple Executions?']")
     By multipleExecYesBy = By.xpath("//*[@id=\"detailtable\"]//td[contains(text(),'Yes')]")
+    By workflowDetailBy = By.xpath("//*[@id='workflowstrategydetail']//*[@class='col-sm-12']")
 
     String loadPath = "/job/show"
 
@@ -70,5 +71,9 @@ class JobShowPage extends BasePage{
 
     WebElement getMultipleExecYesField() {
         el multipleExecYesBy
+    }
+
+    WebElement getWorkflowDetailField() {
+        el workflowDetailBy
     }
 }

@@ -2,173 +2,130 @@ package org.rundeck.tests.functional.selenium.tests.jobs
 
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
-import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobShowPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
-import org.rundeck.tests.functional.selenium.pages.jobs.NotificationEvent
-import org.rundeck.tests.functional.selenium.pages.jobs.NotificationType
+import org.rundeck.tests.functional.selenium.pages.jobs.StepType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
-import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
+import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.setup.NavLinkTypes
-import spock.lang.Stepwise
 
 @SeleniumCoreTest
-@Stepwise
 class JobsSpec extends SeleniumBase {
 
-    def setupSpec(){
+    def setupSpec() {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
-    def "create job has basic fields"() {
+    def "change workflow strategy"() {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
-            def sideBarPage = page SideBarPage
-            sideBarPage.goTo NavLinkTypes.JOBS
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
-            sleep 5000
-            def jobListPage = page JobListPage
-            jobListPage.newJobButton.click()
+            jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
+            jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
+            jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
+
+            jobCreatePage.executor "window.location.hash = '#addnodestep'"
+            jobCreatePage.stepLink 'command', StepType.NODE click()
+            jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
+            jobCreatePage.adhocRemoteStringField.click()
+            jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.floatBy
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
+            jobCreatePage.saveStep 0
+            jobCreatePage.createJobButton.click()
         expect:
-            currentUrl.contains("/job/create")
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.jobNameInput
-            jobCreatePage.groupPathInput
-            jobCreatePage.descriptionTextarea
-    }
-
-    def "edit job set description"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.descriptionTextarea.clear()
-            jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
-            jobCreatePage.updateJobButton.click()
-        expect:
-            def jobShowPage = page JobShowPage
-            'a new job description' == jobShowPage.descriptionTextLabel.getText()
-    }
-
-    def "edit job set groups"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.jobGroupField.clear()
-            jobCreatePage.jobGroupField.sendKeys 'testGroup'
-            jobCreatePage.updateJobButton.click()
-        expect:
-            def jobShowPage = page JobShowPage
-            'testGroup' == jobShowPage.jobInfoGroupLabel.getText()
-    }
-
-    def "edit job and set schedules tab"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.tab JobTab.SCHEDULE click()
-            jobCreatePage.scheduleRunYesField.click()
-            if (!jobCreatePage.scheduleEveryDayCheckboxField.isSelected()) {
-                jobCreatePage.scheduleEveryDayCheckboxField.click()
-            }
-            jobCreatePage.scheduleDaysCheckboxDivField.isDisplayed()
-            jobCreatePage.updateJobButton.click()
-    }
-
-    def "edit job and set other tab"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.tab JobTab.OTHER click()
-            if (jobCreatePage.multiExecFalseField.isSelected()) {
-                jobCreatePage.multiExecTrueField.click()
-                jobCreatePage.multiExecTrueField.isSelected()
-            } else {
-                jobCreatePage.multiExecFalseField.click()
-                jobCreatePage.multiExecFalseField.isSelected()
-            }
-            jobCreatePage.updateJobButton.click()
-    }
-
-    def "edit job and set notifications"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
-            def jobCreatePage = page JobCreatePage
-            jobCreatePage.tab JobTab.NOTIFICATIONS click()
-            jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
-            jobCreatePage.notificationDropDown.click()
-            jobCreatePage.notificationByType NotificationType.MAIL click()
-            jobCreatePage.notificationConfigByPropName "recipients" sendKeys 'test@rundeck.com'
-            jobCreatePage.notificationSaveButton.click()
-            jobCreatePage.waitNotificationModal 0
-            jobCreatePage.updateJobButton.click()
-    }
-
-    def "showing the edited job"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
-        when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToShowJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
-        then:
             def jobShowPage = page JobShowPage
             jobShowPage.jobDefinitionModal.click()
+            jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
+    }
+
+    def "cancel job create with default lang"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.cancelButton.click()
         expect:
-            jobShowPage.cronLabel.size() == 2
-            jobShowPage.scheduleTimeLabel.isDisplayed()
-            jobShowPage.multipleExecField.isDisplayed()
-            jobShowPage.multipleExecYesField.getText() == 'Yes'
-            jobShowPage.notificationDefinition.getText() == 'mail to: test@rundeck.com'
-            jobShowPage.closeJobDefinitionModalButton.click()
+            def jobListPage = page JobListPage
+            jobListPage.validatePage()
+    }
+
+    def "change UI lang fr_FR and cancel job create"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+            def userProfilePage = page UserProfilePage
+            userProfilePage.loadPath += "?lang=fr_FR"
+            userProfilePage.go()
+            userProfilePage.languageLabel.getText() == 'Langue:'
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.cancelButton.click()
+        expect:
+            def jobListPage = page JobListPage
+            jobListPage.validatePage()
+    }
+
+    def "change UI lang ja_JP and cancel job create"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+            def userProfilePage = page UserProfilePage
+            userProfilePage.loadPath += "?lang=ja_JP"
+            userProfilePage.go()
+            userProfilePage.languageLabel.getText() == '言語:'
+            userProfilePage.go()
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.cancelButton.click()
+        expect:
+            def jobListPage = page JobListPage
+            jobListPage.validatePage()
+    }
+
+    def "Duplicate_options - only validations, not save jobs"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.jobNameInput.sendKeys 'duplicate options'
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.executor "window.location.hash = '#addnodestep'"
+            jobCreatePage.stepLink 'command', StepType.NODE click()
+            jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
+            jobCreatePage.adhocRemoteStringField.click()
+            jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.floatBy
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
+            jobCreatePage.saveStep 0
+
+            def optName = 'test'
+            jobCreatePage.optionButton.click()
+            jobCreatePage.optionName 0 sendKeys optName
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+
+            jobCreatePage.duplicateButton optName click()
+            jobCreatePage.waitFotOptLi 1
+
+            jobCreatePage.duplicateButton optName click()
+            jobCreatePage.waitFotOptLi 2
+
+        expect:
+            jobCreatePage.optionNameSaved 1 getText() equals optName + '_1'
+            jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
+            jobCreatePage.createJobButton.click()
     }
 
 }

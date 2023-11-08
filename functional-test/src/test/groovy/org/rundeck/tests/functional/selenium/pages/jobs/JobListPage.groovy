@@ -12,8 +12,6 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class JobListPage extends BasePage {
 
-    By newJob = By.partialLinkText('New Job')
-
     String loadPath = "/jobs"
 
     JobListPage(final SeleniumContext context) {
@@ -34,7 +32,4 @@ class JobListPage extends BasePage {
         }
     }
 
-    WebElement getNewJobButton() {
-        el newJob
-    }
 }
