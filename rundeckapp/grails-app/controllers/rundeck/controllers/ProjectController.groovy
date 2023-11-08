@@ -3363,6 +3363,12 @@ Note: `other_errors` included since API v35""",
         }
     }
 
+    /**
+     * Status endpoint, gives status for the given project if the process has been started (status file exists in db)
+     *
+     * @param project (name) - mandatory to hit the endpoint
+     * @return JSON with info
+     */
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectAsyncImportStatus(){
         def statusFileContent

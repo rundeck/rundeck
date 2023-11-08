@@ -51,6 +51,8 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -2297,6 +2299,34 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
         1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
         1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
+    }
+
+    def "async import status endpoint"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        def dto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = 'This is a test'
+            it.lastUpdated = new Date()
+            it.errors = null
+            return it
+        }
+        controller.projectService = Mock(ProjectService){
+            it.getAsyncImportStatusFileForProject(projectName) >> dto
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        response.status == 200
+        response.json.lastUpdate == dto.lastUpdate
+        response.json.lastUpdated == dto.lastUpdated
+        response.json.errors == 'No errors.'
     }
 
     def "api import component options"() {
