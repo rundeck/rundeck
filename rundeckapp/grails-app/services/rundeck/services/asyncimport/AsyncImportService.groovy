@@ -20,6 +20,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -229,22 +230,18 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         def importResult = [:]
 
         String destDir = "${TEMP_DIR}${File.separator}${TEMP_PROJECT_SUFFIX}${projectName}"
-        if (!Files.exists(Paths.get(destDir))) {
-            try {
-                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                    it.lastUpdate = "Creating a copy of the uploaded project in /tmp."
-                    return it
-                })
-                createTempCopyFromStream(destDir, inputStream)
-                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                    it.tempFilepath = destDir
-                    return it
-                })
-            } catch (Exception e) {
-                e.printStackTrace()
-                throw e
-            }
-        }
+
+        asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+            it.lastUpdate = "Creating a copy of the uploaded project in /tmp."
+            return it
+        })
+
+        createProjectCopy(Paths.get(destDir.toString()), inputStream)
+
+        asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+            it.tempFilepath = destDir
+            return it
+        })
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating the working directory in /tmp."
@@ -252,14 +249,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         })
 
         String scopedWorkingDir = "${BASE_WORKING_DIR}${projectName}"
+
         File baseWorkingDir = new File(scopedWorkingDir)
-        if (!baseWorkingDir.exists()) {
-            baseWorkingDir.mkdir()
-        }
         File modelProjectHost = new File(baseWorkingDir.toString() + File.separator + MODEL_PROJECT_NAME_SUFFIX)
-        if (!modelProjectHost.exists()) {
-            modelProjectHost.mkdir()
-        }
+
+        if (!baseWorkingDir.exists()) baseWorkingDir.mkdir()
+        if (!modelProjectHost.exists()) modelProjectHost.mkdir()
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating the project model inside working directory in /tmp."
@@ -267,28 +262,20 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         })
 
         def framework = frameworkService.rundeckFramework
+        Predicate<? super Path> internalProjectMatcher = path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
 
         try {
-
             if( modelProjectHost.list().size() == 0 ){
                 // check if the executions dir exists, if not, false a flag to prevent M2 trigger
-                Optional<Path> dirFound = Files.list(Paths.get(destDir.toString()))
-                        .filter {
-                            path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
-                        }
-                        .findFirst()
-                if( dirFound.isPresent() ){
-                    def internalProject = dirFound.get()
-                    Optional<Path> executionsDir = Files.list(internalProject)
-                            .filter {
-                                path -> path.fileName.toString() == EXECUTION_DIR_NAME
-                            }
-                            .findFirst()
-                    if( !executionsDir.isPresent() ){
+                def internalProjectPath = getPathWithLogic(Paths.get(destDir.toString()), internalProjectMatcher)
+                if( internalProjectPath != null ){
+                    Predicate<? super Path> executionsDirMatcher = path -> path.fileName.toString() == EXECUTION_DIR_NAME
+                    def executionsDirPath = getPathWithLogic(internalProjectPath, executionsDirMatcher)
+                    if( executionsDirPath == null ){
                         executionsDirFound = false
                     }else{
                         // If the dir exists but there are no executions, dont start M2
-                        def hasExecutions = Files.list(executionsDir.get()).count()
+                        def hasExecutions = Files.list(executionsDirPath).count()
                         if( hasExecutions <=0  ){
                             executionsDirFound = false
                         }
@@ -297,16 +284,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 copyDirExcept(destDir, modelProjectHost.toString(), EXECUTION_DIR_NAME)
             }
 
-            Optional<Path> dirFound = Files.list(Paths.get(modelProjectHost.toString()))
-                                .filter {
-                                    path -> path.fileName.toString().startsWith(MODEL_PROJECT_INTERNAL_PREFIX)
-                                }
-                                .findFirst()
+            def internalProjectInModelPath = getPathWithLogic(Paths.get(modelProjectHost.toString()), internalProjectMatcher)
 
-            if( dirFound.isPresent() ){
-                if( Files.exists(Paths.get(dirFound.get().toString())) ){
-                    Files.move(Paths.get(dirFound.get().toString()), Paths.get(modelProjectHost.toString()).resolve("${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"))
-                }
+            if( internalProjectInModelPath != null ){
+                Files.move(internalProjectInModelPath, Paths.get(modelProjectHost.toString()).resolve("${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"))
             }
 
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
@@ -365,58 +346,54 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 deleteNonEmptyDir(scopedWorkingDir)
                 return importResult
             }
+
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.lastUpdate = "Cleaning the model project."
+                return it
+            })
+
+            List<Path> filepathsToRemove = Files.list(internalProjectInModelPath).filter {
+                it -> it.fileName.toString() != "jobs"
+            }.collect(Collectors.toList())
+
+            filepathsToRemove.forEach {
+                it ->
+                    {
+                        File file = new File(it.toString())
+                        if (file.isDirectory()) {
+                            deleteNonEmptyDir(file.toString())
+                        } else {
+                            Files.delete(it)
+                        }
+                    }
+            }
+
+            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                it.lastUpdate = "Milestone 1 completed, calling Milestone 2 in process..."
+                return it
+            })
+
+            if( importExecutions && executionsDirFound ){
+                projectService.beginAsyncImportMilestone(
+                        projectName,
+                        authContext,
+                        project,
+                        AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
+                )
+            }else{
+                // End the async import
+                if( Files.exists(Paths.get(destDir)) ) deleteNonEmptyDir(destDir)
+                if( Files.exists(Paths.get(scopedWorkingDir)) ) deleteNonEmptyDir(scopedWorkingDir)
+                asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
+                    it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                    it.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
+                    return it
+                })
+            }
+
         } catch (Exception e) {
             e.printStackTrace()
             throw e
-        }
-
-        asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Cleaning the model project."
-            return it
-        })
-
-        Path pathToRundeckInternalProject = Files.list(Paths.get(modelProjectHost.toString()))
-                .filter { it ->
-                    it.fileName.toString().startsWith("rundeck-")
-                }.collect(Collectors.toList())[0]
-
-        List<Path> filepathsToRemove = Files.list(pathToRundeckInternalProject).filter {
-            it -> it.fileName.toString() != "jobs"
-        }.collect(Collectors.toList())
-
-        filepathsToRemove.forEach {
-            it ->
-                {
-                    File file = new File(it.toString())
-                    if (file.isDirectory()) {
-                        deleteNonEmptyDir(file.toString())
-                    } else {
-                        Files.delete(it)
-                    }
-                }
-        }
-
-        asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 1 completed, calling Milestone 2 in process..."
-            return it
-        })
-
-        if( importExecutions && executionsDirFound ){
-            projectService.beginAsyncImportMilestone(
-                    projectName,
-                    authContext,
-                    project,
-                    AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
-            )
-        }else{
-            // End the async import
-            if( Files.exists(Paths.get(destDir)) ) deleteNonEmptyDir(destDir)
-            if( Files.exists(Paths.get(scopedWorkingDir)) ) deleteNonEmptyDir(scopedWorkingDir)
-            asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
-                it.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
-                return it
-            })
         }
 
         return importResult
@@ -928,6 +905,29 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             tempProp = prop
         }
         return tempProp
+    }
+
+    static Path getPathWithLogic(Path checked, Predicate<? super Path> logic){
+        Path path = null
+        try{
+            if( Files.list(checked).anyMatch(logic) ){
+                path = Files.list(checked).filter(logic).findFirst().get()
+            }
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+        return path
+    }
+
+    static def createProjectCopy(Path destinationDir, InputStream is){
+        if (!Files.exists(destinationDir)) {
+            try {
+                createTempCopyFromStream(destinationDir.toString(), is)
+            } catch (Exception e) {
+                e.printStackTrace()
+                throw e
+            }
+        }
     }
 
 }
