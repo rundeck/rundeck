@@ -10,7 +10,7 @@ dependencies_build_setup() {
     echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
 
     sudo apt-get update
-    sudo apt-get -y --no-install-recommends install zulu11-jdk-headless
+    sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
 
     # Node and aws installed by orb.
 
@@ -34,7 +34,7 @@ dependencies_packaging_setup() {
     dependencies_build_setup
 
     sudo apt-get -y --no-install-recommends install \
-        openjdk-11-jdk-headless \
+        openjdk-17-jdk-headless \
         dpkg \
         xmlstarlet \
         expect \
@@ -51,7 +51,7 @@ dependencies_testdeck_setup() {
     sudo apt-get update
     sudo apt-get -y --no-install-recommends install \
         xmlstarlet \
-        openjdk-11-jdk-headless \
+        openjdk-17-jdk-headless \
         file \
         dpkg \
         jq
