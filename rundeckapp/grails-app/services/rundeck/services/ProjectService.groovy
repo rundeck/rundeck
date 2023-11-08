@@ -1971,10 +1971,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
+    /**
+     * Gets the info of a existing status file in db, if there isn't a status file.
+     *
+     * @param projectName
+     * @return
+     */
     AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
         try{
             def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
-            if( !dto || null == dto ) throw new Exception("Status object empty or non-existent")
+            if( !dto || null == dto ) return null
             return dto
         }catch(Exception e){
             e.printStackTrace()

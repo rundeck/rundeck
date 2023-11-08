@@ -3375,14 +3375,18 @@ Note: `other_errors` included since API v35""",
         try{
             if( !params.project ){
                 return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.async.import.projectName.param.missing'
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.projectName.param.missing',
                 ])
             }
             def projectName = params.project as String
             statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
             if(!statusFileContent || null == statusFileContent){
-                throw new Exception("Status file empty or non-existent.")
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_NOT_FOUND,
+                        code: 'api.error.async.import.status.file.retrieval.error',
+                        args: ['No Status file in db.']
+                ])
             }
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
