@@ -80,6 +80,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * True/false if status file exists in DB.
+     *
+     * @param projectName
+     * @return
+     */
     private Boolean statusFileExists(String projectName){
         try {
             def fwkProject = frameworkService.getFrameworkProject(projectName)
