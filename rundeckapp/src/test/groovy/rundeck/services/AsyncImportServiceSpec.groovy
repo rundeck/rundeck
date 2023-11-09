@@ -1066,6 +1066,22 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(desiredPath) ) AsyncImportService.deleteNonEmptyDir(desiredPath.toString())
     }
 
+    def "Delete non empty dir test"(){
+        given:
+        def tempDir = AsyncImportService.TEMP_DIR
+        def dirA = new File("${tempDir}${File.separator}dirA")
+        def fileA = Paths.get("${dirA}${File.separator}a.txt")
+
+        when:
+        dirA.mkdirs()
+        Files.createFile(fileA)
+        AsyncImportService.deleteNonEmptyDir(dirA.toString())
+
+        then:
+        !Files.exists(fileA)
+        !Files.exists(Paths.get(dirA.toString()))
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
