@@ -616,12 +616,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         // Options (false values bc we already imported the project with user's options in M1)
         def options = [
                 jobUuidOption     :jobUuidOption,
-                importExecutions  : true,
-                importConfig      : false,
-                importACL         : false,
-                importScm         : false,
-                validateJobref    : false,
-                importNodesSources: false
+                importExecutions  : true
         ] as ProjectArchiveParams
 
         try {
