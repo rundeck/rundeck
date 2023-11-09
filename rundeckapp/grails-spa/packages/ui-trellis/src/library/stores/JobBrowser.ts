@@ -1,5 +1,6 @@
+import {getRundeckContext} from '../rundeckService'
 import {JobBrowseItem} from '../types/jobs/JobBrowse'
-import {browsePath} from '../services/jobBrowse'
+import {browsePath, bulkDeleteJobs, bulkExecutionEnableDisable, bulkScheduleEnableDisable} from '../services/jobBrowse'
 import { InjectionKey } from "vue";
 
 export class JobBrowserStoreItem {
@@ -88,4 +89,68 @@ export class JobBrowserStore extends JobBrowserStoreItem {
   }
 }
 
-export const JobBrowserStoreInjectionKey: InjectionKey<JobBrowserStore> = Symbol('jobBrowseStore')
+export class JobPageStore {
+    bulkEditMode: boolean = false;
+    authz: { [key: string]: boolean } = {};
+    executionMode: boolean = false;
+    projectExecutionsEnabled: boolean = false;
+    projectSchedulesEnabled: boolean = false;
+    selectedJobs: JobBrowseItem[] = [];
+
+    addBulkJob(job: JobBrowseItem) {
+        if (!this.selectedJobs.find((j) => j.id === job.id)) {
+            this.selectedJobs.push(job);
+        }
+    }
+    addBulkJobs(jobs: JobBrowseItem[]) {
+        for (const job of jobs) {
+            this.addBulkJob(job);
+        }
+    }
+
+    removeBulkJob(job: JobBrowseItem) {
+        this.selectedJobs = this.selectedJobs.filter((j) => j.id !== job.id);
+    }
+    removeBulkJobs(jobs: JobBrowseItem[]) {
+        for (const job of jobs) {
+            this.removeBulkJob(job);
+        }
+    }
+    async performBulkAction(action: string) {
+      if(action==='delete') {
+        const result = await bulkDeleteJobs(
+            getRundeckContext().projectName,
+            this.selectedJobs.map((j) => j.id)
+        );
+      }else if(action==='enable_schedule'||action==='disable_schedule') {
+        const result = await bulkScheduleEnableDisable(
+          getRundeckContext().projectName,
+          this.selectedJobs.map((j) => j.id),
+          action==='enable_schedule'
+        );
+      }else if(action==='enable_execution'||action==='disable_execution') {
+
+        const result = await bulkExecutionEnableDisable(
+          getRundeckContext().projectName,
+          this.selectedJobs.map((j) => j.id),
+          action==='enable_execution'
+        );
+      }
+    }
+
+    async loadAuth() {
+        console.log("TODO: loadAuth, modes");
+        //set to random boolean values
+        for (const az of ["read", "update", "delete", "create", "run"]) {
+            this.authz[az] = Math.random() >= 0.5;
+        }
+        this.executionMode = Math.random() >= 0.5;
+        this.projectExecutionsEnabled = Math.random() >= 0.5;
+        this.projectSchedulesEnabled = Math.random() >= 0.5;
+    }
+}
+
+export const JobBrowserStoreInjectionKey: InjectionKey<JobBrowserStore> =
+    Symbol("jobBrowseStore");
+export const JobPageStoreInjectionKey: InjectionKey<JobPageStore> =
+    Symbol("jobPageStore");
