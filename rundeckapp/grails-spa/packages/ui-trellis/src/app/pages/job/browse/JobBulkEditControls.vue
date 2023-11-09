@@ -53,20 +53,30 @@
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <span
-                        class="btn btn-simple btn-xs btn-hover"
-                        data-bind="click: selectAll"
+                    <btn
+                        size="xs"
+                        type="simple"
+                        class="btn-hover"
+                        @click="selectAll"
                     >
                         <b class="glyphicon glyphicon-check"></b>
                         {{ $t("select.all") }}
-                    </span>
-                    <span
-                        class="btn btn-simple btn-xs btn-hover"
-                        data-bind="click: selectNone"
+                    </btn>
+                    <btn
+                        size="xs"
+                        type="simple"
+                        class="btn-hover"
+                        @click="selectNone"
                     >
                         <b class="glyphicon glyphicon-unchecked"></b>
                         {{ $t("select.none") }}
-                    </span>
+                    </btn>
+                    {{
+                        $tc(
+                            "job.bulk.panel.select.message",
+                            jobPageStore.selectedJobs.length
+                        )
+                    }}
                 </div>
 
                 <div class="panel-footer">
@@ -167,6 +177,12 @@ export default defineComponent({
         },
         projAuthz(action: string): boolean {
             return this.jobPageStore.authz?.[action];
+        },
+        selectAll() {
+            eventBus.emit("job-bulk-edit-select-all");
+        },
+        selectNone() {
+            this.jobPageStore.selectedJobs = [];
         },
     },
     computed: {

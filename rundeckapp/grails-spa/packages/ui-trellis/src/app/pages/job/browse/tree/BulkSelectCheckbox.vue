@@ -5,6 +5,7 @@
 </template>
 
 <script lang="ts">
+import {getRundeckContext} from '@/library'
 import {
     JobPageStore,
     JobPageStoreInjectionKey,
@@ -12,6 +13,7 @@ import {
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 
+let eventBus = getRundeckContext().eventBus
 export default defineComponent({
     name: "BulkSelectCheckbox",
     props: {
@@ -52,6 +54,11 @@ export default defineComponent({
             return data?.authorizations || {};
         },
     },
+  mounted(){
+      eventBus.on('job-bulk-edit-select-all', () => {
+        this.selected = true
+      })
+  }
 });
 </script>
 
