@@ -1310,6 +1310,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForUserAndRoles(_,_) >> Mock(UserAndRolesAuthContext)
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
 

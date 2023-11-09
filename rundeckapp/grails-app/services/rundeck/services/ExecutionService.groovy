@@ -1505,10 +1505,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public StepExecutionContext createContext(
             String executionUuid,
-            UserAndRolesAuthContext authContext
+            UserAndRolesAuthContext authContext = null
     )
     {
         def execution = Execution.findByUuid(executionUuid)
+        if(!authContext) {
+            authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRoles(execution.user,execution.userRoles)
+        }
         def job = execution.jobUuid ? ScheduledExecution.findByUuid(execution.jobUuid) : null
         def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
         def secureOptionNodeDeferred = [:]
