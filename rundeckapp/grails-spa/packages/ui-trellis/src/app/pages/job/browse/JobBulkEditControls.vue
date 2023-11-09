@@ -120,7 +120,15 @@
             v-model="bulkConfirm"
             :title="$t('job.bulk.modify.confirm.panel.title')"
         >
-            {{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}
+            <p>{{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}</p>
+            <p>
+              {{
+                $tc(
+                    "job.bulk.panel.select.message",
+                    jobPageStore.selectedJobs.length
+                )
+            }}
+            </p>
             <template #footer>
                 <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
                 <btn type="danger" @click="performBulkAction">
@@ -169,11 +177,17 @@ export default defineComponent({
             this.bulkConfirmAction = name;
             this.bulkConfirm = true;
         },
+        confirmActionSingle(evt: { name: string; job: JobBrowseItem }) {
+            const { name, job } = evt;
+            this.jobPageStore.selectedJobs = [job];
+            this.jobPageStore.bulkEditMode = true;
+            this.confirmAction({name})
+        },
         async performBulkAction() {
             await this.jobPageStore.performBulkAction(this.bulkConfirmAction);
             this.jobPageStore.selectedJobs = [];
             this.bulkConfirm = false;
-            this.jobPageStore.bulkEditMode=false
+            this.jobPageStore.bulkEditMode = false;
         },
         projAuthz(action: string): boolean {
             return this.jobPageStore.authz?.[action];
@@ -195,6 +209,7 @@ export default defineComponent({
     },
     mounted() {
         eventBus.on("job-action", this.confirmAction);
+        eventBus.on("job-action-single", this.confirmActionSingle);
     },
 });
 </script>
