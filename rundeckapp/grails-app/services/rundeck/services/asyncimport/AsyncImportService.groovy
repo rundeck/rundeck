@@ -816,7 +816,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static def createProjectCopy(Path destinationDir, InputStream is){
         if (!Files.exists(destinationDir)) {
             try {
-                createTempCopyFromStream(destinationDir.toString(), is)
+                extractStream(destinationDir.toString(), is)
             } catch (Exception e) {
                 e.printStackTrace()
                 throw e
@@ -830,7 +830,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param destDir
      * @param inputStream
      */
-    private static void createTempCopyFromStream(String destDir, InputStream inputStream){
+    static void extractStream(String destDir, InputStream inputStream){
         ZipInputStream zipInputStream = new ZipInputStream(inputStream)
         try {
             File checkDir = new File(destDir)
