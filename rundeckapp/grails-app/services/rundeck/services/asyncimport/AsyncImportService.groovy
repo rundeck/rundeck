@@ -770,7 +770,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param zos - output stream
      * @throws IOException
      */
-    private static void zipDir(String unzippedFilepath, String zippedFilePath, ZipOutputStream zos) throws IOException {
+    static void zipDir(String unzippedFilepath, String zippedFilePath, ZipOutputStream zos) throws IOException {
         File dir = new File(unzippedFilepath);
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {

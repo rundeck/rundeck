@@ -19,6 +19,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import java.util.zip.ZipOutputStream
 
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
 
@@ -1080,6 +1081,32 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         then:
         !Files.exists(fileA)
         !Files.exists(Paths.get(dirA.toString()))
+    }
+
+    def "Zip a whole directory recursively"(){
+        given:
+        def tempDir = AsyncImportService.TEMP_DIR
+        def dirA = new File("${tempDir}${File.separator}dirA")
+        def fileA = Paths.get("${dirA}${File.separator}a.txt")
+
+        def zippedFilename = "${dirA.toString()}.jar"
+
+        when:
+        dirA.mkdirs()
+        Files.createFile(fileA)
+        try(FileOutputStream fos = new FileOutputStream(zippedFilename)){
+            ZipOutputStream zos = new ZipOutputStream(fos)
+            AsyncImportService.zipDir(dirA.toString(), "", zos)
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+
+        then:
+        Files.exists(Paths.get(zippedFilename))
+
+        cleanup:
+        if( Files.exists(Paths.get(zippedFilename)) ) AsyncImportService.deleteNonEmptyDir(zippedFilename)
+        if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
     }
 
     private def getTempDirsPath(String projectName) {
