@@ -1,16 +1,24 @@
 import {defineComponent, markRaw, provide, reactive} from 'vue'
 import {getRundeckContext} from '../../../../library'
-import {JobBrowserStore, JobBrowserStoreInjectionKey} from '../../../../library/stores/JobBrowser'
+import {
+    JobBrowserStore,
+    JobBrowserStoreInjectionKey,
+    JobPageStore,
+    JobPageStoreInjectionKey,
+} from "../../../../library/stores/JobBrowser";
 import JobListPage from './JobListPage.vue'
-import * as uiv from 'uiv'
+import * as uiv from "uiv";
+import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from './tree/JobActionsMenu.vue'
 import JobRunButton from './tree/JobRunButton.vue'
 import JobScheduleInfo from './tree/JobScheduleInfo.vue';
 
 function init() {
-  const rootStore = getRundeckContext().rootStore
-  const browse = new JobBrowserStore(getRundeckContext().projectName, '')
+  const rootStore = getRundeckContext().rootStore;
+  const page = new JobPageStore();
+  const browse = new JobBrowserStore(getRundeckContext().projectName, "");
 
+  const jobPageStore = reactive(page);
   const jobBrowserStore = reactive(browse)
   rootStore.ui.addItems([
       {
@@ -24,6 +32,7 @@ function init() {
                   props: ["itemData"],
                   setup() {
                       provide(JobBrowserStoreInjectionKey, jobBrowserStore);
+                      provide(JobPageStoreInjectionKey, jobPageStore);
                   },
                   template: `
           <JobListPage />`,
@@ -39,6 +48,14 @@ function init() {
       {
           section: "job-browse-item",
           location: "before-job-name",
+          order: 0,
+          visible: true,
+          widget: markRaw(BulkSelectCheckbox),
+      },
+      {
+          section: "job-browse-item",
+          location: "before-job-name",
+          order: 1,
           visible: true,
           widget: markRaw(JobRunButton),
       },

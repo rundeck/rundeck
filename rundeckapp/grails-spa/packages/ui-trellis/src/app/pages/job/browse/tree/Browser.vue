@@ -13,7 +13,7 @@
                     <Browser
                         :path="item.groupPath"
                         v-if="isExpanded(item.groupPath)"
-                        @tree_root-browse="rootBrowse"
+                        @rootBrowse="rootBrowse"
                     />
                 </template>
             </li>
@@ -52,7 +52,7 @@ export default defineComponent({
             default: false,
         },
     },
-    emits: ["tree_rootBrowse"],
+    emits: ["rootBrowse"],
     setup(props) {
         const items = ref<JobBrowseItem[]>([]);
         return {
@@ -101,7 +101,7 @@ export default defineComponent({
         },
 
         async rootBrowse(path: string) {
-            this.$emit("tree_rootBrowse", path);
+            this.$emit("rootBrowse", path);
         },
         async refresh() {
             this.loading = true;
