@@ -18,3 +18,22 @@ export const api = axios.create({
     return status >= 200 && status < 500;
   },
 });
+
+api.interceptors.request.use((config) => {
+  config.headers["Accept"] = "application/json";
+  if (config.method !== "get") {
+    config.headers["X-RUNDECK-TOKEN-URI"] = token.URI!;
+    config.headers["X-RUNDECK-TOKEN-KEY"] = token.TOKEN!;
+  }
+  return config;
+});
+api.interceptors.response.use((resp) => {
+  if (
+    resp.headers["x-rundeck-token-key"] &&
+    resp.headers["x-rundeck-token-uri"]
+  ) {
+    token.TOKEN = resp.headers["x-rundeck-token-key"];
+    token.URI = resp.headers["x-rundeck-token-uri"];
+  }
+  return resp;
+});
