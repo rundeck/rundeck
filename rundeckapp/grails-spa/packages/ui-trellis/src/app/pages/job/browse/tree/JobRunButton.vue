@@ -6,26 +6,22 @@
         :title="$t('action.prepareAndRun.tooltip')"
         :data-job-id="job.id"
         @click="$emit('run-job', job.id)"
-        v-if="authz['run']"
+        v-if="canRun"
     >
         <b class="glyphicon glyphicon-play"></b>
     </btn>
-    <span
-        :title="$t('disabled.job.run')"
-        class="has_tooltip"
-        data-toggle="tooltip"
-        data-placement="auto bottom"
-        v-else
-    >
-        <span class="btn btn-default btn-xs disabled">
-            <b class="glyphicon glyphicon-play"></b>
-        </span>
-    </span>
+    <btn  v-else :v-tooltip.hover="$t('disabled.job.run')" disabled size="xs">
+          <b class="glyphicon glyphicon-play"></b>
+    </btn>
 </template>
 
 <script lang="ts">
+import {
+    JobPageStore,
+    JobPageStoreInjectionKey,
+} from "@/library/stores/JobBrowser";
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
-import { defineComponent } from "vue";
+import { defineComponent, inject } from "vue";
 
 export default defineComponent({
     name: "JobRunButton",
@@ -35,6 +31,11 @@ export default defineComponent({
             default: () => {},
         },
     },
+    setup() {
+        return {
+            jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+        };
+    },
     computed: {
         job(): JobBrowseItem {
             return this.itemData?.job;
@@ -43,10 +44,21 @@ export default defineComponent({
             const data: any = this.job?.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "authz"
             )?.data;
-            return data?.authorizations||{}
+            return data?.authorizations || {};
+        },
+        canRun(): boolean {
+            const runAuth = this.authz?.run || false;
+            const projEnabled =
+                this.jobPageStore.projectExecutionsEnabled &&
+                this.jobPageStore.executionMode;
+            return runAuth && projEnabled;
         },
     },
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn {
+    margin-right: var(--spacing-2);
+}
+</style>

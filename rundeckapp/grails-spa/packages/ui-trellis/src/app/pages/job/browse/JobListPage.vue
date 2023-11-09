@@ -5,34 +5,20 @@
         <i class="glyphicon glyphicon-folder-open"></i>
         {{ browsePath }}
     </template>
-    <Browser
-        :path="browsePath"
-        :root="true"
-        @tree_rootBrowse="rootBrowse"
-    ></Browser>
-    <modal
-        id="bulk_confirm_modal"
-        ref="bulk_confirm_modal"
-        v-model="bulkConfirm"
-        :title="$t('job.bulk.modify.confirm.panel.title')"
-    >
-        {{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}
-        <template #footer>
-            <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
-            <btn type="danger" @click="deleteJobs">
-                {{ $t(`job.bulk.${bulkConfirmAction}.button`) }}
-            </btn>
-        </template>
-    </modal>
+    <JobBulkEditControls/>
+    <Browser :path="browsePath" :root="true" @rootBrowse="rootBrowse"></Browser>
+
 </template>
 
 <script lang="ts">
+import JobBulkEditControls from '@/app/pages/job/browse/JobBulkEditControls.vue'
 import { getRundeckContext } from "@/library";
 import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
+    JobPageStore,
+    JobPageStoreInjectionKey,
 } from "@/library/stores/JobBrowser";
-import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 import Browser from "./tree/Browser.vue";
 
@@ -40,35 +26,25 @@ const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
     name: "JobListPage",
-    components: { Browser },
+    components: {JobBulkEditControls, Browser },
     setup(props) {
+        const jobBrowserStore: JobBrowserStore = inject(
+            JobBrowserStoreInjectionKey
+        ) as JobBrowserStore;
+        const jobPageStore: JobPageStore = inject(JobPageStoreInjectionKey) as JobPageStore
         return {
-            jobBrowserStore: inject(
-                JobBrowserStoreInjectionKey
-            ) as JobBrowserStore,
+            jobBrowserStore,
+            jobPageStore,
             browsePath: ref(""),
-            bulkConfirm: ref(false),
-            bulkJobs: ref([]),
-            bulkConfirmAction: ref(""),
         };
     },
     methods: {
         rootBrowse(path: string) {
             this.browsePath = path;
         },
-        confirmAction(evt: { name: string; jobs: JobBrowseItem[] }) {
-            const { name, jobs } = evt;
-            this.bulkJobs = jobs;
-            this.bulkConfirmAction = name;
-            this.bulkConfirm = true;
-        },
-        deleteJobs() {
-            // this.jobBrowserStore.deleteJobs(this.bulkJobs);
-            this.bulkConfirm = false;
-        },
     },
-    mounted() {
-        eventBus.on("job-action", this.confirmAction);
+    async mounted() {
+      await this.jobPageStore.loadAuth()
     },
 });
 </script>

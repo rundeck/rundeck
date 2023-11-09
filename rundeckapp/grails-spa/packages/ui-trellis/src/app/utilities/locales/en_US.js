@@ -446,12 +446,16 @@ const messages = {
     "job.bulk.delete.button":"Delete Jobs",
     "job.bulk.disable_execution.button":"Disable Execution",
     "job.bulk.enable_execution.button":"Enable Execution",
-
+    "delete.selected.jobs":"Delete Selected Jobs",
     "job.bulk.panel.select.title":"Select Jobs for Bulk Edit",
     "job.bulk.perform.action.menu.label":"Perform Action",
     "job.create.button":"Create a new Job",
     "job.upload.button.title":"Upload a Job definition",
-    "cancel":"Cancel"
+    "cancel":"Cancel",
+    'job.actions':'Job Actions',
+    'job.bulk.activate.menu.label':'Bulk Edit',
+    'upload.definition.button.label':'Upload Definition',
+    'new.job.button.label':'New Job',
 }
 
 export default messages;

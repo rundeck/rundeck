@@ -1,9 +1,16 @@
 <template>
     <span v-if="scheduleData && scheduleData.hasSchedule">
         <i
-            class="glyphicon glyphicon-time"
+            class="glyphicon glyphicon-time text-success"
             :title="JSON.stringify(scheduleData)"
         ></i>
+
+      <span class="text-secondary" :title="'on server X'">
+<!--      <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil text-success"/>-->
+        <span v-if="scheduleData && scheduleData.nextExecution">
+          {{ scheduleData['nextExecution'] }}
+        </span>
+      </span>
     </span>
 </template>
 
