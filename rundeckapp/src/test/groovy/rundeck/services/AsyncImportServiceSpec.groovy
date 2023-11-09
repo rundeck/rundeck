@@ -924,6 +924,23 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(mockedFileInTmp.toString())) ) service.deleteNonEmptyDir(mockedFileInTmp.toString())
     }
 
+    def "Translate temp path by os basic usage"(){
+        setup:
+        System.setProperty("java.io.tmpdir", mockedEnvVar)
+
+        when:
+        def translatedTempDir = service.stripSlashFromString()
+
+        then:
+        translatedTempDir == result
+
+        where:
+        mockedEnvVar | result
+        "a\\path\\"  | "a\\path"
+        "a/path/"    | "a/path"
+
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName

@@ -37,7 +37,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ConfigurationService configurationService
 
     // Constants
-    static final String TEMP_DIR = translateTempPathByOs()
+    static final String TEMP_DIR = stripSlashFromString()
     static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-WD-")
     static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_executions"
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
@@ -941,15 +941,18 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     /**
      * Strips the last slash from the temp dir path to allow the async importer to work in windows and linux
      *
-     * @return
+     * @return a string w/o slash at the end
      */
-    static String translateTempPathByOs(){
+    static String stripSlashFromString(){
         def tempProp = null
         def prop = System.getProperty("java.io.tmpdir")
         if( prop.endsWith('\\') ){
             def trimmedProp = prop.substring(0, prop.size() -1)
             tempProp = trimmedProp
-        }else{
+        }else if(prop.endsWith('/')){
+            def trimmedUnixProp = prop.substring(0, prop.size() -1)
+            tempProp = trimmedUnixProp
+        } else{
             tempProp = prop
         }
         return tempProp
