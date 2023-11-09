@@ -39,4 +39,54 @@ databaseChangeLog = {
             }
         }
     }
+
+    final int DATA_FIELD_MAX_SIZE_BYTES = 1000000
+    changeSet(author: "rundeckuser (generated)", id: "migrate-storage-data-column-to-longblob-1", dbms: "mysql,mariadb") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "storage")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE storage MODIFY data longblob;")
+            }
+            rollback {
+            }
+        }
+    }
+    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1MB-1", dbms: "mysql,mariadb,postgresql,h2") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "storage")
+        }
+        grailsChange{
+            change{
+                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK (octet_length(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
+            }
+            rollback{
+            }
+        }
+    }
+    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1MB-1", dbms: "mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "storage")
+        }
+        grailsChange{
+            change{
+                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK(DATALENGTH(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
+            }
+            rollback{
+            }
+        }
+    }
+    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1M-1", dbms: "oracle") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "storage")
+        }
+        grailsChange{
+            change{
+                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK(length(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
+            }
+            rollback{
+            }
+        }
+    }
 }
