@@ -120,19 +120,19 @@ export class JobPageStore {
       if(action==='delete') {
         const result = await bulkDeleteJobs(
             getRundeckContext().projectName,
-            this.selectedJobs.map((j) => j.id)
+            this.selectedJobs.map((j) => j.id!)
         );
       }else if(action==='enable_schedule'||action==='disable_schedule') {
         const result = await bulkScheduleEnableDisable(
           getRundeckContext().projectName,
-          this.selectedJobs.map((j) => j.id),
+          this.selectedJobs.map((j) => j.id!),
           action==='enable_schedule'
         );
       }else if(action==='enable_execution'||action==='disable_execution') {
 
         const result = await bulkExecutionEnableDisable(
           getRundeckContext().projectName,
-          this.selectedJobs.map((j) => j.id),
+          this.selectedJobs.map((j) => j.id!),
           action==='enable_execution'
         );
       }
