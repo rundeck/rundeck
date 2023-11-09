@@ -941,6 +941,56 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
     }
 
+    def "getFilesPathsByPrefixAndExtensionInPath basic usage"(){
+        given:
+        def testName = specificationContext.currentIteration.name.replaceAll("\\s","")
+        def possibleNames = ["1", "2", "3"]
+        def tempPath = Paths.get(service.TEMP_DIR)
+        def testDir = new File("${tempPath}${File.separator}${testName}")
+
+        when:
+        testDir.mkdir()
+        if (Files.exists(Paths.get(testDir.toString()))) {
+            possibleNames.each {name ->{
+                def execFilename = "${AsyncImportService.EXECUTION_FILE_PREFIX}${name}${AsyncImportService.EXECUTION_FILE_EXT}"
+                def execPath = Paths.get("${testDir.toString()}${File.separator}${execFilename}")
+
+                def outputFilename = "${AsyncImportService.OUTPUT_FILE_PREFIX}${name}${AsyncImportService.OUTPUT_FILE_EXT}"
+                def outputPath = Paths.get("${testDir.toString()}${File.separator}${outputFilename}")
+
+                def stateFilename = "${AsyncImportService.STATE_FILE_PREFIX}${name}${AsyncImportService.STATE_FILE_EXT}"
+                def statePath = Paths.get("${testDir.toString()}${File.separator}${stateFilename}")
+
+                Files.createFile(execPath)
+                Files.createFile(outputPath)
+                Files.createFile(statePath)
+            }}
+        }
+        List<Path> executions = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.EXECUTION_FILE_PREFIX,
+                AsyncImportService.EXECUTION_FILE_EXT
+        )
+        List<Path> logs = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.OUTPUT_FILE_PREFIX,
+                AsyncImportService.OUTPUT_FILE_EXT
+        )
+        List<Path> states = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.STATE_FILE_PREFIX,
+                AsyncImportService.STATE_FILE_EXT
+        )
+
+        then:
+        executions.size() == 3
+        logs.size() == 3
+        states.size() == 3
+
+        cleanup:
+        if( Files.exists(Paths.get(testDir.toString())) ) AsyncImportService.deleteNonEmptyDir(testDir.toString())
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
