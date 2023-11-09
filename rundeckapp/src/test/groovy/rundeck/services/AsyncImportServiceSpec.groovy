@@ -15,7 +15,9 @@ import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Predicate
 import java.util.stream.Collectors
 
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
@@ -902,6 +904,24 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         !Files.exists(Paths.get(workingDirs.workingDir))
         !Files.exists(Paths.get(workingDirs.projectCopy))
 
+    }
+
+    def "getPathWithLogic basic usage"(){
+        given:
+        def className = this.getClass().toString()
+        def tempDir = AsyncImportService.TEMP_DIR
+        def mockedFileInTmp = new File("${tempDir}${File.separator}${className}")
+        Predicate<? super Path> dirMatcher = dirPath -> dirPath.getFileName().toString().endsWith(className)
+
+        when:
+        mockedFileInTmp.mkdirs()
+        def dirFound = service.getPathWithLogic(Paths.get(tempDir), dirMatcher)
+
+        then:
+        dirFound != null
+
+        cleanup:
+        if( Files.exists(Paths.get(mockedFileInTmp.toString())) ) service.deleteNonEmptyDir(mockedFileInTmp.toString())
     }
 
     private def getTempDirsPath(String projectName) {
