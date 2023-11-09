@@ -10,7 +10,7 @@
     >
         <b class="glyphicon glyphicon-play"></b>
     </btn>
-    <btn  v-else :v-tooltip.hover="$t('disabled.job.run')" disabled size="xs">
+    <btn  v-else :v-tooltip.hover="$t('disabled.job.run')" disabled size="xs" type="simple">
           <b class="glyphicon glyphicon-play"></b>
     </btn>
 </template>
