@@ -167,7 +167,7 @@ export default defineComponent({
             return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${format}`;
         },
         action(name: string) {
-            context.eventBus.emit(`job-action`, {name,jobs:[this.job]});
+            context.eventBus.emit(`job-action-single`, {name,job:this.job});
         },
     },
     computed: {
