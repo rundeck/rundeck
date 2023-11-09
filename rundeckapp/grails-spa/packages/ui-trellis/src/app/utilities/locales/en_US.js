@@ -456,6 +456,7 @@ const messages = {
     'job.bulk.activate.menu.label':'Bulk Edit',
     'upload.definition.button.label':'Upload Definition',
     'new.job.button.label':'New Job',
+    'job.bulk.panel.select.message':'{n} Job Selected | {n} Jobs Selected',
 }
 
 export default messages;
