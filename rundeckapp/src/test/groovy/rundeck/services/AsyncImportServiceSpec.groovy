@@ -1023,6 +1023,28 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
 
     }
 
+    def "Create temp copy from stream"(){
+        given:
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def tempDir = AsyncImportService.TEMP_DIR
+        def desiredName = "copied-project"
+        def desiredPath = Paths.get("${tempDir}${File.separator}${desiredName}")
+
+        when:
+        service.extractStream(desiredPath.toString(), is)
+
+        then:
+        Files.exists(desiredPath)
+        Files.isDirectory(desiredPath)
+        Files.list(desiredPath).count() > 0
+
+        cleanup:
+        if( Files.exists(desiredPath) ) AsyncImportService.deleteNonEmptyDir(desiredPath.toString())
+
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
