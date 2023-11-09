@@ -991,6 +991,38 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(testDir.toString())) ) AsyncImportService.deleteNonEmptyDir(testDir.toString())
     }
 
+    def "copy dir except basic usage"(){
+        given:
+        def tempDir = AsyncImportService.TEMP_DIR
+        def dirA = new File("${tempDir}${File.separator}dirA")
+        def dirB = new File("${tempDir}${File.separator}dirB")
+
+        def fileA = Paths.get("${dirA}${File.separator}a.txt")
+        def fileB = Paths.get("${dirA}${File.separator}b.txt")
+
+        when:
+        dirA.mkdirs()
+        dirB.mkdirs()
+        Files.createFile(fileA)
+        Files.createFile(fileB)
+
+        service.copyDirExcept(
+                dirA.toString(),
+                dirB.toString(),
+                "a.txt"
+        )
+
+        then:
+        Files.list(Paths.get(dirB.toString())).count() == 1
+        Files.list(Paths.get(dirA.toString())).count() == 2 // Only copy, dont move
+        Files.list(Paths.get(dirB.toString())).anyMatch { path -> path.fileName.toString() == "b.txt"}
+
+        cleanup:
+        if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
+        if( Files.exists(Paths.get(dirB.toString())) ) AsyncImportService.deleteNonEmptyDir(dirB.toString())
+
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
