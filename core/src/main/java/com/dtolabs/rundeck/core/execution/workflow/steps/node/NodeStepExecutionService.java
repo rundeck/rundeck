@@ -130,17 +130,6 @@ public class NodeStepExecutionService
         this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
     }
 
-//    public static boolean isRegistered(String provider){
-//        return PRESET_PROVIDERS.containsKey(provider);
-//    }
-
-    public static boolean isRegistered(String provider, PluginBlocklist blocklist){
-//        if(!blocklist.isPluginProviderPresent(SERVICE_NAME, provider)){
-//            return isRegistered(provider);
-//        }
-        return false;
-    }
-
     public ChainedNodeStepPluginService getChainedNodeStepPluginService() {
         return chainedNodeStepPluginService;
     }
