@@ -1,18 +1,36 @@
 <template>
-    <btn
-        type="success"
-        size="xs"
-        class="btn-simple btn-hover act_execute_job"
-        :title="$t('action.prepareAndRun.tooltip')"
-        :data-job-id="job.id"
-        @click="$emit('run-job', job.id)"
-        v-if="canRun"
-    >
-        <b class="glyphicon glyphicon-play"></b>
-    </btn>
-    <btn  v-else :v-tooltip.hover="$t('disabled.job.run')" disabled size="xs" type="simple">
-          <b class="glyphicon glyphicon-play"></b>
-    </btn>
+    <template v-if="jobEnabled && runAuthorized">
+        <btn
+            type="success"
+            size="xs"
+            class="btn-simple btn-hover act_execute_job"
+            :title="$t('action.prepareAndRun.tooltip')"
+            :data-job-id="job.id"
+            @click="$emit('run-job', job.id)"
+            v-if="projEnabled"
+        >
+            <b class="glyphicon glyphicon-play"></b>
+        </btn>
+        <btn
+            v-else
+            :v-tooltip.hover="$t('disabled.job.run')"
+            disabled
+            size="xs"
+            type="simple"
+        >
+            <b class="glyphicon glyphicon-play"></b>
+        </btn>
+    </template>
+    <template v-else>
+        <span
+            class="text-muted disabled"
+            style="padding: 4px 5px"
+            :title="$t('cannot.run.job')"
+            disabled
+        >
+            <b class="glyphicon glyphicon-minus"></b>
+        </span>
+    </template>
 </template>
 
 <script lang="ts">
@@ -46,12 +64,20 @@ export default defineComponent({
             )?.data;
             return data?.authorizations || {};
         },
-        canRun(): boolean {
-            const runAuth = this.authz?.run || false;
-            const projEnabled =
+        runAuthorized(): boolean {
+            return !!this.authz?.run;
+        },
+        jobEnabled(): boolean {
+            const data: any = this.job?.meta?.find(
+                (meta: JobBrowseMeta) => meta.name === "schedule"
+            )?.data;
+            return data?.executionEnabled || false;
+        },
+        projEnabled(): boolean {
+            return (
                 this.jobPageStore.projectExecutionsEnabled &&
-                this.jobPageStore.executionMode;
-            return runAuth && projEnabled;
+                this.jobPageStore.executionMode
+            );
         },
     },
 });
