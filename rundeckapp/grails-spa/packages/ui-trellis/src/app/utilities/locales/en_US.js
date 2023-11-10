@@ -416,6 +416,7 @@ const messages = {
     "per.page": "Per Page",
     "scheduledExecution.action.edit.button.label":"Edit this Job…",
     "scheduledExecution.action.duplicate.button.label":"Duplicate this Job…",
+    "scheduledExecution.action.duplicate.other.button.label":"Duplicate this Job to another Project…",
     "scheduledExecution.action.download.button.label":"Download Definition",
     "scheduledExecution.action.downloadformat.button.label":"Download Job definition in {0}",
     "scheduledExecution.action.delete.button.label":"Delete this Job",
@@ -432,7 +433,7 @@ const messages = {
     "scheduledExecution.action.disable.execution.button.label":"Disable Execution",
     "scheduleExecution.execution.disabled":"Job execution is disabled",
     "delete.this.job":"Delete this Job",
-    "action.prepareAndRun.tooltip":"Choose options and Run Job...",
+    "action.prepareAndRun.tooltip":"Choose options and Run Job…",
     "job.bulk.modify.confirm.panel.title":"Confirm Bulk Job Modification",
 
     "job.bulk.delete.confirm.message":"Really delete the selected Jobs?",
@@ -453,10 +454,15 @@ const messages = {
     "job.upload.button.title":"Upload a Job definition",
     "cancel":"Cancel",
     'job.actions':'Job Actions',
-    'job.bulk.activate.menu.label':'Bulk Edit',
+    'job.bulk.activate.menu.label':'Bulk Edit…',
+    'job.bulk.deactivate.menu.label':'Exit Bulk Edit Mode',
     'upload.definition.button.label':'Upload Definition',
     'new.job.button.label':'New Job',
     'job.bulk.panel.select.message':'{n} Job Selected | {n} Jobs Selected',
+    'cannot.run.job':'Cannot run job',
+    "disabled.schedule.run": "Executions are disabled.",
+    "disabled.job.run": "Executions are disabled.",
+    "disabled.execution.run": "Executions are disabled."
 }
 
 export default messages;
