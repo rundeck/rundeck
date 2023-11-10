@@ -1109,6 +1109,68 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
     }
 
+    def "Create dirs method test"(){
+        given:
+        def tempDir = AsyncImportService.TEMP_DIR
+        def dirA = new File("${tempDir}${File.separator}dirA")
+        def dirB = new File("${tempDir}${File.separator}dirB")
+        def files = List.of(dirA, dirB)
+
+        when:
+        AsyncImportService.createDirs(files)
+
+        then:
+        dirA.exists()
+        dirB.exists()
+
+        cleanup:
+        if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
+        if( Files.exists(Paths.get(dirB.toString())) ) AsyncImportService.deleteNonEmptyDir(dirB.toString())
+    }
+
+    def "check executions inside project path"(){
+        given:
+        def pathWithExecs = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def pathWithOutExecs = getClass().getClassLoader().getResource("async-import-sample-project-wo-execs.jar")
+
+        Predicate<? super Path> internalProjectMatcher = path -> path.fileName.toString().startsWith(AsyncImportService.MODEL_PROJECT_INTERNAL_PREFIX)
+
+        def fileWithExecs = new File(pathWithExecs.toURI())
+        def isExecs = new FileInputStream(fileWithExecs)
+
+        def fileWithOutExecs = new File(pathWithOutExecs.toURI())
+        def isWoExecs = new FileInputStream(fileWithOutExecs)
+
+        def tempDir = AsyncImportService.TEMP_DIR
+        def parentDirForProjectWithExecs = Paths.get("${tempDir}${File.separator}project-w-execs")
+        def parentDirForProjectWithOutExecs = Paths.get("${tempDir}${File.separator}project-wo-execs")
+
+        when:
+        AsyncImportService.extractStream(parentDirForProjectWithExecs.toString(), isExecs)
+        AsyncImportService.extractStream(parentDirForProjectWithOutExecs.toString(), isWoExecs)
+
+        def internalProjectPathWithExecs = AsyncImportService.getPathWithLogic(
+                parentDirForProjectWithExecs,
+                internalProjectMatcher
+        )
+
+        def internalProjectPathWithOutExecs = AsyncImportService.getPathWithLogic(
+                parentDirForProjectWithOutExecs,
+                internalProjectMatcher
+        )
+
+        def parentAhasExecs = AsyncImportService.checkExecutionsExistenceInPath(internalProjectPathWithExecs)
+        def parentBhasExecs = AsyncImportService.checkExecutionsExistenceInPath(internalProjectPathWithOutExecs)
+
+        then:
+        parentAhasExecs
+        !parentBhasExecs
+
+        cleanup:
+        if( Files.exists(parentDirForProjectWithExecs) ) AsyncImportService.deleteNonEmptyDir(parentDirForProjectWithExecs.toString())
+        if( Files.exists(parentDirForProjectWithOutExecs) ) AsyncImportService.deleteNonEmptyDir(parentDirForProjectWithOutExecs.toString())
+    }
+
     private def getTempDirsPath(String projectName) {
         def tmpCopy = service.TEMP_DIR + File.separator + service.TEMP_PROJECT_SUFFIX.toString() + projectName
         def tmpWorkingDir = service.BASE_WORKING_DIR.toString() + projectName
