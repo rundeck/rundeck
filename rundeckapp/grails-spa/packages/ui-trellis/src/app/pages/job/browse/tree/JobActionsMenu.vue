@@ -1,5 +1,5 @@
 <template>
-    <dropdown class="btn-group pull-right">
+    <dropdown class="btn-group pull-right visibility-hidden">
         <btn size="xs" class="dropdown-toggle" :data-job-id="job.id">
             {{ $t("actions") }}
             <span class="caret"></span>
