@@ -28,7 +28,20 @@
                     {{ $t("scheduledExecution.action.duplicate.button.label") }}
                 </a>
             </li>
-            <!-- todo: duplicate to other project -->
+            <li v-if="authz['read'] ">
+                <a
+                    :title="
+                        $t('scheduledExecution.action.duplicate.button.tooltip')
+                    "
+                    :href="duplicateOtherHref"
+                    data-action="copy_other_project"
+                    :data-job-id="job.id"
+                    class="page_action"
+                >
+                    <i class="glyphicon glyphicon-plus"></i>
+                    {{ $t("scheduledExecution.action.duplicate.other.button.label") }}
+                </a>
+            </li>
 
             <li class="divider"></li>
             <li v-if="authz['delete']">
@@ -194,6 +207,9 @@ export default defineComponent({
             return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;
         },
         duplicateHref() {
+            return `${context.rdBase}project/${context.projectName}/job/copy/${this.job.id}`;
+        },
+        duplicateOtherHref() {
             return `${context.rdBase}project/${context.projectName}/job/copy/${this.job.id}`;
         },
         deleteHref() {
