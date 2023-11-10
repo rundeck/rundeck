@@ -83,7 +83,7 @@ databaseChangeLog = {
         }
         grailsChange{
             change{
-                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK(length(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
+                sql.execute("ALTER TABLE storage ADD CONSTRAINT STORAGE_DATA_COL_MAX_SIZE_1M CHECK (lengthb(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ")")
             }
             rollback{
             }
