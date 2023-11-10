@@ -1,5 +1,5 @@
 plugins {
-  id "com.github.node-gradle.node"
+  id "com.github.node-gradle.node" version "7.0.1"
   id 'base'
 }
 
@@ -27,7 +27,7 @@ node{
     
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
-    version = "16.18.0"
+    version = "18.18.1"
 }
 
 

@@ -1002,7 +1002,7 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     contextBuilder.authContext(evt.authContext)
                     triggerJobNotification(
-                            "failure", job,
+                            evt.trigger, job,
                             [execution: Execution.findByUuid(evt.executionUuid),
                              context  : contextBuilder.build()]
                     )

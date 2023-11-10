@@ -301,17 +301,17 @@ export default defineComponent({
       this.updated();
     },
     selectFilter(filter) {
-      this.QueryNames.forEach(v => (this.query[v] = filter[v]));
+      this.QueryNames.forEach(v => (this.query[v] = filter.query[v]));
       this.DateQueryNames.forEach(v => {
-        if (filter[v]) {
+        if (filter.query[v]) {
           this.query["do" + v] = "true";
         }
       });
-      if (filter.recentFilter) {
-        this.query.recentFilter = filter.recentFilter;
+      if (filter.query.recentFilter) {
+        this.query.recentFilter = filter.query.recentFilter;
       }
 
-      this.query.filterName = filter.name;
+      this.query.filterName = filter.filterName;
       this.checkQueryIsPresent();
       this.updateSelectedPeriod();
       this.updated();

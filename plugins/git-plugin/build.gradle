@@ -65,7 +65,7 @@ dependencies {
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
-    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
 
     testImplementation( 'org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r')
 }

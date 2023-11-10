@@ -1,10 +1,10 @@
 FROM rdtest:latest
 
-RUN sudo apt-get update
-RUN sudo apt-get install -y software-properties-common
-RUN sudo apt-add-repository ppa:ansible/ansible
-RUN sudo apt-get update
-RUN sudo apt-get install -y ansible
+RUN sudo apt-add-repository ppa:ansible/ansible && \
+    sudo apt-get update
+
+
+RUN sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ansible-core
 
 RUN mkdir -p $HOME/atest
 COPY config $HOME/atest

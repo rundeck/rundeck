@@ -19,7 +19,7 @@ buildscript {
 plugins {
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
-    id "com.github.node-gradle.node" version "3.1.1"
+    id "com.github.node-gradle.node" version "7.0.1"
     id "java-library"
     id "war"
 }
@@ -258,9 +258,9 @@ dependencies {
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-    runtimeOnly "com.h2database:h2:2.1.210"
 
     // Database drivers
+    runtimeOnly "com.h2database:h2:2.2.220"
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:9.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.3.8'
@@ -397,6 +397,11 @@ tasks.withType(Test).configureEach {
     forkEvery = 500
 }
 
+// To make Spring boot bootWar task work, we need to declare the duplicateStrategy explicitly
+tasks.withType(Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 assets {
     minifyJs = false
     minifyCss = false
@@ -515,6 +520,9 @@ assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
 
+tasks.withType(War).configureEach { War war ->
+    war.dependsOn compileGroovyPages
+}
 
 bootWar {
     enabled=true
@@ -537,6 +545,7 @@ artifacts {
     war war
     bootWar bootWar
 }
+
 //install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {

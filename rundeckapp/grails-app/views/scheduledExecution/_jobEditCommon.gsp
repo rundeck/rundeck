@@ -7,6 +7,8 @@
 <g:jsMessages code="page.unsaved.changes"/>
 <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
 <asset:stylesheet src="static/css/pages/job/editor.css" />
+<asset:javascript src="static/pages/nodes.js" defer="defer"/>
+<asset:stylesheet src="static/css/pages/nodes.css"/>
 <g:jsMessages code="
     yes,
     no,

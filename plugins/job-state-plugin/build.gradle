@@ -31,7 +31,7 @@ dependencies{
                 'org.mockito:mockito-all:1.10.19'
 
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
 }
 jar {
     manifest {

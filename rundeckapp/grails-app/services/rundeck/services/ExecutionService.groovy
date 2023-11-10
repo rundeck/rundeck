@@ -991,7 +991,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.execIdForLogStore = execution.getExecIdForLogStore().toString()
         jobcontext.isRemoteFilePath = execution.isRemoteOutputfilepath().toString()
         jobcontext.executionUuid = execution.uuid
-        jobcontext.execDateCompleted = execution.dateCompleted
+        jobcontext.execDateCompleted = execution.dateCompleted?.toString()
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
@@ -1498,6 +1498,46 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       manager,
                       secureOptionNodeDeferred,
                       childNodes
+        )
+    }
+    /**
+     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     */
+    public StepExecutionContext createContext(
+            String executionUuid,
+            UserAndRolesAuthContext authContext = null
+    )
+    {
+        def execution = Execution.findByUuid(executionUuid)
+        if(!authContext) {
+            authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRoles(execution.user,execution.userRoles)
+        }
+        def job = execution.jobUuid ? ScheduledExecution.findByUuid(execution.jobUuid) : null
+        def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
+        def secureOptionNodeDeferred = [:]
+        def extraParamsExposed = [:]
+        def extraParams = [:]
+        if(job) {
+            Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+            loadSecureOptionStorageDefaults(job, extraParamsExposed, extraParams, authContext, true,
+                    args, jobcontext, secureOptionNodeDeferred)
+        }
+        String charsetEncoding=frameworkService.getDefaultInputCharsetForProject(execution.project)
+
+        return createContext(execution,
+                null,
+                frameworkService.rundeckFramework,
+                authContext,
+                null,
+                jobcontext,
+                null,
+                null,
+                null,
+                extraParams,
+                extraParamsExposed,
+                charsetEncoding,
+                null,
+                secureOptionNodeDeferred
         )
     }
     /**
@@ -4317,6 +4357,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch(JobLifecycleComponentException e) {
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            log.debug("beforeJobExecution check failure: " + e.getMessage(), e)
             def jobEventStatus = new JobEventStatusImpl(
                     successful: false,
                     eventType: event.getClass(),
