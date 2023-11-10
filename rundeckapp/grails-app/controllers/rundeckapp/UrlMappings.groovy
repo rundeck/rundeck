@@ -119,6 +119,7 @@ class UrlMappings {
         "/api/$api_version/project/$project"(controller: 'project'){
             action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
         }
+        "/api/$api_version/project/$project/meta"(controller: 'project', action:'apiProjectMeta')
         "/api/$api_version/project/$project/config"(controller: 'project'){
             action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
         }
