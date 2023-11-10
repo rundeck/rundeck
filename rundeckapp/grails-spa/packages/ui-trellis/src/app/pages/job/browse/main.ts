@@ -18,7 +18,7 @@ import JobScheduleInfo from './tree/JobScheduleInfo.vue';
 function init() {
   const rootStore = getRundeckContext().rootStore;
   moment.locale(getRundeckContext().locale||'en_US')
-  const page = new JobPageStore();
+  const page = rootStore.jobPageStore
   const browse = new JobBrowserStore(getRundeckContext().projectName, "");
 
   const jobPageStore = reactive(page);
