@@ -2009,7 +2009,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
                 break
             default:
-                throw new AsyncImportException("Invalid milestone number: ${milestoneNumber} please, provide a valid async import milestone number.")
+                throw new AsyncImportException("Invalid milestone number: ${asyncImportStep} please, provide a valid async import milestone number.")
         }
     }
 
