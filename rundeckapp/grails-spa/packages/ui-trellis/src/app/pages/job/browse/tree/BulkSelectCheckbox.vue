@@ -54,11 +54,16 @@ export default defineComponent({
             return data?.authorizations || {};
         },
     },
-  mounted(){
-      eventBus.on('job-bulk-edit-select-all', () => {
-        this.selected = true
-      })
-  }
+    mounted() {
+        eventBus.on("job-bulk-edit-select-all", () => {
+            this.selected = true;
+        });
+        eventBus.on(`browser-job-item-click:${this.job.id}`, () => {
+            if (this.jobPageStore.bulkEditMode) {
+                this.selected = !this.selected;
+            }
+        });
+    },
 });
 </script>
 
