@@ -2,7 +2,7 @@ package org.rundeck.app.data.job.metadata
 
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import groovy.transform.CompileStatic
-import org.rundeck.app.components.jobs.JobMeta
+import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobMetadataComponent
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.JobDataSummary
@@ -27,27 +27,27 @@ class JobScheduleMetadataComponent implements JobMetadataComponent {
     }
 
     @Override
-    List<JobMeta> getMetadataForJob(final String id, final Set<String> names) {
+    List<ComponentMeta> getMetadataForJob(final String id, final Set<String> names) {
         if (!names.contains(SCHEDULE_NAME) && !names.contains('*')) {
             return null
         }
         JobData foundJob = jobDataProvider.findByUuid(id)
         if (foundJob) {
-            return [JobMeta.with(SCHEDULE_NAME, toMapData(foundJob))]
+            return [ComponentMeta.with(SCHEDULE_NAME, toMapData(foundJob))]
         }
 
         return null
     }
 
     @Override
-    List<JobMeta> getMetadataForJob(final JobDataSummary job, final Set<String> names) {
+    List<ComponentMeta> getMetadataForJob(final JobDataSummary job, final Set<String> names) {
 
         if (!names.contains(SCHEDULE_NAME) && !names.contains('*')) {
             return null
         }
         def data = toMapData(job)
         if (data) {
-            return [JobMeta.with(SCHEDULE_NAME, data)]
+            return [ComponentMeta.with(SCHEDULE_NAME, data)]
         }
         return null
 

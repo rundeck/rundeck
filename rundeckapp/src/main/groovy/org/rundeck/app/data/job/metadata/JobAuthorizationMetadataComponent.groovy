@@ -3,7 +3,7 @@ package org.rundeck.app.data.job.metadata
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
-import org.rundeck.app.components.jobs.JobMeta
+import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobMetadataComponent
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.JobDataSummary
@@ -38,30 +38,19 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
     }
 
     @Override
-    List<JobMeta> getMetadataForJob(final String id, final Set<String> names) {
-        return null
-    }
-
-
-    @Override
-    List<JobMeta> getMetadataForJob(final JobDataSummary job, final Set<String> names) {
-        return null
-    }
-
-    @Override
-    List<JobMeta> getMetadataForJob(final String id, final Set<String> names, UserAndRolesAuthContext authContext) {
+    List<ComponentMeta> getMetadataForJob(final String id, final Set<String> names, UserAndRolesAuthContext authContext) {
         if (!names.contains(NAME) && !names.contains('*')) {
             return null
         }
         def job = jobDataProvider.findByUuid(id)
         if (job) {
-            return [JobMeta.with(NAME, getAuthzMeta(job, authContext))]
+            return [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))]
         }
         return null
     }
 
     @Override
-    List<JobMeta> getMetadataForJob(
+    List<ComponentMeta> getMetadataForJob(
         final JobDataSummary job,
         final Set<String> names,
         final UserAndRolesAuthContext authContext
@@ -69,7 +58,7 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
         if (!names.contains(NAME) && !names.contains('*')) {
             return null
         }
-        return [JobMeta.with(NAME, getAuthzMeta(job, authContext))]
+        return [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))]
     }
 
     Map<String, Object> getAuthzMeta(JobData jobDataSummary, UserAndRolesAuthContext authContext) {

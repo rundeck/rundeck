@@ -23,7 +23,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
 import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseItemData
 import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseResponse
-import com.dtolabs.rundeck.app.api.jobs.browse.JobItemMeta
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
@@ -6111,7 +6111,7 @@ Since: v45''',
             path,
             projectAuthContext
         )
-        Map<String, List<JobItemMeta>> jobMetaItems = [:]
+        Map<String, List<ItemMeta>> jobMetaItems = [:]
         if (meta) {
             jobMetaItems = scheduledExecutionService.loadJobMetaItems(
                 project,
@@ -6148,7 +6148,7 @@ Since: v45''',
                 content = [
                     @Content(
                         mediaType = MediaType.APPLICATION_JSON,
-                        array = @ArraySchema(schema = @Schema(implementation = JobItemMeta))
+                        array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
                     )
                 ]
 

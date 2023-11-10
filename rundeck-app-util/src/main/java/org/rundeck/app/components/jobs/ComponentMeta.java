@@ -3,15 +3,15 @@ package org.rundeck.app.components.jobs;
 import java.util.Map;
 
 /**
- * A named set of metadata for a job
+ * A named set of metadata
  */
-public interface JobMeta {
+public interface ComponentMeta {
     String getName();
 
     Map<String, Object> getData();
 
-    static JobMeta with(String name, Map<String, Object> data) {
-        return new JobMeta() {
+    static ComponentMeta with(String name, Map<String, Object> data) {
+        return new ComponentMeta() {
             @Override
             public String getName() {
                 return name;
