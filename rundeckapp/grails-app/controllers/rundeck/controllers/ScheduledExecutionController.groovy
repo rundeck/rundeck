@@ -6062,7 +6062,7 @@ Since: v14''',
 
 Authorization required: `read` or `view` for the Job.
 
-Since: v45''',
+Since: v46''',
         tags = ['jobs'],
         parameters = [
 
@@ -6136,7 +6136,7 @@ Since: v45''',
 
 Authorization required: `read` or `view` for the Job.
 
-Since: v45''',
+Since: v46''',
         tags = ['jobs'],
         responses = [
             @ApiResponse(
