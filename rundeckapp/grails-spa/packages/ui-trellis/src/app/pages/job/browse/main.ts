@@ -6,6 +6,7 @@ import {
     JobPageStore,
     JobPageStoreInjectionKey,
 } from "../../../../library/stores/JobBrowser";
+import moment from 'moment'
 import JobListPage from './JobListPage.vue'
 import * as uiv from "uiv";
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
@@ -15,6 +16,7 @@ import JobScheduleInfo from './tree/JobScheduleInfo.vue';
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
+  moment.locale(getRundeckContext().locale||'en_US')
   const page = new JobPageStore();
   const browse = new JobBrowserStore(getRundeckContext().projectName, "");
 
