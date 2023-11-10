@@ -20,9 +20,10 @@ import { getRundeckContext } from "@/library";
 import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
-    JobPageStore,
-    JobPageStoreInjectionKey,
+
+
 } from "@/library/stores/JobBrowser";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { defineComponent, inject, ref } from "vue";
 import Browser from "./tree/Browser.vue";
 

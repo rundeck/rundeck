@@ -36,10 +36,7 @@
 </template>
 
 <script lang="ts">
-import {
-    JobPageStore,
-    JobPageStoreInjectionKey,
-} from "@/library/stores/JobBrowser";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject } from "vue";
 

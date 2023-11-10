@@ -3,10 +3,11 @@ import {getRundeckContext} from '../../../../library'
 import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
-    JobPageStore,
-    JobPageStoreInjectionKey,
+
+
 } from "../../../../library/stores/JobBrowser";
 import moment from 'moment'
+import {JobPageStore, JobPageStoreInjectionKey} from '../../../../library/stores/JobPageStore'
 import JobListPage from './JobListPage.vue'
 import * as uiv from "uiv";
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
