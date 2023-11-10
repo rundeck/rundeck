@@ -55,8 +55,6 @@ import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.JobDataSummary
-import org.rundeck.app.data.model.v1.page.Page
-import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider

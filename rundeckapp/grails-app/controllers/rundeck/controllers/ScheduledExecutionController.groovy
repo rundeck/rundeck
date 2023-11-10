@@ -74,7 +74,6 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
-import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -82,7 +81,6 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
-import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.util.HttpClientCreator
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -96,7 +94,6 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
-import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
