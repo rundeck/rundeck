@@ -90,6 +90,14 @@ export class JobPageStore {
   findMeta(key: string) {
     return this.meta.find((m) => m.name === key)?.data
   }
+  createJobHref(){
+    const context= getRundeckContext()
+    return `${context.rdBase}project/${context.projectName}/job/create`;
+  }
+  uploadJobHref() {
+    const context= getRundeckContext()
+    return `${context.rdBase}project/${context.projectName}/job/upload`;
+  }
 }
 
 export const JobPageStoreInjectionKey: InjectionKey<JobPageStore> =
