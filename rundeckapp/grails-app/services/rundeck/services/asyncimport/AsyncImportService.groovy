@@ -249,12 +249,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         })
 
         String scopedWorkingDir = "${BASE_WORKING_DIR}${projectName}"
-
         File baseWorkingDir = new File(scopedWorkingDir)
         File modelProjectHost = new File(baseWorkingDir.toString() + File.separator + MODEL_PROJECT_NAME_SUFFIX)
-
-        if (!baseWorkingDir.exists()) baseWorkingDir.mkdir()
-        if (!modelProjectHost.exists()) modelProjectHost.mkdir()
+        createDirs(List.of(
+                baseWorkingDir,
+                modelProjectHost
+        ))
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating the project model inside working directory in /tmp."
@@ -268,18 +268,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             if( modelProjectHost.list().size() == 0 ){
                 // check if the executions dir exists, if not, false a flag to prevent M2 trigger
                 def internalProjectPath = getPathWithLogic(Paths.get(destDir.toString()), internalProjectMatcher)
-                if( internalProjectPath != null ){
-                    Predicate<? super Path> executionsDirMatcher = path -> path.fileName.toString() == EXECUTION_DIR_NAME
-                    def executionsDirPath = getPathWithLogic(internalProjectPath, executionsDirMatcher)
-                    if( executionsDirPath == null ){
-                        executionsDirFound = false
-                    }else{
-                        // If the dir exists but there are no executions, dont start M2
-                        def hasExecutions = Files.list(executionsDirPath).count()
-                        if( hasExecutions <=0  ){
-                            executionsDirFound = false
-                        }
-                    }
+                if( !checkExecutionsExistenceInPath(internalProjectPath) ){
+                    executionsDirFound = false
                 }
                 copyDirExcept(destDir, modelProjectHost.toString(), EXECUTION_DIR_NAME)
             }
@@ -760,6 +750,49 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 return it
             })
         }
+    }
+
+    /**
+     * Takes a list of files and creates them
+     *
+     * @param filesToCreate
+     * @return
+     */
+    static createDirs(List<File> filesToCreate) {
+        try {
+            if (filesToCreate.size()) {
+                filesToCreate.each { file ->
+                    file.mkdirs()
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Checks executions in given exported project dir path
+     *
+     * @param internalProjectPath
+     * @return
+     */
+    static boolean checkExecutionsExistenceInPath(Path internalProjectPath) {
+        try{
+            Predicate<? super Path> executionsDirMatcher = path -> path.fileName.toString() == EXECUTION_DIR_NAME
+            def executionsDirPath = getPathWithLogic(internalProjectPath, executionsDirMatcher)
+            if (executionsDirPath == null) {
+                return false
+            } else {
+                // If the dir exists but there are no executions, dont start M2
+                def hasExecutions = Files.list(executionsDirPath).count()
+                if (hasExecutions <= 0) {
+                    return false
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+        return true
     }
 
     /**
