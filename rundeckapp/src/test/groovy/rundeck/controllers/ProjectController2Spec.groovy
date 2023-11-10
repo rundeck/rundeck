@@ -1443,7 +1443,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         given:
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(_,_,_,_,_)>>{
+                1 * handleApiImport(_,_,_,_,_)>>{
                     [success:false,joberrors:['error1','error2']]
                 }
             }
@@ -1487,7 +1487,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             setupImportApiService(format)
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it.importExecutions
                     it.jobUuidOption == 'preserve'
@@ -1524,7 +1524,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it."$param"==val
                 }
@@ -1603,7 +1603,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectImport()
         then:
             with(controller.projectService){
-                0 * importToProject(*_)>>[success:true]
+                0 * handleApiImport(*_)>>[success:true]
             }
             1 * controller.apiService.renderErrorFormat(_,
                 [
@@ -1639,7 +1639,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
 
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
@@ -1718,7 +1718,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
         then:
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
