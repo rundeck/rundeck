@@ -17,18 +17,14 @@
                             </li>
                             <li class="divider"></li>
                         </template>
-                        <li v-if="!jobPageStore.bulkEditMode">
+                        <li>
                             <a
-                                @click="jobPageStore.bulkEditMode = true"
+                                @click="jobPageStore.bulkEditMode = !jobPageStore.bulkEditMode"
                                 role="button"
-                                >{{ $t("job.bulk.activate.menu.label") }}</a
-                            >
+                                >
+                              {{ $t(jobPageStore.bulkEditMode?"job.bulk.deactivate.menu.label":"job.bulk.activate.menu.label") }}
+                            </a>
                         </li>
-                        <template v-if="jobPageStore.bulkEditMode">
-                            <li>
-                                <a @click="bulkAction('delete')">Delete Jobs</a>
-                            </li>
-                        </template>
                     </template>
                 </dropdown>
                 <ui-socket section="job-list-page" location="action-buttons">
