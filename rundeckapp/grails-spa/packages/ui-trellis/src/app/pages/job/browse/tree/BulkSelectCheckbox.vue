@@ -6,10 +6,7 @@
 
 <script lang="ts">
 import {getRundeckContext} from '@/library'
-import {
-    JobPageStore,
-    JobPageStoreInjectionKey,
-} from "@/library/stores/JobBrowser";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 

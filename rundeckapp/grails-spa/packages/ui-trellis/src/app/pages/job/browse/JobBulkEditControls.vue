@@ -139,10 +139,9 @@
 import { getRundeckContext } from "@/library";
 import {
     JobBrowserStore,
-    JobBrowserStoreInjectionKey,
-    JobPageStore,
-    JobPageStoreInjectionKey,
+    JobBrowserStoreInjectionKey
 } from "@/library/stores/JobBrowser";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 import UiSocket from '@/library/components/utils/UiSocket.vue'
