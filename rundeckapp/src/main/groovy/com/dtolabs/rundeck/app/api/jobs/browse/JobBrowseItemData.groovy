@@ -15,9 +15,9 @@ class JobBrowseItemData {
     @Ignore(onlyIfNull = true)
     String id
     @Ignore(onlyIfNull = true)
-    List<JobItemMeta> meta
+    List<ItemMeta> meta
 
-    static JobBrowseItemData from(JobBrowseItem model, List<JobItemMeta> meta) {
+    static JobBrowseItemData from(JobBrowseItem model, List<ItemMeta> meta) {
         new JobBrowseItemData(
             job: model.job,
             groupPath: model.groupPath ?: model.jobData?.groupPath,

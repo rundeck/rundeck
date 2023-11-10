@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.api.jobs.browse.JobItemMeta
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -45,7 +45,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
-import org.rundeck.app.components.jobs.JobMeta
+import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobMetadataComponent
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
@@ -533,18 +533,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param authContext
      * @return
      */
-    List<JobItemMeta> loadJobMetaItems(
+    List<ItemMeta> loadJobMetaItems(
         String project,
         Set<String> metakeys,
         String uuid,
         UserAndRolesAuthContext authContext
     ) {
-        List<JobItemMeta> metaVals = []
+        List<ItemMeta> metaVals = []
         def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
         components.each { name, component ->
-            List<JobMeta> metaItems = component.getMetadataForJob(uuid, metakeys, authContext)
+            List<ComponentMeta> metaItems = component.getMetadataForJob(uuid, metakeys, authContext)
             metaVals.addAll(
-                metaItems.stream().map(JobItemMeta.&from).collect(Collectors.toList())
+                metaItems.stream().map(ItemMeta.&from).collect(Collectors.toList())
             )
         }
 
@@ -559,14 +559,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param authContext
      * @return
      */
-    Map<String, List<JobItemMeta>> loadJobMetaItems(
+    Map<String, List<ItemMeta>> loadJobMetaItems(
         String project,
         String path,
         Set<String> metakeys,
         List<JobBrowseItem> items,
         UserAndRolesAuthContext authContext
     ) {
-        Map<String, List<JobItemMeta>> metaVals = new HashMap<>()
+        Map<String, List<ItemMeta>> metaVals = new HashMap<>()
 
         def jobs = items.stream().
             filter(JobBrowseItem.&isJob).
@@ -574,11 +574,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             collect(Collectors.toList())
         def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
         components.each { name, component ->
-            Map<String, List<JobMeta>> metaItems = component.getMetadataForJobs(jobs, metakeys, authContext)
+            Map<String, List<ComponentMeta>> metaItems = component.getMetadataForJobs(jobs, metakeys, authContext)
             for (String id : metaItems.keySet()) {
-                metaVals.computeIfAbsent(id, { new ArrayList<JobMeta>()}).
+                metaVals.computeIfAbsent(id, { new ArrayList<ComponentMeta>()}).
                     addAll(
-                        metaItems.get(id).stream().map(JobItemMeta.&from).collect(Collectors.toList())
+                        metaItems.get(id).stream().map(ItemMeta.&from).collect(Collectors.toList())
                     )
             }
         }
