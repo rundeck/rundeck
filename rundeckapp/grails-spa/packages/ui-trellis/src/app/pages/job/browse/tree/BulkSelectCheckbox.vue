@@ -67,4 +67,9 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+span {
+    margin-right: var(--spacing-2);
+    padding: 4px 5px;
+}
+</style>
