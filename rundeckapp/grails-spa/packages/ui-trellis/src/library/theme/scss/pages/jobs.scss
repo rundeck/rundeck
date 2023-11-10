@@ -159,6 +159,10 @@
     line-height: 16px;
   }
 
+  .opt-desc {
+    overflow-wrap: break-word !important;
+  }
+
   .enforceSet span.any,
   .opt.item .enforceSet span.enforced,
   .opt.item .enforceSet span.regex {
