@@ -919,7 +919,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param ext
      * @return
      */
-    List<Path> getFilesPathsByPrefixAndExtensionInPath(String path, String prefix, String ext){
+    static List<Path> getFilesPathsByPrefixAndExtensionInPath(String path, String prefix, String ext){
         try{
             return Files.list(Paths.get(path.toString()))
                     .sorted((s1, s2) -> {
