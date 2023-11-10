@@ -462,7 +462,14 @@ const messages = {
     'cannot.run.job':'Cannot run job',
     "disabled.schedule.run": "Executions are disabled.",
     "disabled.job.run": "Executions are disabled.",
-    "disabled.execution.run": "Executions are disabled."
+    "disabled.execution.run": "Executions are disabled.",
+    "schedule.on.server.x.at.y":'Scheduled to run on server {0} at {1}',
+    "schedule.time.in.future":"in {0}",
+    "never":"Never",
+    "disabled":"Disabled",
+    "project.schedule.disabled": "Project schedule is disabled",
+    "project.execution.disabled": "Project execution is disabled",
+    "job.schedule.will.never.fire":"Job schedule will never fire"
 }
 
 export default messages;
