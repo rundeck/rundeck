@@ -28,7 +28,7 @@
                     </template>
                 </dropdown>
                 <ui-socket section="job-list-page" location="action-buttons">
-                    <a :href="newJobHref" class="btn btn-primary">
+                    <a :href="newJobHref" class="btn btn-primary" v-if="projAuthz('create')">
                         <i class="glyphicon glyphicon-plus"></i>
                         {{ $t("new.job.button.label") }}
                     </a>
