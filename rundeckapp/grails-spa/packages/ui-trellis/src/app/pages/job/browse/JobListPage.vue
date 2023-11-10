@@ -5,18 +5,30 @@
         <i class="glyphicon glyphicon-folder-open"></i>
         {{ browsePath }}
     </template>
-    <JobBulkEditControls/>
-    <Browser :path="browsePath"
-             :root="true"
-             @rootBrowse="rootBrowse"
-             class="job_list_browser"
-    />
-
+    <JobBulkEditControls />
+    <Browser
+        :path="browsePath"
+        :root="true"
+        @rootBrowse="rootBrowse"
+        class="job_list_browser"
+    >
+        <ui-socket section="job-list-page" location="empty-splash">
+          <div class="empty-splash">
+          <create-new-job-button btn-type="cta">
+            {{ $t("job.create.button") }}
+          </create-new-job-button>
+          <upload-job-button></upload-job-button>
+          </div>
+        </ui-socket>
+    </Browser>
 </template>
 
 <script lang="ts">
-import JobBulkEditControls from '@/app/pages/job/browse/JobBulkEditControls.vue'
+import CreateNewJobButton from "@/app/pages/job/browse/components/CreateNewJobButton.vue";
+import UploadJobButton from "@/app/pages/job/browse/components/UploadJobButton.vue";
+import JobBulkEditControls from "@/app/pages/job/browse/JobBulkEditControls.vue";
 import { getRundeckContext } from "@/library";
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
@@ -31,7 +43,13 @@ const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
     name: "JobListPage",
-    components: {JobBulkEditControls, Browser },
+    components: {
+        UploadJobButton,
+        UiSocket,
+        CreateNewJobButton,
+        JobBulkEditControls,
+        Browser,
+    },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
             JobBrowserStoreInjectionKey
@@ -57,5 +75,10 @@ export default defineComponent({
 <style scoped lang="scss">
 .job_list_browser{
   margin-top: var(--spacing-8)
+}
+.empty-splash{
+  .btn+.btn{
+    margin-left: var(--spacing-4);
+  }
 }
 </style>

@@ -28,10 +28,7 @@
                     </template>
                 </dropdown>
                 <ui-socket section="job-list-page" location="action-buttons">
-                    <a :href="newJobHref" class="btn btn-primary" v-if="projAuthz('create')">
-                        <i class="glyphicon glyphicon-plus"></i>
-                        {{ $t("new.job.button.label") }}
-                    </a>
+                    <create-new-job-button/>
                 </ui-socket>
             </div>
         </div>
@@ -136,6 +133,7 @@
 </template>
 
 <script lang="ts">
+import CreateNewJobButton from "@/app/pages/job/browse/components/CreateNewJobButton.vue";
 import { getRundeckContext } from "@/library";
 import {
     JobBrowserStore,
@@ -150,7 +148,7 @@ const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
     name: "JobBulkEditControls",
-    components:{UiSocket},
+    components: { CreateNewJobButton, UiSocket },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
             JobBrowserStoreInjectionKey

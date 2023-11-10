@@ -21,6 +21,7 @@
                 <template v-if="loading">
                     <i class="glyphicon glyphicon-refresh spinning"></i>
                 </template>
+                <slot/>
             </li>
         </ul>
     </div>
