@@ -1,6 +1,12 @@
 import {getRundeckContext} from '../rundeckService'
-import {JobBrowseItem} from '../types/jobs/JobBrowse'
-import {browsePath, bulkDeleteJobs, bulkExecutionEnableDisable, bulkScheduleEnableDisable} from '../services/jobBrowse'
+import {JobBrowseItem, JobBrowseMeta} from '../types/jobs/JobBrowse'
+import {
+  browsePath,
+  bulkDeleteJobs,
+  bulkExecutionEnableDisable,
+  bulkScheduleEnableDisable,
+  getProjectMeta
+} from '../services/jobBrowse'
 import { InjectionKey } from "vue";
 
 export class JobBrowserStoreItem {
@@ -96,6 +102,7 @@ export class JobPageStore {
     projectExecutionsEnabled: boolean = false;
     projectSchedulesEnabled: boolean = false;
     selectedJobs: JobBrowseItem[] = [];
+    meta: JobBrowseMeta[] = [];
 
     addBulkJob(job: JobBrowseItem) {
         if (!this.selectedJobs.find((j) => j.id === job.id)) {
@@ -139,14 +146,25 @@ export class JobPageStore {
     }
 
     async loadAuth() {
-        console.log("TODO: loadAuth, modes");
-        //set to random boolean values
-        for (const az of ["read", "update", "delete", "create", "run"]) {
-            this.authz[az] = Math.random() >= 0.5;
+        this.meta = await getProjectMeta(getRundeckContext().projectName);
+        const projAuthz = this.findMeta('authz');
+        if (projAuthz?.types?.job?.authorizations && typeof projAuthz.types.job.authorizations === 'object') {
+            this.authz = projAuthz?.types?.job?.authorizations;
         }
-        this.executionMode = Math.random() >= 0.5;
-        this.projectExecutionsEnabled = Math.random() >= 0.5;
-        this.projectSchedulesEnabled = Math.random() >= 0.5;
+        const projMode = this.findMeta('projMode');
+        if (projMode) {
+            this.projectExecutionsEnabled = !!projMode.executionsEnabled;
+            this.projectSchedulesEnabled = !!projMode.scheduleEnabled;
+        }
+
+        const sysMode = this.findMeta('sysMode');
+        if (sysMode) {
+            this.executionMode = !!sysMode.active;
+        }
+    }
+
+    findMeta(key: string) {
+        return this.meta.find((m) => m.name === key)?.data;
     }
 }
 
