@@ -73,8 +73,8 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.job_list_browser{
-  margin-top: var(--spacing-8)
+.job_list_browser {
+    margin-top: var(--spacing-8);
 }
 .empty-splash{
   .btn+.btn{
