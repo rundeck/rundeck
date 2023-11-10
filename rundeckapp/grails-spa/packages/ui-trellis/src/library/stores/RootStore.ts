@@ -1,4 +1,6 @@
 import { ExecutionOutputStore, ExecutionOutput } from "./ExecutionOutput"
+
+import {JobPageStore} from './JobPageStore'
 import { WorkflowStore } from './Workflow'
 import { NavBar } from './NavBar'
 import { UtilityBar } from './UtilityBar'
@@ -28,6 +30,7 @@ export class RootStore {
     theme: UnwrapNestedRefs<ThemeStore>
     ui: UnwrapNestedRefs<UIStore>
     nodeSourceFile: UnwrapNestedRefs<NodeSourceFile>
+    jobPageStore: UnwrapNestedRefs<JobPageStore>
 
     constructor(readonly client: RundeckClient, appMeta: any = {}) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
@@ -44,5 +47,6 @@ export class RootStore {
         this.theme = reactive(new ThemeStore())
         this.ui = reactive(new UIStore())
         this.nodeSourceFile = reactive(new NodeSourceFile(this, client))
+        this.jobPageStore=reactive(new JobPageStore())
     }
 }
