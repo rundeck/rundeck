@@ -1,4 +1,5 @@
 <template>
+  <template v-if="!jobPageStore.bulkEditMode">
     <template v-if="jobEnabled && runAuthorized">
         <btn
             type="success"
@@ -31,6 +32,7 @@
             <b class="glyphicon glyphicon-minus"></b>
         </span>
     </template>
+  </template>
 </template>
 
 <script lang="ts">
