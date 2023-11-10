@@ -10,7 +10,7 @@
                     <template #dropdown>
                         <template v-if="projAuthz('create')">
                             <li>
-                                <a :href="uploadJobHref">
+                                <a :href="jobPageStore.uploadJobHref()">
                                     <i class="glyphicon glyphicon-upload"></i>
                                     {{ $t("upload.definition.button.label") }}
                                 </a>
@@ -194,14 +194,6 @@ export default defineComponent({
         },
         selectNone() {
             this.jobPageStore.selectedJobs = [];
-        },
-    },
-    computed: {
-        newJobHref() {
-            return `${context.rdBase}project/${context.projectName}/job/create`;
-        },
-        uploadJobHref() {
-            return `${context.rdBase}project/${context.projectName}/job/upload`;
         },
     },
     mounted() {
