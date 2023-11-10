@@ -6,7 +6,11 @@
         {{ browsePath }}
     </template>
     <JobBulkEditControls/>
-    <Browser :path="browsePath" :root="true" @rootBrowse="rootBrowse"></Browser>
+    <Browser :path="browsePath"
+             :root="true"
+             @rootBrowse="rootBrowse"
+             class="job_list_browser"
+    />
 
 </template>
 
@@ -49,4 +53,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.job_list_browser{
+  margin-top: var(--spacing-8)
+}
+</style>

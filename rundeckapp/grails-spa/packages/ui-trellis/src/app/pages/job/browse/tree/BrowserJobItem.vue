@@ -13,7 +13,6 @@
     <a :href="jobLinkHref(job)" :data-job-id="job.uuid">
         {{ job.jobName }}
     </a>
-    <span class="text-secondary" v-if="job.description">{{
         shortDescription
     }}</span>
     <ui-socket
@@ -27,6 +26,7 @@
         section="job-browse-item"
         :socket-data="{ job }"
     />
+        <span class="text-secondary job-description" v-if="job.description">
 </template>
 
 <script lang="ts">
@@ -64,4 +64,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.job-description {
+    margin: 0 var(--spacing-2);
+}
+</style>

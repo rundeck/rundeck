@@ -2,8 +2,7 @@
     <div class="group-control">
         <btn
             @click="$emit('toggleExpanded', item.groupPath)"
-            class="btn-link group-name jobgroupexpand text-secondary"
-            size="sm"
+            class="btn-link group-name  text-secondary"
         >
             <i
                 class="glyphicon"
@@ -20,7 +19,7 @@
             :title="`Browse job group: ${item.groupPath}`"
             @click="$emit('rootBrowse', item.groupPath)"
         >
-            <i class="glyphicon glyphicon-folder-close"></i>
+            <i class="glyphicon glyphicon-folder-open"></i>
         </btn>
     </div>
 </template>
@@ -58,5 +57,8 @@ export default defineComponent({
 
 .btn.btn-link.text-secondary {
     color: var(--text-secondary-color);
+}
+.job_list_group_header{
+  padding: 3px;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
-    <div class="">
+    <div >
         <div class="flex col flex-justify-end">
-            <div>
+            <div class="bulk_edit_controls">
                 <dropdown>
                     <btn class="dropdown-toggle mr-2">
                         {{ $t("job.actions") }}
@@ -214,4 +214,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.bulk_edit_controls{
+  margin-bottom: var(--spacing-8)
+}
+</style>
