@@ -34,7 +34,7 @@
                 <g:icon name="lock"/>
             </g:if>
         </span>
-        <span class="opt-desc"><g:strip>${option.description}</g:strip></span>
+        <span class="desc" style="word-wrap:break-word; border: 1px dashed red; max-width: 900px; display: block; margin-bottom: 5px"><g:strip>${option.description}</g:strip></span>
     </span>
     <g:if test="${option.optionValues}">
         <g:set var="opts" value="${option.optionValues}"/>
