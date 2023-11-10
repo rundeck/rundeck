@@ -9,7 +9,7 @@ export interface JobBrowseItem {
 
 export interface JobBrowseMeta {
     name: string;
-    data: { [key: string]: string };
+    data: { [key: string]: any };
 }
 export interface JobBrowseList {
   path: string
