@@ -202,7 +202,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.bulk_edit_controls{
-  margin-bottom: var(--spacing-8)
+.bulk_edit_controls {
+    margin-bottom: var(--spacing-8);
 }
 </style>
