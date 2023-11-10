@@ -145,11 +145,13 @@ import {
 } from "@/library/stores/JobBrowser";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
+import UiSocket from '@/library/components/utils/UiSocket.vue'
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
     name: "JobBulkEditControls",
+    components:{UiSocket},
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
             JobBrowserStoreInjectionKey
