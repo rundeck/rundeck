@@ -82,6 +82,6 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .job-description {
-    margin: 0 var(--spacing-2);
+    margin-left: var(--spacing-2);
 }
 </style>
