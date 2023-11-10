@@ -1,5 +1,5 @@
 <template>
-    <div class="group-control">
+    <div class="job_list_group_header hover-reveal-hidden" @click="$emit('toggleExpanded',item.groupPath)">
         <btn
             @click="$emit('toggleExpanded', item.groupPath)"
             class="btn-link group-name  text-secondary"
@@ -14,8 +14,7 @@
             {{ lastPathItem(item.groupPath) }}
         </btn>
         <btn
-            class="btn-link groupname text-strong group-name"
-            size="sm"
+            class="btn-link groupname text-strong group-name visibility-hidden"
             :title="`Browse job group: ${item.groupPath}`"
             @click="$emit('rootBrowse', item.groupPath)"
         >
