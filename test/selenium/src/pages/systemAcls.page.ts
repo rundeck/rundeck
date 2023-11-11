@@ -2,7 +2,6 @@ import { By, WebElementPromise } from 'selenium-webdriver'
 
 import { Page } from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context'
-import { integer } from 'aws-sdk/clients/cloudfront'
 
 export const Elems = {
     uploadBtn: By.css('#storage_acl_upload_btn'),
@@ -68,7 +67,7 @@ export class SystemAclsPage extends Page {
     async getDeleteModal() {
         return this.ctx.driver.findElement(Elems.deleteModal)
     }
-    async getActionDropdown(index: integer) {
+    async getActionDropdown(index: number) {
         let list = await this.getStoredPoliciesCardList()
         let div = list.findElement(By.css("div:nth-of-type(" + (index + 1) + ")"))
         return div.findElement(By.css(" a[data-toggle='dropdown']"))

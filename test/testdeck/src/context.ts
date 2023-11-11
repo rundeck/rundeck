@@ -34,7 +34,7 @@ export class Context {
     }
 
     friendlyTestName() {
-        return this.currentTestName.toLowerCase().replace(/ /g, '_')
+        return this.currentTestName.toLowerCase().replace(/ /g, '_');
     }
 
     async screenshot() {
