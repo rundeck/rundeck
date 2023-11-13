@@ -3087,6 +3087,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.asyncImportService = Mock(AsyncImportService){
             it.getAsyncImportStatusForProject(projectName) >> mockedStatus
+            it.statusFileExists(projectName) >> true
         }
 
         when:
