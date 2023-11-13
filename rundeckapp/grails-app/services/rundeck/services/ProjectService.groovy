@@ -1983,12 +1983,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
         try{
-            def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
-            if( !dto || null == dto ) return null
-            return dto
+            if( asyncImportService.statusFileExists(projectName) ){
+                def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
+                if( !dto || null == dto ) return null
+                return dto
+            }
         }catch(Exception e){
             e.printStackTrace()
         }
+        return null
     }
 
     /**

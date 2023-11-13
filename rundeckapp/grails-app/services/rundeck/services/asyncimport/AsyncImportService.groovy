@@ -8,7 +8,10 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
+import liquibase.logging.LogFactory
 import org.apache.commons.io.FileUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -35,6 +38,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     FrameworkService frameworkService
     ProjectService projectService
     ConfigurationService configurationService
+    Logger logger = LoggerFactory.getLogger(this.class)
 
     // Constants
     static final String TEMP_DIR = stripSlashFromString()
@@ -87,7 +91,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param projectName
      * @return
      */
-    private Boolean statusFileExists(String projectName){
+    Boolean statusFileExists(String projectName){
         try {
             def fwkProject = frameworkService.getFrameworkProject(projectName)
             def statusFilepath = "${JSON_FILE_PREFIX}${projectName}${JSON_FILE_EXT}"
@@ -118,7 +122,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             final def fwkProject = frameworkService.getFrameworkProject(projectName)
             fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, out)
             def obj = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
-            log.debug("Object extracted: ${obj.toString()}")
+            log.debug("Async Import status file content: ${obj.toString()}")
             return obj
         }catch(Exception e){
             log.error("Error during the async import file extraction process: ${e.message}")
@@ -222,14 +226,18 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         final def importExecutions = options.importExecutions
         def executionsDirFound = true
 
+        logger.debug("Creating required directories.")
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Starting M1... Creating required directories."
+            it.lastUpdate = "Creating required directories."
             return it
         })
 
         def importResult = [:]
 
         String destDir = "${TEMP_DIR}${File.separator}${TEMP_PROJECT_SUFFIX}${projectName}"
+
+        logger.debug("Creating a copy of the uploaded project in /tmp.")
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating a copy of the uploaded project in /tmp."
@@ -242,6 +250,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             it.tempFilepath = destDir
             return it
         })
+
+        logger.debug("Creating the working directory in /tmp.")
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating the working directory in /tmp."
@@ -256,6 +266,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 modelProjectHost
         ))
 
+        logger.debug("Creating the project model inside working directory in /tmp.")
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating the project model inside working directory in /tmp."
             return it
@@ -266,6 +278,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         try {
             if( modelProjectHost.list().size() == 0 ){
+
+                logger.debug("Checking if there are executions in project.")
+
                 // check if the executions dir exists, if not, false a flag to prevent M2 trigger
                 def internalProjectPath = getPathWithLogic(Paths.get(destDir.toString()), internalProjectMatcher)
                 if( !checkExecutionsExistenceInPath(internalProjectPath) ){
@@ -287,6 +302,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
                     ZipOutputStream zos = new ZipOutputStream(fos)
 
+                    logger.debug("Ziping uploaded project.")
+
                     zipDir(modelProjectHost.toString(), "", zos)
 
                 }catch(IOException ignored){
@@ -294,6 +311,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     throw ignored
                 }
             }
+
+            logger.debug("Uploading project w/o executions.")
 
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                 it.lastUpdate = "Uploading project w/o executions."
@@ -328,6 +347,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             Files.delete(Paths.get(zippedFilename))
 
             if( !importResult.success ){
+
+                logger.debug("Errors while importing the project w/o executions.")
+
                 asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                     it.lastUpdate = "Errors while importing the project w/o executions."
                     return it
@@ -372,6 +394,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 )
             }else{
                 // End the async import
+                logger.debug("Async import process ended.")
                 if( Files.exists(Paths.get(destDir)) ) deleteNonEmptyDir(destDir)
                 if( Files.exists(Paths.get(scopedWorkingDir)) ) deleteNonEmptyDir(scopedWorkingDir)
                 asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
