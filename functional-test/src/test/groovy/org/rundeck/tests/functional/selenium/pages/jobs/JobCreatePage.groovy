@@ -4,8 +4,6 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
@@ -42,12 +40,38 @@ class JobCreatePage extends BasePage {
     By optionBy = By.cssSelector("#optnewbutton > span")
     By separatorOptionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
+    By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
+    By nodeFilterLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown")
+    By nodeFilterSelectAllLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_all")
+    By nodeMatchedCountBy = By.xpath("//span[@class='text-info node_filter_results__matched_nodes_count']")
+    By excludeFilterTrueBy = By.xpath("//*[@id='excludeFilterTrue']")
+    By editableFalseBy = By.xpath("//*[@id='editableFalse']")
+    By schedJobNodeThreadCountBy = By.xpath("//*[@id='schedJobnodeThreadcount']")
+    By schedJobNodeRankAttributeBy = By.xpath("//*[@id='schedJobnodeRankAttribute']")
+    By nodeRankOrderDescendingBy = By.xpath("//*[@id='nodeRankOrderDescending']")
+    By nodeKeepGoingTrueBy = By.xpath("//*[@id='nodeKeepgoingTrue']")
+    By successOnEmptyNodeFilterTrueBy = By.xpath("//*[@id='successOnEmptyNodeFilterTrue']")
+    By nodesSelectedByDefaultFalseBy = By.xpath("//*[@id='nodesSelectedByDefaultFalse']")
+
 
     String loadPath = "/job/create"
 
     JobCreatePage(final SeleniumContext context, String project) {
         super(context)
         this.loadPath = "/${project ? project + '/' : ''}job/create"
+    }
+
+    void fillBasicJob(String name) {
+        jobNameInput.sendKeys name //'duplicate options'
+        tab JobTab.WORKFLOW click()
+        executor "window.location.hash = '#addnodestep'"
+        stepLink 'command', StepType.NODE click()
+        waitForElementVisible adhocRemoteStringField
+        adhocRemoteStringField.click()
+        waitForNumberOfElementsToBe floatBy
+        adhocRemoteStringField.sendKeys 'echo selenium test'
+        saveStep 0
+        tab JobTab.NODES click()
     }
 
     void validatePage() {
@@ -197,12 +221,59 @@ class JobCreatePage extends BasePage {
         el By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
     }
 
+    WebElement getNodeDispatchTrueCheck() {
+        el nodeDispatchTrueBy
+    }
+
+    WebElement getNodeFilterLinkButton() {
+        el nodeFilterLinkBy
+    }
+
+    WebElement getNodeFilterSelectAllLinkButton() {
+        el nodeFilterSelectAllLinkBy
+    }
+
+    WebElement getNodeMatchedCountField() {
+        el nodeMatchedCountBy
+    }
+
+    WebElement getExcludeFilterTrueCheck() {
+        el excludeFilterTrueBy
+    }
+
+    WebElement getEditableFalseCheck() {
+        el editableFalseBy
+    }
+
+    WebElement getSchedJobNodeThreadCountField() {
+        el schedJobNodeThreadCountBy
+    }
+
+    WebElement getSchedJobNodeRankAttributeField() {
+        el schedJobNodeRankAttributeBy
+    }
+
+    WebElement getNodeRankOrderDescendingField() {
+        el nodeRankOrderDescendingBy
+    }
+
+    WebElement getNodeKeepGoingTrueCheck() {
+        el nodeKeepGoingTrueBy
+    }
+
+    WebElement getSuccessOnEmptyNodeFilterTrueCheck() {
+        el successOnEmptyNodeFilterTrueBy
+    }
+
+    WebElement getNodesSelectedByDefaultFalseCheck() {
+        el nodesSelectedByDefaultFalseBy
+    }
+
     void saveStep(Integer stepNumber) {
         def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
         button?.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
-
 }
 
 enum NotificationType {

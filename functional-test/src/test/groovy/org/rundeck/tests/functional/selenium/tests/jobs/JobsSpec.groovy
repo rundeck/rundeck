@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobShowPage
@@ -7,8 +8,10 @@ import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
 import org.rundeck.tests.functional.selenium.pages.jobs.StepType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
+import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.setup.NavLinkTypes
 
 @SeleniumCoreTest
 class JobsSpec extends SeleniumBase {
@@ -99,16 +102,7 @@ class JobsSpec extends SeleniumBase {
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
-            jobCreatePage.jobNameInput.sendKeys 'duplicate options'
-            jobCreatePage.tab JobTab.WORKFLOW click()
-            jobCreatePage.executor "window.location.hash = '#addnodestep'"
-            jobCreatePage.stepLink 'command', StepType.NODE click()
-            jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
-            jobCreatePage.adhocRemoteStringField.click()
-            jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.floatBy
-            jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
-            jobCreatePage.saveStep 0
-
+            jobCreatePage.fillBasicJob 'duplicate options'
             def optName = 'test'
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys optName
@@ -126,6 +120,42 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameSaved 1 getText() equals optName + '_1'
             jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
             jobCreatePage.createJobButton.click()
+    }
+
+    def "create job with dispatch to nodes"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'jobs with nodes'
+            jobCreatePage.tab JobTab.NODES click()
+            jobCreatePage.nodeDispatchTrueCheck.click()
+            jobCreatePage.waitForElementVisible jobCreatePage.nodeFilterLinkButton
+            jobCreatePage.nodeFilterLinkButton.click()
+            jobCreatePage.nodeFilterSelectAllLinkButton.click()
+            jobCreatePage.nodeMatchedCountField.isDisplayed()
+            jobCreatePage.nodeMatchedCountField.getText() == '1 Node Matched'
+            jobCreatePage.excludeFilterTrueCheck.click()
+            jobCreatePage.editableFalseCheck.click()
+            jobCreatePage.schedJobNodeThreadCountField.clear()
+            jobCreatePage.schedJobNodeThreadCountField.sendKeys '3'
+            jobCreatePage.schedJobNodeRankAttributeField.clear()
+            jobCreatePage.schedJobNodeRankAttributeField.sendKeys 'arank'
+            jobCreatePage.nodeRankOrderDescendingField.click()
+            jobCreatePage.nodeKeepGoingTrueCheck.click()
+            jobCreatePage.successOnEmptyNodeFilterTrueCheck.click()
+            jobCreatePage.nodesSelectedByDefaultFalseCheck.click()
+            jobCreatePage.createJobButton.click()
+        expect:
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.nodeFilterSectionMatchedNodesLabel.getText() == 'Include nodes matching: name: .*'
+            jobShowPage.threadCountLabel.getText() == 'Execute on up to 3 Nodes at a time.'
+            jobShowPage.nodeKeepGoingLabel.getText() == 'If a node fails: Continue running on any remaining nodes before failing the step.'
+            jobShowPage.nodeRankOrderAscendingLabel.getText() == 'Sort nodes by arank in descending order.'
+            jobShowPage.nodeSelectedByDefaultLabel.getText() == 'Node selection: The user has to explicitly select target nodes'
     }
 
 }

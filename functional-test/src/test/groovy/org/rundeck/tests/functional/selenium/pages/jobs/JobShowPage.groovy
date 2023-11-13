@@ -23,6 +23,11 @@ class JobShowPage extends BasePage{
     By multipleExecBy = By.xpath("//*[@id=\"detailtable\"]//td[text()='Multiple Executions?']")
     By multipleExecYesBy = By.xpath("//*[@id=\"detailtable\"]//td[contains(text(),'Yes')]")
     By workflowDetailBy = By.xpath("//*[@id='workflowstrategydetail']//*[@class='col-sm-12']")
+    By nodeFilterSectionMatchedNodesBy = By.cssSelector("#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__matchednodes")
+    By threadCountBy = By.cssSelector("div[class\$='threadcount'] span[class*='text-strong']")
+    By nodeKeepGoingBy = By.cssSelector("div[class='exec_detail__nodeKeepgoing'] span[class^='text-strong']")
+    By nodeRankOrderAscendingBy = By.cssSelector("div[class\$='nodeRankOrderAscending'] span[class^='text-strong']")
+    By nodeSelectedByDefaultBy = By.cssSelector("div[class\$='nodeSelectedByDefault'] span[class^='text-strong']")
 
     String loadPath = "/job/show"
 
@@ -76,4 +81,25 @@ class JobShowPage extends BasePage{
     WebElement getWorkflowDetailField() {
         el workflowDetailBy
     }
+
+    WebElement getNodeFilterSectionMatchedNodesLabel() {
+        el nodeFilterSectionMatchedNodesBy
+    }
+
+    WebElement getThreadCountLabel() {
+        el threadCountBy
+    }
+
+    WebElement getNodeKeepGoingLabel() {
+        el nodeKeepGoingBy
+    }
+
+    WebElement getNodeRankOrderAscendingLabel() {
+        el nodeRankOrderAscendingBy
+    }
+
+    WebElement getNodeSelectedByDefaultLabel() {
+        el nodeSelectedByDefaultBy
+    }
+
 }
