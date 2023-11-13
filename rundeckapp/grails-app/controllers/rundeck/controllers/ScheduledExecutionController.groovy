@@ -6166,7 +6166,7 @@ Since: v46''',
         ) String project,
         @Parameter(
             name = 'id',
-            in = ParameterIn.QUERY,
+            in = ParameterIn.PATH,
             description = 'Job ID',
             schema = @Schema(type = 'string')
         ) String id,
