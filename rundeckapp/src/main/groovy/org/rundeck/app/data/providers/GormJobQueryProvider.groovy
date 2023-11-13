@@ -41,6 +41,19 @@ class GormJobQueryProvider implements JobQueryProvider {
             )
         )
     }
+    static final List<String> PROJECTION_KEYS = Collections.unmodifiableList(
+        [
+            'uuid',
+            'jobName',
+            'groupPath',
+            'project',
+            'description',
+            'scheduled',
+            'scheduleEnabled',
+            'executionEnabled',
+            'serverNodeUUID',
+        ]
+    )
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
     Page<JobDataSummary> queryJobs(JobQueryInputData jobQueryInput) {
@@ -73,23 +86,19 @@ class GormJobQueryProvider implements JobQueryProvider {
             applyGroupPathCriteria(query, delegate)
             applyJobComponentCriteria(query, delegate)
             applySort(query, delegate)
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
             projections{
-                property 'uuid', 'uuid'
-                property 'jobName', 'jobName'
-                property 'groupPath','groupPath'
-                property 'project','project'
-                property 'description', 'description'
-                property 'scheduled','scheduled'
-                property 'scheduleEnabled', 'scheduleEnabled'
-                property 'executionEnabled', 'executionEnabled'
-                property 'serverNodeUUID', 'serverNodeUUID'
+                for (String key : PROJECTION_KEYS) {
+                    property key
+                }
             }
         }
-        def schedlist = scheduled.collect { se ->
-            return new RdJobDataSummary(
-                se
-            )
+        def schedlist = scheduled.collect { result ->
+            def map=[:]
+            result.eachWithIndex { Object val, int i ->
+                map[PROJECTION_KEYS[i]]=val
+            }
+            map['scheduled'] = jobSchedulesService.isScheduled(map.uuid)
+            return new RdJobDataSummary(map)
         }
         def total = schedlist.size()
         if(queryMax && queryMax>0) {
