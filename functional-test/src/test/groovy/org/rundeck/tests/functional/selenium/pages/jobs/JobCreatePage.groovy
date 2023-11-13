@@ -52,7 +52,7 @@ class JobCreatePage extends BasePage {
     By nodeKeepGoingTrueBy = By.xpath("//*[@id='nodeKeepgoingTrue']")
     By successOnEmptyNodeFilterTrueBy = By.xpath("//*[@id='successOnEmptyNodeFilterTrue']")
     By nodesSelectedByDefaultFalseBy = By.xpath("//*[@id='nodesSelectedByDefaultFalse']")
-
+    By orchestratorDropdownBy = By.cssSelector('#orchestrator-edit-type-dropdown > button')
 
     String loadPath = "/job/create"
 
@@ -267,6 +267,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getNodesSelectedByDefaultFalseCheck() {
         el nodesSelectedByDefaultFalseBy
+    }
+    
+    WebElement getOrchestratorDropdownButton() {
+        el orchestratorDropdownBy
+    }
+
+    WebElement orchestratorChoiceLink(String variable) {
+        el By.cssSelector("#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=$variable]")
     }
 
     void saveStep(Integer stepNumber) {

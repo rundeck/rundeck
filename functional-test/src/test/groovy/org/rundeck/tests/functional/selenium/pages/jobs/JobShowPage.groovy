@@ -28,6 +28,11 @@ class JobShowPage extends BasePage{
     By nodeKeepGoingBy = By.cssSelector("div[class='exec_detail__nodeKeepgoing'] span[class^='text-strong']")
     By nodeRankOrderAscendingBy = By.cssSelector("div[class\$='nodeRankOrderAscending'] span[class^='text-strong']")
     By nodeSelectedByDefaultBy = By.cssSelector("div[class\$='nodeSelectedByDefault'] span[class^='text-strong']")
+    By orchestratorNameBy = By.xpath("//details[contains(@id, 'exec_detail__orchestrator')]")
+    By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
+    By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
+    By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
+    By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
 
     String loadPath = "/job/show"
 
@@ -100,6 +105,26 @@ class JobShowPage extends BasePage{
 
     WebElement getNodeSelectedByDefaultLabel() {
         el nodeSelectedByDefaultBy
+    }
+
+    WebElement getOrchestratorNameLabel() {
+        el orchestratorNameBy
+    }
+
+    WebElement getCloseDefinitionModalButton() {
+        el closeDefinitionModalBy
+    }
+
+    WebElement getJobActionDropdownButton() {
+        el jobActionBy
+    }
+
+    WebElement getEditJobLink() {
+        el jobActionEditBy
+    }
+
+    WebElement getJobLinkTitleLabel() {
+        el jobLinkTitleBy
     }
 
 }

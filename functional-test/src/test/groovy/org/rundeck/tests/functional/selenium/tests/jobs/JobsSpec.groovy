@@ -158,4 +158,39 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.nodeSelectedByDefaultLabel.getText() == 'Node selection: The user has to explicitly select target nodes'
     }
 
+    def "rename job with orchestrator"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'job with node orchestrator'
+            jobCreatePage.tab JobTab.NODES click()
+            jobCreatePage.nodeDispatchTrueCheck.click()
+            jobCreatePage.waitForElementVisible jobCreatePage.nodeFilterLinkButton
+            jobCreatePage.nodeFilterLinkButton.click()
+            jobCreatePage.nodeFilterSelectAllLinkButton.click()
+            jobCreatePage.nodeMatchedCountField.isDisplayed()
+            jobCreatePage.nodeMatchedCountField.getText() == '1 Node Matched'
+            jobCreatePage.executor "window.location.hash = '#orchestrator-edit-type-dropdown'"
+            jobCreatePage.orchestratorDropdownButton.click()
+            jobCreatePage.orchestratorChoiceLink 'rankTiered' click()
+            jobCreatePage.createJobButton.click()
+        expect:
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.orchestratorNameLabel.getText() == 'Rank Tiered'
+            jobShowPage.closeDefinitionModalButton.click()
+            jobShowPage.jobActionDropdownButton.click()
+            jobShowPage.editJobLink.click()
+            jobCreatePage.jobNameInput.clear()
+            jobCreatePage.jobNameInput.sendKeys 'renamed job with node orchestrator'
+            jobCreatePage.tab JobTab.NODES click()
+            jobCreatePage.updateJobButton.click()
+            jobShowPage.jobLinkTitleLabel.getText() == 'renamed job with node orchestrator'
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.orchestratorNameLabel.getText() == 'Rank Tiered'
+    }
+
 }
