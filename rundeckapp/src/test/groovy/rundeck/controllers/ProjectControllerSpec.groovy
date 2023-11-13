@@ -2346,6 +2346,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         controller.apiProjectAsyncImportStatus()
 
         then:
+        noExceptionThrown()
         1 * controller.apiService.renderErrorFormat(_,[status:404,code:'api.error.async.import.status.file.retrieval.error',args:['No Status file in db.']])>>{it[0].status=it[1].status}
     }
 
