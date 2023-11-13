@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -106,7 +107,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
+            _ * featurePresent(Features.LEGACY_UI) >> true
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {

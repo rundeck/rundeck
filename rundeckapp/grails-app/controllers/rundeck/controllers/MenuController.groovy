@@ -319,7 +319,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
-        if(params.legacyUi!='true'){
+        if (!featureService.featurePresent(Features.LEGACY_UI) && params.legacyUi != 'true') {
             return [:]
         }
 
