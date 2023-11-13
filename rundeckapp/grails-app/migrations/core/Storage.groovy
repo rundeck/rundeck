@@ -100,7 +100,7 @@ databaseChangeLog = {
         preConditions(onFail: "MARK_RAN") {
             and{
                 tableExists(tableName: "storage")
-                sqlCheck(expectedResult: '0', "SELECT COUNT(*) FROM all_constraints WHERE CONSTRAINT_NAME LIKE '%STORAGE_DATA_COL_MAX_SIZE_1M%'")
+                sqlCheck(expectedResult: '0', "SELECT COUNT(*) FROM all_constraints WHERE CONSTRAINT_NAME = 'STORAGE_DATA_COL_MAX_SIZE_1M'")
             }
         }
         grailsChange{
