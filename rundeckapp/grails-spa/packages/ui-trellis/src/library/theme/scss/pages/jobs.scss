@@ -146,6 +146,11 @@
     white-space: nowrap;
     height: 16px;
     line-height: 16px;
+    position:relative;
+    top: 2px;
+    display: inline-block;
+    padding-bottom: 5px;
+    min-height: 17px
   }
 
   .enforceSet {
@@ -160,7 +165,10 @@
   }
 
   .opt-desc {
-    overflow-wrap: break-word !important;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+    margin-top: 5px;
   }
 
   .enforceSet span.any,
