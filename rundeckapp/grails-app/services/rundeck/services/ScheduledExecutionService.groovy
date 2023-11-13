@@ -540,10 +540,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         List<ItemMeta> metaVals = []
         def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
         components.each { name, component ->
-            List<ComponentMeta> metaItems = component.getMetadataForJob(uuid, metakeys, authContext)
-            metaVals.addAll(
-                metaItems.stream().map(ItemMeta.&from).collect(Collectors.toList())
-            )
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForJob(uuid, project, metakeys, authContext)
+            metaItems.ifPresent { metaList ->
+                metaVals.addAll(
+                    metaList.stream().map(ItemMeta.&from).collect(Collectors.toList())
+                )
+            }
         }
 
         return metaVals

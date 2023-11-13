@@ -38,27 +38,27 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
     }
 
     @Override
-    List<ComponentMeta> getMetadataForJob(final String id, final Set<String> names, UserAndRolesAuthContext authContext) {
+    Optional<List<ComponentMeta>> getMetadataForJob(final String id,String project, final Set<String> names, UserAndRolesAuthContext authContext) {
         if (!names.contains(NAME) && !names.contains('*')) {
-            return null
+            return Optional.empty()
         }
         def job = jobDataProvider.findByUuid(id)
         if (job) {
-            return [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))]
+            return Optional.of( [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))])
         }
-        return null
+        return Optional.empty()
     }
 
     @Override
-    List<ComponentMeta> getMetadataForJob(
+    Optional<List<ComponentMeta>> getMetadataForJob(
         final JobDataSummary job,
         final Set<String> names,
         final UserAndRolesAuthContext authContext
     ) {
         if (!names.contains(NAME) && !names.contains('*')) {
-            return null
+            return Optional.empty()
         }
-        return [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))]
+        return Optional.of([ComponentMeta.with(NAME, getAuthzMeta(job, authContext))])
     }
 
     Map<String, Object> getAuthzMeta(JobData jobDataSummary, UserAndRolesAuthContext authContext) {

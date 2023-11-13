@@ -27,30 +27,28 @@ class JobScheduleMetadataComponent implements JobMetadataComponent {
     }
 
     @Override
-    List<ComponentMeta> getMetadataForJob(final String id, final Set<String> names) {
+    Optional<List<ComponentMeta>> getMetadataForJob(final String id, String project,final Set<String> names) {
         if (!names.contains(SCHEDULE_NAME) && !names.contains('*')) {
-            return null
+            return Optional.empty()
         }
         JobData foundJob = jobDataProvider.findByUuid(id)
         if (foundJob) {
-            return [ComponentMeta.with(SCHEDULE_NAME, toMapData(foundJob))]
+            return Optional.of( [ComponentMeta.with(SCHEDULE_NAME, toMapData(foundJob))])
         }
 
-        return null
+        return Optional.empty()
     }
 
     @Override
-    List<ComponentMeta> getMetadataForJob(final JobDataSummary job, final Set<String> names) {
-
+    Optional<List<ComponentMeta>> getMetadataForJob(final JobDataSummary job, final Set<String> names) {
         if (!names.contains(SCHEDULE_NAME) && !names.contains('*')) {
-            return null
+            return Optional.empty()
         }
         def data = toMapData(job)
         if (data) {
-            return [ComponentMeta.with(SCHEDULE_NAME, data)]
+            return Optional.of([ComponentMeta.with(SCHEDULE_NAME, data)])
         }
-        return null
-
+        return Optional.empty()
     }
 
     Map<String, Object> toMapData(JobDataSummary jobData) {

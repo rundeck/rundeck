@@ -19,8 +19,8 @@ public interface JobMetadataComponent {
     /**
      * @return Metadata for a job
      */
-    default List<ComponentMeta> getMetadataForJob(String id, Set<String> names){
-        return null;
+    default Optional<List<ComponentMeta>> getMetadataForJob(String id, String project, Set<String> names){
+        return Optional.empty();
     }
 
     /**
@@ -31,21 +31,21 @@ public interface JobMetadataComponent {
      * @param authContext auth context
      * @return metadata list
      */
-    default List<ComponentMeta> getMetadataForJob(String id, Set<String> names, UserAndRolesAuthContext authContext) {
-        return getMetadataForJob(id, names);
+    default Optional<List<ComponentMeta>> getMetadataForJob(String id, String project,Set<String> names, UserAndRolesAuthContext authContext) {
+        return getMetadataForJob(id, project, names);
     }
 
     /**
      * @return Metadata for the job
      */
-    default List<ComponentMeta> getMetadataForJob(JobDataSummary job, Set<String> names){
-        return null;
+    default Optional<List<ComponentMeta>> getMetadataForJob(JobDataSummary job, Set<String> names){
+        return Optional.empty();
     }
 
     /**
      * @return Metadata for the job with auth context
      */
-    default List<ComponentMeta> getMetadataForJob(
+    default Optional<List<ComponentMeta>> getMetadataForJob(
             JobDataSummary job,
             Set<String> names,
             UserAndRolesAuthContext authContext
@@ -59,16 +59,15 @@ public interface JobMetadataComponent {
      */
     default Map<String, List<ComponentMeta>> getMetadataForJobIds(
             Collection<String> ids,
+            String project,
             Set<String> names,
             UserAndRolesAuthContext authContext
     )
     {
         Map<String, List<ComponentMeta>> map = new HashMap<>();
         for (String id : ids) {
-            List<ComponentMeta> metadataForJob = getMetadataForJob(id, names, authContext);
-            if (metadataForJob != null && !metadataForJob.isEmpty()) {
-                map.put(id, metadataForJob);
-            }
+            Optional<List<ComponentMeta>> metadataForJob = getMetadataForJob(id, project, names, authContext);
+            metadataForJob.ifPresent(metas -> map.put(id, metas));
         }
         return map;
     }
@@ -78,10 +77,11 @@ public interface JobMetadataComponent {
      */
     default Map<String, List<ComponentMeta>> getMetadataForJobIds(
             Collection<String> ids,
+            String project,
             Set<String> names
     )
     {
-        return getMetadataForJobIds(ids, names, null);
+        return getMetadataForJobIds(ids, project, names, null);
     }
 
     /**
@@ -95,10 +95,8 @@ public interface JobMetadataComponent {
     {
         Map<String, List<ComponentMeta>> map = new HashMap<>();
         for (JobDataSummary job : jobs) {
-            List<ComponentMeta> metadataForJob = getMetadataForJob(job.getUuid(), names, authContext);
-            if (metadataForJob != null && !metadataForJob.isEmpty()) {
-                map.put(job.getUuid(), metadataForJob);
-            }
+            Optional<List<ComponentMeta>> metadataForJob = getMetadataForJob(job.getUuid(), job.getProject(), names, authContext);
+            metadataForJob.ifPresent(metas -> map.put(job.getUuid(), metas));
         }
         return map;
     }
