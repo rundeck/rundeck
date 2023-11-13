@@ -215,7 +215,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @return result - Import results
      */
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_1)
-    def beginMilestone1(
+    def startAsyncImport(
             final String projectName,
             AuthContext authContext,
             IRundeckProject project,
@@ -381,7 +381,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.lastUpdate = "Milestone 1 completed, calling Milestone 2 in process..."
+                it.lastUpdate = "Phase 1 completed, calling phase 2 in process..."
                 return it
             })
 
@@ -430,17 +430,21 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param project - IRundeckProject
      */
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2)
-    def beginMilestone2(
+    def distributeExecutionFiles(
             final String projectName,
             AuthContext authContext,
             IRundeckProject project
     ){
         final def milestoneNumber = AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
 
+        logger.debug("Starting to distribute executions.")
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 2 in process..."
+            it.lastUpdate = "Starting to distribute executions."
             return it
         })
+
+        logger.debug("Creating executions host dir.")
 
         File baseWorkingDirToFile = new File(BASE_WORKING_DIR.toString() + projectName)
         File distributedExecutions = new File(baseWorkingDirToFile.toString() + File.separator + DISTRIBUTED_EXECUTIONS_FILENAME)
@@ -462,6 +466,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             throw new AsyncImportException("No status file found in working dir for project: ${projectName}")
         }
 
+        logger.debug("Extracting TMP location via status file.")
+
         File tempFile = new File(statusFileForProject.tempFilepath)
         if( !tempFile.exists() ){
             throw new AsyncImportException("Unable to locate temp project during Milestone 2, please restart the process in other new project and delete current.")
@@ -472,6 +478,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         File executionsDir = new File(rundeckInternalProjectPath.toString() + File.separator + EXECUTION_DIR_NAME)
 
+        logger.debug("Listing executions and corresponding filepaths.")
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Listing executions and corresponding filepaths."
             return it
@@ -480,6 +488,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         List<Path> xmls = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), EXECUTION_FILE_PREFIX, EXECUTION_FILE_EXT)
         List<Path> logs = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), OUTPUT_FILE_PREFIX, OUTPUT_FILE_EXT)
         List<Path> state = getFilesPathsByPrefixAndExtensionInPath(executionsDir.toString(), STATE_FILE_PREFIX, STATE_FILE_EXT)
+
+        logger.debug("Total executions found: ${xmls.size()}, total log files found: ${logs.size()}, total state files found: ${state.size()}")
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Total executions found: ${xmls.size()}, total log files found: ${logs.size()}, total state files found: ${state.size()}"
@@ -498,6 +508,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             distributedExecutionBundle = new File(distributedExecutions.toString() + File.separator + "1")
             distributedExecutionBundle.mkdir()
         }
+
+        logger.debug("Beginning files iteration...")
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Beginning files iteration..."
@@ -567,8 +579,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
             deleteNonEmptyDir(tempFile.toString())
 
+            logger.debug("Executions distributed; proceeding to call files upload event.")
+
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-                it.lastUpdate = "Executions distributed, M2 done; proceeding to call M3 event."
+                it.lastUpdate = "Executions distributed; proceeding to call files upload event."
                 return it
             })
 
@@ -580,6 +594,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             )
 
         }else{
+            logger.debug("No executions to iterate, asynchronous import process ended.")
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                 it.lastUpdate = "No executions to iterate, asynchronous import process ended."
                 it.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
@@ -604,7 +619,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param project - IRundeckProject
      */
     @Subscriber(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3)
-    def beginMilestone3(
+    def uploadBundledExecutions(
             final String projectName,
             AuthContext authContext,
             IRundeckProject project
@@ -612,8 +627,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         final def milestoneNumber = AsyncImportMilestone.M3_IMPORTING.milestoneNumber
 
+        logger.debug("Files upload operation started....")
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
-            it.lastUpdate = "Milestone 3 started...."
+            it.lastUpdate = "Files upload operation started...."
             return it
         })
 
@@ -623,34 +640,30 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         def framework = frameworkService.rundeckFramework
 
-        // get the jobUuid option
         def jobUuidOption = getAsyncImportStatusForProject(projectName).jobUuidOption
 
-        // Options (false values bc we already imported the project with user's options in M1)
         def options = [
                 jobUuidOption     :jobUuidOption,
                 importExecutions  : true
         ] as ProjectArchiveParams
 
         try {
+            logger.debug("Iterating execution bundles.")
+
             asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                 it.lastUpdate = "Iterating execution bundles."
                 return it
             })
 
-            // Distributed executions path
             def distributedExecutionsFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${DISTRIBUTED_EXECUTIONS_FILENAME}")
-            // The first dir of distributed executions, in other words, the next execution bundle to be uploaded
             Path firstDir
             def executionBundles = null
             try {
-                executionBundles = Files.walk(distributedExecutionsFullPath, FileVisitOption.FOLLOW_LINKS)
-                        .filter(Files::isDirectory)
-                        .filter(path -> path.getFileName().toString().matches("\\d+"))
-                        .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
-                        .collect(Collectors.toList())
+                executionBundles = getExecutionBundles(distributedExecutionsFullPath)
 
                 if( executionBundles.size() ){
+
+                    logger.debug("A total of ${executionBundles.size()} execution bundles found, iterating in progress..")
 
                     asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                         it.lastUpdate = "A total of ${executionBundles.size()} execution bundles found, iterating in progress.."
@@ -661,14 +674,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         if (!Files.exists(bundle) || !Files.isDirectory(bundle)) {
                             throw new AsyncImportException("Bundle corrupted or not a directory.")
                         }
-                        // Executions path
                         firstDir = bundle
-                        // Model path
                         def modelProjectFullPath = Paths.get("${BASE_WORKING_DIR.toString()}${projectName}${File.separator}${MODEL_PROJECT_NAME_SUFFIX}")
-                        // Executions path inside model
                         def modelProjectExecutionsContainerPath = Paths.get("${modelProjectFullPath}${File.separator}${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}")
                         try {
-                            // Move the first dir to model project
                             try {
                                 Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
                             } catch (NoSuchFileException ignored) {
@@ -749,9 +758,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             })
                         }
                     }
+                }else{
+                    logger.debug("No execution bundles to iterate, ending async import process")
                 }
 
                 deleteNonEmptyDir("${BASE_WORKING_DIR.toString()}${projectName}")
+
+                logger.debug("All Executions uploaded, async import ended. Please check the target project.")
 
                 asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
                     it.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
@@ -1035,6 +1048,25 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             e.printStackTrace()
         }
         return path
+    }
+
+    /**
+     * Return the distributed executions child dirs paths sorted
+     *
+     * @param distributedExecutionsPath
+     * @return
+     */
+    static List<Path> getExecutionBundles(Path distributedExecutionsPath){
+        try{
+            return Files.walk(distributedExecutionsPath, FileVisitOption.FOLLOW_LINKS)
+                    .filter(Files::isDirectory)
+                    .filter(path -> path.getFileName().toString().matches("\\d+"))
+                    .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
+                    .collect(Collectors.toList())
+        }catch(IOException e){
+            e.printStackTrace()
+            throw e
+        }
     }
 
 }

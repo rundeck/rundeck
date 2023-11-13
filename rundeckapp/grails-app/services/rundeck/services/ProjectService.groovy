@@ -2043,7 +2043,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             def created = createAsyncImportStatusFile(project.name)
             if( created ){
                 // Start the process synchronously
-                return asyncImportService.beginMilestone1(
+                return asyncImportService.startAsyncImport(
                         project.name,
                         userAndRolesAuthContext,
                         project,
