@@ -168,7 +168,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -224,7 +224,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked with import executions to false"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -279,7 +279,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked with no executions in uploaded file"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -334,7 +334,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -388,7 +388,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -445,7 +445,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -501,7 +501,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -557,7 +557,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The method gets invoked"
-        def result = service.beginMilestone1(
+        def result = service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -610,7 +610,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The methods get invoked"
-        service.beginMilestone1(
+        service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -618,7 +618,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 params
         )
         // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
-        service.beginMilestone2(
+        service.distributeExecutionFiles(
                 projectName,
                 auth,
                 fwkProject
@@ -677,7 +677,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The methods get invoked"
-        service.beginMilestone1(
+        service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -685,7 +685,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 params
         )
         // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
-        service.beginMilestone2(
+        service.distributeExecutionFiles(
                 projectName,
                 auth,
                 fwkProject
@@ -744,7 +744,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The methods get invoked"
-        service.beginMilestone1(
+        service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -752,7 +752,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 params
         )
         // then we invoke the milestone 2 programmatically (bc there's no context in tests and events doesn't work)
-        service.beginMilestone2(
+        service.distributeExecutionFiles(
                 projectName,
                 auth,
                 fwkProject
@@ -817,7 +817,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The methods get invoked"
-        service.beginMilestone1(
+        service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
@@ -825,7 +825,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 params
         )
         // then we invoke the milestone 2 programatically (bc there's no context in tests and events doesn't work)
-        service.beginMilestone2(
+        service.distributeExecutionFiles(
                 projectName,
                 auth,
                 fwkProject
@@ -881,19 +881,19 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "The methods get invoked"
-        service.beginMilestone1(
+        service.startAsyncImport(
                 projectName,
                 auth,
                 fwkProject,
                 is,
                 params
         )
-        service.beginMilestone2(
+        service.distributeExecutionFiles(
                 projectName,
                 auth,
                 fwkProject
         )
-        service.beginMilestone3(
+        service.uploadBundledExecutions(
                 projectName,
                 auth,
                 fwkProject
@@ -1169,6 +1169,72 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         cleanup:
         if( Files.exists(parentDirForProjectWithExecs) ) AsyncImportService.deleteNonEmptyDir(parentDirForProjectWithExecs.toString())
         if( Files.exists(parentDirForProjectWithOutExecs) ) AsyncImportService.deleteNonEmptyDir(parentDirForProjectWithOutExecs.toString())
+    }
+
+    def "getExecutionBundles basic usage"(){
+        given: "The invocation through controller (with context)"
+        def projectName = "test"
+        def workingDirs = getTempDirsPath(projectName)
+        def distributedExecutionsPath = "${workingDirs.workingDir}${File.separator}${service.DISTRIBUTED_EXECUTIONS_FILENAME}"
+        def auth = Mock(UserAndRolesAuthContext)
+        def path = getClass().getClassLoader().getResource("async-import-sample-project.jar")
+        def file = new File(path.toURI())
+        def is = new FileInputStream(file)
+        def params = new ProjectArchiveParams().with {
+            it.asyncImport = true
+            it.importExecutions = true
+            return it
+        }
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+        service.projectService = Mock(ProjectService){
+            it.importToProject(
+                    _,
+                    _,
+                    _,
+                    _,
+                    _) >> [success: true]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getInteger(service.MAX_EXECS_PER_DIR_PROP_NAME, _) >> 5
+        }
+
+        when: "The methods get invoked"
+        service.startAsyncImport(
+                projectName,
+                auth,
+                fwkProject,
+                is,
+                params
+        )
+        service.distributeExecutionFiles(
+                projectName,
+                auth,
+                fwkProject
+        )
+
+        def listOfDistributedExecutionsBundles = AsyncImportService.getExecutionBundles(Paths.get(distributedExecutionsPath))
+
+        then: "The bundles will be parsed as a iterable"
+        listOfDistributedExecutionsBundles.size() > 0
+
+        cleanup:
+        if( Files.exists(Paths.get(workingDirs.workingDir)) ){
+            service.deleteNonEmptyDir(workingDirs.workingDir)
+        }
+        if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
+            service.deleteNonEmptyDir(workingDirs.projectCopy)
+        }
+
     }
 
     private def getTempDirsPath(String projectName) {
