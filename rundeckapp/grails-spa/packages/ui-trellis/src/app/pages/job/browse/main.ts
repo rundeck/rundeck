@@ -66,6 +66,7 @@ function init() {
           section: "job-browse-item",
           location: "after-job-name",
           visible: true,
+          order: 1000,
           widget: markRaw(JobActionsMenu),
       },
   ]);
