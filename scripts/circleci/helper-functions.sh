@@ -119,8 +119,7 @@ openapi_tests() {
     mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
 
     # Redocly OpenAPI Linting
-    npm install @redocly/cli -g
-    redocly lint \
+    npx -y @redocly/cli lint \
         openapi/rundeck-api.yml \
         --skip-rule=operation-4xx-response \
         --skip-rule=no-invalid-media-type-examples
