@@ -41,7 +41,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     Logger logger = LoggerFactory.getLogger(this.class)
 
     // Constants
-    static final String TEMP_DIR = stripSlashFromString()
+    static final String TEMP_DIR = stripSlashFromString(System.getProperty("java.io.tmpdir"))
     static final Path BASE_WORKING_DIR = Paths.get(TEMP_DIR + File.separator + "AImport-WD-")
     static final String DISTRIBUTED_EXECUTIONS_FILENAME = "distributed_executions"
     static final String TEMP_PROJECT_SUFFIX = 'AImportTMP-'
@@ -1012,9 +1012,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      *
      * @return a string w/o slash at the end
      */
-    static String stripSlashFromString(){
+    static String stripSlashFromString(String string){
         def tempProp = null
-        def prop = System.getProperty("java.io.tmpdir")
+        def prop = string
         if( prop.endsWith('\\') ){
             def trimmedProp = prop.substring(0, prop.size() -1)
             tempProp = trimmedProp

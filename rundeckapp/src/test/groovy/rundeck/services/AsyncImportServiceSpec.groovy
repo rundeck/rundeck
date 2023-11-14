@@ -926,11 +926,8 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
     }
 
     def "Translate temp path by os basic usage"(){
-        setup:
-        System.setProperty("java.io.tmpdir", mockedEnvVar)
-
         when:
-        def translatedTempDir = service.stripSlashFromString()
+        def translatedTempDir = service.stripSlashFromString(mockedEnvVar)
 
         then:
         translatedTempDir == result
@@ -939,88 +936,6 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         mockedEnvVar | result
         "a\\path\\"  | "a\\path"
         "a/path/"    | "a/path"
-
-    }
-
-    def "getFilesPathsByPrefixAndExtensionInPath basic usage"(){
-        given:
-        def testName = specificationContext.currentIteration.name.replaceAll("\\s","")
-        def possibleNames = ["1", "2", "3"]
-        def tempPath = Paths.get(service.TEMP_DIR)
-        def testDir = new File("${tempPath}${File.separator}${testName}")
-
-        when:
-        testDir.mkdir()
-        if (Files.exists(Paths.get(testDir.toString()))) {
-            possibleNames.each {name ->{
-                def execFilename = "${AsyncImportService.EXECUTION_FILE_PREFIX}${name}${AsyncImportService.EXECUTION_FILE_EXT}"
-                def execPath = Paths.get("${testDir.toString()}${File.separator}${execFilename}")
-
-                def outputFilename = "${AsyncImportService.OUTPUT_FILE_PREFIX}${name}${AsyncImportService.OUTPUT_FILE_EXT}"
-                def outputPath = Paths.get("${testDir.toString()}${File.separator}${outputFilename}")
-
-                def stateFilename = "${AsyncImportService.STATE_FILE_PREFIX}${name}${AsyncImportService.STATE_FILE_EXT}"
-                def statePath = Paths.get("${testDir.toString()}${File.separator}${stateFilename}")
-
-                Files.createFile(execPath)
-                Files.createFile(outputPath)
-                Files.createFile(statePath)
-            }}
-        }
-        List<Path> executions = service.getFilesPathsByPrefixAndExtensionInPath(
-                testDir.toString(),
-                AsyncImportService.EXECUTION_FILE_PREFIX,
-                AsyncImportService.EXECUTION_FILE_EXT
-        )
-        List<Path> logs = service.getFilesPathsByPrefixAndExtensionInPath(
-                testDir.toString(),
-                AsyncImportService.OUTPUT_FILE_PREFIX,
-                AsyncImportService.OUTPUT_FILE_EXT
-        )
-        List<Path> states = service.getFilesPathsByPrefixAndExtensionInPath(
-                testDir.toString(),
-                AsyncImportService.STATE_FILE_PREFIX,
-                AsyncImportService.STATE_FILE_EXT
-        )
-
-        then:
-        executions.size() == 3
-        logs.size() == 3
-        states.size() == 3
-
-        cleanup:
-        if( Files.exists(Paths.get(testDir.toString())) ) AsyncImportService.deleteNonEmptyDir(testDir.toString())
-    }
-
-    def "copy dir except basic usage"(){
-        given:
-        def tempDir = AsyncImportService.TEMP_DIR
-        def dirA = new File("${tempDir}${File.separator}dirA")
-        def dirB = new File("${tempDir}${File.separator}dirB")
-
-        def fileA = Paths.get("${dirA}${File.separator}a.txt")
-        def fileB = Paths.get("${dirA}${File.separator}b.txt")
-
-        when:
-        dirA.mkdirs()
-        dirB.mkdirs()
-        Files.createFile(fileA)
-        Files.createFile(fileB)
-
-        service.copyDirExcept(
-                dirA.toString(),
-                dirB.toString(),
-                "a.txt"
-        )
-
-        then:
-        Files.list(Paths.get(dirB.toString())).count() == 1
-        Files.list(Paths.get(dirA.toString())).count() == 2 // Only copy, dont move
-        Files.list(Paths.get(dirB.toString())).anyMatch { path -> path.fileName.toString() == "b.txt"}
-
-        cleanup:
-        if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
-        if( Files.exists(Paths.get(dirB.toString())) ) AsyncImportService.deleteNonEmptyDir(dirB.toString())
 
     }
 
@@ -1234,6 +1149,88 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
             service.deleteNonEmptyDir(workingDirs.projectCopy)
         }
+
+    }
+
+    def "getFilesPathsByPrefixAndExtensionInPath basic usage"(){
+        given:
+        def testName = specificationContext.currentIteration.name.replaceAll("\\s","")
+        def possibleNames = ["1", "2", "3"]
+        def tempPath = Paths.get(service.TEMP_DIR)
+        def testDir = new File("${tempPath}${File.separator}${testName}")
+
+        when:
+        testDir.mkdir()
+        if (Files.exists(Paths.get(testDir.toString()))) {
+            possibleNames.each {name ->{
+                def execFilename = "${AsyncImportService.EXECUTION_FILE_PREFIX}${name}${AsyncImportService.EXECUTION_FILE_EXT}"
+                def execPath = Paths.get("${testDir.toString()}${File.separator}${execFilename}")
+
+                def outputFilename = "${AsyncImportService.OUTPUT_FILE_PREFIX}${name}${AsyncImportService.OUTPUT_FILE_EXT}"
+                def outputPath = Paths.get("${testDir.toString()}${File.separator}${outputFilename}")
+
+                def stateFilename = "${AsyncImportService.STATE_FILE_PREFIX}${name}${AsyncImportService.STATE_FILE_EXT}"
+                def statePath = Paths.get("${testDir.toString()}${File.separator}${stateFilename}")
+
+                Files.createFile(execPath)
+                Files.createFile(outputPath)
+                Files.createFile(statePath)
+            }}
+        }
+        List<Path> executions = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.EXECUTION_FILE_PREFIX,
+                AsyncImportService.EXECUTION_FILE_EXT
+        )
+        List<Path> logs = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.OUTPUT_FILE_PREFIX,
+                AsyncImportService.OUTPUT_FILE_EXT
+        )
+        List<Path> states = service.getFilesPathsByPrefixAndExtensionInPath(
+                testDir.toString(),
+                AsyncImportService.STATE_FILE_PREFIX,
+                AsyncImportService.STATE_FILE_EXT
+        )
+
+        then:
+        executions.size() == 3
+        logs.size() == 3
+        states.size() == 3
+
+        cleanup:
+        if( Files.exists(Paths.get(testDir.toString())) ) AsyncImportService.deleteNonEmptyDir(testDir.toString())
+    }
+
+    def "copy dir except basic usage"(){
+        given:
+        def tempDir = AsyncImportService.TEMP_DIR
+        def dirA = new File("${tempDir}${File.separator}dirA")
+        def dirB = new File("${tempDir}${File.separator}dirB")
+
+        def fileA = Paths.get("${dirA}${File.separator}a.txt")
+        def fileB = Paths.get("${dirA}${File.separator}b.txt")
+
+        when:
+        dirA.mkdirs()
+        dirB.mkdirs()
+        Files.createFile(fileA)
+        Files.createFile(fileB)
+
+        service.copyDirExcept(
+                dirA.toString(),
+                dirB.toString(),
+                "a.txt"
+        )
+
+        then:
+        Files.list(Paths.get(dirB.toString())).count() == 1
+        Files.list(Paths.get(dirA.toString())).count() == 2 // Only copy, dont move
+        Files.list(Paths.get(dirB.toString())).anyMatch { path -> path.fileName.toString() == "b.txt"}
+
+        cleanup:
+        if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
+        if( Files.exists(Paths.get(dirB.toString())) ) AsyncImportService.deleteNonEmptyDir(dirB.toString())
 
     }
 
