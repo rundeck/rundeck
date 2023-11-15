@@ -2090,7 +2090,6 @@ class ArchiveOptions implements ProjectArchiveExportRequest{
     boolean acls = false
     boolean scm = false
     String stripJobRef = null
-    boolean asyncImport = false
     Map<String, Map<String, String>> exportOpts = [:]
     Map<String, Boolean> exportComponents = [:]
 

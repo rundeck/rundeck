@@ -132,7 +132,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 stripJobRef: stripJobRef,
                 exportOpts: exportOpts,
                 exportComponents: exportComponents,
-                asyncImport: asyncImport
         )
     }
 
