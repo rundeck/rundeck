@@ -1190,22 +1190,7 @@ class ScmService {
         return true
     }
 
-    /**
-     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
-     * @param userAuthenticated: a boolean which will be a decisive parameter to return an unauthorized message or not.
-     * @return [true/false , message]
-     */
-    Function<LinkedHashMap<String, Boolean>, LinkedHashMap<Boolean, String>> scmAuthenticationResponse = integrationAndAccess -> {
-        def integration = integrationAndAccess.integration
-        def access = integrationAndAccess.access
-        def responsePrefix = "[SCM - ${integration}]"
-        def unauthorizedMessage = "${responsePrefix} User don't have access to the configured key or password yet."
-        def authorizedMessage = "${responsePrefix} User has access to the configured key or password."
-        if( access ){
-            return [ hasAccess: access, message: authorizedMessage ]
-        }
-        return [ hasAccess: access, message: unauthorizedMessage ]
-    }
+
 
     /**
      * Return a map of status for jobs
