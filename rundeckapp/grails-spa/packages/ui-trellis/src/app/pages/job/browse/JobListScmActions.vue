@@ -49,19 +49,43 @@
     >
         <li class="divider"></li>
         <li>
-            <a
-                id="toggle_btn"
-                data-toggle="modal"
-                href="#toggle_confirm"
-                class=""
-            >
-                {{ $t(`job.toggle.scm.menu.${enabledStatus?'off':'on'}`) }}
+            <a @click="toggleModal = true">
+                {{ $t(`job.toggle.scm.menu.${enabledStatus ? "off" : "on"}`) }}
             </a>
         </li>
+        <Teleport to="body">
+            <modal :title="$t('job.toggle.scm.confirm.panel.title')" v-model="toggleModal">
+                <p>
+                    {{
+                        $t(
+                            `job.toggle.scm.confirm.${
+                                enabledStatus ? "off" : "on"
+                            }`
+                        )
+                    }}
+                </p>
+                <template #footer>
+                    <btn @click="toggleModal = false">
+                        {{ $t("no") }}
+                    </btn>
+                    <btn type="danger" @click="actionToggleScm(!enabledStatus)">
+                        {{
+                            $t(
+                                `job.toggle.scm.button.label.${
+                                    enabledStatus ? "off" : "on"
+                                }`
+                            )
+                        }}
+                    </btn>
+                </template>
+            </modal>
+        </Teleport>
     </template>
 </template>
 
 <script lang="ts">
+import { getRundeckContext } from "@/library";
+import { scmProjectToggle } from "@/library/services/jobBrowse";
 import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
@@ -93,11 +117,19 @@ export default defineComponent({
         ) as JobPageStore;
         return {
             jobPageStore,
+            toggleModal: ref(false),
         };
     },
     methods: {
         projectScmAction(id: string) {
             return `${this.jobPageStore.projectScmHref}/performAction?actionId=${id}`;
+        },
+        async actionToggleScm(enabled: boolean) {
+            this.toggleModal = false;
+            let result = await scmProjectToggle(
+                getRundeckContext().projectName,
+                enabled
+            );
         },
     },
     computed: {

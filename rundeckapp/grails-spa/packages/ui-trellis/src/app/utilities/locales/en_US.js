@@ -508,7 +508,12 @@ const messages = {
     "scm.import.actions.title": "SCM Import Actions",
     "scm.export.actions.title": "SCM Export Actions",
     "scm.export.title": "SCM Export",
-    "scm.import.title": "SCM Import"
+    "scm.import.title": "SCM Import",
+    "job.toggle.scm.button.label.off": "Disable SCM",
+    "job.toggle.scm.confirm.panel.title": "Confirm SCM Modification",
+    "job.toggle.scm.confirm.on": "Enable all SCM configured plugins?",
+    "job.toggle.scm.confirm.off": "Disable all SCM configured plugins?",
+    "job.toggle.scm.button.label.on": "Enable SCM"
 }
 
 export default messages;
