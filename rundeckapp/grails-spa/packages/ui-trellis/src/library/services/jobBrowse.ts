@@ -18,7 +18,20 @@ export async function browsePath(project: string, path: string,meta: string='*')
     return resp.data
   }
 }
+export async function scmProjectToggle(project: string, enabled:boolean): Promise<ToggleResult> {
+  const resp = await api.post(`project/${project}/scm/toggle`,{
+      enabled
+  })
+  if (resp.status !== 200) {
+    throw {message: resp.data.message, response: resp}
+  } else {
+    return resp.data
+  }
+}
 
+export interface ToggleResult {
+    modified:boolean
+}
 export interface ResultItem {
     id: string;
     message?: string;
