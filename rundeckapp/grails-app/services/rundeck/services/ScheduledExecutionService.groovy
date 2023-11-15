@@ -4601,8 +4601,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ScheduledExecution scheduledExecution) {
         def scmOptions = [:]
         if (scmService.projectHasConfiguredExportPlugin(project)) {
-            def userRightsToExport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project) as Map<String, Object>
-            if (userRightsToExport.get("hasAccess")) {
+            boolean keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project)
+            if (keyAccess) {
                 def exportModel = [:]
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
@@ -4611,8 +4611,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (scmService.projectHasConfiguredImportPlugin(project)) {
-            def userRightsToImport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project) as Map<String, Object>
-            if (userRightsToImport.get("hasAccess")) {
+            boolean keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)
+            if (keyAccess) {
                 def importModel = [:]
                 importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.getOptionKey(), true)
                 importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.getOptionKey(), scmService.importStatusForJobs(project, authContext, [scheduledExecution]))
