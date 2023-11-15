@@ -1190,10 +1190,38 @@ class ScmService {
         return true
     }
 
+    /**
+     * Return a map of status for jobs by id
+     * @param project project name
+     * @param auth auth context
+     * @param jobIds list of job ids
+     * @param runClusterFix if true, run the cluster fix
+     * @param jobsPluginMeta map of job id to plugin metadata
+     * @return
+     */
+    Map<String, JobState> exportStatusForJobIds(
+        String project,
+        UserAndRolesAuthContext auth,
+        Collection<String> jobIds,
+        boolean runClusterFix,
+        Map<String, Map> jobsPluginMeta
+    ) {
+        List<ScheduledExecution> jobs = jobIds.collect {
+            ScheduledExecution.findByProjectAndUuid(project, it)
+        }.grep { it }
 
+        return exportStatusForJobs(
+            project,
+            auth,
+            jobs,
+            runClusterFix,
+            jobsPluginMeta
+        )
+    }
 
     /**
      * Return a map of status for jobs
+     * todo: provide interface that does not not require ScheduledExecution objects
      * @param jobs
      * @return
      */
@@ -1249,6 +1277,23 @@ class ScmService {
     }
     /**
      * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobImportState> importStatusForJobIds(String project, UserAndRolesAuthContext auth, Collection<String> jobIds,  boolean runClusterFix , Map<String, Map> jobsPluginMeta ) {
+        return importStatusForJobs(
+            project,
+            auth,
+            jobIds.collect {
+                ScheduledExecution.findByProjectAndUuid(project, it)
+            }.grep { it },
+            runClusterFix,
+            jobsPluginMeta
+        )
+    }
+    /**
+     * Return a map of status for jobs
+     * todo: provide interface that does not not require ScheduledExecution objects
      * @param jobs
      * @return
      */
