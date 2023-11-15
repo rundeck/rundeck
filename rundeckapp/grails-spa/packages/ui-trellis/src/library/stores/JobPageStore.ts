@@ -10,7 +10,8 @@ import {InjectionKey} from 'vue'
 
 export class JobPageStore {
   bulkEditMode: boolean = false
-  authz: { [key: string]: boolean } = {}
+  jobAuthz: { [key: string]: boolean } = {}
+  projAuthz: { [key: string]: boolean } = {}
   executionMode: boolean = false
   projectExecutionsEnabled: boolean = false
   projectSchedulesEnabled: boolean = false
@@ -70,10 +71,15 @@ export class JobPageStore {
     this.meta = await getProjectMeta(getRundeckContext().projectName)
     const projAuthz = this.findMeta('authz')
     if (
-      projAuthz?.types?.job?.authorizations &&
-      typeof projAuthz.types.job.authorizations === 'object'
+      projAuthz?.types?.job &&
+      typeof projAuthz.types.job === 'object'
     ) {
-      this.authz = projAuthz?.types?.job?.authorizations
+      this.jobAuthz = projAuthz?.types?.job
+    }if (
+      projAuthz?.project &&
+      typeof projAuthz.project === 'object'
+    ) {
+      this.projAuthz = projAuthz?.project
     }
     const projMode = this.findMeta('projMode')
     if (projMode) {

@@ -1,5 +1,5 @@
 <template>
-  <a :href="jobPageStore.createJobHref()" class="btn" :class="`btn-${btnType}`" v-if="jobPageStore.authz['create']">
+  <a :href="jobPageStore.createJobHref()" class="btn" :class="`btn-${btnType}`" v-if="jobPageStore.jobAuthz['create']">
     <i class="glyphicon glyphicon-plus"></i>
     <slot>{{ $t("new.job.button.label") }}</slot>
   </a>

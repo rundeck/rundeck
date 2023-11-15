@@ -185,7 +185,7 @@ export default defineComponent({
             this.jobPageStore.bulkEditMode = false;
         },
         projAuthz(action: string): boolean {
-            return this.jobPageStore.authz?.[action];
+            return this.jobPageStore.jobAuthz?.[action];
         },
         selectAll() {
             eventBus.emit("job-bulk-edit-select-all");
