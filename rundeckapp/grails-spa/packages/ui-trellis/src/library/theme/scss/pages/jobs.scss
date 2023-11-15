@@ -141,7 +141,7 @@
   //   }
   .optdetail {
     /*float:left;*/
-    width: 540px;
+    width: 650px;
     overflow: hidden;
     white-space: nowrap;
     height: 16px;
@@ -149,7 +149,6 @@
     position:relative;
     top: 2px;
     display: inline-block;
-    padding-bottom: 5px;
     min-height: 17px
   }
 
@@ -167,7 +166,6 @@
   .opt-desc {
     overflow:hidden;
     text-overflow: ellipsis;
-    max-width: 100px;
     margin-top: 5px;
   }
 
