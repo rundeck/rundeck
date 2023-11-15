@@ -1,5 +1,5 @@
 <template>
-    <div class="job_list_group_header hover-reveal-hidden" @click="$emit('toggleExpanded',item.groupPath)">
+    <div class="job_list_group_header hover-reveal-hidden" @click="handleClick" ref="itemDiv">
         <btn
             @click="$emit('toggleExpanded', item.groupPath)"
             class="btn-link group-name  text-secondary"
@@ -44,6 +44,12 @@ export default defineComponent({
         lastPathItem(path: string) {
             const parts = path.split("/");
             return parts[parts.length - 1];
+        },
+        handleClick(event) {
+          if (event.target == this.$refs.itemDiv) {
+            //only emit if the click was on the item div to avoid case when clicking on inputs/buttons
+            this.$emit('toggleExpanded',this.item.groupPath)
+          }
         },
     },
 });
