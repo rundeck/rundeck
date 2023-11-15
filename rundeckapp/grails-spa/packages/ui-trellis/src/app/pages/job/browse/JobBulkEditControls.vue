@@ -1,7 +1,11 @@
 <template>
-    <div >
+    <div>
         <div class="flex col flex-justify-end">
             <div class="bulk_edit_controls">
+                <ui-socket section="job-list-page" location="status-item" />
+
+                <job-list-scm-status class="status-item" />
+
                 <dropdown>
                     <btn class="dropdown-toggle mr-2">
                         {{ $t("job.actions") }}
@@ -25,6 +29,11 @@
                               {{ $t(jobPageStore.bulkEditMode?"job.bulk.deactivate.menu.label":"job.bulk.activate.menu.label") }}
                             </a>
                         </li>
+                        <job-list-scm-actions />
+                        <ui-socket
+                            location="job-list-actions-menu"
+                            section="extended"
+                        ></ui-socket>
                     </template>
                 </dropdown>
                 <ui-socket section="job-list-page" location="action-buttons">
@@ -134,21 +143,31 @@
 
 <script lang="ts">
 import CreateNewJobButton from "@/app/pages/job/browse/components/CreateNewJobButton.vue";
+import JobListScmActions from "@/app/pages/job/browse/JobListScmActions.vue";
+import JobListScmStatus from "@/app/pages/job/browse/JobListScmStatus.vue";
 import { getRundeckContext } from "@/library";
 import {
     JobBrowserStore,
-    JobBrowserStoreInjectionKey
+    JobBrowserStoreInjectionKey,
 } from "@/library/stores/JobBrowser";
-import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
+import {
+    JobPageStore,
+    JobPageStoreInjectionKey,
+} from "@/library/stores/JobPageStore";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
-import UiSocket from '@/library/components/utils/UiSocket.vue'
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
     name: "JobBulkEditControls",
-    components: { CreateNewJobButton, UiSocket },
+    components: {
+        JobListScmStatus,
+        CreateNewJobButton,
+        UiSocket,
+        JobListScmActions,
+    },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
             JobBrowserStoreInjectionKey
@@ -204,5 +223,9 @@ export default defineComponent({
 <style scoped lang="scss">
 .bulk_edit_controls {
     margin-bottom: var(--spacing-8);
+
+    .status-item {
+        margin-right: var(--spacing-2);
+    }
 }
 </style>

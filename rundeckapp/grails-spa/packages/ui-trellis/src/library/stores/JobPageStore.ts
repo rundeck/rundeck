@@ -96,6 +96,11 @@ export class JobPageStore {
   findMeta(key: string) {
     return this.meta.find((m) => m.name === key)?.data
   }
+  createProjectScmActionHref(id:string, integration:string){
+    ///project/demo/scm/export/performAction?actionId=project-commit
+    const context= getRundeckContext()
+    return `${context.rdBase}project/${context.projectName}/scm/${integration}/performAction?actionId=${id}`;
+  }
   createJobHref(){
     const context= getRundeckContext()
     return `${context.rdBase}project/${context.projectName}/job/create`;
