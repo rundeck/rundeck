@@ -19,7 +19,7 @@
             </li>
             <li v-if="items.length === 0">
                 <template v-if="loading">
-                    <i class="glyphicon glyphicon-refresh spinning"></i>
+                  <i class="fas fa-spinner fa-pulse" ></i>
                 </template>
                 <slot/>
             </li>
