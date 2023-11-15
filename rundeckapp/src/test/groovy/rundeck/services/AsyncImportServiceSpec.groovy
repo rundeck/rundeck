@@ -93,18 +93,15 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 return 4L
             }
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream()
         service.frameworkService = Mock(FrameworkService){
             it.getFrameworkProject(projectName) >> fwkProject
         }
 
         when: "We try to get info from resource"
-        def result = service.getAsyncImportStatusForProject(projectName, out)
-        def status = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
+        def result = service.getAsyncImportStatusForProject(projectName)
 
         then:
         result != null
-        status != null
     }
 
     def "Status file updater helper updates the status file leaving existing data intact"(){
@@ -116,7 +113,6 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
                 return 4L
             }
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream()
         service.frameworkService = Mock(FrameworkService){
             it.getFrameworkProject(projectName) >> fwkProject
         }
@@ -126,7 +122,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
 
         when: "We try to update, all the old props get copied to the new file and then it writes a resource in storage."
-        service.asyncImportStatusFileUpdater(newStatus, out)
+        service.asyncImportStatusFileUpdater(newStatus)
 
         then:
         newStatus.jobUuidOption == 'remove' // this value come from the mock
