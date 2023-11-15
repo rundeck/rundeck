@@ -37,7 +37,7 @@ export default defineComponent({
     socketData: {
       type: Object,
       required: false,
-    },
+    }
   },
   setup() {
     const items = ref<UIItem[]>([])

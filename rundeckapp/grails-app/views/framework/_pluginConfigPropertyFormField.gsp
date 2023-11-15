@@ -337,7 +337,7 @@
              data-storage-filter="${enc(attr:storageFilter)}">
             <ui-socket section="plugin-runner-key-selector" location="main"
                        :event-bus="eventBus"
-                       :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}' }"
+                       :socket-data="{ storageFilter: '${enc(attr:storageFilter)}', fieldId: '${enc(attr:fieldid)}', readOnly: 'true'}"
             >
                 <a class="btn btn-sm btn-default obs-select-storage-path"
                         data-toggle="modal"

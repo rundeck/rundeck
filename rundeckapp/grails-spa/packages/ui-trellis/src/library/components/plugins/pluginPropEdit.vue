@@ -317,10 +317,20 @@
         <job-config-picker v-model="currentValue" :btnClass="`btn-primary`"></job-config-picker>
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
-        <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                              :allow-upload="true"
-                              :value="keyPath"
-                              :read-only="renderReadOnly"/>
+        <div v-if="useRunnerSelector===true">
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{storageFilter: prop.options['storage-file-meta-filter'], allowUpload: true, readOnly: renderReadOnly, value: currentValue, handleUpdate: (val)=>this.currentValue=val}">
+            <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                  :allow-upload="true"
+                                  :value="keyPath"
+                                  :read-only="renderReadOnly"/>
+          </ui-socket>
+        </div>
+        <div v-else>
+          <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                :allow-upload="true"
+                                :value="keyPath"
+                                :read-only="renderReadOnly"/>
+        </div>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -365,7 +375,8 @@ import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import TextAutocomplete from '../utils/TextAutocomplete.vue'
 import type {PropType} from "vue";
 import { getRundeckContext } from "../../rundeckService";
-
+import {EventBus} from "@/library";
+import UiSocket from "../utils/UiSocket.vue";
 interface Prop {
   type: string
   defaultValue: any
@@ -386,7 +397,8 @@ export default defineComponent({
     VMarkdownView,
     PluginPropVal,
     KeyStorageSelector,
-    TextAutocomplete
+    TextAutocomplete,
+    UiSocket
   },
   props:{
     'prop':{
@@ -402,6 +414,11 @@ export default defineComponent({
       required:false,
       default:''
      },
+    'useRunnerSelector':{
+      type:Boolean,
+      default:false,
+      required:false
+    },
     'inputValues':{
       type:Object,
       required:false
@@ -410,6 +427,10 @@ export default defineComponent({
       type:Object as PropType<any>,
       required:false
      },
+    'eventBus':{
+      type:Object as PropType<typeof EventBus>,
+      required:false
+    },
     'rkey':{
       type:String,
       required:false,
@@ -466,6 +487,9 @@ export default defineComponent({
     },
     parseAllowedValues(){
       return JSON.stringify(this.prop.allowed);
+    },
+    handleUpdate(val: any){
+      this.currentValue= val;
     },
     hasAllowedValues(){
       if(this.prop.allowed!=null){
