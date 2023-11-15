@@ -21,14 +21,11 @@ class ProjectModeMetadataComponent implements ProjectMetadataComponent {
     ConfigurationService configurationService
 
     @Override
-    List<ComponentMeta> getMetadataForProject(
+    Optional<List<ComponentMeta>> getMetadataForProject(
         final String project,
         final Set<String> names,
         final UserAndRolesAuthContext authContext
     ) {
-        if (!names.contains(PROJECT_MODE) && !names.contains(SYSTEM_MODE) && !names.contains('*')) {
-            return null
-        }
         List<ComponentMeta> result = new ArrayList<>()
         if (names.contains(PROJECT_MODE) || names.contains('*')) {
             result.add(
@@ -40,7 +37,10 @@ class ProjectModeMetadataComponent implements ProjectMetadataComponent {
                 getSystemModeMeta()
             )
         }
-        return result
+        if(result){
+            return Optional.of(result)
+        }
+        return Optional.empty()
     }
 
     ComponentMeta getProjectModeMeta(String project) {

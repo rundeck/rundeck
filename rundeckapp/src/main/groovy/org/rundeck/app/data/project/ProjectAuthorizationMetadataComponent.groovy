@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 @CompileStatic
 class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent {
     public static final String NAME = 'authz'
-    public static final Map<String, List<String>> PROJ_AUTH_CHECK_SET = Collections.unmodifiableMap(
+    public static final Map<String, List<String>> PROJ_TYPES_AUTH_CHECK_SET = Collections.unmodifiableMap(
         [
             (AuthConstants.TYPE_JOB): [
                 AuthConstants.ACTION_CREATE,
@@ -21,6 +21,15 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
         ]
     )
 
+    public static final List<String> PROJ_AUTH_CHECK_ACTIONS = Collections.unmodifiableList(
+        [
+            AuthConstants.ACTION_CONFIGURE,
+            AuthConstants.ACTION_EXPORT,
+            AuthConstants.ACTION_SCM_EXPORT,
+            AuthConstants.ACTION_IMPORT,
+            AuthConstants.ACTION_SCM_IMPORT,
+        ]
+    )
     @Autowired
     AuthContextProcessor rundeckAuthContextProcessor
 
@@ -30,29 +39,54 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
     }
 
     @Override
-    List<ComponentMeta> getMetadataForProject(
+    Optional<List<ComponentMeta>> getMetadataForProject(
         final String project,
         final Set<String> names,
         final UserAndRolesAuthContext authContext
     ) {
         if (!names.contains(NAME) && !names.contains('*')) {
-            return null
+            return Optional.empty()
         }
-        return [ComponentMeta.with(NAME, getAuthzMeta(project, authContext))]
+        Map<String, Object> result = new HashMap<String, Object>()
+        result.putAll(getTypeAuthzMeta(project, authContext))
+        result.putAll(getProjAuthzMeta(project, authContext, PROJ_AUTH_CHECK_ACTIONS))
+        return Optional.of(
+            [ComponentMeta.with(NAME, result)]
+        )
     }
 
-    Map<String, Object> getAuthzMeta(String project, UserAndRolesAuthContext authContext) {
+    /**
+     * Evalutes authorizations for the actions for the project resource in the system context
+     * @param project
+     * @param authContext
+     * @param actions
+     */
+    Map<String, Object> getProjAuthzMeta(
+        String project, UserAndRolesAuthContext authContext, List<String> actions
+    ) {
+        //authorization for project resource
+        def results = getAuthSystemResults(
+            actions,
+            project,
+            authContext
+        )
+        return [
+            project: results
+        ] as Map<String, Object>
+    }
+
+    Map<String, Object> getTypeAuthzMeta(String project, UserAndRolesAuthContext authContext) {
         //authorization for generic types (job)
         Map<String, Object> typeAuthz = [:]
-        for (String type : PROJ_AUTH_CHECK_SET.keySet()) {
+        for (String type : PROJ_TYPES_AUTH_CHECK_SET.keySet()) {
             def resource = AuthorizationUtil.resourceType(type)
-            typeAuthz[type] = getAuthzMeta(resource, PROJ_AUTH_CHECK_SET.get(type), project, authContext)
+            typeAuthz[type] = getAuthProjectResults(resource, PROJ_TYPES_AUTH_CHECK_SET.get(type), project, authContext)
         }
 
         return [types: typeAuthz] as Map<String, Object>
     }
 
-    Map<String, Object> getAuthzMeta(
+    Map<String, Object> getAuthProjectResults(
         Map<String, String> authResource,
         List<String> actions,
         String project,
@@ -64,8 +98,23 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
             actions.toSet(),
             project
         )
-        return [
-            authorizations: authz.collectEntries { [it.action, it.authorized] }
-        ] as Map<String, Object>
+        return authz.collectEntries { [it.action, it.authorized] } as Map<String, Object>
+    }
+
+    Map<String, Object> getAuthSystemResults(
+        List<String> actions,
+        String project,
+        UserAndRolesAuthContext authContext
+    ) {
+        def result = [:]
+        def authResource = rundeckAuthContextProcessor.authResourceForProject(project)
+        for (String action : actions) {
+            result[action] = rundeckAuthContextProcessor.authorizeApplicationResource(
+                authContext,
+                authResource,
+                action
+            )
+        }
+        return result as Map<String, Object>
     }
 }
