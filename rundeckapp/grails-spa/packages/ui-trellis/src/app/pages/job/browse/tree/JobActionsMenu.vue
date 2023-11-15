@@ -201,7 +201,7 @@ export default defineComponent({
         },
         authz(): Object | undefined {
             const data: any = this.findJobMeta("authz");
-            return data?.authorizations || {};
+            return data || {};
         },
         editHref() {
             return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;

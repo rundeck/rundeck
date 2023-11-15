@@ -1,5 +1,5 @@
 <template>
-  <a :href="jobPageStore.uploadJobHref()" class="btn" :class="`btn-${btnType}`" v-if="jobPageStore.authz['create']">
+  <a :href="jobPageStore.uploadJobHref()" class="btn" :class="`btn-${btnType}`" v-if="jobPageStore.jobAuthz['create']">
 
     <slot>{{ $t("job.upload.button.title") }}</slot>
   </a>

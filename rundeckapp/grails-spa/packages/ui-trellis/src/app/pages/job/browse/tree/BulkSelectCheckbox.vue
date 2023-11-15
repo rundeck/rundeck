@@ -48,7 +48,7 @@ export default defineComponent({
             const data: any = this.job?.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "authz"
             )?.data;
-            return data?.authorizations || {};
+            return data || {};
         },
     },
     mounted() {
