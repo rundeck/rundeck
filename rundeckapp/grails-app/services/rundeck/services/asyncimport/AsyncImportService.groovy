@@ -52,6 +52,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     static final String MODEL_PROJECT_NAME_EXT = '.jar'
     static final String MODEL_PROJECT_INTERNAL_PREFIX = 'rundeck-'
     static final String MAX_EXECS_PER_DIR_PROP_NAME = "asyncImportConfig.maxDistributedExecutions"
+    static final int KILOBYTE=1024
 
     static final String EXECUTION_FILE_PREFIX = 'execution-'
     static final String EXECUTION_FILE_EXT = '.xml'
@@ -840,20 +841,20 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @throws IOException
      */
     static void zipDir(String unzippedFilepath, String zippedFilePath, ZipOutputStream zos) throws IOException {
-        File dir = new File(unzippedFilepath);
+        File dir = new File(unzippedFilepath)
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                zipDir(file.getAbsolutePath(), zippedFilePath + file.getName() + "/", zos);
+                zipDir(file.getAbsolutePath(), zippedFilePath + file.getName() + "/", zos)
             } else {
                 try (FileInputStream fis = new FileInputStream(file)) {
-                    ZipEntry zipEntry = new ZipEntry(zippedFilePath + file.getName());
-                    zos.putNextEntry(zipEntry);
-                    byte[] buffer = new byte[1024];
-                    int len;
+                    ZipEntry zipEntry = new ZipEntry(zippedFilePath + file.getName())
+                    zos.putNextEntry(zipEntry)
+                    byte[] buffer = new byte[KILOBYTE]
+                    int len
                     while ((len = fis.read(buffer)) > 0) {
-                        zos.write(buffer, 0, len);
+                        zos.write(buffer, 0, len)
                     }
-                    zos.closeEntry();
+                    zos.closeEntry()
                 }
             }
         }
@@ -869,9 +870,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             Files.walk(Paths.get(path))
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
-                    .forEach(File::delete);
+                    .forEach(File::delete)
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
     }
 
@@ -906,35 +907,35 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             if( !checkDir.exists() ){
                 checkDir.mkdirs()
             }
-            ZipEntry zipEntry;
+            ZipEntry zipEntry
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                String newFileName = zipEntry.getName();
-                File destFile = new File(destDir, newFileName);
+                String newFileName = zipEntry.getName()
+                File destFile = new File(destDir, newFileName)
 
                 if (zipEntry.isDirectory()) {
-                    destFile.mkdirs();
+                    destFile.mkdirs()
                 } else {
                     File parent = destFile.getParentFile();
                     if (!parent.exists()) {
-                        parent.mkdirs();
+                        parent.mkdirs()
                     }
 
                     FileOutputStream fos = new FileOutputStream(destFile);
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
+                    byte[] buffer = new byte[KILOBYTE]
+                    int bytesRead
                     while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-                        fos.write(buffer, 0, bytesRead);
+                        fos.write(buffer, 0, bytesRead)
                     }
-                    fos.close();
+                    fos.close()
                 }
 
-                zipInputStream.closeEntry();
+                zipInputStream.closeEntry()
             }
 
-            zipInputStream.close();
+            zipInputStream.close()
 
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
     }
 
@@ -992,9 +993,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try{
             return Files.list(Paths.get(path.toString()))
                     .sorted((s1, s2) -> {
-                        int num1 = Integer.parseInt(s1.fileName.toString().replaceAll("\\D", ""));
-                        int num2 = Integer.parseInt(s2.fileName.toString().replaceAll("\\D", ""));
-                        return Integer.compare(num1, num2);
+                        int num1 = Integer.parseInt(s1.fileName.toString().replaceAll("\\D", ""))
+                        int num2 = Integer.parseInt(s2.fileName.toString().replaceAll("\\D", ""))
+                        return Integer.compare(num1, num2)
                     })
                     .filter {
                         it -> {
