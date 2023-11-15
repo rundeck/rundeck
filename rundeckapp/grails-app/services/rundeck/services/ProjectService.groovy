@@ -1983,10 +1983,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         List<ItemMeta> metaVals = []
         def components = applicationContext.getBeansOfType(ProjectMetadataComponent) ?: [:]
         components.each { name, component ->
-            List<ComponentMeta> metaItems = component.getMetadataForProject(project, metakeys, authContext)
-            metaVals.addAll(
-                metaItems.stream().map(ItemMeta.&from).collect(Collectors.toList())
-            )
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForProject(project, metakeys, authContext)
+            metaItems.ifPresent {
+                metaVals.addAll(
+                    it.stream().map(ItemMeta.&from).collect(Collectors.toList())
+                )
+            }
         }
 
         return metaVals
