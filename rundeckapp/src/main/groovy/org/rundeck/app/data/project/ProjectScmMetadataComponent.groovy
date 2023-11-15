@@ -41,7 +41,7 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
             try {
                 if (scmService.projectHasConfiguredExportPlugin(project)) {
                     results.configured = true
-                    results.enabled = scmService.loadScmConfig(project, 'export')?.enabled
+                    results.enabled = scmService.loadScmConfig(project, ScmService.EXPORT)?.enabled
                     if (results.enabled) {
                         def validation = scmService
                             .userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project)
@@ -68,7 +68,7 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
             try {
                 if (scmService.projectHasConfiguredImportPlugin(project)) {
                     results.configured = true
-                    results.enabled = scmService.loadScmConfig(project, 'import')?.enabled
+                    results.enabled = scmService.loadScmConfig(project, ScmService.IMPORT)?.enabled
                     if (results.enabled) {
                         def validation = scmService
                             .userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)
