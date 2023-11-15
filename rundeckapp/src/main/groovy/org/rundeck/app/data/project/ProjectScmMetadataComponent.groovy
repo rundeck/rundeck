@@ -39,8 +39,11 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
         ) {
             Map<String, Object> results = new HashMap<>()
             try {
-                if (scmService.projectHasConfiguredExportPlugin(project)) {
+                def ePluginConfig = scmService.loadScmConfig(project, ScmService.EXPORT)
+                if(ePluginConfig){
                     results.configured = true
+                }
+                if (scmService.projectHasConfiguredExportPlugin(project)) {
                     results.enabled = scmService.loadScmConfig(project, ScmService.EXPORT)?.enabled
                     if (results.enabled) {
                         def validation = scmService
@@ -66,8 +69,12 @@ class ProjectScmMetadataComponent implements ProjectMetadataComponent {
         ) {
             Map<String, Object> results = new HashMap<>()
             try {
-                if (scmService.projectHasConfiguredImportPlugin(project)) {
+
+                def pluginConfig = scmService.loadScmConfig(project, ScmService.IMPORT)
+                if(pluginConfig){
                     results.configured = true
+                }
+                if (scmService.projectHasConfiguredImportPlugin(project)) {
                     results.enabled = scmService.loadScmConfig(project, ScmService.IMPORT)?.enabled
                     if (results.enabled) {
                         def validation = scmService
