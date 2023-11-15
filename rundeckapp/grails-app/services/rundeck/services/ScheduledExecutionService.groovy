@@ -572,6 +572,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             filter(JobBrowseItem.&isJob).
             map(JobBrowseItem.&getJobData).
             collect(Collectors.toList())
+        if(jobs.empty){
+            return [:]
+        }
         def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
         components.each { name, component ->
             Map<String, List<ComponentMeta>> metaItems = component.getMetadataForJobs(jobs, metakeys, authContext)
