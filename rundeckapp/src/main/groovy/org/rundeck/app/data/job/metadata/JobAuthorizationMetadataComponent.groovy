@@ -84,8 +84,6 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
             JOB_AUTH_CHECK_SET,
             project
         )
-        return [
-            authorizations: authz.collectEntries { [it.action, it.authorized] }
-        ] as Map<String, Object>
+        return authz.collectEntries { [it.action, it.authorized] } as Map<String, Object>
     }
 }
