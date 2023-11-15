@@ -89,7 +89,7 @@ class JobScmMetadataComponent implements JobMetadataComponent {
         if ((names.contains(SCM_EXPORT) || names.contains('*')) && authorizedForExport(authContext, project)) {
             try {
                 if (scmService.projectHasConfiguredExportPlugin(project)) {
-                    boolean enabled = scmService.loadScmConfig(project, 'export')?.enabled
+                    boolean enabled = scmService.loadScmConfig(project, ScmService.EXPORT)?.enabled
                     if (enabled) {
                         def keyAccess = scmService
                             .userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project)
@@ -116,7 +116,7 @@ class JobScmMetadataComponent implements JobMetadataComponent {
         if ((names.contains(SCM_IMPORT) || names.contains('*')) && authorizedForImport(authContext, project)) {
             try {
                 if (scmService.projectHasConfiguredImportPlugin(project)) {
-                    boolean enabled = scmService.loadScmConfig(project, 'import')?.enabled
+                    boolean enabled = scmService.loadScmConfig(project, ScmService.IMPORT)?.enabled
                     if (enabled) {
                         def keyAccess = scmService
                             .userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)
