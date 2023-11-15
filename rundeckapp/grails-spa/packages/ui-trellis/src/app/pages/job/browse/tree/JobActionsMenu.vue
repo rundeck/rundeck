@@ -152,17 +152,24 @@
                     </a>
                 </li>
             </template>
+            <job-scm-actions :job="job"></job-scm-actions>
+            <ui-socket location="job-actions-menu" section="extended" :socket-data="{job}">
+
+            </ui-socket>
         </template>
     </dropdown>
 </template>
 
 <script lang="ts">
+import JobScmActions from '@/app/pages/job/browse/tree/JobScmActions.vue'
 import { getRundeckContext } from "@/library";
+import UiSocket from '@/library/components/utils/UiSocket.vue'
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent } from "vue";
 const context = getRundeckContext();
 export default defineComponent({
     name: "JobActionsMenu",
+    components: { JobScmActions, UiSocket },
     props: {
         itemData: {
             type: Object,
