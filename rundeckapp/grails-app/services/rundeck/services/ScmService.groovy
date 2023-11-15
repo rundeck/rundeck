@@ -1169,34 +1169,25 @@ class ScmService {
      * @return [true/false , message]
      */
     @CompileStatic
-    def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
-        def hasAccess = true;
-        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess] as LinkedHashMap<String, Boolean>)
-        if( null == auth || null == integration ){
-            return defaultResponse;
-        }
+    boolean userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
         def ctx = scmOperationContext(auth, project)
-        if( ctx ){
-            switch(integration){
-                case IMPORT:
-                    def plugin = getLoadedImportPluginFor project
-                    if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
-                    }
-                    return defaultResponse
-                    break;
-                case EXPORT:
-                    def plugin = getLoadedExportPluginFor project
-                    if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
-                    }
-                    return defaultResponse
-                    break;
-                default:
-                    return defaultResponse
-            }
+
+        switch(integration){
+            case IMPORT:
+                def plugin = getLoadedImportPluginFor project
+                if( plugin ){
+                    return plugin.userHasAccessToKeyOrPassword(ctx)
+                }
+                break;
+            case EXPORT:
+                def plugin = getLoadedExportPluginFor project
+                if( plugin ){
+                    return plugin.userHasAccessToKeyOrPassword(ctx)
+                }
+                break;
         }
-        return defaultResponse
+
+        return true
     }
 
     /**

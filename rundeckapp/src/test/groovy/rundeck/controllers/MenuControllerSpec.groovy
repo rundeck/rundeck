@@ -1480,7 +1480,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                     controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData){
@@ -1525,7 +1525,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
@@ -1579,7 +1579,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         controller.storageService = Mock(StorageService)
         def project = 'test'
@@ -1638,7 +1638,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
@@ -1693,7 +1693,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
