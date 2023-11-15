@@ -14,6 +14,7 @@ import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from './tree/JobActionsMenu.vue'
 import JobRunButton from './tree/JobRunButton.vue'
 import JobScheduleInfo from './tree/JobScheduleInfo.vue';
+import JobScmStatus from './tree/JobScmStatus.vue'
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
@@ -61,6 +62,13 @@ function init() {
           order: 1,
           visible: true,
           widget: markRaw(JobRunButton),
+      },
+      {
+          section: "job-browse-item",
+          location: "before-job-name",
+          order: 10,
+          visible: true,
+          widget: markRaw(JobScmStatus),
       },
       {
           section: "job-browse-item",
