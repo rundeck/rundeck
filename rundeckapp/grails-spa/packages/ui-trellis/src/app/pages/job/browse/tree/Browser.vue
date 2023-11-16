@@ -80,7 +80,7 @@ export default defineComponent({
             default: false,
         },
     },
-    emits: ["rootBrowse"],
+    emits: ["rootBrowse",'empty'],
     setup(props) {
         const items = ref<JobBrowseItem[]>([]);
         return {
@@ -129,6 +129,15 @@ export default defineComponent({
                 this.expandedItems.push(path);
             }
         },
+        childGroupEmpty(item:JobBrowseItem){
+          //remove
+          this.items = this.items.filter(
+            (i) => i.job ||(i.groupPath !== item.groupPath)
+          );
+          if(this.items.length<1){
+            this.$emit('empty')
+          }
+        },
         selectAll(path:string){
           eventBus.emit(`job-bulk-edit-select-all-path`,path)
         },
@@ -142,6 +151,9 @@ export default defineComponent({
             this.loading = true;
             this.items = await this.jobBrowserStore.loadItems(this.browsePath);
             this.loading = false;
+            if(this.items.length<1){
+              this.$emit('empty')
+            }
         },
         modifiedPaths(paths:string[]){
           if(paths.includes(this.browsePath)){
