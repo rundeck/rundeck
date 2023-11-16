@@ -3097,6 +3097,25 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         status != null
     }
 
+    def "Failed async status file for project retrieval"(){
+        given:
+        def projectName = "test"
+        def mockedStatus = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = "Its a mock!"
+            return it
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            it.statusFileExists(projectName) >> true
+            1 * it.getAsyncImportStatusForProject(projectName) >> { throw new AsyncImportException("Some error") }
+        }
+
+        when:
+        def status = service.getAsyncImportStatusFileForProject(projectName)
+
+        then:
+        thrown AsyncImportException
+    }
+
     def "Create async status file for project"(){
         given:
         def projectName = "test"

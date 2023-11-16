@@ -3381,13 +3381,6 @@ Note: `other_errors` included since API v35""",
             }
             def projectName = params.project as String
             statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
-            if(!statusFileContent || null == statusFileContent){
-                return apiService.renderErrorFormat(response,[
-                        status: HttpServletResponse.SC_NOT_FOUND,
-                        code: 'api.error.async.import.status.file.retrieval.error',
-                        args: ['No Status file in db.']
-                ])
-            }
         }catch(Exception e){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
