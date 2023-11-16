@@ -46,6 +46,9 @@ export class JobPageStore {
         getRundeckContext().projectName,
         this.selectedJobs.map((j) => j.id!)
       )
+      if(!result.allsuccessful){
+        throw new Error("Some jobs could not be deleted: "+result.failed.map(f=>f.message).join(", "))
+      }
     } else if (
       action === 'enable_schedule' ||
       action === 'disable_schedule'
@@ -55,6 +58,9 @@ export class JobPageStore {
         this.selectedJobs.map((j) => j.id!),
         action === 'enable_schedule'
       )
+      if(!result.allsuccessful){
+        throw new Error("Some jobs could not be updated: "+result.failed.map(f=>f.id+":"+(f.message||'Unknown reason')).join(", "))
+      }
     } else if (
       action === 'enable_execution' ||
       action === 'disable_execution'
@@ -64,6 +70,9 @@ export class JobPageStore {
         this.selectedJobs.map((j) => j.id!),
         action === 'enable_execution'
       )
+      if(!result.allsuccessful){
+        throw new Error("Some jobs could not be updated: "+result.failed.map(f=>f.id+":"+(f.message||'Unknown reason')).join(", "))
+      }
     }
   }
 
