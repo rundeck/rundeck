@@ -39,7 +39,7 @@ export interface ResultItem {
 }
 
 export interface BulkDeleteResponse {
-    failures: ResultItem[];
+    failed: ResultItem[];
     failedCount: number;
     successCount: number;
     requestCount: number;
@@ -47,7 +47,7 @@ export interface BulkDeleteResponse {
 }
 
 export interface BulkToggleResponse {
-    failured: ResultItem[];
+    failed: ResultItem[];
     succeeded: ResultItem[];
     enabled: boolean;
     requestCount: number;
