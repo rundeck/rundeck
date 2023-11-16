@@ -23,6 +23,7 @@ export default defineComponent({
         return {
             jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
             selected: ref(false),
+            subs:{}
         };
     },
     watch: {
@@ -45,35 +46,53 @@ export default defineComponent({
             return data || {};
         },
     },
+    methods:{
+      selectIfPath(path:string){
+        if(this.job.groupPath===path || this.job.groupPath && this.job.groupPath.startsWith(`${path}/`)){
+          this.selected = true
+        }
+      },
+      unselectIfPath(path:string){
+        if(this.job.groupPath===path || this.job.groupPath && this.job.groupPath.startsWith(`${path}/`)){
+          this.selected = false
+        }
+      },
+      toggleSelected(){
+        if (this.jobPageStore.bulkEditMode) {
+          this.selected = !this.selected
+        }
+      }
+    },
     mounted() {
-        eventBus.on("job-bulk-edit-select-all", () => {
-            this.selected = true;
-        });
-        eventBus.on("job-bulk-edit-select-none", () => {
-            this.selected = false;
-        });
-        eventBus.on(`job-bulk-edit-select-all-path`, (path:string) => {
-          if(this.job.groupPath===path || this.job.groupPath.startsWith(`${path}/`)){
-            this.selected = true
-          }
-        });
-        eventBus.on(`job-bulk-edit-select-none-path`, (path:string) => {
-          if(this.job.groupPath===path || this.job.groupPath.startsWith(`${path}/`)){
-            this.selected = false
-          }
-        });
-        eventBus.on(`browser-job-item-click:${this.job.id}`, () => {
-            if (this.jobPageStore.bulkEditMode) {
-                this.selected = !this.selected;
-            }
-        });
+        this.subs['job-bulk-edit-select-all'] = () => {
+          this.selected = true;
+        }
+        this.subs['job-bulk-edit-select-none'] = () => {
+          this.selected = false;
+        }
+        this.subs[`job-bulk-edit-select-all-path`]= (path:string) => {
+          this.selectIfPath(path)
+        }
+        this.subs[`job-bulk-edit-select-none-path`]= (path:string) => {
+          this.unselectIfPath(path)
+        }
+        this.subs[`browser-job-item-click:${this.job.id}`]= () => {
+            this.toggleSelected()
+        }
+        this.subs[`browser-job-item-select:${this.job.id}`]= () => {
+          this.selected = true;
+        }
+        Object.keys(this.subs).forEach((key) => {
+          //register each listener
+          eventBus.on(key, this.subs[key])
+        })
+
     },
     beforeUnmount() {
-      eventBus.off('job-bulk-edit-select-all')
-      eventBus.off('job-bulk-edit-select-none')
-      eventBus.off('job-bulk-edit-select-all-path')
-      eventBus.off('job-bulk-edit-select-none-path')
-      eventBus.off(`browser-job-item-click:${this.job.id}`)
+      Object.keys(this.subs).forEach((key) => {
+        //unregister each listener
+        eventBus.off(key, this.subs[key])
+      })
     },
 });
 </script>

@@ -93,6 +93,7 @@ export default defineComponent({
             wasExpanded: [],
             loading: ref(false),
             browsePath: props.path,
+            subs:{}
         };
     },
     computed: {
@@ -142,6 +143,11 @@ export default defineComponent({
             this.items = await this.jobBrowserStore.loadItems(this.browsePath);
             this.loading = false;
         },
+        modifiedPaths(paths:string[]){
+          if(paths.includes(this.browsePath)){
+            this.refresh()
+          }
+        }
     },
     watch:{
       path(){
@@ -150,7 +156,12 @@ export default defineComponent({
       }
     },
     async mounted() {
+        this.subs['job-bulk-modified-paths'] = (paths:string[])=>{this.modifiedPaths(paths)}
+        eventBus.on(`job-bulk-modified-paths`,this.subs['job-bulk-modified-paths'])
         await this.refresh();
+    },
+    beforeUnmount() {
+      eventBus.off(`job-bulk-modified-paths`,this.subs['job-bulk-modified-paths'])
     },
 });
 </script>
