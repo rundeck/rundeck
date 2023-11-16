@@ -139,7 +139,7 @@ data for configuring remote option cascading/dependencies
                     </span>
                 </div>
 
-                <div class="col-sm-10 col-sm-offset-2" style="max-width: 950px">
+                <div class="col-sm-10 col-sm-offset-2" style="max-width: 80vw">
                     %{--<span class="help-block" data-bind="text: description"></span>--}%
                     <span class="help-block text-break" data-bind="html: descriptionHtml"></span>
                 </div>
