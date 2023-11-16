@@ -1,7 +1,7 @@
 import axios from 'axios'
 import {_genUrl} from "../../../../utilities/genUrl";
-import {getAppLinks} from "../../../../../library";
-import {getRundeckContext} from "../../../../../../build/pack";
+import {getAppLinks, getRundeckContext} from "../../../../../library";
+
 
 export async function getExecutionMode(): Promise<any> {
     let ctx = getRundeckContext();
