@@ -9,7 +9,29 @@
                       :expanded="isExpanded(item.groupPath)"
                       @toggleExpanded="toggle(item.groupPath)"
                       @rootBrowse="rootBrowse(item.groupPath)"
-                    />
+                    >
+
+                      <template v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)" #supplemental >
+                        <btn
+                          size="xs"
+                          type="simple"
+                          class="btn-hover visibility-hidden button-spacing"
+                          @click="selectAll(item.groupPath)"
+                        >
+                          <b class="glyphicon glyphicon-check"></b>
+                          {{ $t("select.all") }}
+                        </btn>
+                        <btn
+                          size="xs"
+                          type="simple"
+                          class="btn-hover visibility-hidden"
+                          @click="selectNone(item.groupPath)"
+                        >
+                          <b class="glyphicon glyphicon-unchecked"></b>
+                          {{ $t("select.none") }}
+                        </btn>
+                      </template>
+                    </browse-group-item>
                     <Browser
                         :path="item.groupPath"
                         v-if="isExpanded(item.groupPath)"
@@ -21,7 +43,7 @@
                 <template v-if="loading">
                   <i class="fas fa-spinner fa-pulse" ></i>
                 </template>
-                <slot/>
+                <slot v-else/>
             </li>
         </ul>
     </div>
@@ -36,10 +58,12 @@ import {
     JobBrowserStore,
     JobBrowserStoreInjectionKey,
 } from "@/library/stores/JobBrowser";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 
 const context = getRundeckContext();
+const eventBus=context.eventBus
 export default defineComponent({
     name: "Browser",
     components: { BrowseGroupItem, BrowserJobItem, UiSocket },
@@ -60,6 +84,7 @@ export default defineComponent({
             jobBrowserStore: inject(
                 JobBrowserStoreInjectionKey
             ) as JobBrowserStore,
+            jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
             items,
             expandedItems: ref([]),
             wasExpanded: [],
@@ -100,7 +125,12 @@ export default defineComponent({
                 this.expandedItems.push(path);
             }
         },
-
+        selectAll(path:string){
+          eventBus.emit(`job-bulk-edit-select-all-path`,path)
+        },
+        selectNone(path:string){
+          eventBus.emit(`job-bulk-edit-select-none-path`,path)
+        },
         async rootBrowse(path: string) {
             this.$emit("rootBrowse", path);
         },
@@ -125,5 +155,8 @@ export default defineComponent({
 <style scoped lang="scss">
 .subbrowse {
     padding-left: 20px;
+}
+.btn.button-spacing{
+  margin-right: var(--spacing-2);
 }
 </style>

@@ -32,13 +32,7 @@ export default defineComponent({
           }else{
             this.jobPageStore.removeBulkJob(this.job)
           }
-        },
-      'jobPageStore.selectedJobs': {
-        handler(val: JobBrowseItem[]) {
-          this.selected = val.find((job: JobBrowseItem) => job.id === this.job.id) !== undefined
-        },
-        immediate: true
-      }
+        }
     },
     computed: {
         job(): JobBrowseItem {
@@ -54,6 +48,19 @@ export default defineComponent({
     mounted() {
         eventBus.on("job-bulk-edit-select-all", () => {
             this.selected = true;
+        });
+        eventBus.on("job-bulk-edit-select-none", () => {
+            this.selected = false;
+        });
+        eventBus.on(`job-bulk-edit-select-all-path`, (path:string) => {
+          if(this.job.groupPath===path || this.job.groupPath.startsWith(`${path}/`)){
+            this.selected = true
+          }
+        });
+        eventBus.on(`job-bulk-edit-select-none-path`, (path:string) => {
+          if(this.job.groupPath===path || this.job.groupPath.startsWith(`${path}/`)){
+            this.selected = false
+          }
         });
         eventBus.on(`browser-job-item-click:${this.job.id}`, () => {
             if (this.jobPageStore.bulkEditMode) {
