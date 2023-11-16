@@ -195,9 +195,9 @@ export default defineComponent({
         },
         confirmActionSingle(evt: { name: string; job: JobBrowseItem }) {
             const { name, job } = evt;
-            this.jobPageStore.selectedJobs = [job];
             this.jobPageStore.bulkEditMode = true;
-            this.confirmAction({name})
+            eventBus.emit(`browser-job-item-select:${job.id}`);
+            this.confirmAction({ name });
         },
         async performBulkAction() {
             try {
