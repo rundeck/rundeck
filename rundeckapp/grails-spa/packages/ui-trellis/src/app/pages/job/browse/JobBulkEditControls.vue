@@ -102,13 +102,29 @@
                         </btn>
                         <template #dropdown>
                             <li v-if="projAuthz('delete')">
-                                <a @click="bulkAction('delete')">
+                                <a @click="bulkAction('delete')" role="button">
+                                    <b
+                                        class="
+                                            glyphicon glyphicon-remove-circle
+                                        "
+                                    ></b>
                                     {{ $t("delete.selected.jobs") }}
                                 </a>
                             </li>
                             <li class="divider"></li>
                             <li v-for="action in ['enable', 'disable']">
-                                <a @click="bulkAction(`${action}_schedule`)">
+                                <a
+                                    @click="bulkAction(`${action}_schedule`)"
+                                    role="button"
+                                >
+                                    <b
+                                        class="glyphicon"
+                                        :class="
+                                            action === 'enable'
+                                                ? 'glyphicon-check'
+                                                : 'glyphicon-unchecked'
+                                        "
+                                    ></b>
                                     {{
                                         $t(`job.bulk.${action}_schedule.button`)
                                     }}
@@ -116,7 +132,18 @@
                             </li>
                             <li class="divider"></li>
                             <li v-for="action in ['enable', 'disable']">
-                                <a @click="bulkAction(`${action}_execution`)">
+                                <a
+                                    @click="bulkAction(`${action}_execution`)"
+                                    role="button"
+                                >
+                                    <b
+                                        class="glyphicon"
+                                        :class="
+                                            action === 'enable'
+                                                ? 'glyphicon-check'
+                                                : 'glyphicon-unchecked'
+                                        "
+                                    ></b>
                                     {{
                                         $t(
                                             `job.bulk.${action}_execution.button`
