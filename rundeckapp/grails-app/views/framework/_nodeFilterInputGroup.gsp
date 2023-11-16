@@ -33,9 +33,6 @@
                 <g:message code="show.all.nodes" />
             </g:link>
         </li>
-
-
-
     </ul>
 </div>
 

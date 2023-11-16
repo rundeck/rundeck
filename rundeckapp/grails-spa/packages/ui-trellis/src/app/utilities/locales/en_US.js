@@ -359,6 +359,38 @@ const messages = {
             title: 'Runner Set'
         }
     },
+    gui: {
+        menu: {
+            Nodes: 'Nodes',
+        },
+    },
+    search: "Search",
+    browse: "Browse",
+    result: "Result\:",
+    actions: "Actions",
+    none:"None",
+    set: {
+        "all.nodes.as.default.filter": "Set All Nodes as Default Filter",
+        "as.default.filter": "Set as Default Filter",
+    },
+    remove: {
+        "all.nodes.as.default.filter": "Remove All Nodes as Default Filter",
+        "default.filter": "Remove Default Filter",
+    },
+    "run.a.command.on.count.nodes.ellipsis": "Run a command on {0} {1}",
+    "create.a.job.for.count.nodes.ellipsis": "Create a job for {0} {1}",
+    "resource.metadata.entity.tags":"Tags",
+    filters: "Filters",
+    "all.nodes": "All Nodes",
+    "delete.this.filter.ellipsis": "Delete this Filter &hellip;",
+    "enter.a.filter": "Enter a Filter",
+    "remove.all.nodes.as.default.filter": "Remove All Nodes as Default Filter",
+    "set.all.nodes.as.default.filter": "Set All Nodes as Default Filter",
+    "save.node.filter": "Save Node Filter",
+    "name.prompt": "Name\:",
+    "saved.filters": "Saved Filters",
+    "not.authorized": "Not authorized",
+    "disabled.execution.run": "Executions are disabled.",
 }
 
 export default messages;

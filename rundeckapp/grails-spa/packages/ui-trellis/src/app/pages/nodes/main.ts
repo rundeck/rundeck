@@ -1,10 +1,12 @@
 import {defineComponent, markRaw} from 'vue'
 import {getRundeckContext} from '../../../library'
 import NodeFilterInput from '../../components/job/resources/NodeFilterInput.vue'
+import NodeView from "./NodeView.vue";
 
 let rundeckContext = getRundeckContext()
 const FilterInputComp = defineComponent(
     {
+        name: 'NodeFilter',
         data() {
             return {
                 project: rundeckContext.projectName,
@@ -50,7 +52,7 @@ const FilterInputComp = defineComponent(
                 }else if(this.koFieldName && window[this.koFieldName]){
                     return window[this.koFieldName]
                 }else if(!this.koFieldName){
-                  //@ts-ignore
+                    //@ts-ignore
                     return window.nodeFilter
                 }
             },
@@ -97,6 +99,30 @@ function init() {
                                          :item-data="itemData"
                                          :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
                       />
+                    `,
+                }
+            ))
+        },
+        {
+            section: 'nodes-page',
+            location: 'main',
+            visible: true,
+            widget: markRaw(defineComponent(
+                {
+                    data() {
+                        return {
+                            project: rundeckContext.projectName,
+                        }
+                    },
+                    props: ['itemData'],
+                    components: { NodeView, FilterInputComp },
+                    template: `
+                      <NodeView :item-data="itemData">
+                        <filter-input-comp :project="project"
+                                           :item-data="itemData"
+                                           :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
+                        />
+                      </NodeView>
                     `,
                 }
             ))
