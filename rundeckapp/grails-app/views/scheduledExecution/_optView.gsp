@@ -23,7 +23,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <span id="opt_${rkey}" class="optview">
-    <span class="optdetail ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
+    <span class="optdetail opt-detail-ext ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
         <g:if test="${option.optionType=='file'}">
             <g:icon name="file"/>
         </g:if>
