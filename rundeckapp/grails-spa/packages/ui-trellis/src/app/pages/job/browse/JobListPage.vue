@@ -1,11 +1,11 @@
 <template>
+    <JobBulkEditControls />
     <template v-if="browsePath !== ''">
         <!-- todo: breadcrumb navigation -->
         <btn @click="rootBrowse('')">&larr;</btn>
         <i class="glyphicon glyphicon-folder-open"></i>
         {{ browsePath }}
     </template>
-    <JobBulkEditControls />
     <Browser
         :path="browsePath"
         :root="true"
