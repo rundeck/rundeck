@@ -103,6 +103,26 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         result != null
     }
 
+    def "Get info about the status file in storage with exception"(){
+        given:
+        def projectName = "test"
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(statusFileResourcepath(projectName), _) >> {
+                it[1].write("nothing like a status file content".bytes)
+                return 4L
+            }
+        }
+        service.frameworkService = Mock(FrameworkService){
+            it.getFrameworkProject(projectName) >> fwkProject
+        }
+
+        when: "We try to get info from resource"
+        def result = service.getAsyncImportStatusForProject(projectName)
+
+        then:
+        thrown Exception
+    }
+
     def "Status file updater helper updates the status file leaving existing data intact"(){
         given:
         def projectName = "test"

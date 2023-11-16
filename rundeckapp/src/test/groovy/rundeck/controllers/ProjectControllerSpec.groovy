@@ -51,6 +51,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
@@ -2339,7 +2340,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         params.project = projectName
         controller.apiService = Mock(ApiService)
         controller.projectService = Mock(ProjectService){
-            it.getAsyncImportStatusFileForProject(projectName) >> null
+            1 * it.getAsyncImportStatusFileForProject(projectName) >> { throw new AsyncImportException("Errors") }
         }
 
         when:
@@ -2347,7 +2348,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         noExceptionThrown()
-        1 * controller.apiService.renderErrorFormat(_,[status:404,code:'api.error.async.import.status.file.retrieval.error',args:['No Status file in db.']])>>{it[0].status=it[1].status}
+        1 * controller.apiService.renderErrorFormat(_,['status':500, 'code':'api.error.async.import.status.file.retrieval.error', 'args':['Errors']])>>{it[0].status=it[1].status}
     }
 
     def "api import component options"() {

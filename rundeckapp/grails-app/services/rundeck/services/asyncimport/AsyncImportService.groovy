@@ -119,11 +119,11 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try(def out = new ByteArrayOutputStream()){
             final def fwkProject = frameworkService.getFrameworkProject(projectName)
             fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, out)
-            def obj = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
-            log.debug("Async Import status file content: ${obj.toString()}")
+            AsyncImportStatusDTO obj = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
+            logger.debug("Async Import status file content: ${obj.toString()}")
             return obj
         }catch(Exception e){
-            log.error("Error during the async import file extraction process: ${e.message}")
+            logger.error("Error during the async import file extraction process: ${e.stackTrace}")
             throw e
         }
     }
