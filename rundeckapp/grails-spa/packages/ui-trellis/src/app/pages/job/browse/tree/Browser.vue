@@ -39,6 +39,7 @@
                         @rootBrowse="rootBrowse"
                         @empty="childGroupEmpty(item)"
                         :key="item.groupPath"
+                        :expand-level="expandLevel-1"
                     />
                 </template>
             </li>
@@ -78,6 +79,10 @@ export default defineComponent({
         root: {
             type: Boolean,
             default: false,
+        },
+        expandLevel: {
+          type: Number,
+          default: 0,
         },
     },
     emits: ["rootBrowse",'empty'],
@@ -147,10 +152,20 @@ export default defineComponent({
         async rootBrowse(path: string) {
             this.$emit("rootBrowse", path);
         },
-        async refresh() {
+        async refresh(initial:boolean=false) {
             this.loading = true;
             this.items = await this.jobBrowserStore.loadItems(this.browsePath);
             this.loading = false;
+            if(initial){
+              //expand children if expand level is greater than 0
+              if(this.expandLevel>0){
+                this.items.forEach((item)=>{
+                  if(item.groupPath ){
+                    this.expandedItems.push(item.groupPath)
+                  }
+                })
+              }
+            }
             if(this.items.length<1){
               this.$emit('empty')
             }
@@ -170,7 +185,7 @@ export default defineComponent({
     async mounted() {
         this.subs['job-bulk-modified-paths'] = (paths:string[])=>{this.modifiedPaths(paths)}
         eventBus.on(`job-bulk-modified-paths`,this.subs['job-bulk-modified-paths'])
-        await this.refresh();
+        await this.refresh(true);
     },
     beforeUnmount() {
       eventBus.off(`job-bulk-modified-paths`,this.subs['job-bulk-modified-paths'])
