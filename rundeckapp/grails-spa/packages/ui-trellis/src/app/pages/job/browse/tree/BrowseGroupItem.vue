@@ -22,6 +22,7 @@
         >
             <i class="glyphicon glyphicon-folder-open"></i>
         </btn>
+        <slot name="supplemental" />
     </div>
 </template>
 

@@ -210,7 +210,7 @@ export default defineComponent({
             eventBus.emit("job-bulk-edit-select-all");
         },
         selectNone() {
-            this.jobPageStore.selectedJobs = [];
+          eventBus.emit("job-bulk-edit-select-none");
         },
     },
     mounted() {
