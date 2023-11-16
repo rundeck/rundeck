@@ -16,6 +16,7 @@ export class JobPageStore {
   executionMode: boolean = false
   projectExecutionsEnabled: boolean = false
   projectSchedulesEnabled: boolean = false
+  groupExpandLevel: number = 0
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore
@@ -78,7 +79,7 @@ export class JobPageStore {
     }
   }
 
-  async loadAuth() {
+  async load() {
     this.meta = await getProjectMeta(getRundeckContext().projectName)
     const projAuthz = this.findMeta('authz')
     if (
@@ -92,10 +93,11 @@ export class JobPageStore {
     ) {
       this.projAuthz = projAuthz?.project
     }
-    const projMode = this.findMeta('projMode')
-    if (projMode) {
-      this.projectExecutionsEnabled = !!projMode.executionsEnabled
-      this.projectSchedulesEnabled = !!projMode.scheduleEnabled
+    const config = this.findMeta('config')
+    if (config) {
+      this.projectExecutionsEnabled = !!config.executionsEnabled
+      this.projectSchedulesEnabled = !!config.scheduleEnabled
+      this.groupExpandLevel = config.groupExpandLevel || 0;
     }
 
     const sysMode = this.findMeta('sysMode')

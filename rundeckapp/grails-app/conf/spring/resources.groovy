@@ -113,7 +113,7 @@ import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
 import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
-import org.rundeck.app.data.project.ProjectModeMetadataComponent
+import org.rundeck.app.data.project.ProjectConfigMetadataComponent
 import org.rundeck.app.data.project.ProjectScmMetadataComponent
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
@@ -950,7 +950,7 @@ beans={
     jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
     jobScmMetadataComponent(JobScmMetadataComponent)
     projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
-    projectModeMetadataComponent(ProjectModeMetadataComponent)
+    projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
 
 }
