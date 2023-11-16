@@ -18,7 +18,7 @@ export class JobPageStore {
   projectSchedulesEnabled: boolean = false
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
-  browser: JobBrowserStore
+  browser!: JobBrowserStore
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {
