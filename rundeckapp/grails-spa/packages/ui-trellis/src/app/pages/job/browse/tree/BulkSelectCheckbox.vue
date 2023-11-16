@@ -68,6 +68,13 @@ export default defineComponent({
             }
         });
     },
+    beforeUnmount() {
+      eventBus.off('job-bulk-edit-select-all')
+      eventBus.off('job-bulk-edit-select-none')
+      eventBus.off('job-bulk-edit-select-all-path')
+      eventBus.off('job-bulk-edit-select-none-path')
+      eventBus.off(`browser-job-item-click:${this.job.id}`)
+    },
 });
 </script>
 
