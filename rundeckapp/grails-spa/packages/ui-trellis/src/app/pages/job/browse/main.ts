@@ -20,7 +20,7 @@ function init() {
   const rootStore = getRundeckContext().rootStore;
   moment.locale(getRundeckContext().locale||'en_US')
   const page = rootStore.jobPageStore
-  const browse = new JobBrowserStore(getRundeckContext().projectName, "");
+  const browse = page.getJobBrowser()
 
   const jobPageStore = reactive(page);
   const jobBrowserStore = reactive(browse)
