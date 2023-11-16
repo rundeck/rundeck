@@ -83,7 +83,7 @@
 
                 <div class="panel-footer">
                     <dropdown>
-                        <btn size="sm" class="dropdown-toggle">
+                        <btn size="sm" class="dropdown-toggle" :disabled="jobPageStore.selectedJobs.length<1">
                             {{ $t("job.bulk.perform.action.menu.label") }}
                             <span class="caret"></span>
                         </btn>
@@ -133,7 +133,7 @@
             </p>
             <template #footer>
                 <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
-                <btn type="danger" @click="performBulkAction">
+                <btn type="danger" @click="performBulkAction" :disabled="jobPageStore.selectedJobs.length<1">
                     {{ $t(`job.bulk.${bulkConfirmAction}.button`) }}
                 </btn>
             </template>
