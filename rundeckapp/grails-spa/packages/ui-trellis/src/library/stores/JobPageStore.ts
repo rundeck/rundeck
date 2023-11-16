@@ -7,6 +7,7 @@ import {
 } from '../services/jobBrowse'
 import {JobBrowseItem, JobBrowseMeta} from '../types/jobs/JobBrowse'
 import {InjectionKey} from 'vue'
+import {JobBrowserStore} from './JobBrowser'
 
 export class JobPageStore {
   bulkEditMode: boolean = false
@@ -17,6 +18,7 @@ export class JobPageStore {
   projectSchedulesEnabled: boolean = false
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
+  browser: JobBrowserStore
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {
@@ -117,6 +119,16 @@ export class JobPageStore {
   uploadJobHref() {
     const context= getRundeckContext()
     return `${context.rdBase}project/${context.projectName}/job/upload`;
+  }
+  getProject():string{
+    return getRundeckContext().projectName
+  }
+
+  getJobBrowser(): JobBrowserStore{
+    if(!this.browser){
+      this.browser=new JobBrowserStore(this.getProject(), "")
+    }
+    return this.browser
   }
 }
 
