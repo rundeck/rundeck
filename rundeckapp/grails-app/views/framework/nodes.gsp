@@ -34,6 +34,7 @@
                  data="${[pagingMax:params.int('max')?:20, project:params.project?:request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural"/>
+    <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
 </head>
 <body>
 
@@ -45,9 +46,12 @@
     <g:if test="${legacyUi}">
         <tmpl:legacyNodesList />
     </g:if>
-    <div class="vue-ui-socket">
-        <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: false, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
-    </div>
+    <g:else>
+        <div class="vue-ui-socket">
+            <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: false, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
+        </div>
+    </g:else>
+
 </div>
 </div>
 </body>
