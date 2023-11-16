@@ -155,6 +155,7 @@ import {
     JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
+import {Notification} from 'uiv'
 import { defineComponent, inject, ref } from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 
@@ -167,6 +168,7 @@ export default defineComponent({
         CreateNewJobButton,
         UiSocket,
         JobListScmActions,
+        Notification
     },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
@@ -198,10 +200,36 @@ export default defineComponent({
             this.confirmAction({name})
         },
         async performBulkAction() {
-            await this.jobPageStore.performBulkAction(this.bulkConfirmAction);
-            this.jobPageStore.selectedJobs = [];
+            try {
+              await this.jobPageStore.performBulkAction(this.bulkConfirmAction)
+
+              Notification.notify({
+                type: 'success',
+                content: this.$t(`job.bulk.${this.bulkConfirmAction}.success`,[this.jobPageStore.selectedJobs.length])
+              })
+            } catch (e) {
+              Notification.notify({
+                type: 'error',
+                html: false,
+                content: e.message
+              })
+              this.bulkConfirm = false;
+              return
+            }
             this.bulkConfirm = false;
+            const modifiedPaths = [];
+            this.jobPageStore.selectedJobs.forEach((job) => {
+                if (!modifiedPaths.includes(job.groupPath)) {
+                    modifiedPaths.push(job.groupPath||'');
+                }
+            });
+            this.selectNone()
             this.jobPageStore.bulkEditMode = false;
+            modifiedPaths.forEach((path) => {
+                this.jobPageStore.getJobBrowser().refresh(path)
+            });
+
+            eventBus.emit("job-bulk-modified-paths", modifiedPaths);
         },
         projAuthz(action: string): boolean {
             return this.jobPageStore.jobAuthz?.[action];
