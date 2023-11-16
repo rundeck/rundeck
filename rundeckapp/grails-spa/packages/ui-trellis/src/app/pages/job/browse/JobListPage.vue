@@ -63,6 +63,8 @@ export default defineComponent({
     },
     methods: {
         rootBrowse(path: string) {
+            //deselect any jobs
+            this.jobPageStore.selectedJobs = []
             this.browsePath = path;
         },
     },
