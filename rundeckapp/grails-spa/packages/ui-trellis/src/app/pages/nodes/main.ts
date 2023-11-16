@@ -1,9 +1,10 @@
 import {defineComponent, markRaw} from 'vue'
 import {getRundeckContext} from '../../../library'
+import {NodeFilterStore} from '../../../library/stores/NodeFilterStore'
 import NodeFilterInput from '../../components/job/resources/NodeFilterInput.vue'
-import NodeView from "./NodeView.vue";
+import NodeCard from "../../components/job/resources/NodeCard.vue";
 
-let rundeckContext = getRundeckContext()
+let rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent(
     {
         name: 'NodeFilter',
@@ -38,12 +39,23 @@ const FilterInputComp = defineComponent(
                              v-bind="extraAttrs"
           />
         `,
+        computed: {
+            isNodeStoreAvailable() {
+                return !!this.extraAttrs.nodeFilterStore
+            }
+        },
         methods: {
             updatedValue(val: string) {
-                this.nodeFilterKo()?.selectNodeFilter({filter: val}, false)
+                this.nodeFilterKo()?.selectNodeFilter({filter: val}, false);
+                if(this.isNodeStoreAvailable) {
+                    this.extraAttrs.nodeFilterStore.setSelectedFilter(val)
+                }
             },
             filterClicked(filter: any) {
                 this.nodeFilterKo()?.selectNodeFilter(filter, false)
+                if(this.isNodeStoreAvailable) {
+                    this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter)
+                }
             },
             nodeFilterKo() {
                 //@ts-ignore
@@ -75,7 +87,12 @@ const FilterInputComp = defineComponent(
             this.subs.forEach(s => s.dispose())
         },
         mounted() {
+
             this.attachKnockout(5)
+            if(this.isNodeStoreAvailable){
+                this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter
+            }
+
         }
     }
 )
@@ -112,17 +129,44 @@ function init() {
                     data() {
                         return {
                             project: rundeckContext.projectName,
+                            nodeFilterStore: new NodeFilterStore(),
                         }
                     },
                     props: ['itemData'],
-                    components: { NodeView, FilterInputComp },
+                    components: { FilterInputComp, NodeCard },
+                    methods: {
+                        updateNodeFilter(val: any) {
+                            const filterName = val.filter || val
+                            this.nodeFilterStore.setSelectedFilter(filterName)
+                        }
+                    },
                     template: `
-                      <NodeView :item-data="itemData">
-                        <filter-input-comp :project="project"
-                                           :item-data="itemData"
-                                           :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
-                        />
-                      </NodeView>
+                        <div class="title">
+                          <span class="text-h3"><i class="fas fa-sitemap"></i> {{ $t('gui.menu.Nodes') }}</span>
+                        </div>
+                        <div style="margin-bottom:20px">
+                          <filter-input-comp
+                              v-model="nodeFilterStore.selectedFilter"
+                              :project="project"
+                              :item-data="itemData"
+                              :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;', 'nodeFilterStore': nodeFilterStore}"
+                          />
+                        </div>
+                        <div id="nodesContent">
+                          <div class="container-fluid">
+                            <div class="row">
+                              <div class="col-xs-12">
+                                <node-card
+                                    :node-filter-store="nodeFilterStore"
+                                    :job-create-authorized="itemData.jobCreateAuthorized"
+                                    :run-authorized="itemData.runAuthorized"
+                                    @filter="updateNodeFilter"
+                                >
+                                </node-card>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     `,
                 }
             ))

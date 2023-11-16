@@ -5,111 +5,132 @@
       <div class="nav-tabs-navigation">
         <div class="nav-tabs-wrapper">
           <ul class="nav nav-tabs">
-            <li class="active" id="tab_link_summary">
-              <a href="#summary" data-toggle="tab">
+            <li :class="{'active': !nodeFilterStore.filter}" id="tab_link_summary" @click="fetchNodeSummary" :key="`${nodeFilterStore.filter}tab-result`">
+              <a href="#summary1" data-toggle="tab">
                 {{ $t("browse") }}
               </a>
             </li>
-            <li id="tab_link_result" v-if="allCount >=2">
-              <a href="#result" data-toggle="tab" v-if="filterIsSet">
+            <li :class="{'active': nodeFilterStore.filter}" id="tab_link_result" :key="`${nodeFilterStore.filter}tab-summary`" v-if="allCount !== null">
+              <a href="#result1" data-toggle="tab" v-if="filterIsSet">
                 {{ $t("result") }}
-                <template v-if="allCount>=2">
-                  <span class="text-info" style="margin-right: 4px">{{ total }} </span>
-                  <span data-bind="text: nodesTitle">Node {{1 !== total ? 's' : ''}}</span>
+                <template v-if="allCount >= 0">
+                  <span class="text-info" style="margin-right: 4px">
+                    {{ total }}
+                  </span>
+                  <span>
+                    {{ nodesTitle }}
+                  </span>
                 </template>
                 <span v-else class="text-strong">&hellip;</span>
               </a>
-              <a v-else>
+              <a v-else data-toggle="tab">
                 {{ $t("enter.a.filter") }}
               </a>
             </li>
           </ul>
         </div>
-        <span v-if="allCount>=2" class="pull-right">
-            <span class="tabs-sibling tabs-sibling-compact">
-                <div class="btn-group pull-right ">
-                  <button class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                      {{$t("actions")}} <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu">
-                    <li v-if="executionMode === 'active' && hasNodes" :class="{'disabled': !runAuthorized}">
-                        <a href="#"
-                           @click="runCommand"
-                           :title="notAuthorized()"
-                           :class="{'has_tooltip': !runAuthorized}"
-                           data-placement="left"
-                        >
-                            <i class="glyphicon glyphicon-play"></i>
-                            <span> {{ $t("run.a.command.on.count.nodes.ellipsis",[total, nodesTitle]) }} </span>
-                      </a>
-                    </li>
-                    <li v-else-if="hasNodes" class="disabled">
-                        <a href="#"
-                           :title="$t('disabled.execution.run')"
-                           class="has_tooltip"
-                           data-placement="left"
-                        >
-                            <i class="glyphicon glyphicon-play"></i>
-                            <span> {{ $t("run.a.command.on.count.nodes.ellipsis",[total, nodesTitle]) }} </span>
-                        </a>
-                    </li>
-                    <li :class="{'disabled': !jobCreateAuthorized}">
-                        <a href="#"
-                           @click="saveJob"
-                           :title="notAuthorized(jobCreateAuthorized)"
-                           :class="{'has_tooltip': !jobCreateAuthorized}"
-                           data-placement="left"
-                        >
-                            <i class="glyphicon glyphicon-plus"></i>
-                            <span>
-                              {{ $t("create.a.job.for.count.nodes.ellipsis",[total, nodesTitle]) }}
-                            </span>
-                        </a>
-                    </li>
-                  </ul>
-              </div>
-            </span>
+        <span v-if="allCount !== null" class="pull-right">
+          <span class="tabs-sibling tabs-sibling-compact">
+            <div class="btn-group pull-right">
+              <button
+                class="btn btn-default btn-sm dropdown-toggle"
+                data-toggle="dropdown"
+              >
+                {{ $t("actions") }} <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" role="menu">
+                <li
+                  v-if="executionMode === 'active' && hasNodes"
+                  :class="{ disabled: !runAuthorized }"
+                >
+                  <a
+                    href="#"
+                    @click="runCommand"
+                    :title="notAuthorized()"
+                    :class="{ has_tooltip: !runAuthorized }"
+                    data-placement="left"
+                  >
+                    <i class="glyphicon glyphicon-play"></i>
+                    <span>
+                      {{
+                        $t("run.a.command.on.count.nodes.ellipsis", [
+                          total,
+                          nodesTitle,
+                        ])
+                      }}
+                    </span>
+                  </a>
+                </li>
+                <li v-else-if="hasNodes" class="disabled">
+                  <a
+                    href="#"
+                    :title="$t('disabled.execution.run')"
+                    class="has_tooltip"
+                    data-placement="left"
+                  >
+                    <i class="glyphicon glyphicon-play"></i>
+                    <span>
+                      {{
+                        $t("run.a.command.on.count.nodes.ellipsis", [
+                          total,
+                          nodesTitle,
+                        ])
+                      }}
+                    </span>
+                  </a>
+                </li>
+                <li :class="{ disabled: !jobCreateAuthorized }">
+                  <a
+                    href="#"
+                    @click="saveJob"
+                    :title="notAuthorized(jobCreateAuthorized)"
+                    :class="{ has_tooltip: !jobCreateAuthorized }"
+                    data-placement="left"
+                  >
+                    <i class="glyphicon glyphicon-plus"></i>
+                    <span>
+                      {{
+                        $t("create.a.job.for.count.nodes.ellipsis", [
+                          total,
+                          nodesTitle,
+                        ])
+                      }}
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </span>
         </span>
       </div>
 
-
-
       <!-- TABS -->
       <div class="tab-content">
-        <div class="tab-pan" id="result">
-          <div v-if="error" class="row row-space">
-            <div class="col-sm-12">
-              <span class="text-danger">
-                  <i class="glyphicon glyphicon-warning-sign"></i>
-                  <span>{{ error }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane active" id="summary">
+        <div class="tab-pane" :class="{'active': !nodeFilterStore.filter}" id="summary1" :key="`${nodeFilterStore.filter}summary`">
           <div class="row">
             <div class="col-xs-6">
               <h5 class="column-title text-uppercase text-strong">
                 {{ $t("resource.metadata.entity.tags") }}
               </h5>
-              <ul v-for="(tag,index) in nodeSummary.tags" class="list-unstyled">
-                <li style="display:inline;" :key="index">
+              <ul
+                class="list-unstyled"
+              >
+                <li v-for="(tag, index) in nodeSummary.tags" style="margin: 0 2px; display: inline-block;" :key="index">
                   <node-filter-link
+                    class="label label-muted"
                     filterKey="tags"
-                    :filterVal="tag"
-
-                  />
-<!--                  <node-filter-link  params="-->
-<!--                                    classnames: 'label label-muted',-->
-<!--                                    filterkey: 'tags',-->
-<!--                                    filterval: tag,-->
-<!--                                    tag: tag,-->
-<!--                                    count: count-->
-<!--                                ">-->
-<!--                  </node-filter-link>-->
+                    :filterVal="tag.tag"
+                    @nodefilterclick="saveFilter"
+                  >
+                    <template #suffix>
+                      ({{ tag.count }})
+                    </template>
+                  </node-filter-link>
                 </li>
               </ul>
-              <div v-if="nodeSummary && !nodeSummary.hasOwnProperty('tags') || nodeSummary.tags && nodeSummary.tags!.length === 0">
+              <div
+                v-if="nodeSummary && !nodeSummary.hasOwnProperty('tags') || nodeSummary.tags && nodeSummary.tags!.length === 0"
+              >
                 {{ $t("none") }}
               </div>
             </div>
@@ -119,29 +140,47 @@
                 {{ $t("filters") }}
               </h5>
 
-
               <ul class="list-unstyled">
                 <li>
-                  <a class="nodefilterlink btn btn-default btn-xs" data-node-filter=".*" data-node-filter-all="true">
-                    {{ $t("all.nodes") }} {{ nodeSummary?.totalCount }}
+                  <a
+                    class="nodefilterlink btn btn-default btn-xs"
+                    @click.prevent="saveFilter({filter: '.*'})"
+                  >
+                    {{ $t("all.nodes") }} {{ nodeSummary? nodeSummary.totalCount! : 0 }}
                   </a>
                   <div class="btn-group" style="margin-left: 4px">
-                    <button type="button"
-                            class="btn btn-default btn-xs btn-simple dropdown-toggle"
-                            style="padding: 0 5px;"
-                            title="Filter Actions"
-                            data-toggle="dropdown"
-                            aria-expanded="false">
+                    <button
+                      type="button"
+                      class="btn btn-default btn-xs btn-simple dropdown-toggle"
+                      style="padding: 0 5px"
+                      title="Filter Actions"
+                      data-toggle="dropdown"
+                      aria-expanded="false"
+                    >
                       <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" role="menu">
                       <li>
-                        <a href="#" @click="isDefaultFilter? removeDefaultFilter: setDefaultFilter">
-                          <i class="glyphicon" :class="[isDefaultFilter? 'glyphicon-ban-circle': 'glyphicon-filter']"></i>
+                        <a
+                          href="#"
+                          @click="
+                            isDefaultFilter
+                              ? removeDefaultFilter
+                              : setDefaultFilter
+                          "
+                        >
+                          <i
+                            class="glyphicon"
+                            :class="[
+                              isDefaultFilter
+                                ? 'glyphicon-ban-circle'
+                                : 'glyphicon-filter',
+                            ]"
+                          ></i>
                           {{
                             isDefaultFilter
-                                ? $t('remove.all.nodes.as.default.filter')
-                                : $t("set.all.nodes.as.default.filter")
+                              ? $t("remove.all.nodes.as.default.filter")
+                              : $t("set.all.nodes.as.default.filter")
                           }}
                         </a>
                       </li>
@@ -152,24 +191,53 @@
             </div>
           </div>
         </div>
+
+        <div class="tab-pane" :class="{'active': nodeFilterStore.filter}" id="result1" :key="`${nodeFilterStore.filter}result`">
+          <div v-if="error" class="row row-space">
+            <div class="col-sm-12">
+              <span class="text-danger">
+                <i class="glyphicon glyphicon-warning-sign"></i>
+                <span>{{ error }}</span>
+              </span>
+            </div>
+          </div>
+          <div class="clear matchednodes" id="nodeview">
+            <NodeTable
+                :node-set="nodeSet"
+                :filter-columns="filterColumns"
+                :loading="loading"
+                :has-paging="hasPaging"
+                :paging-max="pagingMax"
+                :maxPages="maxPages"
+                :page="page"
+                :filterAll="filterAll"
+                @filter="saveFilter"
+                @changePage="updatePage"
+                @changePagingMax="updatePagingMax"
+                :filter="nodeFilterStore.filter"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import {defineComponent, PropType} from "vue";
 import axios from "axios";
-import {_genUrl} from "@/app/utilities/genUrl";
-import {getAppLinks} from "@/library";
+import { _genUrl } from "@/app/utilities/genUrl";
+import { getAppLinks } from "@/library";
 import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
-import { NodeFilterStore } from '../../../../library/stores/NodeFilterStore'
-import {getRundeckContext} from "../../../../../build/pack";
+import { getRundeckContext } from "../../../../../build/pack";
+import NodeTable from "@/app/components/job/resources/NodeTable.vue";
+import {getExecutionMode, getNodes, getNodeSummary} from "@/app/components/job/resources/services/nodeServices";
 
 export default defineComponent({
   name: "NodeCard",
   components: {
-    NodeFilterLink
+    NodeTable,
+    NodeFilterLink,
   },
   props: {
     runAuthorized: {
@@ -180,129 +248,181 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
+    nodeFilterStore: {
+      type: Object as PropType<any>,
+      required: true,
+    },
   },
   data() {
     return {
       nodeSet: {},
       nodeSummary: {},
-      nodeFilterStore: new NodeFilterStore(),
-      allCount: 0,
-      total: 1,
-      hasNodes: true,
-      filterIsSet: true,
+      allCount: null as number | null,
+      total: 0,
       executionMode: null,
       error: null,
       loading: false,
       truncated: null,
-      colKeys: null
-    }
+      colKeys: null,
+      filterAll: false,
+      hideAll: false,
+      filter: null,
+      page: 0,
+      pagingMax: 20,
+    };
   },
   computed: {
-    isDefaultFilter() {
-      return this.nodeSummary.defaultFilter === '.*'
+    isDefaultFilter(): boolean {
+      return this.nodeSummary.selectedFilter === ".*";
     },
-    nodesTitle() {
-      return this.allCount > 1 ? this.$t('nodes') : this.$t('node')
+    hasNodes(): boolean {
+      return !!this.allCount;
     },
-    links() {
-      return getAppLinks()
+    nodesTitle(): string {
+      return this.total >= 1 ? this.$t("nodes") : this.$t("node");
+    },
+    filterColumns(): string[] {
+      if(!this.colKeys) {
+        return [];
+      }
+      return this.colKeys.filter((colKey: string) => !colKey.startsWith("ui:"));
+    },
+    filterIsSet(): boolean {
+      return !(this.filterAll && this.isDefaultFilter);
+    },
+    hasPaging(): boolean {
+      return this.total > this.pagingMax;
+    },
+    maxPages(): number {
+      return Math.ceil(this.total/this.pagingMax);
     }
   },
+  emits: ['filter'],
   methods: {
-    notAuthorized( authorized = this.runAuthorized) {
-      return !authorized ? this.$t('not.authorized'): ''
+    notAuthorized(authorized = this.runAuthorized): string {
+      return !authorized ? this.$t("not.authorized") : "";
     },
     async fetchExecutionMode() {
       try {
-        let ctx = getRundeckContext();
-        const response = await axios.request({
-          method: 'GET',
-          headers: {
-            'x-rundeck-ajax': 'true',
-          },
-          url: `${ctx.rdBase}api/${ctx.apiVersion}/system/executions/status`
-        })
-        if (response.status >= 200 && response.status < 300) {
-          this.executionMode = response.data.executionMode
-        } else {
-          throw(new Error(`Error fetching execution mode: ${response.status}`))
-        }
-
+        const data = await getExecutionMode();
+        this.executionMode = data.executionMode;
       } catch (e) {
-        this.error = e.message
+        this.error = e.message;
       }
     },
     async fetchNodeSummary() {
-      let result = await axios.get(_genUrl(getAppLinks().frameworkNodeSummaryAjax, {}))
-      if (result.status >= 200 && result.status < 300) {
-        this.nodeSummary = result.data
+      try {
+        this.nodeSummary = await getNodeSummary();
+      } catch(e) {
+        this.error = "Node Summary: request failed: " + e.message;
       }
     },
     async fetchNodes() {
-      axios.request({
-        method: 'GET',
-        headers: {
-          'x-rundeck-ajax': 'true',
-        },
-        url: _genUrl(getAppLinks().frameworkNodesQueryAjax),
-      }).then(result => {
-        this.loading = false
-        if (result.status === 403) {
-          this.error = ('Not authorized')
-        } else if (result.status >= 300) {
-          if (result.data.message) {
+      // filter parameters
+      const filterdata =  this.nodeFilterStore.filter ? {filter: this.nodeFilterStore.filter} : {};
 
-            this.error = result.data.message
-          } else {
-            this.error = 'Error: ' + result.status
-          }
-        } else {
-          let data = result.data
-          this.nodeSet = {
-            nodes: data.allnodes,
-            tagsummary: data.tagsummary
-          }
-          this.allCount = data.allcount
-          this.total = data.total
-          this.truncated = data.truncated
-          this.colKeys = data.colkeys
-          this.maxShown = data.max
-        }
-      }).catch((err) => {
-        this.loading = false
-        console.log('Nodes Query: request failed: ' + err)
-        this.error = ('Nodes Query: request failed: ' + err)
-      })
+      const page = this.page;
+      const basedata: any = {
+        view: 'table',
+        declarenone: true,
+        fullresults: true,
+        expanddetail: true,
+        page: this.page,
+        max: this.pagingMax,
+        inlinepaging: true,
+      }
+
+      if (this.hasPaging && page !== 0) {
+        basedata.view = 'tableContent';
+      }
+
+      let params = Object.assign({}, basedata, filterdata);
+      if (!this.nodeFilterStore.filter) {
+        params.localNodeOnly = 'true';
+      }
+      params.nodeExcludePrecedence = 'true';
+
+
+      try {
+        this.loading = true;
+        const data = await getNodes(params, getAppLinks().frameworkNodesQueryAjax);
+
+        this.nodeSet = {
+          nodes: data.allnodes,
+          tagsummary: data.tagsummary,
+        };
+        this.allCount = data.allcount;
+        this.total = data.total;
+        this.truncated = data.truncated;
+        this.colKeys = data.colkeys;
+        this.maxShown = data.max;
+
+      } catch(e) {
+        this.error = "Nodes Query: request failed: " + e.message;
+      } finally {
+        this.loading = false;
+      }
     },
     async setDefaultFilter() {
       // TODO: finish this - need to find out wth is the selectedFilterName for default
-      this.nodeFilterStore.setStoredDefaultFilter(this.project,this.selectedFilterName)
-      this.nodeSummary.defaultFilter = this.selectedFilterName
+      // this.nodeFilterStore.setStoredDefaultFilter(
+      //   this.project,
+      //   this.selectedFilterName
+      // );
+      // this.nodeSummary.defaultFilter = this.selectedFilterName;
     },
     async removeDefaultFilter() {
-      this.nodeFilterStore.removeStoredDefaultFilter(this.project)
-      this.nodeSummary.defaultFilter = null
+      // this.nodeFilterStore.removeStoredDefaultFilter(this.project);
+      // this.nodeSummary.defaultFilter = null;
     },
 
     runCommand() {
-      if(this.runAuthorized){
+      if (this.runAuthorized) {
         document.location = _genUrl(getAppLinks().frameworkAdhoc, {
-          filter: this.filter
+          filter: this.nodeFilterStore.selectedFilter,
         });
       }
     },
     saveJob() {
-      if(this.jobCreateAuthorized){
+      if (this.jobCreateAuthorized) {
         document.location = _genUrl(getAppLinks().scheduledExecutionCreate, {
-          filter: this.filter
+          filter: this.nodeFilterStore.selectedFilter,
         });
       }
     },
+
+    saveFilter(selectedFilter: object) {
+      this.$emit('filter',selectedFilter);
+    },
+    async updatePage(page: number) {
+      this.page = page;
+      await this.fetchNodes();
+    },
+    async updatePagingMax(pagingMax: number) {
+      this.pagingMax = pagingMax;
+      await this.fetchNodes();
+    }
   },
   async mounted() {
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
-    await this.fetchNodes()
+    await this.fetchNodes();
+  },
+  watch: {
+    nodeFilterStore: {
+      async handler(newValue) {
+
+          if (newValue.selectedFilter === '' && this.hideAll) {
+            this.filterAll = true;
+          }else if(newValue.selectedFilter ===".*"){
+            this.filterAll = true;
+          }
+
+          await this.fetchNodes();
+
+      },
+      deep: true,
+    },
   }
-})
+});
 </script>

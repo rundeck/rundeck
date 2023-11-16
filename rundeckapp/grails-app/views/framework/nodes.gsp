@@ -23,6 +23,7 @@
     <meta name="tabpage" content="nodes"/>
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
+    <g:set var="filtvalue" value="${query?.('filter')}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
     <asset:javascript src="static/pages/nodes.js" defer="defer"/>
@@ -41,11 +42,11 @@
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
 <div class="content">
 <div id="layoutBody">
-%{--    <g:if test="${legacyUi}">--}%
+    <g:if test="${legacyUi}">
         <tmpl:legacyNodesList />
-%{--    </g:if>--}%
+    </g:if>
     <div class="vue-ui-socket">
-        <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: true, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
+        <ui-socket section="nodes-page" location="main" socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: false, runAuthorized: run_authorized, jobCreateAuthorized: job_create_authorized].encodeAsJSON())}"></ui-socket>
     </div>
 </div>
 </div>
