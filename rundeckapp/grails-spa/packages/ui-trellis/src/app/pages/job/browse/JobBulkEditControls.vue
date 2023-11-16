@@ -51,7 +51,7 @@
             </div>
         </div>
         <div v-if="jobPageStore.bulkEditMode">
-            <div class="panel panel-warning">
+            <div class="panel panel-warning bulk_edit_panel">
                 <div class="panel-heading">
                     <btn
                         class="close"
@@ -303,6 +303,12 @@ export default defineComponent({
 
     .status-item {
         margin-right: var(--spacing-2);
+    }
+}
+
+.bulk_edit_panel {
+    .btn + .btn {
+        margin-left: var(--spacing-2);
     }
 }
 </style>
