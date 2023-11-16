@@ -60,9 +60,24 @@ export default defineComponent({
         jobLinkHref(job: JobBrowseItem) {
             return `${context.rdBase}project/${context.projectName}/job/show/${job.id}`;
         },
+        /**
+         * Check if the element has a parent with a nodeName in the list
+         * @param el element
+         * @param top stop at this ancestor
+         * @param nodeTypes list of node names to check
+         */
+        hasDomParent(el:HTMLElement, top:HTMLElement, nodeTypes:string[]){
+            while(top!==el){
+                if(nodeTypes.indexOf(el.nodeName)>-1){
+                    return true
+                }
+                el = el.parentElement as HTMLElement
+            }
+            return false
+        },
         handleClick(event) {
-            if (event.target == this.$refs.itemDiv) {
-                //only emit if the click was on the item div to avoid case when clicking on inputs/buttons
+            if (!this.hasDomParent(event.target, this.$refs.itemDiv, ['INPUT','BUTTON','A'])) {
+                //only emit if the click was not within a button,input or link
                 eventBus.emit(
                     `browser-job-item-click:${this.job.id}`,
                     this.job
