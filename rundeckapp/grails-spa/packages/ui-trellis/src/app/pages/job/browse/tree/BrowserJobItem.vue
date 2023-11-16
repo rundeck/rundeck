@@ -8,12 +8,14 @@
             section="job-browse-item"
             location="before-job-name"
             :socket-data="{ job }"
+            :key="'before/'+job.id"
         />
         <ui-socket
             v-for="meta in job.meta"
             :location="`before-job-name:meta:${meta.name}`"
             section="job-browse-item"
             :socket-data="{ job, meta: meta.data }"
+            :key="'before/'+job.id+'/'+meta.name"
         />
         <a :href="jobLinkHref(job)" :data-job-id="job.uuid" class="link-quiet">
             {{ job.jobName }}
@@ -26,11 +28,13 @@
             :location="`after-job-name:meta:${meta.name}`"
             section="job-browse-item"
             :socket-data="{ job, meta: meta.data }"
+            :key="'after/'+job.id+'/'+meta.name"
         />
         <ui-socket
             location="after-job-name"
             section="job-browse-item"
             :socket-data="{ job }"
+            :key="'after/'+job.id"
         />
     </div>
 </template>

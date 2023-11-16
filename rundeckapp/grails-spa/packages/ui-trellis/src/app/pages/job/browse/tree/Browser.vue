@@ -1,14 +1,15 @@
 <template>
     <div :class="!root ? 'subbrowse' : ''">
         <ul class="list-unstyled">
-            <li v-for="item in sortedItems" v-if="items.length > 0">
-                <browser-job-item :job="item" v-if="item.job" />
+            <li v-for="item in sortedItems" v-if="items.length > 0" :key="item.job?item.job.id:item.groupPath">
+                <browser-job-item :job="item" v-if="item.job" :key="item.job.id"/>
                 <template v-else>
                     <browse-group-item
                       :item="item"
                       :expanded="isExpanded(item.groupPath)"
                       @toggleExpanded="toggle(item.groupPath)"
                       @rootBrowse="rootBrowse(item.groupPath)"
+                      :key="item.groupPath"
                     >
 
                       <template v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)" #supplemental >
@@ -36,6 +37,8 @@
                         :path="item.groupPath"
                         v-if="isExpanded(item.groupPath)"
                         @rootBrowse="rootBrowse"
+                        @empty="childGroupEmpty(item)"
+                        :key="item.groupPath"
                     />
                 </template>
             </li>
