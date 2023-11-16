@@ -2,7 +2,8 @@
     <div class="job_list_group_header hover-reveal-hidden" @click="handleClick" ref="itemDiv">
         <btn
             @click="$emit('toggleExpanded', item.groupPath)"
-            class="btn-link group-name  text-secondary"
+            type="link"
+            class="group-name text-secondary"
         >
             <i
                 class="glyphicon"
@@ -14,7 +15,8 @@
             {{ lastPathItem(item.groupPath) }}
         </btn>
         <btn
-            class="btn-link groupname text-strong group-name visibility-hidden"
+            type="link"
+            class="groupname text-strong group-name visibility-hidden"
             :title="`Browse job group: ${item.groupPath}`"
             @click="$emit('rootBrowse', item.groupPath)"
         >
@@ -65,5 +67,9 @@ export default defineComponent({
 }
 .job_list_group_header{
   padding: 3px;
+  >.btn  {
+    margin-right: var(--spacing-2);
+  }
 }
+
 </style>
