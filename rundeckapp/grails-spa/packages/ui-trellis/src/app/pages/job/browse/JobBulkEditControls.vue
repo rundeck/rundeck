@@ -23,10 +23,19 @@
                         </template>
                         <li>
                             <a
-                                @click="jobPageStore.bulkEditMode = !jobPageStore.bulkEditMode"
+                                @click="
+                                    jobPageStore.bulkEditMode =
+                                        !jobPageStore.bulkEditMode
+                                "
                                 role="button"
-                                >
-                              {{ $t(jobPageStore.bulkEditMode?"job.bulk.deactivate.menu.label":"job.bulk.activate.menu.label") }}
+                            >
+                                {{
+                                    $t(
+                                        jobPageStore.bulkEditMode
+                                            ? "job.bulk.deactivate.menu.label"
+                                            : "job.bulk.activate.menu.label"
+                                    )
+                                }}
                             </a>
                         </li>
                         <job-list-scm-actions />
@@ -37,7 +46,7 @@
                     </template>
                 </dropdown>
                 <ui-socket section="job-list-page" location="action-buttons">
-                    <create-new-job-button/>
+                    <create-new-job-button />
                 </ui-socket>
             </div>
         </div>
@@ -83,7 +92,11 @@
 
                 <div class="panel-footer">
                     <dropdown>
-                        <btn size="sm" class="dropdown-toggle" :disabled="jobPageStore.selectedJobs.length<1">
+                        <btn
+                            size="sm"
+                            class="dropdown-toggle"
+                            :disabled="jobPageStore.selectedJobs.length < 1"
+                        >
                             {{ $t("job.bulk.perform.action.menu.label") }}
                             <span class="caret"></span>
                         </btn>
@@ -124,16 +137,20 @@
         >
             <p>{{ $t(`job.bulk.${bulkConfirmAction}.confirm.message`) }}</p>
             <p>
-              {{
-                $tc(
-                    "job.bulk.panel.select.message",
-                    jobPageStore.selectedJobs.length
-                )
-            }}
+                {{
+                    $tc(
+                        "job.bulk.panel.select.message",
+                        jobPageStore.selectedJobs.length
+                    )
+                }}
             </p>
             <template #footer>
                 <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
-                <btn type="danger" @click="performBulkAction" :disabled="jobPageStore.selectedJobs.length<1">
+                <btn
+                    type="danger"
+                    @click="performBulkAction"
+                    :disabled="jobPageStore.selectedJobs.length < 1"
+                >
                     {{ $t(`job.bulk.${bulkConfirmAction}.button`) }}
                 </btn>
             </template>
@@ -155,7 +172,7 @@ import {
     JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import {Notification} from 'uiv'
+import { Notification } from "uiv";
 import { defineComponent, inject, ref } from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 
@@ -168,7 +185,7 @@ export default defineComponent({
         CreateNewJobButton,
         UiSocket,
         JobListScmActions,
-        Notification
+        Notification,
     },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
@@ -201,32 +218,37 @@ export default defineComponent({
         },
         async performBulkAction() {
             try {
-              await this.jobPageStore.performBulkAction(this.bulkConfirmAction)
+                await this.jobPageStore.performBulkAction(
+                    this.bulkConfirmAction
+                );
 
-              Notification.notify({
-                type: 'success',
-                content: this.$t(`job.bulk.${this.bulkConfirmAction}.success`,[this.jobPageStore.selectedJobs.length])
-              })
+                Notification.notify({
+                    type: "success",
+                    content: this.$t(
+                        `job.bulk.${this.bulkConfirmAction}.success`,
+                        [this.jobPageStore.selectedJobs.length]
+                    ),
+                });
             } catch (e) {
-              Notification.notify({
-                type: 'error',
-                html: false,
-                content: e.message
-              })
-              this.bulkConfirm = false;
-              return
+                Notification.notify({
+                    type: "error",
+                    html: false,
+                    content: e.message,
+                });
+                this.bulkConfirm = false;
+                return;
             }
             this.bulkConfirm = false;
             const modifiedPaths = [];
             this.jobPageStore.selectedJobs.forEach((job) => {
                 if (!modifiedPaths.includes(job.groupPath)) {
-                    modifiedPaths.push(job.groupPath||'');
+                    modifiedPaths.push(job.groupPath || "");
                 }
             });
-            this.selectNone()
+            this.selectNone();
             this.jobPageStore.bulkEditMode = false;
             modifiedPaths.forEach((path) => {
-                this.jobPageStore.getJobBrowser().refresh(path)
+                this.jobPageStore.getJobBrowser().refresh(path);
             });
 
             eventBus.emit("job-bulk-modified-paths", modifiedPaths);
@@ -238,7 +260,7 @@ export default defineComponent({
             eventBus.emit("job-bulk-edit-select-all");
         },
         selectNone() {
-          eventBus.emit("job-bulk-edit-select-none");
+            eventBus.emit("job-bulk-edit-select-none");
         },
     },
     mounted() {
