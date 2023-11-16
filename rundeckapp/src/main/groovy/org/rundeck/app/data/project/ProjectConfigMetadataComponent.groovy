@@ -1,6 +1,7 @@
 package org.rundeck.app.data.project
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.jobs.ComponentMeta
@@ -10,10 +11,10 @@ import rundeck.services.ConfigurationService
 import rundeck.services.ScheduledExecutionService
 
 @CompileStatic
-class ProjectModeMetadataComponent implements ProjectMetadataComponent {
-    public static final String PROJECT_MODE = 'projMode'
+class ProjectConfigMetadataComponent implements ProjectMetadataComponent {
+    public static final String CONFIG = 'config'
     public static final String SYSTEM_MODE = 'sysMode'
-    final Set<String> availableMetadataNames = [PROJECT_MODE, SYSTEM_MODE].toSet()
+    final Set<String> availableMetadataNames = [CONFIG, SYSTEM_MODE].toSet()
 
     @Autowired
     ProjectManager projectManagerService
@@ -27,9 +28,9 @@ class ProjectModeMetadataComponent implements ProjectMetadataComponent {
         final UserAndRolesAuthContext authContext
     ) {
         List<ComponentMeta> result = new ArrayList<>()
-        if (names.contains(PROJECT_MODE) || names.contains('*')) {
+        if (names.contains(CONFIG) || names.contains('*')) {
             result.add(
-                getProjectModeMeta(project)
+                getProjectConfigMeta(project)
             )
         }
         if (names.contains(SYSTEM_MODE) || names.contains('*')) {
@@ -43,19 +44,32 @@ class ProjectModeMetadataComponent implements ProjectMetadataComponent {
         return Optional.empty()
     }
 
-    ComponentMeta getProjectModeMeta(String project) {
+    ComponentMeta getProjectConfigMeta(String project) {
         def conf = projectManagerService.loadProjectConfig(project)
+
+        def map = [
+            executionsEnabled: (
+                conf.getProperty(ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION) != 'true'
+            ),
+            scheduleEnabled  : (
+                conf.getProperty(ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE) != 'true'
+            )
+        ]
+        if (conf.hasProperty(ScheduledExecutionService.CONF_GROUP_EXPAND_LEVEL)) {
+            map.groupExpandLevel = tryParseInt(conf.getProperty(ScheduledExecutionService.CONF_GROUP_EXPAND_LEVEL), 1)
+        }
         return ComponentMeta.with(
-            PROJECT_MODE,
-            [
-                executionsEnabled: (
-                    conf.getProperty(ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION) != 'true'
-                ),
-                scheduleEnabled  : (
-                    conf.getProperty(ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE) != 'true'
-                )
-            ] as Map<String, Object>
+            CONFIG,
+            map as Map<String, Object>
         )
+    }
+
+    private static int tryParseInt(String val, int defval) {
+        try {
+            return Integer.parseInt(val)
+        } catch (NumberFormatException ignored) {
+            return defval
+        }
     }
 
     ComponentMeta getSystemModeMeta() {
