@@ -11,6 +11,8 @@
         :root="true"
         @rootBrowse="rootBrowse"
         class="job_list_browser"
+        :expand-level="jobPageStore.groupExpandLevel"
+        v-if="loaded"
     >
         <ui-socket section="job-list-page" location="empty-splash">
           <div class="empty-splash">
@@ -59,6 +61,7 @@ export default defineComponent({
             jobBrowserStore,
             jobPageStore,
             browsePath: ref(""),
+            loaded: ref(false),
         };
     },
     methods: {
@@ -69,7 +72,8 @@ export default defineComponent({
         },
     },
     async mounted() {
-      await this.jobPageStore.loadAuth()
+        await this.jobPageStore.load();
+        this.loaded = true;
     },
 });
 </script>
