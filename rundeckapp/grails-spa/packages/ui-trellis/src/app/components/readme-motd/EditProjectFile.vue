@@ -23,14 +23,10 @@
                     <details class="details-reset more-info">
                       <summary>
                         <span v-html="$t('file.readme.help.markdown')"></span>
-                        <button @click="markdownSectionOpen = !markdownSectionOpen" class="more-info-icon">
-                          <i v-if="!markdownSectionOpen" class="glyphicon glyphicon-chevron-right"></i>
-                          <i v-else class="glyphicon glyphicon-chevron-down"></i>
-                        </button>
+                        <span class="more-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-right "></i></span>
+                        <span class="less-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-down "></i></span>
                       </summary>
-                      <div v-if="markdownSectionOpen">
-                        <span v-html="$t('file.readme.help.html')"></span>
-                      </div>
+                      <span v-html="$t('file.readme.help.html')"></span>
                     </details>
                   </div>
                   <ace-editor v-model="fileText"
