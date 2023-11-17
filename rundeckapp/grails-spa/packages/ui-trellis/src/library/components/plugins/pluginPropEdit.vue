@@ -350,7 +350,7 @@
               <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
           </summary>
 
-          <VMarkdownView class="markdown-body" :content="extraDescription" />
+          <VMarkdownView class="markdown-body" :content="extraDescription" mode="" />
 
       </details>
       <div class="help-block" v-else>{{prop.desc}}</div>

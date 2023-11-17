@@ -7,7 +7,7 @@
               <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
           </summary>
           <div class="more-info-content">
-            <VMarkdownView class="markdown-body" mode="light" :content="extraDescription"/>
+            <VMarkdownView class="markdown-body" mode="" :content="extraDescription"/>
           </div>
       </details>
       <span :class="basicCss" v-else>{{text}}</span>
