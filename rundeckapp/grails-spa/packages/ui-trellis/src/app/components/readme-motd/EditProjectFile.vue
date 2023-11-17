@@ -63,7 +63,10 @@
 import {defineComponent} from "vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
+import {client} from "@/library/modules/rundeckClient";
+import {getRundeckContext} from "@/library";
 
+const rundeckClient = getRundeckContext().rundeckClient
 export default defineComponent({
   name: "EditProjectFile",
   components: {AceEditor, AceEditorVue},
@@ -91,16 +94,43 @@ export default defineComponent({
   },
   mounted() {
     console.log("made it into new component")
+    this.getFileText()
   },
   methods: {
-    saveProjectFile() {
+    async saveProjectFile() {
       // Implement form submission logic using API
+      if(this.fileText === ''){
+        this.fileText = '#This is a test'
+      }
+      const resp = await rundeckClient.sendRequest({
+        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+        pathTemplate: "/project/"+this.project+"/" + this.filename,
+        method: "PUT",
+        body: {
+          contents: this.fileText
+        }
+      });
     },
     cancel() {
       // Implement cancel logic
     },
     getFileText(){
       // Implement logic to get the project file text using the API
+      rundeckClient.sendRequest({
+        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+        pathTemplate: "/project/"+this.project+"/" + this.filename,
+        headers: {
+          'Accept': 'application/json'
+        },
+        method: 'GET'
+      }).then(response => {
+        if(response.status === 200){
+          console.log("test 1")
+          console.log(response)
+          console.log(response.parsedBody)
+          this.fileText = response.parsedBody.contents
+        }
+      })
     }
   },
 });
