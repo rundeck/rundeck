@@ -74,12 +74,9 @@ export default defineComponent({
   components: {AceEditor, AceEditorVue},
   data() {
     return {
-      editReadmeMessage: 'Your Edit Readme Message',
-      editMessageOfTheDay: 'Your Edit Message of the Day',
-      fileText: '', // pull value for fileText from API
+      fileText: '',
       markdownSectionOpen: false,
-      errorMsg: '',
-      saved: false
+      errorMsg: ''
     };
   },
   props: {
@@ -89,9 +86,6 @@ export default defineComponent({
     authAdmin: false,
   },
   computed: {
-    markdownSummary() {
-      // Return the markdown summary based on the filename -- not exactly sure what this is yet
-    },
     createProjectConfigureLink() {
       return url('project/' + this.project + '/configure').href
     },
@@ -101,7 +95,6 @@ export default defineComponent({
   },
   methods: {
     async saveProjectFile() {
-      // Implement form submission logic using API
       if(this.fileText === ''){
         this.fileText = '#This is a test'
       }
@@ -120,12 +113,8 @@ export default defineComponent({
         if(resp.status !== 200){
           this.errorMsg = resp.parsedBody.message
           this.notifyError(this.errorMsg)
-          // Implement error handling, either show it or log it
         }
       }
-    },
-    cancel() {
-      // Implement cancel logic
     },
     createProjectHomeLink() {
       document.location = url('project/' + this.project + '/home').href
@@ -148,7 +137,6 @@ export default defineComponent({
       });
     },
     getFileText(){
-      // Implement logic to get the project file text using the API
       rundeckClient.sendRequest({
         baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
         pathTemplate: "/project/"+this.project+"/" + this.filename,
@@ -163,7 +151,7 @@ export default defineComponent({
         else{
           if(response.status !== 200){
             this.errorMsg = response.parsedBody.message
-            // Implement error handling, either show it or log it
+            this.notifyError(this.errorMsg)
           }
         }
       })
