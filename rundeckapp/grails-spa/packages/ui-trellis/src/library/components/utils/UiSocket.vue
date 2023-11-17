@@ -35,7 +35,7 @@ export default defineComponent({
       required: false,
     },
     socketData: {
-      type: Object,
+      type: [String, Object] as PropType<string | Record<string, any>>,
       required: false,
     }
   },
