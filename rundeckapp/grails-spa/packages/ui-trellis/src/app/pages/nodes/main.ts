@@ -1,6 +1,6 @@
 import {defineComponent, markRaw} from 'vue'
 import {getRundeckContext} from '../../../library'
-import {NodeFilterStore} from '../../../library/stores/NodeFilterStore'
+import {NodeFilterStore} from '../../../library/stores/NodeFilterLocalstore'
 import NodeFilterInput from '../../components/job/resources/NodeFilterInput.vue'
 import NodeCard from "../../components/job/resources/NodeCard.vue";
 
