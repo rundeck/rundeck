@@ -53,6 +53,7 @@ class JobCreatePage extends BasePage {
     By successOnEmptyNodeFilterTrueBy = By.xpath("//*[@id='successOnEmptyNodeFilterTrue']")
     By nodesSelectedByDefaultFalseBy = By.xpath("//*[@id='nodesSelectedByDefaultFalse']")
     By orchestratorDropdownBy = By.cssSelector('#orchestrator-edit-type-dropdown > button')
+    By sessionSectionBy = By.xpath("//div[contains(@class, 'opt_sec_nexp_disabled')]")
 
     String loadPath = "/job/create"
 
@@ -71,7 +72,6 @@ class JobCreatePage extends BasePage {
         waitForNumberOfElementsToBe floatBy
         adhocRemoteStringField.sendKeys 'echo selenium test'
         saveStep 0
-        tab JobTab.NODES click()
     }
 
     void validatePage() {
@@ -271,6 +271,10 @@ class JobCreatePage extends BasePage {
     
     WebElement getOrchestratorDropdownButton() {
         el orchestratorDropdownBy
+    }
+
+    WebElement getSessionSectionLabel() {
+        el sessionSectionBy
     }
 
     WebElement orchestratorChoiceLink(String variable) {

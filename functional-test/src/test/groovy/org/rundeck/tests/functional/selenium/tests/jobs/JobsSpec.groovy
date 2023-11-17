@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
-import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobShowPage
@@ -8,12 +7,12 @@ import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
 import org.rundeck.tests.functional.selenium.pages.jobs.StepType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
-import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.setup.NavLinkTypes
+import spock.lang.Stepwise
 
 @SeleniumCoreTest
+@Stepwise
 class JobsSpec extends SeleniumBase {
 
     def setupSpec() {
@@ -135,7 +134,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForElementVisible jobCreatePage.nodeFilterLinkButton
             jobCreatePage.nodeFilterLinkButton.click()
             jobCreatePage.nodeFilterSelectAllLinkButton.click()
-            jobCreatePage.nodeMatchedCountField.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.nodeMatchedCountField
             jobCreatePage.nodeMatchedCountField.getText() == '1 Node Matched'
             jobCreatePage.excludeFilterTrueCheck.click()
             jobCreatePage.editableFalseCheck.click()
@@ -191,6 +190,57 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText() == 'renamed job with node orchestrator'
             jobShowPage.jobDefinitionModal.click()
             jobShowPage.orchestratorNameLabel.getText() == 'Rank Tiered'
+    }
+
+    def "job options config - check usage session"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with options'
+            jobCreatePage.optionButton.click()
+            jobCreatePage.waitForElementVisible(jobCreatePage.optionName 0)
+            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.createJobButton.click()
+    }
+
+    def "job options config - check storage session"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'job with node orchestrator'
+            jobCreatePage.optionButton.click()
+            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.createJobButton.click()
+    }
+
+    def "job option simple redo"() {
+        setup:
+        def loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
+        when:
+        def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+        jobCreatePage.fillBasicJob 'job with node orchestrator'
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.saveOptionButton.click()
     }
 
 }
