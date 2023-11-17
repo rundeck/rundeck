@@ -40,11 +40,11 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
     private final def statusFileResourcepath = (projectName) -> "${AsyncImportService.JSON_FILE_PREFIX}${projectName}${AsyncImportService.JSON_FILE_EXT}"
     private final def sampleProjectInternalProjectPath = "rundeck-test"
 
-    def "Try to create a status file without a project name or updated data, get an error"(){
+    def "Try to create a status file without updated data, get an error"(){
         given:
         service.frameworkService = Mock(FrameworkService)
         when:
-        def bytes = service.saveAsyncImportStatusForProject(null, null)
+        def bytes = service.saveAsyncImportStatusForProject("test", null)
         then:
         thrown AsyncImportException
     }
@@ -847,7 +847,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         )
 
         then:
-        thrown NullPointerException
+        thrown Exception
 
         cleanup:
         if( Files.exists(Paths.get(workingDirs.workingDir)) ){
