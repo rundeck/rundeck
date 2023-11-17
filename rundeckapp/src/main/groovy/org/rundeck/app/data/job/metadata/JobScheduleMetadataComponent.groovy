@@ -31,12 +31,12 @@ class JobScheduleMetadataComponent implements JobMetadataComponent {
         if (!names.contains(SCHEDULE_NAME) && !names.contains('*')) {
             return Optional.empty()
         }
-        JobData foundJob = jobDataProvider.findByUuid(id)
-        if (foundJob) {
-            return Optional.of( [ComponentMeta.with(SCHEDULE_NAME, toMapData(foundJob))])
+        Optional<JobDataSummary> foundJob = jobDataProvider.findBasicByUuid(id)
+        return foundJob.map {
+            toMapData(it)
+        }.map {
+            [ComponentMeta.with(SCHEDULE_NAME, it)]
         }
-
-        return Optional.empty()
     }
 
     @Override

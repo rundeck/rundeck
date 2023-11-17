@@ -42,11 +42,10 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
         if (!names.contains(NAME) && !names.contains('*')) {
             return Optional.empty()
         }
-        def job = jobDataProvider.findByUuid(id)
-        if (job) {
-            return Optional.of( [ComponentMeta.with(NAME, getAuthzMeta(job, authContext))])
+        def job = jobDataProvider.findBasicByUuid(id)
+        return job.map {
+            [ComponentMeta.with(NAME, getAuthzMeta(it, authContext))]
         }
-        return Optional.empty()
     }
 
     @Override
