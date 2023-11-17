@@ -22,16 +22,22 @@
                   <div class="help-block">
                     <details class="details-reset more-info">
                       <summary>
-                        {{ $t("file.readme.help.markdown") }}
-                        <span class="more-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-right" /></span>
-                        <span class="more-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-down" /></span>
+                        <span v-html="$t('file.readme.help.markdown')"></span>
+                        <button @click="markdownSectionOpen = !markdownSectionOpen" class="more-info-icon">
+                          <i v-if="!markdownSectionOpen" class="glyphicon glyphicon-chevron-right"></i>
+                          <i v-else class="glyphicon glyphicon-chevron-down"></i>
+                        </button>
                       </summary>
+                      <div v-if="markdownSectionOpen">
+                        <span v-html="$t('file.readme.help.html')"></span>
+                      </div>
                     </details>
                   </div>
                   <ace-editor v-model="fileText"
+                              :soft-wrap-control="true"
                               height="200"
                               width="100%"
-                              lang="md"
+                              lang="markdown"
                               :readOnly="false"
                   />
                 </div>
@@ -70,6 +76,7 @@ export default defineComponent({
       editReadmeMessage: 'Your Edit Readme Message',
       editMessageOfTheDay: 'Your Edit Message of the Day',
       fileText: '', // pull value for fileText from API
+      markdownSectionOpen: false
     };
   },
   props: {
