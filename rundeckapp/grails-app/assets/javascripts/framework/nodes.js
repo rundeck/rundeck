@@ -21,7 +21,7 @@
 //= require nodeRemoteEdit
 
 /*
- Manifest for "framework/adhoc.gsp" page
+ Manifest for "framework/nodes.gsp" page
  */
 
 

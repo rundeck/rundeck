@@ -19,6 +19,19 @@ export const STORAGE_NODE_FILTER_KEY = 'node-filters'
  * Use local storage for managing saved node filters
  */
 export class NodeFilterStore {
+    private filter: string = '';
+
+    constructor(data: any = {}) {
+        this.filter = data.filter || this.filter;
+    }
+
+    get selectedFilter(): string {
+        return this.filter;
+    }
+
+    setSelectedFilter(newSelection: string) {
+        this.filter = newSelection;
+    }
 
     loadStoredNodeFilters(): StoredNodeFilters {
         const settings = localStorage.getItem(STORAGE_NODE_FILTER_KEY)
