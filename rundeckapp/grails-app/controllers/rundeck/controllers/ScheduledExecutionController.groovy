@@ -6101,7 +6101,13 @@ Since: v46''',
             in = ParameterIn.QUERY,
             description = 'Comma-separated list of metadata items to include, or "*" for all',
             schema = @Schema(type = 'string')
-        ) String meta
+        ) String meta,
+        @Parameter(
+            name = 'breakpoint',
+            in = ParameterIn.QUERY,
+            description = 'Breakpoint, max number of jobs to load with metadata, if more results than the breakpoint are available, no metadata will be loaded',
+            schema = @Schema(type = 'integer')
+        ) Integer breakpoint
     ) {
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
@@ -6109,7 +6115,7 @@ Since: v46''',
             projectAuthContext
         )
         Map<String, List<ItemMeta>> jobMetaItems = [:]
-        if (meta) {
+        if (meta && (!breakpoint || breakpoint>result.size())) {
             jobMetaItems = scheduledExecutionService.loadJobMetaItems(
                 project,
                 path,
