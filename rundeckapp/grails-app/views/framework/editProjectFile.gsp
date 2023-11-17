@@ -44,6 +44,8 @@
 
 <body>
     <g:set var="authAdmin" value="${auth.resourceAllowedTest( action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN], type: AuthConstants.TYPE_PROJECT, name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION )}"/>
-    <ui-socket section="edit-project-file" location="main"  :socket-data="{filename: '${filename}', displayConfig: '${displayConfig}', project: '${params.project ?: request.project}', authAdmin: '${authAdmin}'"></ui-socket>
+    <div class='vue-ui-socket'>
+        <ui-socket section="edit-project-file" location="main"  :socket-data="{filename: '${filename}', displayConfig: '${displayConfig}', project: '${params.project ?: request.project}', authAdmin: '${authAdmin}'}"></ui-socket>
+    </div>
 </body>
 </html>
