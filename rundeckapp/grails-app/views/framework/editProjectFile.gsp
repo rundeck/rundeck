@@ -27,26 +27,34 @@
     <meta name="projconfigselected" content="${(filename=='readme.md'?'edit-readme':filename=='motd.md'?'edit-motd':'edit.project.file')}"/>
     <title><g:message code="edit.project.file" /></title>
 
+    <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="static/components/readme-motd.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
     function init(){
-        jQuery('input[type=text]').on('keydown', noenter);
-        var confirm = new PageConfirm(message('page.unsaved.changes'));
-        jQuery('.apply_ace').each(function () {
-            _setupAceTextareaEditor(this,confirm.setNeetsConfirm);
-        });
+        <g:if test="${legacyUi}">
+            jQuery('input[type=text]').on('keydown', noenter);
+            var confirm = new PageConfirm(message('page.unsaved.changes'));
+            jQuery('.apply_ace').each(function () {
+                _setupAceTextareaEditor(this,confirm.setNeetsConfirm);
+            });
+        </g:if>
     }
     jQuery(init);
     </g:javascript>
 </head>
 
 <body>
-    <g:set var="authAdmin" value="${auth.resourceAllowedTest( action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN], type: AuthConstants.TYPE_PROJECT, name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION )}"/>
-    <div class='vue-ui-socket'>
-        <ui-socket section="edit-project-file" location="main"  :socket-data="{filename: '${filename}', displayConfig: '${displayConfig}', project: '${params.project ?: request.project}', authAdmin: '${authAdmin}'}"></ui-socket>
-    </div>
+    <g:if test="${legacyUi}">
+        <tmpl:legacyEditProjectFile/>
+    </g:if>
+    <g:else>
+        <g:set var="authAdmin" value="${auth.resourceAllowedTest( action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN], type: AuthConstants.TYPE_PROJECT, name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION )}"/>
+        <div class='vue-ui-socket'>
+            <ui-socket section="edit-project-file" location="main"  :socket-data="{filename: '${filename}', displayConfig: '${displayConfig}', project: '${params.project ?: request.project}', authAdmin: '${authAdmin}'}"></ui-socket>
+        </div>
+    </g:else>
 </body>
 </html>
