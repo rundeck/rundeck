@@ -38,7 +38,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     FrameworkService frameworkService
     ProjectService projectService
     ConfigurationService configurationService
-    Logger logger = LoggerFactory.getLogger(this.class)
+    static Logger logger = LoggerFactory.getLogger(this.class)
 
     // Constants
     static final String TEMP_DIR = stripSlashFromString(System.getProperty("java.io.tmpdir"))
@@ -396,8 +396,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
         } catch (Exception e) {
-            e.printStackTrace()
-            throw e
+            logger.error(e.message)
+            throw new AsyncImportException(e.message)
         }
 
         return importResult
@@ -406,7 +406,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
     /**
      * Async import process Milestone 2: Files Distribution.
-     * This method is asynchronous and only will be triggered by the completion of milestone 1 through an event emission,
+     * This method is asynchronous and will only be triggered by the completion of milestone 1 through an event emission,
      * it:
      * 1) Creates the distributed executions dir in working directory for project
      * 2) Extracts the project copy in temp for a given project and list each execution of the project, then moves the executions
@@ -620,14 +620,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         logger.debug("Files upload operation started....")
 
+        if( !projectName ){
+            throw new MissingPropertyException("No project name passed in event.")
+        }
+
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Files upload operation started...."
             return it
         })
-
-        if( !projectName ){
-            throw new MissingPropertyException("No project name passed in event.")
-        }
 
         def framework = frameworkService.rundeckFramework
 
@@ -817,7 +817,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch(Exception e){
-            e.printStackTrace()
+            logger.error(e.message)
         }
         return true
     }
@@ -862,7 +862,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .map(Path::toFile)
                     .forEach(File::delete)
         } catch (IOException e) {
-            e.printStackTrace()
+            logger.error(e.message)
         }
     }
 
