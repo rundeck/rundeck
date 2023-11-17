@@ -1,9 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: chrismcg
-  Date: 11/14/23
-  Time: 12:19 PM
---%>
 <%@ page import="org.rundeck.core.auth.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <div class="content">
     <div id="layoutBody">
