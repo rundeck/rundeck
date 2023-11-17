@@ -35,6 +35,22 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.descriptionTextarea
     }
 
+    def "create job invalid empty name"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
+        then:
+            jobCreatePage.validatePage()
+            jobCreatePage.jobNameInput.clear()
+            jobCreatePage.createJobButton.click()
+            jobCreatePage.errorAlert.getText().contains('Error saving Job')
+            def validationMsg = jobCreatePage.formValidationAlert.getText()
+            validationMsg.contains('"Job Name" parameter cannot be blank') == true
+            validationMsg.contains('Workflow must have at least one step') == true
+    }
+
     def "edit job set description"() {
         setup:
             def loginPage = go LoginPage

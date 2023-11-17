@@ -53,6 +53,8 @@ class JobCreatePage extends BasePage {
     By successOnEmptyNodeFilterTrueBy = By.xpath("//*[@id='successOnEmptyNodeFilterTrue']")
     By nodesSelectedByDefaultFalseBy = By.xpath("//*[@id='nodesSelectedByDefaultFalse']")
     By orchestratorDropdownBy = By.cssSelector('#orchestrator-edit-type-dropdown > button')
+    By errorAlertBy = By.cssSelector('#error')
+    By formValidationAlertBy = By.cssSelector('#page_job_edit > div.list-group-item > div.alert.alert-danger')
 
     String loadPath = "/job/create"
 
@@ -275,6 +277,14 @@ class JobCreatePage extends BasePage {
 
     WebElement orchestratorChoiceLink(String variable) {
         el By.cssSelector("#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=$variable]")
+    }
+
+    WebElement getErrorAlert() {
+        el errorAlertBy
+    }
+
+    WebElement getFormValidationAlert() {
+        el formValidationAlertBy
     }
 
     void saveStep(Integer stepNumber) {
