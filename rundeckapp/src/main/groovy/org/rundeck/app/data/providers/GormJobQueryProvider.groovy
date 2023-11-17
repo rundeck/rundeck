@@ -1,6 +1,7 @@
 package org.rundeck.app.data.providers
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.datastore.mapping.query.api.BuildableCriteria
@@ -94,12 +95,7 @@ class GormJobQueryProvider implements JobQueryProvider {
             }
         }
         def schedlist = scheduled.collect { result ->
-            def map=[:]
-            result.eachWithIndex { Object val, int i ->
-                map[PROJECTION_KEYS[i]]=val
-            }
-            map['scheduled'] = jobSchedulesService.isScheduled(map.uuid)
-            return new RdJobDataSummary(map)
+            summaryFromProjection(result)
         }
         def total = schedlist.size()
         if(queryMax && queryMax>0) {
@@ -121,6 +117,16 @@ class GormJobQueryProvider implements JobQueryProvider {
         page.total = total
         page.pageable = new RdPageable(max: query.max, offset: query.offset, sortOrders: query.sortOrders)
         return page
+    }
+
+
+    @CompileDynamic
+    RdJobDataSummary summaryFromProjection(Object result) {
+        def map = [:]
+        result.eachWithIndex { Object val, int i ->
+            map[PROJECTION_KEYS[i]] = val
+        }
+        return new RdJobDataSummary(map)
     }
 
     BuildableCriteria createCriteria() {
