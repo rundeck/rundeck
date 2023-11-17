@@ -95,7 +95,7 @@ public interface JobMetadataComponent {
     {
         Map<String, List<ComponentMeta>> map = new HashMap<>();
         for (JobDataSummary job : jobs) {
-            Optional<List<ComponentMeta>> metadataForJob = getMetadataForJob(job.getUuid(), job.getProject(), names, authContext);
+            Optional<List<ComponentMeta>> metadataForJob = getMetadataForJob(job, names, authContext);
             metadataForJob.ifPresent(metas -> map.put(job.getUuid(), metas));
         }
         return map;
