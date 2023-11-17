@@ -97,12 +97,12 @@ export default defineComponent({
             return this.scmImport?.jobState?.synchState;
         },
         scmExport(): JobBrowseMeta | undefined {
-            return this.job.meta.find(
+            return this.job.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "scmExport"
             )?.data;
         },
         scmImport(): JobBrowseMeta | undefined {
-            return this.job.meta.find(
+            return this.job.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "scmImport"
             )?.data;
         },

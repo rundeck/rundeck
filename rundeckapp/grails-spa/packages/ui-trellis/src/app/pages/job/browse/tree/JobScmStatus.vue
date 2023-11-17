@@ -44,12 +44,12 @@ export default defineComponent({
             return state && state !== "CLEAN" ? state : undefined;
         },
         scmExport(): JobBrowseMeta | undefined {
-            return this.job.meta.find(
+            return this.job.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "scmExport"
             )?.data;
         },
         scmImport(): JobBrowseMeta | undefined {
-            return this.job.meta.find(
+            return this.job.meta?.find(
                 (meta: JobBrowseMeta) => meta.name === "scmImport"
             )?.data;
         },
