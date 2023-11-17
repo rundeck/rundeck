@@ -141,11 +141,18 @@
   //   }
   .optdetail {
     /*float:left;*/
-    width: 540px;
+    width: 650px;
     overflow: hidden;
     white-space: nowrap;
     height: 16px;
     line-height: 16px;
+  }
+
+  .opt-detail-ext {
+    position:relative;
+    top: 2px;
+    display: inline-block;
+    min-height: 17px
   }
 
   .enforceSet {
@@ -157,6 +164,12 @@
     white-space: nowrap;
     height: 16px;
     line-height: 16px;
+  }
+
+  .opt-desc {
+    overflow:hidden;
+    text-overflow: ellipsis;
+    margin-top: 5px;
   }
 
   .enforceSet span.any,
