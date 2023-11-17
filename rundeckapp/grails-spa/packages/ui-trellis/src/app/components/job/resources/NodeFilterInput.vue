@@ -191,7 +191,7 @@
     </modal>
 </template>
 <script lang="ts">
-import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterStore'
+import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterLocalstore'
 import {defineComponent, ref, PropType} from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
 
