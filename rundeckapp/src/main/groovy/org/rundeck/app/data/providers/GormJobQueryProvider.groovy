@@ -37,7 +37,8 @@ class GormJobQueryProvider implements JobQueryProvider {
             new RdJobQueryInput(
                 projFilter:input.project,
                 groupPath:input.path,
-                inputParamMap: [:]
+                inputParamMap: [:],
+                max: 0
             )
         )
     }
