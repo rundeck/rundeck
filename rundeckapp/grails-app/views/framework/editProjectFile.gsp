@@ -28,6 +28,7 @@
     <title><g:message code="edit.project.file" /></title>
 
     <asset:javascript src="leavePageConfirm.js"/>
+    <asset:javascript src="static/components/readme-motd.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
