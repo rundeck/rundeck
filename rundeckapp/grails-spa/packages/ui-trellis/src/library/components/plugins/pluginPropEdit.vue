@@ -1,4 +1,4 @@
-<template>
+<<template>
   <div>
     <template v-if="prop.type==='Boolean'">
       <div class="col-xs-10 col-xs-offset-2" v-if="prop.defaultValue!=='true'">

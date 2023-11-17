@@ -20,6 +20,7 @@ module.exports = {
     'components/tour':                        { entry: './src/app/components/tour/main.js'},
     'components/version':                     { entry: './src/app/components/version/main.js'},
     'components/server-identity':             { entry: './src/app/components/server-identity/serverIdentity.ts'},
+    'components/readme-motd':                 { entry: './src/app/components/readme-motd/main.ts'},
     'pages/storage':                          { entry: './src/app/pages/storage/main.ts'},
     'pages/login':                            { entry: './src/app/pages/login/main.ts'},
     'pages/project-dashboard':                { entry: './src/app/pages/project-dashboard/main.js'},
