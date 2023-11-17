@@ -81,7 +81,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return false
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.message)
             throw e
         }
     }
@@ -101,7 +101,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return true
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.message)
             throw e
         }
     }
@@ -124,7 +124,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return obj
         }catch(Exception e){
             logger.error("Error during the async import file extraction process: ${e.stackTrace}")
-            throw e
+            throw new AsyncImportException(e.message)
         }
     }
 
@@ -136,13 +136,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param newStatus (nullable)
      * @return Long bytes written.
      */
-    Long saveAsyncImportStatusForProject(String projectName = null, AsyncImportStatusDTO newStatus = null){
+    Long saveAsyncImportStatusForProject(String projectName, AsyncImportStatusDTO newStatus = null){
         def resource
         def statusPersist
-
-        if( !projectName && !newStatus ){
-            throw new AsyncImportException("Must pass either a projectName or a new AsyncImportStatusDTO in method call.")
-        }
 
         try {
             if( newStatus != null ){ // update scenario
@@ -168,9 +164,9 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             resource = fwkProject.storeFileResource(filename, inputStream)
             inputStream.close();
             return resource
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e
+        } catch (Exception e) {
+            logger.error(e.message)
+            throw new AsyncImportException(e.message)
         }
     }
 
@@ -232,7 +228,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         String destDir = "${TEMP_DIR}${File.separator}${TEMP_PROJECT_SUFFIX}${projectName}"
 
-        logger.debug("Creating a copy of the uploaded project in /tmp.")
+        logger.debug("Creating a copy of the uploaded project in /tmp, in path: ${destDir}.")
 
         asyncImportStatusFileUpdater(new AsyncImportStatusDTO(projectName, milestoneNumber).with {
             it.lastUpdate = "Creating a copy of the uploaded project in /tmp."
@@ -328,8 +324,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 fis.close()
 
             }catch (IOException e){
-                e.printStackTrace()
-                throw e
+                logger.error(e.message)
+                throw new AsyncImportException(e.message)
             }
 
             String jobUuidOption = options.jobUuidOption
