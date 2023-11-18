@@ -603,11 +603,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     List<JobBrowseItem> basicQueryJobs(String project, String path, UserAndRolesAuthContext authContext){
         //returns all jobs under the specified path
+        long start = System.currentTimeMillis()
         def result = jobDataProvider.queryJobsAndGroups(new RdJobBrowseInput(project: project, path: path))
+        long qend=System.currentTimeMillis()-start
+        long qsize=result.total
         //filter results for authorization read/view
         //remove subpath results and convert to simple groups
         List<JobBrowseItem> filtered = new ArrayList<JobBrowseItem>()
         Set<String> seenChildPath = new HashSet<String>()
+        int skipped=0
+        int authchecks=0
+        long start2 = System.currentTimeMillis()
         for (JobDataSummary item : result.results) {
             //include an item if the job is authorized, and the path matches the query path
             //include an item's group if the job is authorized, and the sub path of the group has not already been added
@@ -615,6 +621,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def isAuthorized = false
             //exact path match, should include this job if it is authorized
             if(item.groupPath==path || (!item.groupPath && !path)){
+                authchecks++
                 if(rundeckAuthContextProcessor.authorizeProjectResourceAny(
                     authContext,
                     rundeckAuthContextProcessor.authResourceForJob(item.jobName, item.groupPath, item.uuid),
@@ -648,9 +655,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             if(seenChildPath.contains(childPath)){
                 //we have already authorized another job matching this child path, no need to check again
+                skipped++
                 continue
             }
 
+            authchecks++
             //have not yet seen this child subpath, so check authorization
             if (rundeckAuthContextProcessor.authorizeProjectResourceAny(
                 authContext,
@@ -665,6 +674,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 seenChildPath<<childPath
             }
         }
+        long qend2=System.currentTimeMillis()-start2
+//        log.warn("basicQueryJobs: query: ${path} authchecks: ${authchecks} skipped: ${skipped} qsize: ${qsize} qtime: ${qend}ms authchecktime: ${qend2}ms")
         return filtered
     }
 
