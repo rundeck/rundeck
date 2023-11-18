@@ -6134,7 +6134,7 @@ Since: v46''',
         )
     }
 
-    @Get(uri="/project/{project}/job/{id}/meta")
+    @Get(uri="/job/{id}/meta")
     @Operation(
         method = 'GET',
         summary = 'Get Job Metadata',
@@ -6164,13 +6164,6 @@ Since: v46''',
     @GrailsCompileStatic
     def apiJobMeta(
         @Parameter(
-            name = 'project',
-            in = ParameterIn.PATH,
-            description = 'Project name',
-            required = true,
-            schema = @Schema(type = 'string')
-        ) String project,
-        @Parameter(
             name = 'id',
             in = ParameterIn.PATH,
             description = 'Job ID',
@@ -6186,12 +6179,11 @@ Since: v46''',
         if (!meta) {
             meta = '*'
         }
-
+        def job = authorizingJob
         def result = scheduledExecutionService.loadJobMetaItems(
-            project,
             new HashSet<>(meta.split(',').toList()),
             id,
-            projectAuthContext
+            rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(), job.resource.project)
         )
 
         respond result

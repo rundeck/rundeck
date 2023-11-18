@@ -95,6 +95,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -525,22 +526,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     /**
      * load metadata for a specific job
-     * @param project
      * @param metakeys
      * @param uuid
      * @param authContext
      * @return
      */
     List<ItemMeta> loadJobMetaItems(
-        String project,
         Set<String> metakeys,
         String uuid,
         UserAndRolesAuthContext authContext
     ) {
+        def jobData = jobDataProvider.findBasicByUuid(uuid).orElseThrow {
+            new NotFound('job', uuid)
+        }
         List<ItemMeta> metaVals = []
         def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
         components.each { name, component ->
-            Optional<List<ComponentMeta>> metaItems = component.getMetadataForJob(uuid, project, metakeys, authContext)
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForJob(jobData, metakeys, authContext)
             metaItems.ifPresent { metaList ->
                 metaVals.addAll(
                     metaList.stream().map(ItemMeta.&from).collect(Collectors.toList())
