@@ -6116,6 +6116,7 @@ Since: v46''',
         )
         Map<String, List<ItemMeta>> jobMetaItems = [:]
         if (meta && (!breakpoint || breakpoint>result.size())) {
+            //long start = System.currentTimeMillis()
             jobMetaItems = scheduledExecutionService.loadJobMetaItems(
                 project,
                 path,
@@ -6123,6 +6124,8 @@ Since: v46''',
                 result,
                 projectAuthContext
             )
+            //long end=System.currentTimeMillis()-start
+//            log.warn("Loaded ${jobMetaItems.size()} job metadata items in ${end}ms")
         }
         respond(
             new JobBrowseResponse(
