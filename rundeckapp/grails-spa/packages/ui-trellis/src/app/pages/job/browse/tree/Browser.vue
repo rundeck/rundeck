@@ -1,48 +1,56 @@
 <template>
     <div :class="!root ? 'subbrowse' : ''">
         <ul class="list-unstyled">
-            <li v-for="item in sortedItems" v-if="items.length > 0" :key="item.job?item.job.id:item.groupPath">
-                <browser-job-item :job="item" v-if="item.job" :key="item.job.id"/>
-                <template v-else>
-                    <browse-group-item
-                      :item="item"
-                      :expanded="isExpanded(item.groupPath)"
-                      @toggleExpanded="toggle(item.groupPath)"
-                      @rootBrowse="rootBrowse(item.groupPath)"
-                      :key="item.groupPath"
+            <li v-for="item in sortedGroups" v-if="sortedGroups.length > 0" :key="item.groupPath">
+                <browse-group-item
+                  :item="item"
+                  :expanded="isExpanded(item.groupPath)"
+                  @toggleExpanded="toggle(item.groupPath)"
+                  @rootBrowse="rootBrowse(item.groupPath)"
+                  :key="item.groupPath"
+                >
+                  <template v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)" #supplemental >
+                    <btn
+                      size="xs"
+                      type="simple"
+                      class="btn-hover visibility-hidden button-spacing"
+                      @click="selectAll(item.groupPath)"
                     >
-
-                      <template v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)" #supplemental >
-                        <btn
-                          size="xs"
-                          type="simple"
-                          class="btn-hover visibility-hidden button-spacing"
-                          @click="selectAll(item.groupPath)"
-                        >
-                          <b class="glyphicon glyphicon-check"></b>
-                          {{ $t("select.all") }}
-                        </btn>
-                        <btn
-                          size="xs"
-                          type="simple"
-                          class="btn-hover visibility-hidden"
-                          @click="selectNone(item.groupPath)"
-                        >
-                          <b class="glyphicon glyphicon-unchecked"></b>
-                          {{ $t("select.none") }}
-                        </btn>
-                      </template>
-                    </browse-group-item>
-                    <Browser
-                        :path="item.groupPath"
-                        v-if="isExpanded(item.groupPath)"
-                        @rootBrowse="rootBrowse"
-                        @empty="childGroupEmpty(item)"
-                        :key="item.groupPath"
-                        :expand-level="expandLevel-1"
-                    />
-                </template>
+                      <b class="glyphicon glyphicon-check"></b>
+                      {{ $t("select.all") }}
+                    </btn>
+                    <btn
+                      size="xs"
+                      type="simple"
+                      class="btn-hover visibility-hidden"
+                      @click="selectNone(item.groupPath)"
+                    >
+                      <b class="glyphicon glyphicon-unchecked"></b>
+                      {{ $t("select.none") }}
+                    </btn>
+                  </template>
+                </browse-group-item>
+                <Browser
+                  :path="item.groupPath"
+                  v-if="isExpanded(item.groupPath)"
+                  @rootBrowse="rootBrowse"
+                  @empty="childGroupEmpty(item)"
+                  :key="item.groupPath"
+                  :expand-level="expandLevel-1"
+                />
             </li>
+              <RecycleScroller
+                  ref="scroller"
+                  :items="sortedItems"
+                  :item-size="25"
+                  v-slot:default="{ item,active }"
+                  key-field="id"
+                  itemTag="li"
+                  page-mode
+              >
+                <browser-job-item :job="item" v-if="item.job" :key="item.job.id" :active="active" :load-meta="this.jobBrowserStore.findPath(this.browsePath).bpHit"/>
+              </RecycleScroller>
+
             <li v-if="items.length === 0">
                 <template v-if="loading">
                   <i class="fas fa-spinner fa-pulse" ></i>
@@ -59,18 +67,20 @@ import BrowserJobItem from "@/app/pages/job/browse/tree/BrowserJobItem.vue";
 import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {
-    JobBrowserStore,
-    JobBrowserStoreInjectionKey,
-} from "@/library/stores/JobBrowser";
+  JobBrowserStore,
+  JobBrowserStoreInjectionKey, JobBrowserStoreItem,
+} from '@/library/stores/JobBrowser'
 import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
+import {RecycleScroller} from 'vue-virtual-scroller';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const context = getRundeckContext();
 const eventBus=context.eventBus
 export default defineComponent({
     name: "Browser",
-    components: { BrowseGroupItem, BrowserJobItem, UiSocket },
+    components: {RecycleScroller, BrowseGroupItem, BrowserJobItem, UiSocket },
     props: {
         path: {
             type: String,
@@ -102,22 +112,22 @@ export default defineComponent({
         };
     },
     computed: {
+        sortedGroups(): JobBrowseItem[] {
+            //sort by group name, and job name, and job names come after groups
+            if (!this.items || this.items.length < 1) {
+                return [];
+            }
+            return this.items.filter((a:JobBrowseItem)=>!a.job).sort((a: JobBrowseItem, b: JobBrowseItem) => {
+                return a.groupPath.localeCompare(b.groupPath);
+            });
+        },
         sortedItems(): JobBrowseItem[] {
             //sort by group name, and job name, and job names come after groups
             if (!this.items || this.items.length < 1) {
                 return [];
             }
-            return this.items.sort((a: JobBrowseItem, b: JobBrowseItem) => {
-                if (a.job && b.job) {
-                    return a.jobName.localeCompare(b.jobName);
-                }
-                if (a.job) {
-                    return 1;
-                }
-                if (b.job) {
-                    return -1;
-                }
-                return a.groupPath.localeCompare(b.groupPath);
+            return this.items.filter((a:JobBrowserStoreItem)=>a.job).sort((a: JobBrowseItem, b: JobBrowseItem) => {
+                  return a.jobName.localeCompare(b.jobName);
             });
         },
     },
