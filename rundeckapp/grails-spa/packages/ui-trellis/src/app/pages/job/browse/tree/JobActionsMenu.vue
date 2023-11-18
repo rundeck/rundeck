@@ -1,13 +1,14 @@
 <template>
-    <dropdown class="btn-group pull-right visibility-hidden">
+    <dropdown class="btn-group pull-right visibility-hidden"
+              menu-right
+              append-to-body
+              v-if="authz"
+    >
         <btn size="xs" class="dropdown-toggle" :data-job-id="job.id">
             {{ $t("actions") }}
             <span class="caret"></span>
         </btn>
         <template #dropdown>
-            <li role="presentation" class="dropdown-header" v-if="!authz">
-                {{ $t("loading.text") }}
-            </li>
             <li v-if="authz['update']">
                 <a
                     :title="$t('scheduledExecution.action.edit.button.tooltip')"
@@ -207,8 +208,7 @@ export default defineComponent({
             return schedule && schedule.executionEnabled;
         },
         authz(): Object | undefined {
-            const data: any = this.findJobMeta("authz");
-            return data || {};
+            return  this.findJobMeta("authz");
         },
         editHref() {
             return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;
