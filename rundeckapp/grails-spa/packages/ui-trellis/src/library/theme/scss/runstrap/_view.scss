@@ -22,8 +22,8 @@ body.view{
     position: relative;
 }
 #section-main{
-    margin-top: 45px;
-    height: calc(100vh - 69px);
+    padding-top:45px;
+    height: calc(100vh - 24px);
     #section-navbar{
 
     }
@@ -46,7 +46,6 @@ body.view{
 
 
 .view > section {
-    overflow: hidden;
 }
 
 #section-header {
@@ -62,6 +61,10 @@ body.view{
     align-items: center;
     overflow: hidden;
     background-color: var(--sidebar-background-color);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: calc(100vh - 45px);
 }
 #section-content-wrap{
     display: flex;
@@ -73,19 +76,18 @@ body.view{
     display: flex;
     flex: 1;
     flex-direction: column;
-    overflow: auto;
     padding: 2rem;
 }
 
 #section-main {
     display: flex;
     z-index: 1;
-    overflow: hidden;
-    // position: relative;
+    &.with-project{
+        margin-left: 65px;
+    }
 }
 
 #section-utility {
-    position: relative;
     z-index: 2;
     box-shadow: var(--utility-bar-box-shadow) !important;
 }
