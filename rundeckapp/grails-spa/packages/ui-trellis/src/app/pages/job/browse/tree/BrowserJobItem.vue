@@ -42,8 +42,9 @@
 <script lang="ts">
 import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
+import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
-import { defineComponent } from "vue";
+import { defineComponent,PropType,inject } from "vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -52,9 +53,18 @@ export default defineComponent({
     components: { UiSocket },
     props: {
         job: {
-            type: JobBrowseItem,
+            type: Object as PropType<JobBrowseItem>,
             required: true,
         },
+        loadMeta:{
+          type:Boolean,
+          default:false,
+        }
+    },
+    setup() {
+      return {
+        jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+      }
     },
     methods: {
         jobLinkHref(job: JobBrowseItem) {
@@ -75,13 +85,16 @@ export default defineComponent({
             }
             return false
         },
-        handleClick(event) {
+        async handleClick(event) {
             if (!this.hasDomParent(event.target, this.$refs.itemDiv, ['INPUT','BUTTON','A'])) {
                 //only emit if the click was not within a button,input or link
                 eventBus.emit(
                     `browser-job-item-click:${this.job.id}`,
                     this.job
                 );
+                if(this.loadMeta && !this.job.meta){
+                    await this.jobPageStore.getJobBrowser().loadJobMeta(this.job)
+                }
             }
         },
     },
