@@ -1,11 +1,14 @@
 import { InjectionKey } from "vue";
-import { browsePath } from "../services/jobBrowse";
+import { browsePath, getJobMeta } from "../services/jobBrowse";
 import { JobBrowseItem } from "../types/jobs/JobBrowse";
 
 export class JobBrowserStoreItem {
     path: string | null;
     item: JobBrowseItem;
     loaded: boolean = false;
+    bpHit: boolean = false;
+    meta: string = "*";
+    breakpoint: number = 100;
     children: JobBrowserStoreItem[] = [];
 
     constructor(item: JobBrowseItem, path: string | null) {
@@ -46,7 +49,15 @@ export class JobBrowserStoreItem {
         if (this.path === undefined || this.path === null) {
             return [];
         }
-        const result = await browsePath(project, this.path);
+        const result = await browsePath(
+            project,
+            this.path,
+            this.meta,
+            this.breakpoint
+        );
+        if (result.items.length > this.breakpoint) {
+            this.bpHit = true;
+        }
         this.children = result.items.map((i) => {
             const item = new JobBrowserStoreItem(i, i.groupPath);
             item.item = i;
@@ -76,6 +87,9 @@ export class JobBrowserStore extends JobBrowserStoreItem {
     } else {
       return []
     }
+  } 
+  async loadJobMeta(job:JobBrowseItem){
+    job.meta = await getJobMeta(this.project, job.id!, this.meta);
   }
 
   async refresh(path: string): Promise<JobBrowseItem[]> {
