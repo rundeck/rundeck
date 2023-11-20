@@ -56,12 +56,30 @@ class JobCreatePage extends BasePage {
     By errorAlertBy = By.cssSelector('#error')
     By formValidationAlertBy = By.cssSelector('#page_job_edit > div.list-group-item > div.alert.alert-danger')
     By sessionSectionBy = By.xpath("//div[contains(@class, 'opt_sec_nexp_disabled')]")
+    By secureInputTypeBy = By.xpath("//input[contains(@value, 'secureExposed')]")
+    By optionOpenKeyStorageBy = By.cssSelector(".btn.btn-default.obs-select-storage-path")
+    By optionCloseKeyStorageBy = By.xpath("//button[@class='btn btn-sm btn-default']")
+    By optionUndoBy = By.xpath("//*[@id='optundoredo']/div/span[1]")
+    By optionRedoBy = By.xpath("//*[@id='optundoredo']/div/span[2]")
+    By optionRevertAllBy = By.xpath("//*[starts-with(@id,'revertall')]")
+    By optionConfirmRevertAllBy = By.cssSelector("div[class='popover-content'] span[class*='confirm']")
 
     String loadPath = "/job/create"
 
     JobCreatePage(final SeleniumContext context, String project) {
         super(context)
-        this.loadPath = "/${project ? project + '/' : ''}job/create"
+        if (project.split('##').length > 1) {
+            def projectAux = project.split('##')[0]
+            def jobId = project.split('##')[1]
+            this.loadPath = "/project/${projectAux ? projectAux + '/' : ''}job/edit/${jobId}"
+        } else {
+            this.loadPath = "/${project ? project + '/' : ''}job/create"
+        }
+    }
+
+    JobCreatePage(final SeleniumContext context, String projectName, String jobId) {
+        super(context)
+        this.loadPath = "/project/${projectName}/job/show/${jobId}"
     }
 
     void fillBasicJob(String name) {
@@ -215,6 +233,10 @@ class JobCreatePage extends BasePage {
         waitForElementVisible By.cssSelector("#optli_$index")
     }
 
+    List<WebElement> optionLis(int index) {
+        els By.cssSelector("#optli_$index")
+    }
+
     WebElement optionNameSaved(int index) {
         el By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
     }
@@ -277,6 +299,34 @@ class JobCreatePage extends BasePage {
 
     WebElement getSessionSectionLabel() {
         el sessionSectionBy
+    }
+
+    WebElement getSecureInputTypeRadio() {
+        el secureInputTypeBy
+    }
+
+    WebElement getOptionOpenKeyStorageButton() {
+        el optionOpenKeyStorageBy
+    }
+
+    WebElement getOptionCloseKeyStorageButton() {
+        el optionCloseKeyStorageBy
+    }
+
+    WebElement getOptionUndoButton() {
+        el optionUndoBy
+    }
+
+    WebElement getOptionRedoButton() {
+        el optionRedoBy
+    }
+
+    WebElement getOptionRevertAllButton() {
+        el optionRevertAllBy
+    }
+
+    WebElement getOptionConfirmRevertAllButton() {
+        el optionConfirmRevertAllBy
     }
 
     WebElement orchestratorChoiceLink(String variable) {

@@ -53,18 +53,19 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "create job invalid empty workflow"() {
         setup:
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
         when:
-        def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
+            def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
         then:
-        jobCreatePage.validatePage()
-        jobCreatePage.jobNameInput.sendKeys('a job')
-        jobCreatePage.createJobButton.click()
-        jobCreatePage.errorAlert.getText().contains('Error saving Job')
-        def validationMsg = jobCreatePage.formValidationAlert.getText()
-        !validationMsg.contains('"Job Name" parameter cannot be blank')
-        validationMsg.contains('Workflow must have at least one step')
+            jobCreatePage.validatePage()
+            jobCreatePage.jobNameInput.sendKeys('a job')
+            jobCreatePage.createJobButton.click()
+        expect:
+            jobCreatePage.errorAlert.getText().contains('Error saving Job')
+            def validationMsg = jobCreatePage.formValidationAlert.getText()
+            !validationMsg.contains('"Job Name" parameter cannot be blank')
+            validationMsg.contains('Workflow must have at least one step')
     }
 
     def "edit job set description"() {
@@ -74,11 +75,8 @@ class BasicJobsSpec extends SeleniumBase {
             def homePage = page HomePage
             homePage.goProjectHome"SeleniumBasic"
         when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
+            def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
-            def jobCreatePage = page JobCreatePage
             jobCreatePage.descriptionTextarea.clear()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()

@@ -34,6 +34,7 @@ class JobsSpec extends SeleniumBase {
 
             jobCreatePage.executor "window.location.hash = '#addnodestep'"
             jobCreatePage.stepLink 'command', StepType.NODE click()
+            sleep 2000
             jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
             jobCreatePage.adhocRemoteStringField.click()
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.floatBy
@@ -201,9 +202,10 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.fillBasicJob 'a job with options'
             jobCreatePage.optionButton.click()
-            jobCreatePage.waitForElementVisible(jobCreatePage.optionName 0)
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.createJobButton.click()
@@ -216,12 +218,16 @@ class JobsSpec extends SeleniumBase {
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
-            jobCreatePage.fillBasicJob 'job with node orchestrator'
+            jobCreatePage.fillBasicJob 'a job with option secure'
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
             jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.executor "window.location.hash = '#secureExposed'"
+            jobCreatePage.secureInputTypeRadio.click()
+            jobCreatePage.optionOpenKeyStorageButton.click()
+            jobCreatePage.optionCloseKeyStorageButton.click()
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.createJobButton.click()
@@ -229,18 +235,103 @@ class JobsSpec extends SeleniumBase {
 
     def "job option simple redo"() {
         setup:
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
         when:
-        def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
-        jobCreatePage.fillBasicJob 'job with node orchestrator'
-        jobCreatePage.optionButton.click()
-        jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
-        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-        jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
-        jobCreatePage.sessionSectionLabel.isDisplayed()
-        jobCreatePage.saveOptionButton.click()
+            jobCreatePage.fillBasicJob 'a job with options undo test'
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+            jobCreatePage.optionUndoButton.click()
+        expect:
+            sleep 2000
+            jobCreatePage.optionLis 1 isEmpty()
+            jobCreatePage.createJobButton.click()
     }
 
+    def "job option revert all"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with options revert all test'
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+            jobCreatePage.executor "window.location.hash = '#optundoredo'"
+            jobCreatePage.optionUndoButton
+            jobCreatePage.optionRevertAllButton.click()
+            jobCreatePage.optionConfirmRevertAllButton.click()
+        expect:
+            sleep 2000
+            jobCreatePage.optionLis 0 isEmpty()
+            jobCreatePage.optionLis 1 isEmpty()
+            jobCreatePage.createJobButton.click()
+    }
+
+    def "job option undo redo"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with options undo-redo test'
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.optionButton.click()
+            sleep 2000
+            jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
+            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+            jobCreatePage.executor "window.location.hash = '#optundoredo'"
+            jobCreatePage.optionUndoButton.click()
+            sleep 2000
+            jobCreatePage.optionRedoButton.click()
+        expect:
+            sleep 1000
+            !(jobCreatePage.optionLis 0 isEmpty())
+            !(jobCreatePage.optionLis 1 isEmpty())
+            jobCreatePage.createJobButton.click()
+    }
+    
 }

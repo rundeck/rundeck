@@ -18,10 +18,6 @@ class JobListPage extends BasePage {
         super(context)
     }
 
-    void loadPathToEditJob(String projectName, String jobId) {
-        loadPath = "/project/${projectName}/job/edit/${jobId}"
-    }
-
     void loadPathToShowJob(String projectName, String jobId) {
         loadPath = "/project/${projectName}/job/show/${jobId}"
     }
