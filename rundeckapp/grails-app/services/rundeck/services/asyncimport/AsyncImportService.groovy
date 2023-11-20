@@ -127,6 +127,13 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         }
     }
 
+    /**
+     * Just append two strings formatted for errors output
+     *
+     * @param oldErrors
+     * @param newErrors
+     * @return
+     */
     static String appendErrorsInStatus(String oldErrors, String newErrors){
         try{
             if( oldErrors != null ){
