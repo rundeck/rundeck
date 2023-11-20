@@ -123,31 +123,6 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         thrown Exception
     }
 
-    def "Status file updater helper updates the status file leaving existing data intact"(){
-        given:
-        def projectName = "test"
-        def fwkProject = Mock(IRundeckProject){
-            it.loadFileResource(statusFileResourcepath(projectName), _) >> {
-                it[1].write(mockStatusFile(projectName).bytes)
-                return 4L
-            }
-        }
-        service.frameworkService = Mock(FrameworkService){
-            it.getFrameworkProject(projectName) >> fwkProject
-        }
-        def newStatus = new AsyncImportStatusDTO(projectName, 2).with {
-            it.lastUpdate = "hey"
-            return it
-        }
-
-        when: "We try to update, all the old props get copied to the new file and then it writes a resource in storage."
-        service.asyncImportStatusFileUpdater(newStatus)
-
-        then:
-        newStatus.jobUuidOption == 'remove' // this value come from the mock
-
-    }
-
     def "Gracefully invoke async import milestone 1"(){
         // This test will create real files in /tmp
         given: "The invocation through controller (with context)"
@@ -1246,6 +1221,24 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         cleanup:
         if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
         if( Files.exists(Paths.get(dirB.toString())) ) AsyncImportService.deleteNonEmptyDir(dirB.toString())
+
+    }
+
+    def "Append errors in status"(){
+        given:
+        def oldErrors = oldErr
+        def newErrors = newErr
+
+        when:
+        def appended = AsyncImportService.appendErrorsInStatus(oldErrors, newErrors)
+
+        then:
+        appended == result
+
+        where:
+        oldErr        | newErr                  | result
+        null          | "some error"            | "some error"
+        "Old error"   | "some error"            | "Old error, some error"
 
     }
 
