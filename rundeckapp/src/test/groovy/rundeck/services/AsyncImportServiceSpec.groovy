@@ -1035,7 +1035,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         Files.exists(Paths.get(zippedFilename))
 
         cleanup:
-        if( Files.exists(Paths.get(zippedFilename)) ) AsyncImportService.deleteNonEmptyDir(zippedFilename)
+        if( Files.exists(Paths.get(zippedFilename)) ) Files.delete(Paths.get(zippedFilename))
         if( Files.exists(Paths.get(dirA.toString())) ) AsyncImportService.deleteNonEmptyDir(dirA.toString())
     }
 
