@@ -299,7 +299,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipDir(modelProjectHost.toString(), "", zos)
 
                 }catch(IOException ignored){
-                    ignored.printStackTrace()
+                    logger.error(ignored.message)
                     throw ignored
                 }
             }
@@ -562,7 +562,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace()
+                logger.error(e.message)
                 throw e
             }
 
@@ -670,7 +670,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             try {
                                 Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
                             } catch (NoSuchFileException ignored) {
-                                ignored.printStackTrace()
+                                logger.error(ignored.message)
                                 throw ignored
                             }
 
@@ -683,7 +683,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 zipDir(modelProjectFullPath.toString(), "", zos)
 
                             }catch(IOException ignored){
-                                ignored.printStackTrace()
+                                logger.error(ignored.message)
                                 throw ignored
                             }
 
@@ -704,7 +704,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                             options
                                     )
                                 } catch (IOException e) {
-                                    e.printStackTrace()
+                                    logger.error(e.message)
                                     throw e
                                 }
                             }}
@@ -787,7 +787,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace()
+            logger.error(e.message)
         }
     }
 
@@ -869,7 +869,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             try {
                 extractStream(destinationDir.toString(), is)
             } catch (Exception e) {
-                e.printStackTrace()
+                logger.error(e.message)
                 throw e
             }
         }
@@ -912,7 +912,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipInputStream.closeEntry()
                 }
             } catch (IOException e) {
-                e.printStackTrace()
+                logger.error(e.message)
             }
         }}
     }
@@ -954,7 +954,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch (Exception e){
-            e.printStackTrace()
+            logger.error(e.message)
         }
     }
 
@@ -981,7 +981,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
                     }.collect(Collectors.toList())
         }catch(Exception e){
-            e.printStackTrace()
+            logger.error(e.message)
             throw e
         }
     }
@@ -1024,7 +1024,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 path = Files.list(checked).filter(logic).findFirst().get()
             }
         }catch(Exception e){
-            e.printStackTrace()
+            logger.error(e.message)
         }
         return path
     }
@@ -1043,7 +1043,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                     .collect(Collectors.toList())
         }catch(IOException e){
-            e.printStackTrace()
+            logger.error(e.message)
             throw e
         }
     }
