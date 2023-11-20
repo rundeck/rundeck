@@ -63,6 +63,15 @@ class JobCreatePage extends BasePage {
     By optionRedoBy = By.xpath("//*[@id='optundoredo']/div/span[2]")
     By optionRevertAllBy = By.xpath("//*[starts-with(@id,'revertall')]")
     By optionConfirmRevertAllBy = By.cssSelector("div[class='popover-content'] span[class*='confirm']")
+    By workFlowStepBy = By.linkText("Workflow Steps")
+    By ansibleBinariesPathBy = By.name("pluginConfig.ansible-binaries-dir-path")
+    By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
+    By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
+    By wfRedoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[2]")
+    By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
+    By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
+    By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
+    By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
 
     String loadPath = "/job/create"
 
@@ -83,15 +92,19 @@ class JobCreatePage extends BasePage {
     }
 
     void fillBasicJob(String name) {
-        jobNameInput.sendKeys name //'duplicate options'
+        jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
+        addSimpleCommandStep 'echo selenium test', 0
+    }
+
+    void addSimpleCommandStep(String command, int number) {
         executor "window.location.hash = '#addnodestep'"
         stepLink 'command', StepType.NODE click()
         waitForElementVisible adhocRemoteStringField
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBe floatBy
-        adhocRemoteStringField.sendKeys 'echo selenium test'
-        saveStep 0
+        adhocRemoteStringField.sendKeys command
+        saveStep number
     }
 
     void validatePage() {
@@ -339,6 +352,50 @@ class JobCreatePage extends BasePage {
 
     WebElement getFormValidationAlert() {
         el formValidationAlertBy
+    }
+
+    WebElement getWorkFlowStepLink() {
+        el workFlowStepBy
+    }
+
+    WebElement getAnsibleBinariesPathField() {
+        el ansibleBinariesPathBy
+    }
+
+    WebElement getWfUndoButton() {
+        el wfUndoButtonBy
+    }
+
+    WebElement getWfRedoButton() {
+        el wfRedoButtonBy
+    }
+
+    WebElement getWfRevertAllButton() {
+        el wfRevertAllButtonBy
+    }
+
+    WebElement getRevertWfConfirmYes() {
+        el revertWfConfirmBy
+    }
+
+    List<WebElement> getWorkFlowList() {
+        els listWorkFlowItemBy
+    }
+
+    WebElement getAddSimpleCommandStepButton() {
+        el addSimpleCommandStepBy
+    }
+
+    WebElement getAutocompleteSuggestions() {
+        def autoAux = els autocompleteSuggestionsBy
+        WebElement autoDivAux
+        for (WebElement auto : autoAux) {
+            if (auto.isDisplayed()) {
+                autoDivAux = auto
+                break
+            }
+        }
+        autoDivAux.findElement By.cssSelector("div[class='autocomplete-suggestion']")
     }
 
     void saveStep(Integer stepNumber) {

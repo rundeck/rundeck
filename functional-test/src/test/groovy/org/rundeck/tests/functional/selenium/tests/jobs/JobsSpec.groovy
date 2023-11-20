@@ -333,5 +333,78 @@ class JobsSpec extends SeleniumBase {
             !(jobCreatePage.optionLis 1 isEmpty())
             jobCreatePage.createJobButton.click()
     }
-    
+
+    def "job workflow step context variables autocomplete"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.jobNameInput.sendKeys 'job workflow step context variables autocomplete'
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.executor "window.location.hash = '#addnodestep'"
+            jobCreatePage.workFlowStepLink.click()
+            jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
+            sleep 2000
+            jobCreatePage.ansibleBinariesPathField.clear()
+            jobCreatePage.ansibleBinariesPathField.sendKeys '${job.id'
+            jobCreatePage.autocompleteSuggestions.click()
+            jobCreatePage.saveStep 0
+            jobCreatePage.createJobButton.click()
+        expect:
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.autocompleteJobStepDefinitionLabel.getText() == '${job.id}'
+    }
+    def "job workflow simple undo"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with workflow undo test'
+            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
+            jobCreatePage.wfUndoButton.click()
+        expect:
+            jobCreatePage.workFlowList.size() == 1
+            jobCreatePage.createJobButton.click()
+    }
+    def "job workflow undo redo"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with workflow undo-redo test'
+            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
+            jobCreatePage.wfUndoButton.click()
+            sleep 1000
+            jobCreatePage.wfRedoButton.click()
+        expect:
+            jobCreatePage.workFlowList.size() == 2
+            jobCreatePage.createJobButton.click()
+    }
+    def "job workflow revert all"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
+        then:
+            jobCreatePage.fillBasicJob 'a job with workflow revert all test'
+            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
+            jobCreatePage.wfRevertAllButton.click()
+            jobCreatePage.revertWfConfirmYes.click()
+        expect:
+            jobCreatePage.workFlowList.size() == 0
+            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
+            jobCreatePage.createJobButton.click()
+    }
 }

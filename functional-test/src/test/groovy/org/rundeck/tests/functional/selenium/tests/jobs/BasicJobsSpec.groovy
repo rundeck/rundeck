@@ -72,8 +72,6 @@ class BasicJobsSpec extends SeleniumBase {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -89,14 +87,9 @@ class BasicJobsSpec extends SeleniumBase {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
+            def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
-            def jobCreatePage = page JobCreatePage
             jobCreatePage.jobGroupField.clear()
             jobCreatePage.jobGroupField.sendKeys 'testGroup'
             jobCreatePage.updateJobButton.click()
@@ -109,14 +102,9 @@ class BasicJobsSpec extends SeleniumBase {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
+            def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
-            def jobCreatePage = page JobCreatePage
             jobCreatePage.tab JobTab.SCHEDULE click()
             jobCreatePage.scheduleRunYesField.click()
             if (!jobCreatePage.scheduleEveryDayCheckboxField.isSelected()) {
@@ -130,14 +118,9 @@ class BasicJobsSpec extends SeleniumBase {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
+            def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
-            def jobCreatePage = page JobCreatePage
             jobCreatePage.tab JobTab.OTHER click()
             if (jobCreatePage.multiExecFalseField.isSelected()) {
                 jobCreatePage.multiExecTrueField.click()
@@ -153,14 +136,9 @@ class BasicJobsSpec extends SeleniumBase {
         setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-            def homePage = page HomePage
-            homePage.goProjectHome"SeleniumBasic"
         when:
-            def jobListPage = page JobListPage
-            jobListPage.loadPathToEditJob "SeleniumBasic", "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
-            jobListPage.go()
+            def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
-            def jobCreatePage = page JobCreatePage
             jobCreatePage.tab JobTab.NOTIFICATIONS click()
             jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
             jobCreatePage.notificationDropDown.click()

@@ -33,6 +33,7 @@ class JobShowPage extends BasePage{
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
+    By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
 
     String loadPath = "/job/show"
 
@@ -125,6 +126,10 @@ class JobShowPage extends BasePage{
 
     WebElement getJobLinkTitleLabel() {
         el jobLinkTitleBy
+    }
+
+    WebElement getAutocompleteJobStepDefinitionLabel() {
+        el autocompleteJobStepDefinitionBy
     }
 
 }
