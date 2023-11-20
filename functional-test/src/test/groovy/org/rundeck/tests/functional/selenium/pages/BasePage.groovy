@@ -85,6 +85,11 @@ abstract class BasePage {
             .until(ExpectedConditions.presenceOfElementLocated(locator))
     }
 
+    void waitForUrlToContain(String text) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.urlContains(text))
+    }
+
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
         new WebDriverWait(context.driver, Duration.ofSeconds(15))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))

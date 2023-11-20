@@ -1,5 +1,8 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
+import org.openqa.selenium.StaleElementReferenceException
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
@@ -13,6 +16,8 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.setup.NavLinkTypes
 import spock.lang.Stepwise
+
+import java.time.Duration
 
 @SeleniumCoreTest
 @Stepwise
@@ -66,6 +71,22 @@ class BasicJobsSpec extends SeleniumBase {
             def validationMsg = jobCreatePage.formValidationAlert.getText()
             !validationMsg.contains('"Job Name" parameter cannot be blank')
             validationMsg.contains('Workflow must have at least one step')
+    }
+
+    def "create valid job basic workflow"() {
+        setup:
+            def loginPage = go LoginPage
+            loginPage.login(TEST_USER, TEST_PASS)
+        when:
+            def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
+        then:
+            jobCreatePage.validatePage()
+            jobCreatePage.jobNameInput.sendKeys('a job')
+            jobCreatePage.addNewWfStepCommand('echo selenium test')
+            jobCreatePage.createJobButton.click()
+            jobCreatePage.waitForUrlToContain('/job/show')
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobLinkTitleLabel.getText() == 'a job'
     }
 
     def "edit job set description"() {

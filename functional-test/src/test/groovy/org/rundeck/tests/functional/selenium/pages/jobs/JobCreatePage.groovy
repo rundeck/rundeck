@@ -72,6 +72,10 @@ class JobCreatePage extends BasePage {
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By tabWorkflowBy = By.cssSelector('#job_edit_tabs > li > a[href=\'#tab_workflow\']')
+    By addNewWfStepCommandBy = By.cssSelector('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]')
+    By wfStepCommandRemoteTextBy = By.cssSelector('#adhocRemoteStringField')
+    By wfStep0SaveButtonBy = By.cssSelector('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm')
 
     String loadPath = "/job/create"
 
@@ -398,10 +402,37 @@ class JobCreatePage extends BasePage {
         autoDivAux.findElement By.cssSelector("div[class='autocomplete-suggestion']")
     }
 
+    WebElement getTabWorkflowBy() {
+        el tabWorkflowBy
+    }
+
     void saveStep(Integer stepNumber) {
         def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
         button?.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
+    }
+
+    void addNewWfStepCommand(String command) {
+        addNewWfStepCommand()
+        setWfStepCommandRemoteText(command)
+        wfStep0SaveButton()
+    }
+
+    void addNewWfStepCommand() {
+        def tab = el tabWorkflowBy
+        tab.click()
+        def newWfStepCommand = byAndWait addNewWfStepCommandBy
+        newWfStepCommand.click()
+    }
+
+    void setWfStepCommandRemoteText(String value) {
+        def wfStepCommandRemote = byAndWait wfStepCommandRemoteTextBy
+        wfStepCommandRemote.sendKeys(value)
+    }
+
+    void wfStep0SaveButton() {
+        def button = byAndWait wfStep0SaveButtonBy
+        button.click()
     }
 }
 
