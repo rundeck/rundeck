@@ -282,8 +282,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
             def internalProjectInModelPath = getPathWithLogic(Paths.get(modelProjectHost.toString()), internalProjectMatcher)
 
+            String newProjectName = "${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"
+
             if( internalProjectInModelPath != null ){
-                Files.move(internalProjectInModelPath, Paths.get(modelProjectHost.toString()).resolve("${MODEL_PROJECT_INTERNAL_PREFIX}${projectName}"))
+                Files.move(internalProjectInModelPath, Paths.get(modelProjectHost.toString()).resolve("${newProjectName}"))
             }
 
             String zippedFilename = "${baseWorkingDir.toString()}${File.separator}${projectName}${MODEL_PROJECT_NAME_EXT}"
@@ -310,23 +312,20 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 return it
             })
 
-            try {
-                FileInputStream fis = new FileInputStream(zippedFilename)
-
-                importResult = projectService.importToProject(
-                        project,
-                        framework,
-                        authContext as UserAndRolesAuthContext,
-                        fis,
-                        options
-                )
-
-                fis.close()
-
-            }catch (IOException e){
-                logger.error(e.message)
-                throw new AsyncImportException(e.message)
-            }
+            new FileInputStream(zippedFilename).withCloseable {fis ->{
+                try {
+                    importResult = projectService.importToProject(
+                            project,
+                            framework,
+                            authContext as UserAndRolesAuthContext,
+                            fis,
+                            options
+                    )
+                }catch (IOException e){
+                    logger.error(e.message)
+                    throw new AsyncImportException(e.message)
+                }
+            }}
 
             String jobUuidOption = options.jobUuidOption
 
@@ -355,7 +354,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 return it
             })
 
-            List<Path> filepathsToRemove = Files.list(internalProjectInModelPath).filter {
+            List<Path> filepathsToRemove = Files.list(Paths.get("${modelProjectHost.toString()}${File.separator}${newProjectName}")).filter {
                 it -> it.fileName.toString() != "jobs"
             }.collect(Collectors.toList())
 
