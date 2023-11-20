@@ -518,9 +518,10 @@ const messages = {
     "job.toggle.scm.confirm.panel.title": "Confirm SCM Modification",
     "job.toggle.scm.confirm.on": "Enable all SCM configured plugins?",
     "job.toggle.scm.confirm.off": "Disable all SCM configured plugins?",
-    "job.toggle.scm.button.label.on": "Enable SCM"
     "job.toggle.scm.button.label.on": "Enable SCM",
     "page.section.Activity.for.jobs":"Activity for Jobs",
+    "widget.theme.title":"Theme",
+    "widget.nextUi.title":"Enable Next UI",
 }
 
 export default messages;

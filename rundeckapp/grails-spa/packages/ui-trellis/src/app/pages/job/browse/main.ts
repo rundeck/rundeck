@@ -11,6 +11,7 @@ import {JobPageStore, JobPageStoreInjectionKey} from '../../../../library/stores
 import JobListPage from './JobListPage.vue'
 import * as uiv from "uiv";
 import JobsPage from './JobsPage.vue'
+import NextUiToggle from './NextUiToggle.vue'
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from './tree/JobActionsMenu.vue'
 import JobRunButton from './tree/JobRunButton.vue'
@@ -43,6 +44,12 @@ function init() {
           <jobs-page />`,
               })
           ),
+      },
+      {
+          section: "theme-select",
+          location: "after",
+          visible: true,
+          widget: markRaw(NextUiToggle)
       },
       {
           section: "job-list-page",
