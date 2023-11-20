@@ -1,7 +1,6 @@
 package rundeck.services.asyncimport
 
 import groovy.transform.builder.Builder
-import org.apache.commons.beanutils.PropertyUtils
 
 @Builder
 class AsyncImportStatusDTO {
