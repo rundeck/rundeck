@@ -8,7 +8,6 @@ import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.json.JsonSlurper
-import liquibase.logging.LogFactory
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -142,6 +141,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
         try {
             if( newStatus != null ){ // update scenario
+                if (!newStatus.projectName || newStatus.projectName.size() <= 0) {
+                    logger.error("No project name provided in new status.")
+                    throw new MissingPropertyException("No project name provided in new status.")
+                }
                 statusPersist = new AsyncImportStatusDTO(newStatus)
             }else{
                 statusPersist = new AsyncImportStatusDTO(
@@ -155,10 +158,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             def jsonStatus = statusPersist as JSON
             def inputStream = new ByteArrayInputStream(jsonStatus.toString().getBytes(StandardCharsets.UTF_8));
-            if (!statusPersist.projectName || statusPersist.projectName.size() <= 0) {
-                log.error("No project name provided in new status.")
-                throw new MissingPropertyException("No project name provided in new status.")
-            }
             final def fwkProject = frameworkService.getFrameworkProject(statusPersist.projectName)
             final def filename = JSON_FILE_PREFIX + statusPersist.projectName + JSON_FILE_EXT
             resource = fwkProject.storeFileResource(filename, inputStream)
@@ -177,14 +176,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param newStatus
      * @return Long (bytes written)
      */
-    def asyncImportStatusFileUpdater( AsyncImportStatusDTO newStatus){
+    def asyncImportStatusFileUpdater( AsyncImportStatusDTO newStatus ){
         def oldStatus = getAsyncImportStatusForProject(newStatus.projectName)
         if( oldStatus == null ) throw new AsyncImportException("No status file for project: ${newStatus.projectName}")
         if( oldStatus.errors != null ){
             def oldStatusErrors = oldStatus.errors
             newStatus.errors = oldStatusErrors + ", " + newStatus.errors
         }
-        AsyncImportStatusDTO.replacePropsInTargetDTO(newStatus, oldStatus)
+        AsyncImportStatusDTO.replacePropsInTargetDtoWhenNull(newStatus, oldStatus)
         return saveAsyncImportStatusForProject(null, newStatus)
     }
 

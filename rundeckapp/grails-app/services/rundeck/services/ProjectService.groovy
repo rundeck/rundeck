@@ -2038,10 +2038,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             InputStream is,
             ProjectArchiveParams params
     ) {
-        if (params.asyncImport) {
-            // Creates the async import status file
-            def created = createAsyncImportStatusFile(project.name)
-            if( created ){
+        try{
+            if (params.asyncImport) {
+                // Creates the async import status file
+                if( !createAsyncImportStatusFile(project.name) ){
+                    throw new AsyncImportException("Error creating status file.")
+                }
                 // Start the process synchronously
                 return asyncImportService.startAsyncImport(
                         project.name,
@@ -2050,17 +2052,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         is,
                         params
                 )
+            }else{
+                return importToProject(
+                        project,
+                        framework,
+                        userAndRolesAuthContext,
+                        is,
+                        params
+                )
             }
-        }else{
-            return importToProject(
-                    project,
-                    framework,
-                    userAndRolesAuthContext,
-                    is,
-                    params
-            )
+        }catch(Exception e){
+            throw e
         }
-
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
