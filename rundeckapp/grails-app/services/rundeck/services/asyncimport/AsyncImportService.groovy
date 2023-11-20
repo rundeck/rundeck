@@ -695,24 +695,20 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 return it
                             })
 
-                            try {
-
-                                FileInputStream fis = new FileInputStream(zippedFilename)
-
-                                result = projectService.importToProject(
-                                        project,
-                                        framework,
-                                        authContext as UserAndRolesAuthContext,
-                                        fis,
-                                        options
-                                )
-
-                                fis.close()
-
-                            } catch (IOException e) {
-                                e.printStackTrace()
-                                throw e
-                            }
+                            new FileInputStream(zippedFilename).withCloseable { fis -> {
+                                try {
+                                    result = projectService.importToProject(
+                                            project,
+                                            framework,
+                                            authContext as UserAndRolesAuthContext,
+                                            fis,
+                                            options
+                                    )
+                                } catch (IOException e) {
+                                    e.printStackTrace()
+                                    throw e
+                                }
+                            }}
 
                             if (result.success) {
                                 def modelProjectExecutionsContainerFullPath = Paths.get("${modelProjectExecutionsContainerPath}${File.separator}${EXECUTION_DIR_NAME}")
@@ -890,42 +886,39 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param inputStream
      */
     static void extractStream(String destDir, InputStream inputStream){
-        ZipInputStream zipInputStream = new ZipInputStream(inputStream)
-        try {
-            File checkDir = new File(destDir)
-            if( !checkDir.exists() ){
-                checkDir.mkdirs()
-            }
-            ZipEntry zipEntry
-            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                String newFileName = zipEntry.getName()
-                File destFile = new File(destDir, newFileName)
-
-                if (zipEntry.isDirectory()) {
-                    destFile.mkdirs()
-                } else {
-                    File parent = destFile.getParentFile();
-                    if (!parent.exists()) {
-                        parent.mkdirs()
-                    }
-
-                    FileOutputStream fos = new FileOutputStream(destFile);
-                    byte[] buffer = new byte[KILOBYTE]
-                    int bytesRead
-                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-                        fos.write(buffer, 0, bytesRead)
-                    }
-                    fos.close()
+        new ZipInputStream(inputStream).withCloseable {zipInputStream -> {
+            try {
+                File checkDir = new File(destDir)
+                if( !checkDir.exists() ){
+                    checkDir.mkdirs()
                 }
+                ZipEntry zipEntry
+                while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                    String newFileName = zipEntry.getName()
+                    File destFile = new File(destDir, newFileName)
 
-                zipInputStream.closeEntry()
+                    if (zipEntry.isDirectory()) {
+                        destFile.mkdirs()
+                    } else {
+                        File parent = destFile.getParentFile();
+                        if (!parent.exists()) {
+                            parent.mkdirs()
+                        }
+
+                        FileOutputStream fos = new FileOutputStream(destFile);
+                        byte[] buffer = new byte[KILOBYTE]
+                        int bytesRead
+                        while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead)
+                        }
+                        fos.close()
+                    }
+                    zipInputStream.closeEntry()
+                }
+            } catch (IOException e) {
+                e.printStackTrace()
             }
-
-            zipInputStream.close()
-
-        } catch (IOException e) {
-            e.printStackTrace()
-        }
+        }}
     }
 
     /**
