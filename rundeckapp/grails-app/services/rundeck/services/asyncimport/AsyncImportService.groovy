@@ -852,10 +852,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      */
     static void deleteNonEmptyDir(String path){
         try {
-            Files.walk(Paths.get(path))
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete)
+            FileUtils.deleteDirectory(new File(path))
         } catch (IOException e) {
             logger.error(e.message)
         }
