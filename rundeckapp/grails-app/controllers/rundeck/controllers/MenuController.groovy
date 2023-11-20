@@ -319,8 +319,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
-        if (!featureService.featurePresent(Features.LEGACY_UI) && params.legacyUi != 'true') {
-            return [:]
+        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
+            params.nextUi = true
+            return render(view: 'jobs.next', model: [:])
         }
 
         if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
