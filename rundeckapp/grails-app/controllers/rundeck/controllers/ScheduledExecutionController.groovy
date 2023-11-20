@@ -6109,6 +6109,9 @@ Since: v46''',
             schema = @Schema(type = 'integer')
         ) Integer breakpoint
     ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
             path,
@@ -6179,6 +6182,9 @@ Since: v46''',
             schema = @Schema(type = 'string')
         ) String meta
     ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
         if (!meta) {
             meta = '*'
         }
