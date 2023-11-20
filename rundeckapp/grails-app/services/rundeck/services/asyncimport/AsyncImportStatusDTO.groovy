@@ -36,31 +36,4 @@ class AsyncImportStatusDTO {
         this.lastUpdate = newStatus.lastUpdate
         this.jobUuidOption = newStatus.jobUuidOption
     }
-
-    /**
-     * Replaces all null properties in destinationDTO with the properties in sourceDTO that match with null keys of destinationDTO,
-     * be sure that destinationDTO has null the values that you DONT want to change of status file in DB.
-     *
-     * @param destinationDTO
-     * @param sourceDTO
-     * @return
-     */
-    static def replacePropsInTargetDtoWhenNull(AsyncImportStatusDTO destinationDTO, AsyncImportStatusDTO sourceDTO) {
-        try {
-            PropertyUtils.describe(sourceDTO).entrySet().stream()
-                    .filter(source -> source.getValue() != null)
-                    .filter(source -> !source.getKey().equals("class"))
-                    .forEach(source -> {
-                        try {
-                            if( destinationDTO[source.getKey()] == null ){
-                                PropertyUtils.setProperty(destinationDTO, source.getKey(), source.getValue())
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace()
-                        }
-                    });
-        } catch (Exception e) {
-            e.printStackTrace()
-        }
-    }
 }
