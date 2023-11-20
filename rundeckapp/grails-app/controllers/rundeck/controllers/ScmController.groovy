@@ -739,6 +739,9 @@ Since: v46''',
         ) String project,
         @Parameter(hidden = true) ScmToggleRequest toggleRequest
     ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
         def ePluginConfig = scmService.loadScmConfig(project, ScmService.EXPORT)
         def iPluginConfig = scmService.loadScmConfig(project, ScmService.IMPORT)
         def eConfiguredPlugin = null
