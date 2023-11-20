@@ -50,21 +50,24 @@ body.view{
 
 #section-header {
     //position: relative;
-    z-index: 3;
+    z-index: 4;
     overflow: visible;
 }
 
 #section-navbar {
     display: flex;
     flex: none;
-    width: 65px;
+    width: auto;
+    z-index: 2;
     align-items: center;
-    overflow: hidden;
     background-color: var(--sidebar-background-color);
     position: fixed;
     bottom: 0;
     left: 0;
     height: calc(100vh - 45px);
+    > nav{
+       width: 65px;
+    }
 }
 #section-content-wrap{
     display: flex;
@@ -88,7 +91,7 @@ body.view{
 }
 
 #section-utility {
-    z-index: 2;
+    z-index: 3;
     box-shadow: var(--utility-bar-box-shadow) !important;
 }
 
