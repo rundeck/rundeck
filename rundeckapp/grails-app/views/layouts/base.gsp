@@ -172,6 +172,7 @@
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
+                                                uiType     : params.nextUi?'next':params.legacyUi?'legacy':'current',
                                                 lang       : org.springframework.web.servlet.support.RequestContextUtils.getLocale(request).toLanguageTag(),
                                                 project    : params.project ?: request.project,
                                                 baseUrl    : createLink(uri: "/plugin/file/UI", absolute: true),

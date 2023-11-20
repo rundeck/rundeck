@@ -21,6 +21,7 @@ function RundeckPage(data) {
     "use strict";
     var self = this;
     self.project = ko.observable(data.project);
+    self.uiType = ko.observable(data.uiType||'current');
     self.path = ko.observable(data.path);
     self.baseUrl = ko.observable(data.baseUrl);
     self.basei18nUrl = ko.observable(data.basei18nUrl);
