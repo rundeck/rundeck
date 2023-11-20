@@ -606,7 +606,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         long start = System.currentTimeMillis()
         def result = jobDataProvider.queryJobsAndGroups(new RdJobBrowseInput(project: project, path: path))
         long qend=System.currentTimeMillis()-start
-        long qsize=result.total
         //filter results for authorization read/view
         //remove subpath results and convert to simple groups
         List<JobBrowseItem> filtered = new ArrayList<JobBrowseItem>()
