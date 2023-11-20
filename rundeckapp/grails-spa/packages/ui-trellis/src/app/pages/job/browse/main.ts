@@ -10,6 +10,7 @@ import moment from 'moment'
 import {JobPageStore, JobPageStoreInjectionKey} from '../../../../library/stores/JobPageStore'
 import JobListPage from './JobListPage.vue'
 import * as uiv from "uiv";
+import JobsPage from './JobsPage.vue'
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from './tree/JobActionsMenu.vue'
 import JobRunButton from './tree/JobRunButton.vue'
@@ -25,6 +26,24 @@ function init() {
   const jobPageStore = reactive(page);
   const jobBrowserStore = reactive(browse)
   rootStore.ui.addItems([
+      {
+          section: "job-list-page",
+          location: "main",
+          visible: true,
+          widget: markRaw(
+              defineComponent({
+                  name: "JobPageMain",
+                  components: { JobsPage },
+                  props: ["itemData"],
+                  setup() {
+                      provide(JobBrowserStoreInjectionKey, jobBrowserStore);
+                      provide(JobPageStoreInjectionKey, jobPageStore);
+                  },
+                  template: `
+          <jobs-page />`,
+              })
+          ),
+      },
       {
           section: "job-list-page",
           location: "tree-browser",
