@@ -3,10 +3,10 @@ databaseChangeLog = {
         property name: "boolean.type", value: "BOOLEAN", dbms: "postgresql,h2"
         property name: "boolean.type", value: "NUMBER(1, 0)", dbms: "oracle"
 
-        property name: "bytearray.type", value: "longblob", dbms: "mysql,mariadb" // 2^32 - 1
-        property name: "bytearray.type", value: "blob", dbms: "oracle,h2" // 4 GB - 1
-        property name: "bytearray.type", value: "bytea", dbms: "postgresql"  //max field size of -> 1GB
-        property name: "bytearray.type", value: "varbinary(max)", dbms: "mssql" // 2^31 -1 B -> 2GB
+        property name: "bytearray.type", value: "longblob", dbms: "mysql,mariadb"
+        property name: "bytearray.type", value: "blob", dbms: "oracle,h2"
+        property name: "bytearray.type", value: "bytea", dbms: "postgresql"
+        property name: "bytearray.type", value: "varbinary(max)", dbms: "mssql"
 
         property name: "int.type", value: "INT", dbms: "mysql, mssql,h2,mariadb"
         property name: "int.type", value: "INTEGER", dbms: "postgresql"

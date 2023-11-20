@@ -40,7 +40,6 @@ databaseChangeLog = {
         }
     }
 
-    final int DATA_FIELD_MAX_SIZE_BYTES = 1000000
     changeSet(author: "rundeckuser (generated)", id: "migrate-storage-data-column-to-longblob-1", dbms: "mysql,mariadb") {
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "storage")
@@ -50,64 +49,6 @@ databaseChangeLog = {
                 sql.execute("ALTER TABLE storage MODIFY data longblob;")
             }
             rollback {
-            }
-        }
-    }
-    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1MB-1", dbms: "mysql,mariadb,postgresql,h2") {
-        preConditions(onFail: "MARK_RAN") {
-            and {
-                tableExists(tableName: "storage")
-                or {
-                    and {
-                        dbms(type: 'mysql,mariadb')
-                        sqlCheck(expectedResult: '0', "select count(*) from INFORMATION_SCHEMA.CHECK_CONSTRAINTS where CONSTRAINT_NAME = 'storage_data_col_max_size_1M'")//MYSQL
-                    }
-                    and{
-                        dbms(type: 'postgresql')
-                        sqlCheck(expectedResult: '0', "select count(*) from pg_constraint where conname = 'storage_data_col_max_size_1m'")//POSTGRES
-                    }
-                    and{
-                        dbms(type: 'h2')
-                        sqlCheck(expectedResult: '0', "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME = 'STORAGE_DATA_COL_MAX_SIZE_1M'")//H2
-                    }
-                }
-            }
-        }
-        grailsChange{
-            change{
-                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK (octet_length(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
-            }
-            rollback{
-            }
-        }
-    }
-    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1MB-1", dbms: "mssql") {
-        preConditions(onFail: "MARK_RAN") {
-            and{
-                tableExists(tableName: "storage")
-                sqlCheck(expectedResult: '0', "select count(*) from sys.check_constraints where name = 'storage_data_col_max_size_1M'")
-            }
-        }
-        grailsChange{
-            change{
-                sql.execute("ALTER TABLE storage ADD CONSTRAINT storage_data_col_max_size_1M CHECK(DATALENGTH(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ");")
-            }
-            rollback{
-            }
-        }
-    }
-    changeSet(author: "rundeckuser (generated)", id: "data-col-max-size-to-1M-1", dbms: "oracle") {
-        preConditions(onFail: "MARK_RAN") {
-            and{
-                tableExists(tableName: "storage")
-                sqlCheck(expectedResult: '0', "SELECT COUNT(*) FROM all_constraints WHERE CONSTRAINT_NAME = 'STORAGE_DATA_COL_MAX_SIZE_1M'")
-            }
-        }
-        grailsChange{
-            change{
-                sql.execute("ALTER TABLE storage ADD CONSTRAINT STORAGE_DATA_COL_MAX_SIZE_1M CHECK (lengthb(data) < " + DATA_FIELD_MAX_SIZE_BYTES + ")")
-            }
-            rollback{
             }
         }
     }
