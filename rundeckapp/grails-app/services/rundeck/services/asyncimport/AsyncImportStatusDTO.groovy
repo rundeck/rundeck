@@ -45,7 +45,7 @@ class AsyncImportStatusDTO {
      * @param sourceDTO
      * @return
      */
-    static def replacePropsInTargetDTO(AsyncImportStatusDTO destinationDTO, AsyncImportStatusDTO sourceDTO) {
+    static def replacePropsInTargetDtoWhenNull(AsyncImportStatusDTO destinationDTO, AsyncImportStatusDTO sourceDTO) {
         try {
             PropertyUtils.describe(sourceDTO).entrySet().stream()
                     .filter(source -> source.getValue() != null)

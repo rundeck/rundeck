@@ -2948,6 +2948,34 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertEquals EXEC_XML_TEST6, str
     }
 
+    def "Handle API import with exception"(){
+        given:
+        def framework = Mock(IFramework)
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject){
+            getName() >> "test"
+        }
+        def inputStream = Mock(FileInputStream)
+        def params = Mock(ProjectArchiveParams){
+            asyncImport >> true
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            createStatusFile(project.name) >> false
+        }
+
+        when:
+        def result = service.handleApiImport(
+                framework,
+                auth,
+                project,
+                inputStream,
+                params
+        )
+
+        then:
+        thrown AsyncImportException
+    }
+
     def testExportExecutionWithScheduledExecutionBackupJobEnabled(){
         given:
 
