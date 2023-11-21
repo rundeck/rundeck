@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.tests.navigation
 
 import org.rundeck.tests.functional.selenium.pages.TopMenuPage
+import org.rundeck.tests.functional.selenium.pages.appadmin.SystemConfigurationPage
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
@@ -61,6 +62,7 @@ class NavigationSpec extends SeleniumBase {
             def topMenuPage = page TopMenuPage
         then:
             topMenuPage.navigateToSystemConfiguration()
-            topMenuPage.waitForUrlToContain('/config')
+            def systemConfigurationPage = page SystemConfigurationPage
+            systemConfigurationPage.validatePage()
     }
 }
