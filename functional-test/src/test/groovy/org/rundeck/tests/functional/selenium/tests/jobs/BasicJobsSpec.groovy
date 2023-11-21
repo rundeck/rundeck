@@ -1,8 +1,5 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
-import org.openqa.selenium.StaleElementReferenceException
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
@@ -11,13 +8,9 @@ import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
 import org.rundeck.tests.functional.selenium.pages.jobs.NotificationEvent
 import org.rundeck.tests.functional.selenium.pages.jobs.NotificationType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
-import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
-import org.rundeck.util.setup.NavLinkTypes
 import spock.lang.Stepwise
-
-import java.time.Duration
 
 @SeleniumCoreTest
 @Stepwise
@@ -27,10 +20,12 @@ class BasicJobsSpec extends SeleniumBase {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
+    def setup(){
+        def loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
+    }
+
     def "create job has basic fields"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
         then:
@@ -41,9 +36,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "create job invalid empty name"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
         then:
@@ -57,9 +49,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "create job invalid empty workflow"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
         then:
@@ -74,9 +63,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "create valid job basic workflow"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
         then:
@@ -90,9 +76,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "edit job set description"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -105,9 +88,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "edit job set groups"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -120,9 +100,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "edit job and set schedules tab"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -136,9 +113,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "edit job and set other tab"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -154,9 +128,6 @@ class BasicJobsSpec extends SeleniumBase {
     }
 
     def "edit job and set notifications"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
         then:
@@ -172,8 +143,6 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "showing the edited job"() {
         setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
             def homePage = page HomePage
             homePage.goProjectHome"SeleniumBasic"
         when:
