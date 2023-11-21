@@ -44,8 +44,8 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.createJobButton.click()
             jobCreatePage.errorAlert.getText().contains('Error saving Job')
             def validationMsg = jobCreatePage.formValidationAlert.getText()
-            validationMsg.contains('"Job Name" parameter cannot be blank') == true
-            validationMsg.contains('Workflow must have at least one step') == true
+            validationMsg.contains('"Job Name" parameter cannot be blank')
+            validationMsg.contains('Workflow must have at least one step')
     }
 
     def "create job invalid empty workflow"() {
