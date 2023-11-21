@@ -105,6 +105,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.fillBasicJob 'duplicate options'
             def optName = 'test'
             jobCreatePage.optionButton.click()
+            sleep 2000
             jobCreatePage.optionName 0 sendKeys optName
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
             jobCreatePage.saveOptionButton.click()
