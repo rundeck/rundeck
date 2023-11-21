@@ -416,6 +416,7 @@ class JobCreatePage extends BasePage {
         addNewWfStepCommand()
         setWfStepCommandRemoteText(command)
         wfStep0SaveButton()
+        waitForNumberOfElementsToBe(By.xpath("//span[text()='Save']"), 0)
     }
 
     void addNewWfStepCommand() {
