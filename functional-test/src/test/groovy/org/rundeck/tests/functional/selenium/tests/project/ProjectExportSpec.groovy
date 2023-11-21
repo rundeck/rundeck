@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.tests.project
 
-import org.openqa.selenium.WebElement
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.project.ProjectExportPage
 import org.rundeck.util.annotations.SeleniumCoreTest
