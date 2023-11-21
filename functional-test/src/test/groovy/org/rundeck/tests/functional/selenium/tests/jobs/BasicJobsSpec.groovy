@@ -75,6 +75,28 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText() == 'a job'
     }
 
+    def "create valid job basic options"() {
+        when:
+            def jobCreatePage = go JobCreatePage, "/project/SeleniumBasic"
+        then:
+            jobCreatePage.validatePage()
+            jobCreatePage.jobNameInput.sendKeys('a job with options')
+            jobCreatePage.addNewWfStepCommand('echo selenium test')
+
+            jobCreatePage.optionButton.click()
+            def optionName = 'seleniumOption1'
+            jobCreatePage.optionName 0 sendKeys optionName
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 0
+            jobCreatePage.createJobButton.click()
+
+        then:
+            jobCreatePage.waitForUrlToContain('/job/show')
+            def jobShowPage = page JobShowPage
+            jobShowPage.jobLinkTitleLabel.getText().contains('a job with options')
+            jobShowPage.optionInputText(optionName) != null
+    }
+
     def "edit job set description"() {
         when:
             def jobCreatePage = go JobCreatePage, "SeleniumBasic##b7b68386-3a52-46dc-a28b-1a4bf6ed87de"

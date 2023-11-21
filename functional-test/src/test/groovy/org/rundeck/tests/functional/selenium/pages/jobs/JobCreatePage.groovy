@@ -235,7 +235,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement optionName(int index) {
-        el By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
+        byAndWait By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
     }
 
     WebElement getSeparatorOption() {

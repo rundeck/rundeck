@@ -132,4 +132,7 @@ class JobShowPage extends BasePage{
         el autocompleteJobStepDefinitionBy
     }
 
+    WebElement optionInputText(String name) {
+        el By.cssSelector("#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']")
+    }
 }
