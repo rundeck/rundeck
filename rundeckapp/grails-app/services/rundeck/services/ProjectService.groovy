@@ -1966,7 +1966,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         try{
             return asyncImportService.createStatusFile(projectName)
         }catch(Exception e){
-            e.printStackTrace()
+            projectLogger.error(e.stackTrace.toString())
             throw e
         }
     }
@@ -1985,7 +1985,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
             return dto
         }catch(Exception e){
-            e.printStackTrace()
+            projectLogger.error(e.stackTrace.toString())
             throw e
         }
     }
