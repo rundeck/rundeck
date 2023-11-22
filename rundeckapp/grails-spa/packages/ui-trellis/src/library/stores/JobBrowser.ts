@@ -1,6 +1,7 @@
 import { InjectionKey } from "vue";
-import { browsePath, getJobMeta } from "../services/jobBrowse";
+import { getJobMeta, queryPath } from "../services/jobBrowse";
 import { JobBrowseItem } from "../types/jobs/JobBrowse";
+import { JobPageStore } from './JobPageStore';
 
 export class JobBrowserStoreItem {
     path: string | null;
@@ -42,18 +43,19 @@ export class JobBrowserStoreItem {
         return child.findPath(path);
     }
 
-    async load(project: string): Promise<JobBrowseItem[]> {
+    async load(jobPageStore: JobPageStore): Promise<JobBrowseItem[]> {
         if (this.loaded) {
             return this.children.map((c) => c.item);
         }
         if (this.path === undefined || this.path === null) {
             return [];
         }
-        const result = await browsePath(
-            project,
+        const result = await queryPath(
+            jobPageStore.getProject(),
             this.path,
             this.meta,
-            this.breakpoint
+            this.breakpoint,
+            jobPageStore.query
         );
         if (result.items.length > this.breakpoint) {
             this.bpHit = true;
@@ -72,34 +74,41 @@ export class JobBrowserStoreItem {
 }
 
 export class JobBrowserStore extends JobBrowserStoreItem {
-  project: string
+    jobPageStore: JobPageStore
 
-  constructor(project: string, path: string) {
-    super({job: false, groupPath: path}, path)
-    this.path = path
-    this.project = project
-  }
-
-  async loadItems(path: string): Promise<JobBrowseItem[]> {
-    let item = this.findPath(path)
-    if (item) {
-      return item.load(this.project)
-    } else {
-      return []
+    constructor(jobPageStore: JobPageStore, path: string) {
+        super({job: false, groupPath: path}, path)
+        this.path = path
+        this.jobPageStore = jobPageStore
     }
-  } 
-  async loadJobMeta(job:JobBrowseItem){
-    job.meta = await getJobMeta(this.project, job.id!, this.meta);
-  }
 
-  async refresh(path: string): Promise<JobBrowseItem[]> {
-    let item = this.findPath(path)
-    if (item) {
-        item.loaded = false;
-        return item.load(this.project);
+    async loadItems(path: string): Promise<JobBrowseItem[]> {
+        let item = this.findPath(path)
+        if (item) {
+            return item.load(this.jobPageStore)
+        } else {
+            return []
+        }
     }
-    return [];
-  }
+
+    async loadJobMeta(job: JobBrowseItem) {
+        job.meta = await getJobMeta(this.jobPageStore.getProject(), job.id!, this.meta)
+    }
+
+    async refresh(path: string): Promise<JobBrowseItem[]> {
+        let item = this.findPath(path)
+        if (item) {
+            item.loaded = false
+            return item.load(this.jobPageStore)
+        }
+        return []
+    }
+
+    async reload() {
+        this.loaded = false
+        this.item.meta = undefined;
+        this.children = []
+    }
 }
 
 export const JobBrowserStoreInjectionKey: InjectionKey<JobBrowserStore> =
