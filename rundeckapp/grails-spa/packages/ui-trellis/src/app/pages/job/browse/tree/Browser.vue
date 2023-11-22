@@ -37,6 +37,7 @@
                   @empty="childGroupEmpty(item)"
                   :key="item.groupPath"
                   :expand-level="expandLevel-1"
+                  :query-refresh="queryRefresh"
                 />
             </li>
               <RecycleScroller
@@ -94,6 +95,10 @@ export default defineComponent({
           type: Number,
           default: 0,
         },
+        queryRefresh:{
+            type: Boolean,
+            default: false,
+        }
     },
     emits: ["rootBrowse",'empty'],
     setup(props) {
@@ -190,6 +195,9 @@ export default defineComponent({
       path(){
         this.browsePath=this.path
         this.refresh()
+      },
+      queryRefresh(){
+        this.refresh(true)
       }
     },
     async mounted() {

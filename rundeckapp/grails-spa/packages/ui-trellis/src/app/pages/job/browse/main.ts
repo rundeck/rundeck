@@ -11,6 +11,7 @@ import {JobPageStore, JobPageStoreInjectionKey} from '../../../../library/stores
 import JobListPage from './JobListPage.vue'
 import * as uiv from "uiv";
 import JobsPage from './JobsPage.vue'
+import JobsPageHeader from './JobsPageHeader.vue'
 import NextUiToggle from './NextUiToggle.vue'
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from './tree/JobActionsMenu.vue'
@@ -44,6 +45,20 @@ function init() {
           <jobs-page />`,
               })
           ),
+      },
+      {
+        section: 'main-content',
+        location: 'before',
+        visible: true,
+        widget: markRaw(defineComponent({
+          name: 'JobsPageHeaderWrap',
+          components: {JobsPageHeader},
+          setup() {
+            provide(JobBrowserStoreInjectionKey, jobBrowserStore);
+            provide(JobPageStoreInjectionKey, jobPageStore);
+          },
+          template: `<jobs-page-header />`
+        }))
       },
       {
           section: "theme-select",

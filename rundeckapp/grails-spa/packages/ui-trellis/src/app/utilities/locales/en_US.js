@@ -522,6 +522,13 @@ const messages = {
     "page.section.Activity.for.jobs":"Activity for Jobs",
     "widget.theme.title":"Theme",
     "widget.nextUi.title":"Enable Next UI",
+    "page.section.title.AllJobs":"All Jobs",
+    "advanced.search":"Advanced",
+    "jobs.advanced.search.title":"Click to modify filter",
+    "filter.jobs":"Search Jobs",
+    "job.filter.quick.placeholder":"Search",
+    "job.filter.apply.button.title":"Search",
+    "all":"All",
 }
 
 export default messages;
