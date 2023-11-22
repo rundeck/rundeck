@@ -3,6 +3,7 @@ package rundeckapp
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import groovy.util.logging.Slf4j
 import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
+import liquibase.exception.LockException
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -64,6 +66,7 @@ import java.nio.file.Paths
     paramName = "X-Rundeck-Auth-Token"
 )
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
+@Slf4j
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
@@ -170,13 +173,19 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         preboostraplist.each { pbs ->
             try {
                 pbs.run()
-            } catch(Exception ex) {
+            }catch(LockException le){
+                log.error("Cannot obtain lock on table DATABASECHANGELOGLOCK. This could be due to a database connection issue when starting a Process Automation instance. " +
+                        "To force the unlock you must first make sure that are no Process Automation instances running using this DB. " +
+                        "You can change the lock status directly on the database and start Process Automation again by setting 'LOCKED' field in the table 'DATABASECHANGELOGLOCK' as false (or 0 depending on the database)", le)
+                error = true
+            }
+            catch(Exception ex) {
                 System.err.println("PreBootstrap process "+pbs.class.canonicalName+" failed")
                 ex.printStackTrace()
-                error = true;
+                error = true
             }
         }
-        return error;
+        return error
     }
 
     static List<PreBootstrap> getPrebootstrapFunctions() {
