@@ -55,6 +55,7 @@ import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -113,7 +114,6 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
 import rundeck.data.job.RdJobBrowseItem
-import rundeck.data.job.query.RdJobBrowseInput
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
@@ -601,10 +601,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param authContext auth context
      * @return
      */
-    List<JobBrowseItem> basicQueryJobs(String project, String path, UserAndRolesAuthContext authContext){
-        //returns all jobs under the specified path
+    @CompileStatic
+    List<JobBrowseItem> basicQueryJobs(String project, JobQueryInputData queryInput, UserAndRolesAuthContext authContext, Map params=[:]){
         long start = System.currentTimeMillis()
-        def result = jobDataProvider.queryJobsAndGroups(new RdJobBrowseInput(project: project, path: path))
+        def path = queryInput.groupPath
+        def result = jobDataProvider.queryJobs(queryInput)
         long qend=System.currentTimeMillis()-start
         //filter results for authorization read/view
         //remove subpath results and convert to simple groups

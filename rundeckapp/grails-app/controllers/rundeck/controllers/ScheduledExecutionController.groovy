@@ -94,6 +94,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
@@ -166,6 +167,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobUpdateSingle           : 'PUT',
             apiJobRetry                  : 'POST',
             apiJobWorkflow               : 'GET',
+            apiJobBrowse                 : ['GET','POST'],
     ]
 
     def cancel (){
@@ -6081,6 +6083,73 @@ Since: v46''',
             )
         ]
     )
+    protected apiJobBrowseGet_docs(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'path',
+            in = ParameterIn.QUERY,
+            description = 'Group path root, or blank for the root',
+            schema = @Schema(type = 'string')
+        ) String path,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all',
+            schema = @Schema(type = 'string')
+        ) String meta,
+        @Parameter(
+            name = 'breakpoint',
+            in = ParameterIn.QUERY,
+            description = '''Breakpoint, max number of jobs to load with metadata, if more results than the 
+breakpoint are available, no metadata will be loaded''',
+            schema = @Schema(type = 'integer')
+        ) Integer breakpoint,
+        @Parameter(hidden = true) RdJobQueryInput query
+    ) {}
+
+    @Post(uri="/project/{project}/jobs/browse")
+    @Operation(
+        method = 'POST',
+        summary = 'Query jobs at a path',
+        description = '''Query the jobs at a specific group path.
+
+Authorization required: `read` or `view` for the Job.
+
+Since: v46''',
+        tags = ['jobs'],
+        requestBody = @RequestBody(
+            description = '''Query parameters''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = RdJobQueryInput),
+                    examples = @ExampleObject('')
+                )
+            ]
+        ),
+        parameters = [
+
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = JobBrowseResponse)
+                    )
+                ]
+
+            )
+        ]
+    )
     @GrailsCompileStatic
     def apiJobBrowse(
         @Parameter(
@@ -6105,16 +6174,21 @@ Since: v46''',
         @Parameter(
             name = 'breakpoint',
             in = ParameterIn.QUERY,
-            description = 'Breakpoint, max number of jobs to load with metadata, if more results than the breakpoint are available, no metadata will be loaded',
+            description = '''Breakpoint, max number of jobs to load with metadata, if more results than the 
+breakpoint are available, no metadata will be loaded''',
             schema = @Schema(type = 'integer')
-        ) Integer breakpoint
+        ) Integer breakpoint,
+        @Parameter(hidden = true) RdJobQueryInput query
     ) {
         if (!apiService.requireApi(request, response, ApiVersions.V46)) {
             return
         }
+        query.groupPath = path
+        query.projFilter = project
+        query.inputParamMap = params
         List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
             project,
-            path,
+            query,
             projectAuthContext
         )
         Map<String, List<ItemMeta>> jobMetaItems = [:]
