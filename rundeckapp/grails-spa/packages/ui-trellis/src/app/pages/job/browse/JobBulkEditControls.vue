@@ -1,7 +1,9 @@
 <template>
-    <div>
+    <div class="flex col justify-between" >
+        <ui-socket section="job-list-page" location="card-header" />
         <div class="flex col flex-justify-end">
-            <div class="bulk_edit_controls">
+
+          <div class="bulk_edit_controls">
                 <ui-socket section="job-list-page" location="status-item" />
 
                 <job-list-scm-status class="status-item" />
