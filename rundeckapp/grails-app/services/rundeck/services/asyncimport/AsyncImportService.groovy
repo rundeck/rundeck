@@ -7,10 +7,12 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.converters.JSON
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
+import grails.gorm.transactions.Transactional
 import groovy.json.JsonSlurper
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.transaction.annotation.Propagation
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -71,6 +73,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      *
      * @return Boolean - "true" if the status file is created.
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     Boolean createStatusFile(String projectName) {
         try {
@@ -122,8 +125,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             logger.debug("Async Import status file content: ${obj.toString()}")
             return obj
         }catch(Exception e){
-            logger.error("Error during the async import file extraction process: ${e}")
-            throw new AsyncImportException("Errors getting the status file for project: ${projectName}: ${e}")
+            throw new AsyncImportException("Errors getting the status file for project: ${projectName}", e)
         }
     }
 
@@ -141,8 +143,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return newErrors
         }catch(Exception e){
-            logger.error(e.stackTrace.toString())
-            throw new AsyncImportException("Error appending errors to old errors in status file: ${e}")
+            throw new AsyncImportException("Error appending errors to old errors in status file: ", e)
         }
     }
 
@@ -154,6 +155,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      * @param newStatus (nullable)
      * @return Long bytes written.
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     Long saveAsyncImportStatusForProject(String projectName, AsyncImportStatusDTO newStatus = null){
         def resource
         def statusPersist
@@ -184,8 +186,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             inputStream.close();
             return resource
         } catch (Exception e) {
-            logger.error(e.stackTrace.toString())
-            throw new AsyncImportException("Error while saving the status file in db: ${e}")
+            throw new AsyncImportException("Error while saving the status file in db", e)
         }
     }
 
@@ -218,7 +219,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         if( updatedStatus == null ){
             throw new AsyncImportException("No status file in DB for project: ${projectName}")
         }
-        final def milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
         final def importExecutions = options.importExecutions
         def executionsDirFound = true
 
@@ -315,8 +315,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             options
                     )
                 }catch (IOException e){
-                    logger.error(e.stackTrace.toString())
-                    throw new AsyncImportException("Errors uploading the file: ${e}")
+                    throw new AsyncImportException("Errors uploading the file", e)
                 }
             }}
 
@@ -379,8 +378,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
         } catch (Exception e) {
-            logger.error(e.stackTrace.toString())
-            throw new AsyncImportException("Errors starting the async import: ${e}")
+            throw new AsyncImportException("Errors starting the async import", e)
         }
 
         return importResult
