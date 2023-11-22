@@ -32,8 +32,7 @@ export default defineComponent({
               this.$cookies.set(COOKIE_NAME, "false", "1y", "/", "", false, "Strict")
             }
             this.loading=true
-            const loc=document.location
-            document.location=loc
+            window.location.reload()
         },
     },
 });
