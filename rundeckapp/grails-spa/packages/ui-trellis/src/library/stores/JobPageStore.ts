@@ -11,6 +11,7 @@ import {JobBrowserStore} from './JobBrowser'
 
 export class JobPageStore {
   bulkEditMode: boolean = false
+  loaded:boolean=false
   jobAuthz: { [key: string]: boolean } = {}
   projAuthz: { [key: string]: boolean } = {}
   executionMode: boolean = false
@@ -79,8 +80,15 @@ export class JobPageStore {
       }
     }
   }
+  async loadProjAuthz(): Promise<{ [key: string]: boolean }>{
+    await this.load()
+    return this.projAuthz
+  }
 
   async load() {
+    if(this.loaded){
+      return
+    }
     this.meta = await getProjectMeta(getRundeckContext().projectName)
     const projAuthz = this.findMeta('authz')
     if (
@@ -105,6 +113,7 @@ export class JobPageStore {
     if (sysMode) {
       this.executionMode = !!sysMode.active
     }
+    this.loaded=true
   }
 
   findMeta(key: string) {
