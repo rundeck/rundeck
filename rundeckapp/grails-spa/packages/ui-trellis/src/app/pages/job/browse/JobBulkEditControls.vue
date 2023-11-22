@@ -8,7 +8,7 @@
 
                 <job-list-scm-status class="status-item" />
 
-                <dropdown>
+                <dropdown id="project_job_actions">
                     <btn class="dropdown-toggle mr-2">
                         {{ $t("job.actions") }}
                         <span class="caret"></span>
