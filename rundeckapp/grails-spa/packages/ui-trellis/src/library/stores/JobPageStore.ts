@@ -17,6 +17,7 @@ export class JobPageStore {
   projectExecutionsEnabled: boolean = false
   projectSchedulesEnabled: boolean = false
   groupExpandLevel: number = 0
+  query:{[key:string]:string} = {}
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore
@@ -128,7 +129,7 @@ export class JobPageStore {
 
   getJobBrowser(): JobBrowserStore{
     if(!this.browser){
-      this.browser=new JobBrowserStore(this.getProject(), "")
+      this.browser = new JobBrowserStore(this, "")
     }
     return this.browser
   }
