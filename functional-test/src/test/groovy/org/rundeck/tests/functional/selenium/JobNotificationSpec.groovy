@@ -38,7 +38,7 @@ class JobNotificationSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.goProjectHome("SeleniumBasic")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
-        jobListPage.getCreateJobButton().click()
+        jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("a job with notifications")
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
         jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
