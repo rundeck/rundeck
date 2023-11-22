@@ -73,6 +73,7 @@
             v-model="advancedSearchModalVisible"
             @close="advancedSearchModalVisible = false"
             @search="doSearch"
+            @clear="doClear"
         />
     </div>
 </template>
@@ -109,8 +110,11 @@ export default defineComponent({
     methods: {
         doSearch() {
             this.advancedSearchModalVisible = false;
-            eventBus.emit("job-search-modal:search");
-            this.updateFilters();
+            eventBus.emit("job-list-page:search");
+        },
+        doClear() {
+            this.jobPageStore.query = {};
+            this.doSearch()
         },
         doSearchQuick() {
             this.doSearch();
@@ -128,6 +132,9 @@ export default defineComponent({
     mounted() {
         eventBus.on("job-list-page:browsed", (path: string) => {
             this.groupPath = path;
+        });
+        eventBus.on("job-list-page:search", () => {
+          this.updateFilters();
         });
     },
 });
