@@ -34,11 +34,23 @@ class JobShowPage extends BasePage{
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
+    By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
+    By optionValidationWarningBy = By.cssSelector("#execDiv #exec_options_form #optionSelect #_commandOptions div.form-group.has-warning p.text-warning")
+    By jobRowBy = By.cssSelector("#job_group_tree .jobname.job_list_row[data-job-id] > a[data-job-id]")
+    By jobSearchBy = By.cssSelector('#subtitlebar  .btn[data-target="#jobs_filters"]')
+    By jobSearchNameBy = By.cssSelector('#jobs_filters form input[name="jobFilter"]')
+    By jobSearchGroupBy = By.cssSelector('#jobs_filters form input[name="groupPath"]')
+    By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
 
     String loadPath = "/job/show"
 
     JobShowPage(final SeleniumContext context) {
         super(context)
+    }
+
+    JobShowPage(final SeleniumContext context, String project) {
+        super(context)
+        this.loadPath = "/project/$project/jobs"
     }
 
     void validatePage() {
@@ -135,4 +147,37 @@ class JobShowPage extends BasePage{
     WebElement optionInputText(String name) {
         el By.cssSelector("#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']")
     }
+
+    WebElement runJobLink(String uuid) {
+        el By.cssSelector("#job_group_tree a.act_execute_job[data-job-id='${uuid}']")
+    }
+
+    WebElement getRunFormButton() {
+        el runFormBy
+    }
+
+    WebElement getOptionValidationWarningText() {
+        el optionValidationWarningBy
+    }
+
+    List<WebElement> getJobRowLink() {
+        els jobRowBy
+    }
+
+    WebElement getJobSearchButton() {
+        el jobSearchBy
+    }
+
+    WebElement getJobSearchNameField() {
+        el jobSearchNameBy
+    }
+
+    WebElement getJobSearchGroupField() {
+        el jobSearchGroupBy
+    }
+
+    WebElement getJobSearchSubmitButton() {
+        el jobSearchSubmitBy
+    }
+
 }

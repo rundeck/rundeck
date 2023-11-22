@@ -84,9 +84,9 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             if (!post.successful) {
                 throw new RuntimeException("Failed to create project: ${post.body().string()}")
             }
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
         }else if(getProject.code() == 200){
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
         }
     }
 

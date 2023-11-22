@@ -12,10 +12,12 @@ class ProjectExportSpec extends SeleniumBase {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
+    def setup() {
+        def loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
+    }
+
     def "exports without errors"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:
@@ -26,9 +28,6 @@ class ProjectExportSpec extends SeleniumBase {
     }
 
     def "form radio inputs have proper name"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:
@@ -37,9 +36,6 @@ class ProjectExportSpec extends SeleniumBase {
     }
 
     def "form radio inputs have labels"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:
@@ -47,9 +43,6 @@ class ProjectExportSpec extends SeleniumBase {
     }
 
     def "form checkboxes are checked by default"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:
@@ -59,9 +52,6 @@ class ProjectExportSpec extends SeleniumBase {
     }
 
     def "form checkbox labels work"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:

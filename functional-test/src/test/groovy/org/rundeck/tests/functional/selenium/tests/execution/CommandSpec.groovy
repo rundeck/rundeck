@@ -13,10 +13,12 @@ class CommandSpec extends SeleniumBase {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
+    def setup() {
+        def loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
+    }
+
     def "abort button in commands page"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
@@ -33,9 +35,6 @@ class CommandSpec extends SeleniumBase {
     }
 
     def "abort button in show page"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
@@ -55,9 +54,6 @@ class CommandSpec extends SeleniumBase {
     }
 
     def "default page load shows nodes view"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
@@ -78,9 +74,6 @@ class CommandSpec extends SeleniumBase {
     }
 
     def "fragment #output page load shows output view"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
@@ -101,9 +94,6 @@ class CommandSpec extends SeleniumBase {
     }
 
     def "output view toggle to nodes view with button"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
@@ -126,9 +116,6 @@ class CommandSpec extends SeleniumBase {
     }
 
     def "nodes view toggle to output view with button"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:

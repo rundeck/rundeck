@@ -20,7 +20,7 @@ class BasicJobsSpec extends SeleniumBase {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
-    def setup(){
+    def setup() {
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
     }
@@ -181,6 +181,59 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.multipleExecYesField.getText() == 'Yes'
             jobShowPage.notificationDefinition.getText() == 'mail to: test@rundeck.com'
             jobShowPage.closeJobDefinitionModalButton.click()
+    }
+
+    def "run job modal should show validation error"() {
+        when:
+            def jobShowPage = go JobShowPage, "SeleniumBasic"
+        then:
+            jobShowPage.validatePage()
+            jobShowPage.runJobLink '0088e04a-0db3-4b03-adda-02e8a4baf709' click()
+            sleep 3000
+            jobShowPage.runFormButton.click()
+            sleep 3000
+            jobShowPage.optionValidationWarningText.getText().contains 'Option \'reqOpt1\' is required'
+    }
+
+    def "job filter by name 3 results"() {
+        when:
+            def jobShowPage = go JobShowPage, "SeleniumBasic"
+        then:
+            jobShowPage.validatePage()
+            jobShowPage.jobRowLink.size() == 3
+            jobShowPage.jobRowLink.collect {
+                it.getText()
+            } == ['selenium-option-test1', 'a job with options', 'predefined job with options']
+    }
+
+    def "job filter by name and group 1 results"() {
+        when:
+            def jobShowPage = go JobShowPage, "SeleniumBasic"
+        then:
+            jobShowPage.validatePage()
+            jobShowPage.jobSearchButton.click()
+            jobShowPage.waitForModal 1
+            jobShowPage.jobSearchNameField.sendKeys 'option'
+            jobShowPage.jobSearchGroupField.sendKeys 'test'
+            jobShowPage.jobSearchSubmitButton.click()
+        expect:
+            jobShowPage.jobRowLink.size() == 1
+            jobShowPage.jobRowLink.collect { it.getText() } == ['selenium-option-test1']
+    }
+
+    def "job filter by name and - top group 2 results"() {
+        when:
+            def jobShowPage = go JobShowPage, "SeleniumBasic"
+        then:
+            jobShowPage.validatePage()
+            jobShowPage.jobSearchButton.click()
+            jobShowPage.waitForModal 1
+            jobShowPage.jobSearchNameField.sendKeys 'option'
+            jobShowPage.jobSearchGroupField.sendKeys '-'
+            jobShowPage.jobSearchSubmitButton.click()
+        expect:
+            jobShowPage.jobRowLink.size() == 2
+            jobShowPage.jobRowLink.collect { it.getText() } == ['a job with options', 'predefined job with options']
     }
 
 }

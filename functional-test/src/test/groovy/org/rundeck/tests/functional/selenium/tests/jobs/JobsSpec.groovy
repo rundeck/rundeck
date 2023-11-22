@@ -19,10 +19,12 @@ class JobsSpec extends SeleniumBase {
         setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
     }
 
+    def setup() {
+        def loginPage = go LoginPage
+        loginPage.login(TEST_USER, TEST_PASS)
+    }
+
     def "change workflow strategy"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -48,9 +50,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "cancel job create with default lang"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -62,8 +61,6 @@ class JobsSpec extends SeleniumBase {
 
     def "change UI lang fr_FR and cancel job create"() {
         setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
             def userProfilePage = page UserProfilePage
             userProfilePage.loadPath += "?lang=fr_FR"
             userProfilePage.go()
@@ -79,8 +76,6 @@ class JobsSpec extends SeleniumBase {
 
     def "change UI lang ja_JP and cancel job create"() {
         setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
             def userProfilePage = page UserProfilePage
             userProfilePage.loadPath += "?lang=ja_JP"
             userProfilePage.go()
@@ -96,9 +91,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "Duplicate_options - only validations, not save jobs"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -124,9 +116,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "create job with dispatch to nodes"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -160,9 +149,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "rename job with orchestrator"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -195,9 +181,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job options config - check usage session"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -213,9 +196,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job options config - check storage session"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -235,9 +215,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job option simple redo"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -266,9 +243,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job option revert all"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -301,9 +275,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job option undo redo"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -336,9 +307,6 @@ class JobsSpec extends SeleniumBase {
     }
 
     def "job workflow step context variables autocomplete"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -359,9 +327,6 @@ class JobsSpec extends SeleniumBase {
             jobShowPage.autocompleteJobStepDefinitionLabel.getText() == '${job.id}'
     }
     def "job workflow simple undo"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -374,9 +339,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.createJobButton.click()
     }
     def "job workflow undo redo"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
@@ -391,9 +353,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.createJobButton.click()
     }
     def "job workflow revert all"() {
-        setup:
-            def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
         when:
             def jobCreatePage = go JobCreatePage, "project/SeleniumBasic"
         then:
