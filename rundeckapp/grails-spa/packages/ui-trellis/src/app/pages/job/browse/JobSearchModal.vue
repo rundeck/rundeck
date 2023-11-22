@@ -164,6 +164,9 @@
             <btn type="button" @click="doClose">
                 {{ $t("cancel") }}
             </btn>
+            <btn type="button" @click="doClear">
+                {{ $t("job.filter.clear.button.title") }}
+            </btn>
             <btn type="primary" @click="doSearch">
                 {{ $t("job.filter.apply.button.title") }}
             </btn>
@@ -182,7 +185,7 @@ import { defineComponent, inject, ref } from "vue";
 export default defineComponent({
     name: "JobSearchModal",
     components: { UiSocket },
-    emits: ["close", "search", "update:modelValue"],
+    emits: ["close", "search", "clear", "update:modelValue"],
     props: {
         modelValue: {
             type: Boolean,
@@ -222,6 +225,9 @@ export default defineComponent({
     methods: {
         doClose() {
             this.$emit("close");
+        },
+        doClear() {
+            this.$emit("clear");
         },
         doSearch() {
             this.$emit("search");

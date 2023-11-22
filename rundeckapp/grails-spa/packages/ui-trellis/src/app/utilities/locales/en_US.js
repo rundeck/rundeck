@@ -528,6 +528,7 @@ const messages = {
     "filter.jobs":"Search Jobs",
     "job.filter.quick.placeholder":"Search",
     "job.filter.apply.button.title":"Search",
+    "job.filter.clear.button.title":"Clear Search",
     "all":"All",
 }
 

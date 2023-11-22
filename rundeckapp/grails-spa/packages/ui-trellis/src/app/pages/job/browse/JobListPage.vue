@@ -73,7 +73,7 @@ export default defineComponent({
     async mounted() {
         await this.jobPageStore.load();
         this.loaded = true;
-        eventBus.on("job-search-modal:search", async () => {
+        eventBus.on("job-list-page:search", async () => {
             this.queryRefresh = !this.queryRefresh;
             await this.jobBrowserStore.reload();
         });
