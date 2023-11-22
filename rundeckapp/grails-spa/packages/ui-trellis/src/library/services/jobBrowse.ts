@@ -18,6 +18,18 @@ export async function browsePath(project: string, path: string,meta: string='*',
     return resp.data
   }
 }
+export async function queryPath(project: string, path: string,meta: string='*', breakpoint:number=100, query:{[key:string]:any}): Promise<JobBrowseList> {
+  let qstring=`path=${path}&meta=${meta}&breakpoint=${breakpoint}`
+  for(const key in query){
+    qstring+="&"+key+"="+query[key]
+  }
+  const resp = await api.get(`project/${project}/jobs/browse/?${qstring}`)
+  if (resp.status !== 200) {
+    throw {message: resp.data.message, response: resp}
+  } else {
+    return resp.data
+  }
+}
 export async function getJobMeta(project: string, id: string, meta: string='*'): Promise<JobBrowseMeta[]> {
   const resp = await api.get(`job/${id}/meta?meta=${meta}`)
   if (resp.status !== 200) {
