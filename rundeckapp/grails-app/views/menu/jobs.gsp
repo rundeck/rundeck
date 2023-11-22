@@ -400,6 +400,8 @@ search
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+      <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+      <asset:stylesheet href="static/css/pages/job/browse.css" />
 </head>
 <body>
 
