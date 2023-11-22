@@ -80,7 +80,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return false
         } catch (IOException e) {
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
             throw e
         }
     }
@@ -100,7 +100,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return true
         } catch (Exception e) {
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
             throw e
         }
     }
@@ -122,8 +122,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             logger.debug("Async Import status file content: ${obj.toString()}")
             return obj
         }catch(Exception e){
-            logger.error("Error during the async import file extraction process: ${e.stackTrace}")
-            throw new AsyncImportException(e.message)
+            logger.error("Error during the async import file extraction process: ${e}")
+            throw new AsyncImportException("Errors getting the status file for project: ${projectName}: ${e}")
         }
     }
 
@@ -142,7 +142,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return newErrors
         }catch(Exception e){
             logger.error(e.stackTrace.toString())
-            throw new AsyncImportException(e.stackTrace.toString())
+            throw new AsyncImportException("Error appending errors to old errors in status file: ${e}")
         }
     }
 
@@ -184,8 +184,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             inputStream.close();
             return resource
         } catch (Exception e) {
-            logger.error(e.message)
-            throw new AsyncImportException(e.message)
+            logger.error(e.stackTrace.toString())
+            throw new AsyncImportException("Error while saving the status file in db: ${e}")
         }
     }
 
@@ -295,7 +295,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipDir(modelProjectHost.toString(), "", zos)
 
                 }catch(IOException ignored){
-                    logger.error(ignored.message)
+                    logger.error(ignored.stackTrace.toString())
                     throw ignored
                 }
             }
@@ -315,8 +315,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             options
                     )
                 }catch (IOException e){
-                    logger.error(e.message)
-                    throw new AsyncImportException(e.message)
+                    logger.error(e.stackTrace.toString())
+                    throw new AsyncImportException("Errors uploading the file: ${e}")
                 }
             }}
 
@@ -379,8 +379,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
         } catch (Exception e) {
-            logger.error(e.message)
-            throw new AsyncImportException(e.message)
+            logger.error(e.stackTrace.toString())
+            throw new AsyncImportException("Errors starting the async import: ${e}")
         }
 
         return importResult
@@ -531,7 +531,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     }
                 }
             } catch (Exception e) {
-                logger.error(e.message)
+                logger.error(e.stackTrace.toString())
                 throw e
             }
 
@@ -632,7 +632,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                             try {
                                 Files.move(firstDir, modelProjectExecutionsContainerPath.resolve(EXECUTION_DIR_NAME), StandardCopyOption.REPLACE_EXISTING)
                             } catch (NoSuchFileException ignored) {
-                                logger.error(ignored.message)
+                                logger.error(ignored.stackTrace.toString())
                                 throw ignored
                             }
 
@@ -645,7 +645,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 zipDir(modelProjectFullPath.toString(), "", zos)
 
                             }catch(IOException ignored){
-                                logger.error(ignored.message)
+                                logger.error(ignored.stackTrace.toString())
                                 throw ignored
                             }
 
@@ -664,7 +664,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                             options
                                     )
                                 } catch (IOException e) {
-                                    logger.error(e.message)
+                                    logger.error(e.stackTrace.toString())
                                     throw e
                                 }
                             }}
@@ -735,7 +735,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         } catch (Exception e) {
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
         }
     }
 
@@ -759,7 +759,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch(Exception e){
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
         }
         return true
     }
@@ -801,7 +801,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try {
             FileUtils.deleteDirectory(new File(path))
         } catch (IOException e) {
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
         }
     }
 
@@ -817,7 +817,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             try {
                 extractStream(destinationDir.toString(), is)
             } catch (Exception e) {
-                logger.error(e.message)
+                logger.error(e.stackTrace.toString())
                 throw e
             }
         }
@@ -860,7 +860,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipInputStream.closeEntry()
                 }
             } catch (IOException e) {
-                logger.error(e.message)
+                logger.error(e.stackTrace.toString())
             }
         }}
     }
@@ -902,7 +902,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch (Exception e){
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
         }
     }
 
@@ -929,7 +929,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
                     }.collect(Collectors.toList())
         }catch(Exception e){
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
             throw e
         }
     }
@@ -972,7 +972,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 path = Files.list(checked).filter(logic).findFirst().get()
             }
         }catch(Exception e){
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
         }
         return path
     }
@@ -991,7 +991,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                     .collect(Collectors.toList())
         }catch(IOException e){
-            logger.error(e.message)
+            logger.error(e.stackTrace.toString())
             throw e
         }
     }
