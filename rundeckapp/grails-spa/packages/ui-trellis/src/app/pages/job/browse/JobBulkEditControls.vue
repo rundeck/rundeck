@@ -299,7 +299,7 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .bulk_edit_controls {
-    margin-bottom: var(--spacing-8);
+    //margin-bottom: var(--spacing-8);
 
     .status-item {
         margin-right: var(--spacing-2);
@@ -307,6 +307,7 @@ export default defineComponent({
 }
 
 .bulk_edit_panel {
+    margin-top: var(--spacing-8);
     .btn + .btn {
         margin-left: var(--spacing-2);
     }

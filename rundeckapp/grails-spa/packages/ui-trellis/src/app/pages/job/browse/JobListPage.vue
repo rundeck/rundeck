@@ -12,6 +12,7 @@
         @rootBrowse="rootBrowse"
         class="job_list_browser"
         :expand-level="jobPageStore.groupExpandLevel"
+        :query-refresh="queryRefresh"
         v-if="loaded"
     >
         <ui-socket section="job-list-page" location="empty-splash">
@@ -29,6 +30,7 @@
 import CreateNewJobButton from "@/app/pages/job/browse/components/CreateNewJobButton.vue";
 import UploadJobButton from "@/app/pages/job/browse/components/UploadJobButton.vue";
 import JobBulkEditControls from "@/app/pages/job/browse/JobBulkEditControls.vue";
+import {getRundeckContext} from '@/library'
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {
     JobBrowserStore,
@@ -40,7 +42,7 @@ import {
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject, ref } from "vue";
 import Browser from "./tree/Browser.vue";
-
+const eventBus = getRundeckContext().eventBus
 export default defineComponent({
     name: "JobListPage",
     components: {
@@ -62,6 +64,7 @@ export default defineComponent({
             jobPageStore,
             browsePath: ref(""),
             loaded: ref(false),
+            queryRefresh: ref(false),
         };
     },
     methods: {
@@ -74,13 +77,17 @@ export default defineComponent({
     async mounted() {
         await this.jobPageStore.load();
         this.loaded = true;
+        eventBus.on('job-search-modal:search', async () => {
+            this.queryRefresh=!this.queryRefresh
+            await this.jobBrowserStore.reload()
+        })
     },
 });
 </script>
 
 <style scoped lang="scss">
 .job_list_browser {
-    margin-top: var(--spacing-8);
+    //margin-top: var(--spacing-8);
 }
 .empty-splash {
     .btn + .btn {
