@@ -123,6 +123,10 @@ export class JobPageStore {
     const context= getRundeckContext()
     return `${context.rdBase}project/${context.projectName}/job/upload`;
   }
+  jobPagePathHref(path:string) {
+    const context= getRundeckContext()
+    return `${context.rdBase}project/${context.projectName}/jobs/${path}`;
+  }
   getProject():string{
     return getRundeckContext().projectName
   }

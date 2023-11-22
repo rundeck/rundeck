@@ -1,11 +1,5 @@
 <template>
     <JobBulkEditControls />
-    <template v-if="browsePath !== ''">
-        <!-- todo: breadcrumb navigation -->
-        <btn @click="rootBrowse('')">&larr;</btn>
-        <i class="glyphicon glyphicon-folder-open"></i>
-        {{ browsePath }}
-    </template>
     <Browser
         :path="browsePath"
         :root="true"
@@ -30,7 +24,7 @@
 import CreateNewJobButton from "@/app/pages/job/browse/components/CreateNewJobButton.vue";
 import UploadJobButton from "@/app/pages/job/browse/components/UploadJobButton.vue";
 import JobBulkEditControls from "@/app/pages/job/browse/JobBulkEditControls.vue";
-import {getRundeckContext} from '@/library'
+import { getRundeckContext } from "@/library";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {
     JobBrowserStore,
@@ -42,7 +36,7 @@ import {
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject, ref } from "vue";
 import Browser from "./tree/Browser.vue";
-const eventBus = getRundeckContext().eventBus
+const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
     name: "JobListPage",
     components: {
@@ -72,23 +66,25 @@ export default defineComponent({
             //deselect any jobs
             this.jobPageStore.selectedJobs = [];
             this.browsePath = path;
+            eventBus.emit("job-list-page:browsed", path);
+            //todo: browser history push
         },
     },
     async mounted() {
         await this.jobPageStore.load();
         this.loaded = true;
-        eventBus.on('job-search-modal:search', async () => {
-            this.queryRefresh=!this.queryRefresh
-            await this.jobBrowserStore.reload()
-        })
+        eventBus.on("job-search-modal:search", async () => {
+            this.queryRefresh = !this.queryRefresh;
+            await this.jobBrowserStore.reload();
+        });
+        eventBus.on("job-list-page:rootBrowse", async (path:string) => {
+            this.rootBrowse(path)
+        });
     },
 });
 </script>
 
 <style scoped lang="scss">
-.job_list_browser {
-    //margin-top: var(--spacing-8);
-}
 .empty-splash {
     .btn + .btn {
         margin-left: var(--spacing-4);
