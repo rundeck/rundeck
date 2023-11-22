@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium
 
 import org.openqa.selenium.By
+import org.openqa.selenium.JavascriptExecutor
 import org.rundeck.tests.functional.selenium.pages.JobCreatePage
 import org.rundeck.tests.functional.selenium.pages.JobTab
 import org.rundeck.tests.functional.selenium.pages.JobsListPage
@@ -41,7 +42,11 @@ class JobNotificationSpec extends SeleniumBase {
         jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("a job with notifications")
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
-        jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
+
+        def type = jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE)
+        def panel = jobCreatePage.addStepButtonsPanel
+        ((JavascriptExecutor)driver).executeScript("arguments[0].scrollIntoView(true);", panel)
+        type.click()
         jobCreatePage.waitForStepToBeShown(By.id("adhocRemoteStringField"))
         jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("echo 'example job'")
         jobCreatePage.getSaveStepButton().click()

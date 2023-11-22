@@ -18,6 +18,7 @@ class JobCreatePage extends BasePage {
     By notificationSaveButton = By.id("job-notifications-edit-modal-btn-save")
     By jobDefinitionModal = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinition = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
+    By addStepButtonsPanel = By.cssSelector('.add_step_buttons.panel-body')
 
     String loadPath = PAGE_PATH
 
@@ -42,6 +43,10 @@ class JobCreatePage extends BasePage {
 
     WebElement getStepByType(StepName stepName, StepType stepType){
         el By.xpath("//*[@${stepType.getStepType()}='${stepName.getStepName()}']")
+    }
+
+    WebElement getAddStepButtonsPanel(){
+        el addStepButtonsPanel
     }
 
     WebElement getCreateButton(){
