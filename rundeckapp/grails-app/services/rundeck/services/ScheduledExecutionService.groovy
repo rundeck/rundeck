@@ -602,7 +602,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     @CompileStatic
-    List<JobBrowseItem> basicQueryJobs(String project, JobQueryInputData queryInput, UserAndRolesAuthContext authContext, Map params=[:]){
+    List<JobBrowseItem> basicQueryJobs(String project, JobQueryInputData queryInput, UserAndRolesAuthContext authContext){
         long start = System.currentTimeMillis()
         def path = queryInput.groupPath
         def result = jobDataProvider.queryJobs(queryInput)
