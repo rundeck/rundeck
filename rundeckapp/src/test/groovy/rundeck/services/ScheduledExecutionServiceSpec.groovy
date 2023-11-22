@@ -43,6 +43,7 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.GormJobQueryProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
@@ -6014,13 +6015,14 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
             def project = 'test'
             def path = 'some/path'
+            def queryInput = Mock(JobQueryInputData){
+                getGroupPath()>>path
+            }
+            def params =[:]
         when:
-            def result=service.basicQueryJobs(project, path, authContext)
+            def result=service.basicQueryJobs(project, queryInput, authContext)
         then:
-            1 * service.jobDataProvider.queryJobsAndGroups({
-                it.project==project
-                it.path==path
-            })>>new GormJobQueryProvider.GormPage<JobDataSummary>(results:[
+            1 * service.jobDataProvider.queryJobs(queryInput)>>new GormJobQueryProvider.GormPage<JobDataSummary>(results:[
                 new RdJobDataSummary(uuid:'1', jobName:'test1', groupPath: path+'/test1', project:project),
                 new RdJobDataSummary(uuid:'2', jobName:'test2', groupPath: path+'/test2/authok', project:project),
                 new RdJobDataSummary(uuid:'3', jobName:'test3', groupPath: path+'/test3/noauth', project:project),
