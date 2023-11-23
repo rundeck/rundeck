@@ -46,7 +46,7 @@
 
                   <popover :title="$t('scheduledExecution.property.notifyAvgDurationThreshold.label')" target="#jobAvgInfoBtn">
                     <template v-slot:popover>
-                      <VMarkdownView class="markdown-body" :content="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"/>
+                      <VMarkdownView class="markdown-body" :content="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')" mode=""/>
                     </template>
                   </popover>
 

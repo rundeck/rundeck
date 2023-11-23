@@ -23,7 +23,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <span id="opt_${rkey}" class="optview">
-    <span class="optdetail ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
+    <span class="optdetail opt-detail-ext ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
         <g:if test="${option.optionType=='file'}">
             <g:icon name="file"/>
         </g:if>
@@ -34,7 +34,7 @@
                 <g:icon name="lock"/>
             </g:if>
         </span>
-        <span class="desc"><g:strip>${option.description}</g:strip></span>
+        <span class="opt-desc"><g:strip>${option.description}</g:strip></span>
     </span>
     <g:if test="${option.optionValues}">
         <g:set var="opts" value="${option.optionValues}"/>
