@@ -22,6 +22,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
@@ -40,6 +41,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
@@ -61,6 +63,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
@@ -83,6 +86,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
@@ -105,6 +109,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
@@ -129,6 +134,7 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
+            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
