@@ -104,6 +104,7 @@
                       :entries="viewerEntries"
                       :jump-to-line="jumpToLine"
                       :jumped="jumped"
+                      :follow="mfollow"
                       @line-select="handleLineSelect"
                       @jumped="jumped = true"
         />

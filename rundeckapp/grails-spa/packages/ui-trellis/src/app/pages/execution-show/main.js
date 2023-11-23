@@ -62,11 +62,6 @@ function mount(e) {
   // Create VueI18n instance with options
   const i18n = initI18n()
 
-  let jumpToLine
-  const line = window.location.hash.split('L')[1]
-  if (line)
-    jumpToLine = parseInt(line)
-
   /**
    * Ant accesses the root Vue instance constructor.
    * Since the viewer is a class component that would make its
@@ -75,12 +70,10 @@ function mount(e) {
   const template = `\
   <LogViewer
     executionId="${e.dataset.executionId}"
-    :jumpToLine="${jumpToLine || null}"
     ref="viewer"
     ${e.dataset.trimOutput ? `trimOutput="${e.dataset.trimOutput}"` : ""}
   />
   `
-
   const vue = createApp({
     name:"LogViewerApp",
     components: {LogViewer},
