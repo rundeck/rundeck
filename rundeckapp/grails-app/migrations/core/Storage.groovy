@@ -46,7 +46,7 @@ databaseChangeLog = {
         }
         grailsChange {
             change {
-                sql.execute("ALTER TABLE storage MODIFY data longblob;")
+                modifyDataType(tableName: 'storage', columnName: 'data', newDataType: '${bytearray_new.type}')
             }
             rollback {
             }
