@@ -22,9 +22,9 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
@@ -41,9 +41,9 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
@@ -63,9 +63,9 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -86,9 +86,9 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -109,9 +109,9 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -134,14 +134,14 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
+            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
             commandPage.runButton.click()
-            sleep 1000
+            sleep 5000
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href
         expect:
