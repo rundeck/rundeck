@@ -486,6 +486,9 @@ jobs:
           step-name: Test Packages
           command: packaging_test_packages
       - save-build-cache
+      - store_artifacts:
+          path: ~/workspace/packaging/packaging/build/distributions
+
 
 
   # Run Testdeck job on docker executor.
