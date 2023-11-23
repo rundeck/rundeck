@@ -3090,6 +3090,49 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * eventBusMock.notify(*_)
     }
 
+    def "Async import is called with exception"(){
+        given:
+        def projectName = "test"
+
+        when:
+        service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        thrown AsyncImportException
+    }
+
+    def "Async import is called twice"(){
+        given:
+        def projectName = "test"
+        def mockDto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber)
+        service.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(projectName) >> true
+            getAsyncImportStatusForProject(projectName) >> mockDto
+        }
+
+        when:
+        def isIncomplete = service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        isIncomplete
+    }
+
+    def "Async import is called when operation is complete"(){
+        given:
+        def projectName = "test"
+        def mockDto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber)
+        service.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(projectName) >> true
+            getAsyncImportStatusForProject(projectName) >> mockDto
+        }
+
+        when:
+        def isIncomplete = service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        !isIncomplete
+    }
+
     def "Async import events calls with a invalid milestone number"(){
         given:
         def projectName = "test"

@@ -2062,6 +2062,27 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
+    /**
+     * Checks if an async import status operation is not complete for given project
+     *
+     * @param projectName
+     * @return
+     */
+    boolean isIncompleteAsyncImportForProject(String projectName){
+        def incomplete = true
+        try{
+            if( asyncImportService.statusFileExists(projectName) ){
+                def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
+                if( statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber ){
+                    incomplete = false
+                }
+            }
+            return incomplete
+        }catch (Exception e){
+            throw new AsyncImportException("There was errors while retrieving import status information.", e)
+        }
+    }
+
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,

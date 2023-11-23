@@ -49,7 +49,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.http.protocol.HTTP
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -68,10 +67,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
-import rundeck.services.asyncimport.AsyncImportException
-import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
-import rundeck.services.asyncimport.AsyncImportStatusDTO
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -3275,6 +3271,15 @@ Note: `other_errors` included since API v35""",
         //previous version must import nodes together with the project config
         if(request.api_version <= ApiVersions.V38) {
             archiveParams.importNodesSources = archiveParams.importConfig
+        }
+
+        if( projectService.isIncompleteAsyncImportForProject(project.name) ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.async.import.status.file.exist',
+                    args: [project.name],
+                    format:respFormat
+            ])
         }
 
         def result = projectService.handleApiImport(
