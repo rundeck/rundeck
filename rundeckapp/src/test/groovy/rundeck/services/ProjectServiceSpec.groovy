@@ -2980,6 +2980,26 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         thrown AsyncImportException
     }
 
+    def "restart async import calls to service for status file removal"(){
+        given:
+        def projectName = "test"
+        service.asyncImportService = Mock(AsyncImportService){
+            removeAsyncImportStatusFile(projectName) >> whenMethodReturns
+        }
+
+        when:
+        def result = service.restartAsyncImport(projectName)
+        flagWillBe = result
+
+        then:
+        1 * service.asyncImportService.removeAsyncImportStatusFile(projectName)
+
+        where:
+        whenMethodReturns | flagWillBe
+        false             | false
+        true              | true
+    }
+
     def testExportExecutionWithScheduledExecutionBackupJobEnabled(){
         given:
 
