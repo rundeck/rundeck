@@ -104,6 +104,15 @@ executors:
 
 commands:
 
+  # Logs in to DockerHub
+  docker_login:
+    description: Login to DockerHub
+    steps:
+      - run:
+          name: Login to DockerHub
+          command: |
+            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
   # Setup docker remote for usage in builds
   setup_docker:
     parameters:
@@ -126,6 +135,9 @@ commands:
               echo "  !!!  Local build detected, setting up docker as root  !!!"
               sudo chmod u+s $(which docker)
             fi
+
+        # Run docker login always to prevent rate limiting
+      - docker_login
 
 
   # Executes the env setup script and runs the specified commands
@@ -403,6 +415,7 @@ jobs:
       gradle-task:
         type: string
     steps:
+      - docker_login
       - checkout
       - install-build-dependencies
       - restore-build-cache
@@ -510,8 +523,9 @@ jobs:
           command: testdeck_pull_rdtest
       - run-build-step:
           step-name: Run Test
-          command: << parameters.command >>
-
+          command: |
+            docker_login
+            << parameters.command >>
 
   test-machine:
     <<: *job-defaults
@@ -528,7 +542,6 @@ jobs:
         description: Command that will execute the docker tests
         type: string
     steps:
-
       - checkout
       - install-testdeck-dependencies
       - attach_workspace:
@@ -538,7 +551,9 @@ jobs:
           command: testdeck_pull_rdtest
       - run-build-step:
           step-name: Run Test
-          command: << parameters.command >>
+          command: |
+            docker_login
+            << parameters.command >>
 
 
   # Run Testdeck job on machine executor.
@@ -562,7 +577,6 @@ jobs:
         type: string
 
     steps:
-
       - checkout
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
@@ -575,6 +589,7 @@ jobs:
       - run-build-step:
           step-name: Test
           command: |
+            docker_login
             cd << parameters.workdir >>
             ./bin/deck bootstrap
             << parameters.command >>

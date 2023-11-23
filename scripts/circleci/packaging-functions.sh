@@ -28,6 +28,7 @@ packaging_sign() {
 }
 
 packaging_test_packages() {
+    docker_login
     bash "${PACKAGING_DIR}/test/test-docker-install-deb.sh"
     bash "${PACKAGING_DIR}/test/test-docker-install-rpm.sh"
 }
