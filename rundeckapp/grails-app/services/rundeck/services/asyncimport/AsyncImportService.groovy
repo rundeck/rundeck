@@ -374,6 +374,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 if( Files.exists(Paths.get(scopedWorkingDir)) ) deleteNonEmptyDir(scopedWorkingDir)
                 updatedStatus.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
                 updatedStatus.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                updatedStatus.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
                 saveAsyncImportStatusForProject(projectName,updatedStatus)
             }
 
@@ -552,6 +553,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             updatedStatus.lastUpdate = "No executions to iterate, asynchronous import process ended."
             updatedStatus.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
             updatedStatus.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+            updatedStatus.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
             saveAsyncImportStatusForProject(projectName,updatedStatus)
         }
     }
@@ -704,6 +706,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 logger.debug("All Executions uploaded, async import ended. Please check the target project.")
 
                 updatedStatus.milestone = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.name
+                updatedStatus.milestoneNumber = AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber
                 updatedStatus.lastUpdate = "All Executions uploaded, async import ended. Please check the target project."
                 saveAsyncImportStatusForProject(projectName, updatedStatus)
 

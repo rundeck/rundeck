@@ -2075,16 +2075,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     boolean isIncompleteAsyncImportForProject(String projectName){
         def incomplete = true
         try{
-            if( asyncImportService.statusFileExists(projectName) ){
-                def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
-                if( statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber ){
-                    incomplete = false
-                }
+            def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
+            if (statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber) {
+                incomplete = false
             }
-            return incomplete
         }catch (Exception e){
             throw new AsyncImportException("There was errors while retrieving import status information.", e)
         }
+        return incomplete
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

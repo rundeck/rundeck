@@ -52,6 +52,7 @@ import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -1730,6 +1731,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: ['err1', 'err2']]
                 0 * _(*_)
             }
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
                 1 * requireRequestFormat(_, _, _) >> true
@@ -2253,6 +2257,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             def project = Mock(IRundeckProject)
             setupGetResource(project)
             controller.projectService = Mock(ProjectService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             request.content = 'test'.bytes
             params.importWebhooks='true'
             params.whkRegenAuthTokens='true'
@@ -2286,6 +2293,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         def project = Mock(IRundeckProject)
         setupGetResource(project)
         controller.projectService = Mock(ProjectService)
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
         request.content = 'test'.bytes
         params.importWebhooks='true'
         params.whkRegenAuthTokens='true'
@@ -2309,6 +2319,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         request.method = 'PUT'
         request.api_version = 40
         params.project = 'test'
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.projectService = Mock(ProjectService){
@@ -2380,6 +2393,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             params.project = 'test'
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService = Mock(ProjectService)
             def auth = Mock(UserAndRolesAuthContext)
             def project = Mock(IRundeckProject)
