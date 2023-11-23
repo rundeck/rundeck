@@ -2085,6 +2085,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return incomplete
     }
 
+    /**
+     * Restart a complete async import operation for given project.
+     *
+     * @param projectName
+     * @return
+     */
+    boolean restartAsyncImport(String projectName){
+        try{
+            projectLogger.info("Restarting async project import for project: ${projectName}")
+            return asyncImportService.removeAsyncImportStatusFile(projectName)
+        }catch (Exception e){
+            throw e
+        }
+    }
+
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,

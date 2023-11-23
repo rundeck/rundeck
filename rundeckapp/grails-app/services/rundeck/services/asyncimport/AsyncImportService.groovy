@@ -191,6 +191,25 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     }
 
     /**
+     * Removes Async Import status file for project, only if the operation is complete.
+     *
+     * @param projectName
+     */
+    boolean removeAsyncImportStatusFile(String projectName){
+        try{
+            def existing = getAsyncImportStatusForProject(projectName)
+            if( !existing ) throw new AsyncImportException("No import status file data for project: ${projectName}")
+            if( existing.milestoneNumber != AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber ) throw new AsyncImportException("Async import operation is not complete for project: ${projectName}")
+            // Delete the resource
+            final def fwkProject = frameworkService.getFrameworkProject(existing.projectName)
+            final def filename = JSON_FILE_PREFIX + existing.projectName + JSON_FILE_EXT
+            return fwkProject.deleteFileResource(filename)
+        }catch(Exception e){
+            throw e
+        }
+    }
+
+    /**
      * Async import process Milestone 1: Transaction Requirements.
      * This method is synchronous, it validates the requirements to start the whole operation:
      *
