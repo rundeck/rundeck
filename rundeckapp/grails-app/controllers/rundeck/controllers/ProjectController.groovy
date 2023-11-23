@@ -3273,13 +3273,16 @@ Note: `other_errors` included since API v35""",
             archiveParams.importNodesSources = archiveParams.importConfig
         }
 
-        if( projectService.isIncompleteAsyncImportForProject(project.name) ){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.async.import.status.file.exist',
-                    args: [project.name],
-                    format:respFormat
-            ])
+        if( asyncImportService.statusFileExists(project.name) ){
+            if( projectService.isIncompleteAsyncImportForProject(project.name) ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.status.file.exist',
+                        args: [project.name],
+                        format:respFormat
+                ])
+            }
+
         }
 
         def result = projectService.handleApiImport(
