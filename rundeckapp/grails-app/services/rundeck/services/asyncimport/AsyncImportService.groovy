@@ -83,7 +83,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return false
         } catch (IOException e) {
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message)
             throw e
         }
     }
@@ -103,7 +103,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return true
         } catch (Exception e) {
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message
             throw e
         }
     }
@@ -549,7 +549,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     }
                 }
             } catch (Exception e) {
-                logger.error(e.stackTrace.toString())
+                logger.error(e.message)
                 throw e
             }
 
@@ -683,7 +683,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                             options
                                     )
                                 } catch (IOException e) {
-                                    logger.error(e.stackTrace.toString())
+                                    logger.error(e.message)
                                     throw e
                                 }
                             }}
@@ -702,7 +702,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                         throw new FileNotFoundException("Zipped model project not found.")
                                     }
                                 } catch (Exception e) {
-                                    updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.stackTrace.toString())
+                                    updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.message)
                                     saveAsyncImportStatusForProject(projectName, updatedStatus)
                                     throw e
                                 }
@@ -712,7 +712,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                 saveAsyncImportStatusForProject(projectName, updatedStatus)
                             }
                         } catch (Exception e) {
-                            updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.stackTrace.toString())
+                            updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.message)
                             saveAsyncImportStatusForProject(projectName, updatedStatus)
                         }
                     }
@@ -731,12 +731,12 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
 
             } catch (IOException e) {
                 // Report the error
-                updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.stackTrace.toString())
+                updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.message)
                 saveAsyncImportStatusForProject(projectName, updatedStatus)
             }
         } catch (IOException e) {
             // Report the error
-            updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.stackTrace.toString())
+            updatedStatus.errors = appendErrorsInStatus(updatedStatus.errors, e.message)
             saveAsyncImportStatusForProject(projectName, updatedStatus)
         }
     }
@@ -755,7 +755,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         } catch (Exception e) {
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message))
         }
     }
 
@@ -779,7 +779,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch(Exception e){
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message)
         }
         return true
     }
@@ -821,7 +821,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try {
             FileUtils.deleteDirectory(new File(path))
         } catch (IOException e) {
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message)
         }
     }
 
@@ -837,7 +837,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             try {
                 extractStream(destinationDir.toString(), is)
             } catch (Exception e) {
-                logger.error(e.stackTrace.toString())
+                logger.error(e.message)
                 throw e
             }
         }
@@ -880,7 +880,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipInputStream.closeEntry()
                 }
             } catch (IOException e) {
-                logger.error(e.stackTrace.toString())
+                logger.error(e.message)
             }
         }}
     }
@@ -922,7 +922,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch (Exception e){
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message)
         }
     }
 
@@ -949,7 +949,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
                     }.collect(Collectors.toList())
         }catch(Exception e){
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message))
             throw e
         }
     }
@@ -992,7 +992,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 path = Files.list(checked).filter(logic).findFirst().get()
             }
         }catch(Exception e){
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message)
         }
         return path
     }
@@ -1011,7 +1011,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                     .collect(Collectors.toList())
         }catch(IOException e){
-            logger.error(e.stackTrace.toString())
+            logger.error(e.message))
             throw e
         }
     }
