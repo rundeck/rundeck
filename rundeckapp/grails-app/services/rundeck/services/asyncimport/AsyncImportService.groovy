@@ -103,7 +103,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return true
         } catch (Exception e) {
-            logger.error(e.message
+            logger.error(e.message)
             throw e
         }
     }
@@ -755,7 +755,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         } catch (Exception e) {
-            logger.error(e.message))
+            logger.error(e.message)
         }
     }
 
@@ -949,7 +949,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
                     }.collect(Collectors.toList())
         }catch(Exception e){
-            logger.error(e.message))
+            logger.error(e.message)
             throw e
         }
     }
@@ -1011,7 +1011,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                     .collect(Collectors.toList())
         }catch(IOException e){
-            logger.error(e.message))
+            logger.error(e.message)
             throw e
         }
     }
