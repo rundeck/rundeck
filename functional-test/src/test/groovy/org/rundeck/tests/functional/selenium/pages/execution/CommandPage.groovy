@@ -31,7 +31,7 @@ class CommandPage extends BasePage {
     }
 
     WebElement getFilterNodeButton() {
-        sleep 3000
+        sleep 5000
         el filterNodeBy
     }
 

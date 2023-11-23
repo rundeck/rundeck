@@ -24,7 +24,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
@@ -43,7 +42,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
@@ -65,7 +63,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -88,7 +85,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -111,7 +107,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
@@ -136,7 +131,6 @@ class CommandSpec extends SeleniumBase {
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
-            sleep 5000
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
