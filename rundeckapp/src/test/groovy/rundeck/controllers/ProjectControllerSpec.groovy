@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.AppACLContext
@@ -61,7 +60,6 @@ import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 import static org.rundeck.core.auth.AuthConstants.ACTION_CREATE
@@ -2301,6 +2299,30 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
         1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
         1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
+    }
+
+    def "Call async import with existent operation in progress"(){
+        given:
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        0 * controller.projectService.handleApiImport(_,_,_,_,_)
     }
 
     def "async import status endpoint"(){

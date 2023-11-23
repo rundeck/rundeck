@@ -122,10 +122,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             final def fwkProject = frameworkService.getFrameworkProject(projectName)
             fwkProject.loadFileResource(JSON_FILE_PREFIX + projectName + JSON_FILE_EXT, out)
             AsyncImportStatusDTO obj = new JsonSlurper().parseText(out.toString()) as AsyncImportStatusDTO
-            logger.debug("Async Import status file content: ${obj.toString()}")
+            logger.debug("Async project import status file content: ${obj.toString()}")
             return obj
         }catch(Exception e){
-            throw new AsyncImportException("Errors getting the status file for project: ${projectName}", e)
+            throw new AsyncImportException("Errors getting the import status file for project: ${projectName}", e)
         }
     }
 
@@ -143,7 +143,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return newErrors
         }catch(Exception e){
-            throw new AsyncImportException("Error appending errors to old errors in status file: ", e)
+            throw new AsyncImportException("Error appending errors to old errors in project status file: ", e)
         }
     }
 
@@ -186,7 +186,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             inputStream.close();
             return resource
         } catch (Exception e) {
-            throw new AsyncImportException("Error while saving the status file in db", e)
+            throw new AsyncImportException("Error while saving the async project import status file in db", e)
         }
     }
 
@@ -217,7 +217,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ){
         def updatedStatus = getAsyncImportStatusForProject(projectName)
         if( updatedStatus == null ){
-            throw new AsyncImportException("No status file in DB for project: ${projectName}")
+            throw new AsyncImportException("No project import status file in DB for project: ${projectName}")
         }
         final def importExecutions = options.importExecutions
         def executionsDirFound = true
@@ -300,7 +300,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
 
-            logger.debug("Uploading project w/o executions.")
+            logger.debug("Uploading project jobs and config.")
 
             updatedStatus.lastUpdate = "Uploading project w/o executions."
             saveAsyncImportStatusForProject(projectName,updatedStatus)
@@ -409,7 +409,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ){
         def updatedStatus = getAsyncImportStatusForProject(projectName)
         if( updatedStatus == null ){
-            throw new AsyncImportException("No status file found in DB for project: ${projectName}")
+            throw new AsyncImportException("No project import status file found in DB for project: ${projectName}")
         }
 
         final def milestoneNumber = AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
@@ -427,10 +427,10 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             distributedExecutions.mkdir()
         }
 
-        updatedStatus.lastUpdate = "Extracting TMP filepath from status file."
+        updatedStatus.lastUpdate = "Extracting TMP filepath from project import status file."
         saveAsyncImportStatusForProject(projectName,updatedStatus)
 
-        logger.debug("Extracting TMP location via status file.")
+        logger.debug("Extracting TMP location via project import status file.")
 
         File tempFile = new File(updatedStatus.tempFilepath)
         if( !tempFile.exists() ){
@@ -578,7 +578,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
     ){
         def updatedStatus = getAsyncImportStatusForProject(projectName)
         if( updatedStatus == null ){
-            throw new AsyncImportException("No status file found in DB for project: ${projectName}")
+            throw new AsyncImportException("No project import status file found in DB for project: ${projectName}")
         }
         final def milestoneNumber = AsyncImportMilestone.M3_IMPORTING.milestoneNumber
 
