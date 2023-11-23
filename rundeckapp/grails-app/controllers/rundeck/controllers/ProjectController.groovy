@@ -3282,7 +3282,7 @@ Note: `other_errors` included since API v35""",
                         format:respFormat
                 ])
             }
-
+            projectService.restartAsyncImport(project.name)
         }
 
         def result = projectService.handleApiImport(

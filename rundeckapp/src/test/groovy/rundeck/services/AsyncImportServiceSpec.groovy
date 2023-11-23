@@ -24,17 +24,26 @@ import java.util.zip.ZipOutputStream
 @Integration
 class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<AsyncImportService>, GrailsWebUnitTest{
 
-    private def mockStatusFile(String projectName, String tempPath = null){
-        def statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {
-            it.errors = null
-            it.milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
-            it.jobUuidOption = "remove"
-            it.lastUpdate = "This is a test"
-            it.lastUpdated = new Date().toString()
-            it.milestone = AsyncImportMilestone.M1_CREATED.milestoneNumber
-            it.projectName = projectName
-            it.tempFilepath = tempPath ? tempPath : "unknown-path"
-            return it
+    private def mockStatusFile(
+            String projectName,
+            AsyncImportStatusDTO preBuilt = null,
+            String tempPath = null
+    ){
+        def statusFile
+        if( preBuilt == null ){
+            statusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber).with {
+                it.errors = null
+                it.milestoneNumber = AsyncImportMilestone.M1_CREATED.milestoneNumber
+                it.jobUuidOption = "remove"
+                it.lastUpdate = "This is a test"
+                it.lastUpdated = new Date().toString()
+                it.milestone = AsyncImportMilestone.M1_CREATED.milestoneNumber
+                it.projectName = projectName
+                it.tempFilepath = tempPath ? tempPath : "unknown-path"
+                return it
+            }
+        }else{
+            statusFile = preBuilt
         }
         return new JsonBuilder(statusFile).toString()
     }
@@ -235,6 +244,29 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         if( Files.exists(Paths.get(workingDirs.projectCopy)) ){
             service.deleteNonEmptyDir(workingDirs.projectCopy)
         }
+    }
+
+    def "Delete async import status file basic usage"(){
+        given:
+        def projectName = "test"
+        def mockedStatusFile = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber)
+        def fwkProject = Mock(IRundeckProject){
+            it.loadFileResource(_, _) >> {
+                it[1].write(mockStatusFile(projectName, mockedStatusFile).bytes)
+                return 4L
+            }
+        }
+        def framework = Mock(IFramework)
+        service.frameworkService = Mock(FrameworkService){
+            getFrameworkProject(projectName) >> fwkProject
+            getRundeckFramework() >> framework
+        }
+
+        when:
+        service.removeAsyncImportStatusFile(projectName)
+
+        then:
+        1 * fwkProject.deleteFileResource(_)
     }
 
     def "Milestone 1 doesn't trigger M2 if there's no 'executions' dir in uploaded project"(){
@@ -647,7 +679,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                it[1].write(mockStatusFile(projectName,null,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
@@ -714,7 +746,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                it[1].write(mockStatusFile(projectName,null,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
@@ -851,7 +883,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                it[1].write(mockStatusFile(projectName,null,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
@@ -1094,7 +1126,7 @@ class AsyncImportServiceSpec extends Specification implements ServiceUnitTest<As
         }
         def fwkProject = Mock(IRundeckProject){
             it.loadFileResource(_, _) >> {
-                it[1].write(mockStatusFile(projectName,workingDirs.projectCopy).bytes)
+                it[1].write(mockStatusFile(projectName,null,workingDirs.projectCopy).bytes)
                 return 4L
             }
         }
