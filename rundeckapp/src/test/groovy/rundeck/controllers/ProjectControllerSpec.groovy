@@ -2311,6 +2311,41 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
     }
 
+    def "import via api with async import flag true return handle API custom errors"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> false
+        }
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: [async_importer_errors: "a message"]]
+        response.json.other_errors == [async_importer_errors: "a message"]
+    }
+
     def "Call async import with existent operation in progress"(){
         given:
         def aparams = new ProjectArchiveParams()

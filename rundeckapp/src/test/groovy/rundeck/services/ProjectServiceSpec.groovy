@@ -2977,7 +2977,42 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         )
 
         then:
-        thrown AsyncImportException
+        result.importerErrors != null
+    }
+
+    def "Handle API import with exception at import"(){
+        given:
+        def framework = Mock(IFramework)
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject){
+            getName() >> "test"
+        }
+        def inputStream = Mock(FileInputStream)
+        def params = Mock(ProjectArchiveParams){
+            asyncImport >> true
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            createStatusFile(project.name) >> true
+            1 * startAsyncImport(
+                    project.name,
+                    _,
+                    project,
+                    _,
+                    params
+            ) >> { throw new AsyncImportException("A message") }
+        }
+
+        when:
+        def result = service.handleApiImport(
+                framework,
+                auth,
+                project,
+                inputStream,
+                params
+        )
+
+        then:
+        result.importerErrors != null
     }
 
     def "restart async import calls to service for status file removal"(){
