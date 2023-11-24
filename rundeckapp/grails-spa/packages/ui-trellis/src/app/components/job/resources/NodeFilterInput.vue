@@ -191,10 +191,10 @@
     </modal>
 </template>
 <script lang="ts">
+import {getRundeckContext} from '@/library'
 import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterLocalstore'
 import {defineComponent, ref, PropType} from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
-
 
 
 export default defineComponent({
@@ -272,6 +272,7 @@ export default defineComponent({
     const deleteFilterModal = ref(false)
     const nodeSummary = ref({} as ProjectFilters)
     const nodeFilterStore = new NodeFilterStore()
+    const eventBus = getRundeckContext().eventBus
     return {
       outputValue,
       selectedFilterName,
@@ -281,12 +282,13 @@ export default defineComponent({
       newFilterName,
       deleteFilterModal,
       nodeSummary,
-      nodeFilterStore
+      nodeFilterStore,
+      eventBus,
     }
   },
   computed: {
     filterNameDisplay() {
-      return this.outputValue === '.*' ? 'All Nodes' : this.selectedFilterName
+      return this.outputValue === '.*' || this.selectedFilterName === '.*' ? 'All Nodes' : this.selectedFilterName
     },
     canSaveFilter() {
       return !this.selectedFilterName && this.filterWithoutAll()
@@ -307,6 +309,9 @@ export default defineComponent({
           return found.filterName
         }
       }
+      if(this.outputValue && this.outputValue==='.*'){
+        return this.outputValue
+      }
       return null
     },
     selectedSavedFilter() {
@@ -320,8 +325,6 @@ export default defineComponent({
     },
   },
   methods: {
-    selectedFilterLink(link: any) {
-    },
     filterWithoutAll() {
       if (this.outputValue === '.*' && this.hideAll) {
         return ''
@@ -339,21 +342,34 @@ export default defineComponent({
         this.newFilterName = ''
         this.loadNodeFilters()
         this.$emit('filters-updated')
+        this.eventBus.emit('nodefilter:savedFilters:changed')
+    },
+    async deleteFilterValue(filterName:string) {
+      this.nodeFilterStore.removeFilter(this.project, filterName)
+      this.loadNodeFilters()
+      this.$emit('filters-updated')
+      this.eventBus.emit('nodefilter:savedFilters:changed')
     },
     async deleteFilter() {
       this.nodeFilterStore.removeFilter(this.project, this.selectedFilterName)
+      this.deleteFilterValue(this.selectedFilterName)
         this.deleteFilterModal = false
         this.selectedFilterName = ''
-        this.loadNodeFilters()
+        // this.loadNodeFilters()
         this.$emit('filters-updated')
     },
+    async setDefaultFilterValue(filterName:string) {
+      this.nodeFilterStore.setStoredDefaultFilter(this.project,filterName)
+      this.nodeSummary.defaultFilter = filterName
+      this.eventBus.emit('nodefilter:savedFilters:changed')
+    },
     async setDefaultFilter() {
-      this.nodeFilterStore.setStoredDefaultFilter(this.project,this.selectedFilterName)
-      this.nodeSummary.defaultFilter = this.selectedFilterName
+      await this.setDefaultFilterValue(this.selectedFilterName)
     },
     async removeDefaultFilter() {
       this.nodeFilterStore.removeStoredDefaultFilter(this.project)
       this.nodeSummary.defaultFilter = null
+      this.eventBus.emit('nodefilter:savedFilters:changed')
     },
     doSearch() {
       if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
@@ -372,6 +388,13 @@ export default defineComponent({
     loadNodeFilters(){
       this.nodeSummary = this.nodeFilterStore.loadStoredProjectNodeFilters(this.project)
     },
+    handleDeleteSavedFilter(filterName: string) {
+      this.selectedFilterName=filterName
+      this.deleteFilterModal=true
+    },
+    handleSetDefaultAllFilter() {
+      this.setDefaultFilterValue('.*')
+    },
     async onMount() {
       this.outputValue = this.modelValue
       if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
@@ -379,6 +402,10 @@ export default defineComponent({
       }
       this.selectedFilterName = this.filterName
       this.loadNodeFilters()
+      this.eventBus.on('nodefilter:action:deleteSavedFilter',this.handleDeleteSavedFilter)
+      this.eventBus.on('nodefilter:action:setDefault',this.setDefaultFilterValue)
+      this.eventBus.on('nodefilter:action:setDefaultAll',this.handleSetDefaultAllFilter)
+      this.eventBus.on('nodefilter:action:removeDefault',this.removeDefaultFilter)
     }
   },
   watch: {

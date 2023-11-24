@@ -382,7 +382,7 @@ const messages = {
     "resource.metadata.entity.tags":"Tags",
     filters: "Filters",
     "all.nodes": "All Nodes",
-    "delete.this.filter.ellipsis": "Delete this Filter &hellip;",
+    "delete.this.filter.ellipsis": "Delete this Filter ...",
     "enter.a.filter": "Enter a Filter",
     "remove.all.nodes.as.default.filter": "Remove All Nodes as Default Filter",
     "set.all.nodes.as.default.filter": "Set All Nodes as Default Filter",
@@ -392,7 +392,7 @@ const messages = {
     "node.changes.success": "Node changes were saved successfully.",
     "node.changes.notsaved": "Node changes were not saved.",
     "node.remoteEdit.edit": "Edit node:",
-    "node.remoteEdit.continue": "Continue&hellip;",
+    "node.remoteEdit.continue": "Continue...",
     "node": "Node",
     "this.will.select.both.nodes": "This will select both nodes.",
     "node.metadata.hostname": "Hostname",
@@ -414,6 +414,7 @@ const messages = {
     "default.paginate.next": "+",
     "jump.to": "Jump to",
     "per.page": "Per Page",
+    "remove.default.filter": "Remove Default Filter",
 }
 
 export default messages;

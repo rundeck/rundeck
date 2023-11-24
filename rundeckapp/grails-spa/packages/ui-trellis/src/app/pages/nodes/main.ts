@@ -136,7 +136,7 @@ function init() {
                     components: { FilterInputComp, NodeCard },
                     methods: {
                         updateNodeFilter(val: any) {
-                            const filterName = val.filter || val
+                            const filterName = val && val.filter? val.filter : val
                             this.nodeFilterStore.setSelectedFilter(filterName)
                         }
                     },
@@ -160,6 +160,7 @@ function init() {
                                     :node-filter-store="nodeFilterStore"
                                     :job-create-authorized="itemData.jobCreateAuthorized"
                                     :run-authorized="itemData.runAuthorized"
+                                    :project="project"
                                     @filter="updateNodeFilter"
                                 >
                                 </node-card>
