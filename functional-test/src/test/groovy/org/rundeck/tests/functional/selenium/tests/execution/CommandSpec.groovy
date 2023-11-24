@@ -22,14 +22,13 @@ class CommandSpec extends SeleniumBase {
         when:
             def commandPage = go CommandPage, "SeleniumBasic"
         then:
-            sleep 5000
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
             commandPage.runButton.click()
-            sleep 5000
+            sleep 15000
             commandPage.runningExecutionStateButton.getAttribute("data-execstate") == 'RUNNING'
         expect:
             commandPage.abortButton.click()
