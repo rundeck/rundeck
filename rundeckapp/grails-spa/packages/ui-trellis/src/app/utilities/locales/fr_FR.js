@@ -6,7 +6,7 @@ const messages = {
     Revert: 'Retour arri\u00e8re',
     jobAverageDurationPlaceholder: 'laisser vide pour la dur\u00e9e moyenne du traitement',
     resourcesEditor: {
-        'Envoyer vers les n\u0153uds': 'Envoyer vers les n\u0153uds',
+        'Dispatch to Nodes': 'Envoyer vers les n\u0153uds',
         Nodes: 'N\u0153uds'
     },
     uiv: {
