@@ -634,7 +634,14 @@ workflows:
 
 
   build_and_test:
-    when: << pipeline.git.branch >>
+    when:
+      and:
+        - << pipeline.git.branch >>
+        - not:
+            matches:
+              pattern: /^pull\/[0-9]+$/
+              value: << pipeline.git.branch >>
+
     jobs:
       - build-rundeck:
           name: Build
