@@ -73,4 +73,9 @@ class StorageFileImpl implements StorageFile {
     Date getLastModified() {
         new Date(file.lastModified())
     }
+
+    @Override
+    boolean storageFileExists() {
+        return file.exists()
+    }
 }
