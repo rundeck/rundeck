@@ -82,8 +82,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 return true
             }
             return false
-        } catch (IOException e) {
-            logger.error(e.message)
+        } catch (AsyncImportException e) {
+            logger.error(e.message, e)
             throw e
         }
     }
@@ -195,18 +195,14 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
      *
      * @param projectName
      */
-    boolean removeAsyncImportStatusFile(String projectName){
-        try{
-            def existing = getAsyncImportStatusForProject(projectName)
-            if( !existing ) throw new AsyncImportException("No import status file data for project: ${projectName}")
-            if( existing.milestoneNumber != AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber ) throw new AsyncImportException("Async import operation is not complete for project: ${projectName}")
-            // Delete the resource
-            final def fwkProject = frameworkService.getFrameworkProject(existing.projectName)
-            final def filename = JSON_FILE_PREFIX + existing.projectName + JSON_FILE_EXT
-            return fwkProject.deleteFileResource(filename)
-        }catch(Exception e){
-            throw e
-        }
+    boolean removeAsyncImportStatusFile(String projectName) {
+        def existing = getAsyncImportStatusForProject(projectName)
+        if (!existing) throw new AsyncImportException("No import status file data for project: ${projectName}")
+        if (existing.milestoneNumber != AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber) throw new AsyncImportException("Async import operation is not complete for project: ${projectName}")
+        // Delete the resource
+        final def fwkProject = frameworkService.getFrameworkProject(existing.projectName)
+        final def filename = JSON_FILE_PREFIX + existing.projectName + JSON_FILE_EXT
+        return fwkProject.deleteFileResource(filename)
     }
 
     /**

@@ -2057,8 +2057,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         params
                 )
             }
-        }catch(Exception e){
-            throw e
+        }catch(AsyncImportException e){
+            def badResult = [success: false, importerErrors: [async_importer_errors: e.message]]
+            return badResult
         }
     }
 
@@ -2087,13 +2088,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param projectName
      * @return
      */
-    boolean restartAsyncImport(String projectName){
-        try{
-            projectLogger.info("Restarting async project import for project: ${projectName}")
-            return asyncImportService.removeAsyncImportStatusFile(projectName)
-        }catch (Exception e){
-            throw e
-        }
+    boolean restartAsyncImport(String projectName) {
+        projectLogger.info("Restarting async project import for project: ${projectName}")
+        return asyncImportService.removeAsyncImportStatusFile(projectName)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
