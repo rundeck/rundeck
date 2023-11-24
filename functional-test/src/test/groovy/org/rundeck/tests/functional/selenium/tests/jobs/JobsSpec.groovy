@@ -113,7 +113,6 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.optionNameSaved 1 getText() equals optName + '_1'
             jobCreatePage.optionNameSaved 2 getText() equals optName + '_2'
-            jobCreatePage.createJobButton.click()
     }
 
     def "create job with dispatch to nodes"() {

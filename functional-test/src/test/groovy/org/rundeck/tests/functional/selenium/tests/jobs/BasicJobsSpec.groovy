@@ -82,10 +82,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.optionButton.click()
             def optionName = 'seleniumOption1'
             jobCreatePage.optionName 0 sendKeys optionName
+            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.createJobButton.click()
-
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
             def jobShowPage = page JobShowPage
