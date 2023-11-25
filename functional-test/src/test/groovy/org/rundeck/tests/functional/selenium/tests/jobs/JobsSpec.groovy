@@ -161,7 +161,8 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.nodeFilterSelectAllLinkButton.click()
             sleep 1000
             jobCreatePage.nodeMatchedCountField.getText() == '1 Node Matched'
-            jobCreatePage.executor "window.location.hash = '#orchestrator-edit-type-dropdown'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.orchestratorDropdownButton
+            sleep 2000
             jobCreatePage.orchestratorDropdownButton.click()
             jobCreatePage.orchestratorChoiceLink 'rankTiered' click()
             jobCreatePage.createJobButton.click()
@@ -175,6 +176,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.jobNameInput.clear()
             jobCreatePage.jobNameInput.sendKeys 'renamed job with node orchestrator'
             jobCreatePage.tab JobTab.NODES click()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
             jobShowPage.jobLinkTitleLabel.getText() == 'renamed job with node orchestrator'
             jobShowPage.jobDefinitionModal.click()

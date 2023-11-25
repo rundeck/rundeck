@@ -118,6 +118,10 @@ abstract class BasePage {
         ((JavascriptExecutor) context.driver).executeScript(script)
     }
 
+    void executor(String script, WebElement element) {
+        ((JavascriptExecutor) context.driver).executeScript(script, element)
+    }
+
     WebElement el(By by) {
         context.driver.findElement(by)
     }
