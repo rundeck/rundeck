@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.app.internal.logging
+package com.dtolabs.rundeck.core.logging.internal;
 
-import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogEvent;
+import java.io.File;
 
 /**
  * $INTERFACE is ...
@@ -25,14 +26,14 @@ import com.dtolabs.rundeck.core.logging.LogEvent
  * Time: 6:05 PM
  */
 public interface LineLogFormat {
-    FormatItem parseLine(String line)
-    long seekBackwards(File file, int count)
-    static interface FormatItem {
-        boolean getFileEnd()
-        boolean getLineComplete()
-        boolean getFileStart()
-        boolean isInvalid()
-        LogEvent getEntry()
-        String getPartial()
+    FormatItem parseLine(String line);
+    long seekBackwards(File file, int count);
+    public static interface FormatItem {
+        boolean getFileEnd();
+        boolean getLineComplete();
+        boolean getFileStart();
+        boolean isInvalid();
+        LogEvent getEntry();
+        String getPartial();
     }
 }

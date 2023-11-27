@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.app.internal.logging
+package com.dtolabs.rundeck.core.logging.internal
 
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
+import com.dtolabs.rundeck.core.logging.internal.LogEventBuffer
 import spock.lang.Specification
 import spock.lang.Unroll
 

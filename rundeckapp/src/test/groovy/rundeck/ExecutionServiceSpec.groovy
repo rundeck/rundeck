@@ -1,6 +1,6 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
