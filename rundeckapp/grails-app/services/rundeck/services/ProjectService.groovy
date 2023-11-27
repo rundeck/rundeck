@@ -1985,8 +1985,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
             return dto
         }catch(Exception e){
-            projectLogger.error(e.stackTrace.toString())
-            throw e
+            projectLogger.error("Unexpected error while getting async project import status file in db", e)
+            throw new AsyncImportException("Unexpected error while getting async project import status file in db", e)
         }
     }
 

@@ -83,7 +83,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return false
         } catch (AsyncImportException e) {
-            logger.error(e.message, e)
+            logger.error("Unexpected errors while creating async project import status file in db", e)
             throw e
         }
     }
@@ -103,7 +103,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
             return true
         } catch (Exception e) {
-            logger.error(e.message)
+            logger.error("Unexpected errors checking if async project import status file exists in db", e)
             throw e
         }
     }
@@ -394,7 +394,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             }
 
         } catch (Exception e) {
-            throw new AsyncImportException("Errors starting the async import", e)
+            throw new AsyncImportException("Errors starting the async import, transaction will be rolled back.", e)
         }
 
         return importResult
@@ -427,8 +427,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         if( updatedStatus == null ){
             throw new AsyncImportException("No project import status file found in DB for project: ${projectName}")
         }
-
-        final def milestoneNumber = AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber
 
         logger.debug("Starting to distribute executions.")
 
@@ -491,62 +489,57 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         saveAsyncImportStatusForProject(projectName,updatedStatus)
 
         if (xmls.size() > 0) {
-            try {
-                xmls.forEach { execution ->
-                    String trimmedExecutionSerial = execution.fileName.toString()
-                            .replace(EXECUTION_FILE_PREFIX, "")
-                            .replace(EXECUTION_FILE_EXT, "")
-                            .trim()
+            xmls.forEach { execution ->
+                String trimmedExecutionSerial = execution.fileName.toString()
+                        .replace(EXECUTION_FILE_PREFIX, "")
+                        .replace(EXECUTION_FILE_EXT, "")
+                        .trim()
 
-                    // If there are less than <max execs> in bundle, move the exes and files to bundle
-                    List<Path> xmlInBundle = getFilesPathsByPrefixAndExtensionInPath(
-                            distributedExecutionBundle.toString(),
-                            EXECUTION_FILE_PREFIX as String,
-                            EXECUTION_FILE_EXT as String)
+                // If there are less than <max execs> in bundle, move the exes and files to bundle
+                List<Path> xmlInBundle = getFilesPathsByPrefixAndExtensionInPath(
+                        distributedExecutionBundle.toString(),
+                        EXECUTION_FILE_PREFIX as String,
+                        EXECUTION_FILE_EXT as String)
 
-                    def maxExecutionsPerDir = configurationService.getInteger(MAX_EXECS_PER_DIR_PROP_NAME, 1000)
+                def maxExecutionsPerDir = configurationService.getInteger(MAX_EXECS_PER_DIR_PROP_NAME, 1000)
 
-                    if (xmlInBundle.size() == maxExecutionsPerDir) {
-                        //get the bundle name to int to increase the next bundle
-                        int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
-                        File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
-                        newExecutionBundle.mkdir()
-                        distributedExecutionBundle = newExecutionBundle
-                    }
-                    // if the execution has logs, move the file
-                    // if the execution has state, move the file
-                    // move the execution
-                    Optional<Path> logFound = logs.stream()
-                            .filter { log -> log.toString().contains(trimmedExecutionSerial) }
-                            .findFirst()
-                    Optional<Path> stateFound = state.stream()
-                            .filter { stateFile -> stateFile.toString().contains(trimmedExecutionSerial) }
-                            .findFirst()
-                    Path distributedExecutionsPath = Paths.get(distributedExecutionBundle.toString())
+                if (xmlInBundle.size() == maxExecutionsPerDir) {
+                    //get the bundle name to int to increase the next bundle
+                    int previousBundleNameToInt = Integer.parseInt(distributedExecutionBundle.name)
+                    File newExecutionBundle = new File(String.valueOf(distributedExecutions.toString() + File.separator + (previousBundleNameToInt + 1)))
+                    newExecutionBundle.mkdir()
+                    distributedExecutionBundle = newExecutionBundle
+                }
+                // if the execution has logs, move the file
+                // if the execution has state, move the file
+                // move the execution
+                Optional<Path> logFound = logs.stream()
+                        .filter { log -> log.toString().contains(trimmedExecutionSerial) }
+                        .findFirst()
+                Optional<Path> stateFound = state.stream()
+                        .filter { stateFile -> stateFile.toString().contains(trimmedExecutionSerial) }
+                        .findFirst()
+                Path distributedExecutionsPath = Paths.get(distributedExecutionBundle.toString())
 
-                    updatedStatus.lastUpdate = "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
-                    saveAsyncImportStatusForProject(projectName,updatedStatus)
+                updatedStatus.lastUpdate = "Moving file: #${trimmedExecutionSerial} of ${xmls.size()}."
+                saveAsyncImportStatusForProject(projectName, updatedStatus)
 
-                    if (logFound.isPresent()) {
-                        //move it
-                        if( Files.exists(logFound.get()) ){
-                            Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
-                        }
-                    }
-                    if (stateFound.isPresent()) {
-                        //move it
-                        if( Files.exists(stateFound.get()) ){
-                            Files.move(stateFound.get(), distributedExecutionsPath.resolve(stateFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
-                        }
-                    }
-                    // move the execution
-                    if( Files.exists(execution) ){
-                        Files.move(execution, distributedExecutionsPath.resolve(execution.fileName), StandardCopyOption.REPLACE_EXISTING)
+                if (logFound.isPresent()) {
+                    //move it
+                    if (Files.exists(logFound.get())) {
+                        Files.move(logFound.get(), distributedExecutionsPath.resolve(logFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
                     }
                 }
-            } catch (Exception e) {
-                logger.error(e.message)
-                throw e
+                if (stateFound.isPresent()) {
+                    //move it
+                    if (Files.exists(stateFound.get())) {
+                        Files.move(stateFound.get(), distributedExecutionsPath.resolve(stateFound.get().fileName), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                }
+                // move the execution
+                if (Files.exists(execution)) {
+                    Files.move(execution, distributedExecutionsPath.resolve(execution.fileName), StandardCopyOption.REPLACE_EXISTING)
+                }
             }
 
             deleteNonEmptyDir(tempFile.toString())
@@ -597,7 +590,6 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         if( updatedStatus == null ){
             throw new AsyncImportException("No project import status file found in DB for project: ${projectName}")
         }
-        final def milestoneNumber = AsyncImportMilestone.M3_IMPORTING.milestoneNumber
 
         logger.debug("Files upload operation started....")
 
@@ -679,8 +671,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                                             options
                                     )
                                 } catch (IOException e) {
-                                    logger.error(e.message)
-                                    throw e
+                                    logger.error("Unexpected error while importting bundle: ${firstDir.fileName}")
+                                    throw new AsyncImportException("Unexpected error while importting bundle: ${firstDir.fileName}", e)
                                 }
                             }}
 
@@ -751,7 +743,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         } catch (Exception e) {
-            logger.error(e.message)
+            logger.error("Errors while creating directories.", e)
         }
     }
 
@@ -775,7 +767,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch(Exception e){
-            logger.error(e.message)
+            logger.error("Couldn't check executions existence in path: ${internalProjectPath}", e)
         }
         return true
     }
@@ -817,7 +809,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
         try {
             FileUtils.deleteDirectory(new File(path))
         } catch (IOException e) {
-            logger.error(e.message)
+            logger.error("Unexpected errors while deleting dir: ${path.toString()}", e)
         }
     }
 
@@ -833,8 +825,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             try {
                 extractStream(destinationDir.toString(), is)
             } catch (Exception e) {
-                logger.error(e.message)
-                throw e
+                logger.error("Unexpected error while creating project copy", e)
+                throw new AsyncImportException("Unexpected error while creating project copy", e)
             }
         }
     }
@@ -876,7 +868,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     zipInputStream.closeEntry()
                 }
             } catch (IOException e) {
-                logger.error(e.message)
+                logger.error("Errors while extracting the stream", e)
             }
         }}
     }
@@ -918,7 +910,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 }
             }
         }catch (Exception e){
-            logger.error(e.message)
+            logger.error("Errors copying dir except: ${ignored}", e)
+            throw new AsyncImportException("Errors copying dir except: ${ignored}", e)
         }
     }
 
@@ -945,8 +938,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                         }
                     }.collect(Collectors.toList())
         }catch(Exception e){
-            logger.error(e.message)
-            throw e
+            logger.error("Errors while getting the path: ${path} with prfix: ${prefix} and extension: ${ext}", e)
+            throw new AsyncImportException("Errors while getting the path: ${path} with prfix: ${prefix} and extension: ${ext}", e)
         }
     }
 
@@ -988,7 +981,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                 path = Files.list(checked).filter(logic).findFirst().get()
             }
         }catch(Exception e){
-            logger.error(e.message)
+            logger.error("Errors getting path with given logic, returning given path")
         }
         return path
     }
@@ -1007,8 +1000,8 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
                     .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString())))
                     .collect(Collectors.toList())
         }catch(IOException e){
-            logger.error(e.message)
-            throw e
+            logger.error("Unexpected error getting execution bundle in path: ${distributedExecutionsPath.fileName.toString()}")
+            throw new AsyncImportException("Unexpected error getting execution bundle in path: ${distributedExecutionsPath.fileName.toString()}", e)
         }
     }
 
