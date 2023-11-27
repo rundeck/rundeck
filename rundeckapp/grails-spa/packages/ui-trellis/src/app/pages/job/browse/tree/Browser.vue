@@ -71,7 +71,7 @@ import {
   JobBrowserStore,
   JobBrowserStoreInjectionKey, JobBrowserStoreItem,
 } from '@/library/stores/JobBrowser'
-import {JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
+import { JobPageFilter, JobPageStore, JobPageStoreInjectionKey} from '@/library/stores/JobPageStore'
 import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 import {RecycleScroller} from 'vue-virtual-scroller';
@@ -131,7 +131,10 @@ export default defineComponent({
             if (!this.items || this.items.length < 1) {
                 return [];
             }
-            return this.items.filter((a:JobBrowserStoreItem)=>a.job).sort((a: JobBrowseItem, b: JobBrowseItem) => {
+            let filters:JobPageFilter[] = this.jobPageStore.filters||[]
+            return this.items.filter((a:JobBrowserStoreItem)=>a.job)
+              .filter((a:JobBrowserStoreItem)=>filters.every((f)=>f.filter(a)))
+              .sort((a: JobBrowseItem, b: JobBrowseItem) => {
                   return a.jobName.localeCompare(b.jobName);
             });
         },
