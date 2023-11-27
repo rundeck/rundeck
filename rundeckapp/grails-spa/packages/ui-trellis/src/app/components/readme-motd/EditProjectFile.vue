@@ -67,6 +67,7 @@ import AceEditor from "@/library/components/utils/AceEditor.vue";
 import {getRundeckContext} from "@/library";
 import {url} from  "@/library/rundeckService"
 import {Notification} from "uiv";
+import {saveProjectFile, getFileText} from "@/app/components/readme-motd/editProjectFileService";
 
 const rundeckClient = getRundeckContext().rundeckClient
 export default defineComponent({
@@ -80,10 +81,22 @@ export default defineComponent({
     };
   },
   props: {
-    filename: '',
-    displayConfig: [],
-    project: '',
-    authAdmin: false,
+    filename: {
+      type: String,
+      default: ''
+    },
+    displayConfig: {
+      type: Array,
+      default: []
+    },
+    project: {
+      type: String,
+      default: ''
+    },
+    authAdmin: {
+      type: Boolean,
+      default: false
+    },
   },
   computed: {
     createProjectConfigureLink() {
@@ -95,25 +108,14 @@ export default defineComponent({
   },
   methods: {
     async saveProjectFile() {
-      if(this.fileText === ''){
-        this.fileText = '#This is a test'
-      }
-      const resp = await rundeckClient.sendRequest({
-        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-        pathTemplate: "/project/"+this.project+"/" + this.filename,
-        method: "PUT",
-        body: {
-          contents: this.fileText
+      try{
+        const resp = await saveProjectFile(this.project, this.filename, this.fileText)
+        if(resp.success){
+          this.notifySuccess("Success", "Saved Project File " + this.filename )
         }
-      });
-      if(resp.status === 200){
-        this.notifySuccess("Success", "Saved Project File " + this.filename )
       }
-      else{
-        if(resp.status !== 200){
-          this.errorMsg = resp.parsedBody.message
-          this.notifyError(this.errorMsg)
-        }
+      catch (e) {
+        this.notifyError(e.message)
       }
     },
     createProjectHomeLink() {
@@ -136,25 +138,29 @@ export default defineComponent({
         duration: 5000
       });
     },
-    getFileText(){
-      rundeckClient.sendRequest({
-        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-        pathTemplate: "/project/"+this.project+"/" + this.filename,
-        headers: {
-          'Accept': 'application/json'
-        },
-        method: 'GET'
-      }).then(response => {
-        if(response.status === 200){
-          this.fileText = response.parsedBody.contents
+    notifyWarning(message) {
+      Notification.notify({
+        type: "info",
+        title: "Warning",
+        content: message,
+        duration: 0
+      });
+    },
+    async getFileText(){
+      try{
+        const response = await getFileText(this.project, this.filename)
+        if(response.success){
+          this.fileText = response.contents
+        }
+      }
+      catch (e) {
+        if(e.warning){
+          this.notifyWarning("The file " + this.filename + " does not exist in project " + this.project + " yet. Please save to create it.");
         }
         else{
-          if(response.status !== 200){
-            this.errorMsg = response.parsedBody.message
-            this.notifyError(this.errorMsg)
-          }
+          this.notifyError(e.message)
         }
-      })
+      }
     }
   },
 });
