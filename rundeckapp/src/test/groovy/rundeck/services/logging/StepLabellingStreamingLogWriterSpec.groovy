@@ -16,7 +16,7 @@
 
 package rundeck.services.logging
 
-import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import spock.lang.Specification
