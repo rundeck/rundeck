@@ -64,11 +64,8 @@
 import {defineComponent} from "vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
-import {getRundeckContext} from "@/library";
 import {url} from  "@/library/rundeckService"
-import {Notification} from "uiv";
-
-const rundeckClient = getRundeckContext().rundeckClient
+import {getFileText, saveProjectFile} from "@/app/components/readme-motd/editProjectFileService";
 export default defineComponent({
   name: "EditProjectFile",
   components: {AceEditor, AceEditorVue},
@@ -80,10 +77,23 @@ export default defineComponent({
     };
   },
   props: {
-    filename: '',
-    displayConfig: [],
-    project: '',
-    authAdmin: false,
+    filename: {
+      type: String,
+      default: ''
+    },
+    displayConfig: {
+      type: Array,
+      default: []
+    },
+    project: {
+      type: String,
+      default: ''
+    },
+    authAdmin: {
+      type: Boolean,
+      default: false
+    },
+
   },
   computed: {
     createProjectConfigureLink() {
@@ -95,66 +105,13 @@ export default defineComponent({
   },
   methods: {
     async saveProjectFile() {
-      if(this.fileText === ''){
-        this.fileText = '#This is a test'
-      }
-      const resp = await rundeckClient.sendRequest({
-        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-        pathTemplate: "/project/"+this.project+"/" + this.filename,
-        method: "PUT",
-        body: {
-          contents: this.fileText
-        }
-      });
-      if(resp.status === 200){
-        this.notifySuccess("Success", "Saved Project File " + this.filename )
-      }
-      else{
-        if(resp.status !== 200){
-          this.errorMsg = resp.parsedBody.message
-          this.notifyError(this.errorMsg)
-        }
-      }
+      await saveProjectFile(this.project, this.filename, this.fileText)
     },
     createProjectHomeLink() {
       document.location = url('project/' + this.project + '/home').href
     },
-    notifyError(msg) {
-      Notification.notify({
-        type: "danger",
-        title: "An Error Occurred",
-        content: msg,
-        duration: 0
-      });
-    },
-
-    notifySuccess(title, msg) {
-      Notification.notify({
-        type: "success",
-        title: title,
-        content: msg,
-        duration: 5000
-      });
-    },
-    getFileText(){
-      rundeckClient.sendRequest({
-        baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
-        pathTemplate: "/project/"+this.project+"/" + this.filename,
-        headers: {
-          'Accept': 'application/json'
-        },
-        method: 'GET'
-      }).then(response => {
-        if(response.status === 200){
-          this.fileText = response.parsedBody.contents
-        }
-        else{
-          if(response.status !== 200){
-            this.errorMsg = response.parsedBody.message
-            this.notifyError(this.errorMsg)
-          }
-        }
-      })
+    async getFileText(){
+      this.fileText = await getFileText(this.project, this.filename)
     }
   },
 });
