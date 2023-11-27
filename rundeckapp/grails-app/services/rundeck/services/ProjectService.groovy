@@ -2081,7 +2081,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 incomplete = false
             }
         }catch (Exception e){
-            throw new AsyncImportException("There was errors while retrieving import status information.", e)
+            throw new AsyncImportException("There was an error while retrieving import status information.", e)
         }
         return incomplete
     }
