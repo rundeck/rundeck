@@ -28,7 +28,9 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.BaseCommandExec
+import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ScriptFileCommand
+import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
@@ -50,7 +52,7 @@ import java.security.NoSuchAlgorithmException
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = ScriptFileNodeStepPlugin.SCRIPT_FILE_COMMAND_TYPE)
 @PluginDescription(title = "Script file or URL", description = "Verify and validate design", isHighlighted = true, order = 2)
-public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileCommand {
+public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileCommand, ProxyRunnerPlugin {
 
     @PluginProperty(title = "File Path or URL",
             description = "Path",
@@ -127,5 +129,10 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
     @Override
     Boolean getAdhocExecution() {
         return null
+    }
+
+    @Override
+    Map<String, String> getRuntimeProperties(ExecutionContext context) {
+        return context.getFramework().getFrameworkProjectMgr().loadProjectConfig(context.frameworkProject).getProjectProperties()
     }
 }
