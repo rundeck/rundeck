@@ -84,7 +84,7 @@ class AsyncImportService implements AsyncImportStatusFileOperations, EventPublis
             return false
         } catch (AsyncImportException e) {
             logger.error("Unexpected errors while creating async project import status file in db", e)
-            throw e
+            throw new AsyncImportException("Unexpected errors while creating async project import status file in db", e)
         }
     }
 

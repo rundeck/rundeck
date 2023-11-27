@@ -1966,8 +1966,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         try{
             return asyncImportService.createStatusFile(projectName)
         }catch(Exception e){
-            projectLogger.error(e.stackTrace.toString())
-            throw e
+            projectLogger.error("There was an unexpected error during async project import status file creation", e)
+            throw new AsyncImportException("There was an unexpected error during async project import status file creation", e)
         }
     }
 
