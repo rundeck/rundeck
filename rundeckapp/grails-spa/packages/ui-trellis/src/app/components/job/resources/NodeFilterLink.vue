@@ -81,7 +81,7 @@ export default defineComponent({
         }
         return this.nodeFilter
       } else if (this.filterKey && this.filterVal) {
-        return `${this.filterKey}: ${this.filterVal}`
+        return `${this.filterKey}: \"${this.filterVal}\"`
       }
     },
   },

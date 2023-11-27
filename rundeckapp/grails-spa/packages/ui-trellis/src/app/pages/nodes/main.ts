@@ -1,10 +1,13 @@
 import {defineComponent, markRaw} from 'vue'
 import {getRundeckContext} from '../../../library'
+import {NodeFilterStore} from '../../../library/stores/NodeFilterLocalstore'
 import NodeFilterInput from '../../components/job/resources/NodeFilterInput.vue'
+import NodeCard from "../../components/job/resources/NodeCard.vue";
 
-let rundeckContext = getRundeckContext()
+let rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent(
     {
+        name: 'NodeFilter',
         data() {
             return {
                 project: rundeckContext.projectName,
@@ -36,12 +39,23 @@ const FilterInputComp = defineComponent(
                              v-bind="extraAttrs"
           />
         `,
+        computed: {
+            isNodeStoreAvailable() {
+                return !!this.extraAttrs.nodeFilterStore
+            }
+        },
         methods: {
             updatedValue(val: string) {
-                this.nodeFilterKo()?.selectNodeFilter({filter: val}, false)
+                this.nodeFilterKo()?.selectNodeFilter({filter: val}, false);
+                if(this.isNodeStoreAvailable) {
+                    this.extraAttrs.nodeFilterStore.setSelectedFilter(val)
+                }
             },
             filterClicked(filter: any) {
                 this.nodeFilterKo()?.selectNodeFilter(filter, false)
+                if(this.isNodeStoreAvailable) {
+                    this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter)
+                }
             },
             nodeFilterKo() {
                 //@ts-ignore
@@ -50,7 +64,7 @@ const FilterInputComp = defineComponent(
                 }else if(this.koFieldName && window[this.koFieldName]){
                     return window[this.koFieldName]
                 }else if(!this.koFieldName){
-                  //@ts-ignore
+                    //@ts-ignore
                     return window.nodeFilter
                 }
             },
@@ -73,7 +87,12 @@ const FilterInputComp = defineComponent(
             this.subs.forEach(s => s.dispose())
         },
         mounted() {
+
             this.attachKnockout(5)
+            if(this.isNodeStoreAvailable){
+                this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter
+            }
+
         }
     }
 )
@@ -97,6 +116,57 @@ function init() {
                                          :item-data="itemData"
                                          :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;'}"
                       />
+                    `,
+                }
+            ))
+        },
+        {
+            section: 'nodes-page',
+            location: 'main',
+            visible: true,
+            widget: markRaw(defineComponent(
+                {
+                    data() {
+                        return {
+                            project: rundeckContext.projectName,
+                            nodeFilterStore: new NodeFilterStore(),
+                        }
+                    },
+                    props: ['itemData'],
+                    components: { FilterInputComp, NodeCard },
+                    methods: {
+                        updateNodeFilter(val: any) {
+                            const filterName = val.filter || val
+                            this.nodeFilterStore.setSelectedFilter(filterName)
+                        }
+                    },
+                    template: `
+                        <div class="title">
+                          <span class="text-h3"><i class="fas fa-sitemap"></i> {{ $t('gui.menu.Nodes') }}</span>
+                        </div>
+                        <div style="margin-bottom:20px">
+                          <filter-input-comp
+                              v-model="nodeFilterStore.selectedFilter"
+                              :project="project"
+                              :item-data="itemData"
+                              :extra-attrs="{'class':'subtitle-head-item','style':'margin-bottom:0;', 'nodeFilterStore': nodeFilterStore}"
+                          />
+                        </div>
+                        <div id="nodesContent">
+                          <div class="container-fluid">
+                            <div class="row">
+                              <div class="col-xs-12">
+                                <node-card
+                                    :node-filter-store="nodeFilterStore"
+                                    :job-create-authorized="itemData.jobCreateAuthorized"
+                                    :run-authorized="itemData.runAuthorized"
+                                    @filter="updateNodeFilter"
+                                >
+                                </node-card>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     `,
                 }
             ))

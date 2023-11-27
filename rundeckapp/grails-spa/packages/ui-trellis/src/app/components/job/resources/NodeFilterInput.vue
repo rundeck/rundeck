@@ -21,7 +21,7 @@
           <li class="divider"></li>
 
           <li class="dropdown-header" v-if="selectedFilterName">
-            {{ $t('filter') }}: <span>{{ filterNameDisplay }}</span>
+            {{ $t('filter') }} <span>{{ filterNameDisplay }}</span>
           </li>
           <li v-if="canSaveFilter">
             <a href="#" @click="saveFilterModal=true">
@@ -191,8 +191,8 @@
     </modal>
 </template>
 <script lang="ts">
-import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterStore'
-import {defineComponent, ref} from 'vue'
+import {NodeFilterStore, ProjectFilters} from '../../../../library/stores/NodeFilterLocalstore'
+import {defineComponent, ref, PropType} from 'vue'
 import NodeFilterLink from './NodeFilterLink.vue'
 
 
@@ -205,7 +205,7 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: String,
+      type: [String, null] as PropType<String | null>,
       required: true,
     },
     showTitle: {
