@@ -8,7 +8,9 @@ import {
 import {JobBrowseItem, JobBrowseMeta} from '../types/jobs/JobBrowse'
 import {InjectionKey} from 'vue'
 import {JobBrowserStore} from './JobBrowser'
-
+export interface JobPageFilter {
+  filter(j: JobBrowseItem) : boolean
+}
 export class JobPageStore {
   bulkEditMode: boolean = false
   loaded:boolean=false
@@ -22,6 +24,7 @@ export class JobPageStore {
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore
+  filters: Array<JobPageFilter> = []
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {
