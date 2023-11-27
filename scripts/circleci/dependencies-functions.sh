@@ -10,7 +10,7 @@ dependencies_build_setup() {
     echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
 
     sudo apt-get update
-    sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
+    sudo apt-get -y --no-install-recommends install zulu11-jdk-headless
 
     # Node and aws installed by orb.
 

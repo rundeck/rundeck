@@ -225,7 +225,7 @@ commands:
 #### Job Definitions ####
 
 # Default job config
-job-defaults: &job-defaults
+job-defaults-java17: &job-defaults-java17
   # Using an absolute path here prevents issues with bash interpolations.
   working_directory: /home/circleci/workspace
   environment:
@@ -234,11 +234,20 @@ job-defaults: &job-defaults
     JAVA_OPTS: -XX:MaxRAMPercentage=80.0
     JAVA_HOME: /usr/lib/jvm/zulu17
 
+job-defaults-java11: &job-defaults-java11
+  # Using an absolute path here prevents issues with bash interpolations.
+  working_directory: /home/circleci/workspace
+  environment:
+    CIRCLE_PIPELINE_NUM: << pipeline.number >>
+    GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
+    JAVA_OPTS: -XX:MaxRAMPercentage=80.0
+    JAVA_HOME: /usr/lib/jvm/zulu11
+
 jobs:
 
   # Build rundeck War
   build-rundeck:
-    <<: *job-defaults
+    <<: *job-defaults-java11
     executor:
       name: docker-builder
       resource_class: large
@@ -286,7 +295,7 @@ jobs:
 
   # Run Gradle Tests
   test-gradle:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     steps:
@@ -304,7 +313,7 @@ jobs:
 
   # Run twistlock scan
   twistlock-scan-image:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     parameters:
@@ -328,7 +337,7 @@ jobs:
 
   #Openapi tests
   test-openapi:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     steps:
@@ -354,7 +363,7 @@ jobs:
 
   # Publish Docker Images
   docker-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -374,7 +383,7 @@ jobs:
 
   # Publish Maven Packages to sonatype
   maven-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -390,7 +399,7 @@ jobs:
           command: packaging_publish_maven
 
   test-gradle-functional:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -423,7 +432,7 @@ jobs:
 
   # Publish all packages to packagecloud
   packaging-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -459,7 +468,7 @@ jobs:
 
   # Test packaging
   packaging-test:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -490,7 +499,7 @@ jobs:
 
   # Run Testdeck job on docker executor.
   test-docker:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -514,7 +523,7 @@ jobs:
 
 
   test-machine:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -543,7 +552,7 @@ jobs:
 
   # Run Testdeck job on machine executor.
   testdeck:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
