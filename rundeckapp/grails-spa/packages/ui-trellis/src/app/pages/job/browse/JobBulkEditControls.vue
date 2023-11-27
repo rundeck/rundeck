@@ -1,6 +1,8 @@
 <template>
     <div class="flex col justify-between" >
-        <ui-socket section="job-list-page" location="card-header" />
+        <div class="flex col flex-justify-start">
+          <ui-socket section="job-list-page" location="card-header"/>
+        </div>
         <div class="flex col flex-justify-end">
 
           <div class="bulk_edit_controls">
