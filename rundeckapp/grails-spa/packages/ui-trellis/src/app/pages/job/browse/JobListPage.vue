@@ -46,6 +46,12 @@ export default defineComponent({
         JobBulkEditControls,
         Browser,
     },
+    props: {
+        path: {
+            type: String,
+            default: "",
+        },
+    },
     setup(props) {
         const jobBrowserStore: JobBrowserStore = inject(
             JobBrowserStoreInjectionKey
@@ -56,7 +62,7 @@ export default defineComponent({
         return {
             jobBrowserStore,
             jobPageStore,
-            browsePath: ref(""),
+            browsePath: ref(props.path || ""),
             loaded: ref(false),
             queryRefresh: ref(false),
         };
