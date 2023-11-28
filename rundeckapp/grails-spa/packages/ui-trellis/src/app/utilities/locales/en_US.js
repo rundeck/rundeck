@@ -530,6 +530,8 @@ const messages = {
     "job.filter.apply.button.title":"Search",
     "job.filter.clear.button.title":"Clear Search",
     "all":"All",
+    "job.tree.breakpoint.hit.info":"Notice: Not all Job detail was loaded because this group contains too many jobs. Click the button to load missing detail.",
+    "job.tree.breakpoint.load.button.title":"Load All Job Detail",
 }
 
 export default messages;

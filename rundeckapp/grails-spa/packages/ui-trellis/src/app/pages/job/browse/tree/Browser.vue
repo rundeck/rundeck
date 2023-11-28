@@ -1,5 +1,15 @@
 <template>
     <div :class="!root ? 'subbrowse' : ''">
+
+        <template v-if="this.jobBrowserStore.findPath(this.browsePath).bpHit">
+          <p class="breakpoint-info">
+            {{$t('job.tree.breakpoint.hit.info')}}
+            <btn @click="loadMeta(this.browsePath)"  size="xs">
+              {{$t('job.tree.breakpoint.load.button.title')}}
+            </btn>
+          </p>
+
+        </template>
         <ul class="list-unstyled">
             <li v-for="item in sortedGroups" v-if="sortedGroups.length > 0" :key="item.groupPath">
                 <browse-group-item
@@ -111,6 +121,7 @@ export default defineComponent({
             ) as JobBrowserStore,
             jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
             items,
+            breakpointHit:ref(false),
             expandedItems: ref([]),
             wasExpanded: [],
             loading: ref(false),
@@ -163,6 +174,10 @@ export default defineComponent({
             this.$emit('empty')
           }
         },
+        async loadMeta(path:string){
+          this.jobBrowserStore.findPath(this.browsePath).breakpoint=0
+          await this.refresh()
+        },
         selectAll(path:string){
           eventBus.emit(`job-bulk-edit-select-all-path`,path)
         },
@@ -174,7 +189,8 @@ export default defineComponent({
         },
         async refresh(initial:boolean=false) {
             this.loading = true;
-            this.items = await this.jobBrowserStore.loadItems(this.browsePath);
+            this.items = await this.jobBrowserStore.refresh(this.browsePath);
+            this.breakpointHit=this.jobBrowserStore.findPath(this.browsePath).bpHit
             this.loading = false;
             if(initial){
               //expand children if expand level is greater than 0
@@ -222,5 +238,8 @@ export default defineComponent({
 }
 .btn.button-spacing{
   margin-right: var(--spacing-2);
+}
+.breakpoint-info{
+  color: var(--text-secondary-color)
 }
 </style>

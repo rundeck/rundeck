@@ -57,9 +57,8 @@ export class JobBrowserStoreItem {
             this.breakpoint,
             jobPageStore.query
         );
-        if (result.items.length > this.breakpoint) {
-            this.bpHit = true;
-        }
+        this.bpHit =
+            this.breakpoint > 0 && result.items.length >= this.breakpoint;
         this.children = result.items.map((i) => {
             const item = new JobBrowserStoreItem(i, i.groupPath);
             item.item = i;
