@@ -49,7 +49,7 @@
                   itemTag="li"
                   page-mode
               >
-                <browser-job-item :job="item" v-if="item.job" :key="item.job.id" :active="active" :load-meta="this.jobBrowserStore.findPath(this.browsePath).bpHit"/>
+                <browser-job-item :job="item" v-if="item.job" :key="item.id" :active="active" :load-meta="this.jobBrowserStore.findPath(this.browsePath).bpHit"/>
               </RecycleScroller>
 
             <li v-if="items.length === 0">
