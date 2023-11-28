@@ -52,6 +52,14 @@ export default defineComponent({
         JobListPage,
         ActivityList,
     },
+    props: {
+        queryParams: {
+            type: Object,
+            default: () => {
+                return {};
+            },
+        },
+    },
 });
 </script>
 

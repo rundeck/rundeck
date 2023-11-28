@@ -225,6 +225,7 @@
   }
 })
     </g:javascript>
+    <g:embedJSON id="pageQueryParams" data="${[queryParams:params]}"/>
 </head>
 
 <body>
