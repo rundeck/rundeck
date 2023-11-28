@@ -13,13 +13,13 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class KeyStoragePage extends BasePage {
 
-    By addUploadKey = By.xpath("//button[contains(.,'Key')]")
+    By addUploadKey = By.xpath("//button[contains(.,'Key')] | //*[contains(@href,'uploadkey')]")
     By uploadKeyType = By.name("uploadKeyType")
     By uploadPassword = By.id("uploadpasswordfield")
     By uploadPath = By.id("uploadResourcePath2")
     By uploadResourceName = By.id("uploadResourceName2")
-    By save = By.xpath("//button[contains(.,'Save')]")
-    By overBy = By.xpath("//button[contains(.,'Overwrite')]")
+    By save = By.xpath("//button[contains(.,'Save')] | //input[contains(@type, 'submit')]")
+    By overBy = By.xpath("//button[contains(.,'Overwrite')] | //a[contains(@data-bind, 'actionUploadModify')]")
 
     String loadPath = "/menu/storage"
 
@@ -63,7 +63,7 @@ class KeyStoragePage extends BasePage {
             actionLink.click()
         }
 
-        def delete = byAndWait By.xpath("//button[contains(.,'Delete')]")
+        def delete = byAndWait By.xpath("//button[contains(.,'Delete Selected Item')] | //a[contains(@href, 'storageconfirmdelete')]")
         delete.click()
 
         def deleteConfirm = byAndWait By.xpath("//*[@class=\"modal-content\"]//button[contains(.,'Delete')]")

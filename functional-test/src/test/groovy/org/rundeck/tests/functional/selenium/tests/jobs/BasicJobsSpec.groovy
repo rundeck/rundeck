@@ -197,6 +197,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.waitForModal 1
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
+            sleep 5000
             jobShowPage.jobRowLink.size() == 3
             jobShowPage.jobRowLink.collect {
                 it.getText()
@@ -214,6 +215,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
         expect:
+            sleep 5000
             jobShowPage.jobRowLink.size() == 1
             jobShowPage.jobRowLink.collect { it.getText() } == ["selenium-option-test1"]
     }
@@ -229,6 +231,7 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
         expect:
+            sleep 5000
             jobShowPage.jobRowLink.size() == 2
             jobShowPage.jobRowLink.collect { it.getText() } == ["a job with options", "predefined job with options"]
     }
