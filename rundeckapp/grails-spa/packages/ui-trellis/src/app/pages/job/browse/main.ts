@@ -20,8 +20,8 @@ import JobScmStatus from './tree/JobScmStatus.vue'
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
-  const uipluginData = loadJsonData("uipluginData")
-  const uiType = uipluginData?.uiType||'next';
+  const uiMeta = loadJsonData("pageUiMeta")
+  const uiType = uiMeta?.uiType||'current';
   rootStore.ui.addItems([
     {
       section: "theme-select",

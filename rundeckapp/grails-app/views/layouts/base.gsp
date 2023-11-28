@@ -168,7 +168,7 @@
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
-
+    <g:embedJSON id="pageUiMeta" data="[uiType     : params.nextUi?'next':params.legacyUi?'legacy':'current']"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
