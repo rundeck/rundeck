@@ -63,7 +63,7 @@ class KeyStoragePage extends BasePage {
             actionLink.click()
         }
 
-        def delete = byAndWait By.xpath("//button[contains(.,'Delete Selected Item')] | //a[contains(@href, 'storageconfirmdelete')]")
+        def delete = byAndWait By.xpath("//button[contains(.,'Delete')] | //a[contains(@href, 'storageconfirmdelete')]")
         delete.click()
 
         def deleteConfirm = byAndWait By.xpath("//*[@class=\"modal-content\"]//button[contains(.,'Delete')]")
