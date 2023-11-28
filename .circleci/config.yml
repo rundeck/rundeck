@@ -221,6 +221,15 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
+  reconfigure-java-version:
+    description: Reconfigure Java Version to 17
+    steps:
+      - aws-cli/install
+      - install-node
+      - run-build-step:
+          step-name: Install Java 17
+          command: dependencies_reconfigure_java
+
 
 #### Job Definitions ####
 
@@ -512,6 +521,7 @@ jobs:
           docker_layer_caching: true
       - checkout
       - install-testdeck-dependencies
+      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -540,6 +550,7 @@ jobs:
 
       - checkout
       - install-testdeck-dependencies
+      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -576,6 +587,7 @@ jobs:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - install-testdeck-dependencies
+      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
