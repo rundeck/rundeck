@@ -413,6 +413,8 @@ export default defineComponent({
       this.outputValue = this.modelValue
       if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
         this.selectedFilterName = ''
+      } else if (this.matchedFilter) {
+        this.selectedFilterName = this.matchedFilter
       }
     },
     filterName() {
