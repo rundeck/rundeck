@@ -208,14 +208,16 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionButton.click()
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
-            jobCreatePage.executor "window.location.hash = '#secureExposed'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.secureInputTypeRadio
             jobCreatePage.secureInputTypeRadio.click()
             jobCreatePage.optionOpenKeyStorageButton.click()
             jobCreatePage.optionCloseKeyStorageButton.click()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
     }
 
@@ -236,14 +238,16 @@ class JobsSpec extends SeleniumBase {
             sleep 2000
             jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.optionUndoButton.click()
         expect:
             sleep 2000
             jobCreatePage.optionLis 1 isEmpty()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
     }
 
@@ -256,8 +260,9 @@ class JobsSpec extends SeleniumBase {
             sleep 2000
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
@@ -276,6 +281,7 @@ class JobsSpec extends SeleniumBase {
             sleep 2000
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
     }
 
@@ -288,16 +294,18 @@ class JobsSpec extends SeleniumBase {
             sleep 2000
             jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
             sleep 2000
             jobCreatePage.optionName 1 sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executor "window.location.hash = '#opt_sec_nexp_disabled'"
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
             jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executor "window.location.hash = '#optundoredo'"
@@ -308,6 +316,7 @@ class JobsSpec extends SeleniumBase {
             sleep 1000
             !(jobCreatePage.optionLis 0 isEmpty())
             !(jobCreatePage.optionLis 1 isEmpty())
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
     }
 
