@@ -68,12 +68,18 @@ export default defineComponent({
         };
     },
     methods: {
-        rootBrowse(path: string) {
+        rootBrowse(path: string, href: string) {
             //deselect any jobs
             this.jobPageStore.selectedJobs = [];
             this.browsePath = path;
             eventBus.emit("job-list-page:browsed", path);
-            //todo: browser history push
+            if(href) {
+              window.history.pushState(
+                {browsePath: path},
+                document.title,
+                href
+              );
+            }
         },
     },
     async mounted() {
@@ -83,9 +89,22 @@ export default defineComponent({
             this.queryRefresh = !this.queryRefresh;
             await this.jobBrowserStore.reload();
         });
-        eventBus.on("job-list-page:rootBrowse", async (path:string) => {
-            this.rootBrowse(path)
+        eventBus.on("job-list-page:rootBrowse", async (evt) => {
+            let { path, href } = evt;
+            this.rootBrowse(path, href);
         });
+        if (typeof history.replaceState == "function") {
+            if (!history.state) {
+                //set first page load state
+                let state = this.browsePath?{ start: true, browsePath: this.browsePath }:{ start: true };
+                history.replaceState(state, null, document.location.toString());
+            }
+        }
+        window.onpopstate =  (event) =>{
+            if (event.state) {
+                this.rootBrowse(event.state.browsePath|| "",null);
+            }
+        };
     },
 });
 </script>

@@ -56,7 +56,7 @@ export default defineComponent({
             return this.jobPageStore.jobPagePathHref(path);
         },
         browsePath(path: string) {
-            this.$emit("browseTo", path);
+            this.$emit("browseTo", path, this.browseHref(path));
         },
     },
     computed: {
