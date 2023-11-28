@@ -169,7 +169,7 @@ export default defineComponent({
           eventBus.emit(`job-bulk-edit-select-none-path`,path)
         },
         async rootBrowse(path: string) {
-            this.$emit("rootBrowse", path);
+            this.$emit("rootBrowse", path, this.jobPageStore.jobPagePathHref(path));
         },
         async refresh(initial:boolean=false) {
             this.loading = true;
