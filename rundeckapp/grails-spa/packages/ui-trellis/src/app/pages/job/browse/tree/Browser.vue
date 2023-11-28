@@ -7,6 +7,7 @@
                   :expanded="isExpanded(item.groupPath)"
                   @toggleExpanded="toggle(item.groupPath)"
                   @rootBrowse="rootBrowse(item.groupPath)"
+                  :href="this.jobPageStore.jobPagePathHref(item.groupPath)"
                   :key="item.groupPath"
                 >
                   <template v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)" #supplemental >

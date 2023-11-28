@@ -14,14 +14,14 @@
             ></i>
             {{ lastPathItem(item.groupPath) }}
         </btn>
-        <btn
-            type="link"
+        <a
             class="groupname text-strong group-name visibility-hidden"
             :title="`Browse job group: ${item.groupPath}`"
-            @click="$emit('rootBrowse', item.groupPath)"
+            @click.prevent="$emit('rootBrowse', item.groupPath)"
+            :href="href"
         >
             <i class="glyphicon glyphicon-folder-open"></i>
-        </btn>
+        </a>
         <slot name="supplemental" />
     </div>
 </template>
@@ -41,6 +41,10 @@ export default defineComponent({
         expanded: {
             type: Boolean,
             default: false,
+        },
+        href: {
+          type: String,
+          default: "",
         },
     },
     methods: {
