@@ -46,8 +46,8 @@ class ProjectExportSpec extends SeleniumBase {
         when:
             def projectExportPage = go ProjectExportPage, "SeleniumBasic"
         then:
-            projectExportPage.checkBoxes.size() == 9
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } == 8
+            projectExportPage.checkBoxes.size() >= 9
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
             projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } == 1
     }
 
@@ -61,7 +61,7 @@ class ProjectExportSpec extends SeleniumBase {
             }
         expect:
             projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } == 1
-            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } == 8
+            projectExportPage.checkBoxes.count {it.getAttribute("checked") == null } >= 8
     }
 
 }

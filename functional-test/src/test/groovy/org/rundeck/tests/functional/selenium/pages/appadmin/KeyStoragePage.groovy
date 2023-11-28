@@ -13,12 +13,13 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class KeyStoragePage extends BasePage {
 
-    By addUploadKey = By.linkText("Add or Upload a Key")
+    By addUploadKey = By.xpath("//button[contains(.,'Key')]")
     By uploadKeyType = By.name("uploadKeyType")
     By uploadPassword = By.id("uploadpasswordfield")
     By uploadPath = By.id("uploadResourcePath2")
     By uploadResourceName = By.id("uploadResourceName2")
-    By save = By.xpath("//input[@type='submit']")
+    By save = By.xpath("//button[contains(.,'Save')]")
+    By overBy = By.xpath("//button[contains(.,'Overwrite')]")
 
     String loadPath = "/menu/storage"
 
@@ -33,12 +34,12 @@ class KeyStoragePage extends BasePage {
     }
 
     def goToKey(String name, String storagePath) {
-        By storageBy = By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$storagePath')]")
+        By storageBy = By.xpath("//*[@class=\"action\"]//*[contains(.,'$storagePath')]")
         waitForElementVisible storageBy
         def storageEl = el storageBy
         storageEl.click()
 
-        By nameBy = By.xpath("//*[@id=\"page_storage\"]//*[@class=\"action\"]//*[contains(.,'$name')]")
+        By nameBy = By.xpath("//*[@class=\"action\"]//*[contains(.,'$name')]")
         waitForElementVisible nameBy
         def nameEl = el nameBy
         nameEl.click()
@@ -56,10 +57,13 @@ class KeyStoragePage extends BasePage {
     void deleteKey(String name, String storagePath) {
         goToKey name, storagePath
 
-        def actionLink = byAndWait By.xpath("//*[@class=\"btn-group\"]//button[contains(.,'Action')]")
-        actionLink.click()
+        def action = els By.xpath("//*[@class=\"btn-group\"]//button[contains(.,'Action')]")
+        if (action.size() == 1) {
+            def actionLink = byAndWait By.xpath("//*[@class=\"btn-group\"]//button[contains(.,'Action')]")
+            actionLink.click()
+        }
 
-        def delete = byAndWait By.linkText("Delete Selected Item")
+        def delete = byAndWait By.xpath("//button[contains(.,'Delete')]")
         delete.click()
 
         def deleteConfirm = byAndWait By.xpath("//*[@class=\"modal-content\"]//button[contains(.,'Delete')]")
@@ -68,10 +72,8 @@ class KeyStoragePage extends BasePage {
 
     void clickOverwriteKey(String storagePath, String name) {
         goToKey name, storagePath
-        By overBy = By.linkText("Overwrite Key")
         waitForElementVisible overBy
-        def overwriteButton = el overBy
-        overwriteButton.click()
+        el overBy click()
     }
 
     void overwriteKey(String newKey) {
