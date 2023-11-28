@@ -5,8 +5,11 @@ import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.extensions.TestResultExtension
 import org.rundeck.tests.functional.selenium.pages.BasePage
+
+import java.time.Duration
 
 /**
  * Utility Base for selenium test specs
@@ -67,5 +70,12 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         T page = page(clazz)
         page.go()
         return page
+    }
+
+    def wait(Duration duration, @DelegatesTo(WebDriverWait) Closure<?> closure) {
+        def waitfor = new WebDriverWait(driver, duration)
+        closure.delegate=waitfor
+        closure.resolveStrategy = Closure.DELEGATE_FIRST
+        closure.call(waitfor)
     }
 }
