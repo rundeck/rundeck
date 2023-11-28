@@ -139,6 +139,7 @@ class BasicJobsSpec extends SeleniumBase {
                 jobCreatePage.multiExecFalseField.click()
                 jobCreatePage.multiExecFalseField.isSelected()
             }
+            jobCreatePage.executor "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
     }
 
