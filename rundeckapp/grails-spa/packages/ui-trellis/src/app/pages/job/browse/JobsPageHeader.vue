@@ -110,7 +110,7 @@ export default defineComponent({
         return {
             jobPageStore,
             advancedSearchModalVisible: ref(false),
-            groupPath: ref(""),
+            groupPath: ref(props.queryParams?.groupPath || ""),
             wasFiltered: ref([]),
         };
     },
@@ -126,8 +126,8 @@ export default defineComponent({
         doSearchQuick() {
             this.doSearch();
         },
-        doRootBrowse(path: string) {
-            eventBus.emit("job-list-page:rootBrowse", path);
+        doRootBrowse(path: string, href: string) {
+            eventBus.emit("job-list-page:rootBrowse", { path, href });
         },
         updateFilters() {
             let keys = Object.keys(this.jobPageStore.query).filter(
