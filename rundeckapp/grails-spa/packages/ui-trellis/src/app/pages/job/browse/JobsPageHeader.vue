@@ -95,7 +95,14 @@ export default defineComponent({
         JobGroupsBreadcrumbs,
         JobSearchModal,
     },
-
+    props: {
+        queryParams: {
+            type: Object,
+            default: () => {
+                return {};
+            },
+        },
+    },
     setup(props) {
         const jobPageStore: JobPageStore = inject(
             JobPageStoreInjectionKey

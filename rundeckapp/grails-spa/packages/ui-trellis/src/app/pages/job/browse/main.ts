@@ -33,6 +33,7 @@ function init() {
   if(uiType!=='next'){
     return
   }
+  const pageQueryParams = loadJsonData("pageQueryParams")
 
   moment.locale(getRundeckContext().locale||'en_US')
   const page = rootStore.jobPageStore
@@ -53,9 +54,12 @@ function init() {
                   setup() {
                       provide(JobBrowserStoreInjectionKey, jobBrowserStore);
                       provide(JobPageStoreInjectionKey, jobPageStore);
+                    return {
+                      pageQueryParams
+                    }
                   },
                   template: `
-          <jobs-page />`,
+          <jobs-page :query-params="pageQueryParams?.queryParams" />`,
               })
           ),
       },
@@ -69,8 +73,11 @@ function init() {
           setup() {
             provide(JobBrowserStoreInjectionKey, jobBrowserStore);
             provide(JobPageStoreInjectionKey, jobPageStore);
+            return {
+              pageQueryParams
+            }
           },
-          template: `<jobs-page-header />`
+          template: `<jobs-page-header :query-params="pageQueryParams?.queryParams"/>`
         }))
       },
       {
