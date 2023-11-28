@@ -235,13 +235,12 @@
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<g:if test="${projectName}">
-    <section id="section-navbar">
-        <div id="navbar"/>
-    </section>
-</g:if>
 <section id="section-main" class="${projectName ? 'with-project' : ''}">
-
+    <g:if test="${projectName}">
+        <section id="section-navbar">
+            <div id="navbar"/>
+        </section>
+    </g:if>
     <div id="section-content-wrap">
         <div class="vue-ui-socket">
             <ui-socket section="main-content" location="before"></ui-socket>
