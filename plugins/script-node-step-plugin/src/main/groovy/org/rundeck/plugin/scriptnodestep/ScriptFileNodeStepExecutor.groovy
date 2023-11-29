@@ -4,13 +4,17 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionService
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
-import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext
+import org.rundeck.plugin.util.ScriptFileExecutionServiceImpl
+import org.rundeck.plugin.util.ScriptFileFramework;
 
 public class ScriptFileNodeStepExecutor {
     private final String scriptInterpreter;
@@ -75,12 +79,18 @@ public ScriptFileNodeStepExecutor(
         }
 
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
-        final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
+        ExecutionContextImpl.Builder newContextBuilder = ExecutionContextImpl.builder(stepExecutionContext)
+        ScriptFileFramework framework = new ScriptFileFramework(context.getFramework())
+        ExecutionServiceImpl executionService = new ScriptFileExecutionServiceImpl(framework);
+        framework.setExecutionService(executionService)
+
+        StepExecutionContext newContext = newContextBuilder.framework(framework).build()
+//        final ExecutionService executionService = framework.getExecutionService();
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
         NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
-                stepExecutionContext,
+                newContext,
                 entry,
                 this.adhocLocalString,
                 expandedVarsInURL,
