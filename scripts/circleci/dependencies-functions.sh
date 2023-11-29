@@ -33,7 +33,6 @@ dependencies_build_setup() {
 reconfigure_java_version(){
 
   sudo apt-get remove openjdk-11-jdk-headless
-  sudo apt-get remove zulu11-jdk-headless
   sudo apt-get -y --no-install-recommends install openjdk-17-jdk-headless
   sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
 
