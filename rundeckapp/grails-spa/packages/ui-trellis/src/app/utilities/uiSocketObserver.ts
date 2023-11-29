@@ -13,17 +13,15 @@ export const observer = new MutationObserver(function (mutations_list) {
         return;
       }
       const added_elem = added_node as Element;
-      if (
-        added_elem.className &&
-        added_elem.getElementsByClassName("vue-ui-socket")?.length > 0
-      ) {
+      let uiSockets:  HTMLCollectionOf<Element> | Element[] = added_elem.getElementsByClassName('vue-ui-socket')
+      uiSockets = (uiSockets?.length > 0)? uiSockets : [ added_elem ]
+
+        if( added_elem.className && uiSockets?.length > 0) {
         const i18n = initI18n();
         const rootStore = getRundeckContext().rootStore;
         const eventBus = getRundeckContext().eventBus;
 
-        for (const socketElem of added_elem.getElementsByClassName(
-          "vue-ui-socket",
-        )) {
+        for (const socketElem of uiSockets) {
           const vue = createApp(
             {
               name: "DynamicUiSocketRoot",
