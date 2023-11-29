@@ -5,7 +5,11 @@ import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 /**
  * Base type for page object model
@@ -37,6 +41,13 @@ abstract class BasePage {
      */
     void validatePage() {
 
+    }
+    void waitUntilPageLoaded() {
+        if(loadPath) {
+            new WebDriverWait(driver, Duration.ofSeconds(30)).until(
+                ExpectedConditions.urlToBe(context.client.baseUrl + loadPath)
+            )
+        }
     }
 
 

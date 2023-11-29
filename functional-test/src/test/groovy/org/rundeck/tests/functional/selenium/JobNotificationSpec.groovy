@@ -12,6 +12,7 @@ import org.rundeck.tests.functional.selenium.pages.LoginPage
 import org.rundeck.tests.functional.selenium.pages.NotificationEvent
 import org.rundeck.tests.functional.selenium.pages.NotificationType
 import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
+import org.rundeck.tests.functional.selenium.pages.ProjectListPage
 import org.rundeck.tests.functional.selenium.pages.SideBar
 import org.rundeck.tests.functional.selenium.pages.SideBarNavLinks
 import org.rundeck.tests.functional.selenium.pages.StepName
@@ -42,6 +43,7 @@ class JobNotificationSpec extends SeleniumBase {
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
+        page(ProjectListPage).waitUntilPageLoaded()
         projectHomePage.goProjectHome("SeleniumBasic")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
         jobListPage.getCreateJobLink().click()
@@ -87,6 +89,7 @@ class JobNotificationSpec extends SeleniumBase {
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
+            page(ProjectListPage).waitUntilPageLoaded()
             projectHomePage.goProjectHome("SeleniumBasic")
             sideBar.goTo(SideBarNavLinks.JOBS).click()
             jobListPage.getCreateJobLink().click()
