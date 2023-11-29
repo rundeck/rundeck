@@ -33,6 +33,9 @@ dependencies_build_setup() {
 reconfigure_java_version(){
 
   sudo apt-get remove openjdk-11-jdk-headless
+  sudo apt install gnupg ca-certificates curl
+      curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
+      echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
   sudo apt-get -y --no-install-recommends install openjdk-17-jdk-headless
   sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
 
