@@ -227,7 +227,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     @PreDestroy
     void cleanUp() {
-        configurationService.setExecutionModeActive(false)
+        //configurationService.setExecutionModeActive(false)
         applicationIsShutdown = true;
     }
 

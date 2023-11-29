@@ -25,6 +25,7 @@ import org.rundeck.app.config.SysConfigProp
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 
+import javax.annotation.PreDestroy
 import java.util.concurrent.TimeUnit
 
 @GrailsCompileStatic
@@ -56,6 +57,11 @@ class ConfigurationService implements InitializingBean, ConfigService {
 
     void setExecutionModeActive(boolean active) {
         executionModeActiveValue = active
+    }
+
+    @PreDestroy
+    void forceInactive(){
+        this.executionModeActive = false
     }
 
     /**
