@@ -11,7 +11,9 @@ import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionService
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
@@ -23,6 +25,8 @@ import com.dtolabs.rundeck.core.utils.Converter
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import org.apache.commons.codec.binary.Hex
+import org.rundeck.plugin.util.ScriptFileExecutionServiceImpl
+import org.rundeck.plugin.util.ScriptFileFramework
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -84,12 +88,17 @@ class ScriptURLNodeStepExecutor {
         }
 
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
-        final ExecutionService executionService = stepExecutionContext.getFramework().getExecutionService();
+        ExecutionContextImpl.Builder newContextBuilder = ExecutionContextImpl.builder(stepExecutionContext)
+        ScriptFileFramework framework = new ScriptFileFramework(context.getFramework())
+        ExecutionServiceImpl executionService = new ScriptFileExecutionServiceImpl(framework);
+        framework.setExecutionService(executionService)
+
+        StepExecutionContext newContext = newContextBuilder.framework(framework).build()
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
         NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
-                stepExecutionContext,
+                newContext,
                 entry,
                 null,
                 destinationTempFile.getAbsolutePath(),
