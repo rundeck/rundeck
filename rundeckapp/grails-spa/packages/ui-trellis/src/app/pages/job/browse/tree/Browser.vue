@@ -54,7 +54,7 @@
               <RecycleScroller
                   ref="scroller"
                   :items="sortedItems"
-                  :item-size="25"
+                  :item-size="27"
                   v-slot:default="{ item,active }"
                   key-field="id"
                   itemTag="li"
