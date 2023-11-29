@@ -655,9 +655,9 @@ workflows:
   build_and_test:
     when: << pipeline.git.branch >>
     jobs:
-#      - build-rundeck:
-#          name: Build
-#          <<: *slack-defaults
+      - build-rundeck:
+          name: Build
+          <<: *slack-defaults
 #      - test-gradle:
 #          name: Gradle Test
 #          <<: *slack-defaults
