@@ -1,6 +1,6 @@
 package org.rundeck.tests.functional.selenium
 
-
+import org.openqa.selenium.By
 import org.rundeck.tests.functional.selenium.pages.JobsListPage
 import org.rundeck.tests.functional.selenium.pages.JobsList_nextui_Page
 import org.rundeck.tests.functional.selenium.pages.LoginPage
@@ -24,7 +24,7 @@ class JobsListNextUiSpec extends SeleniumBase {
         setup:
             ProjectListPage listPage = page ProjectListPage
             LoginPage loginPage = page LoginPage
-            JobsListPage jobListPage = page JobsList_nextui_Page
+            JobsList_nextui_Page jobListPage = page JobsList_nextui_Page
             jobListPage.project = TEST_PROJECT
         when:
             loginPage.go()
@@ -35,6 +35,12 @@ class JobsListNextUiSpec extends SeleniumBase {
         when:
             jobListPage.go()
         then:
+            //validate ui type next
+
+            jobListPage.el(
+                By.cssSelector('body.ui-type-next')
+            ).isDisplayed()
+
             jobListPage.createJobLink.isDisplayed()
 
             def actionsButton = jobListPage.jobsActionsButton
