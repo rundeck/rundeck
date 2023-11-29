@@ -19,8 +19,6 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
-import org.rundeck.plugin.util.ScriptFileExecutionServiceImpl
-import org.rundeck.plugin.util.ScriptFileFramework
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = EXEC_COMMAND_TYPE)
 @PluginDescription(title = "Command", description = "Run a command on the remote node", isHighlighted = true, order = 0)
@@ -37,11 +35,7 @@ class CommandNodeStepPlugin implements NodeStepPlugin, ExecCommand, ProxyRunnerP
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
 
-        ScriptFileFramework framework = new ScriptFileFramework(context.getFramework())
-        ExecutionServiceImpl executionService = new ScriptFileExecutionServiceImpl(framework);
-        framework.setExecutionService(executionService)
-
-        NodeExecutorResult nodeExecutorResult =  framework.getExecutionService().executeCommand(
+        NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(
                 context.getExecutionContext(),
                 ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
                 .stringContainsPropertyReferencePredicate, adhocRemoteString),
