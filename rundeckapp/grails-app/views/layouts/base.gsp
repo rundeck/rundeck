@@ -168,11 +168,12 @@
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
-    <g:embedJSON id="pageUiMeta" data="[uiType     : params.nextUi?'next':params.legacyUi?'legacy':'current']"/>
+    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+    <g:embedJSON id="pageUiMeta" data="[uiType: uiType]"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
-                                                uiType     : params.nextUi?'next':params.legacyUi?'legacy':'current',
+                                                uiType     : uiType,
                                                 lang       : org.springframework.web.servlet.support.RequestContextUtils.getLocale(request).toLanguageTag(),
                                                 project    : params.project ?: request.project,
                                                 baseUrl    : createLink(uri: "/plugin/file/UI", absolute: true),
@@ -232,17 +233,22 @@
 
 </head>
 
-<body class="view">
+<body class="view ${'ui-type-'+uiType}">
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<g:if test="${projectName}">
+<g:if test="${projectName && uiType=='next'}">
     <section id="section-navbar">
         <div id="navbar"/>
     </section>
 </g:if>
 <section id="section-main" class="${projectName ? 'with-project' : ''}">
 
+    <g:if test="${projectName && uiType!='next'}">
+        <section id="section-navbar">
+            <div id="navbar"/>
+        </section>
+    </g:if>
     <div id="section-content-wrap">
         <div class="vue-ui-socket">
             <ui-socket section="main-content" location="before"></ui-socket>
