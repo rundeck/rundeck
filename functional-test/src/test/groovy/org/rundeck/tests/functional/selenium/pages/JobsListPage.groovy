@@ -7,7 +7,7 @@ import org.rundeck.util.container.SeleniumContext
 class JobsListPage extends BasePage{
 
     static final String PAGE_PATH = "/jobs"
-    By createJobButton = By.partialLinkText('new Job')
+    By createJobButton = By.partialLinkText('New Job')
 
     String loadPath = PAGE_PATH
 
