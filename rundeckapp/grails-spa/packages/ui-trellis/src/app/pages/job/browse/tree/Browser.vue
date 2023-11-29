@@ -216,6 +216,9 @@ export default defineComponent({
     },
     watch:{
       path(){
+        if(this.browsePath===this.path){
+          return
+        }
         this.browsePath=this.path
         this.refresh()
       },
