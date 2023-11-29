@@ -91,10 +91,8 @@ export default defineComponent({
       await this.loadFilters()
     },
     async doSaveFilter(name) {
-      console.log("save filter", name, this.query)
-      console.log("filters", this.filters)
       if(this.filters.find((f)=>f.filterName===name)){
-        this.notifyError("Filter name already exists")
+        this.notifyError(`Filter with nanme ${name} already exists`)
       }
       else{
         this.filterStore.saveFilter(this.projectName,{
