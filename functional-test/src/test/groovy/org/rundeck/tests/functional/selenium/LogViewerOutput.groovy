@@ -20,7 +20,7 @@ class LogViewerOutput extends SeleniumBase{
 
         when:
         loginPage.go()
-        loginPage.login(TEST_USER, "admin")
+        loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.goProjectHome("SeleniumBasic")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
         jobListPage.getCreateJobButton().click()
