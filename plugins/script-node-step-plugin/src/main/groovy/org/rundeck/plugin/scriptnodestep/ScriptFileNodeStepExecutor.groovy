@@ -13,8 +13,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
-import org.rundeck.plugin.util.ScriptFileExecutionServiceImpl
-import org.rundeck.plugin.util.ScriptFileFramework;
 
 public class ScriptFileNodeStepExecutor {
     private final String scriptInterpreter;
@@ -79,18 +77,12 @@ public ScriptFileNodeStepExecutor(
         }
 
         StepExecutionContext stepExecutionContext = context.getExecutionContext() as StepExecutionContext
-        ExecutionContextImpl.Builder newContextBuilder = ExecutionContextImpl.builder(stepExecutionContext)
-        ScriptFileFramework framework = new ScriptFileFramework(context.getFramework())
-        ExecutionServiceImpl executionService = new ScriptFileExecutionServiceImpl(framework);
-        framework.setExecutionService(executionService)
-
-        StepExecutionContext newContext = newContextBuilder.framework(framework).build()
-//        final ExecutionService executionService = framework.getExecutionService();
+        final ExecutionService executionService = context.getFramework().getExecutionService();
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
         NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
-                newContext,
+                stepExecutionContext,
                 entry,
                 this.adhocLocalString,
                 expandedVarsInURL,
