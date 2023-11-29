@@ -28,15 +28,15 @@ class LogViewerOutput extends SeleniumBase{
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
         jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
         jobCreatePage.waitForStepToBeShown(By.id("adhocRemoteStringField"))
-        jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("for i in {1..60}; do echo NUMBER \$i; sleep 0.1; done")
+        jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("for i in {1..60}; do echo NUMBER \$i; sleep 0.2; done")
         jobCreatePage.getSaveStepButton().click()
         jobCreatePage.waitForSavedStep(0)
         jobCreatePage.getCreateButton().click()
         jobShowPage.getRunJobBtn().click()
         jobShowPage.getLogOutputBtn().click()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),0,5)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),3,5)
         def firstLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),30,20)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),30,30)
         def finalLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
         def result = false
 
