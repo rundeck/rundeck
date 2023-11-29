@@ -175,7 +175,9 @@ export default defineComponent({
           }
         },
         async loadMeta(path:string){
-          this.jobBrowserStore.findPath(this.browsePath).breakpoint=0
+          let item = this.jobBrowserStore.findPath(this.browsePath)
+          item.breakpoint=0
+          item.loaded=false
           await this.refresh()
         },
         selectAll(path:string){
@@ -189,7 +191,7 @@ export default defineComponent({
         },
         async refresh(initial:boolean=false) {
             this.loading = true;
-            this.items = await this.jobBrowserStore.refresh(this.browsePath);
+            this.items = await this.jobBrowserStore.loadItems(this.browsePath);
             this.breakpointHit=this.jobBrowserStore.findPath(this.browsePath).bpHit
             this.loading = false;
             if(initial){
