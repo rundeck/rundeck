@@ -18,6 +18,7 @@ class JobCreatePage extends BasePage {
     By notificationSaveButton = By.id("job-notifications-edit-modal-btn-save")
     By jobDefinitionModal = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinition = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
+    By jobAddStepButton = By.cssSelector("#wfnewbutton > .btn")
 
     String loadPath = PAGE_PATH
 
@@ -93,6 +94,10 @@ class JobCreatePage extends BasePage {
         stepSaveButton.findElement(By.cssSelector(".btn.btn-cta.btn-sm"))
     }
 
+    WebElement getJobAddStepButton(){
+        el jobAddStepButton
+    }
+
     void waitForSavedStep(Integer stepNumber){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(By.id("wfitem_${stepNumber}"), stepNumber+1))
     }
@@ -103,6 +108,11 @@ class JobCreatePage extends BasePage {
 
     void waitForModal(Integer totalModals){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, totalModals))
+    }
+
+    void waitForAddNewStepBtn(By jobAddStepButton){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobAddStepButton))
+
     }
 }
 
