@@ -106,6 +106,15 @@
 
       <!-- TABS -->
       <div class="tab-content">
+        <div v-if="error" class="row row-space">
+          <div class="col-sm-12">
+              <span class="text-danger">
+                <i class="glyphicon glyphicon-warning-sign"></i>
+                <span>{{ error }}</span>
+              </span>
+          </div>
+        </div>
+
         <div class="tab-pane" :class="{'active': !nodeFilterStore.filter}" id="summary1" :key="`${nodeFilterStore.filter}summary`">
           <div class="row">
             <div class="col-xs-6">
@@ -149,14 +158,6 @@
         </div>
 
         <div class="tab-pane" :class="{'active': nodeFilterStore.filter}" id="result1" :key="`${nodeFilterStore.filter}result`">
-          <div v-if="error" class="row row-space">
-            <div class="col-sm-12">
-              <span class="text-danger">
-                <i class="glyphicon glyphicon-warning-sign"></i>
-                <span>{{ error }}</span>
-              </span>
-            </div>
-          </div>
           <div class="clear matchednodes" id="nodeview">
             <NodeTable
                 :node-set="nodeSet"
@@ -324,7 +325,7 @@ export default defineComponent({
         this.maxShown = data.max;
 
       } catch(e) {
-        this.error = "Nodes Query: request failed: " + e.message;
+        this.error = e.message;
       } finally {
         this.loading = false;
       }
