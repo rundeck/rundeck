@@ -522,7 +522,7 @@ jobs:
           docker_layer_caching: true
       - checkout
       - install-testdeck-dependencies
-      - reconfigure-java-version
+#      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
