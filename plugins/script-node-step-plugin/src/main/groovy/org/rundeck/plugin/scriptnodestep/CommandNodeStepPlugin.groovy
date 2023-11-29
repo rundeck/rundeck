@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecCommand
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -18,6 +19,8 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
+import org.rundeck.plugin.util.ScriptFileExecutionServiceImpl
+import org.rundeck.plugin.util.ScriptFileFramework
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = EXEC_COMMAND_TYPE)
 @PluginDescription(title = "Command", description = "Run a command on the remote node", isHighlighted = true, order = 0)
@@ -34,7 +37,11 @@ class CommandNodeStepPlugin implements NodeStepPlugin, ExecCommand, ProxyRunnerP
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
 
-        NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(
+        ScriptFileFramework framework = new ScriptFileFramework(context.getFramework())
+        ExecutionServiceImpl executionService = new ScriptFileExecutionServiceImpl(framework);
+        framework.setExecutionService(executionService)
+
+        NodeExecutorResult nodeExecutorResult =  framework.getExecutionService().executeCommand(
                 context.getExecutionContext(),
                 ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
                 .stringContainsPropertyReferencePredicate, adhocRemoteString),
