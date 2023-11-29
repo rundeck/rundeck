@@ -1,6 +1,6 @@
 <template>
     <div
-        class="job_list_row hover-reveal-hidden"
+        class="job-list-row-item hover-reveal-hidden"
         @click="handleClick"
         ref="itemDiv"
     >
@@ -115,5 +115,16 @@ export default defineComponent({
 <style scoped lang="scss">
 .job-description {
     margin-left: var(--spacing-2);
+}
+.job-list-row-item{
+  padding: 1px 0 1px 3px;
+  border-style: solid;
+  border-width: 0 0 3px 0;
+  border-color: transparent;
+  cursor: pointer;
+}
+.hover .job-list-row-item{
+  background: var(--background-color-accent-lvl2);
+  border-color: var(--border-color);
 }
 </style>
