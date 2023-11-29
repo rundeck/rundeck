@@ -135,4 +135,9 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
     Map<String, String> getRuntimeProperties(ExecutionContext context) {
         return context.getFramework().getFrameworkProjectMgr().loadProjectConfig(context.frameworkProject).getProjectProperties()
     }
+
+    @Override
+    Map<String, String> getRuntimeFrameworkProperties(ExecutionContext context){
+        return context.getIFramework().getPropertyLookup().getPropertiesMap()
+    }
 }
