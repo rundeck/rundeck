@@ -36,7 +36,7 @@ export class JobBrowserStoreItem {
         if (!child) {
             child = new JobBrowserStoreItem(
                 { job: false, groupPath: searchPath },
-                path
+                searchPath
             );
             this.children.push(child);
         }
