@@ -228,7 +228,7 @@ commands:
       - install-node
       - run-build-step:
           step-name: Install Java 17
-          command: dependencies_reconfigure_java
+          command: reconfigure_java_version
 
 
 #### Job Definitions ####
@@ -423,6 +423,7 @@ jobs:
     steps:
       - checkout
       - install-build-dependencies
+      - reconfigure-java-version
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
