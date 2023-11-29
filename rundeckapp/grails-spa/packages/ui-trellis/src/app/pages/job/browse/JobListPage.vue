@@ -83,8 +83,6 @@ export default defineComponent({
         },
     },
     async mounted() {
-        await this.jobPageStore.load();
-        this.loaded = true;
         eventBus.on("job-list-page:search", async () => {
             this.queryRefresh = !this.queryRefresh;
             await this.jobBrowserStore.reload();
@@ -105,6 +103,8 @@ export default defineComponent({
                 this.rootBrowse(event.state.browsePath|| "",null);
             }
         };
+        await this.jobPageStore.load();
+        this.loaded = true;
     },
 });
 </script>
