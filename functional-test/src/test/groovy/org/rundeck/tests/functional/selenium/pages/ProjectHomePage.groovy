@@ -16,10 +16,10 @@ class ProjectHomePage extends BasePage {
     }
 
     void goProjectHome(String projectName){
-        def path = loadPath.replaceAll('\\$PROJECT', projectName)
+        def path = PAGE_PATH.replaceAll('\\$PROJECT', projectName)
         driver.get(context.client.baseUrl + path)
-        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
-            ExpectedConditions.urlContains(path)
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(
+            ExpectedConditions.urlToBe(context.client.baseUrl + path)
         )
     }
 }
