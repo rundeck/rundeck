@@ -36,7 +36,10 @@ class JobsListNextUiSpec extends SeleniumBase {
             jobListPage.go()
         then:
             //validate ui type next
-
+            verifyAll {
+                driver.currentUrl.contains('uiNext=true')
+                driver.pageSource.contains('ui-type-next')
+            }
             jobListPage.el(
                 By.cssSelector('body.ui-type-next')
             ).isDisplayed()
