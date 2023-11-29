@@ -695,7 +695,7 @@ workflows:
       - test-docker:
           name: Docker Test
           command: bash test/run-docker-tests.sh
-#          <<: *require-build
+          <<: *require-build
           <<: *slack-defaults
 #      - test-docker:
 #          name: Tomcat 8 API Test
