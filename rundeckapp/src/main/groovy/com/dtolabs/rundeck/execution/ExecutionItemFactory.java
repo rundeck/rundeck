@@ -23,16 +23,13 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.execution.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 

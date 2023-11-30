@@ -3,7 +3,7 @@ package org.rundeck.plugin.scriptnodestep
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecArgList
-import com.dtolabs.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ExecCommand
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
