@@ -38,26 +38,19 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             }
         } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null){
             synchronized (LOCK) {
-                try{
-                    RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
-                    rdDockerContainer.start()
-                    CLIENT_PROVIDER = rdDockerContainer
-                }catch(Exception e){
-                    log.error("ERROR STARTING DOCKER", e)
-                    System.exit(1)
-                }
+                RdDockerContainer rdDockerContainer = new RdDockerContainer(getClass().getClassLoader().getResource(DEFAULT_DOCKERFILE_LOCATION).toURI())
+                rdDockerContainer.start()
+                CLIENT_PROVIDER = rdDockerContainer
             }
         } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
             synchronized (LOCK) {
-                try{
-                    RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
-                    log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
-                    RUNDECK.start()
-                    CLIENT_PROVIDER = RUNDECK
-                }catch(Exception e){
-                    log.error("ERROR STARTING DOCKER-COMPOSE", e)
-                    System.exit(1)
-                }
+                log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
+                log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
+                log.info("Starting testcontainer: LICENSE_LOCATION: ${RdContainer.LICENSE_LOCATION}")
+                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdContainer.TEST_RUNDECK_GRAILS_URL}")
+                RUNDECK = new RdContainer(getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI())
+                RUNDECK.start()
+                CLIENT_PROVIDER = RUNDECK
             }
         }
         return CLIENT_PROVIDER

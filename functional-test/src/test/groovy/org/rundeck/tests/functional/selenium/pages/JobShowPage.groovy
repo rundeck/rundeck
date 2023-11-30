@@ -9,7 +9,7 @@ import org.rundeck.util.container.SeleniumContext
 import java.time.Duration
 
 class JobShowPage extends BasePage{
-
+    By jobUuidText = By.cssSelector('#subtitlebar > div > div.subtitle-head-item.flex-item-auto > section > div > div')
     static final String PAGE_PATH = "/job/show"
     String loadPath = PAGE_PATH
     By runJobBtn = By.id("execFormRunButton")
@@ -36,5 +36,9 @@ class JobShowPage extends BasePage{
         if (!driver.currentUrl.contains(PAGE_PATH)) {
             throw new IllegalStateException("Not on job show page: " + driver.currentUrl)
         }
+    }
+
+    WebElement getJobUuidText(){
+        el jobUuidText
     }
 }

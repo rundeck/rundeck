@@ -730,7 +730,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
 
         then:
-        response.hasAccess
+        response
 
     }
 

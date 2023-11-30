@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
@@ -51,11 +52,13 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
@@ -86,6 +89,7 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import org.rundeck.client.util.Client
@@ -1960,6 +1964,34 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project
         )
+    }
+
+    /**
+     * load metadata for a specific project
+     * @param project
+     * @param metakeys
+     * @param uuid
+     * @param authContext
+     * @return
+     */
+    @GrailsCompileStatic
+    List<ItemMeta> loadProjectMetaItems(
+        String project,
+        Set<String> metakeys,
+        UserAndRolesAuthContext authContext
+    ) {
+        List<ItemMeta> metaVals = []
+        def components = applicationContext.getBeansOfType(ProjectMetadataComponent) ?: [:]
+        components.each { name, component ->
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForProject(project, metakeys, authContext)
+            metaItems.ifPresent {
+                metaVals.addAll(
+                    it.stream().map(ItemMeta.&from).collect(Collectors.toList())
+                )
+            }
+        }
+
+        return metaVals
     }
 }
 

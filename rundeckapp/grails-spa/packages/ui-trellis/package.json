@@ -9,7 +9,7 @@
     "ci:app:build": "npm ci && npm run build:app",
     "dev:library:build": "npm install && npm run build:library --prefer-offline --no-audit",
     "ci:library:build": "npm ci && npm run build:library --prefer-offline --no-audit",
-    "dev": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode development --watch && tsc -p ./tsconfig.app.json && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode development --watch",
+    "dev": "export NODE_OPTIONS=--openssl-legacy-provider && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode development --watch && tsc -p ./tsconfig.app.json && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js ./node_modules/.bin/vue-cli-service build --mode development --watch",
     "build:app": "run-script-os",
     "build:app:darwin:linux": "export NODE_OPTIONS=--openssl-legacy-provider && VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js ./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.app.json",
     "build:app:win32": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.app.js node_modules/.bin/vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.app.json",
@@ -102,7 +102,7 @@
     "storybook-dark-mode": "^1.0.8",
     "ts-jest": "^28.0.8",
     "ts-node": "^10.9.1",
-    "typescript": "^4.6.3",
+    "typescript": "^5.1.6",
     "uuid": "^8.3.2",
     "vue-loader": "^16.8.3",
     "walk": "^2.3.15"

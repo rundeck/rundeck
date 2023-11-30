@@ -39,7 +39,8 @@
 import {ActivityFilterStore} from '../../../library/stores/ActivityFilterStore'
 import { defineComponent } from "vue";
 import { getRundeckContext } from "../../../library";
-import {  MessageBox } from 'uiv';
+import {  MessageBox, Notification } from 'uiv';
+
 
 export default defineComponent({
   props: ["query", "hasQuery","eventBus"],
@@ -56,6 +57,14 @@ export default defineComponent({
   },
   emits: ['select_filter'],
   methods: {
+    notifyError(msg) {
+      Notification.notify({
+        type: "danger",
+        title: "An Error Occurred",
+        content: msg,
+        duration: 0
+      });
+    },
     async loadFilters() {
       this.filters = this.filterStore.loadForProject(this.projectName).filters||[]
     },
@@ -82,11 +91,17 @@ export default defineComponent({
       await this.loadFilters()
     },
     async doSaveFilter(name) {
-      this.filterStore.saveFilter(this.projectName,{
-        filterName:name,
-        query:{...this.query, projFilter: this.projectName}
-      })
-      await this.loadFilters()
+      if(this.filters.find((f)=>f.filterName===name)){
+        this.notifyError(`Filter with name ${name} already exists`)
+      }
+      else{
+        this.filterStore.saveFilter(this.projectName,{
+          filterName:name,
+          query:{...this.query, projFilter: this.projectName}
+        })
+        await this.loadFilters()
+      }
+
     },
     saveFilterPrompt() {
       MessageBox.prompt({

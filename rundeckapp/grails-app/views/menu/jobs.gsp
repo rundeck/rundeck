@@ -400,6 +400,8 @@ search
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+      <asset:javascript src="static/pages/job/browse.js" defer="defer"/>
+      <asset:stylesheet href="static/css/pages/job/browse.css" />
 </head>
 <body>
 
@@ -506,26 +508,27 @@ search
 
       <div class="card">
         <div class="card-content">
-          <div class="runbox primary jobs" id="indexMain">
-            <div id="error" class="alert alert-danger" style="display:none;"></div>
-            <g:render template="workflowsFull"
-                      model="${[
-                          jobExpandLevel    : jobExpandLevel,
-                          jobgroups         : jobgroups,
-                          wasfiltered       : wasfiltered ? true : false,
-                          clusterMap        : clusterMap,
-                          nextExecutions    : nextExecutions,
-                          jobauthorizations : jobauthorizations,
-                          authMap           : authMap,
-                          nowrunningtotal   : nowrunningtotal,
-                          max               : max,
-                          offset            : offset,
-                          paginateParams    : paginateParams,
-                          sortEnabled       : true,
-                          rkey              : rkey,
-                          clusterModeEnabled: clusterModeEnabled
-                      ]}"/>
+          <div class="runbox primary jobs " id="indexMain">
+          <div id="error" class="alert alert-danger" style="display:none;"></div>
+          <g:render template="workflowsFull"
+                    model="${[
+                            jobExpandLevel    : jobExpandLevel,
+                            jobgroups         : jobgroups,
+                            wasfiltered       : wasfiltered ? true : false,
+                            clusterMap        : clusterMap,
+                            nextExecutions    : nextExecutions,
+                            jobauthorizations : jobauthorizations,
+                            authMap           : authMap,
+                            nowrunningtotal   : nowrunningtotal,
+                            max               : max,
+                            offset            : offset,
+                            paginateParams    : paginateParams,
+                            sortEnabled       : true,
+                            rkey              : rkey,
+                            clusterModeEnabled: clusterModeEnabled
+                    ]}"/>
           </div>
+
           <g:if test="${paginateJobs && !wasfiltered}">
           <div>
             Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}

@@ -486,6 +486,9 @@ jobs:
           step-name: Test Packages
           command: packaging_test_packages
       - save-build-cache
+      - store_artifacts:
+          path: ~/workspace/packaging/packaging/build/distributions
+
 
 
   # Run Testdeck job on docker executor.
@@ -631,7 +634,14 @@ workflows:
 
 
   build_and_test:
-    when: << pipeline.git.branch >>
+    when:
+      and:
+        - << pipeline.git.branch >>
+        - not:
+            matches:
+              pattern: /^pull\/[0-9]+$/
+              value: << pipeline.git.branch >>
+
     jobs:
       - build-rundeck:
           name: Build
