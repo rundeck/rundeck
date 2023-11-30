@@ -697,16 +697,16 @@ workflows:
           command: bash test/run-docker-tests.sh
           <<: *require-build
           <<: *slack-defaults
-#      - test-docker:
-#          name: Tomcat 8 API Test
-#          command: bash test/run-docker-tomcat-tests.sh 8-jdk11
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: Tomcat 9 API Test
-#          command: bash test/run-docker-tomcat-tests.sh 9-jdk11
-#          <<: *require-build
-#          <<: *slack-defaults
+      - test-docker:
+          name: Tomcat 8 API Test
+          command: bash test/run-docker-tomcat-tests.sh 8-jdk17
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: Tomcat 9 API Test
+          command: bash test/run-docker-tomcat-tests.sh 9-jdk17
+          <<: *require-build
+          <<: *slack-defaults
 #      - test-machine:
 #          name: API Test
 #          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
