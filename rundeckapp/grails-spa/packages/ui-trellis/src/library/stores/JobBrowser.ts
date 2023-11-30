@@ -17,7 +17,7 @@ export class JobBrowserStoreItem {
         this.item = item;
     }
 
-    findPath(path: string): JobBrowserStoreItem | null {
+    findPath(path: string, create:boolean = false): JobBrowserStoreItem | null {
         if (path === this.path || (!this.path && !path)) {
             return this;
         }
@@ -34,13 +34,17 @@ export class JobBrowserStoreItem {
         const searchPath = this.path ? this.path + "/" + paths[0] : paths[0];
         let child = this.children.find((c) => c.path === searchPath);
         if (!child) {
-            child = new JobBrowserStoreItem(
-                { job: false, groupPath: searchPath },
-                searchPath
-            );
-            this.children.push(child);
+            if(create) {
+                child = new JobBrowserStoreItem(
+                  {job: false, groupPath: searchPath},
+                  searchPath
+                );
+                this.children.push(child);
+            }else{
+                return null
+            }
         }
-        return child.findPath(path);
+        return child.findPath(path, create);
     }
 
     async load(jobPageStore: JobPageStore): Promise<JobBrowseItem[]> {
@@ -82,7 +86,7 @@ export class JobBrowserStore extends JobBrowserStoreItem {
     }
 
     async loadItems(path: string): Promise<JobBrowseItem[]> {
-        let item = this.findPath(path)
+        let item = this.findPath(path, true)
         if (item) {
             return item.load(this.jobPageStore)
         } else {
@@ -95,7 +99,7 @@ export class JobBrowserStore extends JobBrowserStoreItem {
     }
 
     async refresh(path: string): Promise<JobBrowseItem[]> {
-        let item = this.findPath(path)
+        let item = this.findPath(path, true)
         if (item) {
             item.loaded = false
             return item.load(this.jobPageStore)
