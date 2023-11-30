@@ -11,19 +11,19 @@ import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionService
-import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.utils.Converter
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.apache.commons.codec.binary.Hex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,6 +32,7 @@ import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
+@CompileStatic
 class ScriptURLNodeStepExecutor {
     static Logger logger = LoggerFactory.getLogger(ScriptURLNodeStepExecutor.class);
 
@@ -64,7 +65,7 @@ class ScriptURLNodeStepExecutor {
                 + "/cache/ScriptURLNodeStepExecutor");
     }
 
-    public void executeScriptURL(Map<String, Object> configuration, INodeEntry entry) {
+    void executeScriptURL(Map<String, Object> configuration, INodeEntry entry) {
         File destinationTempFile = downloadURLToTempFile(context, entry);
         if (!USE_CACHE) {
             destinationTempFile.deleteOnExit();
@@ -90,7 +91,7 @@ class ScriptURLNodeStepExecutor {
 
         boolean argsQuoted = interpreterArgsQuoted != null ? interpreterArgsQuoted : false;
 
-        NodeExecutorResult nodeExecutorResult = scriptUtils.executeScriptFile(
+        NodeStepResult nodeExecutorResult = scriptUtils.executeScriptFile(
                 stepExecutionContext,
                 entry,
                 null,
@@ -104,7 +105,7 @@ class ScriptURLNodeStepExecutor {
                 expandTokens
         );
 
-        if(nodeExecutorResult.resultCode != 0){
+        if(!nodeExecutorResult.isSuccess()){
             throw new NodeStepException( nodeExecutorResult.failureMessage, nodeExecutorResult.failureReason, entry.getNodename())
         }
     }
@@ -194,7 +195,7 @@ class ScriptURLNodeStepExecutor {
 
     public static final Converter<String, String> urlPathEncoder = s -> {
         try {
-            return URLEncoder.encode(s,UTF_8).replace("+","%20");
+            return URLEncoder.encode(s.toString(),UTF_8).replace("+","%20");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return s;
@@ -202,7 +203,7 @@ class ScriptURLNodeStepExecutor {
     };
     public static final Converter<String, String> urlQueryEncoder = s -> {
         try {
-            return URLEncoder.encode(s,UTF_8).replace("+","%20");
+            return URLEncoder.encode(s.toString(),UTF_8).replace("+","%20");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return s;
@@ -216,7 +217,8 @@ class ScriptURLNodeStepExecutor {
      * @param nodename default node context
      * @return expanded string
      */
-    public static String expandUrlString(
+    @CompileDynamic
+    static String expandUrlString(
             final String urlString,
             final MultiDataContext<ContextView, DataContext> dataContext,
             final String nodename
@@ -234,7 +236,7 @@ class ScriptURLNodeStepExecutor {
                         DataContextUtils.replaceMissingOptionsWithBlank,
                         true,
                         false
-                ));
+                ))
         if (qindex > 0) {
             builder.append("?");
             if (qindex < urlString.length() - 1) {

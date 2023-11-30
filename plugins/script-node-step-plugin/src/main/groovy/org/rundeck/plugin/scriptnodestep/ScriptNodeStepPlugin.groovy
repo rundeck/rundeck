@@ -1,15 +1,12 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.BaseCommandExec
 import com.dtolabs.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
@@ -18,8 +15,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Run a script on the remote node", isHighlighted = true, order = 1)
-@PluginMetadata(key = ExecutionEnvironmentConstants.ENVIRONMENT_TYPE_KEY, value = ExecutionEnvironmentConstants.LOCAL_RUNNER)
-class ScriptNodeStepPlugin implements NodeStepPlugin, ScriptCommand  {
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand  {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
