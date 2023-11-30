@@ -17,16 +17,15 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.execution.ExecCommand
-import com.dtolabs.rundeck.core.execution.ScriptFileCommand
-import com.dtolabs.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptFileCommand
+import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants

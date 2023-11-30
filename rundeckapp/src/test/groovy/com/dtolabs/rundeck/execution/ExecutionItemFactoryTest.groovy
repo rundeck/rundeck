@@ -19,19 +19,15 @@ package com.dtolabs.rundeck.execution
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem
 import com.dtolabs.rundeck.core.execution.HasFailureHandler
-import com.dtolabs.rundeck.core.execution.ScriptFileCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
-
 import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import rundeck.CommandExec
 
 /**
  * ExecutionItemFactoryTest is ...

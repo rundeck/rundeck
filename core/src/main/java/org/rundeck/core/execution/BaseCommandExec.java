@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.execution;
+package org.rundeck.core.execution;
 
 public interface BaseCommandExec {
     default String getArgString() {return null;};
