@@ -23,7 +23,7 @@ class LogViewerOutput extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.goProjectHome("SeleniumBasic")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
-        jobListPage.getCreateJobButton().click()
+        jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("loop job")
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
         jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
