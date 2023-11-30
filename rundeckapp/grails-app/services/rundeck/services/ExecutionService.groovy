@@ -63,6 +63,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.events.EventPublisher
 import grails.events.annotation.Publisher
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
@@ -227,8 +228,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     @PreDestroy
     void cleanUp() {
-        //configurationService.setExecutionModeActive(false)
         applicationIsShutdown = true;
+    }
+
+    @Subscriber("rdpro.shutdown")
+    void forceInactive(){
+        configurationService.setExecutionModeActive(false)
     }
 
     /**

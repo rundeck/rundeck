@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.RundeckConfigBase
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
+import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import org.rundeck.app.config.ConfigService
 import org.rundeck.app.config.SysConfigProp
@@ -57,11 +58,6 @@ class ConfigurationService implements InitializingBean, ConfigService {
 
     void setExecutionModeActive(boolean active) {
         executionModeActiveValue = active
-    }
-
-    @PreDestroy
-    void forceInactive(){
-        this.executionModeActive = false
     }
 
     /**
