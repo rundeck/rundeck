@@ -319,6 +319,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
+        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
+            params.nextUi = true
+            return render(view: 'jobs.next', model: [:])
+        }
 
         if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
             query.paginatedRequired = true
@@ -3578,15 +3582,15 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, params.project)
-                            if( null !== validation && validation.hasAccess ){
+                            def keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, params.project)
+                            if( keyAccess ){
                                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, true)
                                 pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                                 pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                                 pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                             }else{
-                                results.warning = validation.message
+                                results.warning = g.message(code:'scm.export.auth.key.noAccess')
                             }
                         }
                         results.putAll(pluginData)
@@ -3607,15 +3611,15 @@ if executed in cluster mode.
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if (pluginData.scmImportEnabled) {
-                            def validation = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, params.project)
-                            if( null !== validation && validation.hasAccess ){
+                            def keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, params.project)
+                            if( keyAccess ){
                                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                                 pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
                                 results.putAll(pluginData)
                             }else{
-                                results.warning = validation.message
+                                results.warning = g.message(code:'scm.import.auth.key.noAccess')
                             }
                         }
                     }

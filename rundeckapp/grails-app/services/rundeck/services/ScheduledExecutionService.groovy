@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
@@ -44,12 +45,17 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
+import org.rundeck.app.components.jobs.ComponentMeta
+import org.rundeck.app.components.jobs.JobMetadataComponent
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.model.v1.DeletionResult
+import org.rundeck.app.data.model.v1.job.JobBrowseItem
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -90,6 +96,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -106,6 +113,7 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.RdJobBrowseItem
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
@@ -121,6 +129,7 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 
 
 /**
@@ -438,7 +447,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 order("jobName","asc")
             }
-        };
+        }
         def schedlist = [];
         scheduled.each{
             schedlist << it
@@ -515,6 +524,160 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
+    /**
+     * load metadata for a specific job
+     * @param metakeys
+     * @param uuid
+     * @param authContext
+     * @return
+     */
+    List<ItemMeta> loadJobMetaItems(
+        Set<String> metakeys,
+        String uuid,
+        UserAndRolesAuthContext authContext
+    ) {
+        def jobData = jobDataProvider.findBasicByUuid(uuid).orElseThrow {
+            new NotFound('job', uuid)
+        }
+        List<ItemMeta> metaVals = []
+        def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
+        components.each { name, component ->
+            Optional<List<ComponentMeta>> metaItems = component.getMetadataForJob(jobData, metakeys, authContext)
+            metaItems.ifPresent { metaList ->
+                metaVals.addAll(
+                    metaList.stream().map(ItemMeta.&from).collect(Collectors.toList())
+                )
+            }
+        }
+
+        return metaVals
+    }
+    /**
+     * Load metadata for a list of jobs
+     * @param project
+     * @param path
+     * @param metakeys
+     * @param items
+     * @param authContext
+     * @return
+     */
+    Map<String, List<ItemMeta>> loadJobMetaItems(
+        String project,
+        String path,
+        Set<String> metakeys,
+        List<JobBrowseItem> items,
+        UserAndRolesAuthContext authContext
+    ) {
+        Map<String, List<ItemMeta>> metaVals = new HashMap<>()
+
+        def jobs = items.stream().
+            filter(JobBrowseItem.&isJob).
+            map(JobBrowseItem.&getJobData).
+            collect(Collectors.toList())
+        if(jobs.empty){
+            return [:]
+        }
+        def components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
+        components.each { name, component ->
+            Map<String, List<ComponentMeta>> metaItems = component.getMetadataForJobs(jobs, metakeys, authContext)
+            for (String id : metaItems.keySet()) {
+                metaVals.computeIfAbsent(id, { new ArrayList<ComponentMeta>()}).
+                    addAll(
+                        metaItems.get(id).stream().map(ItemMeta.&from).collect(Collectors.toList())
+                    )
+            }
+        }
+
+        return metaVals
+    }
+
+    /**
+     * Browse jobs within the project at the specified group path.
+     * This only returns jobs with read/view authorization, or sub group paths where a job exists
+     * that the user has authorization to view.
+     *
+     * @param project project
+     * @param path root of the path to search
+     * @param authContext auth context
+     * @return
+     */
+    @CompileStatic
+    List<JobBrowseItem> basicQueryJobs(String project, JobQueryInputData queryInput, UserAndRolesAuthContext authContext){
+        long start = System.currentTimeMillis()
+        def path = queryInput.groupPath
+        def result = jobDataProvider.queryJobs(queryInput)
+        long qend=System.currentTimeMillis()-start
+        //filter results for authorization read/view
+        //remove subpath results and convert to simple groups
+        List<JobBrowseItem> filtered = new ArrayList<JobBrowseItem>()
+        Set<String> seenChildPath = new HashSet<String>()
+        int skipped=0
+        int authchecks=0
+        long start2 = System.currentTimeMillis()
+        for (JobDataSummary item : result.results) {
+            //include an item if the job is authorized, and the path matches the query path
+            //include an item's group if the job is authorized, and the sub path of the group has not already been added
+            //only check authorization of a job, if the group matches the path OR the group has not already been authorized
+            def isAuthorized = false
+            //exact path match, should include this job if it is authorized
+            if(item.groupPath==path || (!item.groupPath && !path)){
+                authchecks++
+                if(rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                    authContext,
+                    rundeckAuthContextProcessor.authResourceForJob(item.jobName, item.groupPath, item.uuid),
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                    project
+                )){
+                    filtered << new RdJobBrowseItem(jobData:item,job:true)
+                }
+                continue
+            }
+
+            //path of the single child group of the query, also include as a group if authorized
+            String childPath = null
+            if (
+                //note, this should be trivially true because we queried for this path, but check anyway
+                path && item.groupPath.startsWith(path + '/')
+                || (!path && item.groupPath)
+            ) {
+                if(path){
+                    def base = item.groupPath.substring(path.length()+1)
+                    def parts = base.split('/')
+                    childPath=path+'/'+parts[0]
+                }else{
+                    def parts = item.groupPath.split('/')
+                    childPath=parts[0]
+                }
+            }
+            if(!childPath){
+                //unexpected
+                continue
+            }
+            if(seenChildPath.contains(childPath)){
+                //we have already authorized another job matching this child path, no need to check again
+                skipped++
+                continue
+            }
+
+            authchecks++
+            //have not yet seen this child subpath, so check authorization
+            if (rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForJob(item.jobName, item.groupPath, item.uuid),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                project
+            )) {
+                //job was authorized, we can include the childPath in the results
+                filtered << new RdJobBrowseItem(groupPath:childPath)
+
+                //mark as seen so we do not need to check again
+                seenChildPath<<childPath
+            }
+        }
+        long qend2=System.currentTimeMillis()-start2
+//        log.warn("basicQueryJobs: query: ${path} authchecks: ${authchecks} skipped: ${skipped} qsize: ${qsize} qtime: ${qend}ms authchecktime: ${qend2}ms")
+        return filtered
+    }
 
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
@@ -4454,8 +4617,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ScheduledExecution scheduledExecution) {
         def scmOptions = [:]
         if (scmService.projectHasConfiguredExportPlugin(project)) {
-            def userRightsToExport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project) as Map<String, Object>
-            if (userRightsToExport.get("hasAccess")) {
+            boolean keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.EXPORT, project)
+            if (keyAccess) {
                 def exportModel = [:]
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_ENABLED.getOptionKey(), true)
                 exportModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_EXPORT_STATUS.getOptionKey(), scmService.exportStatusForJobs(project, authContext, [scheduledExecution]))
@@ -4464,8 +4627,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (scmService.projectHasConfiguredImportPlugin(project)) {
-            def userRightsToImport = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project) as Map<String, Object>
-            if (userRightsToImport.get("hasAccess")) {
+            boolean keyAccess = scmService.userHasAccessToScmConfiguredKeyOrPassword(authContext, ScmService.IMPORT, project)
+            if (keyAccess) {
                 def importModel = [:]
                 importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_ENABLED.getOptionKey(), true)
                 importModel.put(ScmService.ScmOptionsForJobActionDropdown.SCM_IMPORT_STATUS.getOptionKey(), scmService.importStatusForJobs(project, authContext, [scheduledExecution]))

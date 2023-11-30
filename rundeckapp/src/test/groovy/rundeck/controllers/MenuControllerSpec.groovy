@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -106,7 +107,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
+            _ * featurePresent(Features.LEGACY_UI) >> true
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -1477,7 +1480,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                     controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData){
@@ -1522,7 +1525,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
@@ -1576,7 +1579,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         controller.storageService = Mock(StorageService)
         def project = 'test'
@@ -1635,7 +1638,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
@@ -1690,7 +1693,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)

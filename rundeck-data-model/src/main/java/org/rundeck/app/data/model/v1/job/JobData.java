@@ -12,21 +12,13 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 import java.io.Serializable;
 import java.util.*;
 
-public interface JobData {
-    String getUuid();
-    String getJobName();
-    String getDescription();
-    String getProject();
+public interface JobData extends JobDataSummary {
     String getArgString();
     String getUser();
     String getTimeout();
     String getRetry();
     String getRetryDelay();
-    String getGroupPath();
     List<String> getUserRoles();
-    Boolean getScheduled();
-    Boolean getScheduleEnabled();
-    Boolean getExecutionEnabled();
     Boolean getMultipleExecutions();
     String getNotifyAvgDurationThreshold();
     String getTimeZone();
@@ -34,7 +26,6 @@ public interface JobData {
     String getMaxMultipleExecutions();
     Date getDateCreated();
     Date getLastUpdated();
-    String getServerNodeUUID();
 
     /**
      * Configuration for plugins that are attached to this job, such as execution lifecycle plugins
