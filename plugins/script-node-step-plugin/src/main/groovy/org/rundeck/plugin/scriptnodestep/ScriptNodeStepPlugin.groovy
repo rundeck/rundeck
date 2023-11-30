@@ -14,7 +14,7 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
-@PluginDescription(title = "Script", description = "Run a script on the remote node", isHighlighted = true, order = 1)
+@PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
 class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand  {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
@@ -32,22 +32,39 @@ class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, 
     String adhocLocalString
 
     @PluginProperty(title = "Arguments",
-            description = "Arguments",
+            description = "Enter the commandline arguments for the script",
             required = false)
     String argString;
 
     @PluginProperty(title = "Invocation String",
-            description = "",
+            description = '''Leave blank to run script directly
+Specify how to invoke the script file. By default the temporary script file path will be appended to this string, followed by any arguments. Include `${scriptfile}` anywhere to change the file path argument location:
+_Examples_:
+*   `sudo ${scriptfile}`
+*   `time ${scriptfile}`
+*   `python -u ${scriptfile}`
+*   `mytool -f ${scriptfile} -action execute -args`
+''',
             required = false)
     String scriptInterpreter;
 
     @PluginProperty(title = "Quote arguments to script invocation string?",
-            description = "",
+            description = '''If arguments are quoted, then the arguments passed to the invocation string will be quoted as one string.
+- Unquoted invocation: 
+	    $ [invocation string] args ...
+- Quoted invocation: 
+	    $ [invocation string] 'args ...'
+Note: the scriptfile can be included in the quoted arguments by not specifying `${scriptfile}` within the Invocation String.
+''',
             required = false)
     Boolean interpreterArgsQuoted;
 
     @PluginProperty(title = "File Extension",
-            description = "",
+            description = '''Leave blank to use the default for the target node.
+The file extension is used by the script file when it is copied to the node. Leave blank to use the default for the target node.  
+The `.` is optional.  
+E.g.: `.ps1`, or `abc`.
+''',
             required = false)
     String fileExtension;
 
