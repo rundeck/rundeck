@@ -10,7 +10,7 @@ class AceEditorSpec extends SeleniumBase{
 
         // 1. Logs, create a project
         // 2. Adds a json file resource model
-        // 3. Attempt to edit the file, asses the ace editor rendered lines based on JSON text (must be > 1).
+        // 3. Attempt to edit the file, test the ace editor rendered lines based on JSON text (must be > 1).
 
         setup:
 
