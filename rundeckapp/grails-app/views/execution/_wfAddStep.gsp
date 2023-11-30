@@ -79,7 +79,7 @@
                 </div>
                     <g:if test="${nodeStepDescriptionsHighlighted}">
                         <g:each in="${nodeStepDescriptionsHighlighted.sort{a,b->a.order<=>b.order}}" var="typedeschl">
-                            <g:if test="${typedeschl.builtInPlugin}">
+                            <g:if test="${typedeschl.name == 'job'}">
                                 <blocklist:pluginEnabled name="${typedeschl.name}" service="workflowNodeStep">
                                     <a data-bind="visible: isDefaultStepsVisible('${typedeschl.title}','${typedeschl.description}')"
                                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="${typedeschl.name}">

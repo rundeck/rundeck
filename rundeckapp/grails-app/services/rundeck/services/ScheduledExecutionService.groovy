@@ -4702,9 +4702,4 @@ class BuiltInPluginDescription implements Description{
     boolean isHighlighted() {
         return true
     }
-
-    @Override
-    boolean isBuiltInPlugin() {
-        return true
-    }
 }
