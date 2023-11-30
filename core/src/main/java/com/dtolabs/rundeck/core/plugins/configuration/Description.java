@@ -84,8 +84,4 @@ public interface Description {
         return 0;
     }
 
-    public default boolean isBuiltInPlugin() {
-        return false;
-    }
-
 }
