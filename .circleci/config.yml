@@ -468,7 +468,7 @@ jobs:
 
   # Test packaging
   packaging-test:
-    <<: *job-defaults-java17
+    <<: *job-defaults-java11
     executor:
       name: docker-builder
 

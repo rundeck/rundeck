@@ -45,7 +45,7 @@ dependencies_packaging_setup() {
     dependencies_build_setup
 
     sudo apt-get -y --no-install-recommends install \
-        openjdk-17-jdk-headless \
+        openjdk-11-jdk-headless \
         dpkg \
         xmlstarlet \
         expect \
