@@ -712,21 +712,21 @@ workflows:
 #          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
 #          <<: *require-build
 #          <<: *slack-defaults
-#      - test-docker:
-#          name: SSL Test
-#          command: bash test/run-docker-ssl-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: Ansible Test
-#          command: bash test/run-docker-ansible-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-docker:
-#          name: Blocklist Test
-#          command: bash test/run-docker-plugin-blocklist-test.sh
-#          <<: *require-build
-#          <<: *slack-defaults
+      - test-docker:
+          name: SSL Test
+          command: bash test/run-docker-ssl-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: Ansible Test
+          command: bash test/run-docker-ansible-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
+      - test-docker:
+          name: Blocklist Test
+          command: bash test/run-docker-plugin-blocklist-test.sh
+          <<: *require-build
+          <<: *slack-defaults
 #      - test-machine:
 #          name: LDAP Test
 #          command: bash test/run-docker-ldap-tests.sh
@@ -737,11 +737,11 @@ workflows:
 #          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
 #          <<: *require-build
 #          <<: *slack-defaults
-#      - test-docker:
-#          name: PAM Test
-#          command: bash test/run-docker-pam-tests.sh
-#          <<: *require-build
-#          <<: *slack-defaults
+      - test-docker:
+          name: PAM Test
+          command: bash test/run-docker-pam-tests.sh
+          <<: *require-build
+          <<: *slack-defaults
 #      - testdeck:
 #          name: Selenium Test
 #          workdir: test/selenium
