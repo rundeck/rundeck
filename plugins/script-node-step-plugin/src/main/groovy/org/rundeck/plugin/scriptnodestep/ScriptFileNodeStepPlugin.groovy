@@ -16,43 +16,23 @@
 
 package org.rundeck.plugin.scriptnodestep
 
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.common.UpdateUtils
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder
-import com.dtolabs.rundeck.core.data.BaseDataContext
-import com.dtolabs.rundeck.core.data.DataContext
-import com.dtolabs.rundeck.core.data.MultiDataContext
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils
-import com.dtolabs.rundeck.core.dispatcher.ContextView
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.BaseCommandExec
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
+import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.core.utils.Converter
-import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
-import org.apache.commons.codec.binary.Hex
 
-import java.nio.charset.Charset
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = ScriptFileNodeStepPlugin.SCRIPT_FILE_COMMAND_TYPE)
 @PluginDescription(title = "Script file or URL", description = "Verify and validate design", isHighlighted = true, order = 2)
-public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileCommand, ProxyRunnerPlugin {
+class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileCommand, ProxyRunnerPlugin {
 
     @PluginProperty(title = "File Path or URL",
             description = "Path",
@@ -85,7 +65,7 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
     String fileExtension;
 
     @Override
-    public void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
+    void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
 
         if(adhocFilepath ==~ /^(?i:https?|file):.*$/) {
             ScriptURLNodeStepExecutor scriptURLNodeStepExecutor = new ScriptURLNodeStepExecutor(
@@ -140,4 +120,34 @@ public class ScriptFileNodeStepPlugin implements NodeStepPlugin, ScriptFileComma
     Map<String, String> getRuntimeFrameworkProperties(ExecutionContext context){
         return context.getIFramework().getPropertyLookup().getPropertiesMap()
     }
+
+    @Override
+    //get shared secrets from the original node-executor plugin
+    List<String> listSecretsPathWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration) {
+
+        def executionService = context.getFramework().getNodeExecutorService()
+        //get original node executor from node or project
+        String orig = executionService.getDefaultProviderNameForNodeAndProject(node, context.getFrameworkProject())
+        if (null != node.getAttributes() && null != node.getAttributes().get(executionService.getServiceProviderNodeAttributeForNode(
+                node))) {
+            orig = node.getAttributes().get(executionService.getServiceProviderNodeAttributeForNode(node));
+        }
+        //get provider
+        def provider = executionService.providerOfType(orig)
+
+        def list = new ArrayList<String>()
+        if(provider instanceof ProxyRunnerPlugin){
+            //get list of secrets from original node-executor plugin
+            list = provider.listSecretsPath(context, node)
+        }
+
+        if(provider instanceof ProxySecretBundleCreator){
+            //get list of secrets from original node-executor plugin
+            list = provider.listSecretsPath(context, node)
+        }
+
+        return list
+    }
+
+
 }
