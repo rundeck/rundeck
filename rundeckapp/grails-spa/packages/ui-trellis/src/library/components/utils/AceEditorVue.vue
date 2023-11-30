@@ -30,7 +30,7 @@ export default defineComponent({
             editor: undefined as undefined | ace.Ace.Editor,
             contentBackup: "",
             observer: undefined as undefined | MutationObserver,
-            jsonSpaces: 2 as Number
+            jsonSpaces: 2 as number
         }
     },
     watch: {
