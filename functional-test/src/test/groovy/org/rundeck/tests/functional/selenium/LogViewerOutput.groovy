@@ -8,6 +8,10 @@ import org.rundeck.util.container.SeleniumBase
 @SeleniumCoreTest
 class LogViewerOutput extends SeleniumBase{
 
+    def setupSpec(){
+        setupProject("AutoFollowTest")
+    }
+
     def "auto scroll on log viewer page show last input"() {
 
         setup:
@@ -21,7 +25,7 @@ class LogViewerOutput extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        projectHomePage.goProjectHome("SeleniumBasic")
+        projectHomePage.goProjectHome("AutoFollowTest")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
         jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("loop job")
@@ -34,9 +38,9 @@ class LogViewerOutput extends SeleniumBase{
         jobCreatePage.getCreateButton().click()
         jobShowPage.getRunJobBtn().click()
         jobShowPage.getLogOutputBtn().click()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),3,5)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
         def firstLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER')]"),30,30)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),30,30)
         def finalLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
         def result = false
 
