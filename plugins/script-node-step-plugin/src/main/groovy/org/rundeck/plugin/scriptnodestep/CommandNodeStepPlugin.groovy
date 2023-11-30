@@ -14,11 +14,11 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = EXEC_COMMAND_TYPE)
-@PluginDescription(title = "Command", description = "Run a command on the remote node", isHighlighted = true, order = 0)
+@PluginDescription(title = "Command", description = "Execute a remote command", isHighlighted = true, order = 0)
 class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ExecCommand {
 
     @PluginProperty(title = "Command",
-            description = "",
+            description = "Enter the shell command, e.g.: echo this is a test",
             required = true)
     String adhocRemoteString;
 
