@@ -13,7 +13,7 @@ export const Elems= {
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
 
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
-    addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]'),
+    addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=exec-command]'),
     wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
     wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
