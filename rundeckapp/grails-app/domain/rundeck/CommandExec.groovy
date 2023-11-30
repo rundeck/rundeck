@@ -16,7 +16,7 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.core.execution.BaseCommandExec
+import org.rundeck.core.execution.BaseCommandExec
 import rundeck.data.constants.WorkflowStepConstants
 
 /*

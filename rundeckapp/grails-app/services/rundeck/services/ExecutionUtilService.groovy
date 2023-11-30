@@ -18,9 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
-import com.dtolabs.rundeck.core.execution.ExecCommand
-import com.dtolabs.rundeck.core.execution.ScriptCommand
-import com.dtolabs.rundeck.core.execution.ScriptFileCommand
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -36,12 +36,10 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.converters.JSON
-import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec

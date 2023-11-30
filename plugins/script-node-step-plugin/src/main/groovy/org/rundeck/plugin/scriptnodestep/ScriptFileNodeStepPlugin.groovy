@@ -17,7 +17,7 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.ScriptFileCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
