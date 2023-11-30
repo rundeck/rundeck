@@ -1,7 +1,7 @@
 <template>
     <div :class="!root ? 'subbrowse' : ''">
 
-        <template v-if="this.jobBrowserStore.findPath(this.browsePath).bpHit">
+        <template v-if="!loading && breakpointHit">
           <p class="breakpoint-info">
             {{$t('job.tree.breakpoint.hit.info')}}
             <btn @click="loadMeta(this.browsePath)"  size="xs">
@@ -61,7 +61,7 @@
                   page-mode
                   :key="browsePath"
               >
-                <browser-job-item :job="item" v-if="item.job" :load-meta="this.jobBrowserStore.findPath(this.browsePath).bpHit"/>
+                <browser-job-item :job="item" v-if="item.job" :load-meta="breakpointHit"/>
               </RecycleScroller>
 
             <li v-if="items.length === 0">
@@ -192,7 +192,7 @@ export default defineComponent({
         async refresh(initial:boolean=false) {
             this.loading = true;
             this.items = await this.jobBrowserStore.loadItems(this.browsePath);
-            this.breakpointHit=this.jobBrowserStore.findPath(this.browsePath).bpHit
+            this.breakpointHit = this.jobBrowserStore.findPath(this.browsePath).bpHit
             this.loading = false;
             if(initial){
               //expand children if expand level is greater than 0
