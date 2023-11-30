@@ -197,13 +197,9 @@ class ExecutionUtilService {
                 throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
 
-            String config = cmd as JSON
-            ObjectMapper mapper = new ObjectMapper()
-            Map mapConfig = mapper.readValue(config, Map.class)
-
             return ExecutionItemFactory.createScriptFileItem(
                     type,
-                    mapConfig,
+                    cmd.convertToPluginConfig(),
                     handler,
                     !!cmd.keepgoingOnSuccess,
                     null,
