@@ -221,15 +221,6 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
-  reconfigure-java-version:
-    description: Reconfigure Java Version to 17
-    steps:
-      - aws-cli/install
-      - install-node
-      - run-build-step:
-          step-name: Install Java 17
-          command: reconfigure_java_version
-
 
 #### Job Definitions ####
 
@@ -408,7 +399,7 @@ jobs:
           command: packaging_publish_maven
 
   test-gradle-functional:
-    <<: *job-defaults-java17
+    <<: *job-defaults-java11
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -423,7 +414,6 @@ jobs:
     steps:
       - checkout
       - install-build-dependencies
-      - reconfigure-java-version
       - restore-build-cache
       - attach_workspace:
           at: ~/workspace
@@ -522,7 +512,6 @@ jobs:
           docker_layer_caching: true
       - checkout
       - install-testdeck-dependencies
-#      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -587,7 +576,6 @@ jobs:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
       - install-testdeck-dependencies
-      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -657,40 +645,40 @@ workflows:
       - build-rundeck:
           name: Build
           <<: *slack-defaults
-#      - test-gradle:
-#          name: Gradle Test
-#          <<: *slack-defaults
-#      - trigger-enterprise:
-#          name: Enterprise Snapshot
-#          <<: *require-build
-#          filters:
-#            branches: { only: main }
-#      - test-openapi:
-#          name: OpenAPI Spec Validation
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - packaging-test:
-#          name: Test Packaging
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - twistlock-scan-image:
-#          name: Twistlock Scan Preview
-#          <<: *require-build
-#          continue: true
-#          context:
-#            - tl_scan_context
-#          filters:
-#            branches: { ignore: main }
-#      - twistlock-scan-image:
-#          name: Twistlock Scan
-#          continue: false
-#          context:
-#            - tl_scan_context
-#            - slack-secrets
-#          filters:
-#            branches: { only: main }
-#          <<: *require-build
-#          <<: *slack-fail-post-step
+      - test-gradle:
+          name: Gradle Test
+          <<: *slack-defaults
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          <<: *require-build
+          filters:
+            branches: { only: main }
+      - test-openapi:
+          name: OpenAPI Spec Validation
+          <<: *require-build
+          <<: *slack-defaults
+      - packaging-test:
+          name: Test Packaging
+          <<: *require-build
+          <<: *slack-defaults
+      - twistlock-scan-image:
+          name: Twistlock Scan Preview
+          <<: *require-build
+          continue: true
+          context:
+            - tl_scan_context
+          filters:
+            branches: { ignore: main }
+      - twistlock-scan-image:
+          name: Twistlock Scan
+          continue: false
+          context:
+            - tl_scan_context
+            - slack-secrets
+          filters:
+            branches: { only: main }
+          <<: *require-build
+          <<: *slack-fail-post-step
       - test-docker:
           name: Docker Test
           command: bash test/run-docker-tests.sh
@@ -741,31 +729,31 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
-#      - testdeck:
-#          name: Selenium Test
-#          workdir: test/selenium
-#          command: testdeck_selenium_test
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New Selenium Test
-#          gradle-task: seleniumCoreTest
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New API Test
-#          gradle-task: apiTest
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New API Test Tomcat 8
-#          test-image: 8-jdk11
-#          gradle-task: tomcatTest
-#          <<: *require-build
-#          <<: *slack-defaults
-#      - test-gradle-functional:
-#          name: New API Test Tomcat 9
-#          test-image: 9-jdk11
-#          gradle-task: tomcatTest
-#          <<: *require-build
-#          <<: *slack-defaults
+      - testdeck:
+          name: Selenium Test
+          workdir: test/selenium
+          command: testdeck_selenium_test
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New Selenium Test
+          gradle-task: seleniumCoreTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test
+          gradle-task: apiTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test Tomcat 8
+          test-image: 8-jdk17
+          gradle-task: tomcatTest
+          <<: *require-build
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: New API Test Tomcat 9
+          test-image: 9-jdk17
+          gradle-task: tomcatTest
+          <<: *require-build
+          <<: *slack-defaults
