@@ -551,7 +551,6 @@ jobs:
 
       - checkout
       - install-testdeck-dependencies
-      - reconfigure-java-version
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
