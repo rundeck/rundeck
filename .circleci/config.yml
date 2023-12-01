@@ -247,7 +247,7 @@ jobs:
 
   # Build rundeck War
   build-rundeck:
-    <<: *job-defaults-java11
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
       resource_class: large
@@ -295,7 +295,7 @@ jobs:
 
   # Run Gradle Tests
   test-gradle:
-    <<: *job-defaults-java11
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     steps:
@@ -399,7 +399,7 @@ jobs:
           command: packaging_publish_maven
 
   test-gradle-functional:
-    <<: *job-defaults-java11
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -468,7 +468,7 @@ jobs:
 
   # Test packaging
   packaging-test:
-    <<: *job-defaults-java11
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
