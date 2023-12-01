@@ -40,7 +40,7 @@ class LogViewerOutput extends SeleniumBase{
         jobShowPage.getLogOutputBtn().click()
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
         def firstLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),30,30)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),35,40)
         def finalLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
         def result = false
 
