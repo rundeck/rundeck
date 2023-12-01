@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import spock.lang.Specification
-import spock.mock.MockFactory
 
 class ExecutionContextImplSpec extends Specification {
 
@@ -33,7 +32,7 @@ class ExecutionContextImplSpec extends Specification {
         imp2.dataContext.get("ctx1").get("test") == 'value'
     }
 
-    def "buildNodeService should create an ExecutionContext with a mocked node service"() {
+    def "ExecutionContext builder should create an ExecutionContext with a node service"() {
         given:
         def ctx1 = [test: 'value'] as Map<String, String>
         def map = [ctx1: ctx1] as Map<String, Map<String, String>>
