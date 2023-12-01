@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
+import spock.lang.Specification;
 
 import java.util.HashMap;
 import java.util.Map;
