@@ -54,8 +54,8 @@ class JobNotificationSpec extends SeleniumBase {
         def panel = jobCreatePage.addStepButtonsPanel
         ((JavascriptExecutor)driver).executeScript("arguments[0].scrollIntoView(true);", panel)
         type.click()
-        jobCreatePage.waitForStepToBeShown(By.id("adhocRemoteStringField"))
-        jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("echo 'example job'")
+        jobCreatePage.waitForStepToBeShown(By.name("pluginConfig.adhocRemoteString"))
+        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("echo 'example job'")
         jobCreatePage.getSaveStepButton().click()
         jobCreatePage.waitForSavedStep(0)
         addNotificationEmail(jobCreatePage)
@@ -100,8 +100,8 @@ class JobNotificationSpec extends SeleniumBase {
             def panel = jobCreatePage.addStepButtonsPanel
             ((JavascriptExecutor)driver).executeScript("arguments[0].scrollIntoView(true);", panel)
             type.click()
-            jobCreatePage.waitForStepToBeShown(By.id("adhocRemoteStringField"))
-            jobCreatePage.el(By.id("adhocRemoteStringField")).sendKeys("echo 'example job'")
+            jobCreatePage.waitForStepToBeShown(By.name("pluginConfig.adhocRemoteString"))
+            jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("echo 'example job'")
             jobCreatePage.getSaveStepButton().click()
             jobCreatePage.waitForSavedStep(0)
 
