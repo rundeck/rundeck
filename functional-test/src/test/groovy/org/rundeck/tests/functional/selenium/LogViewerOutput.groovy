@@ -25,6 +25,7 @@ class LogViewerOutput extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
+        page(ProjectListPage).waitUntilPageLoaded()
         projectHomePage.goProjectHome("AutoFollowTest")
         sideBar.goTo(SideBarNavLinks.JOBS).click()
         jobListPage.getCreateJobLink().click()
