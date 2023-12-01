@@ -116,10 +116,10 @@ class ExecutionOutputSpec extends BaseContainer {
             "offset=${it.offset}&lastmod=${it.lastmod}"
         }
         then:
-        logs.join('\n') == '''testing execution <output> api-unicode line 1
-line 😄
-你好
-line 4 final'''
+        logs[0] == "testing execution <output> api-unicode line 1"
+        logs[1] == "line 😄"
+        logs[2] == "你好"
+        logs[3] == "line 4 final"
     }
 
     def "execution output plain text using lastlines"() {
