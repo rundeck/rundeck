@@ -3,6 +3,7 @@ package org.rundeck.plugin.scriptnodestep
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecArgList
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import org.rundeck.core.execution.ExecCommand
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -26,11 +27,11 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
     void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
-
+        def arr = OptsUtil.burst(adhocRemoteString)
         NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(
                 context.getExecutionContext(),
                 ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
-                .stringContainsPropertyReferencePredicate, adhocRemoteString),
+                .stringContainsPropertyReferencePredicate, arr),
                 entry
         );
 
