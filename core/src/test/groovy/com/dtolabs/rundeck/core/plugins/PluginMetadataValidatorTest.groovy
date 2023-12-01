@@ -18,8 +18,12 @@ package com.dtolabs.rundeck.core.plugins
 import com.dtolabs.rundeck.core.VersionConstants
 import spock.lang.Specification
 import spock.lang.Unroll
+import sun.misc.Unsafe
 
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
 
@@ -29,15 +33,11 @@ class PluginMetadataValidatorTest extends Specification {
     def "ValidateTargetHostCompatibility"() {
         when:
         def errors = []
-        Field field = PluginMetadataValidator.getDeclaredField("OS_TYPE")
-        field.setAccessible(true);
-
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null,rundeckHost)
+        String originalOsName = System.getProperty("os.name")
+        System.setProperty("os.name", rundeckHost)
         PluginMetadataValidator.validateTargetHostCompatibility(errors, targetHost)
         String validation = errors.isEmpty() ? "compatible" : "incompatible"
+        System.setProperty("os.name", originalOsName)
 
         then:
         validation == expected

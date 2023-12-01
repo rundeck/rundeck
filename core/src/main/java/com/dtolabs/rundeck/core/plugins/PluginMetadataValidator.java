@@ -24,12 +24,13 @@ public class PluginMetadataValidator {
 
     private static List<String> HOST_TYPES = Arrays.asList("all","unix","windows");
     private static final String INCOMPATIBLE_PLUGIN_VER_MSG = "Plugin is not compatible with this version of Rundeck. (Current: %s, Plugin Compatibility: %s)";
-    public final static String OS_TYPE = System.getProperty("os.name").toLowerCase();
 
     public static PluginValidation.State validateTargetHostCompatibility(
             final List<String> errors,
             final String targetHostCompatibility
     ) {
+        System.out.println("targetHostCompatibility: " + targetHostCompatibility);
+        System.out.println("OS_TYPE: " + System.getProperty("os.name").toLowerCase());
         if(targetHostCompatibility == null) {
             errors.add("No targetHostCompatibility property specified in metadata");
             return PluginValidation.State.INVALID;
@@ -41,9 +42,9 @@ public class PluginMetadataValidator {
             return PluginValidation.State.INVALID;
         }
 
-        if((targetHostCompatibility.equals("unix") && OS_TYPE.startsWith("windows")) ||
-           (targetHostCompatibility.equals("windows") && !OS_TYPE.startsWith("windows"))) {
-            errors.add("Plugin target host("+targetHostCompatibility+") is incompatible with this Rundeck instance: " + OS_TYPE);
+        if((targetHostCompatibility.equals("unix") && System.getProperty("os.name").toLowerCase().startsWith("windows")) ||
+           (targetHostCompatibility.equals("windows") && !System.getProperty("os.name").toLowerCase().startsWith("windows"))) {
+            errors.add("Plugin target host("+targetHostCompatibility+") is incompatible with this Rundeck instance: " + System.getProperty("os.name").toLowerCase());
             return PluginValidation.State.INCOMPATIBLE;
         }
         return PluginValidation.State.VALID;
