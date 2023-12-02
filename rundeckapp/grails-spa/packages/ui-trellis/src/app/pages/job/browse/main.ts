@@ -5,6 +5,11 @@ import {
     JobBrowserStoreInjectionKey
 } from "../../../../library/stores/JobBrowser";
 import moment from 'moment'
+import {
+  JobListFilterStore,
+  JobListFilterLocalStorage,
+  JobListFilterStoreInjectionKey
+} from '../../../../library/stores/JobListFilterStore'
 import {JobPageStore, JobPageStoreInjectionKey} from '../../../../library/stores/JobPageStore'
 import {loadJsonData} from '../../../utilities/loadJsonData'
 import JobListPage from './JobListPage.vue'
@@ -38,7 +43,10 @@ function init() {
   moment.locale(getRundeckContext().locale||'en_US')
   const page = rootStore.jobPageStore
   const browse = page.getJobBrowser()
-
+  const jobListFilterStoreObj = new JobListFilterStore(
+    getRundeckContext().projectName,
+    new JobListFilterLocalStorage()
+  );
   const jobPageStore = reactive(page);
   const jobBrowserStore = reactive(browse)
   rootStore.ui.addItems([
@@ -73,6 +81,7 @@ function init() {
           setup() {
             provide(JobBrowserStoreInjectionKey, jobBrowserStore);
             provide(JobPageStoreInjectionKey, jobPageStore);
+            provide(JobListFilterStoreInjectionKey, jobListFilterStoreObj);
             return {
               pageQueryParams
             }
