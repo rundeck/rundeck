@@ -21,6 +21,7 @@ export class JobPageStore {
   projectSchedulesEnabled: boolean = false
   groupExpandLevel: number = 0
   query:{[key:string]:string} = {}
+  selectedFilter: string = ''
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore

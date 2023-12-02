@@ -170,12 +170,17 @@
             <btn type="primary" @click="doSearch">
                 {{ $t("job.filter.apply.button.title") }}
             </btn>
+            <btn type="success" class="pull-right" @click="doSave">
+              <i class="glyphicon glyphicon-plus"></i>
+              {{ $t("job.filter.save.button.title") }}
+            </btn>
         </template>
     </modal>
 </template>
 
 <script lang="ts">
 import UiSocket from '@/library/components/utils/UiSocket.vue'
+import {JobListFilterStore, JobListFilterStoreInjectionKey} from '@/library/stores/JobListFilterStore'
 import {
     JobPageStore,
     JobPageStoreInjectionKey,
@@ -185,7 +190,7 @@ import { defineComponent, inject, ref } from "vue";
 export default defineComponent({
     name: "JobSearchModal",
     components: { UiSocket },
-    emits: ["close", "search", "clear", "update:modelValue"],
+    emits: ["close", "search", "clear", "save", "update:modelValue"],
     props: {
         modelValue: {
             type: Boolean,
@@ -196,8 +201,12 @@ export default defineComponent({
         const jobPageStore: JobPageStore = inject(
             JobPageStoreInjectionKey
         ) as JobPageStore;
+        const jobListFilterStore: JobListFilterStore = inject(
+          JobListFilterStoreInjectionKey
+        ) as JobListFilterStore
         return {
             jobPageStore,
+            jobListFilterStore,
             visible: ref(props.modelValue),
         };
     },
@@ -231,6 +240,9 @@ export default defineComponent({
         },
         doSearch() {
             this.$emit("search");
+        },
+        doSave() {
+            this.$emit("save");
         },
     },
 });
