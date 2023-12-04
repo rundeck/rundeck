@@ -1,6 +1,8 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.plugins.PluginException
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -15,7 +17,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
-class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand  {
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader  {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
@@ -81,5 +83,15 @@ E.g.: `.ps1`, or `abc`.
         );
 
         scriptFileNodeStepExecutor.executeScriptFile(context, configuration, entry)
+    }
+
+    @Override
+    List<String> listResources() throws PluginException, IOException {
+        ['WorkflowNodeStep.script-command.icon.png']
+    }
+
+    @Override
+    InputStream openResourceStreamFor(String name) throws PluginException, IOException {
+        return this.getClass().getResourceAsStream("/" + name)
     }
 }
