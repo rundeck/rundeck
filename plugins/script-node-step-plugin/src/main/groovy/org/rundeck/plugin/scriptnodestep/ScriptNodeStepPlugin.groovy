@@ -17,7 +17,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
 @PluginDescription(title = "Script", description = "Execute an inline script", isHighlighted = true, order = 1)
-class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader, PluginResourceLoader  {
+class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptCommand, PluginResourceLoader  {
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
