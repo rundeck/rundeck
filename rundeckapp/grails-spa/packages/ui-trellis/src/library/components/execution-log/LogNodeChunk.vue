@@ -13,7 +13,7 @@
                              :data-index="index"
                              :active="active"
                              :size-dependencies="[item.log, item.logHtml]"
-                             :emit-resize="true"
+                             :emit-resize=emitResize
                              @resize="scrollToLine()"
         >
           <LogEntryFlex :eventBus="eventBus"
@@ -136,6 +136,11 @@ export default defineComponent({
     nodeChunkKey() {
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`
     },
+  },
+  data() {
+    return {
+      emitResize:true as boolean
+    }
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
