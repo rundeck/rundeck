@@ -17,6 +17,8 @@
 package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.plugins.PluginException
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -30,7 +32,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_FILE_COMMAND_TYPE)
 @PluginDescription(title = "Script file or URL", description = "Execute a local script file or a script from a URL", isHighlighted = true, order = 2)
-class ScriptFileNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptFileCommand, ProxyRunnerPlugin {
+class ScriptFileNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, ScriptFileCommand, PluginResourceLoader, ProxyRunnerPlugin {
 
     @PluginProperty(title = "File Path or URL",
             description = "Enter the path to a script file on the server or a URL",
@@ -124,6 +126,16 @@ E.g.: `.ps1`, or `abc`.
     @Override
     Boolean getAdhocExecution() {
         return null
+    }
+
+    @Override
+    List<String> listResources() throws PluginException, IOException {
+        ['WorkflowNodeStep.script-file-command.icon.png']
+    }
+
+    @Override
+    InputStream openResourceStreamFor(String name) throws PluginException, IOException {
+        return this.getClass().getResourceAsStream("/" + name)
     }
 
 }
