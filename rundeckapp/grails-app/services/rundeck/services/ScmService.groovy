@@ -56,6 +56,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
+import org.hibernate.ObjectNotFoundException
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
@@ -1578,8 +1579,12 @@ class ScmService {
     }
 
     Map<String, Map> getJobsPluginMeta(String project, String type){
-        List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
-        jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+        try{
+            List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
+            jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+        }catch(ObjectNotFoundException ignored){
+            log.debug("No jobs plugin metadata found")
+        }
     }
 
     // check if jobs has the SCM metadata stored in the DB
