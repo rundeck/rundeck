@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -1471,6 +1472,51 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             false     | true          | true
             true      | false         | true
             true      | true          | false
+    }
+
+    def "api returns expected json containing homeSummary information"() {
+        given:
+        def execCount = 0
+        def failedCount = 0
+        def recentUsers = []
+        def recentProjects = []
+        def frameworkNodeName = 'localhost'
+
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>> Mock(Framework){
+                getFrameworkNodeName() >> frameworkNodeName
+            }
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.configurationService = Mock(ConfigurationService){
+            getBoolean("menuController.projectStats.queryAlt",false)>>false
+        }
+
+        def projInfo = Mock(IProjectInfo) {
+            getDescription() >> null
+        }
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+            getInfo() >> projInfo
+        }
+        def projects = [iproj]
+
+        when:
+        request.api_version = 45
+        response.format='json'
+
+        def result = controller.apiHomeSummary()
+
+        then:
+        def json=response.json
+        assert execCount == json.execCount
+        assert failedCount == json.failedCount
+        assert recentUsers == json.recentUsers
+        assert recentProjects == json.recentProjects
+        assert frameworkNodeName == json.frameworkNodeName
     }
 
     def "list Export"() {
