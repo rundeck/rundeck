@@ -3837,7 +3837,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiJobsImportv14()
         then:
             1 * controller.apiService.requireApi(_,_) >> true
-            (format=='json'?1:0) * controller.apiService.requireApi(_,_,43) >> true
+            (format=='json'?1:0) * controller.apiService.requireApi(_,_,44) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, format) >> [
                 jobset: jobset
