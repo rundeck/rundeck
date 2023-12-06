@@ -1,8 +1,6 @@
 package org.rundeck.tests.functional.selenium.pages.appadmin
 
 import groovy.transform.CompileStatic
-import org.openqa.selenium.By
-import org.openqa.selenium.WebElement
 import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
@@ -12,8 +10,6 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class SystemConfigurationPage extends BasePage {
 
-    By pageTitleBy = By.xpath("//*[text()='System Configuration']")
-
     String loadPath = ""
 
     SystemConfigurationPage(final SeleniumContext context) {
@@ -21,8 +17,9 @@ class SystemConfigurationPage extends BasePage {
     }
 
     void validatePage() {
-        byAndWait pageTitleBy
+        if (!driver.currentUrl.containsIgnoreCase("config")) {
+            throw new IllegalStateException("Not on key system configuration page: " + driver.currentUrl)
+        }
     }
-
 
 }

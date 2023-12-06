@@ -12,18 +12,19 @@ import org.rundeck.util.setup.NavLinkTypes
 class NodesSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
-    }
-
-    def setup() {
-        def loginPage = go LoginPage
-        loginPage.login(TEST_USER, TEST_PASS)
+        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
     }
 
     def "go to edit nodes"() {
+        setup:
+            def loginPage = go LoginPage
+            def nodeSourcePage = page NodeSourcePage
         when:
-            def nodeSourcePage = go NodeSourcePage, "SeleniumBasic"
+            loginPage.login(TEST_USER, TEST_PASS)
+            nodeSourcePage.loadPath += "/project/${SELENIUM_BASIC_PROJECT}/nodes/sources"
+            nodeSourcePage.go()
         then:
+            nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
             nodeSourcePage.newNodeSourceButton != null
             nodeSourcePage.newNodeSourceButton.getText().contains("Source")
     }

@@ -13,6 +13,8 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class KeyStoragePage extends BasePage {
 
+    String loadPath = "/menu/storage"
+
     By addUploadKey = By.xpath("//button[contains(.,'Key')] | //*[contains(@href,'uploadkey')]")
     By uploadKeyType = By.name("uploadKeyType")
     By uploadPassword = By.id("uploadpasswordfield")
@@ -20,8 +22,6 @@ class KeyStoragePage extends BasePage {
     By uploadResourceName = By.id("uploadResourceName2")
     By save = By.xpath("//button[contains(.,'Save')] | //button[@class='btn btn-cta'] | //input[contains(@type, 'submit')]")
     By overBy = By.xpath("//button[contains(.,'Overwrite')] | //a[contains(@data-bind, 'actionUploadModify')]")
-
-    String loadPath = "/menu/storage"
 
     KeyStoragePage(final SeleniumContext context) {
         super(context)
@@ -51,7 +51,7 @@ class KeyStoragePage extends BasePage {
         uploadPasswordField.sendKeys(keyValue)
         uploadPathField.sendKeys(storagePath)
         uploadResourceNameField.sendKeys(name)
-        sleep 2000
+        waitForElementToBeClickable saveField
         saveField.click()
     }
 
@@ -79,7 +79,7 @@ class KeyStoragePage extends BasePage {
 
     void overwriteKey(String newKey) {
         uploadPasswordField.sendKeys(newKey)
-        sleep 2000
+        waitForElementToBeClickable saveField
         saveField.click()
     }
 

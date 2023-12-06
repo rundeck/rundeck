@@ -7,8 +7,6 @@ import org.openqa.selenium.WebElement
 import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
-import java.time.Duration
-
 /**
  * Job create page
  */
@@ -75,20 +73,21 @@ class JobCreatePage extends BasePage {
 
     String loadPath = "/job/create"
 
-    JobCreatePage(final SeleniumContext context, String project) {
+    JobCreatePage(final SeleniumContext context) {
         super(context)
-        if (project.split('##').length > 1) {
-            def projectAux = project.split('##')[0]
-            def jobId = project.split('##')[1]
-            this.loadPath = "/project/${projectAux ? projectAux + '/' : ''}job/edit/${jobId}"
-        } else {
-            this.loadPath = "/${project ? project + '/' : ''}job/create"
-        }
     }
 
-    JobCreatePage(final SeleniumContext context, String projectName, String jobId) {
+    JobCreatePage(final SeleniumContext context, String projectName) {
         super(context)
-        this.loadPath = "/project/${projectName}/job/show/${jobId}"
+        this.loadPath = "/project/${projectName}/job/create"
+    }
+
+    void loadEditPath(String projectName, String jobId) {
+        loadPath = "/project/${projectName}/job/edit/${jobId}"
+    }
+
+    void loadCreatePath(String projectName) {
+        this.loadPath = "/project/${projectName}/job/create"
     }
 
     void fillBasicJob(String name) {
@@ -98,12 +97,12 @@ class JobCreatePage extends BasePage {
     }
 
     void addSimpleCommandStep(String command, int number) {
-        executor "window.location.hash = '#addnodestep'"
+        executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
         sleep 5000
         waitForElementVisible adhocRemoteStringField
         adhocRemoteStringField.click()
-        waitForNumberOfElementsToBe floatBy
+        waitForNumberOfElementsToBeOne floatBy
         sleep 2000
         adhocRemoteStringField.sendKeys command
         saveStep number
@@ -111,13 +110,13 @@ class JobCreatePage extends BasePage {
 
     void validatePage() {
         if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Not on jobs list page: " + driver.currentUrl)
+            throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
         }
     }
 
     WebElement tab(JobTab tab) {
         def tabBy = By.linkText(tab.getTabName())
-        waitForNumberOfElementsToBe tabBy
+        waitForNumberOfElementsToBeOne tabBy
         el tabBy
     }
 
@@ -135,7 +134,7 @@ class JobCreatePage extends BasePage {
 
     WebElement notificationConfigByPropName(String propName) {
         def popBy = By.cssSelector('#notification-edit-config div.form-group[data-prop-name=\'' + propName + '\']')
-        waitForNumberOfElementsToBe popBy
+        waitForNumberOfElementsToBeOne popBy
         el popBy findElement By.cssSelector('input[type=text]')
     }
 
@@ -242,6 +241,10 @@ class JobCreatePage extends BasePage {
 
     List<WebElement> optionLis(int index) {
         els By.cssSelector("#optli_$index")
+    }
+
+    void waitForOptionsToBe(int index, int total) {
+        waitForNumberOfElementsToBe By.cssSelector("#optli_$index"), total
     }
 
     WebElement optionNameSaved(int index) {
@@ -394,7 +397,7 @@ class JobCreatePage extends BasePage {
 
     void saveStep(Integer stepNumber) {
         def button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
-        executor "arguments[0].scrollIntoView(true);", button
+        executeScript "arguments[0].scrollIntoView(true);", button
         button?.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }

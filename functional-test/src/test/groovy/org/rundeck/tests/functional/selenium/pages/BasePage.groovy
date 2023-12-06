@@ -7,13 +7,11 @@ import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.ui.ExpectedCondition
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
 
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
@@ -30,15 +28,16 @@ abstract class BasePage {
      */
     BasePage(final SeleniumContext context) {
         this.context = context
-        this.context.driver.manage().window().setSize(new Dimension(1200,1050))
+        this.context.driver.manage().window().setSize(new Dimension(1200, 1050))
     }
+
     abstract String getLoadPath()
     /**
      * Go to the page and validate
      */
-    void go(){
-        if(loadPath){
-            implicitlyWait 1000
+    void go() {
+        if (loadPath) {
+            implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
@@ -51,17 +50,17 @@ abstract class BasePage {
     }
 
     WebElement waitForElementVisible(WebElement locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.visibilityOf(locator))
     }
 
     WebElement waitForElementVisible(By locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.visibilityOfElementLocated(locator))
     }
 
-    void waitForNumberOfElementsToBe(By locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+    void waitForNumberOfElementsToBeOne(By locator) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.numberOfElementsToBe(locator, 1))
     }
 
@@ -76,12 +75,12 @@ abstract class BasePage {
 
     void waitForElementToBeClickable(WebElement locator) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
-        wait.until {ExpectedConditions.elementToBeClickable(locator)}
+        wait.until { ExpectedConditions.elementToBeClickable(locator) }
     }
 
     void waitForTextToBePresentInElement(WebElement locator, String text) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
-        wait.until {ExpectedConditions.textToBePresentInElement(locator, text)}
+        wait.until { ExpectedConditions.textToBePresentInElement(locator, text) }
     }
 
     boolean waitForElementAttributeToChange(WebElement locator, String attribute, String valueCompare) {
@@ -98,40 +97,40 @@ abstract class BasePage {
     }
 
     void waitForNumberOfElementsToBe(By locator, Integer number) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.numberOfElementsToBe(locator, number))
     }
 
     WebElement waitIgnoringForElementVisible(WebElement locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .ignoring(StaleElementReferenceException.class)
                 .until(ExpectedConditions.visibilityOf(locator))
     }
 
     WebElement waitIgnoringForElementToBeClickable(WebElement locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .ignoring(StaleElementReferenceException.class)
-                .until (ExpectedConditions.elementToBeClickable(locator))
+                .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
     WebElement waitForPresenceOfElementLocated(By locator) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
-            .until(ExpectedConditions.presenceOfElementLocated(locator))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.presenceOfElementLocated(locator))
     }
 
     void waitForUrlToContain(String text) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.urlContains(text))
     }
 
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
     }
 
     def waitForModal(int expected) {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15)).until {
+            new WebDriverWait(driver, Duration.ofSeconds(30)).until {
                 ExpectedConditions.numberOfElementsToBe(modalField, expected)
             }
         } catch (TimeoutException e) {
@@ -148,11 +147,11 @@ abstract class BasePage {
         context.driver
     }
 
-    void executor(String script) {
+    void executeScript(String script) {
         ((JavascriptExecutor) context.driver).executeScript(script)
     }
 
-    void executor(String script, WebElement element) {
+    void executeScript(String script, WebElement element) {
         ((JavascriptExecutor) context.driver).executeScript(script, element)
     }
 

@@ -9,20 +9,16 @@ import org.rundeck.util.container.SeleniumBase
 @SeleniumCoreTest
 class CreateProjectSpec extends SeleniumBase {
 
-    def setupSpec(){
-        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
-    }
-
     def "create project has basic fields"() {
         when:
             def loginPage = go LoginPage
-            loginPage.login(TEST_USER, TEST_PASS)
             def homePage = page HomePage
-            homePage.createProjectButton()
-        then:
-            currentUrl.contains("/resources/createProject")
             def projectCreatePage = page ProjectCreatePage
+        then:
+            loginPage.login(TEST_USER, TEST_PASS)
+            homePage.createProjectButton()
         expect:
+            currentUrl.contains("/resources/createProject")
             projectCreatePage.projectNameInput
             projectCreatePage.labelInput
             projectCreatePage.descriptionInput

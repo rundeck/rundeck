@@ -9,7 +9,7 @@ import org.rundeck.util.container.SeleniumBase
 class ProjectExportSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
+        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
     }
 
     def setup() {
@@ -19,7 +19,7 @@ class ProjectExportSpec extends SeleniumBase {
 
     def "exports without errors"() {
         when:
-            def projectExportPage = go ProjectExportPage, "SeleniumBasic"
+            def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
             projectExportPage.submitExportButton.click()
             projectExportPage.waitForElementVisible projectExportPage.downloadArchiveButton
@@ -29,7 +29,7 @@ class ProjectExportSpec extends SeleniumBase {
 
     def "form radio inputs have proper name"() {
         when:
-            def projectExportPage = go ProjectExportPage, "SeleniumBasic"
+            def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
             projectExportPage.stripJobRefRadios.any {it.isSelected() }
             projectExportPage.stripJobRefRadios.size() == 3
@@ -37,14 +37,14 @@ class ProjectExportSpec extends SeleniumBase {
 
     def "form radio inputs have labels"() {
         when:
-            def projectExportPage = go ProjectExportPage, "SeleniumBasic"
+            def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
             projectExportPage.stripNameLabels.size() == 3
     }
 
     def "form checkboxes are checked by default"() {
         when:
-            def projectExportPage = go ProjectExportPage, "SeleniumBasic"
+            def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
             projectExportPage.checkBoxes.size() >= 9
             projectExportPage.checkBoxes.count {it.getAttribute("checked") == "true" } >= 8
@@ -53,7 +53,7 @@ class ProjectExportSpec extends SeleniumBase {
 
     def "form checkbox labels work"() {
         when:
-            def projectExportPage = go ProjectExportPage, "SeleniumBasic"
+            def projectExportPage = go ProjectExportPage, SELENIUM_BASIC_PROJECT
         then:
             projectExportPage.checkBoxes.each { checkbox ->
                 String checkBoxId = checkbox.getAttribute("id")

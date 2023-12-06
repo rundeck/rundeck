@@ -1,9 +1,8 @@
 package org.rundeck.tests.functional.selenium
 
-import org.openqa.selenium.By
 import org.rundeck.tests.functional.selenium.pages.ProjectListPage
 import org.rundeck.tests.functional.selenium.pages.ProjectListNextUiPage
-import org.rundeck.tests.functional.selenium.pages.LoginPage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import spock.lang.Unroll

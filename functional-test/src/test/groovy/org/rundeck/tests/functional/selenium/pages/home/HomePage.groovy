@@ -35,14 +35,13 @@ class HomePage extends BasePage {
     }
 
     void createProjectButton() {
-        if (createNewProjectFields.size() == 0)
-            newProjectField.click()
-        else
+        try {
+            waitForElementToBeClickable createNewProjectField
             createNewProjectField.click()
-    }
-
-    List<WebElement> getCreateNewProjectFields() {
-        els createNewProject
+        } catch (Exception ignored) {
+            waitForElementToBeClickable newProjectField
+            newProjectField.click()
+        }
     }
 
     WebElement getCreateNewProjectField() {

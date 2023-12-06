@@ -12,17 +12,12 @@ import org.rundeck.util.container.SeleniumContext
 @CompileStatic
 class NodeSourcePage extends BasePage {
 
-    By newNodeSource = By.xpath("//button[contains(.,'Source')]")
-
     String loadPath = ""
+
+    By newNodeSource = By.xpath("//button[contains(.,'Source')]")
 
     NodeSourcePage(final SeleniumContext context) {
         super(context)
-    }
-
-    NodeSourcePage(final SeleniumContext context, String project) {
-        super(context)
-        this.loadPath = "/project/${project}/nodes/sources"
     }
 
     WebElement getNewNodeSourceButton() {

@@ -8,11 +8,10 @@ import org.rundeck.util.container.SeleniumContext
 
 import java.time.Duration
 
-class JobsListPage extends BasePage{
+class JobsListPage extends BasePage {
 
     String loadPath = "/jobs"
     By createJobLink = By.partialLinkText('New Job')
-    By bulkEditSection = By.cssSelector('#indexMain .bulk_edit_controls')
     By jobsActionsButton = By.cssSelector('#project_job_actions')
     By jobsHeader = By.partialLinkText('All Jobs')
     By activitySectionLink = By.partialLinkText('Executions')
