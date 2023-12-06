@@ -14,15 +14,15 @@ class AccessControlSpec extends SeleniumBase {
     def validPolicyName = 'test-valid-policy-name'
 
     def "upload requires file input"() {
-        when:
+        setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-        then:
             def aclPage = go AccessControlPage
+        when:
             aclPage.uploadButton.click()
             aclPage.waitForModal 1
             aclPage.uploadSubmitButton.click()
-        expect:
+        then:
             aclPage.alertsFields.size() == 3
             aclPage.fileRequiredLabel.getText() == 'File is required'
             aclPage.namePolicyLabel.getText() == 'The policy name without file extension, can contain the characters: a-zA-Z0-9,.+_-'
@@ -30,29 +30,29 @@ class AccessControlSpec extends SeleniumBase {
     }
 
     def "upload invalid acl content"() {
-        when:
+        setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-        then:
             def aclPage = go AccessControlPage
+        when:
             aclPage.uploadButton.click()
             aclPage.waitForModal 1
             aclPage.uploadSubmitButton.click()
             aclPage.uploadNameField.sendKeys 'some-file-name'
             aclPage.uploadFileField.sendKeys createTempYamlFile('invalid acl content test data')
             aclPage.uploadSubmitButton.click()
-        expect:
+        then:
             aclPage.validatePage()
             aclPage.alertField.getText().contains 'Validation failed'
             aclPage.uploadedPolicyValidationTitleField.getText() == 'Uploaded File failed ACL Policy Validation:'
     }
 
     def "upload valid acl content succeeds"() {
-        when:
+        setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-        then:
             def aclPage = go AccessControlPage
+        when:
             aclPage.uploadButton.click()
             aclPage.waitForModal 1
             aclPage.uploadSubmitButton.click()
@@ -60,18 +60,18 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.uploadNameField.clear()
             aclPage.uploadNameField.sendKeys validPolicyName
             aclPage.uploadSubmitButton.click()
-        expect:
+        then:
             aclPage.validatePage()
             aclPage.policiesTitleList.size() == 1
             aclPage.policiesTitleList.get 0 getText() equals validPolicyName
     }
 
     def "upload form warns of duplicate name"() {
-        when:
+        setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-        then:
             def aclPage = go AccessControlPage
+        when:
             aclPage.uploadButton.click()
             aclPage.waitForModal 1
             aclPage.uploadSubmitButton.click()
@@ -79,22 +79,22 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.uploadNameField.clear()
             aclPage.uploadNameField.sendKeys validPolicyName
             aclPage.uploadSubmitButton.click()
-        expect:
+        then:
             aclPage.overwriteHelpField.size() == 1
             aclPage.overwriteHelpField.get 0 getText() equals "A Policy already exists with the specified name"
     }
 
     def "delete acl policy"() {
-        when:
+        setup:
             def loginPage = go LoginPage
             loginPage.login(TEST_USER, TEST_PASS)
-        then:
             def aclPage = go AccessControlPage
+        when:
             aclPage.actionDropdown.click()
             aclPage.deleteButton.click()
             aclPage.deleteModal.isDisplayed()
             aclPage.deleteButtonConfirm.click()
-        expect:
+        then:
             aclPage.alertFields.size() == 0
             aclPage.countBadge.getText() == "0"
             aclPage.policiesTitleList.size() == 0

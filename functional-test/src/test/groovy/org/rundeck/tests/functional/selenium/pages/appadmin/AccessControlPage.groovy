@@ -3,7 +3,6 @@ package org.rundeck.tests.functional.selenium.pages.appadmin
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.ui.Select
 import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
@@ -12,6 +11,8 @@ import org.rundeck.util.container.SeleniumContext
  */
 @CompileStatic
 class AccessControlPage extends BasePage {
+
+    String loadPath = "/menu/acls"
 
     By uploadBy = By.cssSelector("#storage_acl_upload_btn")
     By uploadSubmitBy = By.cssSelector("button#aclStorageUpload_submit_btn")
@@ -29,15 +30,13 @@ class AccessControlPage extends BasePage {
     By storedPoliciesHeaderBy = By.cssSelector("#storedPolicies_header")
     By deleteModalBy = By.cssSelector("#deleteStorageAclPolicy")
 
-    String loadPath = "/menu/acls"
-
     AccessControlPage(final SeleniumContext context) {
         super(context)
     }
 
     void validatePage() {
         if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on access control page: " + driver.currentUrl)
+            throw new IllegalStateException("Not on access control page: " + driver.currentUrl + " loadPath: " + loadPath)
         }
     }
 

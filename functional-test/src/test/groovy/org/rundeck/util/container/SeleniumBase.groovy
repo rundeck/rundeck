@@ -16,6 +16,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
     public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
+    public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
 
     /**
      * Create a driver

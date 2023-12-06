@@ -10,7 +10,7 @@ import org.rundeck.util.container.SeleniumBase
 class CommandSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
+        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
     }
 
     def setup() {
@@ -20,11 +20,12 @@ class CommandSpec extends SeleniumBase {
 
     def "abort button in commands page"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
             commandPage.runButton.click()
@@ -36,17 +37,18 @@ class CommandSpec extends SeleniumBase {
 
     def "abort button in show page"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
             commandPage.runButton.click()
             commandPage.runningButtonLink().click()
         expect:
-            def executionShowPage = page ExecutionShowPage
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'RUNNING'
             executionShowPage.abortButton.click()
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'ABORTED'
@@ -54,20 +56,21 @@ class CommandSpec extends SeleniumBase {
 
     def "default page load shows nodes view"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href
         expect:
-            def executionShowPage = page ExecutionShowPage
             executionShowPage.validatePage()
-            executionShowPage.executionStateDisplayLabel.getAttribute('data-execstate') != null
+            executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionShowPage.viewContentNodes.isDisplayed()
             !executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonOutput.isDisplayed()
@@ -75,20 +78,21 @@ class CommandSpec extends SeleniumBase {
 
     def "fragment #output page load shows output view"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href + "#output"
         expect:
-            def executionShowPage = page ExecutionShowPage
             executionShowPage.validatePage()
-            executionShowPage.executionStateDisplayLabel.getAttribute('data-execstate') != null
+            executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionShowPage.viewContentOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
@@ -96,18 +100,19 @@ class CommandSpec extends SeleniumBase {
 
     def "output view toggle to nodes view with button"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href + "#output"
         expect:
-            def executionShowPage = page ExecutionShowPage
             executionShowPage.validatePage()
             executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonNodes.click()
@@ -119,18 +124,19 @@ class CommandSpec extends SeleniumBase {
 
     def "nodes view toggle to output view with button"() {
         when:
-            def commandPage = go CommandPage, "SeleniumBasic"
+            def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
             commandPage.filterNodeButton.click()
+            commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
             commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href
         expect:
-            def executionShowPage = page ExecutionShowPage
             executionShowPage.validatePage()
             executionShowPage.viewButtonOutput.isDisplayed()
             executionShowPage.viewButtonOutput.click()

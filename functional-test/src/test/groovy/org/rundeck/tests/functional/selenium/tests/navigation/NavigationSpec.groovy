@@ -14,55 +14,66 @@ import spock.lang.Stepwise
 @Stepwise
 class NavigationSpec extends SeleniumBase {
 
-    def setupSpec(){
-        setupProject("SeleniumBasic", "/projects-import/SeleniumBasic.zip")
+    def setupSpec() {
+        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
     }
 
     def setup(){
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
-        def homePage = page HomePage
-        homePage.goProjectHome"SeleniumBasic"
     }
 
     def "visits jobs"() {
-        when:
+        setup:
+            def homePage = page HomePage
             def sideBarPage = page SideBarPage
+        when:
+            homePage.goProjectHome SELENIUM_BASIC_PROJECT
             sideBarPage.goTo NavLinkTypes.JOBS
         then:
             sideBarPage.waitForUrlToContain('/jobs')
     }
 
     def "visits nodes"() {
-        when:
+        setup:
+            def homePage = page HomePage
             def sideBarPage = page SideBarPage
+        when:
+            homePage.goProjectHome SELENIUM_BASIC_PROJECT
             sideBarPage.goTo NavLinkTypes.NODES
         then:
             sideBarPage.waitForUrlToContain('/nodes')
     }
 
     def "visits commands"() {
-        when:
+        setup:
+            def homePage = page HomePage
             def sideBarPage = page SideBarPage
+        when:
+            homePage.goProjectHome SELENIUM_BASIC_PROJECT
             sideBarPage.goTo NavLinkTypes.COMMANDS
         then:
             sideBarPage.waitForUrlToContain('/command')
     }
 
     def "visits activity"() {
-        when:
+        setup:
+            def homePage = page HomePage
             def sideBarPage = page SideBarPage
+        when:
+            homePage.goProjectHome SELENIUM_BASIC_PROJECT
             sideBarPage.goTo NavLinkTypes.ACTIVITY
         then:
             sideBarPage.waitForUrlToContain('/activity')
     }
 
     def "visits System Configuration"() {
-        when:
+        setup:
             def topMenuPage = page TopMenuPage
-        then:
-            topMenuPage.navigateToSystemConfiguration()
             def systemConfigurationPage = page SystemConfigurationPage
+        when:
+            topMenuPage.navigateToSystemConfiguration()
+        then:
             systemConfigurationPage.validatePage()
     }
 }
