@@ -4569,7 +4569,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         title: "Job Reference",
                         description: "Run a job on the remote node",
                         order: 3,
-                        iconClass: "rdicon icon-small command"
+                        iconClass: "glyphicon glyphicon-book"
                 ]
         ].collect {new BuiltInPluginDescription(it)}
     }
