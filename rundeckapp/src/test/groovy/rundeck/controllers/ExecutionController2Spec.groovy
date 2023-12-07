@@ -17,7 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
-import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
+import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState

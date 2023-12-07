@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.app.internal.logging
+package com.dtolabs.rundeck.core.logging.internal;
 
-import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogEvent;
 
 /**
  * $INTERFACE is ...
@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
  * Time: 5:40 PM
  */
 public interface OutputLogFormat {
-    String outputBegin()
-    String outputEvent(LogEvent entry)
-    String outputFinish()
+    String outputBegin();
+    String outputEvent(LogEvent entry);
+    String outputFinish();
 }

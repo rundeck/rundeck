@@ -18,10 +18,9 @@ package rundeck.controllers
 
 import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
-import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
-import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
+import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -34,7 +33,6 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
