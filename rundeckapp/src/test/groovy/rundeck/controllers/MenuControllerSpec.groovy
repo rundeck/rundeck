@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -92,6 +93,7 @@ import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 import java.nio.file.Files
@@ -1477,32 +1479,43 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
     def "api returns expected json containing homeSummary information"() {
         given:
         def execCount = 0
-        def failedCount = 0
+        def totalFailedCount = 0
         def recentUsers = []
         def recentProjects = []
         def frameworkNodeName = 'localhost'
 
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
         }
+        new Project(name: 'proj',description: 'desc').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+            getAuthContextForSubject(_)>>Mock(UserAndRolesAuthContext)
+        }
+
         controller.frameworkService = Mock(FrameworkService){
-            getRundeckFramework()>> Mock(Framework){
+            getRundeckFramework() >> Mock(Framework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager)
                 getFrameworkNodeName() >> frameworkNodeName
             }
+            projectNames(_ as AuthContext) >> ['proj']
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
         controller.configurationService = Mock(ConfigurationService){
             getBoolean("menuController.projectStats.queryAlt",false)>>false
         }
 
-        def projInfo = Mock(IProjectInfo) {
-            getDescription() >> null
-        }
-        def iproj = Mock(IRundeckProject) {
-            getName() >> 'proj'
-            getInfo() >> projInfo
-        }
-        def projects = [iproj]
+
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
 
         when:
         request.api_version = 45
@@ -1513,10 +1526,28 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         then:
         def json=response.json
         assert execCount == json.execCount
-        assert failedCount == json.failedCount
+        assert totalFailedCount == json.totalFailedCount
         assert recentUsers == json.recentUsers
         assert recentProjects == json.recentProjects
         assert frameworkNodeName == json.frameworkNodeName
+    }
+
+    def "api returns error for homeSummary if request isn't json/all"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
+            _ * renderErrorFormat(_, { it.status == 415 }) >> {
+                it[0].status = 415
+            }
+        }
+
+        when:
+        request.api_version = 45
+
+        def result = controller.apiHomeSummary()
+
+        then:
+            assert response.status == 415
     }
 
     def "list Export"() {
