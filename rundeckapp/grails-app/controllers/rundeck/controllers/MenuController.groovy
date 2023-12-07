@@ -2362,14 +2362,7 @@ Fields:
         def fwkNode = framework.getFrameworkNodeName()
 
         respond(
-                [
-                        execCount        : execCount,
-                        totalFailedCount : totalFailedCount,
-                        recentUsers      : users,
-                        recentProjects   : projects,
-                        frameworkNodeName: fwkNode
-                ],
-                formats: responseFormats
+                new HomeSummary(execCount as Integer, totalFailedCount as Integer, users as List<String>, projects as List<String>, fwkNode as String),
         )
     }
 
