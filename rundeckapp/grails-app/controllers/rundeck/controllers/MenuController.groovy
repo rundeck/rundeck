@@ -765,19 +765,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             g.refreshFormTokensHeader()
 
             logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
-//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
             def message="Resumed log storage requests"
-            LogFileStorageRequest req=null
+
+            LinkedHashMap<String, Object> requestMap = null
             if(id){
-                req=LogFileStorageRequest.get(id)
+                LogFileStorageRequest req=LogFileStorageRequest.get(id)
+                requestMap = exportRequestMap(req, true, false, null)
             }
+
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
                         status 'ok'
                         delegate.message message
-                        if(req){
-                            contents exportRequestMap(req, true, false, null)
+                        if(requestMap){
+                            contents requestMap
                         }
                     }
                 }
