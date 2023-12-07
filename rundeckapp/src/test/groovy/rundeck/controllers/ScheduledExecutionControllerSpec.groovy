@@ -3778,6 +3778,30 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * controller.apiService.requireApi(_,_) >> false
 
     }
+    def "api jobs import format param=json requires v44"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            request.method = 'POST'
+            params.format='json'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_,_) >> true
+            1 * controller.apiService.requireParameters(_,_,['project']) >> true
+            1 * controller.apiService.requireApi(_,_,44) >> false
+    }
+    def "api jobs import request format=json requires v44"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            request.method = 'POST'
+            request.format='json'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_,_) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> true
+            1 * controller.apiService.requireApi(_,_,44) >> false
+    }
     def "api jobs import require project param"() {
         given:
             controller.apiService = Mock(ApiService)
@@ -3813,6 +3837,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiJobsImportv14()
         then:
             1 * controller.apiService.requireApi(_,_) >> true
+            (format=='json'?1:0) * controller.apiService.requireApi(_,_,44) >> true
             1 * controller.apiService.requireParameters(_, _, ['project']) >> true
             1 * controller.scheduledExecutionService.parseUploadedFile(!null, format) >> [
                 jobset: jobset

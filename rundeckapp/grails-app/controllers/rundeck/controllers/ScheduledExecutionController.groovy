@@ -3750,6 +3750,11 @@ Each job entry contains:
         }
         log.debug("ScheduledExecutionController: upload " + params)
         String fileformat = params.format ?:params.fileformat ?: 'xml'
+        if (fileformat && fileformat == 'json' || request.format == 'json') {
+            if (!apiService.requireApi(request, response, ApiVersions.V44)) {
+                return
+            }
+        }
         def parseresult
         def supportedFormats = ['xml', 'yaml']
         if (request.api_version > ApiVersions.V43) {
