@@ -228,11 +228,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     @PreDestroy
     void cleanUp() {
+        log.trace("Prev destroy!!!!")
+        configurationService.setExecutionModeActive(false)
         applicationIsShutdown = true;
     }
 
     @Subscriber("rdpro.shutdown")
     void forceInactive(){
+        log.trace("rdpro.shutdown - forceInactive!!!!")
         configurationService.setExecutionModeActive(false)
     }
 
@@ -2299,6 +2302,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
             def timeout = 0
+            log.trace("retryExecuteJob: about to schedule new execution retry: ${e.toMap()}")
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
                     user,
@@ -3133,9 +3137,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     loglevel     : execution.loglevel,
                     filter       : execution.filter //TODO: failed nodes?
                 ]
+
+                log.trace(":::::::::saveExecutionState_currentTransaction: About to retry execute job (${scheduledExecution.getJobName()}): ${execution.toMap()}")
                 def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                                              retryContext.user, input, retryContext.secureOpts,
                                              retryContext.secureOptsExposed, count + 1,execution.id,originalId)
+
+                log.trace("saveExecutionState_currentTransaction: retry execute job (${scheduledExecution.getJobName()} - id: ${execution.id}) result status: ${result}")
                 if (result.success) {
                     execution.retryExecution = result.execution
                 }
