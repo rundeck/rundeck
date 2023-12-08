@@ -30,6 +30,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
+    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
     <g:if test="${!projectNames}">
         <g:embedJSON data="${[projectNames:[],projectNamesTotal:-1]}" id="projectNamesData"/>
     </g:if>
@@ -51,6 +52,7 @@
     ]}" id="homeDataPagingParams"/>
 
     <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/pages/home.js" defer="defer"/>
     <asset:javascript src="static/components/ko-paginator.js"/>
     <!-- /VUE JS REQUIREMENTS -->
 
@@ -100,34 +102,35 @@
         </div>
       </g:if>
     </div>
-    <div class="row">
-      <div class="flex justify-between">
-        <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-5 card">
-          <div class="card-content">
-            <span class="text-h3" data-bind="if: loadedProjectNames()">
-              <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
-                <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
+    <g:if test="${uiType!='next'}">
+      <div class="row">
+        <div class="flex justify-between">
+          <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-5 card">
+            <div class="card-content">
+              <span class="text-h3" data-bind="if: loadedProjectNames()">
+                <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
+                  <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
+                </span>
               </span>
-            </span>
-            <span class="text-h3 text-muted" data-bind="if: !loadedProjectNames()">
+              <span class="text-h3 text-muted" data-bind="if: !loadedProjectNames()">
                 <b class="fas fa-spinner fa-spin loading-spinner"></b>
                 <g:message code="page.home.loading.projects" />
-            </span>
-            <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
-              <g:link controller="framework" action="createProject" class="btn  btn-primary pull-right">
-                <g:message code="page.home.new.project.button.label" />
-                <b class="glyphicon glyphicon-plus"></b>
-              </g:link>
-            </auth:resourceAllowed>
+              </span>
+              <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
+                <g:link controller="framework" action="createProject" class="btn  btn-primary pull-right">
+                  <g:message code="page.home.new.project.button.label" />
+                  <b class="glyphicon glyphicon-plus"></b>
+                </g:link>
+              </auth:resourceAllowed>
+            </div>
           </div>
-        </div>
-        <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-7 card">
-          <div class="card-content flex flex--direction-col flex--justify-center h-full">
-            <span data-bind="if: !loaded()" class="text-muted">
-              ...
-            </span>
-            <div data-bind="if: projectCount() > 0 && loaded()">
-              %{--app summary info--}%
+          <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-7 card">
+            <div class="card-content flex flex--direction-col flex--justify-center h-full">
+              <span data-bind="if: !loaded()" class="text-muted">
+                ...
+              </span>
+              <div data-bind="if: projectCount() > 0 && loaded()">
+                %{--app summary info--}%
                 <span class="h4">
                   <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-strong': execCount()<1 }">
                     <span data-bind="text: execCount"></span>
@@ -136,34 +139,42 @@
                     <g:message code="Execution" />|<g:message code="Execution.plural" />
                   </span>
                   <g:message code="page.home.duration.in.the.last.day" />
-                    <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-strong': totalFailedCount()<1 }">
-                      <span data-bind="messageTemplate: totalFailedCount">
-                        <g:message code="page.home.project.executions.0.failed.parenthetical" />
-                      </span>
+                  <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-strong': totalFailedCount()<1 }">
+                    <span data-bind="messageTemplate: totalFailedCount">
+                      <g:message code="page.home.project.executions.0.failed.parenthetical" />
                     </span>
                   </span>
-                  <div data-bind="if: recentProjectsCount()>1">
-                    <g:message code="in" />
-                    <span class="text-info" data-bind="text: recentProjectsCount()"></span>
-                    <g:message code="Project.plural" />:
-                    <span data-bind="foreach: recentProjects">
-                      <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: $data, text: $data"></a>
-                    </span>
-                  </div>
-                  <div data-bind="if: recentUsersCount()>0">
-                    <g:message code="by" />
-                    <span class="text-info" data-bind="text: recentUsersCount"></span>
-                    <span data-bind="messageTemplate: recentUsersCount(),messageTemplatePluralize:true">
-                        <g:message code="user" />:|<g:message code="user.plural" />:
-                    </span>
-                    <span data-bind="text: recentUsers().join(', ')"></span>
-                  </div>
+                </span>
+                <div data-bind="if: recentProjectsCount()>1">
+                  <g:message code="in" />
+                  <span class="text-info" data-bind="text: recentProjectsCount()"></span>
+                  <g:message code="Project.plural" />:
+                  <span data-bind="foreach: recentProjects">
+                    <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: $data, text: $data"></a>
+                  </span>
+                </div>
+                <div data-bind="if: recentUsersCount()>0">
+                  <g:message code="by" />
+                  <span class="text-info" data-bind="text: recentUsersCount"></span>
+                  <span data-bind="messageTemplate: recentUsersCount(),messageTemplatePluralize:true">
+                    <g:message code="user" />:|<g:message code="user.plural" />:
+                  </span>
+                  <span data-bind="text: recentUsers().join(', ')"></span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </g:if>
+    <g:if test="${uiType == 'next'}">
+      <div class="vue-ui-socket">
+        <g:set var="createProjectAllowed" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION )}"/>
+        <ui-socket section="home" location="header" :socket-data="{ createProjectAllowed: ${createProjectAllowed} }"></ui-socket>
+      </div>
+    </g:if>
+  </div>
+
 
       <div class="container-fluid" data-bind="if: projectCount() == 0">
         <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="true">
@@ -191,6 +202,7 @@
           </auth:resourceAllowed>
         </div>
       </div>
+%{--  card --}%
       <div class="container-fluid">
         <div class="row">
           <div class="col-xs-12">
@@ -394,6 +406,7 @@
 </div>
 </div>
 <!-- VUE JS MODULES -->
+<asset:stylesheet href="static/css/pages/home.css"/>
 <asset:stylesheet href="static/css/components/first-run.css"/>
 <asset:javascript src="static/components/first-run.js"/>
 <asset:javascript src="static/components/version-notification.js"/>
