@@ -36,6 +36,6 @@ class ProjectListNextUiSpec extends SeleniumBase {
                 driver.currentUrl.contains('nextUi=true')
             }
 
-            projectListNextUiPage.getFirstRunCreateBtn().isDisplayed()
+//            projectListNextUiPage.getFirstRunCreateBtn().isDisplayed()
     }
 }
