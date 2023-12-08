@@ -1,16 +1,16 @@
 <template>
-  <div class="row homeHeader">
+  <div class="row homeHeader" id="homeHeader">
     <div class="flex justify-between">
       <div class="col-sm-12 col-md-5 card">
-        <div class="card-content">
-          <h3 class="text-h3" v-if="loadedProjectNames">
-            {{ projectCount }} {{ projectCount === 1 ? $t('page.home.section.project.title') : $t('page.home.section.project.title.plural') }}
+        <div class="card-content flex flex--justify-between flex--items-center h-full">
+          <h3 id="projectCount" class="text-h3" v-if="loadedProjectNames">
+            <span id="projectCountNumber">{{ projectCount }}</span> {{ projectCount === 1 ? $t('page.home.section.project.title') : $t('page.home.section.project.title.plural') }}
           </h3>
-          <span class="text-h3 text-muted" v-if="!loadedProjectNames">
+          <span class="text-h3 text-muted loading" v-if="!loadedProjectNames">
                 <b class="fas fa-spinner fa-spin loading-spinner"></b>
                 {{ $t('page.home.loading.projects') }}
           </span>
-          <a v-if="createProjectAllowed" :href="createProjectLink" class="btn btn-primary pull-right">
+          <a v-if="createProjectAllowed" :href="createProjectLink" id="createProject" class="btn btn-primary pull-right">
             {{ $t('page.home.new.project.button.label') }}
             <b class="glyphicon glyphicon-plus"></b>
           </a>
