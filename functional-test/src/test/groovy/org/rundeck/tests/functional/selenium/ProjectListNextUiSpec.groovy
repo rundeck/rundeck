@@ -32,7 +32,7 @@ class ProjectListNextUiSpec extends SeleniumBase {
             projectListNextUiPage.go()
         then:
             //validate ui type next
-            verify {
+            verifyAll {
                 driver.currentUrl.contains('nextUi=true')
             }
 
