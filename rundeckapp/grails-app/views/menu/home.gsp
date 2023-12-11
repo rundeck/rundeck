@@ -170,7 +170,7 @@
     <g:if test="${uiType == 'next'}">
       <div class="vue-ui-socket">
         <g:set var="createProjectAllowed" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION )}"/>
-        <ui-socket section="home" location="header" :socket-data="{ createProjectAllowed: ${createProjectAllowed} }"></ui-socket>
+        <ui-socket section="home" location="header" :socket-data="{ createProjectAllowed: ${createProjectAllowed}, projectCount: ${projectNames.size()}}"></ui-socket>
       </div>
     </g:if>
   </div>

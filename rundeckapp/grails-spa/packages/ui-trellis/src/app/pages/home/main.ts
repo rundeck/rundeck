@@ -20,7 +20,7 @@ function init() {
                     props: ['itemData'],
                     components: { HomeHeader },
                     template: `
-                      <HomeHeader :createProjectAllowed="itemData.createProjectAllowed"  />
+                      <HomeHeader :createProjectAllowed="itemData.createProjectAllowed" :projectCount="itemData.projectCount" />
                     `,
                 }
             ))
