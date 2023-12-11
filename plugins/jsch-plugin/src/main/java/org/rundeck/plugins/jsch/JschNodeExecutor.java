@@ -21,7 +21,7 @@
 * Created: 3/21/11 4:46 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -29,9 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
-import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
-import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
-import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
@@ -39,12 +37,14 @@ import com.dtolabs.rundeck.core.execution.utils.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
+import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
-import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import org.rundeck.plugins.jsch.net.ExtSSHExec;
+import org.rundeck.plugins.jsch.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -68,7 +68,8 @@ import java.util.concurrent.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschNodeExecutor implements NodeExecutor, Describable, ProxySecretBundleCreator {
+@Plugin(name=JschNodeExecutor.SERVICE_PROVIDER_TYPE,service= ServiceNameConstants.NodeExecutor)
+public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerPlugin {
     public static final Logger logger                           = LoggerFactory.getLogger(JschNodeExecutor.class.getName());
     public static final String SERVICE_PROVIDER_TYPE            = "jsch-ssh";
     public static final String FWK_PROP_AUTH_CANCEL_MSG         = "framework.messages.error.ssh.authcancel";
@@ -608,15 +609,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxySecretB
     }
 
     @Override
-    public SecretBundle prepareSecretBundle(
-            final ExecutionContext context, final INodeEntry node
-    ) {
-        return JschSecretBundleUtil.createBundle(context,node);
+    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
+        return JschSecretBundleUtil.getSecretsPath(context, node);
     }
 
     @Override
-    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
-        return JschSecretBundleUtil.getSecretsPath(context, node);
+    public Map<String, String> getRuntimeProperties(ExecutionContext context) {
+        return context.getFramework().getFrameworkProjectMgr().loadProjectConfig(context.getFrameworkProject()).getProjectProperties();
+    }
+
+    @Override
+    public Map<String, String> getRuntimeFrameworkProperties(ExecutionContext context) {
+        return context.getIFramework().getPropertyLookup().getPropertiesMap();
     }
 
     static ExtractFailure extractJschFailure(final INodeEntry node,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.tasks.net;
+package org.rundeck.plugins.jsch.net;
 
 import com.dtolabs.rundeck.core.execution.BaseLogger;
 import com.dtolabs.rundeck.plugins.PluginLogger;

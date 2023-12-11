@@ -21,34 +21,32 @@
 * Created: 3/21/11 4:47 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
-import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
-import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
-import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import org.rundeck.plugins.jsch.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-import com.dtolabs.utils.Streams;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,8 +58,9 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
+@Plugin(name=JschScpFileCopier.SERVICE_PROVIDER_TYPE,service= ServiceNameConstants.FileCopier)
 public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier, Describable,
-                                                                 ProxySecretBundleCreator {
+        ProxyRunnerPlugin {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
@@ -332,14 +331,17 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
     }
 
     @Override
-    public SecretBundle prepareSecretBundle(
-            final ExecutionContext context, final INodeEntry node
-    ) {
-        return JschSecretBundleUtil.createBundle(context,node);
+    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
+        return JschSecretBundleUtil.getSecretsPath(context, node);
     }
 
     @Override
-    public List<String> listSecretsPath(ExecutionContext context, INodeEntry node) {
-        return JschSecretBundleUtil.getSecretsPath(context, node);
+    public Map<String, String> getRuntimeProperties(ExecutionContext context) {
+        return context.getFramework().getFrameworkProjectMgr().loadProjectConfig(context.getFrameworkProject()).getProjectProperties();
+    }
+
+    @Override
+    public Map<String, String> getRuntimeFrameworkProperties(ExecutionContext context) {
+        return context.getIFramework().getPropertyLookup().getPropertiesMap();
     }
 }

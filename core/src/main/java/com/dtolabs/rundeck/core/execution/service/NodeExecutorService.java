@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.IServicesRegistration;
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -62,7 +61,6 @@ public class NodeExecutorService
 
     static {
         Map<String, Class<? extends NodeExecutor>> map = new HashMap<>();
-        map.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
         map.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
         map.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);

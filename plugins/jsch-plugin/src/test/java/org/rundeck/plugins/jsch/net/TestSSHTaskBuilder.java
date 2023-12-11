@@ -21,11 +21,11 @@
 * Created: 11/15/11 3:43 PM
 *
 */
-package com.dtolabs.rundeck.core.tasks.net;
+package org.rundeck.plugins.jsch.net;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import org.rundeck.plugins.jsch.util.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import junit.framework.TestCase;
