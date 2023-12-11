@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
-import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import org.rundeck.plugins.jsch.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.io.ByteArrayOutputStream;

@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.impl.jsch
+package org.rundeck.plugins.jsch
 
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
-import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageTree
-import com.dtolabs.rundeck.core.tools.AbstractBaseTest
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.Resource
+import org.rundeck.plugins.jsch.util.JschTestUtil
 import spock.lang.Specification
 
 /**
@@ -39,7 +34,7 @@ class JschNodeExecutorSpec extends Specification {
     IRundeckProject testProject
 
     def setup() {
-        framework = AbstractBaseTest.createTestFramework()
+        framework = JschTestUtil.createTestFramework()
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
@@ -74,6 +69,9 @@ class JschNodeExecutorSpec extends Specification {
 
     def "ssh-accept-env from project configuration"() {
         given:
+        framework = JschTestUtil.createTestFramework()
+        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
+
         def exec = new JschNodeExecutor(framework)
         def frameworkProject = Mock(IRundeckProject)
         def context = Mock(ExecutionContext) {

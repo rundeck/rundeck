@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.tasks.net;
+package org.rundeck.plugins.jsch.net;
 
 import com.jcraft.jsch.SocketFactory;
 

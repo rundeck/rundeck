@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.impl.jsch
+package org.rundeck.plugins.jsch
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
@@ -22,11 +22,10 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContext
-import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
-import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder
-import com.dtolabs.rundeck.core.tools.AbstractBaseTest
+import org.rundeck.plugins.jsch.net.SSHTaskBuilder
+import org.rundeck.plugins.jsch.util.JschTestUtil
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -38,7 +37,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
     Framework framework
     FrameworkProject testProject
     def setup() {
-        framework = AbstractBaseTest.createTestFramework()
+        framework = JschTestUtil.createTestFramework()
         testProject=framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
     }
     def cleanup(){
@@ -92,7 +91,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -115,6 +114,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
         'ssh-authentication' | null         | "privateKey" | null         | SSHTaskBuilder.AuthenticationType.privateKey
         'ssh-authentication' | null         | "password"   | null         | SSHTaskBuilder.AuthenticationType.password
     }
+
     def "resolve ssh-key-storage-path"(
             String propname,
             String attrval,
@@ -139,7 +139,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -186,7 +186,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -233,7 +233,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -281,7 +281,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -340,7 +340,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -391,7 +391,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -442,7 +442,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -731,7 +731,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
         } else {
             removePrefixes << projectPropName
         }
-        def framework = AbstractBaseTest.createTestFramework()
+        def framework = JschTestUtil.createTestFramework()
         framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
         framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
@@ -747,7 +747,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
             removeProps(new File(framework.getBaseDir(), "etc/framework.properties"), [frameworkPropName])
         }
         //reload fwk props
-        framework = AbstractBaseTest.createTestFramework()
+        framework = JschTestUtil.createTestFramework()
 
         new NodeSSHConnectionInfo(
                 node,

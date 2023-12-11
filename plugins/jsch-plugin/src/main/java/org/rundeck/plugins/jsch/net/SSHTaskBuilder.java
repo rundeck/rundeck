@@ -21,12 +21,12 @@
 * Created: Jun 3, 2010 11:33:34 AM
 * $Id$
 */
-package com.dtolabs.rundeck.core.tasks.net;
+package org.rundeck.plugins.jsch.net;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import org.rundeck.plugins.jsch.util.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
@@ -44,7 +44,6 @@ import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 import org.apache.tools.ant.types.Environment;
 import org.apache.tools.ant.types.FileSet;
-import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
 
 import java.io.ByteArrayOutputStream;

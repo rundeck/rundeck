@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package org.rundeck.plugins.jsch;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;

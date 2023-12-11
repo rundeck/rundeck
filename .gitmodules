@@ -1,4 +1,5 @@
 [submodule "packaging/packaging"]
 	path = packaging/packaging
 	url = git@github.com:rundeck/packaging.git
-	branch = main
+	branch = RUN-2095
+

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.tasks.net;
+package org.rundeck.plugins.jsch.net;
 
-import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
+import org.rundeck.plugins.jsch.util.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;

@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.IServicesRegistration;
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
@@ -61,7 +60,6 @@ public class FileCopierService
 
     static {
         Map<String, Class<? extends FileCopier>> map = new HashMap<>();
-        map.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
         map.put(LocalFileCopier.SERVICE_PROVIDER_TYPE, LocalFileCopier.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
     }
