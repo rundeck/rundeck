@@ -8,7 +8,7 @@
                 </a>
             </div>
             <div class="rundeck-info-widget__header" v-if="version && appInfo">
-                <RundeckVersion :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
+                <RundeckVersion :show-version-info="isVersionInfoEnabled()" :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
             </div>
             <div v-if="version && version.icon && version.color">
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
@@ -23,7 +23,7 @@
                 </span>
             </div>
         </div>
-        <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
+        <div v-if="latest && isVersionInfoEnabled()" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
             <div class="rundeck-info-widget__heading">Latest Release</div>
             <div class="rundeck-info-widget__latest">
                 <RundeckVersion :logo="false" :number="latest.full" :tag="latest.tag"/>
@@ -37,7 +37,7 @@
 
 <script lang="ts">
 
-import { url} from '../../../rundeckService'
+import {getRundeckContext, url} from '../../../rundeckService'
 
 import RundeckLogo from '../../svg/RundeckLogo.vue'
 import PagerdutyLogo from '../../svg/PagerdutyLogo.vue'
@@ -71,6 +71,12 @@ export default defineComponent({
         }
     },
     methods: {
+      isVersionInfoEnabled(){
+        const rundeck = getRundeckContext()
+        console.log((rundeck.feature && rundeck.feature.disableVersionInfo && rundeck.feature.disableVersionInfo.enabled))
+        return (rundeck.feature && rundeck.feature.disableVersionInfo && rundeck.feature.disableVersionInfo.enabled)
+      },
+
         welcomeUrl() {
             return url('menu/welcome').toString()
         }

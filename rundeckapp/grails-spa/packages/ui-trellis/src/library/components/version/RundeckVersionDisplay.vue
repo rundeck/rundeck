@@ -13,6 +13,7 @@ export default defineComponent({
         title: {type: String},
         number: {type: String},
         tag: {type: String},
+        showVersionInfo: {type: Boolean},
         logo: {default: true},
         logocss: {default: 'rdicon'},
     },
@@ -24,8 +25,10 @@ export default defineComponent({
             let {title, number, tag} = this
             let text = ''
             text += `${title ? title + ' ' : ''}`
+          if(this.showVersionInfo){
             text += `${number}`
-            return text
+          }
+          return text
         }
     }
 })
