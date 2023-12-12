@@ -40,7 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import org.apache.tools.ant.Project;
 import org.rundeck.plugins.jsch.net.ExtSSHExec;
 import org.rundeck.plugins.jsch.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -49,7 +49,6 @@ import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -348,7 +347,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
-        AntSupport.addAntBuildListener(listener, project);
+        //AntSupport.addAntBuildListener(listener, project);
 
         boolean success = false;
         final ExtSSHExec sshexec;

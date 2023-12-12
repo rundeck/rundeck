@@ -153,11 +153,11 @@ public class TestSSHTaskBuilder extends TestCase {
             this.pluginLogger = pluginLogger;
         }
 
-        public Map<String, String> getSshConfig() {
+        public Map<String, String> getSshConfigSession() {
             return sshConfig;
         }
 
-        public void setSshConfig(Map<String, String> sshConfig) {
+        public void setSshConfigSession(Map<String, String> sshConfig) {
             this.sshConfig = sshConfig;
         }
 
@@ -518,9 +518,9 @@ public class TestSSHTaskBuilder extends TestCase {
         assertEquals("testusername", test.username);
         assertEquals(false, test.getVerbose());
         assertInvariable(state, test);
-        assertNotNull(test.getSshConfig());
-        assertEquals("1", test.getSshConfig().get("MaxAuthTries"));
-        assertEquals("publickey,password,keyboard-interactive", test.getSshConfig().get("PreferredAuthentications"));
+        assertNotNull(test.getSshConfigSession());
+        assertEquals("1", test.getSshConfigSession().get("MaxAuthTries"));
+        assertEquals("publickey,password,keyboard-interactive", test.getSshConfigSession().get("PreferredAuthentications"));
 
     }
 
@@ -728,11 +728,11 @@ public class TestSSHTaskBuilder extends TestCase {
 
         runBuildSSH(state, test, testLogger);
 
-        assertNotNull(test.getSshConfig());
-        assertEquals(3,test.getSshConfig().size());
-        assertEquals("123", test.getSshConfig().get("abc"));
-        assertEquals("1", test.getSshConfig().get("MaxAuthTries"));
-        assertEquals("publickey,password,keyboard-interactive", test.getSshConfig().get("PreferredAuthentications"));
+        assertNotNull(test.getSshConfigSession());
+        assertEquals(3,test.getSshConfigSession().size());
+        assertEquals("123", test.getSshConfigSession().get("abc"));
+        assertEquals("1", test.getSshConfigSession().get("MaxAuthTries"));
+        assertEquals("publickey,password,keyboard-interactive", test.getSshConfigSession().get("PreferredAuthentications"));
     }
     public void testBuildSSHConfigOverrideDefaults() throws Exception {
         final testState state = new testState();
@@ -743,10 +743,10 @@ public class TestSSHTaskBuilder extends TestCase {
 
         runBuildSSH(state, test, testLogger);
 
-        assertNotNull(test.getSshConfig());
-        assertEquals(2,test.getSshConfig().size());
-        assertEquals("2", test.getSshConfig().get("MaxAuthTries"));
-        assertEquals("publickey,password,keyboard-interactive", test.getSshConfig().get("PreferredAuthentications"));
+        assertNotNull(test.getSshConfigSession());
+        assertEquals(2,test.getSshConfigSession().size());
+        assertEquals("2", test.getSshConfigSession().get("MaxAuthTries"));
+        assertEquals("publickey,password,keyboard-interactive", test.getSshConfigSession().get("PreferredAuthentications"));
     }
     public void testBuildSSHConfigOverrideDefaultsPreferredAuthentications() throws Exception {
         final testState state = new testState();
@@ -758,10 +758,10 @@ public class TestSSHTaskBuilder extends TestCase {
 
         runBuildSSH(state, test, testLogger);
 
-        assertNotNull(test.getSshConfig());
-        assertEquals(2,test.getSshConfig().size());
-        assertEquals("1", test.getSshConfig().get("MaxAuthTries"));
-        assertEquals("publickey,password", test.getSshConfig().get("PreferredAuthentications"));
+        assertNotNull(test.getSshConfigSession());
+        assertEquals(2,test.getSshConfigSession().size());
+        assertEquals("1", test.getSshConfigSession().get("MaxAuthTries"));
+        assertEquals("publickey,password", test.getSshConfigSession().get("PreferredAuthentications"));
     }
     public void testBuildSSHNoHostname() throws Exception {
         final testState state = new testState();

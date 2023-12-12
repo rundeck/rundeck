@@ -19,11 +19,10 @@ configurations{
 }
 
 dependencies {
-    // Use the latest Groovy version for building this library
-    implementation project(":core")
+    implementation(project(":core"))
 
-    pluginLibs 'org.apache.ant:ant:1.10.13'
-    pluginLibs 'org.apache.ant:ant-jsch:1.9.16'
+    pluginLibs 'org.apache.ant:ant:1.10.14'
+    pluginLibs ('org.apache.ant:ant-jsch:1.10.14')
     pluginLibs 'com.jcraft:jsch:0.1.55'
     pluginLibs 'com.jcraft:jsch.agentproxy.jsch:0.0.9'
     pluginLibs 'com.jcraft:jsch.agentproxy.sshagent:0.0.9'

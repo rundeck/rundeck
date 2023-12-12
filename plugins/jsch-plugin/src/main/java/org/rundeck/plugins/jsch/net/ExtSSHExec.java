@@ -266,7 +266,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         this.antLogLevel = antLogLevel;
     }
 
-    public Map<String, String> getSshConfig() {
+    public Map<String, String> getSshConfigSession() {
         return sshConfig;
     }
 
@@ -602,7 +602,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     private Map<String,String> sshConfig;
     @Override
-    public void setSshConfig(Map<String, String> config) {
+    public void setSshConfigSession(Map<String, String> config) {
         this.sshConfig=config;
     }
 
