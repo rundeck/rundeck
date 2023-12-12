@@ -167,6 +167,7 @@ project(':rundeckapp') {
     it.ext.bundledPlugins = buildConf.rundeck.plugins
 
     it.ext.bundledPlugins += [
+        project(':plugins:script-node-step-plugin'),
         project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
         project(':plugins:localexec-plugin'),

@@ -121,6 +121,10 @@ public class PluginAdapterUtility {
             if (!"".equals(descAnnotation.description())) {
                 builder.description(descAnnotation.description());
             }
+            if(descAnnotation.isHighlighted()) {
+                builder.isHighlighted(true);
+                builder.order(descAnnotation.order());
+            }
         }
         builder.metadata(loadPluginMetadata(type));
 

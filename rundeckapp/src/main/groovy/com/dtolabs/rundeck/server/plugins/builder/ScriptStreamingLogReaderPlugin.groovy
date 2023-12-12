@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins.builder
 
-import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable

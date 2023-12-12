@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
@@ -31,24 +31,16 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.core.storage.StorageTree
-import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
-import grails.config.Config
 import grails.plugins.mail.MailMessageBuilder
-import grails.plugins.mail.MailMessageContentRenderer
 import grails.plugins.mail.MailService
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
@@ -60,7 +52,6 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
 import org.springframework.mail.MailMessage
-import org.springframework.mail.MailSender
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification

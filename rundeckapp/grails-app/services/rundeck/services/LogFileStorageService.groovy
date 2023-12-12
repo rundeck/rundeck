@@ -19,7 +19,7 @@ package rundeck.services
 import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
-import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
+import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound

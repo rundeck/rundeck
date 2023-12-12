@@ -18,6 +18,7 @@ package rundeck.controllers
 
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.homeSummary.HomeSummary
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
@@ -2277,6 +2278,93 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     /**
     * API Actions
      */
+
+    @Get(uri="/home/summary")
+    @Operation(
+            method="GET",
+            summary="Summary of executions and projects",
+            description = '''Get Summary information about executions and projects.
+
+Since: V45
+''',
+            tags=["summary","projects","executions"],
+            responses = @ApiResponse(
+                    responseCode = "200",
+                    description = '''Success response, with summary information.
+
+Fields:
+
+`execCount`
+
+:   Number of executions
+
+`totalFailedCount`
+
+:   Number of failed executions in the last 24 hours
+
+`recentUsers`
+
+:   Name of users who triggered executions in the last 24 hours
+
+`recentProjects`
+
+:   Name of projects with executions in the last 24 hours
+
+`frameworkNodeName`
+
+:   Name of framework node
+''',
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = HomeSummary),
+                            examples = @ExampleObject("""{
+    "execCount": 0,
+    "totalFailedCount": 0,
+    "recentUsers": [],
+    "recentProjects": [],
+    "frameworkNodeName": "localhost"
+
+}""")
+                    )
+            )
+    )
+
+    def apiHomeSummary(){
+        if (!apiService.requireApi(request, response, ApiVersions.V45)) {
+            return
+        }
+
+        if (!(response.format in ['all', 'json'])) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        List<String> projectNames = frameworkService.projectNames(authContext)
+
+        log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+        def allsummary=cachedSummaryProjectStats(projectNames)
+        def projects=allsummary.recentProjects
+        def users=allsummary.recentUsers
+        def execCount=allsummary.execCount
+        def totalFailedCount=allsummary.totalFailedCount
+
+        def fwkNode = framework.getFrameworkNodeName()
+
+        respond(
+                new HomeSummary(execCount as Integer, totalFailedCount as Integer, users as List<String>, projects as List<String>, fwkNode as String),
+        )
+    }
 
     @Get(uri="/system/logstorage")
     @Operation(
