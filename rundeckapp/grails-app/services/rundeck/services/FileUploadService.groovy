@@ -107,7 +107,7 @@ class FileUploadService {
         return plugin
     }
 
-    private String getPluginType() {
+    String getPluginType() {
         configurationService.getString('fileupload.plugin.type', FS_FILE_UPLOAD_PLUGIN)
     }
 
