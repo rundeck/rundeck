@@ -14,7 +14,10 @@ class ProjectListPage extends BasePage {
     ProjectListPage(final SeleniumContext context) {
         super(context)
     }
-    String loadPath = PAGE_PATH
+
+    String getLoadPath() {
+        return PAGE_PATH
+    }
 
     void validatePage() {
         if (!driver.currentUrl.contains(PAGE_PATH)) {
