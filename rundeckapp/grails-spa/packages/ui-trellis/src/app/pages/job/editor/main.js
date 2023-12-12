@@ -12,6 +12,7 @@ import OtherEditorSection from "./OtherEditorSection.vue";
 import { EventBus } from "../../../../library/utilities/vueEventBus";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
+import OptionsEditorSection from './OptionsEditorSection.vue'
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -58,6 +59,24 @@ for (let i = 0; i < resels.length; i++) {
     return updateLocaleMessages(i18n, locale, lang, newMessages);
   });
   rapp.mount(e);
+}
+const optsels = document.body.getElementsByClassName('job-editor-options-vue')
+
+for (let i = 0; i < optsels.length; i++) {
+    const e = optsels[i]
+    const rapp = createApp({
+        name:"JobEditOptionsApp",
+        components: { OptionsEditorSection }
+    })
+    rapp.use(uiv)
+    rapp.use(i18n)
+    rapp.provide('addUiMessages', async (messages) => {
+        const newMessages = messages.reduce((acc, message) => message ? ({...acc, ...message}) : acc, {})
+        const locale = window._rundeck.locale || 'en_US'
+        const lang = window._rundeck.language || 'en'
+        return updateLocaleMessages(i18n, locale, lang, newMessages)
+    })
+    rapp.mount(e)
 }
 const scsels = document.body.getElementsByClassName("job-editor-schedules-vue");
 
