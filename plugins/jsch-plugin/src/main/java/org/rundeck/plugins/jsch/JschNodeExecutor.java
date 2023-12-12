@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.proxy.ProxyRunnerPlugin;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -347,7 +346,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
-        //AntSupport.addAntBuildListener(listener, project);
 
         boolean success = false;
         final ExtSSHExec sshexec;
