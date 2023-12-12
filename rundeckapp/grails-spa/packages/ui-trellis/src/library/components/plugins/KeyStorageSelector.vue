@@ -15,17 +15,15 @@
   -->
 
 <template>
-    <div>
-        <btn class="btn btn-sm btn-default" @click="openSelector()">
-            <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
-        </btn>
-        <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
-          <key-storage-view ref="keyStorageViewRef" @update:modelValue="onSelectedKeyChange" :read-only="readOnly" :root-path="rootPath" :allow-upload="allowUpload" :model-value="modelValue" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
-        </modal>
-        <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" :footer="false" auto-focus append-to-body>
-          <key-storage-edit :uploadSetting="uploadSetting" :root-path="rootPath" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing" ></key-storage-edit>
-        </modal>
-    </div>
+    <btn @click="openSelector()">
+        <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
+    </btn>
+    <modal v-model="modalOpen" :beforeClose="beforeModalClose" title="Select a Storage File" id="storage-file" disabled="readOnly" auto-focus append-to-body cancel-text="Cancel" ok-text="Save">
+      <key-storage-view ref="keyStorageViewRef" @update:modelValue="onSelectedKeyChange" :read-only="readOnly" :root-path="rootPath" :allow-upload="allowUpload" :model-value="modelValue" @closeSelector="closeSelector" @openSelector="openSelector" @openEditor="openEditor"></key-storage-view>
+    </modal>
+    <modal v-model="modalEdit" title="Add or Upload a Key" id="storageuploadkey" ref="modalEdit" :footer="false" auto-focus append-to-body>
+      <key-storage-edit :uploadSetting="uploadSetting" :root-path="rootPath" :storage-filter="storageFilter" @cancelEditing="handleCancelEditing" @finishEditing="handleFinishEditing" ></key-storage-edit>
+    </modal>
 </template>
 
 
