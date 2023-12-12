@@ -64,7 +64,7 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     }
 
     @Override
-    public void setSshConfig(Map<String, String> config) {
+    public void setSshConfigSession(Map<String, String> config) {
         this.sshConfig = config;
     }
 
@@ -97,7 +97,7 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
         this.timeout = timeout;
     }
 
-    public Map<String, String> getSshConfig() {
+    public Map<String, String> getSshConfigSession() {
         return sshConfig;
     }
 

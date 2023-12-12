@@ -127,7 +127,7 @@ public class SSHTaskBuilder {
                             Project.MSG_DEBUG,
                             "ssh-agent used as identity repository."
                     );
-                    base.getSshConfig().put("ForwardAgent", "yes");
+                    base.getSshConfigSession().put("ForwardAgent", "yes");
                 } catch (AgentProxyException e) {
                     throw new JSchException("Unable to add key to ssh-agent: " + e);
                 }
@@ -169,7 +169,7 @@ public class SSHTaskBuilder {
         if (base.getVerbose()) {
             base.getPluginLogger().log(Project.MSG_DEBUG, "Connecting to " + base.getHost() + ":" + base.getPort());
         }
-        SSHTaskBuilder.configureSession(base.getSshConfig(), session);
+        SSHTaskBuilder.configureSession(base.getSshConfigSession(), session);
 
         //add  bind address server
         String bindAddress=base.getBindAddress();
@@ -278,9 +278,9 @@ public class SSHTaskBuilder {
 
         String getKnownhosts();
 
-        void setSshConfig(Map<String, String> config);
+        void setSshConfigSession(Map<String, String> config);
 
-        Map<String, String> getSshConfig();
+        Map<String, String> getSshConfigSession();
 
         public PluginLogger getPluginLogger();
 
@@ -477,13 +477,13 @@ public class SSHTaskBuilder {
         }
 
         @Override
-        public void setSshConfig(Map<String, String> config) {
-            instance.setSshConfig(config);
+        public void setSshConfigSession(Map<String, String> config) {
+            instance.setSshConfigSession(config);
         }
 
         @Override
-        public Map<String, String> getSshConfig() {
-            return instance.getSshConfig();
+        public Map<String, String> getSshConfigSession() {
+            return instance.getSshConfigSession();
         }
 
         @Override
@@ -751,7 +751,7 @@ public class SSHTaskBuilder {
         if(null!=sshConfig) {
             baseConfig.putAll(sshConfig);
         }
-        sshbase.setSshConfig(baseConfig);
+        sshbase.setSshConfigSession(baseConfig);
         sshbase.setEnableSSHAgent(sshConnectionInfo.getLocalSSHAgent());
         sshbase.setTtlSSHAgent(sshConnectionInfo.getTtlSSHAgent());
         sshbase.setPluginLogger(logger);

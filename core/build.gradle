@@ -71,7 +71,7 @@ dependencies {
         exclude group: 'pull-parser'
     }
 
-    api 'org.apache.ant:ant:1.10.13',
+    api 'org.apache.ant:ant:1.10.14',
         'org.slf4j:slf4j-api:1.7.32',
         'commons-codec:commons-codec:1.15',
         'commons-beanutils:commons-beanutils:1.9.4',
