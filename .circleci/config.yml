@@ -602,6 +602,8 @@ slack-defaults: &slack-defaults
   <<: *slack-fail-post-step
 
 require-build: &require-build
+  context:
+    - Cloudsmith
   requires:
     - Build
 
