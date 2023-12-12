@@ -140,7 +140,8 @@ def manifest=[
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
     "plugins/audit-logging-plugin/${target}/rundeck-audit-logging-plugin-${version}.jar":[:],
-    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:]
+    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:],
+    "plugins/jsch-plugin/${target}/rundeck-jsch-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate
