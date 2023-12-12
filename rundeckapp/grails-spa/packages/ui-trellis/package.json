@@ -32,6 +32,7 @@
   "dependencies": {
     "@esfx/canceltoken": "^1.0.0",
     "@iconfu/svg-inject": "^1.2.3",
+    "@pagerduty/continuum.tokens": "^0.1.0",
     "@popperjs/core": "^2.8.4",
     "@rundeck/client": "^0.2.5",
     "@storybook/vue3": "^6.5.16",
