@@ -54,14 +54,17 @@ class GormStorageDataProvider implements StorageDataProvider {
     }
 
     @Override
-    void update(final Serializable id, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
-        Storage storage = storageDataService.get(id)
+    void update(final RundeckStorage source, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
+        def sourceParent = PathUtil.parentPath(source.getPath())
+        String sourceDir = sourceParent?sourceParent.path:''
+        String sourceName = source.getPath().name
+        Storage storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
+        if (!storage) {
+            throw new DataAccessException("Not found: storage with ID: ${source.id}")
+        }
         def parent = PathUtil.parentPath(data.getPath())
         String dir = parent?parent.path:''
         String name = data.getPath().name
-        if (!storage) {
-            throw new DataAccessException("Not found: storage with ID: ${id}")
-        }
         Map<String, String> existingMeta = storage.storageMeta?:[:]
         storage.storageMeta = existingMeta + metadata
 
@@ -74,29 +77,32 @@ class GormStorageDataProvider implements StorageDataProvider {
          try {
              storage.save(flush: true)
         } catch (Exception e) {
-            throw new DataAccessException("Error: could not update project ${id}: ${e}", e)
+            throw new DataAccessException("Error: could not update project ${source.id}: ${e}", e)
         }
     }
 
     @Override
-    void delete(final Serializable id) throws DataAccessException {
-        def storage = storageDataService.get(id)
+    void delete(final RundeckStorage source) throws DataAccessException {
+        def sourceParent = PathUtil.parentPath(source.getPath())
+        String sourceDir = sourceParent?sourceParent.path:''
+        String sourceName = source.getPath().name
+        def storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
         if (!storage) {
-            throw new DataAccessException("Not found: storage with ID: ${id}")
+            throw new DataAccessException("Not found: storage with ID: ${source.id}")
         }
         try {
             storage.delete(flush:true)
          } catch (Exception e) {
-            throw new DataAccessException("Could not delete storage ${id}: ${e}", e)
+            throw new DataAccessException("Could not delete storage ${source.id}: ${e}", e)
         }
     }
-    public List<RundeckStorage> findAllByNamespaceAndDir(String namespace, String path) {
+    List<RundeckStorage> findAllByNamespaceAndDir(String namespace, String path) {
         storageDataService.findAllByNamespaceAndDir(namespace, path, [sort:'name',order:'desc']) as List<RundeckStorage>
     }
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    public RundeckStorage findResource(String ns, String dir, String name) {
+    RundeckStorage findResource(String ns, String dir, String name) {
         def found = Storage.createCriteria().get(){
             if(ns){
                 eq('namespace', ns)
@@ -115,7 +121,7 @@ class GormStorageDataProvider implements StorageDataProvider {
             cache(false)
         }
         found?.refresh()
-        found
+        found as RundeckStorage
     }
 
     @Override
@@ -185,7 +191,7 @@ class GormStorageDataProvider implements StorageDataProvider {
                 like('dir', pathkey+'%')
             }
             order("name", "desc")
-        }
+        } as List<RundeckStorage>
     }
 
     @Override
@@ -201,7 +207,7 @@ class GormStorageDataProvider implements StorageDataProvider {
             }
             like('dir', pathkey + '%')
             order("name", "desc")
-        }
+        } as List<RundeckStorage>
     }
 
 
