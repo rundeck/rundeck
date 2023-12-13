@@ -616,9 +616,6 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build Release
-          context:
-            - Cloudsmith
-            - slack-secrets
           <<: *slack-defaults
       - packaging-publish:
           name: Package and Release
@@ -649,9 +646,6 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build
-          context:
-            - Cloudsmith
-            - slack-secrets
           <<: *slack-defaults
       - test-gradle:
           name: Gradle Test
