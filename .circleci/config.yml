@@ -599,11 +599,10 @@ jobs:
 slack-defaults: &slack-defaults
   context:
     - slack-secrets
+    - Cloudsmith
   <<: *slack-fail-post-step
 
 require-build: &require-build
-  context:
-    - Cloudsmith
   requires:
     - Build
 
@@ -617,6 +616,9 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build Release
+          context:
+            - Cloudsmith
+            - slack-secrets
           <<: *slack-defaults
       - packaging-publish:
           name: Package and Release
@@ -647,6 +649,9 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build
+          context:
+            - Cloudsmith
+            - slack-secrets
           <<: *slack-defaults
       - test-gradle:
           name: Gradle Test
