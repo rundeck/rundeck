@@ -121,7 +121,7 @@ class GormStorageDataProvider implements StorageDataProvider {
             cache(false)
         }
         found?.refresh()
-        found as RundeckStorage
+        found
     }
 
     @Override
