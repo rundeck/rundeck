@@ -127,7 +127,7 @@ export class ExecutionOutput {
             },
             queryParameters: {
                 offset: offset.toString(),
-                maxlines: maxLines
+                maxlines: maxLines.toString()
             }
         }).then(response => {
             if (response.status != 200) {
