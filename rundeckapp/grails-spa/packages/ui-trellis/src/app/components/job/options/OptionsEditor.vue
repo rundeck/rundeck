@@ -25,6 +25,7 @@
           <!--          <g:render template="/scheduledExecution/optlistContent" model="${[options:options,edit:edit]}"/>-->
           <li v-if="createMode">
             <option-edit
+              :ui-features="{'next':false}"
               :error="error"
               :new-option="true"
               v-model="createOption"
@@ -122,7 +123,9 @@ export default defineComponent({
         realValuesUrl:null,
         optionValuesPluginType:'',
         remoteUrlAuthenticationType:'',
-        configRemoteUrl:{}
+        configRemoteUrl:{},
+        sortValues:false,
+        regex:null
       };
       this.createMode = true;
     },
