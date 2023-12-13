@@ -280,16 +280,30 @@
       </div>
           <div class="form-group" v-if="!isSecureInput">
             <label class="col-sm-2 control-label">{{ $t('form.option.values.label') }}</label>
-            <div class="col-sm-3">
-              <g:set var="valueTypeListChecked" value="${!option || (!option.realValuesUrl && !option.optionValuesPluginType) ? true : false}"/>
-              <div>
+            <div  :class="{'col-sm-10':uiFeatures['next'],'col-sm-3':!uiFeatures['next']}">
+
+              <select v-model="valuesType" class="form-control" v-if="uiFeatures['next']">
+                <option value="list">
+                  {{ $t('form.label.valuesType.list.label') }}
+                </option>
+                <option value="url">
+                  {{ $t('form.option.valuesType.url.label') }}
+                </option>
+                <template v-if="features['optionValuesPlugin']">
+                  <option v-for="optionValPlugin in optionValuesPlugins"  :value="optionValPlugin.name">
+                    {{ optionValPlugin.title||optionValPlugin.name }}
+                  </option>
+                </template>
+              </select>
+
+              <div v-if="!uiFeatures['next']">
                 <div class="radio">
                   <input type="radio"
                          name="valuesType"
                            value="list"
                          v-model="valuesType"
                            id="vtrlist_"/>
-                  <label for="vtrlist_" 
+                  <label for="vtrlist_"
                          :class="{ 'has-error': hasError('valuesList') }"
                   >
                     {{ $t('form.label.valuesType.list.label') }}
@@ -302,7 +316,7 @@
                          value="url"
                          v-model="valuesType"
                            id="vtrurl_"/>
-                  <label for="vtrurl_" 
+                  <label for="vtrurl_"
                          class="left"
                          :class="{ 'has-error': hasError('valuesUrl') }"
                   >
@@ -331,8 +345,9 @@
               </div>
 
             </div>
-            <div class="col-sm-7">
-              <div id="vlist_section" v-if="valuesType==='list'">
+            <div  :class="{'col-sm-10 col-sm-offset-2':uiFeatures['next'],'col-sm-7':!uiFeatures['next']}">
+
+              <div id="vlist_section" v-if="valuesType==='list'"  :class="{ 'has-error': hasError('valuesList') }">
 
                 <input type="text" name="valuesList"
                              class="form-control"
@@ -344,8 +359,8 @@
               </div>
 
               <div id="vurl_section"
-                   v-if="valuesType==='url'"
-                   style="padding-top: 27px; ">
+                   v-else-if="valuesType==='url'"
+                   :class="{ 'has-error': hasError('valuesUrl') }">
                 <input type="url"
                              class=" form-control"
                              name="valuesUrl"
@@ -548,6 +563,15 @@
                   </div>
 
                 </div>
+              </div>
+              <div v-else-if="valuesType && optionValuesPlugins && uiFeatures['next']">
+                <plugin-info
+                  :detail="getProviderFor(valuesType)"
+                  :show-description="true"
+                  :show-extended="true"
+                  description-css="help-block"
+                >
+                </plugin-info>
               </div>
             </div>
           </div>
@@ -954,9 +978,11 @@
   </div>
 </template>
 <script lang="ts">
+import {plugins} from '@/app/pages/repository/stores/pluginConfig.module'
 import {cloneDeep} from "lodash"
 import KeyStorageSelector from "../../../..//library/components/plugins/KeyStorageSelector.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
 import { defineComponent } from "vue";
@@ -965,7 +991,7 @@ import { VMarkdownView } from "vue3-markdown";
 
 export default defineComponent({
   name: "OptionEdit",
-  components: { KeyStorageSelector, PluginConfig, AceEditor, VMarkdownView },
+  components: { KeyStorageSelector, PluginConfig, AceEditor, VMarkdownView, PluginInfo },
   emits: ["update:modelValue", "cancel", "save"],
   props: {
     error: String,
@@ -975,6 +1001,7 @@ export default defineComponent({
     fileUploadPluginType: { type: String, default: "" },
     errors: { type: Object, default: () => ({}) },
     optionValuesPlugins: { type: Array, default: () => [] },
+    uiFeatures: { type: Object, default: () => ({}) },
   },
   data() {
     return {
@@ -1000,6 +1027,9 @@ export default defineComponent({
     },
   },
   computed: {
+    plugins() {
+      return plugins
+    },
     fileUploadPluginEnabled() {
       return this.features["fileUploadPlugin"];
     },
@@ -1033,7 +1063,7 @@ export default defineComponent({
         if(this.option.enforced){
           return "enforced";
         }
-        if(this.option.regex){
+        if(this.option.regex!==null){
           return "regex";
         }
         return "none";
@@ -1086,7 +1116,9 @@ export default defineComponent({
     hasError(field: string) {
       return this.errors[field] && this.errors[field].length > 0;
     },
-
+    getProviderFor(name){
+      return this.optionValuesPlugins.find(p => p.name === name)
+    },
     tofilebashvar(str: string) {
       return (
         this.bashVarPrefix +
