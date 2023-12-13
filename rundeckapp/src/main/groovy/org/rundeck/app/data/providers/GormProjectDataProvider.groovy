@@ -51,7 +51,7 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
 
     @Override
     void update(final Serializable id, final RdProject data) throws DataAccessException {
-        def project = projectDataService.get(id)
+        def project = projectDataService.getByName(data.name)
         if (!project) {
             throw new DataAccessException("Not found: project with ID: ${id}")
         }
