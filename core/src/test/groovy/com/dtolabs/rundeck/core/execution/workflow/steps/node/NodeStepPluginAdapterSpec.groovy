@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import spock.lang.Specification
 
 /**
@@ -201,7 +202,7 @@ class NodeStepPluginAdapterSpec extends Specification {
         def item = new TestExecItem(
                 type: 'atype',
                 stepConfiguration: inputconfig,
-                nodeStepType: ScriptCommand.SCRIPT_COMMAND_TYPE,
+                nodeStepType: nodeStepType,
                 label: 'a label'
         )
         when:
@@ -214,8 +215,10 @@ class NodeStepPluginAdapterSpec extends Specification {
         where:
 
         inputconfig = [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"']
-        data | expect
-        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"']
+        data | expect                                                        | nodeStepType
+        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptCommand.SCRIPT_COMMAND_TYPE
+        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        [:] | [a: 'b', c: '', d: 'something "xyzqws"']                       | 'someothertype'
     }
 
     def "create config with custom fields"(){
