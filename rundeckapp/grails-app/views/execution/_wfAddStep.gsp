@@ -216,7 +216,7 @@
 </div>
 </div>
 
-    <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[])}"/>
+    <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[]) + (nodeStepDescriptionsHighlighted?:[])}"/>
     <g:set var="stepDescriptionsData" value="${stepDescriptionsAll.collect{[name:it.name,title:it.title,description:it.description,properties:it.properties.collect{[name:it.name,title:it.title,description:it.description]}] } }"/>
     <g:embedJSON data="${stepDescriptionsData}" id="stepDescriptions_json"/>
     <g:javascript>
