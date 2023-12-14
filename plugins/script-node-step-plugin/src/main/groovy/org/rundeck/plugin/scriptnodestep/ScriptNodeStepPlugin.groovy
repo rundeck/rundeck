@@ -87,7 +87,7 @@ E.g.: `.ps1`, or `abc`.
 
     @Override
     List<String> listResources() throws PluginException, IOException {
-        ['WorkflowNodeStep.script-command.icon.png']
+        ['WorkflowNodeStep.script-inline.icon.png']
     }
 
     @Override
