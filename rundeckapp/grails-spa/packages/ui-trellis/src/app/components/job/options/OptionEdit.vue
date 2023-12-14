@@ -951,7 +951,7 @@
         <btn
           size="sm"
           type="cta"
-          @click="$emit('save', option)"
+          @click="doSave"
           :title="$t('form.option.create.title')"
           >{{ $t("save") }}
         </btn>
@@ -1113,6 +1113,10 @@ export default defineComponent({
     }
   },
   methods: {
+    doSave(){
+      this.$emit('update:modelValue', this.option)
+      this.$emit('save', this.option)
+    },
     hasError(field: string) {
       return this.errors[field] && this.errors[field].length > 0;
     },

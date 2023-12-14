@@ -17,27 +17,55 @@
         </div>
       </div>
       <div class="clear"></div>
-      <ul class="options">
-        <ol>
-          <li v-for="option in intOptions">
-            {{ option }}
+        <ul class="options">
+          <li
+            v-for="(option, i) in intOptions"
+            :key="i"
+            class="edit-option-item"
+            :class="{ alternate: i % 2 === 1 }"
+          >
+            <option-edit
+              v-if="editIndex===i"
+              :ui-features="{ next: false }"
+              :error="error"
+              :new-option="false"
+              v-model="createOption"
+              :file-upload-plugin-type="fileUploadPluginType"
+              :features="features"
+              :option-values-plugins="providers"
+              @save="updateOption(i)"
+              @cancel="doCancel"
+            />
+            <option-item
+              v-else
+              :editable="!createOption"
+              :opt-index="i"
+              :can-move-down="i < intOptions.length - 1"
+              :can-move-up="i > 0"
+              :option="option"
+              @moveUp="doMoveUp(i)"
+              @moveDown="doMoveDown(i)"
+              @edit="doEdit(i)"
+              @delete="intOptions.splice(i, 1)"
+              @duplicate="doDuplicate(i)"
+            />
           </li>
-          <!--          <g:render template="/scheduledExecution/optlistContent" model="${[options:options,edit:edit]}"/>-->
           <li v-if="createMode">
             <option-edit
-              :ui-features="{'next':false}"
+              :ui-features="{ next: false }"
               :error="error"
               :new-option="true"
               v-model="createOption"
               :file-upload-plugin-type="fileUploadPluginType"
               :features="features"
               :option-values-plugins="providers"
+              @save="saveNewOption"
+              @cancel="doCancel"
             />
           </li>
-        </ol>
-      </ul>
+        </ul>
       <div
-        id="optionDropFinal"
+        id="xoptionDropFinal"
         class="dragdropfinal droppableitem"
         :data-abs-index="intOptions.length || 1"
         data-is-final="true"
@@ -47,8 +75,6 @@
 
       <div
         class="empty note"
-        :class="{ error: error }"
-        id="optempty"
         v-if="intOptions.length < 1 && !createMode"
       >
         {{ $t("no.options.message") }}
@@ -60,18 +86,19 @@
           class="ready"
           @click="optaddnew"
           :title="$t('add.new.option')"
+          :disabled="createOption"
         >
           <b class="glyphicon glyphicon-plus"></b>
-          {{ $t("add.new.option") }}
+          {{ $t("add.an.option") }}
         </btn>
       </div>
     </div>
-
-    <div id="optnewitem"></div>
   </div>
 </template>
 <script lang="ts">
-import pluginService from '@/library/modules/pluginService'
+import {cloneDeep} from 'lodash'
+import OptionItem from "./list/OptionItem.vue";
+import pluginService from "@/library/modules/pluginService";
 import { defineComponent } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
@@ -83,6 +110,7 @@ const localEB: Emitter<Record<EventType, any>> = emitter;
 export default defineComponent({
   name: "OptionsEditor",
   components: {
+    OptionItem,
     UndoRedo,
     OptionEdit,
   },
@@ -101,15 +129,16 @@ export default defineComponent({
       localEB,
       error: "",
       createMode: false,
+      editIndex: -1,
       intOptions: [],
-      createOption: {},
+      createOption: null,
       fileUploadPluginType: "",
       features: {},
-      providers:[],
-      providerLabels:{}
+      providers: [],
+      providerLabels: {},
     };
   },
-  methods: {
+  methods: { cloneDeep ,
     optaddnew() {
       this.createOption = {
         optionType: "text",
@@ -120,30 +149,81 @@ export default defineComponent({
         secureInput: false,
         secureExposed: false,
         inputType: "plain",
-        realValuesUrl:null,
-        optionValuesPluginType:'',
-        remoteUrlAuthenticationType:'',
-        configRemoteUrl:{},
-        sortValues:false,
-        regex:null
+        realValuesUrl: null,
+        optionValuesPluginType: "",
+        remoteUrlAuthenticationType: "",
+        configRemoteUrl: {},
+        sortValues: false,
+        regex: null,
       };
       this.createMode = true;
+    },
+    doEdit(i:number){
+      if(this.createOption){
+        return;
+      }
+      this.createOption=cloneDeep(this.intOptions[i]);
+      this.editIndex = i;
+    },
+    doDuplicate(i:number){
+      this.createOption=cloneDeep(this.intOptions[i]);
+      this.createOption.name = this.createOption.name + "_copy";
+      this.createMode = true;
+    },
+    doMoveUp(i:number){
+      if (i > 0) {
+        const temp = this.intOptions[i - 1];
+        this.intOptions[i - 1] = this.intOptions[i];
+        this.intOptions[i] = temp;
+      }
+    },
+    doMoveDown(i:number){
+      if (i < this.intOptions.length - 1) {
+        const temp = this.intOptions[i + 1];
+        this.intOptions[i + 1] = this.intOptions[i];
+        this.intOptions[i] = temp;
+      }
+    },
+    updateOption(i:number){
+      this.intOptions[i]=cloneDeep(this.createOption);
+      this.editIndex = -1;
+      this.createOption=null
+    },
+    saveNewOption() {
+      this.createMode = false;
+      this.intOptions.push(this.createOption);
+      this.createOption=null
+    },
+    doCancel() {
+      this.createMode = false;
+      this.editIndex = -1;
+      this.createOption=null
     },
   },
   async mounted() {
     this.intOptions = this.optionsData.options;
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
     this.features = this.optionsData.features;
-    pluginService
-      .getPluginProvidersForService('OptionValues')
-      .then(data => {
-        if (data.service) {
-          this.providers = data.descriptions;
-          this.providerLabels = data.labels;
-        }
-      });
+    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
+      if (data.service) {
+        this.providers = data.descriptions;
+        this.providerLabels = data.labels;
+      }
+    });
   },
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.edit-option-item {
+  background-color: var(--background-color-lvl2);
+  border-radius: var(--border-radius-small);
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--gray-input-outline);
+  &.alternate{
+    background-color: var(--background-color-accent-lvl2);
+  }
+}
+
+</style>
