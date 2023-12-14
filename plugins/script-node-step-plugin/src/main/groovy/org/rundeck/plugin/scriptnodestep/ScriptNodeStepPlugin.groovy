@@ -21,8 +21,8 @@ class ScriptNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin, 
     public static final String PROVIDER_NAME = "script-node-step-plugin";
 
     @PluginProperty(
-            title = "Enter the entire script to execute",
-            description = "",
+            title = "Script",
+            description = "Enter the entire script to execute",
             required = true
     )
     @RenderingOptions(
