@@ -126,7 +126,7 @@ import { EventBus } from '../../utilities/vueEventBus'
 import { Btn, BtnGroup, ProgressBar } from 'uiv'
 import {App, PropType} from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
-import {JobWorkflow} from "@/library/utilities/JobWorkflow";
+import {JobWorkflow} from "../../utilities/JobWorkflow";
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
