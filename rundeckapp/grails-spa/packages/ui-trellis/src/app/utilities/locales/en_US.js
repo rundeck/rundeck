@@ -666,6 +666,8 @@ const messages = {
     "home.table.projects": "Projects",
     "home.table.activity": "Activity",
     "home.table.actions": "Actions",
+    "option.click.to.edit.title": "Click to edit"
+
 }
 
 export default messages;

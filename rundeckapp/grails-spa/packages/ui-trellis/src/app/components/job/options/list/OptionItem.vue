@@ -1,76 +1,67 @@
 <template>
-  <div>
-    <div>
-      <template v-if="editable">
-        <span
-          class="dragHandle btn btn-xs"
-          :title="$t('drag.to.reorder')"
-          v-if="canMoveUp || canMoveDown"
-        >
-          <i class="glyphicon glyphicon-resize-vertical"></i>
-        </span>
-        <span class="btn btn-xs btn-default disabled" v-else
-          ><i class="glyphicon glyphicon-resize-vertical"></i
-        ></span>
-        <div class="btn-group">
-          <span
-            class="btn btn-xs btn-default"
-            v-if="canMoveUp"
-            @click="$emit('moveUp', option)"
-            :title="$t('move.up')"
-          >
-            <i class="glyphicon glyphicon-arrow-up"></i>
-          </span>
-          <span class="btn btn-xs btn-default disabled" v-else>
-            <i class="glyphicon glyphicon-arrow-up"></i>
-          </span>
+  <div class="option-item">
+    <template v-if="editable">
+      <btn
+        size="xs"
+        type="plain"
+        class="dragHandle"
+        :title="$t('drag.to.reorder')"
+        :disabled="!canMoveUp && !canMoveDown"
+      >
+        <i class="glyphicon glyphicon-resize-vertical"></i>
+      </btn>
 
-          <span
-            class="btn btn-xs btn-default"
-            v-if="canMoveDown"
-            @click="$emit('moveDown', option)"
-            :title="$t('move.down')"
-          >
-            <i class="glyphicon glyphicon-arrow-down"></i>
-          </span>
-          <span class="btn btn-xs btn-default disabled" v-else>
-            <i class="glyphicon glyphicon-arrow-down"></i>
-          </span>
-        </div>
-      </template>
-      <span class="opt item" @click="$emit('edit',option)">
-        <option-view :option="option" />
-      </span>
-      <template v-if="editable">
-        <span
-          class="btn-group pull-right"
+      <div class="btn-group">
+        <btn
+          size="xs"
+          :disabled="!canMoveUp"
+          @click="$emit('moveUp', option)"
+          :title="$t('move.up')"
         >
-          <span
-            class="btn btn-xs btn-default"
-            @click="$emit('edit', option)"
-            title="$t('edit.this.option')"
-          >
-            <i class="glyphicon glyphicon-edit"></i>
-            {{ $t("edit") }}
-          </span>
-          <span
-            class="btn btn-xs btn-default"
-            @click="$emit('duplicate', option)"
-            title="$t('duplicate.this.option')"
-          >
-            <i class="glyphicon glyphicon-duplicate"></i>
-            {{ $t("duplicate") }}
-          </span>
-          <span
-            class="btn btn-xs btn-danger"
-            :title="$t('delete.this.option')"
-            @click="$emit('delete', option)"
-          >
-            <i class="glyphicon glyphicon-remove"></i>
-          </span>
-        </span>
-      </template>
-    </div>
+          <i class="glyphicon glyphicon-arrow-up"></i>
+        </btn>
+
+        <btn
+          size="xs"
+          :disabled="!canMoveDown"
+          @click="$emit('moveDown', option)"
+          :title="$t('move.down')"
+        >
+          <i class="glyphicon glyphicon-arrow-down"></i>
+        </btn>
+      </div>
+    </template>
+    <span class="option-item-content" @click="$emit('edit', option)">
+      <option-view :option="option" :editable="editable"/>
+    </span>
+    <template v-if="editable">
+      <span class="btn-group pull-right">
+        <btn
+          size="xs"
+          @click="$emit('edit', option)"
+          title="$t('edit.this.option')"
+        >
+          <i class="glyphicon glyphicon-edit"></i>
+          {{ $t("edit") }}
+        </btn>
+        <btn
+          size="xs"
+          @click="$emit('duplicate', option)"
+          title="$t('duplicate.this.option')"
+        >
+          <i class="glyphicon glyphicon-duplicate"></i>
+          {{ $t("duplicate") }}
+        </btn>
+        <btn
+          size="xs"
+          type="danger"
+          :title="$t('delete.this.option')"
+          @click="$emit('delete', option)"
+        >
+          <i class="glyphicon glyphicon-remove"></i>
+        </btn>
+      </span>
+    </template>
   </div>
 </template>
 <script lang="ts">
@@ -106,4 +97,12 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.option-item {
+  >  .btn-group,
+  >  .btn ,
+  >  .option-item-content {
+    margin-right: var(--spacing-2);
+  }
+}
+</style>
