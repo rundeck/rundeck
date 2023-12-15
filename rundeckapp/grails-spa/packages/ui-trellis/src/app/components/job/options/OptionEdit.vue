@@ -135,7 +135,6 @@
             type="text"
             class="form-control"
             name="defaultValue"
-            id="opt_defaultValue"
             size="40"
             :placeholder="$t('form.option.defaultValue.label')"
             v-model="option.defaultValue"
@@ -966,7 +965,7 @@
         <btn
           size="sm"
           type="cta"
-          @click="$emit('save', option)"
+          @click="doSave"
           :title="$t('form.option.save.title')"
           >{{ $t("save") }}
         </btn>
@@ -1005,7 +1004,20 @@ export default defineComponent({
   },
   data() {
     return {
-      option: cloneDeep(this.modelValue),
+      option: Object.assign(
+        {
+          configRemoteUrl:{},
+          defaultValue:'',
+          optionType:'text',
+          sortValues: false,
+          inputType:'plain',
+          hidden:false,
+          multiValued:false
+        },
+        cloneDeep(this.modelValue)
+      ),
+      regexChoice:false,
+      urlChoice:false,
       bashVarPrefix: "RD_",
       remoteUrlAuthenticationList:[
         {value:'BASIC', label:this.$t('form.option.valuesType.url.authType.basic.label')},
@@ -1016,11 +1028,11 @@ export default defineComponent({
   },
   watch: {
     "option.inputType"(val: string) {
-      this.option.defaultValue = "";
-      this.option.valuesList = "";
-      this.option.valuesUrl = "";
-      this.option.remoteUrlAuthenticationType = "";
-      this.option.enforceType = "none";
+      // this.option.defaultValue = "";
+      // this.option.valuesList = "";
+      // this.option.valuesUrl = "";
+      // this.option.remoteUrlAuthenticationType = "";
+      // this.option.enforceType = "none";
       this.option.isDate = val === "date";
       this.option.secureInput = val === "secure" || val === "secureExposed";
       this.option.secureExposed = val === "secureExposed";
@@ -1063,7 +1075,7 @@ export default defineComponent({
         if(this.option.enforced){
           return "enforced";
         }
-        if(this.option.regex!==null){
+        if(this.option.regex || this.regexChoice){
           return "regex";
         }
         return "none";
@@ -1072,10 +1084,13 @@ export default defineComponent({
         if(val === "enforced"){
           this.option.enforced = true;
           this.option.regex = null;
+          this.regexChoice = false;
         }else if(val === "regex"){
           this.option.enforced = false;
+          this.regexChoice = true;
           this.option.regex = "";
         }else{
+          this.regexChoice = false;
           this.option.enforced = false;
           this.option.regex = null;
         }
@@ -1086,7 +1101,7 @@ export default defineComponent({
         if(this.option.optionValuesPluginType){
           return this.option.optionValuesPluginType;
         }
-        if(this.option.realValuesUrl!==null){
+        if(this.option.realValuesUrl || this.urlChoice){
           return "url";
         }
         return "list";
@@ -1098,16 +1113,19 @@ export default defineComponent({
           this.option.realValuesUrl = "";
           this.option.remoteUrlAuthenticationType='';
           this.option.configRemoteUrl = {};
+          this.urlChoice=true
         }else if(val === "list"){
           this.option.optionValuesPluginType = "";
           this.option.realValuesUrl = null;
           this.option.remoteUrlAuthenticationType='';
           this.option.configRemoteUrl = {};
+          this.urlChoice=false
         }else{
           this.option.optionValuesPluginType = val;
           this.option.realValuesUrl = null;
           this.option.remoteUrlAuthenticationType='';
           this.option.configRemoteUrl = {};
+          this.urlChoice=false
         }
       }
     }
@@ -1115,7 +1133,6 @@ export default defineComponent({
   methods: {
     doSave(){
       this.$emit('update:modelValue', this.option)
-      this.$emit('save', this.option)
     },
     hasError(field: string) {
       return this.errors[field] && this.errors[field].length > 0;
