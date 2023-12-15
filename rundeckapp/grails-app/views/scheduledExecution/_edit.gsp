@@ -207,13 +207,12 @@
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
-%{--                  <g:if test="${uiType=='next'}">--}%
-
+                  <g:if test="${uiType=='next'}">
                       <div class="job-editor-options-vue" id="job-editor-options-vue">
                           <options-editor-section  />
                       </div>
-%{--                  </g:if>--}%
-%{--                  <g:else>--}%
+                  </g:if>
+                  <g:else>
                   <div  id="editoptssect" class="rounded">
                       <%
                           def options = sessionOpts
@@ -229,7 +228,7 @@
                       <g:hiddenField name="_sessionopts" value="true"/>
 
                   </div>
-%{--                  </g:else>--}%
+                  </g:else>
               </div>
           </div>
       </section>%{--//Options--}%
