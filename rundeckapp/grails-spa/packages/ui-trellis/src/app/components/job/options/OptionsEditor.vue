@@ -17,53 +17,53 @@
         </div>
       </div>
       <div class="clear"></div>
-        <ul class="options">
-          <li
-            v-for="(option, i) in intOptions"
-            :key="i"
-            class="edit-option-item"
-            :class="{ alternate: i % 2 === 1 }"
-          >
-            <option-edit
-              v-if="editIndex===i"
-              :ui-features="{ next: false }"
-              :error="error"
-              :new-option="false"
-              v-model="createOption"
-              :file-upload-plugin-type="fileUploadPluginType"
-              :features="features"
-              :option-values-plugins="providers"
-              @save="updateOption(i)"
-              @cancel="doCancel"
-            />
-            <option-item
-              v-else
-              :editable="!createOption"
-              :opt-index="i"
-              :can-move-down="i < intOptions.length - 1"
-              :can-move-up="i > 0"
-              :option="option"
-              @moveUp="doMoveUp(i)"
-              @moveDown="doMoveDown(i)"
-              @edit="doEdit(i)"
-              @delete="intOptions.splice(i, 1)"
-              @duplicate="doDuplicate(i)"
-            />
-          </li>
-          <li v-if="createMode">
-            <option-edit
-              :ui-features="{ next: false }"
-              :error="error"
-              :new-option="true"
-              v-model="createOption"
-              :file-upload-plugin-type="fileUploadPluginType"
-              :features="features"
-              :option-values-plugins="providers"
-              @save="saveNewOption"
-              @cancel="doCancel"
-            />
-          </li>
-        </ul>
+      <ul class="options">
+        <li
+          v-for="(option, i) in intOptions"
+          :key="i"
+          class="edit-option-item"
+          :class="{ alternate: i % 2 === 1 }"
+        >
+          <option-edit
+            v-if="editIndex === i"
+            :ui-features="{ next: false }"
+            :error="error"
+            :new-option="false"
+            :model-value="createOption"
+            :file-upload-plugin-type="fileUploadPluginType"
+            :features="features"
+            :option-values-plugins="providers"
+            @update:modelValue="updateOption(i, $event)"
+            @cancel="doCancel"
+          />
+          <option-item
+            v-else
+            :editable="!createOption"
+            :opt-index="i"
+            :can-move-down="i < intOptions.length - 1"
+            :can-move-up="i > 0"
+            :option="option"
+            @moveUp="doMoveUp(i)"
+            @moveDown="doMoveDown(i)"
+            @edit="doEdit(i)"
+            @delete="intOptions.splice(i, 1)"
+            @duplicate="doDuplicate(i)"
+          />
+        </li>
+        <li v-if="createMode">
+          <option-edit
+            :ui-features="{ next: false }"
+            :error="error"
+            :new-option="true"
+            :model-value="createOption"
+            :file-upload-plugin-type="fileUploadPluginType"
+            :features="features"
+            :option-values-plugins="providers"
+            @update:modelValue="saveNewOption"
+            @cancel="doCancel"
+          />
+        </li>
+      </ul>
       <div
         id="xoptionDropFinal"
         class="dragdropfinal droppableitem"
@@ -73,10 +73,7 @@
       ></div>
       <!--      <g:embedJSON id="optDataList" data="${options.collect{[name:it.name,type:it.optionType,multivalued:it.multivalued, delimiter: it.delimiter]}}"/>-->
 
-      <div
-        class="empty note"
-        v-if="intOptions.length < 1 && !createMode"
-      >
+      <div class="empty note" v-if="intOptions.length < 1 && !createMode">
         {{ $t("no.options.message") }}
       </div>
 
@@ -96,7 +93,7 @@
   </div>
 </template>
 <script lang="ts">
-import {cloneDeep} from 'lodash'
+import { cloneDeep } from "lodash";
 import OptionItem from "./list/OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
 import { defineComponent } from "vue";
@@ -138,7 +135,8 @@ export default defineComponent({
       providerLabels: {},
     };
   },
-  methods: { cloneDeep ,
+  methods: {
+    cloneDeep,
     optaddnew() {
       this.createOption = {
         optionType: "text",
@@ -158,46 +156,46 @@ export default defineComponent({
       };
       this.createMode = true;
     },
-    doEdit(i:number){
-      if(this.createOption){
+    doEdit(i: number) {
+      if (this.createOption) {
         return;
       }
-      this.createOption=cloneDeep(this.intOptions[i]);
+      this.createOption = cloneDeep(this.intOptions[i]);
       this.editIndex = i;
     },
-    doDuplicate(i:number){
-      this.createOption=cloneDeep(this.intOptions[i]);
+    doDuplicate(i: number) {
+      this.createOption = cloneDeep(this.intOptions[i]);
       this.createOption.name = this.createOption.name + "_copy";
       this.createMode = true;
     },
-    doMoveUp(i:number){
+    doMoveUp(i: number) {
       if (i > 0) {
         const temp = this.intOptions[i - 1];
         this.intOptions[i - 1] = this.intOptions[i];
         this.intOptions[i] = temp;
       }
     },
-    doMoveDown(i:number){
+    doMoveDown(i: number) {
       if (i < this.intOptions.length - 1) {
         const temp = this.intOptions[i + 1];
         this.intOptions[i + 1] = this.intOptions[i];
         this.intOptions[i] = temp;
       }
     },
-    updateOption(i:number){
-      this.intOptions[i]=cloneDeep(this.createOption);
+    updateOption(i: number, data: any) {
+      this.intOptions[i] = cloneDeep(data);
       this.editIndex = -1;
-      this.createOption=null
+      this.createOption = null;
     },
-    saveNewOption() {
+    saveNewOption(data: any) {
       this.createMode = false;
-      this.intOptions.push(this.createOption);
-      this.createOption=null
+      this.intOptions.push(cloneDeep(data));
+      this.createOption = null;
     },
     doCancel() {
       this.createMode = false;
       this.editIndex = -1;
-      this.createOption=null
+      this.createOption = null;
     },
   },
   async mounted() {
@@ -217,13 +215,11 @@ export default defineComponent({
 <style scoped lang="scss">
 .edit-option-item {
   background-color: var(--background-color-lvl2);
-  border-radius: var(--border-radius-small);
+  border-radius: 3px;
   margin-top: 10px;
-  padding: 7px 10px;
   border: 1px solid var(--gray-input-outline);
-  &.alternate{
+  &.alternate {
     background-color: var(--background-color-accent-lvl2);
   }
 }
-
 </style>

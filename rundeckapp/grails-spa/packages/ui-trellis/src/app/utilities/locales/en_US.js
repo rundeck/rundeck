@@ -739,9 +739,10 @@ const messages = {
     "Option.hidden.label": "Should be hidden",
     "form.option.regex.placeholder":"Enter a Regular Expression",
     "home.user": "{n} Users | {n} User | {n} Users",
-  "home.table.projects": "Projects",
-  "home.table.activity": "Activity",
-  "home.table.actions": "Actions",
+    "home.table.projects": "Projects",
+    "home.table.activity": "Activity",
+    "home.table.actions": "Actions",
+    "option.click.to.edit.title": "Click to edit",
 };
 
 export default messages;
