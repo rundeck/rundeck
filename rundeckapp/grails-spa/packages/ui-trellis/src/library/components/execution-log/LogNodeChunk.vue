@@ -6,13 +6,15 @@
                      class="scroller execution-log__chunk"
                      key-field="lineNumber"
                      ref="scroller"
-                     @resize="scrollToLine(jumpToLine)"
+
     >
       <template v-slot="{ item, index, active}">
         <DynamicScrollerItem :item="item"
                              :data-index="index"
                              :active="active"
                              :size-dependencies="[item.log, item.logHtml]"
+                             :emit-resize=emitResize
+                             @resize="scrollToLine()"
         >
           <LogEntryFlex :eventBus="eventBus"
                         :key="index"
@@ -135,6 +137,11 @@ export default defineComponent({
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`
     },
   },
+  data() {
+    return {
+      emitResize:true as boolean
+    }
+  },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
       return `#${newEntry.lineNumber} ${newEntry.absoluteTime || newEntry.time} ${this.entryPath(newEntry)}`
@@ -180,13 +187,7 @@ export default defineComponent({
     onSelectLine(index: number) {
       this.$emit('line-select', index)
     },
-    scrollToLine(jumpToLine: number) {
-      if (jumpToLine && jumpToLine <= this.entries.length && !this.jumped) {
-        this.$emit('line-select', jumpToLine)
-        this.$refs.scroller.scrollToItem(jumpToLine-1)
-        this.$emit('jumped')
-        return
-      }
+    scrollToLine() {
       if (this.follow) {
         this.$refs.scroller.scrollToBottom()
       }
