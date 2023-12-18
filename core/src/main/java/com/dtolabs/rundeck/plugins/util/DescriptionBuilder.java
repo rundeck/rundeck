@@ -44,6 +44,8 @@ public class DescriptionBuilder {
     private String name;
     private String title;
     private String description;
+    private boolean isHighlighted;
+    private int order;
     private Map<String, String> metadata;
     private Class<? extends PluginGroup> pluginGroupType;
 
@@ -65,6 +67,8 @@ public class DescriptionBuilder {
         this.name = original.getName();
         this.title = original.getTitle();
         this.description = original.getDescription();
+        this.isHighlighted = original.isHighlighted();
+        this.order = original.getOrder();
     }
 
     /**
@@ -119,6 +123,16 @@ public class DescriptionBuilder {
      */
     public DescriptionBuilder description(final String description) {
         this.description = description;
+        return this;
+    }
+
+    public DescriptionBuilder isHighlighted(final boolean isHighlighted) {
+        this.isHighlighted = isHighlighted;
+        return this;
+    }
+
+    public DescriptionBuilder order(final int order) {
+        this.order = order;
         return this;
     }
 
@@ -429,6 +443,16 @@ public class DescriptionBuilder {
             @Override
             public <T extends PluginGroup> Class<T> getPluginGroupType() {
                 return (Class<T>) pluginGroupType;
+            }
+
+            @Override
+            public boolean isHighlighted() {
+                return isHighlighted;
+            }
+
+            @Override
+            public int getOrder() {
+                return order;
             }
 
             @Override

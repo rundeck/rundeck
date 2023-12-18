@@ -1,3 +1,10 @@
+# Build remco from specific commit
+##################################
+FROM golang:1.21.5 as remco
+ENV REMCO_VERSION=0.12.4
+
+RUN go install github.com/HeavyHorst/remco/cmd/remco@v$REMCO_VERSION
+
 # Build base container
 ######################
 FROM ubuntu:22.04
@@ -42,14 +49,7 @@ RUN curl -sSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}
     chmod +x /tini
 
 # Install Remco
-ENV REMCO_VERSION=0.12.4
-RUN curl -ssL "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_amd64.zip" -o remco.zip && \
-    echo 'c7eae0db823660f8cf0c0ccba1beebec64ee1c2e5b6b66ca3d20208cbcb70962  remco.zip' > remco.zip.sha && \
-    sha256sum -c remco.zip.sha && \
-    unzip remco.zip && \
-    cp remco_linux /usr/local/bin/remco && \
-    chmod +x /usr/local/bin/remco && \
-    rm remco.zip remco.zip.sha
+COPY --from=remco /go/bin/remco /usr/local/bin/remco
 
 USER rundeck
 

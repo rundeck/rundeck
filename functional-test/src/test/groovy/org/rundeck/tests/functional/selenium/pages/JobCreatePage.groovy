@@ -189,8 +189,8 @@ enum StepType {
 }
 
 enum StepName {
-    COMMAND("command"),
-    SCRIPT("script")
+    COMMAND("exec-command"),
+    SCRIPT("script-inline")
 
     private String stepName
 

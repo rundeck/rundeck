@@ -9,10 +9,22 @@ import {initI18n, updateLocaleMessages} from "../../utilities/i18n";
 
 const rootStore = getRundeckContext().rootStore
 const EventBus = getRundeckContext().eventBus
-
+const closest = function (elem: Element, className:string): HTMLElement|null {
+  let parent = elem.parentElement;
+  while (parent) {
+    if (parent.classList.contains(className)) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+};
 window.addEventListener('DOMContentLoaded', (() => {
   const elm = document.getElementsByClassName('vue-ui-socket')
   for (const elmElement of elm) {
+    if(closest(elmElement,'vue-ui-socket-deferred')){
+      return
+    }
     const eventName = elmElement.getAttribute("vue-socket-on")
     if(eventName){
       window.addEventListener(eventName, (evt1 => initUiComponentsOnEvent(evt1)))
