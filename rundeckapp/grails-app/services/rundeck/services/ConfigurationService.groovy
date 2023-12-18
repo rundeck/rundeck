@@ -19,14 +19,12 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.RundeckConfigBase
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
-import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import org.rundeck.app.config.ConfigService
 import org.rundeck.app.config.SysConfigProp
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 
-import javax.annotation.PreDestroy
 import java.util.concurrent.TimeUnit
 
 @GrailsCompileStatic

@@ -228,14 +228,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     @PreDestroy
     void cleanUp() {
-        log.trace("Prev destroy!!!!")
-        configurationService.setExecutionModeActive(false)
         applicationIsShutdown = true;
     }
 
     @Subscriber("rdpro.shutdown")
     void forceInactive(){
-        log.trace("rdpro.shutdown - forceInactive!!!!")
+        log.debug("Enterprise Shutdown Received")
         configurationService.setExecutionModeActive(false)
     }
 
@@ -2265,10 +2263,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
-        }
-
-        if(!getExecutionsAreActive()){
-            return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
 
         if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
