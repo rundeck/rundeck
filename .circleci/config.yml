@@ -259,11 +259,6 @@ jobs:
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
-#      - run-build-step:
-#          step-name: Build Testdeck docker image
-#          command: |
-#            testdeck_build_rdtest
-#            testdeck_push_rdtest
       - persist_to_workspace:
           root: ~/workspace
           paths:
@@ -274,8 +269,6 @@ jobs:
             - grails-*/build
             - rundeck-storage/rundeck-*/build
             - rundeck-authz/rundeck-*/build
-      #            - rundeckapp/grails-spa/packages/ui-trellis/build
-      #            - rundeckapp/grails-spa/packages/ui-trellis/node_modules
       - run-build-step:
           step-name: Collect Artifacts
           command: collect_build_artifacts
@@ -477,7 +470,7 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
-          step-name: Build images
+          step-name: Build test images
           command: testdeck_build_rdtest
       - run-build-step:
           step-name: Run Test
@@ -505,7 +498,7 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
-          step-name: Pull images
+          step-name: Build test images
           command: testdeck_build_rdtest
       - run-build-step:
           step-name: Run Test
@@ -542,7 +535,7 @@ jobs:
           at: ~/workspace
       - run-build-step:
           step-name: Pull Rundeck Image
-          command: testdeck_pull_rundeck
+          command: rundeck_pull_image
       - run-build-step:
           step-name: Test
           command: |
@@ -582,7 +575,7 @@ jobs:
           at: ~/workspace
       - run-build-step:
           step-name: Pull images
-          command: testdeck_pull_rundeck
+          command: rundeck_pull_image
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |

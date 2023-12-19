@@ -38,6 +38,7 @@ export DOCKER_PASSWORD=${DOCKER_PASSWORD:-}
 # DockerHub
 export DOCKER_REPO=${DOCKER_REPO:-"rundeck/rundeck"}
 export DOCKER_CI_REPO=${DOCKER_CI_REPO:-"rundeck/ci"}
+export DOCKER_IMAGE_BUILD_TAG=ci-build-${RUNDECK_BUILD_NUMBER}
 
 # Set Twistlock env and map with Circle ENV.
 export TWISTLOCK_USER=${TWISTLOCK_USER:-${TL_USER:-}}
@@ -45,11 +46,6 @@ export TWISTLOCK_PASSWORD=${TWISTLOCK_PASSWORD:-${TL_PASS:-}}
 export TWISTLOCK_CONSOLE_URL=${TWISTLOCK_CONSOLE_URL:-${TL_CONSOLE_URL:-}}
 
 # AWS Config
-export ECR_REGISTRY=481311893001.dkr.ecr.us-west-2.amazonaws.com
-export ECR_REPO=${ECR_REGISTRY}/rundeck/rundeck
-export ECR_TEST_REPO=${ECR_REGISTRY}/rundeck/rdtest
-export ECR_IMAGE_PREFIX=${ECR_IMAGE_PREFIX:-"circle"}
-export ECR_IMAGE_TAG=${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
 export S3_CI_SHARED_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Import functions
