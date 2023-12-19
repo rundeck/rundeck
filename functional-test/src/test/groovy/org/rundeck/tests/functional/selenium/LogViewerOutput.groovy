@@ -2,8 +2,12 @@ package org.rundeck.tests.functional.selenium
 
 import org.openqa.selenium.By
 import org.rundeck.tests.functional.selenium.pages.*
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
+import org.rundeck.tests.functional.selenium.pages.project.SideBarPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.setup.NavLinkTypes
 
 @SeleniumCoreTest
 class LogViewerOutput extends SeleniumBase{
@@ -15,19 +19,18 @@ class LogViewerOutput extends SeleniumBase{
     def "auto scroll on log viewer page show last input"() {
 
         setup:
-        LoginPage loginPage = page LoginPage
-        SideBar sideBar = page SideBar
-        JobsListPage jobListPage = page JobsListPage
-        JobCreatePage jobCreatePage = page JobCreatePage
-        ProjectHomePage projectHomePage = page ProjectHomePage
-        JobShowPage jobShowPage = page JobShowPage
+        def loginPage = page LoginPage
+        def sideBar = page SideBarPage
+        def jobListPage = page JobsListPage
+        def jobCreatePage = page JobCreatePage
+        def projectHomePage = page HomePage
+        def jobShowPage = page JobShowPage
 
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        page(ProjectListPage).waitUntilPageLoaded()
         projectHomePage.goProjectHome("AutoFollowTest")
-        sideBar.goTo(SideBarNavLinks.JOBS).click()
+        sideBar.goTo(NavLinkTypes.JOBS)
         jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("loop job")
         jobCreatePage.getTab(JobTab.WORKFLOW).click()

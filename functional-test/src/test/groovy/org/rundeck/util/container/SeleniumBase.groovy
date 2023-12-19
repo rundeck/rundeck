@@ -5,11 +5,8 @@ import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.extensions.TestResultExtension
 import org.rundeck.tests.functional.selenium.pages.BasePage
-
-import java.time.Duration
 
 /**
  * Utility Base for selenium test specs
@@ -19,6 +16,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
     public static final String TEST_USER = System.getenv("RUNDECK_TEST_USER") ?: "admin"
     public static final String TEST_PASS = System.getenv("RUNDECK_TEST_PASS") ?: "admin123"
+    public static final String SELENIUM_BASIC_PROJECT = "SeleniumBasic"
 
     /**
      * Create a driver
@@ -62,6 +60,16 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     }
 
     /**
+     * Get a page object for the type, does not automatically load the page and send additional args
+     * @param clazz Page object type, must have a constructor that takes a WebDriver
+     * @return
+     */
+    <T extends BasePage> T page(Class<T> clazz, Object args) {
+        return clazz.getDeclaredConstructor(SeleniumContext, args.getClass()).newInstance(this, args)
+    }
+
+
+    /**
      * Load the page and return the page object
      * @param clazz Page object type, must have a constructor that takes a WebDriver
      * @return
@@ -72,10 +80,14 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         return page
     }
 
-    def wait(Duration duration, @DelegatesTo(WebDriverWait) Closure<?> closure) {
-        def waitfor = new WebDriverWait(driver, duration)
-        closure.delegate=waitfor
-        closure.resolveStrategy = Closure.DELEGATE_FIRST
-        closure.call(waitfor)
+    /**
+     * Load the page and return the page object
+     * @param clazz Page object type, must have a constructor that takes a WebDriver
+     * @return
+     */
+    <T extends BasePage> T go(Class<T> clazz, Object args) {
+        T page = page(clazz, args)
+        page.go()
+        return page
     }
 }
