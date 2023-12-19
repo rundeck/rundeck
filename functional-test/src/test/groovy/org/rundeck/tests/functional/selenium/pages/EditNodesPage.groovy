@@ -9,9 +9,6 @@ class EditNodesPage extends BasePage{
     static final String PAGE_PATH = "/nodes/sources"
     String project
 
-    By modifyResourceButton = By.partialLinkText("Modify")
-    By aceEditorGutter = By.xpath("//div[contains(@class, 'ace_layer') and contains(@class, 'ace_gutter-layer') and contains(@class, 'ace_folding-enabled')]")
-
     /**
      * Create a new page
      * @param context
@@ -26,14 +23,6 @@ class EditNodesPage extends BasePage{
             throw new IllegalStateException("project is not set, cannot load nodes.")
         }
         return "/project/${project}${PAGE_PATH}"
-    }
-
-    WebElement modifyResourceButtonElement(){
-        el modifyResourceButton
-    }
-
-    WebElement aceGutterElement(){
-        el aceEditorGutter
     }
 
 }
