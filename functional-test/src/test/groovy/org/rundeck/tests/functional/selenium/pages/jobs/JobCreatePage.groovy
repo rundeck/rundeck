@@ -99,11 +99,9 @@ class JobCreatePage extends BasePage {
     void addSimpleCommandStep(String command, int number) {
         executeScript "window.location.hash = '#addnodestep'"
         stepLink 'exec-command', StepType.NODE click()
-        sleep 5000
-        waitForElementVisible adhocRemoteStringField
+        waitForElementToBeClickable adhocRemoteStringField
         adhocRemoteStringField.click()
         waitForNumberOfElementsToBeOne floatBy
-        sleep 2000
         adhocRemoteStringField.sendKeys command
         saveStep number
     }
