@@ -1,0 +1,12 @@
+{
+  "test-node": {
+    "nodename": "test-node",
+    "customEnv": "test",
+    "hostname": "http://localhost:4443",
+    "editUrl": "http://localhost:4443",
+    "customIdx": "01",
+    "osFamily": "Linux",
+    "username": "rundeck",
+    "tags": "test"
+  }
+}
