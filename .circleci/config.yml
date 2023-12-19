@@ -714,12 +714,6 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - testdeck:
-          name: Selenium Test
-          workdir: test/selenium
-          command: testdeck_selenium_test
-          <<: *require-build
-          <<: *slack-defaults
       - test-gradle-functional:
           name: New Selenium Test
           gradle-task: seleniumCoreTest
