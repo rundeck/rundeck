@@ -5,10 +5,6 @@ docker_login() {
     echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 }
 
-docker_ecr_login() {
-    docker_login
-    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
-}
 
 install_twistcli() {
     curl -sSL -u "${TWISTLOCK_USER}:${TWISTLOCK_PASSWORD}" "${TWISTLOCK_CONSOLE_URL}/api/v1/util/twistcli" --output ./twistcli
@@ -53,6 +49,20 @@ copy_rundeck_war() {
     fi
 
     cp -pv "${warFile}" "${destFile}"
+}
+
+
+# Pull the image built on this build and adds a custom tag if provided as argument.
+rundeck_pull_image() {
+    docker_login
+    local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    docker pull $sourceTag
+    docker tag "${sourceTag}" "rundeck/testdeck"
+
+    local customTag=${1:-}
+    if [[ -n "${customTag}" ]]; then
+        docker tag "${sourceTag}" "${customTag}"
+    fi
 }
 
 fetch_ci_shared_resources() {
