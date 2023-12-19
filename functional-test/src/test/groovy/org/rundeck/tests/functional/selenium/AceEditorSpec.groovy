@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.selenium.aceEditor
+package org.rundeck.tests.functional.selenium
 
 import org.rundeck.tests.functional.selenium.pages.EditNodesFilePage
 import org.rundeck.tests.functional.selenium.pages.EditNodesPage

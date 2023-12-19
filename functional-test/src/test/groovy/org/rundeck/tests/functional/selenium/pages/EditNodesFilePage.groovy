@@ -11,7 +11,7 @@ class EditNodesFilePage extends BasePage{
     int index
     String project
 
-    By aceEditorGutter = By.xpath("//div[contains(@class, 'ace_layer') and contains(@class, 'ace_gutter-layer') and contains(@class, 'ace_folding-enabled')]")
+    By aceEditorGutter = By.className("ace_gutter")
 
     /**
      * Create a new page
