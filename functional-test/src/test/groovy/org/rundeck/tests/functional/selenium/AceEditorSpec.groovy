@@ -44,6 +44,7 @@ class AceEditorSpec extends SeleniumBase{
         editNodesPage.waitUntilPageLoaded()
         editNodesFilePage.go()
         editNodesFilePage.waitUntilPageLoaded()
+        editNodesFilePage.waitForAceToRender()
         def linesInAceGutter = editNodesFilePage.aceGutterElement().getText()
         List<String> linesAsList = Arrays.stream(linesInAceGutter.split("\\n"))
                 .collect(Collectors.toList());
