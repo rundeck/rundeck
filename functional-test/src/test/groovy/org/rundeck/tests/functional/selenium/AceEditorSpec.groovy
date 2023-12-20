@@ -2,9 +2,8 @@ package org.rundeck.tests.functional.selenium
 
 import org.rundeck.tests.functional.selenium.pages.EditNodesFilePage
 import org.rundeck.tests.functional.selenium.pages.EditNodesPage
-import org.rundeck.tests.functional.selenium.pages.LoginPage
-import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
 import org.rundeck.tests.functional.selenium.pages.ProjectListPage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 
@@ -28,7 +27,6 @@ class AceEditorSpec extends SeleniumBase{
 
         setup:
         LoginPage loginPage = page LoginPage
-        ProjectHomePage projectHomePage = page ProjectHomePage
         EditNodesPage editNodesPage = page EditNodesPage
         editNodesPage.setProject(projectName)
         EditNodesFilePage editNodesFilePage = page EditNodesFilePage
@@ -38,12 +36,9 @@ class AceEditorSpec extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        page(ProjectListPage).waitUntilPageLoaded()
-        projectHomePage.goProjectHome(projectName)
+        page(ProjectListPage)
         editNodesPage.go()
-        editNodesPage.waitUntilPageLoaded()
         editNodesFilePage.go()
-        editNodesFilePage.waitUntilPageLoaded()
         editNodesFilePage.waitForAceToRender()
         def linesInAceGutter = editNodesFilePage.aceGutterElement().getText()
         List<String> linesAsList = Arrays.stream(linesInAceGutter.split("\\n"))
