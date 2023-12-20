@@ -33,47 +33,53 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     Long create(RdProject data) throws DataAccessException {
-        Project project = new Project(
-                name: data.getName(),
-                description: data.getDescription(),
-                state: data.getState())
-        try {
-            if (projectDataService.save(project)) {
-                return project.getId()
-            } else {
-                log.warn(project.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-                throw new DataAccessException("Failed to create project: ${data.name}")
+        Project.withTransaction {
+            Project project = new Project(
+                    name: data.getName(),
+                    description: data.getDescription(),
+                    state: data.getState())
+            try {
+                if (projectDataService.save(project)) {
+                    return project.getId()
+                } else {
+                    log.warn(project.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
+                    throw new DataAccessException("Failed to create project: ${data.name}")
+                }
+            } catch (Exception e) {
+                throw new DataAccessException("Failed to create project: ${data.name}: ${e}", e)
             }
-        } catch (Exception e) {
-            throw new DataAccessException("Failed to create project: ${data.name}: ${e}", e)
         }
     }
 
     @Override
     void update(final Serializable id, final RdProject data) throws DataAccessException {
-        def project = projectDataService.getByName(data.name)
-        if (!project) {
-            throw new DataAccessException("Not found: project with ID: ${id}")
-        }
-        project.description = data.getDescription()
-        project.state = data.getState()
-        try {
-            projectDataService.save(project)
-        } catch (Exception e) {
-            throw new DataAccessException("Error: could not update project ${id}: ${e}", e)
+        Project.withTransaction {
+            def project = projectDataService.getByName(data.name)
+            if (!project) {
+                throw new DataAccessException("Not found: project with ID: ${id}")
+            }
+            project.description = data.getDescription()
+            project.state = data.getState()
+            try {
+                projectDataService.save(project)
+            } catch (Exception e) {
+                throw new DataAccessException("Error: could not update project ${id}: ${e}", e)
+            }
         }
     }
 
     @Override
     void delete(final String projectName) throws DataAccessException {
-        def project = projectDataService.getByName(projectName)
-        if (!project) {
-            throw new DataAccessException("Project does not exist: ${projectName}")
-        }
-        try {
-            projectDataService.delete(project.getId())
-        } catch (Exception e) {
-            throw new DataAccessException("Project does not exist: ${projectName} : ${e}", e)
+        Project.withTransaction {
+            def project = projectDataService.getByName(projectName)
+            if (!project) {
+                throw new DataAccessException("Project does not exist: ${projectName}")
+            }
+            try {
+                projectDataService.delete(project.getId())
+            } catch (Exception e) {
+                throw new DataAccessException("Project does not exist: ${projectName} : ${e}", e)
+            }
         }
     }
 
