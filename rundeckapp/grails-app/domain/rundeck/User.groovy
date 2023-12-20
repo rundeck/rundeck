@@ -39,7 +39,7 @@ class User implements RdUser{
     String lastLoggedHostName
 
     static constraints={
-        login(matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\.,@\\(\\)\\s_\\\\/-]+$')
+        login(matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\.,@\\(\\)\\s_\\\\\'/-]+$')
         firstName(nullable:true)
         lastName(nullable:true)
         email(nullable:true,validator: { val ->
