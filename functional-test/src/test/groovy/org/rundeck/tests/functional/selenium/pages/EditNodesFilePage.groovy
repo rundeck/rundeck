@@ -2,7 +2,11 @@ package org.rundeck.tests.functional.selenium.pages
 
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 class EditNodesFilePage extends BasePage{
 
@@ -30,6 +34,12 @@ class EditNodesFilePage extends BasePage{
             throw new IllegalStateException("No node index specified, cannot load node file edit page.")
         }
         return "/project/${project}${PAGE_PATH}/${index}/${editSuffix}"
+    }
+
+    void waitForAceToRender(){
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(
+                ExpectedConditions.visibilityOf(aceGutterElement())
+        )
     }
 
     WebElement aceGutterElement(){
