@@ -297,6 +297,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.optionUndoButton
             jobCreatePage.optionUndoButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
             jobCreatePage.optionRedoButton.click()
