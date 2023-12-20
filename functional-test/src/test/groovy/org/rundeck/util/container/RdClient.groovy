@@ -95,7 +95,7 @@ class RdClient {
         if (body) {
             builder.post(
                     RequestBody.create(
-                            mapper.writeValueAsBytes(body),
+                            String.valueOf(body),
                             MediaType.parse("application/json")
                     )
             )

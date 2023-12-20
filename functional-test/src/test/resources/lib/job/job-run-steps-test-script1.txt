@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "this is script 1, opt1 is $RD_OPTION_OPT1"
