@@ -15,4 +15,4 @@ services:
       - "/etc/timezone:/etc/timezone:ro"
       - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
       - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
-      - "../../../resource-model:/home/rundeck/server/config/resource-model"
+      - "../../../lib/job/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"

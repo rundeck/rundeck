@@ -155,6 +155,25 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         return client.post(path, body, clazz)
     }
 
+    Map runJobAndWait(String jobId, String body = null) {
+        def path = "/job/${jobId}/run"
+        def response = client.post(path, body, Map)
+        def finalStatus = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout'
+        ]
+        while(true) {
+            def exec = client.get("/execution/${response.id}/output", Map)
+            if (finalStatus.contains(exec.execState)) {
+                return exec
+            } else {
+                sleep 10000
+            }
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
     }
