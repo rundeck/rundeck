@@ -155,7 +155,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         return client.post(path, body, clazz)
     }
 
-    Map runJobAndWait(String jobId, String body = null) {
+    Map runJobAndWait(String jobId, Object body = null) {
         def path = "/job/${jobId}/run"
         def response = client.post(path, body, Map)
         def finalStatus = [
