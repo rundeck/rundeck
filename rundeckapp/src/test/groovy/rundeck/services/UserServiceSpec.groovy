@@ -445,14 +445,28 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
     }
 
     def "validateUserNameWithSingleQuotes"() {
+        def userName = "O'Test, First"
         setup:
-        User uone = new User(login: "O'Test, First")
+        User uone = new User(login: userName)
         uone.save()
 
         when:
-        boolean result = service.validateUserExists("O'Test, First")
+        boolean result = service.validateUserExists(userName)
 
         then:
         result == true
+    }
+
+    def "validateInvalidUserName"() {
+        def userName = "O|Test, First"
+        setup:
+        User uone = new User(login: userName)
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(userName)
+
+        then:
+        result == false
     }
 }
