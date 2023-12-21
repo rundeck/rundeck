@@ -2,9 +2,9 @@ package org.rundeck.tests.functional.selenium
 
 import org.rundeck.tests.functional.selenium.pages.EditNodesFilePage
 import org.rundeck.tests.functional.selenium.pages.EditNodesPage
-import org.rundeck.tests.functional.selenium.pages.LoginPage
-import org.rundeck.tests.functional.selenium.pages.ProjectHomePage
 import org.rundeck.tests.functional.selenium.pages.ProjectListPage
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
+import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 
@@ -28,7 +28,7 @@ class AceEditorSpec extends SeleniumBase{
 
         setup:
         LoginPage loginPage = page LoginPage
-        ProjectHomePage projectHomePage = page ProjectHomePage
+        HomePage projectHomePage = page HomePage
         EditNodesPage editNodesPage = page EditNodesPage
         editNodesPage.setProject(projectName)
         EditNodesFilePage editNodesFilePage = page EditNodesFilePage
