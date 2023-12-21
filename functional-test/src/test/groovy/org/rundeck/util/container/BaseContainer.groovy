@@ -174,6 +174,13 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    void deleteProject(String projectName) {
+        def response = client.doDelete("/project/${projectName}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project: ${response.body().string()}")
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
     }
