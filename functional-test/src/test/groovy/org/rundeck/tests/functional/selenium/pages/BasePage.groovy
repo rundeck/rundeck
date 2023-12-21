@@ -143,6 +143,11 @@ abstract class BasePage {
         el locator
     }
 
+    WebElement byAndWaitClickable(By locator) {
+        waitForElementToBeClickable locator
+        el locator
+    }
+
     WebDriver getDriver() {
         context.driver
     }
