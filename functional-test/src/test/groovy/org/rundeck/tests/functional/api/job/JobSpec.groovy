@@ -13,7 +13,7 @@ class JobSpec extends BaseContainer {
 
     def "Runs workflow steps" () {
         given:
-            def adhoc = runJobAndWait('9b43e4ab-7ff2-4159-9fc7-7437901914f7', '{"options":{"opt2": "a"}}')
+            def adhoc = runJobAndWait('9b43e4ab-7ff2-4159-9fc7-7437901914f7', ["options":["opt2": "a"]])
             def entries = adhoc['entries'].collect { it.log }
             def node = adhoc['entries'].findResult { it.node }
         expect:

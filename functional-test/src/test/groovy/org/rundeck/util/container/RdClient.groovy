@@ -15,7 +15,7 @@ import java.util.function.Consumer
 
 @CompileStatic
 class RdClient {
-    ObjectMapper mapper = new ObjectMapper()
+    final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
     int apiVersion = 45
@@ -95,7 +95,7 @@ class RdClient {
         if (body) {
             builder.post(
                     RequestBody.create(
-                            String.valueOf(body),
+                            mapper.writeValueAsBytes(body),
                             MediaType.parse("application/json")
                     )
             )
