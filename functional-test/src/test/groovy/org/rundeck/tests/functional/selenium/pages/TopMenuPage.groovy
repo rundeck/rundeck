@@ -14,7 +14,6 @@ class TopMenuPage extends BasePage {
 
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
-    By userManagerMenuBy = By.linkText("User Manager")
     By appUserButtonBy = By.id("appUser")
     By logOutMenuBy = By.linkText("Logout")
 
@@ -26,11 +25,6 @@ class TopMenuPage extends BasePage {
         openSettingsMenu()
         def systemConfigEntry = byAndWait systemConfigurationMenuBy
         systemConfigEntry.click()
-    }
-
-    void navigateToUserManager() {
-        openSettingsMenu()
-        byAndWait userManagerMenuBy click()
     }
 
     void openSettingsMenu() {
