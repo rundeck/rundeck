@@ -1,7 +1,7 @@
 import {defineComponent, markRaw} from "vue";
 import {getRundeckContext} from '../../../library'
+import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
-
 
 let rundeckContext = getRundeckContext();
 function init() {
@@ -21,6 +21,24 @@ function init() {
                     components: { HomeHeader },
                     template: `
                       <HomeHeader :createProjectAllowed="itemData.createProjectAllowed" :projectCount="itemData.projectCount" />
+                    `,
+                }
+            ))
+        },
+        {
+            section: 'home',
+            location: 'list',
+            visible: true,
+            widget: markRaw(defineComponent(
+                {
+                    name: "HomeProjectView",
+                    data() {
+                        return {}
+                    },
+                    props: ['itemData'],
+                    components: { HomeView },
+                    template: `
+                      <HomeView v-bind="itemData" />
                     `,
                 }
             ))
