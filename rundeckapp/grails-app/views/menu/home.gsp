@@ -207,6 +207,7 @@
         <div class="row">
           <div class="col-xs-12">
             <div class="card" >
+
               <div id="project-list" class="card-content">
                 <div>
                   <div class="input-group">
@@ -400,6 +401,11 @@
 
         </div>
       </div>
+    </div>
+    <div class="vue-ui-socket">
+      <g:set var="createProjectAllowed" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION )}"/>
+      <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }}"/>
+      <ui-socket section="home" location="list" :socket-data="{ createProjectAllowed: ${createProjectAllowed}, roles: ${enc(attr:roles.encodeAsJSON())}, isFirstRun: ${isFirstRun}}"></ui-socket>
     </div>
   </div>
 </div>
