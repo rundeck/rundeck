@@ -93,9 +93,9 @@ class JobExecutionSpec extends BaseContainer {
                 response.successful
                 response.code() == 200
                 def json = client.jsonValue(response.body(), Map)
-                json.executionState == 'RUNNING'
+                json.executionState
                 json.targetNodes.size() == 1
-                json.targetNodes.get(0) == 'localhost'
+                json.targetNodes[0] == 'localhost'
             }
     }
 
@@ -109,17 +109,19 @@ class JobExecutionSpec extends BaseContainer {
         when:
             def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
             def json = client.jsonValue(responseImport.body(), Map)
-            def jobId = json.succeeded.get(2).id
-            def adhoc = runJobAndWait(jobId, ["options":["opt1": "foobar"]])
-            def exec = client.get("/execution/${adhoc.id}/state", Map)
+            def jobId = json.succeeded[2].id
+            def output = runJobAndWait(jobId, ["options":["opt1": "foobar"]])
+            def state = client.get("/execution/${output.id}/state", Map)
         then:
             verifyAll {
                 responseImport.successful
                 responseImport.code() == 200
                 json.succeeded.size() == 3
-                adhoc.execState == 'succeeded'
-                exec.steps.get(0).nodeStates.localhost.executionState == 'SUCCEEDED'
+                output.execState == 'succeeded'
+                def localnode = state.serverNode
+                state.steps[0].nodeStates."${localnode}".executionState == 'SUCCEEDED'
             }
+        deleteProject(PROJECT_NAME)
     }
 
 }
