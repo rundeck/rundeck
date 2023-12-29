@@ -114,7 +114,7 @@ class GormEventStoreService implements EventStoreService {
             if (query.offset)
                 offset(query.offset)
 
-        }
+        } as DetachedCriteria<StoredEvent>
     }
 
     EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {

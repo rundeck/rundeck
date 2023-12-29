@@ -158,3 +158,31 @@ export function glyphiconForName(name: string) {
   }
   return ''
 }
+
+export function glyphiconBadges(attributes: any): Array<string>{
+  var badges=[];
+  if(attributes['ui:badges']){
+    var found=attributes['ui:badges']().split(/,\s*/g);
+    for(var i=0;i<found.length;i++){
+      if(found[i].match(/^glyphicon-[a-z-]+$/)){
+        badges.push(found[i]);
+      }else if(found[i].match(/^fa-[a-z-]+$/)){
+        badges.push(found[i]);
+      }else if(found[i].match(/^fab-[a-z-]+$/)){
+        badges.push(found[i]);
+      }
+    }
+  }
+
+  return badges;
+}
+
+export function expandNodeAttributes(attrs: any, str: string) {
+  return str.replace(/\$\{node\.([a-zA-Z-.]+)\}/g, function (match, g1, offset, string) {
+    if (attrs[g1]) {
+      return attrs[g1]() || '';
+    } else {
+      return string;
+    }
+  });
+}

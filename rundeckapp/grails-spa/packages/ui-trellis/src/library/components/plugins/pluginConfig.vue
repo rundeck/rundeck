@@ -80,7 +80,9 @@
                   >
                       <plugin-prop-edit v-model="inputValues[prop.name]"
                                         :prop="prop"
+                                        :event-bus="eventBus"
                                         :input-values="inputValues"
+                                        :use-runner-selector="useRunnerSelector"
                                         :context-autocomplete="inputContextAutocomplete"
                                         @pluginPropsMounted="notifyHandleAutoComplete"
                                         :validation="validation"
@@ -116,9 +118,12 @@
                   >
                       <plugin-prop-edit v-model="inputValues[prop.name]"
                                         :prop="prop"
+                                        :use-runner-selector="useRunnerSelector"
                                         :input-values="inputValues"
+                                        :is-storage-prop="isStorageProperty(prop)"
                                         :validation="validation"
                                         :readOnly="readOnly"
+                                        :event-bus="eventBus"
                                         :rkey="'g_'+gindex+'_'+rkey"
                                         :pindex="pindex"
                                         :selector-data="propsComputedSelectorData"
@@ -187,7 +192,9 @@ export default defineComponent({
     'scope',
     'defaultScope',
     'contextAutocomplete',
-    'autocompleteCallback'
+    'autocompleteCallback',
+    'useRunnerSelector',
+    'eventBus'
   ],
   emits: ['update:modelValue','change','handleAutocomplete','hasKeyStorageAccess'],
   data () {
@@ -212,6 +219,9 @@ export default defineComponent({
   methods: {
     setVal(target: any, prop: any, val: any) {
       target[prop] = val
+    },
+    isStorageProperty(prop: any){
+      return prop.options && prop.options['selectionAccessor'] === 'STORAGE_PATH'
     },
     prepareInputs () {
       if (!this.isShowConfigForm) {

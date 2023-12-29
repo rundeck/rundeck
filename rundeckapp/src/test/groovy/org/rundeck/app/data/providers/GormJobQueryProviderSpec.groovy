@@ -29,7 +29,7 @@ class GormJobQueryProviderSpec extends Specification implements DataTest {
         given:
         provider.applicationContext = applicationContext
         provider.jobSchedulesService = Mock(JobSchedulesService) {
-            expectedRowCount * isScheduled(_) >> true
+            0 * isScheduled(_) >> true
         }
         ScheduledExecution job1 = new ScheduledExecution(jobName: "one", project:"test1",workflow: new Workflow(commands:[new CommandExec(adhocLocalString: "echo hello")]))
         job1.save()

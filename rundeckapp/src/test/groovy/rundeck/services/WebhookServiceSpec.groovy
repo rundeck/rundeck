@@ -253,7 +253,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
     def "save new webhook token creation unauthorized"() {
         given:
-        Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
+        Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event", uuid: "existing-uuid")
         existing.save()
 
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
@@ -282,7 +282,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
 
         when:
-        def result = service.saveHook(mockUserAuth,[id:existing.id,name:"test",project:"Test",user:"webhookUser",roles:"webhook,test,bogus",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+        def result = service.saveHook(mockUserAuth,[id:existing.id, uuid: existing.uuid,name:"test",project:"Test",user:"webhookUser",roles:"webhook,test,bogus",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
         result.err ==~ /^Failed to update Auth Token roles: Unauthorized to update roles$/
@@ -620,7 +620,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], false)
 
         then:
-        result == [err:"Unable to import webhoook test. Error: A Webhook by that name already exists in this project"]
+        result == [err:"Unable to import webhoook test. Error:A Webhook by that name already exists in this project"]
 
     }
 

@@ -1250,7 +1250,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                 return
             }
             def categoriesMap = v.categories
-            Collection<String> valid = []
+            Collection<String> valid
             if (category) {
                 valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
                 if (!valid) {

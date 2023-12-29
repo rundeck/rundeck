@@ -281,7 +281,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     ) {
         def semap = [:]
         def adhocauth = null
-        def results = []
+        List<Execution> results = []
         execs.each { Execution exec ->
             def ScheduledExecution se = exec.scheduledExecution
             if (se && null == semap[se.id]) {

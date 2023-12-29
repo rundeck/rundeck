@@ -36,6 +36,8 @@
               :key="plugin.entry.type+'title/'+index"
               :show-description="true"
               @hasKeyStorageAccess="hasKeyStorageAccess"
+              :use-runner-selector="true"
+              :event-bus="eventBus"
             >
               <template v-slot:titlePrefix><span>{{index+1}}.</span></template>
             </plugin-config>
@@ -49,6 +51,8 @@
                 :show-title="false"
                 :show-description="false"
                 :plugin-config="additionalProps"
+                :use-runner-selector="true"
+                :event-bus="eventBus"
               ></plugin-config>
             </div>
             <plugin-config
@@ -62,6 +66,8 @@
               :show-description="false"
               :validation="plugin.validation"
               :validation-warning-text="$t('Validation errors')"
+              :use-runner-selector="true"
+              :event-bus="eventBus"
               @update:modelValue="configUpdated"
             >
               <template v-slot:extraProperties>

@@ -4,6 +4,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.NamedAuthProvider
@@ -37,6 +40,7 @@ class AppAuthorizingJob extends BaseAuthorizingIdResource<ScheduledExecution, Pr
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     protected Optional<ScheduledExecution> retrieve() {
         ScheduledExecution found
         if (identifier.project) {
@@ -48,6 +52,7 @@ class AppAuthorizingJob extends BaseAuthorizingIdResource<ScheduledExecution, Pr
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     boolean exists() {
         if (identifier.project) {
             return ScheduledExecution.countByUuidAndProject(identifier.id, identifier.project) == 1

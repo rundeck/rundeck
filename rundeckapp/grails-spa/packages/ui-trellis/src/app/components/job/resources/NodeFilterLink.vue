@@ -81,7 +81,7 @@ export default defineComponent({
         }
         return this.nodeFilter
       } else if (this.filterKey && this.filterVal) {
-        return `${this.filterKey}: ${this.filterVal}`
+        return `${this.filterKey}: \"${this.filterVal}\"`
       }
     },
   },
@@ -92,7 +92,7 @@ export default defineComponent({
     filterParamValues() {
       let params = {[this.filterParam]: this.getFilter()}
       if (this.nodeFilterName) {
-        params[this.filterParam] = this.nodeFilterName
+        params[this.exclude?'filterNameExclude':'filterName'] = this.nodeFilterName
       }
       return params
     },

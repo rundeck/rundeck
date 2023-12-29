@@ -145,6 +145,7 @@ const messages = {
     'filter.save.name.prompt': 'Name:',
     'filter.save.validation.name.blank': 'Name Cannot be blank',
     'filter.save.button': 'Save Filter...',
+    "saved.filters": "\u4EE5\u4FDD\u5B58\u7684\u6761\u4EF6",
     'failed': 'failed',
     'ok': 'ok',
     '0.total': '{0} total',

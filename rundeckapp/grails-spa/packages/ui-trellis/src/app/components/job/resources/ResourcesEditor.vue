@@ -56,6 +56,7 @@
             <node-filter-input
                 id="job_edit__node_filter_include"
                 v-model="modelData.filter"
+                :project="modelData.project"
                                :filter-name="modelData.filterName"
                                :node-summary="nodeSummary"
                                :allow-filter-default="false"
@@ -85,6 +86,7 @@
             <node-filter-input
                 id="job_edit__node_filter_exclude"
                 v-model="modelData.filterExclude"
+                :project="modelData.project"
                                :filter-name="modelData.filterNameExclude"
                                :node-summary="nodeSummary"
                                :allow-filter-default="false"

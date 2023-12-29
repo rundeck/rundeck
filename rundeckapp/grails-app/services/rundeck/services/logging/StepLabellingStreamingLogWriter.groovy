@@ -16,7 +16,7 @@
 
 package rundeck.services.logging
 
-import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogEvent

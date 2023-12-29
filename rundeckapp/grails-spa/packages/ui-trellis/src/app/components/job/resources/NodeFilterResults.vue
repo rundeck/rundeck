@@ -73,16 +73,6 @@ export default defineComponent({
       type: String,
       required: false,
     },
-    filterName: {
-      type: String,
-      required: false,
-      default: '',
-    },
-    excludeFilterName: {
-      type: String,
-      required: false,
-      default: '',
-    },
     excludeFilterUncheck: {
       type: Boolean,
       required: false,
@@ -139,8 +129,8 @@ export default defineComponent({
       if (this.nodeFilter && this.emptyMode == 'blank') {
         return
       }
-      var filterdata = this.filterName ? {filterName: this.filterName} : this.nodeFilter ? {filter: this.nodeFilter} : {}
-      var filterExcludedata = this.excludeFilterName ? {filterExcludeName: this.excludeFilterName} : this.nodeExcludeFilter ? {filterExclude: this.nodeExcludeFilter} : {}
+      var filterdata =  this.nodeFilter ? {filter: this.nodeFilter} : {}
+      var filterExcludedata =  this.nodeExcludeFilter ? {filterExclude: this.nodeExcludeFilter} : {}
       var excludeFilterUncheck = this.excludeFilterUncheck
       var page = this.page
       var view = this.view ? this.view : 'table'

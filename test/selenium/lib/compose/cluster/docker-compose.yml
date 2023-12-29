@@ -22,7 +22,16 @@ services:
           - ./cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
         expose:
           - 4440
+        healthcheck:
+          test: "curl -f http://localhost:4440/rundeck"
+          interval: 10s
+          timeout: 10s
+          retries: 12
+
     rundeck-2:
+        depends_on:
+          rundeck-1:
+            condition: service_healthy
         build:
           context: ./
           args:
@@ -43,11 +52,20 @@ services:
           - ./cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
         expose:
           - 4440
+        healthcheck:
+          test: "curl -f http://localhost:4440/rundeck"
+          interval: 10s
+          timeout: 10s
+          retries: 12
+
     nginx:
         image: nginx
-        links:
-          - rundeck-1
-          - rundeck-2
+        depends_on:
+          rundeck-1:
+            condition: service_healthy
+          rundeck-2:
+            condition: service_healthy
+
         volumes:
           - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
         ports:

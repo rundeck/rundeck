@@ -28,9 +28,6 @@ import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
@@ -66,9 +63,6 @@ public class NodeStepExecutionService
 
     static {
         Map<String, Class<? extends NodeStepExecutor>> map = new HashMap<>();
-        map.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
-        map.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
-        map.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
         PRESET_PROVIDERS = Collections.unmodifiableMap(map);
     }
 
@@ -134,10 +128,6 @@ public class NodeStepExecutionService
         this.serviceList.add(dynamicRegistryService);
         this.serviceList.add(nodeStepPluginAdaptedNodeStepExecutorService);
         this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
-    }
-
-    public static boolean isRegistered(String provider){
-        return PRESET_PROVIDERS.containsKey(provider);
     }
 
     public ChainedNodeStepPluginService getChainedNodeStepPluginService() {

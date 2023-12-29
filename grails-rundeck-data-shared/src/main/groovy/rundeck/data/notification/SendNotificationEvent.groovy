@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
  * Event trigger to send notifications for an execution
  */
 class SendNotificationEvent {
+    String trigger
     String executionUuid
     String jobUuid
     UserAndRolesAuthContext authContext

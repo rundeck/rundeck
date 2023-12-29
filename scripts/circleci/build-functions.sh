@@ -7,10 +7,6 @@ rundeck_war_build() {
     echo "NPM=$(npm -version)"
     echo "Node=$(node --version)"
     echo "Groovy=$(groovy --version)"
-    echo "== Launch SPA build =="
-    # It appears npm has issues with parallel builds, so we build grails-spa first without parallelism.
-    ./gradlew -Penvironment="${ENV}" ${GRADLE_BASE_OPTS} -x check --no-parallel --max-workers 1 \
-        rundeckapp:grails-spa:build runNpmBuild
 
     echo "== Launch War build =="
     ./gradlew -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} publishToMavenLocal build -x check
@@ -24,7 +20,7 @@ rundeck_docker_build() {
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT
 
-    docker tag "${DOCKER_REPO}:latest" "${ECR_REPO}:${ECR_IMAGE_TAG}"
+    docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
@@ -35,9 +31,9 @@ rundeck_docker_build() {
 }
 
 rundeck_docker_push() {
-    docker_ecr_login
+    docker_login
 
-    docker push "${ECR_REPO}:${ECR_IMAGE_TAG}"
+    docker push "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
@@ -57,4 +53,8 @@ rundeck_docker_publish() {
 
 rundeck_verify_build() {
     groovy testbuild.groovy --buildType="${ENV}" -debug
+}
+
+rundeck_gradle_functional_tests() {
+    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} --info
 }

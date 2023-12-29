@@ -29,15 +29,17 @@ export default defineComponent({
         return {
             editor: undefined as undefined | ace.Ace.Editor,
             contentBackup: "",
-            observer: undefined as undefined | MutationObserver
+            observer: undefined as undefined | MutationObserver,
+            jsonSpaces: 2 as number
         }
     },
     watch: {
         modelValue: function(val): void {
             if (this.contentBackup !== val) {
                 // @ts-ignore
-                this.editor!.session.setValue(val,1)
-                this.contentBackup = val
+                this.editor!.getSession().setValue(this.resolveValue(val) ,1)
+                this.contentBackup = this.resolveValue(val)
+                this.attachChangeEventToEditor()
             }
         },
         theme: function (newTheme): void {
@@ -79,15 +81,9 @@ export default defineComponent({
         editor.setTheme(this.resolveTheme(theme))
 
         if (this.modelValue)
-            editor.setValue(this.modelValue, 1)
+            editor.setValue(this.resolveValue(this.modelValue), 1)
         
         this.contentBackup = this.modelValue
-        
-        editor.on('change', () => {
-            const content = editor.getValue()
-            this.$emit('update:modelValue', content)
-            this.contentBackup = content
-        })
 
         if (this.options)
             editor.setOptions(this.options)
@@ -149,6 +145,29 @@ export default defineComponent({
         },
         resolveLang(lang: string): string {
             return typeof lang === 'string' ? `ace/mode/${lang}` : lang
+        },
+        /**
+        * Convert value to supported format
+        *
+        * @param val
+        */
+        resolveValue(val: string){
+          const LANG_JSON: String = 'json'
+          if( this.lang == LANG_JSON ){
+            return JSON.stringify(JSON.parse(val), null, this.jsonSpaces)
+          }
+          return val
+        },
+        /**
+        * Attach change event to ace editor
+        *
+        */
+        attachChangeEventToEditor(): void{
+          this.editor!.on('change', () => {
+            const content = this.editor!.getValue()
+            this.$emit('update:modelValue', content)
+            this.contentBackup = content
+          })
         }
     }
 })

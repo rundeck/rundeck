@@ -40,10 +40,12 @@
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="framework/adhoc.js"/>
+    <asset:javascript src="static/pages/nodes.js" defer="defer"/>
+    <asset:stylesheet src="static/css/pages/nodes.css"/>
     <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>
     <g:set var="maxLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.max", default: 20)}"/>
 
-    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:50, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
+    <g:embedJSON id="filterParamsJSON" data="${[matchedNodesMaxCount: matchedNodesMaxCount?:50, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams" data="${[
             disableMarkdown: params.boolean('disableMarkdown') ? '&disableMarkdown=true' :'',
             smallIconUrl:resource(dir: 'images', file: 'icon-small'),
@@ -89,9 +91,6 @@ search
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
-            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
-            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
-            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
     },
@@ -113,9 +112,6 @@ search
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
-<user:getNodeFilters user="${session.user}">
-  <g:set var="filterset" value="${filters}"/>
-</user:getNodeFilters>
 
 <div class="content">
 <div id="layoutBody">
@@ -133,19 +129,14 @@ search
               <g:hiddenField name="formInput" value="true"/>
               <g:set var="filtvalue" value="${query?.('filter')}"/>
               <div class="form-group">
-                <div class="col-sm-12">
-                  <div class=" input-group multiple-control-input-group input-group-lg tight">
-                    <g:render template="nodeFilterInputGroup"
-                              model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus:!filterName && !filtvalue]"/>
-                  </div>
+                <div class="col-sm-12 vue-ui-socket">
+                  <ui-socket section="adhoc-command-page"
+                             location="node-filter-input"
+                             socket-data="${enc(attr: [filter: filtvalue?:'', showInputTitle: true, autofocus: !filtvalue].encodeAsJSON())}">
+                  </ui-socket>
                 </div>
               </div>
             </g:form>
-            <div class=" collapse" id="queryFilterHelp">
-              <div class="help-block">
-                <g:render template="/common/nodefilterStringHelp"/>
-              </div>
-            </div>
           </div>
           <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
             <div class="card">

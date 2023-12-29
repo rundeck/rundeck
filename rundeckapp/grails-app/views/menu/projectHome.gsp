@@ -63,6 +63,7 @@
     }
     </style>
     <asset:javascript src="menu/projectHome.js"/>
+    <asset:javascript src="static/pages/project-dashboard.js" defer="defer"/>
 </head>
 
 <body>
@@ -104,7 +105,6 @@
     </div>
 
   </div>
-  <asset:javascript src="static/pages/project-dashboard.js"/>
 </div>
 </div>
 </body>
