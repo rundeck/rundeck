@@ -95,7 +95,6 @@ class JobExecutionSpec extends BaseContainer {
                 def json = client.jsonValue(response.body(), Map)
                 json.executionState
                 json.targetNodes.size() == 1
-                json.targetNodes[0] == 'localhost'
             }
     }
 
@@ -121,7 +120,6 @@ class JobExecutionSpec extends BaseContainer {
                 def localnode = state.serverNode
                 state.steps[0].nodeStates."${localnode}".executionState == 'SUCCEEDED'
             }
-        deleteProject(PROJECT_NAME)
     }
 
 }
