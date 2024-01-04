@@ -31,7 +31,7 @@ export async function getProjects(): Promise<any> {
     let ctx = getRundeckContext();
     try {
         const response = await axios
-            .get(`${ctx.rdBase}api/${ctx.apiVersion}/projects`, {
+            .get(`${ctx.rdBase}api/${ctx.apiVersion}/projects?meta=*`, {
                 method: "GET",
                 headers: {
                     "x-rundeck-ajax": "true",

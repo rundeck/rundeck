@@ -2,6 +2,7 @@ import {defineComponent, markRaw} from "vue";
 import {getRundeckContext} from '../../../library'
 import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
+import HomeActionsMenu from "../../components/home/HomeActionsMenu.vue";
 
 let rundeckContext = getRundeckContext();
 function init() {
