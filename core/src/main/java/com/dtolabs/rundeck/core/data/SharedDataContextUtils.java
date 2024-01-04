@@ -374,6 +374,36 @@ public class SharedDataContextUtils {
         ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination, addBom);
     }
 
+    public static String replaceTokensInlineScriptPlugin(final String script,
+                                                         final MultiDataContext<ContextView, DataContext> dataContext,
+                                                         final String nodeName,
+                                                         final boolean blankIfMissing) throws IOException{
+
+        ScriptVarExpander scriptVarExpander = new ScriptVarExpander();
+
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
+                new StringReader(script),
+                variable -> scriptVarExpander.expandVariable(
+                        dataContext,
+                        ContextView.node(nodeName),
+                        ContextView::nodeStep,
+                        variable
+                ),
+                blankIfMissing,
+                '@',
+                '@'
+        );
+
+        int intValueOfChar;
+        StringBuilder replacedScript = new StringBuilder();
+        while ((intValueOfChar = replaceTokens.read()) != -1) {
+            replacedScript.append((char) intValueOfChar);
+        }
+        replaceTokens.close();
+
+        return replacedScript.toString();
+    }
+
     /**
      * Recursively replace data references in the values in a map which contains either string, collection or Map
      * values.

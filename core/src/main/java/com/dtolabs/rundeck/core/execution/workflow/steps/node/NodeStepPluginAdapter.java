@@ -25,11 +25,16 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
@@ -40,11 +45,13 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
+import org.rundeck.core.execution.BaseCommandExec;
 import org.rundeck.core.execution.ScriptCommand;
 import org.rundeck.core.execution.ScriptFileCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -202,19 +209,42 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         }
         if (null != instanceConfiguration) {
             CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
-            if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
-            {
-                instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                        instanceConfiguration,
+
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    blankIfUnexMap,
+                    customFieldsAdapter::convertInput,
+                    customFieldsAdapter::convertOutput
+            );
+
+            if(Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE).contains((item.getNodeStepType()))){
+                //replace data references in script args
+                String script = ((BaseCommandExec)plugin).getAdhocLocalString();
+
+                final MultiDataContext<ContextView, DataContext> sharedContext = new WFSharedContext(context.getSharedDataContext());
+                sharedContext.merge(
                         ContextView.node(node.getNodename()),
-                        ContextView::nodeStep,
-                        null,
-                        context.getSharedDataContext(),
-                        false,
-                        blankIfUnexMap,
-                        customFieldsAdapter::convertInput,
-                        customFieldsAdapter::convertOutput
+                        new BaseDataContext("node", DataContextUtils.nodeData(node))
                 );
+
+                try {
+                    script = SharedDataContextUtils.replaceTokensInlineScriptPlugin(
+                            script,
+                            sharedContext,
+                            node.getNodename(),
+                            false
+                    );
+                } catch (IOException e) {
+                    log.error("Error replacing tokens.", e);
+                }
+
+                instanceConfiguration.put(BaseCommandExec.ADHOC_LOCAL_STRING, script);
+
             }
         }
         return instanceConfiguration;
