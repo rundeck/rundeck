@@ -174,6 +174,29 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    Integer runJob(String jobId, Object body = null) {
+        def path = "/job/${jobId}/run"
+        def response = client.post(path, body, Map)
+        response.id as Integer
+    }
+
+    Map obtainExecution(int executionId) {
+        def finalStatus = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout'
+        ]
+        while(true) {
+            def exec = client.get("/execution/${executionId}/output", Map)
+            if (finalStatus.contains(exec.execState)) {
+                return exec
+            } else {
+                sleep 10000
+            }
+        }
+    }
+
     void deleteProject(String projectName) {
         def response = client.doDelete("/project/${projectName}")
         if (!response.successful) {
@@ -183,6 +206,12 @@ abstract class BaseContainer extends Specification implements ClientProvider {
 
     def setupSpec() {
         startEnvironment()
+    }
+
+    def jobImportFile(String projectName, String pathXmlFile) {
+        def responseImport = client.doPost("/project/${projectName}/jobs/import", new File(pathXmlFile), "application/xml")
+        def jsonres = client.jsonValue(responseImport.body(), Map)
+        jsonres
     }
 
 }
