@@ -3,19 +3,16 @@
     <ul class="list-unstyled">
       <DynamicScroller
         ref="scroller"
-        :items="sortedItems"
+        :items="projects"
         :min-item-size="43"
-        #default="{ item, active }"
-        key-field="id"
-        itemTag="li"
+        #default="{ item, index, active }"
+        key-field="created"
+        item-tag="li"
         page-mode
-        :key="browsePath"
       >
-<!--        <browser-job-item-->
-<!--          :job="item"-->
-<!--          v-if="item.job"-->
-<!--          :load-meta="breakpointHit"-->
-<!--        />-->
+        <DynamicScrollerItem :item="item" :active="active" :size-dependecies="[item.description]" :data-index="index">
+          <home-browser-item :project="item" :index="index" />
+        </DynamicScrollerItem>
       </DynamicScroller>
     </ul>
   </div>
@@ -23,14 +20,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { DynamicScroller } from "vue-virtual-scroller";
+import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-// import BrowserJobItem from "@/app/pages/job/browse/tree/BrowserJobItem.vue";
+import HomeBrowserItem from "@/app/components/home/HomeBrowserItem.vue";
 
 export default defineComponent({
   name: "HomeBrowser",
-  components: { DynamicScroller },
+  components: { HomeBrowserItem, DynamicScroller, DynamicScrollerItem },
+  props: {
+    projects: {
+      type: Array,
+      required: true,
+    },
+  },
 });
 </script>
-
-<style scoped lang="scss"></style>
