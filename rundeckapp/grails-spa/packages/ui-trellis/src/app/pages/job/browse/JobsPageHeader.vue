@@ -4,9 +4,9 @@
             class="subtitle-head-item flex-container flex-align-items-baseline"
         >
             <div class="flex-item-auto text-h3 jobs-page-header">
-                <span v-if="groupPath">
+                <span v-if="jobPageStore.browsePath">
                     <job-groups-breadcrumbs
-                        :groupPath="groupPath"
+                        :groupPath="jobPageStore.browsePath"
                         @browse-to="doRootBrowse"
                     >
                         <template #root>
@@ -14,8 +14,8 @@
                         </template>
                     </job-groups-breadcrumbs>
                 </span>
-                <span v-else class="query-section">
-                    <i class="fas fa-tasks query-item"></i>
+                <span  class="query-section">
+                    <i class="fas fa-tasks query-item" v-if="!jobPageStore.browsePath"></i>
                     <a
                         class="link-quiet"
                         href="#"
@@ -38,7 +38,7 @@
                                 </template>
                             </template>
                         </template>
-                        <template v-else>
+                        <template v-else-if="!jobPageStore.browsePath">
                             {{ $t("page.section.title.AllJobs") }}
                         </template>
                     </a>
@@ -131,7 +131,6 @@ export default defineComponent({
             jobPageStore,
             jobListFilterStore,
             advancedSearchModalVisible: ref(false),
-            groupPath: ref(props.queryParams?.groupPath || ""),
             wasFiltered: ref([]),
             saveFilterModal: ref(false),
             saveFilterError: ref(""),
@@ -143,7 +142,8 @@ export default defineComponent({
             eventBus.emit("job-list-page:search");
         },
         doClear() {
-            this.jobPageStore.query = {};
+            this.jobPageStore.query = {groupPath:''};
+            this.jobPageStore.browsePath = ''
             this.doSearch();
         },
         doSave() {
@@ -201,9 +201,6 @@ export default defineComponent({
         },
     },
     mounted() {
-        eventBus.on("job-list-page:browsed", (path: string) => {
-            this.groupPath = path;
-        });
         eventBus.on("job-list-page:search", (name: string) => {
             this.updateFilters(name);
         });
