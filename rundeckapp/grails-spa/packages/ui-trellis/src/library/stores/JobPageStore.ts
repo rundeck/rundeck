@@ -26,6 +26,7 @@ export class JobPageStore {
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore
   filters: Array<JobPageFilter> = []
+  browsePath: string = ''
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {

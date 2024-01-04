@@ -42,6 +42,13 @@ function init() {
 
   moment.locale(getRundeckContext().locale||'en_US')
   const page = rootStore.jobPageStore
+  if (pageQueryParams?.queryParams?.groupPath) {
+    page.browsePath = pageQueryParams.queryParams.groupPath;
+    page.query['groupPath'] = pageQueryParams.queryParams.groupPath;
+  }else{
+    page.browsePath = '';
+    page.query['groupPath'] = '';
+  }
   const browse = page.getJobBrowser()
   const jobListFilterStoreObj = new JobListFilterStore(
     getRundeckContext().projectName,
