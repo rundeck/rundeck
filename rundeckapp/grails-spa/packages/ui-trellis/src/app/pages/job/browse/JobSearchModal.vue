@@ -17,14 +17,14 @@
             <div class="form-group" v-if="jobPageStore.query['idlist']">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}idlist"
+                    for="_idlist"
                     >{{ $t("jobquery.title.idlist") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="idlist"
-                        id="${rkey}idlist"
+                        id="_idlist"
                         v-model="jobPageStore.query['idlist']"
                         class="form-control"
                     />
@@ -34,14 +34,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}jobFilter"
+                    for="_jobFilter"
                     >{{ $t("jobquery.title.jobFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="jobFilter"
-                        id="${rkey}jobFilter"
+                        id="_jobFilter"
                         v-model="jobPageStore.query['jobFilter']"
                         class="form-control"
                     />
@@ -50,7 +50,7 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}groupPath"
+                    for="_groupPath"
                     >{{ $t("jobquery.title.groupPath") }}</label
                 >
                 <div class="col-sm-10">
@@ -61,7 +61,7 @@
                         <input
                             type="text"
                             name="groupPath"
-                            id="${rkey}groupPath"
+                            id="_groupPath"
                             v-model="jobPageStore.query['groupPath']"
                             class="form-control"
                         />
@@ -71,14 +71,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}descFilter"
+                    for="_descFilter"
                     >{{ $t("jobquery.title.descFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="descFilter"
-                        id="${rkey}descFilter"
+                        id="_descFilter"
                         v-model="jobPageStore.query['descFilter']"
                         class="form-control"
                     />
@@ -87,7 +87,7 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}scheduledFilter"
+                    for="_scheduledFilter"
                     >{{ $t("jobquery.title.scheduledFilter") }}</label
                 >
                 <div class="col-sm-10">
@@ -124,14 +124,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}serverNodeUUIDFilter"
+                    for="_serverNodeUUIDFilter"
                     >{{ $t("jobquery.title.serverNodeUUIDFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="serverNodeUUIDFilter"
-                        id="${rkey}serverUuid"
+                        id="_serverUuid"
                         v-model="jobPageStore.query['serverNodeUUIDFilter']"
                         class="form-control"
                     />
