@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.step.StepPlugin
@@ -106,6 +107,33 @@ class NodeStepPluginAdapterSpec extends Specification {
                 value = "DYNAMIC_FORM"
         )
         private String customFieldsTest
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = SCRIPT_COMMAND_TYPE)
+    static class TestScriptPlugin implements ScriptCommand, NodeStepPlugin {
+        NodeStepPlugin impl
+        @PluginProperty(
+                title = "Script",
+                description = "Enter the entire script to execute",
+                required = true
+        )
+        @RenderingOptions(
+                [
+                        @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = 'CODE'),
+                        @RenderingOption(key = 'codeSyntaxMode', value = 'sh')
+                ]
+        )
+        String adhocLocalString
 
         @Override
         void executeNodeStep(
@@ -216,9 +244,50 @@ class NodeStepPluginAdapterSpec extends Specification {
 
         inputconfig = [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"']
         data | expect                                                        | nodeStepType
-        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptCommand.SCRIPT_COMMAND_TYPE
         [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
         [:] | [a: 'b', c: '', d: 'something "xyzqws"']                       | 'someothertype'
+    }
+
+    def "expand config vars for inline script plugins"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestScriptPlugin(
+                impl: plugin,
+                adhocLocalString: inputconfig['adhocLocalString']
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: inputconfig,
+                nodeStepType: nodeStepType,
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        1 * plugin.executeNodeStep(!null as PluginStepContext, _, node)
+        result.isSuccess()
+
+        wrap.adhocLocalString == expect['adhocLocalString']
+
+        where:
+
+        inputconfig = [a: 'b', c: '${option.c}', adhocLocalString: 'something "xyz@option.p@qws"']
+        data | expect                                                        | nodeStepType
+        [:] | [a: 'b', c: '${option.c}', adhocLocalString: 'something "xyz@option.p@qws"'] | ScriptCommand.SCRIPT_COMMAND_TYPE
+        ["p":"123"] | [a: 'b', c: '${option.c}', adhocLocalString: 'something "xyz123qws"'] | ScriptCommand.SCRIPT_COMMAND_TYPE
     }
 
     def "create config with custom fields"(){

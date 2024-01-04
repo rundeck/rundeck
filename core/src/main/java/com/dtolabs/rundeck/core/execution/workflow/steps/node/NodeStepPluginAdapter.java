@@ -210,19 +210,22 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         if (null != instanceConfiguration) {
             CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
 
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.node(node.getNodename()),
-                    ContextView::nodeStep,
-                    null,
-                    context.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap,
-                    customFieldsAdapter::convertInput,
-                    customFieldsAdapter::convertOutput
-            );
+            if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
+            {
+                instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                        instanceConfiguration,
+                        ContextView.node(node.getNodename()),
+                        ContextView::nodeStep,
+                        null,
+                        context.getSharedDataContext(),
+                        false,
+                        blankIfUnexMap,
+                        customFieldsAdapter::convertInput,
+                        customFieldsAdapter::convertOutput
+                );
+            }
 
-            if(Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE).contains((item.getNodeStepType()))){
+            if(item.getNodeStepType()!=null && item.getNodeStepType().equals(ScriptCommand.SCRIPT_COMMAND_TYPE)){
                 //replace data references in script args
                 String script = ((BaseCommandExec)plugin).getAdhocLocalString();
 
