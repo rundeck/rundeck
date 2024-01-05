@@ -12,6 +12,7 @@ class JobExecutionSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
+        setupProject("test-executions-query")
     }
 
     def "import project with configs and clean executions"() {
@@ -106,7 +107,7 @@ class JobExecutionSpec extends BaseContainer {
             def client = getClient()
             def pathXmlFile = getClass().getResource("/projects-import/api-test-execution-state.xml").getPath()
             def xmlProjectContent = new File(pathXmlFile).text
-            def xmlProject = xmlProjectContent.replaceAll('$xmlproj', PROJECT_NAME)
+            def xmlProject = xmlProjectContent.replaceAll('xml-project-name', PROJECT_NAME)
             new File(pathXmlFile).text = xmlProject
         when:
             def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
@@ -127,31 +128,32 @@ class JobExecutionSpec extends BaseContainer {
 
     def "execution query OK"() {
         when: "run a command 1"
+            def newProject = "test-executions-query"
             def params1 = "exec=echo+testing+execution+api"
-            def adhoc1 = post("/project/${PROJECT_NAME}/run/command?${params1}", Map)
+            def adhoc1 = post("/project/${newProject}/run/command?${params1}", Map)
         then:
             adhoc1.execution.id != null
             def execId1 = adhoc1.execution.id
         when: "run a command 2"
             def params2 = "exec=echo+testing+adhoc+execution+query+should+fail;false"
-            def adhoc2 = post("/project/${PROJECT_NAME}/run/command?${params2}", Map)
+            def adhoc2 = post("/project/${newProject}/run/command?${params2}", Map)
         then:
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id
         when:"import jobs 1"
             def pathXmlFile = getClass().getResource("/projects-import/test-executions-query.xml").getPath()
             def xmlProjectContent = new File(pathXmlFile).text
-            def xmlProject1 = xmlProjectContent.replaceAll('$xmlproj', PROJECT_NAME).replaceAll('$xmlargs', "echo hello there")
+            def xmlProject1 = xmlProjectContent.replaceAll('xml-project-name', newProject).replaceAll('xml-args', "echo hello there")
             new File(pathXmlFile).text = xmlProject1
         then:
-            def jobId1 = jobImportFile(PROJECT_NAME, pathXmlFile).succeeded[0].id
+            def jobId1 = jobImportFile(newProject, pathXmlFile).succeeded[0].id
         when:"import jobs 2"
             def pathXmlFile1 = getClass().getResource("/projects-import/test-executions-query-2.xml").getPath()
             def xmlProjectContent1 = new File(pathXmlFile1).text
-            def xmlProject2 = xmlProjectContent1.replaceAll('$xmlproj', PROJECT_NAME).replaceAll('$xmlargs', "echo hello there")
+            def xmlProject2 = xmlProjectContent1.replaceAll('xml-project-name', newProject).replaceAll('xml-args', "echo hello there")
             new File(pathXmlFile1).text = xmlProject2
         then:
-            def jobId2 = jobImportFile(PROJECT_NAME, pathXmlFile1).succeeded[0].id
+            def jobId2 = jobImportFile(newProject, pathXmlFile1).succeeded[0].id
         when:"run job 1 and 2"
             def execId3 = runJob(jobId1, ["options":["opt2": "a"]])
             def execId4 = runJob(jobId2, ["options":["opt2": "a"]])
@@ -222,8 +224,8 @@ class JobExecutionSpec extends BaseContainer {
             testExecQuery "adhoc=false&$baseQuery", 2
     }
 
-    void testExecQuery(String xargs = null, Integer expect = null) {
-        def url = "/project/${PROJECT_NAME}/executions"
+    void testExecQuery(String xargs = null, Integer expect = null, String project = "test-executions-query") {
+        def url = "/project/${project}/executions"
         def response = doGet(xargs ? "${url}?${xargs}" : url)
         def itemCount = getClient().jsonValue(response.body(), Map).executions.size()
         verifyAll {

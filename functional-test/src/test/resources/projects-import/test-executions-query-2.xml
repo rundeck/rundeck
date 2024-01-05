@@ -6,7 +6,7 @@
         <description>A job to test the executions query API2</description>
         <loglevel>INFO</loglevel>
         <context>
-            <project>$xmlproj</project>
+            <project>xml-project-name</project>
             <options>
                 <option name="opt1" value="testvalue" required="true"/>
                 <option name="opt2" values="a,b,c" required="true"/>
@@ -18,7 +18,7 @@
         </dispatch>
         <sequence>
             <command>
-                <exec>$xmlargs</exec>
+                <exec>xml-args</exec>
             </command>
         </sequence>
     </job>
