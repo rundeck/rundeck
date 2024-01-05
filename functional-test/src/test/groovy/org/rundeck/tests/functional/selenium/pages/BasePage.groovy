@@ -38,6 +38,7 @@ abstract class BasePage {
     void go() {
         if (loadPath) {
             implicitlyWait 2000
+            println context.client.baseUrl + loadPath
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
