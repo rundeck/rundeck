@@ -91,8 +91,8 @@ class JobExecutionSpec extends BaseContainer {
         when:
             def runCommand = client.post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", null, Map)
             def idExec = runCommand.execution.id
-            def response = client.doGet("/execution/${idExec}/state")
             sleep 5000
+            def response = client.doGet("/execution/${idExec}/state")
         then:
             verifyAll {
                 response.successful
