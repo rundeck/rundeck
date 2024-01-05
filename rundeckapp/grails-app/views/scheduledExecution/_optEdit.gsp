@@ -268,7 +268,6 @@ form.option.valuesType.url.authType.bearerToken.label
                     <wdgt:action targetSelector="#opt_defaultValue" clear="true"/>
                 </wdgt:eventHandler>
                 <wdgt:eventHandler for="defaultStoragePath_${storagePathKey}" state="empty" inline="true" oneway="true" frequency="2" >
-                    <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
                     <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
                 </wdgt:eventHandler>
             </div>
