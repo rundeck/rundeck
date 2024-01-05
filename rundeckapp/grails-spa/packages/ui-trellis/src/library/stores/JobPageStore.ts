@@ -21,10 +21,12 @@ export class JobPageStore {
   projectSchedulesEnabled: boolean = false
   groupExpandLevel: number = 0
   query:{[key:string]:string} = {}
+  selectedFilter: string = ''
   selectedJobs: JobBrowseItem[] = []
   meta: JobBrowseMeta[] = []
   browser!: JobBrowserStore
   filters: Array<JobPageFilter> = []
+  browsePath: string = ''
 
   addBulkJob(job: JobBrowseItem) {
     if (!this.selectedJobs.find((j) => j.id === job.id)) {

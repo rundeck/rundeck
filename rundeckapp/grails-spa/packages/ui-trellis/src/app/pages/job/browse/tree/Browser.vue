@@ -192,7 +192,6 @@ export default defineComponent({
         async refresh(initial:boolean=false) {
             this.loading = true;
             this.items = await this.jobBrowserStore.loadItems(this.browsePath);
-            this.breakpointHit = this.jobBrowserStore.findPath(this.browsePath).bpHit
             this.loading = false;
             if(initial){
               //expand children if expand level is greater than 0
@@ -206,6 +205,11 @@ export default defineComponent({
             }
             if(this.items.length<1){
               this.$emit('empty')
+            }else{
+              let found = this.jobBrowserStore.findPath(this.browsePath)
+              if(found){
+                this.breakpointHit = found.bpHit
+              }
             }
         },
         modifiedPaths(paths:string[]){

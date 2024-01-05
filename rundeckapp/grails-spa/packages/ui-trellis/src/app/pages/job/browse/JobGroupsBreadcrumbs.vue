@@ -1,5 +1,5 @@
 <template>
-    <section class="job-breadcrumbs">
+    <span class="job-breadcrumbs">
         <span class="job-breadcrumb-item">
             <a @click.prevent="browsePath('')" :href="browseHref('')">
                 <slot name="root">&larr;</slot>
@@ -22,7 +22,7 @@
                 {{ part }}
             </a>
         </template>
-    </section>
+    </span>
 </template>
 
 <script lang="ts">

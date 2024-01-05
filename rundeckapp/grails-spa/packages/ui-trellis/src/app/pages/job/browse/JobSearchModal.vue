@@ -17,14 +17,14 @@
             <div class="form-group" v-if="jobPageStore.query['idlist']">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}idlist"
+                    for="_idlist"
                     >{{ $t("jobquery.title.idlist") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="idlist"
-                        id="${rkey}idlist"
+                        id="_idlist"
                         v-model="jobPageStore.query['idlist']"
                         class="form-control"
                     />
@@ -34,14 +34,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}jobFilter"
+                    for="_jobFilter"
                     >{{ $t("jobquery.title.jobFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="jobFilter"
-                        id="${rkey}jobFilter"
+                        id="_jobFilter"
                         v-model="jobPageStore.query['jobFilter']"
                         class="form-control"
                     />
@@ -50,7 +50,7 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}groupPath"
+                    for="_groupPath"
                     >{{ $t("jobquery.title.groupPath") }}</label
                 >
                 <div class="col-sm-10">
@@ -61,7 +61,7 @@
                         <input
                             type="text"
                             name="groupPath"
-                            id="${rkey}groupPath"
+                            id="_groupPath"
                             v-model="jobPageStore.query['groupPath']"
                             class="form-control"
                         />
@@ -71,14 +71,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}descFilter"
+                    for="_descFilter"
                     >{{ $t("jobquery.title.descFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="descFilter"
-                        id="${rkey}descFilter"
+                        id="_descFilter"
                         v-model="jobPageStore.query['descFilter']"
                         class="form-control"
                     />
@@ -87,7 +87,7 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}scheduledFilter"
+                    for="_scheduledFilter"
                     >{{ $t("jobquery.title.scheduledFilter") }}</label
                 >
                 <div class="col-sm-10">
@@ -124,14 +124,14 @@
             <div class="form-group">
                 <label
                     class="col-sm-2 control-label"
-                    for="${enc(attr:rkey)}serverNodeUUIDFilter"
+                    for="_serverNodeUUIDFilter"
                     >{{ $t("jobquery.title.serverNodeUUIDFilter") }}</label
                 >
                 <div class="col-sm-10">
                     <input
                         type="text"
                         name="serverNodeUUIDFilter"
-                        id="${rkey}serverUuid"
+                        id="_serverUuid"
                         v-model="jobPageStore.query['serverNodeUUIDFilter']"
                         class="form-control"
                     />
@@ -170,12 +170,17 @@
             <btn type="primary" @click="doSearch">
                 {{ $t("job.filter.apply.button.title") }}
             </btn>
+            <btn type="success" class="pull-right" @click="doSave">
+              <i class="glyphicon glyphicon-plus"></i>
+              {{ $t("job.filter.save.button.title") }}
+            </btn>
         </template>
     </modal>
 </template>
 
 <script lang="ts">
 import UiSocket from '@/library/components/utils/UiSocket.vue'
+import {JobListFilterStore, JobListFilterStoreInjectionKey} from '@/library/stores/JobListFilterStore'
 import {
     JobPageStore,
     JobPageStoreInjectionKey,
@@ -185,7 +190,7 @@ import { defineComponent, inject, ref } from "vue";
 export default defineComponent({
     name: "JobSearchModal",
     components: { UiSocket },
-    emits: ["close", "search", "clear", "update:modelValue"],
+    emits: ["close", "search", "clear", "save", "update:modelValue"],
     props: {
         modelValue: {
             type: Boolean,
@@ -196,8 +201,12 @@ export default defineComponent({
         const jobPageStore: JobPageStore = inject(
             JobPageStoreInjectionKey
         ) as JobPageStore;
+        const jobListFilterStore: JobListFilterStore = inject(
+          JobListFilterStoreInjectionKey
+        ) as JobListFilterStore
         return {
             jobPageStore,
+            jobListFilterStore,
             visible: ref(props.modelValue),
         };
     },
@@ -231,6 +240,9 @@ export default defineComponent({
         },
         doSearch() {
             this.$emit("search");
+        },
+        doSave() {
+            this.$emit("save");
         },
     },
 });
