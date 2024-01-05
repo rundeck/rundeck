@@ -152,6 +152,20 @@
             </li>
 
           </g:ifExecutionMode>
+          <li id="appNotificationCenter">
+            <div class="dropdown">
+              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
+                <span class="has_tooltip"
+                      title="Notification center"
+                      data-toggle="tooltip"
+                      data-placement="bottom">
+
+                  <i class="fa fa-comments fa-lg"></i>
+                </span>
+              </a>
+              <g:render template="/menu/notificationCenterWidget"/>
+            </div>
+          </li>
           <li id="appAdmin">
             <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
