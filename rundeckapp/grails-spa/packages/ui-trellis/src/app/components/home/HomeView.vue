@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import {defineComponent, PropType} from 'vue'
 import HomeHeader from "./HomeHeader.vue";
 import HomeCardList from "./HomeCardList.vue";
 import {getProjects} from "@/app/components/home/services/homeServices";
@@ -60,7 +60,7 @@ export default defineComponent({
       default: false,
     },
     roles: {
-      type: Array,
+      type: Array as PropType<string[]>,
       default: () => []
     }
   },
@@ -76,7 +76,6 @@ export default defineComponent({
       try {
         this.projects = await getProjects()
         this.projectCount = this.projects.length
-        // this.$root.setProjects(projects)
         this.loadedProjectNames = true
       } catch (e) {
         console.error(e)
@@ -88,7 +87,3 @@ export default defineComponent({
   }
 })
 </script>
-
-<style scoped lang="scss">
-
-</style>

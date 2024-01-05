@@ -86,16 +86,16 @@ export default defineComponent({
     }
   },
   computed: {
-    createProjectLink() {
+    createProjectLink(): string {
       return getAppLinks().frameworkCreateProject
     },
-    recentProjectsCount() {
+    recentProjectsCount(): number {
       return this.recentProjects?.length || 0
     },
-    recentUsersCount() {
+    recentUsersCount(): number {
       return this.recentUsers?.length || 0
     },
-    loadedProjectNames() {
+    loadedProjectNames(): boolean {
       return !!this.projectCount
     }
   },

@@ -34,10 +34,11 @@ class ProjectExecutionMetadataComponent implements ProjectMetadataComponent {
         Map<String, Object> result = new HashMap<String, Object>()
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
-//
-        result.put("readmeDisplay", menuService.getReadmeDisplay(fwkProject))
 
-////        result.putAll(getProjAuthzMeta(project, authContext, PROJ_AUTH_CHECK_ACTIONS))
+        result.put("readmeDisplay", menuService.getReadmeDisplay(fwkProject))
+        result.put("motdDisplay", menuService.getMotdDisplay(fwkProject))
+        result.put("readme", frameworkService.getFrameworkProjectReadmeContents(fwkProject))
+
         if(result){
             return Optional.of(
                     [ComponentMeta.with(NAME, result)]

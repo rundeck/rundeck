@@ -7,35 +7,14 @@
       <span class="caret"></span>
     </a>
     <template #dropdown>
-      <li v-if="!project.loaded">
-        <a href="#" class="text-muted">
-          <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
-        </a>
-      </li>
-      <template v-else>
-        <li v-if="project.auth.admin">
-          <a :href="`/project/${project.name}/configure`">
-            {{ $t('edit.configuration') }}
+      <template v-for="(option, index) in availableOptions">
+        <li v-if="option.show" :key="`item${index}`">
+          <a :href="option.link">
+            <i v-if="option.icon" :class="`glyphicon ${option.icon}`"></i>
+            {{ $t(option.text) }}
           </a>
         </li>
-
-        <li class="divider" v-if="project.auth.admin"></li>
-
-        <template v-if="project.auth.jobCreate">
-          <li>
-            <a :href="`/project/${project.name}/job/create`">
-              <i class="glyphicon glyphicon-plus"></i>
-              {{ $t('new.job.button.label') }}
-            </a>
-          </li>
-          <li class="divider"></li>
-          <li>
-            <a :href="`/project/${project.name}/job/upload`">
-              <i class="glyphicon glyphicon-upload"></i>
-              {{ $t('upload.definition.button.label') }}
-            </a>
-          </li>
-        </template>
+        <li class="divider" v-if="option.show && index !== availableOptions.length -1"></li>
       </template>
     </template>
   </dropdown>
@@ -43,6 +22,7 @@
 
 <script lang="ts">
 import {defineComponent} from 'vue'
+import {AuthzMeta, ProjectActionsItemDropdown} from "@/app/components/home/types/projectTypes";
 
 export default defineComponent({
   name: "HomeActionsMenu",
@@ -56,13 +36,37 @@ export default defineComponent({
       required: true,
     },
   },
-  data() {
-    return {
-      show: false,
+  computed: {
+    authConfig(): AuthzMeta {
+      const emptyConfig = {name: 'authz', data: {}};
+      return this.project.meta.filter(meta => meta.name === 'authz')[0] || emptyConfig;
+    },
+    isAdmin(): boolean {
+      const values: boolean[] = Object.values(this.authConfig.data.project);
+      return values.some(val => val === true);
+    },
+    availableOptions(): ProjectActionsItemDropdown[] {
+      const createPermissions = !!this.authConfig.data.types.job.create;
+
+      return [{
+          show: this.isAdmin,
+          link: `/project/${this.project.name}/configure`,
+          text: 'edit.configuration',
+        },
+        {
+          show: createPermissions,
+          link: `/project/${this.project.name}/job/create`,
+          icon: 'glyphicon-plus',
+          text: 'new.job.button.label',
+        },
+        {
+          show: createPermissions,
+          link: `/project/${this.project.name}/job/upload`,
+          icon: 'glyphicon-upload',
+          text: 'upload.definition.button.label',
+        },
+      ]
     }
-  },
-  mounted() {
-    this.show = true;
   }
 })
 </script>
