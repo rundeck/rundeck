@@ -2,10 +2,7 @@ package org.rundeck.tests.functional.selenium.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
-import org.openqa.selenium.StaleElementReferenceException
-import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
-import org.rundeck.util.setup.NavLinkTypes
 
 /**
  * Top Menu page
@@ -17,16 +14,29 @@ class TopMenuPage extends BasePage {
 
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
+    By appUserButtonBy = By.id("appUser")
+    By logOutMenuBy = By.linkText("Logout")
 
     TopMenuPage(final SeleniumContext context) {
         super(context)
     }
 
     void navigateToSystemConfiguration() {
-        def settingsButton = byAndWait settingsButtonBy
-        settingsButton.click()
+        openSettingsMenu()
         def systemConfigEntry = byAndWait systemConfigurationMenuBy
         systemConfigEntry.click()
     }
 
+    void openSettingsMenu() {
+        byAndWait settingsButtonBy click()
+    }
+
+    void openAppUserMenu() {
+        byAndWaitClickable appUserButtonBy click()
+    }
+
+    void logOut() {
+        openAppUserMenu()
+        byAndWait logOutMenuBy click()
+    }
 }

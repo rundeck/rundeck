@@ -3358,7 +3358,7 @@ Note: `other_errors` included since API v35""",
     @Get('/{project}/meta')
     @Operation(
         method = "GET",
-        summary = "Get project metadata",
+        summary = "Get Project UI Metadata",
         description = """Get project metadata.
 
 Requires `read` authorization for the project resource.

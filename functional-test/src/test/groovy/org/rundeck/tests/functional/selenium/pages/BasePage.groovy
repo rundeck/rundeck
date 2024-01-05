@@ -38,6 +38,7 @@ abstract class BasePage {
     void go() {
         if (loadPath) {
             implicitlyWait 2000
+            println context.client.baseUrl + loadPath
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
@@ -140,6 +141,11 @@ abstract class BasePage {
 
     WebElement byAndWait(By locator) {
         waitForElementVisible locator
+        el locator
+    }
+
+    WebElement byAndWaitClickable(By locator) {
+        waitForElementToBeClickable locator
         el locator
     }
 

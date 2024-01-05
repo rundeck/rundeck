@@ -6121,10 +6121,11 @@ breakpoint are available, no metadata will be loaded''',
     @Post(uri="/project/{project}/jobs/browse")
     @Operation(
         method = 'POST',
-        summary = 'Query jobs at a path',
-        description = '''Query the jobs at a specific group path.
+        summary = 'Project Job Group browse',
+        description = '''Query the jobs at a specific group path. Response includes the list of immediate jobs matching the query in the exact path, 
+and the names of job Groups starting at that path.
 
-Authorization required: `read` or `view` for the Job.
+Authorization required: `read` or `view` for the Jobs.
 
 Since: v46''',
         tags = ['jobs'],
@@ -6222,7 +6223,7 @@ breakpoint are available, no metadata will be loaded''',
     @Get(uri="/job/{id}/meta")
     @Operation(
         method = 'GET',
-        summary = 'Get Job Metadata',
+        summary = 'Get Job UI Metadata',
         description = '''Get metadata for a specific job.
 
 Authorization required: `read` or `view` for the Job.
@@ -6257,7 +6258,7 @@ Since: v46''',
         @Parameter(
             name = 'meta',
             in = ParameterIn.QUERY,
-            description = 'Comma-separated list of metadata items to include, or "*" for all (default)',
+            description = 'Comma-separated list of metadata item names to include, or "*" for all (default)',
             schema = @Schema(type = 'string')
         ) String meta
     ) {
