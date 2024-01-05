@@ -5,7 +5,7 @@
         <description></description>
         <loglevel>INFO</loglevel>
         <context>
-            <project>$xmlproj</project>
+            <project>xml-project-name</project>
             <options />
         </context>
         <dispatch>
@@ -25,7 +25,7 @@
         <description></description>
         <loglevel>INFO</loglevel>
         <context>
-            <project>$xmlproj</project>
+            <project>xml-project-name</project>
             <options>
                 <option name="opt1" value="testvalue" required="true"/>
             </options>
@@ -51,7 +51,7 @@
         <description></description>
         <loglevel>INFO</loglevel>
         <context>
-            <project>$xmlproj</project>
+            <project>xml-project-name</project>
             <options>
                 <option name="opt1" value="testvalue" required="true"/>
             </options>
