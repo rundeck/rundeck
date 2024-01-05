@@ -1,96 +1,68 @@
 import {mount, VueWrapper} from '@vue/test-utils';
 import HomeActionsMenu from '../HomeActionsMenu.vue';
+import {Dropdown} from 'uiv';
+import {AuthzMeta} from "../types/projectTypes";
 
-interface ComponentProps {
-    project: {
-        name: string;
-        meta: Array<{ name: string; data: any }>;
-    };
-    index: number;
-}
+
+const defaultMeta: AuthzMeta  = { name: 'authz', data: { project: {admin: true}, types: { job: { create: true } } } }
+
+const mountHomeActionsMenu = async (): Promise<VueWrapper<any>> => {
+    const wrapper = mount(HomeActionsMenu, {
+        props: {
+            project: {
+                name: 'example',
+                meta: [defaultMeta],
+            },
+            index: 0,
+        },
+        global: {
+            mocks: {
+                $t: (msg: string) => msg,
+            },
+        },
+        components: {
+            Dropdown
+        }
+    });
+
+    // Wait for the next Vue tick to allow for asynchronous rendering
+    await wrapper.vm.$nextTick();
+
+    return wrapper;
+};
 
 
 describe('HomeActionsMenu', () => {
-    const mountHomeActionsMenu = (props?: ComponentProps): VueWrapper<any> => {
-        const defaultProps: ComponentProps = {
-            project: {
-                name: 'example',
-                meta: [{ name: 'authz', data: { project: {}, types: { job: { create: true } } } }],
-            },
-            index: 0,
-        }
-
-        return mount(HomeActionsMenu, {
-            ...defaultProps,
-            props,
-        });
-    };
-
-    it('renders the component correctly', () => {
-        const wrapper = mountHomeActionsMenu();
-
-        expect(wrapper.exists()).toBe(true);
+    afterEach(() => {
+        jest.clearAllMocks();
     });
-
+    
     it('displays edit configuration link for admin', async () => {
-        const wrapper = mount(HomeActionsMenu, {
-            props: {
-                project: {
-                    name: 'example',
-                    meta: [{ name: 'authz', data: { project: { admin: true }, types: { job: { create: true } } } }],
-                },
-                index: 0,
-            },
-        });
+        const wrapper = await mountHomeActionsMenu();
 
-        // Assert that the edit configuration link is displayed
         expect(wrapper.find('[href="/project/example/configure"]').exists()).toBe(true);
     });
 
     it('does not display edit configuration link for non-admin', async () => {
-        const wrapper = mount(HomeActionsMenu, {
-            props: {
-                project: {
-                    name: 'example',
-                    meta: [{ name: 'authz', data: { project: { admin: false }, types: { job: { create: true } } } }],
-                },
-                index: 0,
-            },
-        });
+        defaultMeta.data.project.admin = false;
+        const wrapper = await mountHomeActionsMenu();
 
-        // Assert that the edit configuration link is not displayed
         expect(wrapper.find('[href="/project/example/configure"]').exists()).toBe(false);
     });
 
     it('displays create job link for users with create permissions', async () => {
-        const wrapper = mount(HomeActionsMenu, {
-            props: {
-                project: {
-                    name: 'example',
-                    meta: [{ name: 'authz', data: { project: { admin: true }, types: { job: { create: true } } } }],
-                },
-                index: 0,
-            },
-        });
+        const wrapper = await mountHomeActionsMenu();
 
-        // Assert that the create job link is displayed
         expect(wrapper.find('[href="/project/example/job/create"]').exists()).toBe(true);
     });
 
     it('does not display create job link for users without create permissions', async () => {
-        const wrapper = mount(HomeActionsMenu, {
-            props: {
-                project: {
-                    name: 'example',
-                    meta: [{ name: 'authz', data: { project: { admin: true }, types: { job: { create: false } } } }],
-                },
-                index: 0,
-            },
-        });
+        defaultMeta.data.types.job.create = false;
+        defaultMeta.data.project.admin = false;
+
+        const wrapper = await mountHomeActionsMenu();
 
         // Assert that the create job link is not displayed
         expect(wrapper.find('[href="/project/example/job/create"]').exists()).toBe(false);
     });
-
-    // Add more tests as needed for other scenarios
 });

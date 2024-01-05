@@ -1,5 +1,3 @@
-
-
 <template>
   <dropdown menu-right append-to-body ref="dropdown">
     <a role="button" class="as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle">
