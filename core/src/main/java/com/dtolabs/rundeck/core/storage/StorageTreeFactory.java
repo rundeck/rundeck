@@ -343,7 +343,7 @@ public class StorageTreeFactory {
         ConfiguredPlugin<T> configured = getPluginRegistry().retainConfigurePluginByName(
                 pluginType,
                 service,
-                PropertyResolverFactory.createResolver(
+                PropertyResolverFactory.pluginPrefixedScoped(
                         PropertyResolverFactory.instanceRetriever(config),
                         null,
                         getPropertyLookup()
