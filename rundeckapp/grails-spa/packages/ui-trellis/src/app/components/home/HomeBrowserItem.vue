@@ -11,35 +11,23 @@
             {{ project.label ? project.label : project.name }}
           </p>
 
-          <span
-            class="h5"
-            v-if="!executionsEnabled"
-          >
+          <tooltip :text="$t('project.execution.disabled')" data-placement="right" class="h5" v-if="!executionsEnabled">
             <span
-              :title="$t('project.execution.disabled')"
-              class="text-base text-warning has_tooltip"
-              data-placement="right"
-              data-toggle="tooltip"
-              :data-container="`#project${index}`"
+                class="text-base text-warning"
+                :data-container="`#project${index}`"
             >
               <i class="glyphicon glyphicon-pause"></i>
             </span>
-          </span>
+          </tooltip>
 
-          <span
-            class="h5"
-            v-if="!scheduleEnabled"
-          >
+          <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" v-if="!scheduleEnabled">
             <span
-              class="text-base text-warning has_tooltip"
-              data-placement="right"
-              data-toggle="tooltip"
-              :data-container="`#project${index}`"
-              :title="$t('project.schedule.disabled')"
+                class="text-base text-warning"
+                :data-container="`#project${index}`"
             >
               <i class="glyphicon glyphicon-ban-circle"></i>
             </span>
-          </span>
+          </tooltip>
 
           <span
             v-if="project.description.length > 0"
@@ -143,16 +131,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import HomeActionsMenu from "@/app/components/home/HomeActionsMenu.vue";
+import {ConfigMeta, Project} from "@/app/components/home/types/projectTypes";
 
 export default defineComponent({
   name: "HomeBrowserItem",
   components: {HomeActionsMenu, UiSocket },
   props: {
     project: {
-      type: Object,
+      type: Object as PropType<Project>,
       required: true,
     },
     index: {
@@ -161,13 +150,15 @@ export default defineComponent({
     },
   },
   computed: {
-    configSettings() {
-      return this.project.meta.filter(metaObject => metaObject.name === 'config')[0] || {data: {}};
+    configSettings(): ConfigMeta {
+      const emptyConfig = {name: 'config', data: {}};
+      return this.project.meta.filter(metaObject => metaObject.name === 'config')[0] || emptyConfig;
     },
-    executionsEnabled() {
+
+    executionsEnabled(): boolean {
       return this.configSettings.data.executionsEnabled || false;
     },
-    scheduleEnabled() {
+    scheduleEnabled(): boolean {
       return this.configSettings.data.scheduleEnabled || false;
     },
   }

@@ -1,5 +1,4 @@
 <template>
-  <div>
     <ul class="list-unstyled">
       <DynamicScroller
         ref="scroller"
@@ -11,25 +10,25 @@
         page-mode
       >
         <DynamicScrollerItem :item="item" :active="active" :size-dependecies="[item.description]" :data-index="index">
-          <home-browser-item :project="item" :index="index" />
+          <HomeBrowserItem :project="item" :index="index" />
         </DynamicScrollerItem>
       </DynamicScroller>
     </ul>
-  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import HomeBrowserItem from "@/app/components/home/HomeBrowserItem.vue";
+import {Project} from "@/app/components/home/types/projectTypes";
 
 export default defineComponent({
   name: "HomeBrowser",
   components: { HomeBrowserItem, DynamicScroller, DynamicScrollerItem },
   props: {
     projects: {
-      type: Array,
+      type: Array as PropType<Project[]>,
       required: true,
     },
   },
