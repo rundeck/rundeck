@@ -62,7 +62,7 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {getAppLinks} from "@/library";
-import {getSummary} from "@/app/components/home/services/homeServices";
+import {getSummary} from "./services/homeServices";
 
 export default defineComponent({
   name: "HomeHeader",
