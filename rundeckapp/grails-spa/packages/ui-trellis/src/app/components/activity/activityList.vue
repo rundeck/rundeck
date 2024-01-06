@@ -164,7 +164,7 @@
               </template>
     </modal>
     <div class="card-content-full-width">
-    <table class=" table table-hover table-condensed events-table" >
+    <table class=" table table-hover table-condensed activity-list-table" >
       <tbody  v-if="running && running.executions&& running.executions.length>0" class="running-executions">
         <tr
             v-for="exec in running.executions"
@@ -917,8 +917,18 @@ export default defineComponent({
 td.eventtitle.adhoc {
     font-style: italic;
 }
-.table > tbody > tr > td.eventicon{
-  padding:0 0 0 10px;
+.table.activity-list-table {
+  > tbody > tr {
+    > td.eventicon{
+      width: 24px;
+      padding: 0 0 0 10px;
+    }
+    > td.node-stats{
+      white-space: nowrap;
+      text-align: right;
+      width: 5%;
+    }
+  }
 }
 $since-bg: #ccf;
 .table tbody.since-count-data{
