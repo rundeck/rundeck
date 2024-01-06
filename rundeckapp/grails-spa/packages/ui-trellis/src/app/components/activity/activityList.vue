@@ -265,7 +265,7 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="text-right date"
+            <td class="date"
               v-tooltip.bottom="{
                 text: $t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)]),
                 'viewport': `.ali-${rpt.execution.id}`
