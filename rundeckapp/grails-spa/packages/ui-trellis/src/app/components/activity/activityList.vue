@@ -74,10 +74,9 @@
     <!-- Bulk edit modals -->
     <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')" append-to-body>
 
-      <p>
-          {{ $t("clearselected.confirm.text")}}
+      <i18n-t keypath="clearselected.confirm.text" tag="p">
         <strong>{{bulkSelectedIds.length}}</strong>
-      </p>
+      </i18n-t>
 
       <template v-slot:footer>
         <div>
@@ -98,11 +97,10 @@
     </modal>
 
     <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')" append-to-body>
-      <p class="spacing-x">
-          {{ $t("delete.confirm.text")}}
-          <strong>{{bulkSelectedIds.length}}</strong>
-          <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
-      </p>
+      <i18n-t keypath="delete.confirm.text" tag="p" >
+        <strong>{{bulkSelectedIds.length}}</strong>
+        <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
+      </i18n-t>
 
       <template v-slot:footer>
         <div>
