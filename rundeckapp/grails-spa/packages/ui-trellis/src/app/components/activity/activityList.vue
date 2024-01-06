@@ -1,9 +1,8 @@
 <template>
   <div class=" activity-list">
 
-          <section class="section-space-bottom">
+          <section class="section-space-bottom spacing-x">
 
-            <span>
 
                 <span v-if="pagination.total > 0 && pagination.total > pagination.max" class="text-muted">
                   {{pagination.offset+1}}
@@ -26,7 +25,6 @@
                   </span>
                   {{$tc('execution',pagination.total>0?pagination.total:0)}}
                 </a>
-            </span>
 
 
           <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
@@ -100,7 +98,7 @@
     </modal>
 
     <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')" append-to-body>
-      <p>
+      <p class="spacing-x">
           {{ $t("delete.confirm.text")}}
           <strong>{{bulkSelectedIds.length}}</strong>
           <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
