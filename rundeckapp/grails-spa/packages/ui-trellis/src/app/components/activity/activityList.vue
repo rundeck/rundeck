@@ -168,7 +168,7 @@
               </template>
     </modal>
     <div class="card-content-full-width">
-    <table class=" table table-hover table-condensed " >
+    <table class=" table table-hover table-condensed events-table" >
       <tbody  v-if="running && running.executions&& running.executions.length>0" class="running-executions">
         <tr
             v-for="exec in running.executions"
@@ -269,12 +269,12 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date"
+            <td class="text-right date"
               v-tooltip.bottom="{
                 text: $t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)]),
                 'viewport': `.ali-${rpt.execution.id}`
             }">
-                <span v-if="rpt.dateCompleted">
+                <span v-if="rpt.dateCompleted" class="spacing-x-2">
                     <span class="timeabs ">
                         {{momentJobFormatDate(rpt.dateCompleted)}}
                     </span>
@@ -953,7 +953,12 @@ $since-bg: #ccf;
 }
 .spacing-x{
   * + *{
-    margin-left: 1rem;
+    margin-left: var(--spacing-1);
+  }
+}
+.spacing-x-2{
+  * + *{
+    margin-left: var(--spacing-2);
   }
 }
 </style>
