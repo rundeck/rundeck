@@ -7,6 +7,10 @@ import org.rundeck.util.container.RdClient
 @APITest
 class BasicSpec extends BaseContainer {
 
+    def setupSpec() {
+        setupProject()
+    }
+
     def testInvalidToken() {
         given:
         def client = clientWithToken("invalidtoken")
