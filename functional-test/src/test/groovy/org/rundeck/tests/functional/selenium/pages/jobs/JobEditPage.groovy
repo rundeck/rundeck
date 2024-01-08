@@ -7,7 +7,7 @@ import org.rundeck.tests.functional.selenium.pages.BasePage
 import org.rundeck.util.container.SeleniumContext
 
 /**
- * Job upload page
+ * Job edit page
  */
 @CompileStatic
 class JobEditPage extends BasePage {
