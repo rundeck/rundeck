@@ -181,9 +181,9 @@ class WebhookService {
     def saveHook(UserAndRolesAuthContext authContext, def hookData) {
         RdWebhook hook = null
         SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
-        boolean shouldUpdate = false
+        boolean shouldUpdate = hookData.update ?: false
         if(saveWebhookRequest.id) {
-            hook = webhookDataProvider.getWebhookByUuid(saveWebhookRequest.uuid)
+            hook = webhookDataProvider.findByUuidAndProject(saveWebhookRequest.uuid,saveWebhookRequest.project)
             if (!hook) return [err: "Webhook not found"]
             if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
@@ -195,16 +195,11 @@ class WebhookService {
                 }
             }
         } else {
-            int countByNameInProject = webhookDataProvider.countByNameAndProject(saveWebhookRequest.name, saveWebhookRequest.project)
-            if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
-            saveWebhookRequest.setUuid(UUID.randomUUID().toString())
+            saveWebhookRequest.setUuid(hookData.uuid ?: UUID.randomUUID().toString())
         }
-        def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(saveWebhookRequest.name, saveWebhookRequest.project, saveWebhookRequest.uuid)
-        if( whsFound.size() > 0) {
-            return [err: "A Webhook by that name already exists in this project"]
-        }
+
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
             generatedSecureString = RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -256,12 +251,20 @@ class WebhookService {
             }
             saveWebhookRequest.authToken = hookData.authToken
         }
+        if(hookData.regenUuid){
+            saveWebhookRequest.setUuid(UUID.randomUUID().toString())
+        }
+
         SaveWebhookResponse saveWebhookResponse
-        if(shouldUpdate){
-            saveWebhookResponse = webhookDataProvider.updateWebhook(saveWebhookRequest)
-        }else{
+
+        if (shouldUpdate) {
+            saveWebhookResponse = hookData.regenUuid
+                    ? webhookDataProvider.createWebhook(saveWebhookRequest)
+                    : webhookDataProvider.updateWebhook(saveWebhookRequest)
+        } else {
             saveWebhookResponse = webhookDataProvider.createWebhook(saveWebhookRequest)
         }
+
 
         if(saveWebhookResponse.isSaved) {
             def responsePayload = [msg: "Saved webhook", uuid: saveWebhookResponse.webhook.uuid]
@@ -341,11 +344,12 @@ class WebhookService {
         }
     }
 
-    def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens) {
+    def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens, boolean regenUuid) {
 
         RdWebhook existing = webhookDataProvider.findByUuidAndProject(hook.uuid, hook.project)
         if(existing) {
             hook.id = existing.id
+            hook.update = true
         } else {
             hook.id = null
         }
@@ -355,6 +359,9 @@ class WebhookService {
             hook.shouldImportToken = true
         } else {
             hook.authToken = null
+        }
+        if(regenUuid){
+            hook.regenUuid = true
         }
 
         try {
