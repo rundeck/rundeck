@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 
@@ -29,6 +30,9 @@ import com.dtolabs.rundeck.execution.PluginNodeStepExecutionItemImpl
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
@@ -45,21 +49,32 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     def setupSpec() { mockDomains Execution, CommandExec, JobExec, Workflow }
 
 
-    void testItemForWFCmdItem_command(){
+    void "itemForWFCmdItem command step basics"(){
+        given:
+            def testService = service
+            //exec
+            CommandExec ce = new CommandExec([description: 'some step'] + config)
         when:
-        def testService = service
-        //exec
-        CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
-        def res = testService.itemForWFCmdItem(ce)
-        assertNotNull(res)
-        assertTrue(res instanceof StepExecutionItem)
-        assertTrue(res instanceof PluginNodeStepExecutionItemImpl)
-        PluginNodeStepExecutionItemImpl item=(PluginNodeStepExecutionItemImpl) res
-        assertEquals(item.stepConfiguration.adhocRemoteString, "exec command")
+            def res = testService.itemForWFCmdItem(ce)
 
         then:
-        // above asserts have validation
-        1 == 1
+            // above asserts have validation
+            res != null
+            (res instanceof StepExecutionItem)
+            (res instanceof NodeStepExecutionItem)
+            (res instanceof PluginNodeStepExecutionItemImpl)
+            PluginNodeStepExecutionItemImpl item = (PluginNodeStepExecutionItemImpl) res
+            for (key in config.keySet()) {
+                assert config[key] == item.stepConfiguration[key]
+            }
+            res.label == 'some step'
+            res.type == 'NodeDispatch'
+            ((NodeStepExecutionItem) res).nodeStepType == type
+        where:
+            config                              | type
+            [adhocRemoteString: 'some command'] | ExecCommand.EXEC_COMMAND_TYPE
+            [adhocLocalString: 'local script']  | ScriptCommand.SCRIPT_COMMAND_TYPE
+            [adhocFilepath: '/some/file']       | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
     }
 
     void testItemForWFCmdItem_script() {
