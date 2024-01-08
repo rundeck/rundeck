@@ -245,6 +245,25 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.createJobButton.click()
     }
 
+    def "No default value field shown in secure job option section"() {
+        when:
+        def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+        then:
+        jobCreatePage.fillBasicJob 'a job with option secure'
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionName 0 sendKeys 'seleniumOption1'
+        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.secureInputTypeRadio.click()
+        jobCreatePage.storagePathInput.sendKeys("test")
+        jobCreatePage.secureInputTypeRadio.click()
+        jobCreatePage.storagePathInput.clear()
+        jobCreatePage.secureInputTypeRadio.click()
+
+        expect:
+        !jobCreatePage.defaultValueInput.isDisplayed()
+    }
+
     def "job option revert all"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
