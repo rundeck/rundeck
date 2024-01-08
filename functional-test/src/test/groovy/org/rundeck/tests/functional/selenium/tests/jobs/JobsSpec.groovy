@@ -1,9 +1,11 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
+import org.rundeck.tests.functional.selenium.pages.jobs.JobEditPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobShowPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
+import org.rundeck.tests.functional.selenium.pages.jobs.JobUploadPage
 import org.rundeck.tests.functional.selenium.pages.jobs.StepType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
@@ -262,6 +264,52 @@ class JobsSpec extends SeleniumBase {
 
         expect:
         !jobCreatePage.defaultValueInput.isDisplayed()
+    }
+
+    def "Upload job definition with secure options + default values, get info"() {
+        setup:
+        def uploadJobDefinitionPage = page JobUploadPage
+        uploadJobDefinitionPage.loadPathToUploadPage(SELENIUM_BASIC_PROJECT)
+        def tempYamlText = "- defaultTab: nodes\n  description: ''\n  executionEnabled: true\n  id: c19d5338-770b-493f-8125-bfa4634515bb\n  loglevel: INFO\n  name: test\n  nodeFilterEditable: false\n  options:\n  - name: secure_opt\n    secure: true\n    value: anything\n    valueExposed: true\n  plugins:\n    ExecutionLifecycle: {}\n  scheduleEnabled: true\n  schedules: []\n  sequence:\n    commands:\n    - exec: echo 'asd'\n    keepgoing: false\n    strategy: node-first\n  uuid: c19d5338-770b-493f-8125-bfa4634515bb"
+        def tempFile = File.createTempFile("temp", ".yaml")
+        tempFile.text = tempYamlText
+        tempFile.deleteOnExit()
+
+        when:
+        uploadJobDefinitionPage.go()
+        uploadJobDefinitionPage.fileInputElement().sendKeys(tempFile.getAbsolutePath())
+        uploadJobDefinitionPage.fileUploadButtonElement().click()
+        uploadJobDefinitionPage.waitForElementVisible(uploadJobDefinitionPage.jobUploadInfoDivElement())
+
+        then:
+        uploadJobDefinitionPage.jobUploadInfoDivElement().isDisplayed()
+    }
+
+    def "Upload job definition with secure options + default values, get info"() {
+        setup:
+        def uploadJobDefinitionPage = page JobUploadPage
+        uploadJobDefinitionPage.loadPathToUploadPage(SELENIUM_BASIC_PROJECT)
+
+        def tempYamlText = "- defaultTab: nodes\n  description: ''\n  executionEnabled: true\n  id: c19d5338-770b-493f-8125-bfa4634515bb\n  loglevel: INFO\n  name: test\n  nodeFilterEditable: false\n  options:\n  - name: secure_opt\n    secure: true\n    value: anything\n    valueExposed: true\n  plugins:\n    ExecutionLifecycle: {}\n  scheduleEnabled: true\n  schedules: []\n  sequence:\n    commands:\n    - exec: echo 'asd'\n    keepgoing: false\n    strategy: node-first\n  uuid: c19d5338-770b-493f-8125-bfa4634515bb"
+        def tempFile = File.createTempFile("temp", ".yaml")
+        tempFile.text = tempYamlText
+        tempFile.deleteOnExit()
+
+        def jobEditPage = page JobEditPage
+        jobEditPage.loadPathToEditByUuid(SELENIUM_BASIC_PROJECT, 'c19d5338-770b-493f-8125-bfa4634515bb')
+
+        when:
+        uploadJobDefinitionPage.go()
+        uploadJobDefinitionPage.fileInputElement().sendKeys(tempFile.getAbsolutePath())
+        uploadJobDefinitionPage.fileUploadButtonElement().click()
+        jobEditPage.go()
+        jobEditPage.workflowTabElement().click()
+        jobEditPage.secureOptionSpanElement().click()
+
+        then:
+        jobEditPage.defaultValueInputElement().isDisplayed()
+        jobEditPage.secureOptionDefaultValueHelpElement().isDisplayed()
+
     }
 
     def "job option revert all"() {
