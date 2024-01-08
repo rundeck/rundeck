@@ -25,6 +25,7 @@ function OptionEditor(data) {
     self.showDefaultValue = ko.observable(data.showDefaultValue);
     self.defaultValue = ko.observable(data.defaultValue);
     self.optionType = ko.observable(data.optionType);
+    self.isSecure = ko.observable(data.isSecure);
     self.name = ko.observable(data.name);
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
@@ -75,8 +76,11 @@ function OptionEditor(data) {
         self.showDefaultValue(showDefaultValueInput);
         return true;
     };
+    self.checkForOldSecureOptionsWithDefaultValues = ko.computed(function(){
+        return self.isSecure() ? JSON.parse(self.isSecure() && self.defaultValue() != null) : false;
+    })
     self.shouldShowDefaultValue = ko.computed(function(){
-        return JSON.parse(self.showDefaultValue());
+        return self.checkForOldSecureOptionsWithDefaultValues() ? self.checkForOldSecureOptionsWithDefaultValues() : JSON.parse(self.showDefaultValue());
     });
     self.shouldShowDefaultStorage = ko.computed(function(){
         return !JSON.parse(self.showDefaultValue());

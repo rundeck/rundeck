@@ -219,7 +219,6 @@ form.option.valuesType.url.authType.bearerToken.label
                                    data-bind="value: defaultValue"
                             />
             </div>
-
         </div>
 
         <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"
@@ -1022,6 +1021,7 @@ form.option.valuesType.url.authType.bearerToken.label
           var editor=new OptionEditor({name:"${option?.name}",
           bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',
           optionType:"${option?.optionType}",
+          isSecure: "${option?.secureInput}",
           enforceType:currentEnforceType,
           defaultValue:"${option?.defaultValue}",
           showDefaultValue:"${!option?.secureInput && !option?.isDate}",
