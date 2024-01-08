@@ -106,19 +106,19 @@
   </div>
 
   <div>
-    <div class="row" v-if="project.showMessage">
+    <div class="row" v-if="showMessage">
       <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
-        <div v-if="project.showMotd">
+        <div v-if="showMotd">
           <span
-            v-if="project.readme.motdHTML"
-            v-html="project.readme.motdHTML"
+            v-if="messageMeta.data.readme.motdHTML"
+            v-html="messageMeta.data.readme.motdHTML"
           ></span>
         </div>
-        <div v-if="project.showReadme">
+        <div v-if="showReadme">
           <div>
             <span
-              v-if="project.readme.readmeHTML"
-              v-html="project.readme.readmeHTML"
+              v-if="messageMeta.data.readme.readmeHTML"
+              v-html="messageMeta.data.readme.readmeHTML"
             ></span>
           </div>
         </div>
@@ -134,7 +134,7 @@
 import {defineComponent, PropType} from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import HomeActionsMenu from "@/app/components/home/HomeActionsMenu.vue";
-import {ConfigMeta, Project} from "@/app/components/home/types/projectTypes";
+import {ConfigMeta, MessageMeta, Project} from "@/app/components/home/types/projectTypes";
 
 export default defineComponent({
   name: "HomeBrowserItem",
@@ -154,13 +154,34 @@ export default defineComponent({
       const emptyConfig = {name: 'config', data: {}};
       return this.project.meta.filter(metaObject => metaObject.name === 'config')[0] || emptyConfig;
     },
-
+    messageMeta(): MessageMeta {
+      const emptyMessageMeta = {name: 'message', data: {}};
+      return this.project.meta.filter(metaObject => metaObject.name === 'message')[0] || emptyMessageMeta;
+    },
     executionsEnabled(): boolean {
       return this.configSettings.data.executionsEnabled || false;
     },
     scheduleEnabled(): boolean {
       return this.configSettings.data.scheduleEnabled || false;
     },
+    showMotd(): boolean {
+      if(Object.keys(this.messageMeta.data.readme).length === 0) return false;
+
+      const { readme, motdDisplay } = this.messageMeta.data;
+      return readme.motdHTML && motdDisplay.includes('projectList');
+    },
+    showReadme(): boolean {
+      if(Object.keys(this.messageMeta.data.readme).length === 0) return false;
+
+      const { readmeDisplay, readme } = this.messageMeta.data;
+      return readme.readmeHTML && readmeDisplay.includes('projectList')
+    },
+    showMessage(): boolean {
+      if(Object.keys(this.messageMeta.data.readme).length === 0) return false;
+
+      const { readme } = this.messageMeta.data;
+      return readme && (this.showMotd || this.showReadme);
+    }
   }
 });
 </script>

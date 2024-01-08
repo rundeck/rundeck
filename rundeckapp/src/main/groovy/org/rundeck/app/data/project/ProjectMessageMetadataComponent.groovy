@@ -9,8 +9,8 @@ import rundeck.controllers.MenuService
 import rundeck.services.FrameworkService
 
 @CompileStatic
-class ProjectExecutionMetadataComponent implements ProjectMetadataComponent {
-    public static final String NAME = 'executions'
+class ProjectMessageMetadataComponent implements ProjectMetadataComponent {
+    public static final String NAME = 'message'
 
     @Autowired
     MenuService menuService

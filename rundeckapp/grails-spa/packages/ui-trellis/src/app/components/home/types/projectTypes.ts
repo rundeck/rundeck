@@ -1,4 +1,16 @@
-
+interface MessageMeta {
+    name: string;
+    data: {
+        motdDisplay?: string[];
+        readmeDisplay?: string[];
+        readme?: {
+            motd?: string;
+            motdHTML?: string;
+            readme?: string;
+            readmeHTML?: string;
+        };
+    }
+}
 
 interface AuthzMeta {
     name: string;
@@ -47,7 +59,7 @@ interface ScmImportMeta {
     data: object;
 }
 
-type MetaType = AuthzMeta | ConfigMeta | SysModeMeta | ScmExportMeta | ScmImportMeta;
+type MetaType = AuthzMeta | ConfigMeta | SysModeMeta | ScmExportMeta | ScmImportMeta | MessageMeta;
 
 interface Project {
     name: string;
@@ -65,4 +77,4 @@ interface ProjectActionsItemDropdown {
     text: string;
 }
 
-export {Project, ConfigMeta, AuthzMeta, SysModeMeta, ScmExportMeta, ScmImportMeta, ProjectActionsItemDropdown}
+export {Project, ConfigMeta, AuthzMeta, SysModeMeta, ScmExportMeta, ScmImportMeta, MessageMeta, ProjectActionsItemDropdown}
