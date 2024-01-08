@@ -87,7 +87,7 @@ export default defineComponent({
     },
     displayConfig: {
       type: Array,
-      default: []
+      default: () => []
     },
     project: {
       type: String,
@@ -149,11 +149,14 @@ export default defineComponent({
     async getFileText(){
       try{
         const response = await getFileText(this.project, this.filename)
+        console.log(response);
         if(response.success){
+          console.log(response.contents)
           this.fileText = response.contents
         }
       }
       catch (e) {
+        console.log(e);
         if(e.warning){
           this.notifyWarning("The file " + this.filename + " does not exist in project " + this.project + " yet. Please save to create it.");
         }
