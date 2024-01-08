@@ -82,6 +82,9 @@ function OptionEditor(data) {
     self.shouldShowDefaultValue = ko.computed(function(){
         return self.checkForOldSecureOptionsWithDefaultValues() ? self.checkForOldSecureOptionsWithDefaultValues() : JSON.parse(self.showDefaultValue());
     });
+    self.disableIfSecureAndHasDefaultValue = ko.computed(function(){
+        return self.checkForOldSecureOptionsWithDefaultValues();
+    })
     self.shouldShowDefaultStorage = ko.computed(function(){
         return !JSON.parse(self.showDefaultValue());
     });
