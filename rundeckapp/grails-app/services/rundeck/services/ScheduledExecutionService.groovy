@@ -1850,6 +1850,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
     /**
+     * Checks if the imported job has secure options with default values (deprecated as of version 3.x.X) and
+     * populates a waring to the user.
+     *
+     * @param importedJob
+     * @return secure options with default values
+     */
+    def getSecureOptionsWithDefaultValues(ImportedJob<ScheduledExecution> importedJob){
+        def options = importedJob.job.options
+        def optionsWithSecureOptsAndDefaultValues = new ArrayList<String>()
+        options.each { option -> {
+            if( option.secureInput && (option.defaultValue != null || !option.defaultValue.isEmpty()) ){
+                optionsWithSecureOptsAndDefaultValues << option.name
+            }
+        }}
+        return optionsWithSecureOptsAndDefaultValues
+    }
+
+    /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution:
      * (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg],
@@ -1861,7 +1879,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String uuidOption,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext,
-            Boolean validateJobref = false
+            Boolean validateJobref = false,
+            ArrayList warnings
     ) {
         def jobs = []
         def jobsi = []
@@ -1882,6 +1901,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             def jobchange = new HashMap(changeinfo)
+            def secureOptionsWithDefaultValues = getSecureOptionsWithDefaultValues(importedJob)
+            if( secureOptionsWithDefaultValues.size() ){
+                warnings << "Job: ${jobdata.jobName}, " +
+                        "has secure options: [${String.join(", ", secureOptionsWithDefaultValues)}] set with default values," +
+                        " please consider overriding this values with a storage key path to avoid security issues."
+            }
             if(!jobdata.project){
                 errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
                 i++

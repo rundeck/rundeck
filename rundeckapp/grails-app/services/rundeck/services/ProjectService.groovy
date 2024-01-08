@@ -1314,7 +1314,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 null,
                                 [:],
                                 authContext,
-                                validateJobref
+                                validateJobref,
+                                execerrors
                         )
 
                         scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
