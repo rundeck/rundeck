@@ -5099,6 +5099,24 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             !job.errors.hasErrors()
     }
 
+    def "Option validation removes the default value from a secure option if the definition has a storage path set"(){
+        given:
+        def opt2 = new Option(
+                name: 'opt2',
+                required: false,
+                description: 'monkey',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+                defaultStoragePath: "keys/keypath/key.key"
+        )
+        when:
+        service.cleanSecureOptionIfHasDefaultValueAndStoragePath(opt2)
+
+        then:
+        opt2.defaultValue == null
+    }
+
     def "validate definition options should have errors for option"() {
         given:
             def opt2 = new Option(name: 'opt2', required: true, description: 'monkey', enforced: false)
