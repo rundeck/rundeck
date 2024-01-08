@@ -2751,6 +2751,44 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.workflow.commands[3].errorHandler instanceof JobExec
 
     }
+
+    def "load jobs with secure options that has default values, get a message"(){
+        given:
+        def userHint = "Job: testUploadErrorHandlers, has secure options: [secure_opt] set with default values, please consider overriding this values with a storage key path to avoid security issues."
+        setupDoUpdate()
+        service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
+        service.fileUploadService = Mock(FileUploadService)
+
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'AProject',
+                description: 'desc',
+                options: [
+                        new Option(
+                                name: 'secure_opt',
+                                secureInput: true,
+                                defaultValue: 'default'
+                        )
+                ],
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
+                ])
+        )
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
+
+        upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
+        service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
+        when:
+        def result = service.loadImportedJobs([upload], 'update',null, [:],  mockAuth())
+
+        then:
+        result!=null
+        result.msgs == [userHint]
+    }
+
     def "load jobs cannot load job with same uuid in different project"(){
         given:
         setupDoUpdate()
