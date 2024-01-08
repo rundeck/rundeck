@@ -730,7 +730,7 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         def response = service.userHasAccessToScmConfiguredKeyOrPassword(authContext, integration, project);
 
         then:
-        response.hasAccess
+        response
 
     }
 
@@ -1256,6 +1256,35 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         false       | "xxx/scm-export"    | "{}"                                                    | 0     | "456"
         true        | "1234/scm-export"   | '{"name":"test","groupPath":"test"}'                    | 1     | "456"
         true        | "1234/scm-export"   | '{"name":"test","groupPath":"test","srcId":"1234"}'     | 1     | "1234"
+    }
+
+    def "Call for jobs plugin metadata, no exception thrown"() {
+        given:
+        def project = "test"
+        def scmIntegration = 'scm-import'
+
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobsPluginMeta(project, scmIntegration) >> List.of()
+        }
+
+
+        PluginMeta importPluginMeta = new PluginMeta()
+        importPluginMeta.key = "1234/scm-import"
+        importPluginMeta.project = project
+        importPluginMeta.jsonData = '{"name":"test","groupPath":"test","srcId":"456"}'
+
+        when:
+        def result = service.getJobsPluginMeta(project,scmIntegration)
+
+        then:
+        noExceptionThrown()
     }
 
     def "get srcId job export plugin metadata"() {

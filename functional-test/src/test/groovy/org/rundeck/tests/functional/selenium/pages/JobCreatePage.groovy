@@ -11,13 +11,19 @@ import java.time.Duration
 class JobCreatePage extends BasePage {
 
     static final String PAGE_PATH = "/job/create"
+    static final String JOB_EDIT_PATH = '/project/$PROJECT/job/edit/$ID'
+
     By jobNameField = By.id('schedJobName')
     By jobCreateButton = By.id("Create")
+    By jobSaveButton = By.id("jobUpdateSaveButton")
     By notificationModal = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDown = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveButton = By.id("job-notifications-edit-modal-btn-save")
     By jobDefinitionModal = By.cssSelector('a[href="#job-definition-modal"]')
     By notificationDefinition = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
+    By jobAddStepButton = By.cssSelector("#wfnewbutton > .btn")
+    By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
+    By addStepButtonsPanel = By.cssSelector('.add_step_buttons.panel-body')
 
     String loadPath = PAGE_PATH
 
@@ -27,9 +33,19 @@ class JobCreatePage extends BasePage {
 
     void validatePage() {
         if (!driver.currentUrl.endsWith(PAGE_PATH)) {
-            throw new IllegalStateException("Not on jobs list page: " + driver.currentUrl)
+            throw new IllegalStateException("Not on Job Create page: " + driver.currentUrl)
         }
     }
+
+    void goJobEditPage(String projectName, String jobId){
+        driver.get(context.client.baseUrl+JOB_EDIT_PATH.replaceAll('\\$PROJECT', projectName).replaceAll('\\$ID', jobId))
+    }
+    void validateJobEditPage() {
+        if (!driver.currentUrl.contains('/job/edit/')) {
+            throw new IllegalStateException("Not on Job Edit page: " + driver.currentUrl)
+        }
+    }
+
 
     WebElement getJobNameField(){
         el jobNameField
@@ -44,9 +60,17 @@ class JobCreatePage extends BasePage {
         el By.xpath("//*[@${stepType.getStepType()}='${stepName.getStepName()}']")
     }
 
+    WebElement getAddStepButtonsPanel(){
+        el addStepButtonsPanel
+    }
+
     WebElement getCreateButton(){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobCreateButton))
         el jobCreateButton
+    }
+    WebElement getJobSaveButton(){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobSaveButton))
+        el jobSaveButton
     }
 
     WebElement getAddNotificationButtonByType(NotificationEvent notificationType){
@@ -85,12 +109,16 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationDefinition(){
-        el notificationDefinition
+        el notificationDefinitionBy
     }
 
     WebElement getSaveStepButton(){
         WebElement stepSaveButton = el By.className("floatr")
         stepSaveButton.findElement(By.cssSelector(".btn.btn-cta.btn-sm"))
+    }
+
+    WebElement getJobAddStepButton(){
+        el jobAddStepButton
     }
 
     void waitForSavedStep(Integer stepNumber){
@@ -103,6 +131,11 @@ class JobCreatePage extends BasePage {
 
     void waitForModal(Integer totalModals){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.numberOfElementsToBe(notificationModal, totalModals))
+    }
+
+    void waitForAddNewStepBtn(By jobAddStepButton){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobAddStepButton))
+
     }
 }
 
@@ -156,8 +189,8 @@ enum StepType {
 }
 
 enum StepName {
-    COMMAND("command"),
-    SCRIPT("script")
+    COMMAND("exec-command"),
+    SCRIPT("script-inline")
 
     private String stepName
 

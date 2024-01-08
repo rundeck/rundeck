@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
+import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseItemData
+import com.dtolabs.rundeck.app.api.jobs.browse.JobBrowseResponse
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
@@ -70,7 +73,7 @@ import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
-import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -91,6 +94,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
@@ -98,6 +102,7 @@ import rundeck.services.optionvalues.OptionValuesService
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 @Controller()
 class ScheduledExecutionController  extends ControllerBase{
@@ -162,6 +167,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobUpdateSingle           : 'PUT',
             apiJobRetry                  : 'POST',
             apiJobWorkflow               : 'GET',
+            apiJobBrowse                 : ['GET','POST'],
     ]
 
     def cancel (){
@@ -3744,6 +3750,11 @@ Each job entry contains:
         }
         log.debug("ScheduledExecutionController: upload " + params)
         String fileformat = params.format ?:params.fileformat ?: 'xml'
+        if (fileformat && fileformat == 'json' || request.format == 'json') {
+            if (!apiService.requireApi(request, response, ApiVersions.V44)) {
+                return
+            }
+        }
         def parseresult
         def supportedFormats = ['xml', 'yaml']
         if (request.api_version > ApiVersions.V43) {
@@ -6047,6 +6058,224 @@ Since: v14''',
             }
 
         }
+    }
+
+
+    @Get(uri="/project/{project}/jobs/browse")
+    @Operation(
+        method = 'GET',
+        summary = 'Browse jobs at a path',
+        description = '''Browse the jobs at a specific group path.
+
+Authorization required: `read` or `view` for the Job.
+
+Since: v46''',
+        tags = ['jobs'],
+        parameters = [
+
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = JobBrowseResponse)
+                    )
+                ]
+
+            )
+        ]
+    )
+    protected apiJobBrowseGet_docs(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'path',
+            in = ParameterIn.QUERY,
+            description = 'Group path root, or blank for the root',
+            schema = @Schema(type = 'string')
+        ) String path,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all',
+            schema = @Schema(type = 'string')
+        ) String meta,
+        @Parameter(
+            name = 'breakpoint',
+            in = ParameterIn.QUERY,
+            description = '''Breakpoint, max number of jobs to load with metadata, if more results than the 
+breakpoint are available, no metadata will be loaded''',
+            schema = @Schema(type = 'integer')
+        ) Integer breakpoint,
+        @Parameter(hidden = true) RdJobQueryInput query
+    ) {}
+
+    @Post(uri="/project/{project}/jobs/browse")
+    @Operation(
+        method = 'POST',
+        summary = 'Project Job Group browse',
+        description = '''Query the jobs at a specific group path. Response includes the list of immediate jobs matching the query in the exact path, 
+and the names of job Groups starting at that path.
+
+Authorization required: `read` or `view` for the Jobs.
+
+Since: v46''',
+        tags = ['jobs'],
+        requestBody = @RequestBody(
+            description = '''Query parameters''',
+            content = [
+                @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = RdJobQueryInput),
+                    examples = @ExampleObject('')
+                )
+            ]
+        ),
+        parameters = [
+
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        schema = @Schema(implementation = JobBrowseResponse)
+                    )
+                ]
+
+            )
+        ]
+    )
+    @GrailsCompileStatic
+    def apiJobBrowse(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'path',
+            in = ParameterIn.QUERY,
+            description = 'Group path root, or blank for the root',
+            schema = @Schema(type = 'string')
+        ) String path,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all',
+            schema = @Schema(type = 'string')
+        ) String meta,
+        @Parameter(
+            name = 'breakpoint',
+            in = ParameterIn.QUERY,
+            description = '''Breakpoint, max number of jobs to load with metadata, if more results than the 
+breakpoint are available, no metadata will be loaded''',
+            schema = @Schema(type = 'integer')
+        ) Integer breakpoint,
+        @Parameter(hidden = true) RdJobQueryInput query
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
+        query.groupPath = path
+        query.projFilter = project
+        query.inputParamMap = params
+        List<JobBrowseItem> result = scheduledExecutionService.basicQueryJobs(
+            project,
+            query,
+            projectAuthContext
+        )
+        Map<String, List<ItemMeta>> jobMetaItems = [:]
+        if (meta && (!breakpoint || breakpoint>result.size())) {
+            //long start = System.currentTimeMillis()
+            jobMetaItems = scheduledExecutionService.loadJobMetaItems(
+                project,
+                path,
+                new HashSet<>(meta.split(',').toList()),
+                result,
+                projectAuthContext
+            )
+            //long end=System.currentTimeMillis()-start
+//            log.warn("Loaded ${jobMetaItems.size()} job metadata items in ${end}ms")
+        }
+        respond(
+            new JobBrowseResponse(
+                path: path,
+                items: result.stream().map { JobBrowseItem item ->
+                    JobBrowseItemData.from(item, item.job ? jobMetaItems[item.jobData.uuid]  : null)
+                }.collect(Collectors.toList())
+            )
+        )
+    }
+
+    @Get(uri="/job/{id}/meta")
+    @Operation(
+        method = 'GET',
+        summary = 'Get Job UI Metadata',
+        description = '''Get metadata for a specific job.
+
+Authorization required: `read` or `view` for the Job.
+
+Since: v46''',
+        tags = ['jobs'],
+        responses = [
+            @ApiResponse(
+                responseCode = '200',
+                description = "Job results",
+                content = [
+                    @Content(
+                        mediaType = MediaType.APPLICATION_JSON,
+                        array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
+                    )
+                ]
+
+            )
+        ]
+    )
+    @RdAuthorizeJob(
+        RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
+    )
+    @GrailsCompileStatic
+    def apiJobMeta(
+        @Parameter(
+            name = 'id',
+            in = ParameterIn.PATH,
+            description = 'Job ID',
+            schema = @Schema(type = 'string')
+        ) String id,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata item names to include, or "*" for all (default)',
+            schema = @Schema(type = 'string')
+        ) String meta
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
+        if (!meta) {
+            meta = '*'
+        }
+        def job = authorizingJob
+        def result = scheduledExecutionService.loadJobMetaItems(
+            new HashSet<>(meta.split(',').toList()),
+            id,
+            rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(), job.resource.project)
+        )
+
+        respond result
     }
 
 }

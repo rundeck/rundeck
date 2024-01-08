@@ -1,7 +1,11 @@
-package rundeck.data.job;
+package rundeck.data.job
 
+import groovy.transform.CompileStatic
+import groovy.transform.ToString;
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 
+@CompileStatic
+@ToString
 class RdJobDataSummary implements JobDataSummary {
     String uuid
     String jobName

@@ -16,6 +16,7 @@
 
 package rundeck
 
+import org.rundeck.core.execution.BaseCommandExec
 import rundeck.data.constants.WorkflowStepConstants
 
 /*
@@ -26,7 +27,7 @@ import rundeck.data.constants.WorkflowStepConstants
 * $Id$
 */
 
-public class CommandExec extends WorkflowStep  {
+public class CommandExec extends WorkflowStep implements BaseCommandExec {
     String argString
     String adhocRemoteString
     String adhocLocalString

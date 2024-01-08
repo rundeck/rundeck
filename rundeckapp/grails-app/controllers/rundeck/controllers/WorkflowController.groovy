@@ -17,13 +17,15 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptFileCommand
+import org.rundeck.core.execution.ScriptCommand
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -787,6 +789,8 @@ class WorkflowController extends ControllerBase {
                 if (params.nodeStep instanceof String) {
                     item.nodeStep = params.nodeStep == 'true'
                 }
+            } else if([ExecCommand.EXEC_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE].contains(params.type)){
+                item = PluginStep.fromMap(params)
             } else {
                 item = new CommandExec(params)
 

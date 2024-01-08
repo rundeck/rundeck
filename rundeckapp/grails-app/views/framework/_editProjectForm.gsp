@@ -306,8 +306,8 @@
             <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
           <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
-          <div class=" " id="${enc(attr: nkey) + '_det'}"
-               data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
+          <div class=" vue-ui-socket-deferred " id="${enc(attr: nkey) + '_det'}"
+               data-bind="if: loaded() && defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
               <hr/>
 
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[

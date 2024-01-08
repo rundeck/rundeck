@@ -9,6 +9,7 @@ import {UtilityActionItem} from '../../../library/stores/UtilityBar'
 import { getRundeckContext, getAppLinks } from '../../../library'
 import {commonAddUiMessages, initI18n} from '../../utilities/i18n'
 import * as uiv from 'uiv'
+import VueCookies from "vue-cookies"
 
 const appLinks = getAppLinks()
 const rootStore = getRundeckContext().rootStore
@@ -91,6 +92,7 @@ function initUtil() {
     })
 
   const i18n = initI18n()
+  vue.use(VueCookies)
   vue.use(i18n)
   vue.use(uiv)
   vue.provide('addUiMessages', async (messages) => {

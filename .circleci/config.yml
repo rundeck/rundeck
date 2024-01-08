@@ -259,11 +259,6 @@ jobs:
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
-      - run-build-step:
-          step-name: Build Testdeck docker image
-          command: |
-            testdeck_build_rdtest
-            testdeck_push_rdtest
       - persist_to_workspace:
           root: ~/workspace
           paths:
@@ -274,8 +269,6 @@ jobs:
             - grails-*/build
             - rundeck-storage/rundeck-*/build
             - rundeck-authz/rundeck-*/build
-      #            - rundeckapp/grails-spa/packages/ui-trellis/build
-      #            - rundeckapp/grails-spa/packages/ui-trellis/node_modules
       - run-build-step:
           step-name: Collect Artifacts
           command: collect_build_artifacts
@@ -389,38 +382,6 @@ jobs:
           step-name: Publish to Sonatype
           command: packaging_publish_maven
 
-  test-gradle-functional:
-    <<: *job-defaults
-    executor:
-      name: machine-builder
-      docker_layer_caching: true
-      resource_class: medium
-    parameters:
-      test-image:
-        description: Test image tag
-        default: "rundeck/testdeck"
-        type: string
-      gradle-task:
-        type: string
-    steps:
-      - checkout
-      - install-build-dependencies
-      - restore-build-cache
-      - attach_workspace:
-          at: ~/workspace
-      - run-build-step:
-          step-name: Pull images
-          command: testdeck_pull_rundeck
-      - run-build-step:
-          step-name: Runs gradle test task << parameters.gradle-task >>
-          command: |
-            TEST_IMAGE=<< parameters.test-image >>
-            GRADLE_TASK=<< parameters.gradle-task >>
-            rundeck_gradle_functional_tests
-      - collect-gradle-tests
-      - store_artifacts:
-          path: ~/workspace/functional-test/build/test-results/images
-
   # Publish all packages to packagecloud
   packaging-publish:
     <<: *job-defaults
@@ -486,6 +447,9 @@ jobs:
           step-name: Test Packages
           command: packaging_test_packages
       - save-build-cache
+      - store_artifacts:
+          path: ~/workspace/packaging/packaging/build/distributions
+
 
 
   # Run Testdeck job on docker executor.
@@ -506,8 +470,8 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
-          step-name: Pull images
-          command: testdeck_pull_rdtest
+          step-name: Build test images
+          command: testdeck_build_rdtest
       - run-build-step:
           step-name: Run Test
           command: << parameters.command >>
@@ -534,8 +498,8 @@ jobs:
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
-          step-name: Pull images
-          command: testdeck_pull_rdtest
+          step-name: Build test images
+          command: testdeck_build_rdtest
       - run-build-step:
           step-name: Run Test
           command: << parameters.command >>
@@ -571,7 +535,7 @@ jobs:
           at: ~/workspace
       - run-build-step:
           step-name: Pull Rundeck Image
-          command: testdeck_pull_rundeck
+          command: rundeck_pull_image
       - run-build-step:
           step-name: Test
           command: |
@@ -589,6 +553,39 @@ jobs:
           destination: images
       - store_test_results:
           path: << parameters.workdir >>/test_out
+
+  test-gradle-functional:
+    <<: *job-defaults
+    executor:
+      name: machine-builder
+      docker_layer_caching: true
+      resource_class: medium
+    parameters:
+      test-image:
+        description: Test image tag
+        default: "rundeck/testdeck"
+        type: string
+      gradle-task:
+        type: string
+    steps:
+      - checkout
+      - install-build-dependencies
+      - restore-build-cache
+      - attach_workspace:
+          at: ~/workspace
+      - run-build-step:
+          step-name: Pull images
+          command: rundeck_pull_image
+      - run-build-step:
+          step-name: Runs gradle test task << parameters.gradle-task >>
+          command: |
+            TEST_IMAGE=<< parameters.test-image >>
+            GRADLE_TASK=<< parameters.gradle-task >>
+            rundeck_gradle_functional_tests
+      - collect-gradle-tests
+      - store_artifacts:
+          path: ~/workspace/functional-test/build/test-results/images
+
 
 
 #### WORKFLOWS ####
@@ -631,7 +628,14 @@ workflows:
 
 
   build_and_test:
-    when: << pipeline.git.branch >>
+    when:
+      and:
+        - << pipeline.git.branch >>
+        - not:
+            matches:
+              pattern: /^pull\/[0-9]+$/
+              value: << pipeline.git.branch >>
+
     jobs:
       - build-rundeck:
           name: Build
@@ -675,16 +679,6 @@ workflows:
           command: bash test/run-docker-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - test-docker:
-          name: Tomcat 8 API Test
-          command: bash test/run-docker-tomcat-tests.sh 8-jdk11
-          <<: *require-build
-          <<: *slack-defaults
-      - test-docker:
-          name: Tomcat 9 API Test
-          command: bash test/run-docker-tomcat-tests.sh 9-jdk11
-          <<: *require-build
-          <<: *slack-defaults
       - test-machine:
           name: API Test
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
@@ -720,12 +714,6 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
           <<: *require-build
           <<: *slack-defaults
-      - testdeck:
-          name: Selenium Test
-          workdir: test/selenium
-          command: testdeck_selenium_test
-          <<: *require-build
-          <<: *slack-defaults
       - test-gradle-functional:
           name: New Selenium Test
           gradle-task: seleniumCoreTest
@@ -734,17 +722,5 @@ workflows:
       - test-gradle-functional:
           name: New API Test
           gradle-task: apiTest
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: New API Test Tomcat 8
-          test-image: 8-jdk11
-          gradle-task: tomcatTest
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: New API Test Tomcat 9
-          test-image: 9-jdk11
-          gradle-task: tomcatTest
           <<: *require-build
           <<: *slack-defaults

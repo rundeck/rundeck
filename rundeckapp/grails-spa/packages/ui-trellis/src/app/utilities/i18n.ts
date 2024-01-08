@@ -40,11 +40,9 @@ const initI18n = (options = {}) => {
 }
 
 const updateLocaleMessages = async (i18n, locale, lang, messages) => {
-    const baseMessages = {
-        ...(uivLang[locale] || uivLang[lang] || {}),
-        ...(internationalization[locale] || internationalization[lang] || internationalization['en_US'] || {})
-    }
-    i18n.global.setLocaleMessage(locale, mergeDeep(baseMessages, messages))
+    //include previously loaded messages
+    let merged = mergeDeep(i18n.global.messages[locale]||{}, messages)
+    i18n.global.setLocaleMessage(locale, merged)
     return nextTick()
 }
 /**
