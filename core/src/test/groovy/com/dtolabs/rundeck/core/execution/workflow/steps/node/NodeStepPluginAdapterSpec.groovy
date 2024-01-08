@@ -22,19 +22,17 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepPluginAdapter
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
-import com.dtolabs.rundeck.plugins.step.StepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -92,6 +90,40 @@ class NodeStepPluginAdapterSpec extends Specification {
                 final INodeEntry entry
         ) throws NodeStepException
         {
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = EXEC_COMMAND_TYPE)
+    static class TestCommandPlugin implements ExecCommand, NodeStepPlugin {
+        NodeStepPlugin impl
+        @PluginProperty(title = "Command",
+                description = "Enter the shell command, e.g.: echo this is a test",
+                required = true)
+        String adhocRemoteString;
+        String[] adhocRemoteStringResult;
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            def arr = OptsUtil.burst(adhocRemoteString)
+
+            def result = SharedDataContextUtils.replaceDataReferencesInObject(
+                    arr as ArrayList,
+                    ContextView.node(entry.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getExecutionContext().getSharedDataContext(),
+                    false,
+                    true
+            ) as String[]
+
+            configuration.put('result', result)
+
             impl.executeNodeStep(context, configuration, entry)
         }
     }
@@ -174,6 +206,46 @@ class NodeStepPluginAdapterSpec extends Specification {
         [c: 'q'] | [a: 'b', c: 'q', d: 'something "xyzqws"']
         [p: 'Q'] | [a: 'b', c: '', d: 'something "xyzQqws"']
         [c: 'Z', p: 'Q'] | [a: 'b', c: 'Z', d: 'something "xyzQqws"']
+    }
+
+    def "expand config vars for command plugins"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestCommandPlugin(
+                impl: plugin,
+                adhocRemoteString: inputconfig['adhocRemoteString']
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: inputconfig,
+                nodeStepType: nodeStepType,
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        1 * plugin.executeNodeStep(!null as PluginStepContext, expect, node)
+        result.isSuccess()
+
+        where:
+
+        inputconfig = [adhocRemoteString: 'something ${option.p}']
+
+        data           | expect                                  | nodeStepType
+        ["p": "1 2 3"] | [result: ['something', "1 2 3"]]        | ExecCommand.EXEC_COMMAND_TYPE
     }
 
     def "Not expand config vars for script plugins"() {
