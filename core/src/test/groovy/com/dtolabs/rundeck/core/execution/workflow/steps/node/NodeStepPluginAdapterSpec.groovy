@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import spock.lang.Specification
@@ -218,6 +219,7 @@ class NodeStepPluginAdapterSpec extends Specification {
         data | expect                                                        | nodeStepType
         [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptCommand.SCRIPT_COMMAND_TYPE
         [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"'] | ExecCommand.EXEC_COMMAND_TYPE
         [:] | [a: 'b', c: '', d: 'something "xyzqws"']                       | 'someothertype'
     }
 
