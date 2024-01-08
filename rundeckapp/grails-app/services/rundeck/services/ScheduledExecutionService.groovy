@@ -2757,6 +2757,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
+            // If a secure option has a default value AND a storage path set, remove the default value.
+            cleanSecureOptionIfHasDefaultValueAndStoragePath(origopt)
+
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
                 origopt.discard()
@@ -2772,6 +2775,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         return failed
+    }
+
+    /**
+     * Removes the deprecated default value from option if there is a storage path set in the definition
+     * to avoid security issues.
+     *
+     * @param option
+     */
+    @CompileStatic
+    public void cleanSecureOptionIfHasDefaultValueAndStoragePath(Option option){
+        if( option.secureInput ){
+            if( option.defaultValue != null && option.defaultStoragePath != null ){
+                log.info("Overriding old default value of secure input: ${option.name} with storage key.")
+                option.defaultValue = null
+            }
+        }
     }
 
     @CompileStatic
