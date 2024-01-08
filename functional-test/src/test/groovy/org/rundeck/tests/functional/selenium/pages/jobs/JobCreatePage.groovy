@@ -55,6 +55,8 @@ class JobCreatePage extends BasePage {
     By formValidationAlertBy = By.cssSelector('#page_job_edit > div.list-group-item > div.alert.alert-danger')
     By sessionSectionBy = By.xpath("//div[contains(@class, 'opt_sec_nexp_disabled')]")
     By secureInputTypeBy = By.xpath("//input[contains(@value, 'secureExposed')]")
+    By storagePathInput = By.name("defaultStoragePath")
+    By defaultValueInput = By.id("opt_defaultValue")
     By optionOpenKeyStorageBy = By.cssSelector(".btn.btn-default.obs-select-storage-path")
     By optionCloseKeyStorageBy = By.xpath("//button[@class='btn btn-sm btn-default']")
     By optionUndoBy = By.xpath("//*[@id='optundoredo']/div/span[1]")
@@ -311,6 +313,14 @@ class JobCreatePage extends BasePage {
 
     WebElement getSecureInputTypeRadio() {
         el secureInputTypeBy
+    }
+
+    WebElement getStoragePathInput(){
+        el storagePathInput
+    }
+
+    WebElement getDefaultValueInput(){
+        el defaultValueInput
     }
 
     WebElement getOptionOpenKeyStorageButton() {

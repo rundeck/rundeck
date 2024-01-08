@@ -1,7 +1,7 @@
 <template>
     <JobBulkEditControls />
     <Browser
-        :path="browsePath"
+        :path="jobPageStore.browsePath"
         :root="true"
         @rootBrowse="rootBrowse"
         class="job_list_browser"
@@ -62,16 +62,16 @@ export default defineComponent({
         return {
             jobBrowserStore,
             jobPageStore,
-            browsePath: ref(props.path || ""),
             loaded: ref(false),
             queryRefresh: ref(false),
         };
     },
     methods: {
-        rootBrowse(path: string, href: string) {
+        async rootBrowse(path: string, href: string) {
             //deselect any jobs
             this.jobPageStore.selectedJobs = [];
-            this.browsePath = path;
+            this.jobPageStore.browsePath = path;
+            this.jobPageStore.query['groupPath'] = path;
             eventBus.emit("job-list-page:browsed", path);
             if(href) {
               window.history.pushState(
@@ -84,8 +84,14 @@ export default defineComponent({
     },
     async mounted() {
         eventBus.on("job-list-page:search", async () => {
-            this.queryRefresh = !this.queryRefresh;
-            await this.jobBrowserStore.reload();
+            if(this.jobPageStore.query['groupPath']!==this.jobPageStore.browsePath) {
+              this.jobPageStore.browsePath = this.jobPageStore.query['groupPath']||''
+              await this.jobBrowserStore.reload();
+              await this.rootBrowse(this.jobPageStore.browsePath, null)
+            }else{
+              await this.jobBrowserStore.reload();
+              this.queryRefresh = !this.queryRefresh;
+            }
         });
         eventBus.on("job-list-page:rootBrowse", async (evt) => {
             let { path, href } = evt;
@@ -94,7 +100,7 @@ export default defineComponent({
         if (typeof history.replaceState == "function") {
             if (!history.state) {
                 //set first page load state
-                let state = this.browsePath?{ start: true, browsePath: this.browsePath }:{ start: true };
+                let state = this.jobPageStore.browsePath?{ start: true, browsePath: this.jobPageStore.browsePath }:{ start: true };
                 history.replaceState(state, null, document.location.toString());
             }
         }

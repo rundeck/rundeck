@@ -5,9 +5,7 @@
                 <div class="card">
                     <div class="card-content">
                         <div class="runbox primary jobs" id="indexMain">
-                            <job-list-page
-                                :path="queryParams?.groupPath || ''"
-                            />
+                            <job-list-page />
                         </div>
                     </div>
                 </div>
