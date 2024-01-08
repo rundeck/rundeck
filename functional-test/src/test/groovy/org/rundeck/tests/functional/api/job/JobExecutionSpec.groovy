@@ -106,7 +106,7 @@ class JobExecutionSpec extends BaseContainer {
     def "POST job/id/run should succeed"() {
         given:
             def client = getClient()
-            def pathXmlFile = getClass().getResource("/projects-import/api-test-execution-state.xml").getPath()
+            def pathXmlFile = getClass().getResource("/temp-files/api-test-execution-state.xml").getPath()
             def xmlProjectContent = new File(pathXmlFile).text
             def xmlProject = xmlProjectContent.replaceAll('xml-project-name', PROJECT_NAME)
             new File(pathXmlFile).text = xmlProject
@@ -142,14 +142,14 @@ class JobExecutionSpec extends BaseContainer {
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id
         when:"import jobs 1"
-            def pathXmlFile = getClass().getResource("/projects-import/test-executions-query.xml").getPath()
+            def pathXmlFile = getClass().getResource("/temp-files/test-executions-query.xml").getPath()
             def xmlProjectContent = new File(pathXmlFile).text
             def xmlProject1 = xmlProjectContent.replaceAll('xml-project-name', newProject).replaceAll('xml-args', "echo hello there")
             new File(pathXmlFile).text = xmlProject1
         then:
             def jobId1 = jobImportFile(newProject, pathXmlFile).succeeded[0].id
         when:"import jobs 2"
-            def pathXmlFile1 = getClass().getResource("/projects-import/test-executions-query-2.xml").getPath()
+            def pathXmlFile1 = getClass().getResource("/temp-files/test-executions-query-2.xml").getPath()
             def xmlProjectContent1 = new File(pathXmlFile1).text
             def xmlProject2 = xmlProjectContent1.replaceAll('xml-project-name', newProject).replaceAll('xml-args', "echo hello there")
             new File(pathXmlFile1).text = xmlProject2
@@ -223,6 +223,18 @@ class JobExecutionSpec extends BaseContainer {
         then:
             testExecQuery "adhoc=true&$baseQuery", 2
             testExecQuery "adhoc=false&$baseQuery", 2
+    }
+
+    def "TEST: executions-running for project test"() {
+        when:
+            def demo = doGet("/project/${PROJECT_NAME}/executions/running")
+        then:
+            verifyAll {
+                demo.successful
+                demo.code() == 200
+                def json = getClient().jsonValue(demo.body(), Map)
+                json.executions.size() != null
+            }
     }
 
     void testExecQuery(String xargs = null, Integer expect = null, String project = "test-executions-query") {
