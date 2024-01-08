@@ -1879,8 +1879,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String uuidOption,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext,
-            Boolean validateJobref = false,
-            ArrayList warnings
+            Boolean validateJobref = false
     ) {
         def jobs = []
         def jobsi = []
@@ -1889,6 +1888,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def skipjobs = []
         def jobChangeEvents = []
         def remappedIds = [:]
+        def msgsToUser = []
 
         def updateAuthActions = [AuthConstants.ACTION_UPDATE]
         def createAuthActions = [AuthConstants.ACTION_CREATE]
@@ -1901,12 +1901,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             def jobchange = new HashMap(changeinfo)
-            def secureOptionsWithDefaultValues = getSecureOptionsWithDefaultValues(importedJob)
-            if( secureOptionsWithDefaultValues.size() ){
-                warnings << "Job: ${jobdata.jobName}, " +
-                        "has secure options: [${String.join(", ", secureOptionsWithDefaultValues)}] set with default values," +
-                        " please consider overriding this values with a storage key path to avoid security issues."
-            }
             if(!jobdata.project){
                 errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
                 i++
@@ -1940,10 +1934,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def projectAuthContext = rundeckAuthContextProcessor.getAuthContextWithProject(authContext, project)
 
             def handleResult={result->
+                def msgs = []
                 def errorStrings=[]
                 def errdata=[:]
                 def success = result.success
                 scheduledExecution = result.scheduledExecution
+                def secureOptionsWithDefaultValues = getSecureOptionsWithDefaultValues(importedJob)
+                if( secureOptionsWithDefaultValues.size() ){
+                    msgs << "Job: ${jobdata.jobName}, " +
+                            "has secure options: [${String.join(", ", secureOptionsWithDefaultValues)}] set with default values," +
+                            " please consider overriding this values with a storage key path to avoid security issues."
+                }
                 if (!success) {
                     if(result.error){
                         errorStrings << result.error
@@ -1968,7 +1969,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsgs           : errorStrings,
                     errmsg            : errorStrings.join('\n'),
                     errdata           : errdata,
-                    scheduledExecution: scheduledExecution
+                    scheduledExecution: scheduledExecution,
+                    msgs              : msgs
                 ]
             }
 
@@ -2004,6 +2006,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
                         errmsgs = xresult.errmsgs
+                        msgsToUser = xresult.msgs
 
                     } catch (Exception e) {
                         errmsg = e.getMessage()
@@ -2048,6 +2051,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
                         errmsgs = xresult.errmsgs
+                        msgsToUser = xresult.msgs
 
                     } catch (Exception e) {
                         System.err.println("caught exception");
@@ -2070,7 +2074,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             i++
 
         }
-        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds]
+        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds, msgs: msgsToUser]
     }
     static Logger jobChangeLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 
