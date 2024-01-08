@@ -1,7 +1,9 @@
 package org.rundeck.tests.functional.api.job
 
+import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
+@APITest
 class JobDeleteSpec extends BaseContainer {
 
     def setupSpec() {
@@ -19,7 +21,16 @@ class JobDeleteSpec extends BaseContainer {
         when:
             def jobId = jobImportFile(PROJECT_NAME, pathXmlFile).succeeded[0].id
         then:
-            def response = doDelete("/job/${jobId}")
+            def responseDelete = doDelete("/job/${jobId}")
+        when:
+            def responseGet = doGet("/job/${jobId}")
+        then:
+        verifyAll {
+            responseDelete.code() == 204
+            responseGet.code() == 404
+            def json = client.jsonValue(responseGet.body(), Map)
+            json.message == "Job ID does not exist: ${jobId}"
+        }
     }
 
 }
