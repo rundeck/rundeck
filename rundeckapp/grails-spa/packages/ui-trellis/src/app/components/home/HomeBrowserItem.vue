@@ -32,11 +32,13 @@
           <span
             v-if="project.description.length > 0"
             class="text-secondary text-base"
+            style="margin-left: 5px"
           >
             {{ project.description }}
           </span>
         </a>
       </div>
+<!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
       <div class="col-sm-6 col-md-2 text-center">
         <a
           :href="`/project/${project.name}/activity`"
@@ -99,6 +101,7 @@
           </span>
         </a>
       </div>
+
       <div class="col-sm-12 col-md-2 col-last">
         <HomeActionsMenu :index="index" :project="project" />
       </div>
