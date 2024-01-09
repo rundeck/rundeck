@@ -57,6 +57,7 @@ class SetUserInterceptor {
             return false
         }
         def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
+        boolean isRunnerToken = false
 
         if (request.userPrincipal && session.user!=request.userPrincipal.name) {
             session.user = request.userPrincipal.name
@@ -81,6 +82,10 @@ class SetUserInterceptor {
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
             Set<String> roles = lookupTokenRoles(foundToken, servletContext)
             String user = foundToken?.getOwnerName()
+
+            if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken.type == AuthTokenType.RUNNER) {
+                isRunnerToken = true
+            }
 
             if (user){
                 session.user = user
@@ -125,10 +130,6 @@ class SetUserInterceptor {
                 render view: '/common/error.gsp'
                 return false
             }
-        }
-        boolean isRunnerToken = false
-        if(request.getAttribute(RUNNER_RQ_ATTRIB)){
-            isRunnerToken = true
         }
 
         def requiredRoles = getRequiredRolesFromProps()
