@@ -34,7 +34,7 @@
             <span title="${enc(attr: propdesc)}"><stepplugin:message
                     service="${service}"
                     name="${provider}"
-                    code="${messagePrefix}property.${prop.name}.title"
+                    code="${messagePrefix?:''}property.${prop.name}.title"
                     default="${prop.title ?: prop.name}"/>:</span>
             <g:set var="textclass" value="text-success"/>
             <g:if test="${prop.renderingOptions['booleanTrueDisplayValueClass']}">
@@ -50,7 +50,7 @@
         <span title="${enc(attr: propdesc)}"><stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="${messagePrefix}property.${prop.name}.title"
+                code="${messagePrefix?:''}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
         <span class="text-success">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
     </span>
@@ -67,7 +67,7 @@
                 <span title="${enc(attr: propdesc)}"><stepplugin:message
                         service="${service}"
                         name="${provider}"
-                        code="${messagePrefix}property.${prop.name}.title"
+                        code="${messagePrefix?:''}property.${prop.name}.title"
                         default="${prop.title ?: prop.name}"/>:</span>
 
                 <span class="text-info">${split.size()} lines</span>
@@ -86,7 +86,7 @@
         <span title="${enc(attr: propdesc)}"><stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="${messagePrefix}property.${prop.name}.title"
+                code="${messagePrefix?:''}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
 
         <g:if test="${prop.type.toString() in ['Options', 'Select', 'FreeSelect']}">
