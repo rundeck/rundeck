@@ -75,6 +75,14 @@ export default defineComponent({
       type: Number,
       default: 0
     },
+    summaryRefresh: {
+      type: Boolean,
+      default: false,
+    },
+    refreshDelay: {
+      type: Number,
+      default: 30000
+    }
   },
   data() {
     return {
@@ -111,6 +119,12 @@ export default defineComponent({
           this.totalFailedCount = response.totalFailedCount;
           this.recentProjects = response.recentProjects;
           this.recentUsers = response.recentUsers;
+
+          if(this.summaryRefresh){
+            setTimeout(() => {
+              this.fetchSummary();
+            }, this.refreshDelay);
+          }
         }
       } catch (e) {
         console.error(e);

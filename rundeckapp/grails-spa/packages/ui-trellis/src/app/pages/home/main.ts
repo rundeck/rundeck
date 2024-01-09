@@ -5,6 +5,7 @@ import HomeHeader from "../../components/home/HomeHeader.vue";
 import {loadJsonData} from "../../utilities/loadJsonData";
 import NextUiToggle from "../job/browse/NextUiToggle.vue";
 
+// @ts-ignore
 window.SVGInject = require('@iconfu/svg-inject')
 
 let rundeckContext = getRundeckContext();

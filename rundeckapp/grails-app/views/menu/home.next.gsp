@@ -58,7 +58,6 @@
 
   <!-- VUE JS REQUIREMENTS -->
   <asset:javascript src="static/pages/home.js" defer="defer"/>
-  <asset:javascript src="static/components/ko-paginator.js"/>
   <!-- /VUE JS REQUIREMENTS -->
 
   <asset:javascript src="menu/home.js"/>
@@ -97,6 +96,8 @@
                 buildIdent: '${buildIdent}',
                 logoImage: '${logoImage}',
                 helpLinkUrl: '${helpLinkUrl}',
+                summaryRefresh: ${cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true)},
+                refreshDelay: ${cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000)},
                 }"></ui-socket>
     </div>
   </div>

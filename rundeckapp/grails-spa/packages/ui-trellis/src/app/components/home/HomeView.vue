@@ -12,6 +12,8 @@
       <HomeHeader
         :createProjectAllowed="createProjectAllowed"
         :projectCount="projectCount"
+        :summaryRefresh="summaryRefresh"
+        :refreshDelay="refreshDelay"
       />
     </div>
     <div class="container-fluid" v-if="projectCount === 0">
@@ -98,6 +100,14 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    summaryRefresh: {
+      type: Boolean,
+      default: false,
+    },
+    refreshDelay: {
+      type: Number,
+      default: 30000
+    }
   },
   data() {
     return {

@@ -1,5 +1,5 @@
 <template>
-    <ul class="list-unstyled">
+    <ul v-if="projects.length > 0" class="list-unstyled">
       <DynamicScroller
         ref="scroller"
         :items="projects"
