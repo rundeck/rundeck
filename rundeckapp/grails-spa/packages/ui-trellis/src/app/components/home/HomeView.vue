@@ -2,26 +2,12 @@
   <div id="layoutBody">
     <div class="container-fluid" v-if="projectCount > 0 || !loadedProjectNames">
       <div class="row" v-if="isFirstRun">
-        <div id="first-run-message" class="col-sm-12">
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">
-                {{ $t('app.firstRun.title', [appTitle, buildIdent]) }}
-              </h2>
-            </div>
-            <div class="card-content">
-              <img :src="logoImage" :alt="appTitle" style="width: 400px; padding-bottom: 10px" />
-              <VMarkdownView :content="$t('app.firstRun.md', [appTitle, helpLinkUrl])" />
-              <p class="h6 text-strong" style="margin-top:1em;">
-                {{ $t('you.can.see.this.message.again.by.clicking.the') }}
-                <a href="/menu/welcome">
-                  {{ $t('version.number') }}
-                </a>
-                {{ $t('in.the.page.footer') }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <HomeWelcome
+          :appTitle="appTitle"
+          :buildIdent="buildIdent"
+          :logoImage="logoImage"
+          :helpLinkUrl="helpLinkUrl"
+        />
       </div>
       <HomeHeader
         :createProjectAllowed="createProjectAllowed"
@@ -71,16 +57,17 @@ import { defineComponent, PropType } from "vue";
 import HomeHeader from "./HomeHeader.vue";
 import HomeCardList from "./HomeCardList.vue";
 import { getProjects } from "@/app/components/home/services/homeServices";
-import FirstRun from '@/library/components/first-run/FirstRun.vue'
-import { VMarkdownView } from "vue3-markdown"
+import FirstRun from "@/library/components/first-run/FirstRun.vue";
+import HomeWelcome from "@/app/components/home/HomeWelcome.vue";
+
 
 export default defineComponent({
   name: "HomeView",
   components: {
+    HomeWelcome,
     FirstRun,
     HomeHeader,
     HomeCardList,
-    VMarkdownView
   },
   props: {
     isFirstRun: {
@@ -97,19 +84,19 @@ export default defineComponent({
     },
     appTitle: {
       type: String,
-      required: true
+      required: true,
     },
     buildIdent: {
       type: String,
-      required: true
+      required: true,
     },
     logoImage: {
       type: String,
-      required: true
+      required: true,
     },
     helpLinkUrl: {
       type: String,
-      required: true
+      required: true,
     },
   },
   data() {
