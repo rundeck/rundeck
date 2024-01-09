@@ -31,14 +31,20 @@ class WebhooksProjectExporter implements ProjectDataExporter {
     private static final ObjectMapper mapper = new ObjectMapper()
     public static final String INLUDE_AUTH_TOKENS = 'inludeAuthTokens'
     public static final String WEBHOOKS_YAML_FILE = "webhooks.yaml"
+    public static final String WHK_REGEN_UUID = 'regenUuid'
 
     def webhookService
 
     final List<Property> exportProperties = [
-        PropertyBuilder.builder().
+        PropertyBuilder.builder().with{
             booleanType(INLUDE_AUTH_TOKENS).
             title('Include Webhook Auth Tokens').
-            description('If not included, tokens will be regenerated upon import.').
+            description('If not included, tokens will be regenerated upon import.')}.
+            build(),
+        PropertyBuilder.builder().with {
+            booleanType(WHK_REGEN_UUID).
+            title('Remove UUIDs').
+            description('Strip UUIDs for exported Webhook')}.
             build()
     ]
 
@@ -62,6 +68,11 @@ class WebhooksProjectExporter implements ProjectDataExporter {
             if (exportOptions[INLUDE_AUTH_TOKENS] == 'true') {
                 data.authToken = hk.authToken
             }
+
+            if (exportOptions[WHK_REGEN_UUID] == 'true') {
+                data.uuid = UUID.randomUUID().toString()
+            }
+
             export.webhooks.add(data)
         }
         zipBuilder.file(WEBHOOKS_YAML_FILE) { writer ->
