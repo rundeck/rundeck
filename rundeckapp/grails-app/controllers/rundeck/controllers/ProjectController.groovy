@@ -215,6 +215,7 @@ class ProjectController extends ControllerBase{
                 archiveParams.importComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
             }
             archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = (String) params.whkRegenAuthTokens
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][WebhooksProjectImporter.WHK_REGEN_UUID] = (String) params.whkRegenUuid
         }
 
         if (archiveParams.hasErrors()) {
@@ -2783,6 +2784,8 @@ Requires `export` authorization for the project resource.""",
             }
             archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
                 WebhooksProjectExporter.INLUDE_AUTH_TOKENS] = params.whkIncludeAuthTokens
+            archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                    WebhooksProjectExporter.WHK_REGEN_UUID] = params.whkRegenUuid
         }
 
         ProjectArchiveExportRequest options
