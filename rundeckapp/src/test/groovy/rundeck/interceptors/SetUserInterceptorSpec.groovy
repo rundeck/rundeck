@@ -16,6 +16,7 @@ import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.HTMLContentCodec
 import rundeck.codecs.URIComponentCodec
+import rundeck.controllers.ApiController
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -280,7 +281,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         GroovyMock(ConfigurationService, global: true)
 
         User u1 = new User(login: "_runner")
-        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: AuthenticationToken.AuthTokenType.RUNNER)
+        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"_runner",type: AuthenticationToken.AuthTokenType.RUNNER)
         u1.save()
         userTk1.save()
 
@@ -316,10 +317,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.apiService = apiService
         interceptor.userService = userServiceMock
 
-        interceptor.request.userPrincipal = new Username(username)
         interceptor.params.authtoken = "123"
         interceptor.request.api_version = 41
-        withRequest(controller: "runner")
         boolean allowed = interceptor.before()
 
         then:
