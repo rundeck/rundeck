@@ -202,7 +202,7 @@ class ExecutionUtilService {
                     cmd.convertToPluginConfig(),
                     handler,
                     !!cmd.keepgoingOnSuccess,
-                    null,
+                    cmd.description,
                     createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
             )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
