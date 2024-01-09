@@ -268,4 +268,64 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             request.invalidApiAuthentication
     }
 
+    def "skip requiredRoles check if the call is performed by the runner"() {
+        setup:
+        defineBeans {
+            rundeckConfig(RundeckConfig)
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+
+        }
+        GroovyMock(ConfigurationService, global: true)
+
+        User u1 = new User(login: "_runner")
+        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: AuthenticationToken.AuthTokenType.RUNNER)
+        u1.save()
+        userTk1.save()
+
+        def svCtx = Mock(ServletContext)
+        request.setAttribute(SetUserInterceptor.RUNNER_RQ_ATTRIB, true)
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+
+        mockCodec(URIComponentCodec)
+        mockCodec(HTMLContentCodec)
+        mockCodec(HTMLAttributeCodec)
+        mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
+
+        def username = "_runner"
+        def role = "_runner"
+
+        def userServiceMock = Mock(UserService) {
+            getUserGroupSourcePluginRoles(username) >> { [role] }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole","")>>"enter,admin"
+            getString(_,_)>>""
+            getString(_)>>""
+        }
+
+        when:
+
+        interceptor.apiService = apiService
+        interceptor.userService = userServiceMock
+
+        interceptor.request.userPrincipal = new Username(username)
+        interceptor.params.authtoken = "123"
+        interceptor.request.api_version = 41
+        withRequest(controller: "runner")
+        boolean allowed = interceptor.before()
+
+        then:
+        allowed
+
+
+    }
+
 }
