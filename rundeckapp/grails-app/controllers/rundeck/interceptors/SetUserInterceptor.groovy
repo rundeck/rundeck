@@ -126,8 +126,13 @@ class SetUserInterceptor {
                 return false
             }
         }
+        boolean isRunnerToken = false
+        if(request.getAttribute(RUNNER_RQ_ATTRIB)){
+            isRunnerToken = true
+        }
+
         def requiredRoles = getRequiredRolesFromProps()
-        if( requiredRoles.size() ){
+        if( requiredRoles.size() && !isRunnerToken){
             def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
             List<String> requestRoles = requestGroups.stream()
             .map{it.getName()}
