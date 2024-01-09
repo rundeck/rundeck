@@ -1850,7 +1850,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
     /**
-     * Returns the secure options with default values (deprecated as of version 3.x.x).
+     * Returns the secure options with default values (deprecated as of version 3.4.x).
      *
      * @param importedJob
      * @return list with the names of secure options with default values
