@@ -3267,6 +3267,9 @@ Note: `other_errors` included since API v35""",
             }
             archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
                 WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
+
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                    WebhooksProjectImporter.WHK_REGEN_UUID] = params.whkRegenUuid
         }
 
         //previous version must import nodes together with the project config
