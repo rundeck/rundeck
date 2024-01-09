@@ -4,13 +4,12 @@
         ref="scroller"
         :items="projects"
         :min-item-size="43"
-
         key-field="created"
         item-tag="li"
         page-mode
       >
         <template #default="{ item, index, active }">
-          <DynamicScrollerItem :item="item" :active="active" :size-dependecies="[item.description]" :index="index">
+          <DynamicScrollerItem v-if="active" :item="item" :active="active" :size-dependecies="[item.description]" :index="index">
             <HomeBrowserItem :project="item" :index="index" />
           </DynamicScrollerItem>
         </template>

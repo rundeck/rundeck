@@ -543,7 +543,10 @@ const messages = {
     "no.authorized.access.to.projects": "You have no authorized access to projects.",
     "no.authorized.access.to.projects.contact.your.administrator.user.roles.0": "Contact your administrator. (User roles: {0})",
     "page.home.loading.projects": "Loading Projects",
-    "app.firstRun.md": "",
+    "app.firstRun.md": "Thank you for being a {0} subscriber.\n\n" +
+        "  \n\n\n" +
+        "* [{0} Support Portal &raquo;](http://support.rundeck.com)\n\n" +
+        "* [{0} Documentation &raquo;]({1})",
     "page.home.section.project.title": "{0} Project",
     "page.home.section.project.title.plural": "{0} Projects",
     "page.home.duration.in.the.last.day": "In the last day",
@@ -562,7 +565,7 @@ const messages = {
     "home.user": "{n} Users | {n} User | {n} Users",
     "home.table.projects": "Projects",
     "home.table.activity": "Activity",
-    "home.table.actions": "Actions"
+    "home.table.actions": "Actions",
 }
 
 export default messages;
