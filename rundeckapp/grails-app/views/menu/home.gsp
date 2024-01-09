@@ -407,7 +407,20 @@
           <div class="vue-ui-socket">
             <g:set var="createProjectAllowed" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_CREATE, type: AuthConstants.TYPE_PROJECT, context: AuthConstants.CTX_APPLICATION )}"/>
             <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }}"/>
-            <ui-socket section="home" location="list" :socket-data="{ createProjectAllowed: ${createProjectAllowed}, roles: ${enc(attr:roles.encodeAsJSON())}, isFirstRun: ${isFirstRun}}"></ui-socket>
+            <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
+            <g:set var="appTitle" value="${g.appTitle()}"/>
+            <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+            <g:set var="helpLinkUrl" value="${g.helpLinkUrl()}"/>
+
+            <ui-socket section="home" location="list" :socket-data="{
+                createProjectAllowed: ${createProjectAllowed},
+                roles: ${enc(attr:roles.encodeAsJSON())},
+                isFirstRun: ${isFirstRun},
+                appTitle: '${appTitle}',
+                buildIdent: '${buildIdent}',
+                logoImage: '${logoImage}',
+                helpLinkUrl: '${helpLinkUrl}',
+                }"></ui-socket>
           </div>
 </div>
 </div>
