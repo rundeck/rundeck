@@ -285,7 +285,7 @@ class JobsSpec extends SeleniumBase {
         uploadJobDefinitionPage.jobUploadInfoDivElement().isDisplayed()
     }
 
-    def "Upload job definition with secure options + default values, get info"() {
+    def "Secure options with default values, hint in the definition form"() {
         setup:
         def uploadJobDefinitionPage = page JobUploadPage
         uploadJobDefinitionPage.loadPathToUploadPage(SELENIUM_BASIC_PROJECT)
