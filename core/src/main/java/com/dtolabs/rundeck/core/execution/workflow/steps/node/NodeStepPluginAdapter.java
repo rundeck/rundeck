@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -39,11 +40,15 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
+import org.rundeck.core.execution.ExecCommand;
+import org.rundeck.core.execution.ScriptCommand;
+import org.rundeck.core.execution.ScriptFileCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -132,7 +137,12 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             this(ServiceNameConstants.WorkflowNodeStep, true);
         }
 
-        public NodeStepExecutor convert(final NodeStepPlugin plugin) {
+        public NodeStepExecutor convert(final NodeStepPlugin plugin, final boolean blankIfUnexpanded) {
+            return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
+        }
+
+        @Override
+        public NodeStepExecutor convert(NodeStepPlugin plugin) {
             return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
         }
     }
@@ -192,15 +202,21 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             });
         }
         if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.node(node.getNodename()),
-                    ContextView::nodeStep,
-                    null,
-                    context.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap
-            );
+            CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
+            if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ExecCommand.EXEC_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
+            {
+                instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                        instanceConfiguration,
+                        ContextView.node(node.getNodename()),
+                        ContextView::nodeStep,
+                        null,
+                        context.getSharedDataContext(),
+                        false,
+                        blankIfUnexMap,
+                        customFieldsAdapter::convertInput,
+                        customFieldsAdapter::convertOutput
+                );
+            }
         }
         return instanceConfiguration;
     }

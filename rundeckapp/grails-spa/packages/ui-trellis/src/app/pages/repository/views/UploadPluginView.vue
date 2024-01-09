@@ -16,15 +16,21 @@
   </div>
 </template>
 <script>
-import PluginUploadForm from "../components/PluginUploadForm";
-import PluginURLUploadForm from "../components/PluginURLUploadForm";
-export default {
+import { defineComponent } from 'vue';
+import { mapActions } from 'vuex';
+
+import PluginUploadForm from "../components/PluginUploadForm.vue";
+import PluginURLUploadForm from "../components/PluginURLUploadForm.vue";
+export default defineComponent({
   name: "UploadPluginView",
   components: { PluginUploadForm, PluginURLUploadForm },
+  methods: {
+    ...mapActions('overlay', ['openOverlay']),
+  },
   created() {
-    this.$store.dispatch("overlay/openOverlay", false);
+    this.openOverlay(false);
   }
-};
+})
 </script>
 <style lang="scss" scoped>
 </style>

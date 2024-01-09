@@ -21,6 +21,12 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
@@ -44,6 +50,7 @@ import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -65,6 +72,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         session.subject = new Subject()
         controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
         controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+        controller.featureService = Mock(FeatureService)
     }
     /**
      * utility method to mock a class
@@ -75,33 +83,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         return mock.proxyInstance()
     }
 
-    void apiProjectList_xml(){
-        given:
-        controller.frameworkService = mockWith(FrameworkService){
-            projects(1..1){auth->
-                [
-                        [name: 'testproject'],
-                        [name: 'testproject2'],
-                ]
-            }
-        }
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-
-        controller.apiService = mockWith(ApiService){
-            requireApi(1..1) { req, resp ->
-                true
-            }
-            renderSuccessXml(1..1) { req, resp, clos ->
-
-            }
-        }
-        when:
-        response.format='xml'
-        controller.apiProjectList()
-        then:
-        assert response.status == HttpServletResponse.SC_OK
-
-    }
 
     void apiProjectList_json(){
         when:
@@ -217,29 +198,33 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     }
 
 
-    void apiProjectList_unacceptableReceivesXml(){
+    void apiProjectList_unacceptableReceivesJson(){
         when:
-        controller.frameworkService = mockWith(FrameworkService) {
-            projects(1..1) { auth ->
-                [
-                        [name: 'testproject'],
-                        [name: 'testproject2'],
-                ]
+            def prja = new MockFor(IRundeckProject)
+            prja.demand.getName(1..3) { -> 'testproject'}
+            prja.demand.getProjectProperties(1..2){ -> [:]}
+            def prjb = new MockFor(IRundeckProject)
+            prjb.demand.getName(1..3) { -> 'testproject2'}
+            prjb.demand.getProjectProperties(1..2){ -> [:]}
+            controller.frameworkService = mockWith(FrameworkService) {
+                projects(1..1) { auth ->
+                    [
+                            prja.proxyInstance(),
+                            prjb.proxyInstance(),
+                    ]
+                }
             }
-        }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderSuccessXml(1..1) { req, resp, clos ->
-
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_,_)>>true
+                0 * renderSuccessXml(*_)
             }
-        }
 
-        response.format='text'
-        controller.apiProjectList()
+            response.format='text'
+            controller.apiProjectList()
         then:
-        assert response.status==HttpServletResponse.SC_OK
+            assert response.status==HttpServletResponse.SC_OK
 
     }
 
@@ -480,37 +465,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     /**
      * project already exists
      */
-    void apiProjectCreate_xml_projectExists() {
-        given:
-        controller.apiService=Mock(ApiService)
-
-        setupProjectCreate(controller, true, false, null, null, null)
-        request.xml='<project><name>test1</name></project>'
-        request.method='POST'
-        response.format = 'xml'
-        when:
-        controller.apiProjectCreate()
-
-        //test project element
-        then:
-            assert response.status == HttpServletResponse.SC_CONFLICT
-
-        1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
-        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-            it[2].get('xml').call(it[0].XML)
-            true
-        }
-        1 * controller.apiService.renderErrorFormat(_, {
-            it.code=='api.error.item.alreadyexists'
-        })>> {
-            it[0].status=it[1].status
-        }
-
-    }
-    /**
-     * project already exists
-     */
     void apiProjectCreate_json_projectExists() {
         given:
         controller.apiService=Mock(ApiService)
@@ -526,42 +480,17 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         //test project element
         then:
             assert response.status == HttpServletResponse.SC_CONFLICT
-        1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
-        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-            it[2].get('json').call(it[0].JSON)
-            true
-        }
-        1 * controller.apiService.renderErrorFormat(_, {
-            it.code=='api.error.item.alreadyexists'
-        })>> {
-            it[0].status=it[1].status
-        }
-    }
-    /**
-     * Failure to create project
-     */
-    void apiProjectCreate_xml_withErrors() {
-        given:
-            controller.apiService=Mock(ApiService)
-        setupProjectCreate(controller, false, false, ['error1', 'error2'], [:], null)
-        request.xml='<project><name>test1</name></project>'
-        request.method='POST'
-        response.format = 'xml'
-        when:
-        controller.apiProjectCreate()
-
-        //test project element
-        then:
-        1 * controller.apiService.requireApi(*_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.requireApi(_,_)>>true
+            _ * controller.apiService.extractResponseFormat(_,_,_)>>'json'
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-                it[2].get('xml').call(it[0].XML)
+                it[2].get('json').call(it[0].JSON)
                 true
             }
-        1 * controller.apiService.renderErrorFormat(_, {
-            it.status== HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-        })
+            1 * controller.apiService.renderErrorFormat(_, {
+                it.code=='api.error.item.alreadyexists'
+            })>> {
+                it[0].status=it[1].status
+            }
     }
     /**
      * Failure to create project
@@ -577,7 +506,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         controller.apiProjectCreate()
         then:
 
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            _ * controller.apiService.extractResponseFormat(_,_,_)>>'json'
             1 * controller.apiService.requireApi(*_)>>true
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
                 it[2].get('json').call(it[0].JSON)
@@ -586,28 +515,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             1 * controller.apiService.renderErrorFormat(_, {
                 it.status== HttpServletResponse.SC_INTERNAL_SERVER_ERROR
             })
-    }
-    /**
-     * Successful
-     */
-    void apiProjectCreate_xml_success() {
-        
-        given:
-            controller.apiService=Mock(ApiService)
-        setupProjectCreate(controller, false, true, [], [:], ['prop1': 'value1', 'prop2': 'value2'])
-        request.xml='<project><name>test1</name></project>'
-        request.method='POST'
-        response.format = 'xml'
-        when:
-        controller.apiProjectCreate()
-        then:
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-                it[2].get('xml').call(it[0].XML)
-                true
-            }
-            1 * controller.apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, _ as HttpServletRequest, _ as HttpServletResponse, _ as Closure)
     }
     /**
      * Successful
@@ -628,7 +535,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
 
             1 * controller.apiService.requireApi(*_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.extractResponseFormat(_, _, _, 'json') >> 'json'
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
                 it[2].get('json').call(it[0].JSON)
                 true
@@ -645,36 +552,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
-    }
-    /**
-     * Create project with input config
-     */
-    void apiProjectCreate_xml_withconfig() {
-        
-        given:
-        controller.apiService=Mock(ApiService)
-        setupProjectCreate(
-            controller,
-            false,
-            true,
-            [],
-            ['input1': 'value1', 'input2': 'value2'],
-            ['prop1': 'value1', 'prop2': 'value2']
-        )
-        request.xml='<project><name>test1</name><config><property key="input1" value="value1"/><property key="input2"' +
-                ' value="value2"/></config></project>'
-        request.method='POST'
-        response.format = 'xml'
-        when:
-        controller.apiProjectCreate()
-        then:
-            1 * controller.apiService.requireApi(*_)>>true
-            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-                it[2].get('xml').call(it[0].XML)
-                true
-            }
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
-            1 * controller.apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, _ as HttpServletRequest, _ as HttpServletResponse, _ as Closure)
     }
     /**
      * Create project with input config
@@ -698,7 +575,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
 
             response.status == HttpServletResponse.SC_CREATED
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            _ * controller.apiService.extractResponseFormat(_, _, _, 'json') >> 'json'
             1 * controller.apiService.requireApi(*_)>>true
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
                 it[2].get('json').call(it[0].JSON)
@@ -1042,24 +919,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     }
 
 
-    void apiProjectConfigGet_xml_success(){
-        
-        given:
-        controller.apiService=Mock(ApiService)
-
-        setupGetResource(Mock(IRundeckProject){
-            getName()>>'test1'
-            getProjectProperties()>>["prop1": "value1", "prop2": "value2"]
-        })
-        request.api_version = 11
-        params.project='test1'
-        when:
-            controller.apiProjectConfigGet()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_,_)>>'xml'
-            1 * controller.apiService.renderSuccessXml(_ as HttpServletRequest,_,_ as Closure)
-    }
     def "respondXmlConfig"(){
         given:
             def pject = Mock(IRundeckProject)
@@ -1127,81 +986,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     }
 
 
-    void apiProjectConfigPut_xml_success(){
-        
-        given:
-            controller.apiService=Mock(ApiService)
-            def pject=Mock(IRundeckProject) {
-                _* getName() >> 'test1'
-                _* getProjectProperties() >> ['prop1': 'valueA']
-            }
-            controller.frameworkService= Mock(FrameworkService)
-            setupGetResource(pject)
-
-            request.api_version = 11
-            params.project = 'test1'
-            request.method='PUT'
-            request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
-
-        when:
-        controller.apiProjectConfigPut()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
-            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-                it[2].get('xml').call(it[0].XML)
-                true
-            }
-            1 * controller.frameworkService.setFrameworkProjectConfig('test1', [prop1: 'value1',prop2:'value2']) >> {
-                [success: true,error: null]
-            }
-            1 * controller.apiService.renderSuccessXml (_,_,_ as Closure)
-    }
-
-    @Unroll
-    void "apiProjectConfigPut xml change scheduling"(){
-        
-        given:
-            controller.apiService=Mock(ApiService)
-            def pject=Mock(IRundeckProject) {
-                _* getName() >> 'test1'
-                _* getProjectProperties() >> [
-                    'project.disable.executions': (curExecDisabled).toString(),
-                    'project.disable.schedule': (curSchedDisabled).toString()
-                ]
-            }
-            controller.frameworkService= Mock(FrameworkService)
-
-            request.api_version = 11
-            params.project = 'test1'
-            request.method='PUT'
-            request.xml= "<config>" +
-                         "<property key=\"project.disable.executions\" value=\"${newExecDisabled}\"/>" +
-                         "<property key=\"project.disable.schedule\" value=\"${newSchedDisabled}\"/>" +
-                         "</config>"
-
-            setupGetResource(pject)
-        when:
-            controller.apiProjectConfigPut()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
-            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
-                it[2].get('xml').call(it[0].XML)
-                true
-            }
-            1 * controller.frameworkService.setFrameworkProjectConfig('test1', _) >> {
-                [success: true,error: null]
-            }
-            1 * controller.frameworkService.handleProjectSchedulingEnabledChange(_,curExecDisabled,curSchedDisabled,newExecDisabled,newSchedDisabled)
-            1 * controller.apiService.renderSuccessXml (_,_,_ as Closure)
-        where:
-            curExecDisabled | curSchedDisabled | newExecDisabled | newSchedDisabled
-            false           | false            | true            | false
-            false           | false            | false           | true
-            true            | false            | false           | false
-            false           | true             | false           | false
-    }
 
     void apiProjectConfigPut_text_success(){
         
@@ -1224,7 +1008,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
              assertEquals HttpServletResponse.SC_OK, response.status
             1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'text'
+            1 * controller.apiService.extractResponseFormat(_,_,_,'json')>>'text'
 
             1 * controller.frameworkService.setFrameworkProjectConfig('test1', [prop1: 'value1',prop2:'value2']) >> {
                 [success: true,error: null]
@@ -1255,7 +1039,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
              assertEquals HttpServletResponse.SC_OK, response.status
             1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.extractResponseFormat(_,_,_,'json')>>'json'
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
                 it[2].get('json').call(it[0].JSON)
                 true
@@ -1297,7 +1081,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectConfigPut()
         then:
             1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.extractResponseFormat(_, _, _, 'json') >> 'json'
             1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
                 it[2].get('json').call(it[0].JSON)
                 true
@@ -1306,6 +1090,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 [success: true,error: null]
             }
             1 * controller.frameworkService.handleProjectSchedulingEnabledChange(_,curExecDisabled,curSchedDisabled,newExecDisabled,newSchedDisabled)
+            1 * controller.frameworkService.loadProjectProperties(_)>>[
+                    'project.disable.executions': (newExecDisabled).toString(),
+                    'project.disable.schedule': (newSchedDisabled).toString()
+            ]
 
         where:
             curExecDisabled | curSchedDisabled | newExecDisabled | newSchedDisabled
@@ -1344,7 +1132,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         }
         where:
             format | expected
-            'xml'  | "<property key='prop1' value='value1' />"
             'json' | '{"key":"prop1","value":"value1"}'
             'text' | 'value1'
     }
@@ -1359,6 +1146,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiService=Mock(ApiService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
+                getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    getName()>>'test1'
+                    getProjectProperties()>>["prop1": "value1"]
+                }
             }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -1403,11 +1194,113 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             }
         where:
             format |input                                   |expected
-            'xml'  |'<property key="prop1" value="value1"/>'|"<property key='prop1' value='value1' />"
             'json' |'{"key":"prop1","value":"value1"}'      |'{"key":"prop1","value":"value1"}'
             'text' |'value1'                                |'value1'
     }
 
+    @Unroll
+    void "apiProjectConfigKeyPut should validate all plugin settings values"() {
+
+        given:
+            controller.apiService=Mock(ApiService)
+            Map prop = ["project.plugin.provider1.prop1": inputValue]
+            Map currentProps = ["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
+            Properties mergedProjProps = new Properties(currentProps + prop)
+            controller.frameworkService =Mock(FrameworkService){
+                updateFrameworkProjectConfig(_, prop,_)>> [success: true]
+                getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    getName()>>'test1'
+                    getProjectProperties()>>["project.plugin.provider1.prop1": "value0", "project.plugin.provider1.prop2": "value2"]
+                }
+                discoverScopedConfiguration(mergedProjProps, 'project.plugin')>>[
+                    'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
+                ]
+            }
+
+
+            Description desc = new AbstractBaseDescription() {
+                public String getName() {
+                    return "provider1";
+                }
+
+                public String getTitle() {
+                    return "Script Execution";
+                }
+
+                public String getDescription() {
+                    return "Delegates file copying to an external script. Can be configured project-wide or on a per-node basis.";
+                }
+
+                public List<Property> getProperties() {
+                    List<Property> properties = new ArrayList<Property>();
+                    properties.add(PropertyUtil.string("prop1", "Prop1", "", true, null));
+                    properties.add(PropertyUtil.string("prop2", "Prop2", "", true, null));
+                    return properties;
+                }
+
+                @Override
+                public Map<String, String> getPropertiesMapping() {
+                    return new HashMap<String, String>();
+                }
+
+                @Override
+                public Map<String, String> getFwkPropertiesMapping() {
+                    return new HashMap<String, String>();
+                }
+            }
+
+            controller.pluginService = Mock(PluginService) {
+                listPluginDescriptions("svcName") >> [desc]
+            }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                1 * project(_, _) >> Mock(AuthorizingProject) {
+                    1 * getResource() >> Stub(IRundeckProject){
+                        getName()>>'test1'
+                        getProperty('prop1') >>> [null, inputValue]
+                    }
+                    0*_(*_)
+                }
+                0*_(*_)
+            }
+
+            with(controller.apiService) {
+                requireApi(_, _) >> true
+                restoreUriPath(_, _) >> 'project.plugin.provider1.prop1'
+                extractResponseFormat(_, _, _) >> 'JSON'
+                parseJsonXmlWith(_,_,_)>>{
+                    it[2].get('json').call(it[0].JSON)
+                    true
+                }
+            }
+
+            request.api_version = 11
+            params.project = 'test1'
+            params.keypath = 'project.plugin.provider1.prop1'
+            request.setContent(('{"key":"project.plugin.provider1.prop1","value":"' + inputValue + '"}').bytes)
+            request.format='JSON'
+            request.method='PUT'
+        when:
+            controller.apiProjectConfigKeyPut()
+        then:
+            with(controller.frameworkService) {
+                1 * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
+            }
+            with(controller.apiService){
+                (valid ? 0 : 1) * renderErrorFormat(_, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message:["provider1 configuration was invalid: " + reportError?.errors],
+                        format: 'JSON'
+                ])
+            }
+
+        where:
+        inputValue     | valid | reportError
+        "value1"       | true  | null
+        "invalidValue" | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+
+    }
 
 
     void apiProjectConfigKeyDelete_success() {
@@ -1570,19 +1463,13 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             response.text==expect
         where:
             format | expect
-            'xml'|'''<import status='failed' successful='false'>
-  <errors count='2'>
-    <error>error1</error>
-    <error>error2</error>
-  </errors>
-</import>'''
             'json'|'{"import_status":"failed","successful":false,"errors":["error1","error2"]}'
     }
 
     private setupImportApiService(String format){
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_)>>true
-            1 * extractResponseFormat(*_)>>format
+            0 * extractResponseFormat(*_)>>format
             1 * requireRequestFormat(_,_,['application/zip'])>>true
             (format=='xml'?1:0) * renderSuccessXml(_,_,_ as Closure)>> {
                 def mb = new MarkupBuilder(it[1].writer)
@@ -1625,7 +1512,6 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             response.text==expect
         where:
             format| expect
-            'xml' | '<import status=\'successful\' successful=\'true\' />'
             'json'|'{"import_status":"successful","successful":true}'
     }
 

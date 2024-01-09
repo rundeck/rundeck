@@ -1,20 +1,20 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
-import { action, computed, flow, observable } from 'mobx'
-import Axios from 'axios'
+import axios from "axios";
+import {ref} from "vue";
 
 export class NewsStore {
-    @observable articles: Array<Article> = []
+    articles: Array<Article> = []
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
-    @observable loaded = false
+    loaded = ref<boolean>(false)
 
-    load = flow(function* (this: NewsStore) {
-        if (this.loaded)
+    load = async () => {
+        if (this.loaded.value)
             return
 
-        const resp = yield Axios
+        const resp = await axios
             .get("https://api.rundeck.com/news/v1/blog/list", {
             params: {
                 groupid: 7039074342
@@ -23,18 +23,18 @@ export class NewsStore {
         resp.data.objects.forEach( (o: any) => {
            this.articles.push(Article.FromApi(o))
         })
-        this.loaded = true
-    })
+        this.loaded.value = true
+    }
 
 }
 
 
 export class Article {
-    @observable url!: string
-    @observable description!: string
-    @observable imageUrl!: string
-    @observable title!: string
-    @observable date!: Date
+    url!: string
+    description!: string
+    imageUrl!: string
+    title!: string
+    date!: Date
 
     static FromApi(post: any): Article {
         const article = new Article

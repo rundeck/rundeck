@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from '@storybook/vue3'
 
 import { Rundeck, RundeckClient, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
@@ -14,14 +14,15 @@ window._rundeck.rundeckClient = new RundeckClient(new TokenCredentialProvider(pr
 
 
 export default {
-    title: 'Widgets/Webhook Select'
-}
+    title: 'Widgets/Webhook Select',
+    component: WebhookSelect,
+} as Meta<typeof WebhookSelect>
 
 
-export const pluginPicker = () => {
+export const pluginPicker: StoryFn<typeof WebhookSelect> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
-    
-    return Vue.extend({
+    window._rundeck.rootStore = rootStore
+    return {
         template: `<WebhookSelect project="Test" @item:selected="() => {}"/>`,
         provide: {rootStore},
         components: {WebhookSelect},
@@ -37,5 +38,5 @@ export const pluginPicker = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
 }

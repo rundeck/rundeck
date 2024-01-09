@@ -1,10 +1,9 @@
-import { observable} from 'mobx'
-import { VueConstructor } from 'vue'
 
 export class UIStore {
-  @observable items: Array<UIItem> = []
-  @observable watchers: Array<UIWatcher> = []
-  @observable uiMessages: Array<UiMessage> = []
+  items: Array<UIItem> = []
+  watchers: Array<UIWatcher> = []
+  uiMessages: Array<UiMessage> = []
+  registerComponent: Function | null = null
 
   notifyWatchers() {
     this.watchers.forEach((w) => {
@@ -53,7 +52,7 @@ export interface UIItem {
   section: string
   location: string
   visible: boolean
-  widget?: VueConstructor
+  widget?: Object
   html?: string
   text?: string
 }

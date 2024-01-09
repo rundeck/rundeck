@@ -104,6 +104,83 @@ class DataContextUtilsSpec extends Specification {
           dataContext
         ) == 'this is a value'
     }
+    static interface TestConverter{
+        Object convert(String key, Object value)
+    }
+
+    def "replaceDataReferences in Map using input and output converters"(){
+        given:
+            Map input =[a:'avalue',b:'bvalue ${refkey.subkey}']
+            Map data =[refkey:[subkey:'data']]
+            TestConverter inputConverter=Mock(TestConverter)
+            TestConverter outputConverter=Mock(TestConverter)
+
+        when:
+            def result=DataContextUtils.replaceDataReferences(
+                    input,
+                    data,
+                    null,
+                    false,
+                    false,
+                    inputConverter.&convert,
+                    outputConverter.&convert
+            )
+        then:
+            1 * inputConverter.convert('a', 'avalue') >> 'ainput replaced'
+            1 * outputConverter.convert('a', 'ainput replaced') >> 'aoutput replaced'
+            1 * inputConverter.convert('b', 'bvalue ${refkey.subkey}') >> 'binput replaced ${refkey.subkey}'
+            1 * outputConverter.convert('b', 'binput replaced data') >> 'boutput replaced'
+
+            result==[a:'aoutput replaced',b:'boutput replaced']
+    }
+
+    def "replaceDataReferences in Map using input and output converters replacing with Map value"(){
+        given:
+            Map input =[a:'avalue']
+            Map data =[refkey:[subkey:'data']]
+            TestConverter inputConverter=Mock(TestConverter)
+            TestConverter outputConverter=Mock(TestConverter)
+
+        when:
+            def result=DataContextUtils.replaceDataReferences(
+                    input,
+                    data,
+                    null,
+                    false,
+                    false,
+                    inputConverter.&convert,
+                    outputConverter.&convert
+            )
+        then:
+            1 * inputConverter.convert('a', 'avalue') >> [test:'ainput replaced',other:'some ref ${refkey.subkey}']
+            1 * outputConverter.convert('a', [test:'ainput replaced',other:'some ref data']) >> 'aoutput replaced'
+
+            result==[a:'aoutput replaced']
+    }
+
+    def "replaceDataReferences in Map using input and output converters replacing with List value"(){
+        given:
+            Map input =[a:'avalue']
+            Map data =[refkey:[subkey:'data']]
+            TestConverter inputConverter=Mock(TestConverter)
+            TestConverter outputConverter=Mock(TestConverter)
+
+        when:
+            def result=DataContextUtils.replaceDataReferences(
+                    input,
+                    data,
+                    null,
+                    false,
+                    false,
+                    inputConverter.&convert,
+                    outputConverter.&convert
+            )
+        then:
+            1 * inputConverter.convert('a', 'avalue') >> ['ainput replaced','some ref ${refkey.subkey}']
+            1 * outputConverter.convert('a', ['ainput replaced','some ref data']) >> 'aoutput replaced'
+
+            result==[a:'aoutput replaced']
+    }
 
     def testReplaceDataReferencesArray() {
         when:

@@ -3,6 +3,7 @@ version: '2'
 services:
   mysql:
     image: mysql:5.7
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     expose:
       - 3306
     environment:
@@ -13,8 +14,7 @@ services:
     networks:
       localnet:
         ipv4_address: 192.168.234.10
-    volumes:
-       - ./dockers/mysql/conf:/etc/mysql/conf.d
+
   rundeck1:
     hostname: rundeck1
     image: rdtest:latest

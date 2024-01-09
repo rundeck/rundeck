@@ -23,8 +23,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-execid=$($XMLSTARLET sel -T -t -o "Execution started with ID: " -v "//execution/@id" -n $DIR/curl.out)
+#select id
+execid=$(jq -r ".execution.id" < $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
     errorMsg "FAIL: expected execution id in result: ${execid}"
     exit 2

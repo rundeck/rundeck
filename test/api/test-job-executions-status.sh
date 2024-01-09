@@ -68,14 +68,13 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+assert_json_not_null ".id" $DIR/curl.out
+execid=$(jq -r ".id" < $DIR/curl.out)
 
-if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+if [ "" != "${execid}" ] ; then
     echo "OK"
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -98,10 +97,8 @@ params="status=test+status+code"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #verify 1 results
 
-assert "1" $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
-assert "${execid}" $(xmlsel "//executions/execution/@id" $DIR/curl.out) "Wrong ID found"
+assert_json_value "1" ".executions | length" $DIR/curl.out
+assert_json_value "${execid}" ".executions[0].id" $DIR/curl.out
 echo "OK"

@@ -66,7 +66,7 @@ wait_for(){
 start_rundeck(){
 	local FARGS=("$@")
 	local launcherJar=${FARGS[0]}
-	java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar
+	java -Xmx1024m -jar $launcherJar
 	# ( bash -c 'sleep 30; echo done; sleep 600' > $outfile 2>&1 ) &
 
 }
@@ -161,7 +161,7 @@ run_ci_test(){
 
     echo "Start Rundeck: $launcherJar"
 
-		(java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
+		(java -Xmx1024m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
 		RDPID=$!
 
 		trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR

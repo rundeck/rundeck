@@ -52,7 +52,8 @@ class ScheduledExecutionFromRdJobUpdater {
         se.defaultTab = job.defaultTab
         se.maxMultipleExecutions = job.maxMultipleExecutions
         se.save() //This is necessary for inserts to happen in the correct order
-        updateWorkflow(se, job.workflow)
+        if(!se.workflow) se.workflow = new Workflow(commands: [])
+        WorkflowUpdater.updateWorkflow(se.workflow, job.workflow)
         updateSchedule(se, job.schedule)
         updateLogConfig(se, job.logConfig)
         updateNodeConfig(se, job.nodeConfig)
@@ -60,6 +61,16 @@ class ScheduledExecutionFromRdJobUpdater {
         updateOrchestrator(se, job.orchestrator)
         updateNotifications(se, job)
         updatePluginConfig(se, job)
+    }
+
+    static updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
+        if(!se.orchestrator && !rdo) return
+        if(se.orchestrator && !rdo) {
+            se.orchestrator = null
+            return
+        }
+        if(!se.orchestrator) se.orchestrator = new Orchestrator()
+        OrchestratorUpdater.updateOrchestrator(se.orchestrator, rdo)
     }
 
     static updatePluginConfig(ScheduledExecution se, RdJob job) {
@@ -87,13 +98,6 @@ class ScheduledExecutionFromRdJobUpdater {
         n.configuration = rdn.configuration
         n.eventTrigger = rdn.eventTrigger
         n.format = rdn.format
-    }
-
-    static void updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
-        if(!se.orchestrator && !rdo) return
-        if(!se.orchestrator) se.orchestrator = new Orchestrator()
-        se.orchestrator.type = rdo.type
-        se.orchestrator.content = mapper.writeValueAsString(rdo.configuration)
     }
 
     static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
@@ -190,47 +194,6 @@ class ScheduledExecutionFromRdJobUpdater {
         se.crontabString = schedule?.crontabString
     }
 
-    static void updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
-        if(!se.workflow) se.workflow = new Workflow(commands: [])
-        Workflow wkf = se.workflow
-        wkf.threadcount = rdw.threadcount
-        wkf.keepgoing = rdw.keepgoing
-        wkf.strategy = rdw.strategy
-        wkf.pluginConfigMap = rdw.pluginConfigMap
-        //remove all previous steps
-        for(int x = 0; x < wkf.commands.size(); x++) {
-            def cmd = wkf.commands[x]
-            wkf.removeFromCommands(cmd)
-            cmd.delete()
-        }
-        rdw.steps.each { rdstep ->
-            def wfstep = createWorkflowStep(rdstep)
-            wkf.addToCommands(wfstep)
-            updateWorkflowStep(wfstep, rdstep)
-            wfstep.save(failOnError:true)
-        }
-        wkf.save(failOnError:true)
 
-    }
-
-    static WorkflowStep createWorkflowStep(RdWorkflowStep step) {
-        if(step.pluginType == "builtin-jobref") return new JobExec()
-        else if(step.pluginType.startsWith("builtin-")) return new CommandExec()
-        return new PluginStep()
-    }
-
-    static void updateWorkflowStep(WorkflowStep step, RdWorkflowStep rdstep) {
-        if(step instanceof JobExec) {
-            def jstep = (JobExec)step
-            JobExec.updateFromMap(jstep, rdstep.configuration)
-        } else if(step instanceof CommandExec) {
-            def cstep = (CommandExec)step
-            CommandExec.updateFromMap(cstep, rdstep.configuration)
-        } else if(step instanceof PluginStep) {
-            def pstep = (PluginStep)step
-            PluginStep.updateFromMap(pstep, rdstep.configuration)
-            pstep.type = rdstep.pluginType
-        }
-    }
 
 }

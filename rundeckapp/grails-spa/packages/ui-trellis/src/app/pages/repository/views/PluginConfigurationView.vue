@@ -155,7 +155,7 @@
               <div class="card-content">
                 <div v-for="(service, index) in pluginsByService" :key="index">
                   <div v-if="service.providers.length">
-                    <h5 class="checkbox-group-title">{{service.service | splitAtCapitalLetter }}</h5>
+                    <h5 class="checkbox-group-title">{{StringFormatters.splitAtCapitalLetter(service.service) }}</h5>
                     <ul>
                       <li v-for="(plugin, index) in service.providers" :key="index">
                         <label>
@@ -189,7 +189,7 @@
                 <div class="card">
                   <div class="card-header">
                     <h3 style="margin:0;" class="card-title">{{details.response.title}}</h3>
-                    <h5 style="margin:0;">{{details.provider.serviceName | splitAtCapitalLetter }}</h5>
+                    <h5 style="margin:0;">{{StringFormatters.splitAtCapitalLetter(details.provider.serviceName) }}</h5>
                   </div>
                   <hr>
                   <div class="card-content">
@@ -302,14 +302,25 @@
           </div>
         </li>
       </ul>
-      <div slot="footer">
+      <template v-slot:footer>
+      <div>
         <btn @click="handleModalClose">Close</btn>
       </div>
+      </template>
     </modal>
   </div>
 </template>
 
 <script>
+import { defineComponent } from 'vue'
+import Fuse from 'fuse.js'
+import { mapState, mapActions } from "vuex";
+
+import * as StringFormatters from "../../../utilities/StringFormatters";
+import ProviderCard from "../components/ProviderCard.vue";
+import ProviderCardRow from "../components/ProviderCardRow.vue";
+import ConfigureFrameworkString from "../components/ConfigureFrameworkString.vue";
+
 const FuseSearchOptions = {
   shouldSort: true,
   threshold: 0.2,
@@ -320,24 +331,9 @@ const FuseSearchOptions = {
   keys: ["display", "name", "title"]
 };
 
-import axios from "axios";
-
-import { mapState, mapActions, mapGetters } from "vuex";
-import ProviderCard from "../components/ProviderCard";
-import ProviderCardRow from "../components/ProviderCardRow";
-import ConfigureFrameworkString from "../components/ConfigureFrameworkString";
-
-export default {
+export default defineComponent({
   name: "PluginConfigurationView",
-  components: { ProviderCard, ProviderCardRow, ConfigureFrameworkString },
-  filters: {
-    splitAtCapitalLetter: function(value) {
-      if (!value) return "";
-      value = value.toString();
-      if(value.match(/^[A-Z]+$/g)) return value;
-      return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
-    }
-  },
+  components: {ProviderCard, ProviderCardRow, ConfigureFrameworkString},
   methods: {
     ...mapActions("plugins", [
       "initData",
@@ -365,14 +361,15 @@ export default {
         return;
       }
       let theRepo = this.plugins;
-      this.$search(this.searchString, theRepo, FuseSearchOptions).then(
-        results => {
-          this.setSearchResultPlugins(results);
-        }
-      );
+      const fuse = new Fuse(theRepo, FuseSearchOptions);
+      const results = fuse.search(this.searchString).map((result) => result.item)
+      this.setSearchResultPlugins(results);
     }
   },
   computed: {
+    StringFormatters() {
+      return StringFormatters
+    },
     ...mapState("modal", ["modalOpen"]),
     ...mapState("plugins", [
       "plugins",
@@ -384,10 +381,10 @@ export default {
       "providersDetails"
     ]),
     isModalOpen: {
-      get: function() {
+      get: function () {
         return this.modalOpen;
       },
-      set: function() {
+      set: function () {
         this.closeModal().then(() => {
           return this.modalOpen;
         });
@@ -415,11 +412,11 @@ export default {
     };
   },
   watch: {
-    checkedServiceProviders: function(newVal, oldVal) {
+    checkedServiceProviders(newVal) {
       this.getProvidersInfo(newVal);
     }
   }
-};
+})
 </script>
 
 <style lang="scss" scoped>

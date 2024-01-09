@@ -27,8 +27,8 @@
             <plugin-prop-val :prop="prop" :value="optval"/>
           </span>
           </span>
-          <span v-else-if="value.length>0">
-            <span v-for="optval in value" :key="optval" class="text-success">
+          <span v-else-if="typeof value==='string' && `${value}`.length>0">
+            <span v-for="optval in `${value}`" :key="optval" class="text-success">
             <i class="glyphicon glyphicon-ok-circle" v-if="!(prop.options && prop.options['valueDisplayType'])"></i>
             <plugin-prop-val :prop="prop" :value="optval"/>
           </span>
@@ -38,9 +38,9 @@
       <span v-else class="configpair">
         <template v-if="prop.options && prop.options['displayType']==='CODE'">
           <expandable >
-            <template slot="label"><span :title="prop.desc">{{ prop.title }}:</span> <span class="text-info">{{value.split(/\r?\n/).length}} lines</span></template>
+            <template v-slot:label><span :title="prop.desc">{{ prop.title }}:</span> <span class="text-info">{{`${value}`.split(/\r?\n/).length}} lines</span></template>
              <ace-editor
-              v-model="value"
+              v-model="(value as string)"
               :lang="prop.options['codeSyntaxMode']"
               height="200"
               width="100%"
@@ -50,9 +50,9 @@
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'" >
           <expandable>
-            <template slot="label"><span :title="prop.desc">{{ prop.title }}:</span> <span class="text-info">{{value.split(/\r?\n/).length}} lines</span></template>
+            <template v-slot:label><span :title="prop.desc">{{ prop.title }}:</span> <span class="text-info">{{`${value}`.split(/\r?\n/).length}} lines</span></template>
             <ace-editor
-              v-model="value"
+              v-model="(value as string)"
               height="200"
               width="100%"
               :readOnly="true"
@@ -76,11 +76,11 @@
     </span>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent, PropType} from 'vue'
 import Expandable from '../utils/Expandable.vue'
 import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
-export default Vue.extend({
+export default defineComponent({
   components:{
     Expandable,
     AceEditor,
@@ -88,14 +88,15 @@ export default Vue.extend({
   },
   props:{
     value:{
-      required:true
+      type: [Boolean, String],
+      required: false
     },
     prop:{
       type:Object,required:true
     }
   },
   methods:{
-    getCustomValues(): any{
+    getCustomValues(): any[]{
       if(this.value!==null){
         const data = `${this.value}`
         const json = JSON.parse(data)

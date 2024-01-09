@@ -48,4 +48,6 @@ public interface NodeStepPlugin {
                                    final Map<String, Object> configuration,
                                    final INodeEntry entry)
         throws NodeStepException;
+
+    public default boolean blankIfUnexpanded(){ return true;}
 }

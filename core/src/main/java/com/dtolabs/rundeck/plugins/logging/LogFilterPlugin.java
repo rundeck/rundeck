@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.plugins.logging;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.logging.*;
 
 import java.util.Map;
@@ -47,8 +48,18 @@ public interface LogFilterPlugin {
      * Called when the current step/node output is complete, optional
      *
      * @param context the context for the plugin
+     * @deprecated use {@link #complete(PluginLoggingContext, StatusResult)}
      */
     default void complete(PluginLoggingContext context) {
 
+    }
+    /**
+     * Called when the current step/node output is complete, optional
+     *
+     * @param context the context for the plugin
+     * @param result the status of the step/workflow, may be null if an error occurred
+     */
+    default void complete(PluginLoggingContext context, StatusResult result) {
+        complete(context);
     }
 }

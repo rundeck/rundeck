@@ -1,27 +1,27 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
-import { action, computed, flow, observable } from 'mobx'
 import { ProjectListOKResponseItem, ProjectListResponse } from '@rundeck/client/dist/lib/models'
+import {ref} from "vue";
 
 
 export class ProjectStore {
-    @observable projects: Array<Project> = []
+    projects: Array<Project> = []
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
-    @observable loaded = false
+    loaded = ref<boolean>(false)
 
-    load = flow(function* (this: ProjectStore) {
-        if (this.loaded)
+    load = async () => {
+        if (this.loaded.value)
             return
 
         this.projects = []
-        const resp = (yield this.client.projectList()) as ProjectListResponse
+        const resp = await this.client.projectList() as ProjectListResponse
         resp.forEach(p => {
             this.projects.push(Project.FromApi(p))
         })
-        this.loaded = true
-    })
+        this.loaded.value = true
+    }
 
     search(term: string) {
         const lowerTerm = term.toLowerCase()
@@ -33,9 +33,9 @@ export class ProjectStore {
 
 
 export class Project {
-    @observable name!: string
-    @observable description?: string
-    @observable label?: string
+    name!: string
+    description?: string
+    label?: string
 
     static FromApi(project: ProjectListOKResponseItem): Project  {
         const proj = new Project

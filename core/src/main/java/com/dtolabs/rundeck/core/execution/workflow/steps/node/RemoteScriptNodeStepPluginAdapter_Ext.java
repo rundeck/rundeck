@@ -41,6 +41,11 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
         implements NodeStepPlugin, Configurable, Describable
 {
 
+    @Override
+    public boolean blankIfUnexpanded() {
+        return this.blankIfUnexpanded;
+    }
+
     private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     @Override
@@ -54,8 +59,10 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
     }
 
     private RemoteScriptNodeStepPlugin plugin;
+    private boolean blankIfUnexpanded;
 
-    public RemoteScriptNodeStepPluginAdapter_Ext(final RemoteScriptNodeStepPlugin plugin) {
+    public RemoteScriptNodeStepPluginAdapter_Ext(final RemoteScriptNodeStepPlugin plugin, final boolean blankIfUnexpanded) {
+        this.blankIfUnexpanded = blankIfUnexpanded;
         this.plugin = plugin;
     }
 
@@ -72,7 +79,7 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
     {
         @Override
         public NodeStepPlugin convert(final RemoteScriptNodeStepPlugin plugin) {
-            return new RemoteScriptNodeStepPluginAdapter_Ext(plugin);
+            return new RemoteScriptNodeStepPluginAdapter_Ext(plugin, false);
         }
     }
 

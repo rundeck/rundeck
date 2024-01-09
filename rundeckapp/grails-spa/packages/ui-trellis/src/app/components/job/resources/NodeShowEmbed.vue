@@ -25,7 +25,7 @@
 
     <node-status :node="node"/>
   </a>
-    <template slot="popover">
+    <template v-slot:popover>
       <div class=" detailpopup node_entry tooltipcontent" :class="{server:node.islocal}">
         <div class="node-header">
 
@@ -63,31 +63,42 @@ import NodeIcon from '../../job/resources/NodeIcon.vue'
 import NodeStatus from '../../job/resources/NodeStatus.vue'
 
 import {getRundeckContext} from '../../../../library'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop} from 'vue-property-decorator'
+import {defineComponent} from 'vue'
+import type { PropType } from "vue"
 import {styleForNode} from '../../../utilities/nodeUi'
 
 const rdBase = getRundeckContext().rdBase
 const project = getRundeckContext().projectName
 
-@Component({
-  components: {NodeStatus, NodeIcon, NodeDetailsSimple, NodeFilterLink}
+export default defineComponent({
+  name: 'NodeShowEmbed',
+  components: {
+    NodeStatus,
+    NodeIcon,
+    NodeDetailsSimple,
+    NodeFilterLink,
+  },
+  props: {
+    node: {
+      type: Object as PropType<any>,
+      required: true,
+    },
+    showExcludeFilterLinks: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+  },
+  emits: ['filter'],
+  methods: {
+    styleForNode(node: any) {
+      return styleForNode(node)
+    },
+    filterClick(filter: any) {
+      this.$emit('filter', filter)
+    },
+  }
 })
-export default class NodeShowEmbed extends Vue {
-  @Prop({required: true})
-  node!: Array<any>
-  @Prop({required: false, default: false})
-  showExcludeFilterLinks!: boolean
-
-  styleForNode(node: any) {
-    return styleForNode(node)
-  }
-
-  filterClick(filter: any) {
-    this.$emit('filter', filter)
-  }
-}
 </script>
 <style lang="scss">
 .popover.node-embed-popover {

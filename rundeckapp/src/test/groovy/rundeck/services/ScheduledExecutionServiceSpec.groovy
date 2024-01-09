@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
@@ -42,9 +43,14 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.model.v1.job.JobDataSummary
+import org.rundeck.app.data.model.v1.query.JobQueryInputData
+import org.rundeck.app.data.providers.GormJobQueryProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -61,6 +67,7 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.RdJobDataSummary
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -104,7 +111,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
                                       WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
-
+    def setup(){
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+    }
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
         rundeckJobSchedulesManager.frameworkService = Mock(FrameworkService){
@@ -123,6 +132,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> true
         }
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
     }
 
     def setupDoValidate(boolean enabled=false){
@@ -150,6 +160,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 RundeckJobDefinitionManager.importedJob(it[0],[:])
             }
             validateImportedJob(_)>>new Validator.ReportSet(true,[:])
+        }
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
         }
         TEST_UUID1
     }
@@ -909,6 +922,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.failed
         results.scheduledExecution.errors.hasFieldErrors('workflow')
         results.scheduledExecution.workflow.commands[0].errors.hasFieldErrors(fieldName)
+        results.validation.workflow != null
 
         where:
         cmd                                           | fieldName
@@ -1469,6 +1483,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             validateImportedJob(_)>>new Validator.ReportSet(true,[:])
         }
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         uuid
     }
 
@@ -2943,6 +2961,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -4034,6 +4053,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         assert se.id!=null
         def oldQuartzJob=se.generateJobScheduledName()
         def oldQuartzGroup=se.generateJobGroupName()
+        service.quartzJobSpecifier = new ExecutionJobQuartzJobSpecifier()
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'bob'
@@ -5640,7 +5660,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
                 getProjectGlobals(_) >> [:]
                 getPluginControlService(_) >> pluginControlService
-                getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
+                getNodeStepPluginDescriptions() >> [
+                        DescriptionBuilder.builder().name("test").isHighlighted(false).build(),
+                        DescriptionBuilder.builder().name("test2").isHighlighted(false).build()
+                ]
             }
 
             service.frameworkService = frameworkService
@@ -5885,11 +5908,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         importIntegrationConfigured | exportIntegrationConfigured | hasAccessToKeyOrPassword | hasImportKeys | hasExportKeys
-        true                        | false                       | ["hasAccess": true]      | true          | false
-        false                       | true                        | ["hasAccess": true]      | false         | true
-        true                        | true                        | ["hasAccess": true]      | true          | true
-        false                       | false                       | ["hasAccess": true]      | false         | false
-        true                        | true                        | ["hasAccess": false]     | false         | false
+        true                        | false                       | true      | true          | false
+        false                       | true                        | true      | false         | true
+        true                        | true                        | true      | true          | true
+        false                       | false                       | true      | false         | false
+        true                        | true                        | false     | false         | false
 
     }
 
@@ -5989,6 +6012,57 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         "parallel"       | "parallel"          | false
     }
 
+    def "basicQueryJobs"(){
+        given:
+            service.jobDataProvider=Mock(JobDataProvider)
+            def authContext=Mock(UserAndRolesAuthContext)
+
+            def project = 'test'
+            def path = 'some/path'
+            def queryInput = Mock(JobQueryInputData){
+                getGroupPath()>>path
+            }
+            def params =[:]
+        when:
+            def result=service.basicQueryJobs(project, queryInput, authContext)
+        then:
+            1 * service.jobDataProvider.queryJobs(queryInput)>>new GormJobQueryProvider.GormPage<JobDataSummary>(results:[
+                new RdJobDataSummary(uuid:'1', jobName:'test1', groupPath: path+'/test1', project:project),
+                new RdJobDataSummary(uuid:'2', jobName:'test2', groupPath: path+'/test2/authok', project:project),
+                new RdJobDataSummary(uuid:'3', jobName:'test3', groupPath: path+'/test3/noauth', project:project),
+                new RdJobDataSummary(uuid:'4', jobName:'test4', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'5', jobName:'test5', groupPath: path, project:project),
+                new RdJobDataSummary(uuid:'6', jobName:'test6', groupPath: path+'/test3/other', project:project),
+            ])
+            _ * service.rundeckAuthContextProcessor.authResourceForJob(_,_,_)>>{
+                [
+                    jobName:it[0],
+                    groupPath:it[1],
+                    uuid:it[2],
+                ]
+            }
+            _ * service.rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authContext,
+                _,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                project
+            ) >> {
+                return (it[1].uuid in authorized)
+            }
+
+            result.findAll{it.job}.collect{it.jobData.uuid}==expectedJobs
+            result.findAll{!it.job}.collect{it.groupPath}.sort()==expectedGroups
+        where:
+            authorized                | expectedJobs | expectedGroups
+            ['1', '4']                | ['4']        | ['some/path/test1']
+            ['2', '4']                | ['4']        | ['some/path/test2']
+            ['3', '4']                | ['4']        | ['some/path/test3']
+            ['1', '2', '4']           | ['4']        | ['some/path/test1', 'some/path/test2']
+            ['1', '2', '5']           | ['5']        | ['some/path/test1', 'some/path/test2']
+            ['1', '4', '5']           | ['4', '5']   | ['some/path/test1']
+            ['1', '2', '3', '4', '5'] | ['4', '5']   | ['some/path/test1', 'some/path/test2', 'some/path/test3']
+
+    }
 }
 
 @CompileStatic

@@ -16,42 +16,53 @@
 
 <template>
   <div>
-    <select v-bind:value="value" v-on:input="$emit('input',$event.target.value)" class="form-control">
+    <select v-model="value" class="form-control">
         <option v-for="project in projects" :key="project" v-bind:value="project">{{project}}</option>
     </select>
   </div>
 </template>
 <script lang="ts">
-import { JobReference } from '../../interfaces/JobReference'
-import { JobTree } from '../../types/JobTree'
-import { GroupedJobs, TreeItem } from '../../types/TreeItem'
-import { Job } from '@rundeck/client/dist/lib/models'
-import Vue from 'vue'
-import { Component, Prop, Watch } from 'vue-property-decorator'
+import { defineComponent } from 'vue'
 import { client } from '../../modules/rundeckClient'
 
-
-
-@Component
-export default class ProjectPicker extends Vue {
-  @Prop({ required: false, default: '' })
-  value!: string
-
-  projects: string[] = []
-
-  loadProjects() {
+export default defineComponent({
+  name: 'ProjectPicker',
+  props: {
+    modelValue: {
+      required: false,
+      default: ''
+    }
+  },
+  emits: ['update:modelValue'],
+  data() {
+    return {
+      value: this.modelValue,
+      projects: [] as string[],
+    }
+  },
+  methods: {
+    loadProjects() {
       this.projects.push('')
       client.projectList().then(result => {
-          result.forEach(prj => {
-              if(prj.name) this.projects.push(prj.name)
-          })
+        result.forEach(prj => {
+          if (prj.name) this.projects.push(prj.name)
+        })
       })
-  }
-
+    }
+  },
   mounted() {
     this.loadProjects()
-  }
-}
+  },
+  watch: {
+    value() {
+      this.$emit('update:modelValue', this.value)
+    },
+    modelValue() {
+      this.value = this.modelValue
+    },
+  },
+})
+
 </script>
 <style lang="scss">
 </style>

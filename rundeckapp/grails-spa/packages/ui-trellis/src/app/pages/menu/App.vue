@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import userSummary from './components/userSummary'
+import userSummary from './components/userSummary.vue'
 
 export default {
   name: 'App',

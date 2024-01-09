@@ -1,13 +1,10 @@
-import Vue from 'vue'
-import { addons } from '@storybook/addons'
-
 
 export default {
     title: 'Layouts/Base'
 }
 
-export const base = () => (Vue.extend({
-    render(h) {
+export const base = () => ({
+    render() {
         return (
             <section class="layout-base">
                 <div class="layout-base--header">
@@ -26,10 +23,10 @@ export const base = () => (Vue.extend({
             </section>
         )
     }
-}))
+})
 
-export const baseWithAction = () => (Vue.extend({
-    render(h) {
+export const baseWithAction = () => ({
+    render() {
         return (
             <section class="layout-base">
                 <div class="layout-base--header">
@@ -53,10 +50,10 @@ export const baseWithAction = () => (Vue.extend({
             </section>
         )
     }
-}))
+})
 
-export const baseWithMulitpleAction = () => (Vue.extend({
-    render(h) {
+export const baseWithMultipleAction = () => ({
+    render() {
         return (
             <section class="layout-base">
                 <div class="layout-base--header">
@@ -81,10 +78,10 @@ export const baseWithMulitpleAction = () => (Vue.extend({
             </section>
         )
     }
-}))
+})
 
-export const baseWithBreadcrumbBar = () => (Vue.extend({
-    render(h) {
+export const baseWithBreadcrumbBar = () => ({
+    render() {
         return (
             <div>
                 <section class="breadcrumb-bar">
@@ -121,10 +118,10 @@ export const baseWithBreadcrumbBar = () => (Vue.extend({
             </div>
         )
     }
-}))
+})
 
-export const baseBodyGrid = () => (Vue.extend({
-    render(h) {
+export const baseBodyGrid = () => ({
+    render() {
         return (
             <div>
                 <section class="layout-base">
@@ -203,4 +200,4 @@ export const baseBodyGrid = () => (Vue.extend({
             </div>
         )
     }
-}))
+})

@@ -54,11 +54,6 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_INTERPRETER_ARGS_QUOTED = "argsQuoted";
 
     public static final String CONFIG_FORMAT = "format";
-    public static final PropertyValidator FILE_VALIDATOR = new PropertyValidator() {
-        public boolean isValid(String value) throws ValidationException {
-            return new File(value).isFile();
-        }
-    };
 
     static Description createDescription(final List<String> formats) {
         return DescriptionBuilder.builder()
@@ -78,7 +73,6 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
                           .title("Script File Path")
                           .description("Path to script file to execute")
                           .required(true)
-                          .validator(FILE_VALIDATOR)
                           .build()
             )
             .property(PropertyBuilder.builder()
@@ -131,10 +125,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
             throw new ConfigurationException(CONFIG_FILE + " is required");
         }
         scriptFile = new File(configuration.getProperty(CONFIG_FILE));
-        if (!scriptFile.isFile()) {
-            throw new ConfigurationException(
-                CONFIG_FILE + " does not exist or is not a file: " + scriptFile.getAbsolutePath());
-        }
+
         interpreter = configuration.getProperty(CONFIG_INTERPRETER);
         String args = configuration.getProperty(CONFIG_ARGS);
         if(null != args){
@@ -158,6 +149,13 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
+
+        //validate file exists
+        if (!scriptFile.isFile()) {
+            throw new ResourceModelSourceException(
+                    CONFIG_FILE + " does not exist or is not a file: " + scriptFile.getAbsolutePath());
+        }
+
         try {
             return ScriptResourceUtil.executeScript(scriptFile,
                                                     null,

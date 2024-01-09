@@ -102,11 +102,14 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID.substring(0,8)}"
-                        data-show-id="false"
-                        class="rundeck-server-uuid">
+                  <span class="vue-ui-socket">
+                      <ui-socket
+                              section="server-info-display"
+                              location="main"
+                              socket-data="${enc(attr:[remoteClusterNodeUUID:remoteClusterNodeUUID,showId:false,serverName:remoteClusterNodeUUID.substring(0,8)].encodeAsJSON())}"
+                      >
+                      </ui-socket>
                   </span>
-                  <i class="fas fa-dot-circle cluster-status-icon"></i>
               </g:if>
           </span>
       </g:if>
@@ -133,11 +136,12 @@
               <span class="detail"><g:message code="never" /></span>
           </span>
       </g:elseif>
-    <ui-socket class="vue-ui-socket"
-        section="job-show-job-info"
-        location="badges"
-        socket-data="${g.enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}"
+      <span class="vue-ui-socket">
+        <ui-socket section="job-show-job-info"
+                   location="badges"
+                   :socket-data="${g.enc(attr:[uuid:scheduledExecution.uuid].encodeAsJSON())}"
         ></ui-socket>
+      </span>
   </section>
 
     <section class="section-space">

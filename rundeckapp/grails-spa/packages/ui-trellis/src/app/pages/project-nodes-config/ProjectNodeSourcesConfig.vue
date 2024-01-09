@@ -11,34 +11,36 @@
     :mode-toggle="modeToggle"
     :event-bus="eventBus"
   >
-    <div slot="item-extra" slot-scope="{plugin,mode}">
-      <div
-        v-if="isWriteable(plugin.origIndex) && (showWriteableLinkMode==='any' || showWriteableLinkMode===mode)"
-      >
-        <a :href="editPermalink(plugin.origIndex)" class="btn btn-sm btn-default">
-          <i class="glyphicon glyphicon-pencil"></i>
-          {{$t('Edit Nodes')}}
-        </a>
-      </div>
-      <div class="row row-space" v-if="sourceErrors(plugin.origIndex)">
-        <div class="col-sm-12">
-          <div class="well well-sm">
-            <div class="text-info">{{$t('The Node Source had an error')}}:</div>
-            <span class="text-danger">{{sourceErrors(plugin.origIndex)}}</span>
+    <template v-slot:item-extra="{plugin,mode}">
+      <div>
+        <div
+          v-if="isWriteable(plugin.origIndex) && (showWriteableLinkMode==='any' || showWriteableLinkMode===mode)"
+        >
+          <a :href="editPermalink(plugin.origIndex)" class="btn btn-sm btn-default">
+            <i class="glyphicon glyphicon-pencil"></i>
+            {{$t('Edit Nodes')}}
+          </a>
+        </div>
+        <div class="row row-space" v-if="sourceErrors(plugin.origIndex)">
+          <div class="col-sm-12">
+            <div class="well well-sm">
+              <div class="text-info">{{$t('The Node Source had an error')}}:</div>
+              <span class="text-danger">{{sourceErrors(plugin.origIndex)}}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </project-plugin-config>
 </template>
 <script lang="ts">
-import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "../../../library";
+import { defineComponent, PropType } from "vue";
+import { EventBus, getRundeckContext, RundeckContext } from "../../../library";
 
 import ProjectPluginConfig from "./ProjectPluginConfig.vue";
 import { getProjectNodeSources, NodeSource } from "./nodeSourcesUtil";
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     help: {
       type: String,
@@ -56,8 +58,12 @@ export default Vue.extend({
       type: String,
       default: "show"
     },
-    eventBus: { type: Vue, required: false }
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false,
+    }
   },
+  emits: ['saved','reset','modified'],
   components: {
     ProjectPluginConfig
   },
@@ -111,10 +117,10 @@ export default Vue.extend({
       this.sourcesData.forEach( (source:NodeSource)=>{
         if(source.errors!==undefined &&  (source.errors.indexOf("Unauthorized access") > 0 ||source.errors.indexOf("storage") > 0) ){
           globalErrors.push(source.errors)
-          this.eventBus.$emit('nodes-unauthorized',this.sourcesData.length)
+          this.eventBus.emit('nodes-unauthorized',this.sourcesData.length)
         }else{
           if(globalErrors.length==0){
-            this.eventBus.$emit('nodes-unauthorized',0)
+            this.eventBus.emit('nodes-unauthorized',0)
           }
         }
       })
@@ -127,7 +133,6 @@ export default Vue.extend({
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
-    const self = this;
     if (
       window._rundeck &&
       window._rundeck.rdBase &&

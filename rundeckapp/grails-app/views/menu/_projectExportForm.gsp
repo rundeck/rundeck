@@ -134,7 +134,7 @@
                         </div>
                     </g:set>
                     <g:if test="${projectComponent.exportAuthRequiredActions}">
-                       <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
+                       <auth:resourceAllowed any="true" action="${projectComponent.exportAuthRequiredActions}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
                           ${raw(projectComponentCheckboxTemplate)}
                         </auth:resourceAllowed>
                         <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}" has="false">

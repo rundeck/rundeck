@@ -8,7 +8,7 @@ source $DIR/include.sh
 # now submit req
 runurl="${APIURL}/projects"
 
-echo "TEST: /api/projects "
+echo "TEST: /api/14/projects "
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -19,13 +19,8 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-#Check projects list
-itemcount=$(xmlsel "//projects/@count" $DIR/curl.out)
-if [ "" == "$itemcount" ] ; then
-    errorMsg "Wrong count"
-    exit 2
 
-fi
+assert_json_not_null "length" $DIR/curl.out
 
 echo "OK"
 

@@ -18,18 +18,22 @@
   </Drawer>
 </template>
 
-<script>
+<script lang="ts">
+import { PropType, defineComponent } from 'vue'
 import axios from 'axios'
 // import _ from 'lodash'
 import Drawer from '../../../library/components/containers/drawer/Drawer.vue'
+import {EventBus} from "../../../library";
 
-export default {
+export default defineComponent({
   name: 'MessageOfTheDay',
   components: {Drawer},
-  props: [
-    'eventBus',
-    'tabPage'
-  ],
+  props: {
+    eventBus: { type: Object as PropType<typeof EventBus> },
+    tabPage: { type: String },
+    rdBase: { type: String, required: false },
+    projectName: { type: String, required: false }
+  },
   data () {
     return {
       project:null,
@@ -76,7 +80,7 @@ export default {
   },
   computed: {
     /**
-     * Return true if the html does not start with a <h1/2/3/4/5> tag
+     * Return true if the html does not start with a &lt;h1/2/3/4/5&gt; tag
      * @returns {boolean}
      */
     noTitle () {
@@ -86,7 +90,7 @@ export default {
       return this.message.indexOf("<article class=\"markdown-body\"><h") < 0
     },
     /**
-     * Return true if the html does not start with a <h1/2/3/4/5> tag
+     * Return true if the html does not start with a &lt;h1/2/3/4/5&gt; tag
      * @returns {boolean}
      */
     motdTitle () {
@@ -103,7 +107,7 @@ export default {
       }
     },
     /**
-     * Return 'style' variant if the motd text contains a html comment starting with <!-- style:variant
+     * Return 'style' variant if the motd text contains a html comment starting with &lt;!-- style:variant
      * for the danger, warning, primary, info, success styles
      * @returns {string}
      */
@@ -119,7 +123,7 @@ export default {
       return 'default'
     },
     /**
-     * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
+     * Return 'alert-*' variant if the motd text contains a html comment starting with &lt;!-- style:variant
      * for the danger, warning, primary, info, success styles
      * @returns {string}
      */
@@ -159,17 +163,17 @@ export default {
       this.message = this.project.readme.motdHTML
       this.hasNewMessage = this.checkMessage()
       this.showMessage = this.hasNewMessage && this.checkPage()
-      this.eventBus.$on('motd-indicator-activated', () => {
+      this.eventBus.on('motd-indicator-activated', () => {
         if (!this.showMessage) {
           this.showMessage = true
         } else {
           this.dismissMessage()
         }
       })
-      this.eventBus.$emit('motd-message-available', {hasMessage:!!this.project.readme.motd,hasNewMessage:this.hasNewMessage,style:this.motdStyle,title:this.motdTitle,display:this.project.motdDisplay})
+      this.eventBus.emit('motd-message-available', {hasMessage:!!this.project.readme.motd,hasNewMessage:this.hasNewMessage,style:this.motdStyle,title:this.motdTitle,display:this.project.motdDisplay})
     }
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>

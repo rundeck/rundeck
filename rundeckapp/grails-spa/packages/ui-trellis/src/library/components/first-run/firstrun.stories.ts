@@ -1,5 +1,4 @@
-import Vue from 'vue'
-
+import type {Meta, StoryFn} from "@storybook/vue3";
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import { BrowserFetchHttpClient } from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
@@ -16,10 +15,11 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'First Run'
-}
+    title: 'First Run',
+    component: Firstrun,
+} as Meta<typeof Firstrun>
 
-export const firstRun = () => {
+export const firstRun: StoryFn<typeof Firstrun> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
     const version = new VersionInfo()
     const server = new ServerInfo('xubuntu', 'f1dbb7ed-c575-4154-8d01-216a59d7cb5e')
@@ -29,7 +29,8 @@ export const firstRun = () => {
     version.icon = 'book'
     version.color = 'aquamarine'
 
-    return Vue.extend({
+    window._rundeck.rootStore = rootStore
+    return {
         template: `<Firstrun v-bind="$data"/>`,
         provide: { rootStore },
         components: { Firstrun },
@@ -47,5 +48,5 @@ export const firstRun = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
 }

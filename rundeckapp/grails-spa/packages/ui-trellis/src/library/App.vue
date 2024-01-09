@@ -7,12 +7,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import HelloWorld from './components/HelloWorld.vue';
 import copybox from './components/containers/copybox/CopyBox.vue';
 
 
-export default Vue.extend({
+export default defineComponent({
   name: 'App',
   components: {
     HelloWorld,

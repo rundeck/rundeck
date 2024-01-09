@@ -57,7 +57,7 @@
         </div>
         <div class="omnisearch-results row">
           <ais-hits>
-            <template slot="item" slot-scope="{ item }">
+            <template v-slot:item="item">
               <div class="ais-Hits-item-inner col-sm-4">
                 <div class="card result">
                   <div class="card-header">

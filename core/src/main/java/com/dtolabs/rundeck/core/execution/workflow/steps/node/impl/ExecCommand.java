@@ -35,8 +35,9 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class ExecCommand extends BaseExecutionItem implements ExecCommandExecutionItem {
+    public static final String SERVICE_IMPLEMENTATION_NAME = "exec";
     public String getNodeStepType() {
-        return ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+        return SERVICE_IMPLEMENTATION_NAME;
     }
 
     public String getType() {

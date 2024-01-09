@@ -50,7 +50,7 @@ class WebhookService {
     static final String TOPIC_RECENT_EVENTS = 'webhook:events:recent'
     static final String TOPIC_DEBUG_EVENTS = 'webhook:events:debug'
 
-    WebhookDataProvider webhookDataProvider;
+    WebhookDataProvider webhookDataProvider
 
     @Autowired
     EventStoreService eventStoreService
@@ -118,7 +118,7 @@ class WebhookService {
                 subsystem: "webhooks",
                 topic: "${eventTopic}:${webhook.uuid}"
         ))
-        return queryResult.totalCount;
+        return queryResult.totalCount
     }
 
     @PackageScope
@@ -179,11 +179,11 @@ class WebhookService {
     }
 
     def saveHook(UserAndRolesAuthContext authContext, def hookData) {
-        RdWebhook hook
+        RdWebhook hook = null
         SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
         boolean shouldUpdate = false
         if(saveWebhookRequest.id) {
-            hook = webhookDataProvider.getWebhook(saveWebhookRequest.id)
+            hook = webhookDataProvider.getWebhookByUuid(saveWebhookRequest.uuid)
             if (!hook) return [err: "Webhook not found"]
             if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
@@ -203,7 +203,7 @@ class WebhookService {
         }
         def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(saveWebhookRequest.name, saveWebhookRequest.project, saveWebhookRequest.uuid)
         if( whsFound.size() > 0) {
-            return [err: " A Webhook by that name already exists in this project"]
+            return [err: "A Webhook by that name already exists in this project"]
         }
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
@@ -211,6 +211,8 @@ class WebhookService {
             saveWebhookRequest.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
             saveWebhookRequest.setAuthConfigJson(null)
+        } else if(shouldUpdate && hookData.useAuth == true && hookData.regenAuth == false) {
+            saveWebhookRequest.setAuthConfigJson(hook?.authConfigJson)
         }
 
         if(hookData.enabled != null) saveWebhookRequest.setEnabled(hookData.enabled)
@@ -262,7 +264,7 @@ class WebhookService {
         }
 
         if(saveWebhookResponse.isSaved) {
-            def responsePayload = [msg: "Saved webhook"]
+            def responsePayload = [msg: "Saved webhook", uuid: saveWebhookResponse.webhook.uuid]
             if(generatedSecureString) responsePayload.generatedSecurityString = generatedSecureString
             return responsePayload
         } else {
@@ -330,7 +332,7 @@ class WebhookService {
         try {
             // Deleting all stored debug data for this particular hook from the DB
             deleteWebhookEventsData(hook)
-            webhookDataProvider.delete(hook.id)
+            webhookDataProvider.deleteByUuid(hook.uuid)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
@@ -342,7 +344,11 @@ class WebhookService {
     def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens) {
 
         RdWebhook existing = webhookDataProvider.findByUuidAndProject(hook.uuid, hook.project)
-        if(existing) hook.id = existing.id
+        if(existing) {
+            hook.id = existing.id
+        } else {
+            hook.id = null
+        }
         hook.importData = true
 
         if(!regenAuthTokens && hook.authToken) {
@@ -393,11 +399,11 @@ class WebhookService {
     }
 
     RdWebhook getWebhookByUuid(String uuid) {
-        return webhookDataProvider.getWebhookByUuid(uuid);
+        return webhookDataProvider.getWebhookByUuid(uuid)
     }
 
     RdWebhook getWebhookByToken(String token) {
-        return webhookDataProvider.getWebhookByToken(token);
+        return webhookDataProvider.getWebhookByToken(token)
     }
 
     class Evt extends EventImpl {}

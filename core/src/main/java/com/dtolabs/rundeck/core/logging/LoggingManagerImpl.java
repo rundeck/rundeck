@@ -16,10 +16,7 @@
 
 package com.dtolabs.rundeck.core.logging;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionLogger;
-import com.dtolabs.rundeck.core.execution.HasLoggingFilterConfiguration;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -142,12 +139,14 @@ public class LoggingManagerImpl implements LoggingManager {
         }
 
         @Override
-        public <T> T runWith(final Supplier<T> supplier) {
+        public <T extends StatusResult> T runWith(final Supplier<T> supplier) {
             begin();
+            T result = null;
             try {
-                return supplier.get();
+                result = supplier.get();
+                return result;
             } finally {
-                end();
+                end(result);
             }
         }
 
@@ -162,10 +161,10 @@ public class LoggingManagerImpl implements LoggingManager {
 
 
         @Override
-        public void end() {
+        public void end(StatusResult result) {
             if (pluginsAdded) {
                 writer.removeOverride();
-                pluginFilteredStreamingLogWriter.close();
+                pluginFilteredStreamingLogWriter.finish(result);
             }else{
                 writer.removeOverride();
             }

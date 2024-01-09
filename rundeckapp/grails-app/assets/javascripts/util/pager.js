@@ -109,7 +109,7 @@ function PagerVueAdapter(pager, name) {
     self.pager = pager;
 
     self.emitVuePagingEvent = function(pages) {
-        window._rundeck.eventBus.$emit('ko-pagination', {
+        window._rundeck.eventBus.emit('ko-pagination', {
             name: self.name,
             pager: self.pager
         })

@@ -23,9 +23,7 @@
     "postcss": "^8.2.12",
     "run-script-os": "^1.1.1",
     "typescript": "^4.2.4",
-    "vue-class-component": "^7.2.6",
-    "vue-loader": "^15.9.6",
-    "vue-template-compiler": "^2.6.12"
+    "vue-loader": "^16.4.1"
   },
   "dependencies": {
     "bootstrap": "3.4.1",
@@ -38,9 +36,8 @@
     "knockout": "3.5.1",
     "knockout-mapping": "2.6.0",
     "perfect-scrollbar": "1.5.0",
-    "vue": "2.6.14",
-    "vue-property-decorator": "^9.1.2",
-    "vuex": "^3.6.2"
+    "vue": "3.3.2",
+    "vuex": "^4.1.0"
   },
   "overrides": {
     "selfsigned": {

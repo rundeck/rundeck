@@ -1,18 +1,18 @@
-import Vue from 'vue'
+import type {Meta, StoryFn} from '@storybook/vue3'
 
 import UtilityBar from './UtilityBar.vue'
 import RundeckInfo from '../widgets/rundeck-info/RundeckInfo.vue'
-
 import {RootStore} from '../../stores/RootStore'
-
-import { UtilityBarItem } from 'src/library/stores/UtilityBar'
+import {UtilityBarItem} from "../../stores/UtilityBar";
 import { ServerInfo, VersionInfo } from '../../stores/System'
+import {markRaw} from "vue";
 
 export default {
-    title: 'Utility Bar'
-}
+    title: 'Utility Bar',
+    component: UtilityBar,
+} as Meta<typeof UtilityBar>
 
-export const navBar = () => {
+export const navBar: StoryFn<typeof UtilityBar> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
     const server = new ServerInfo('xubuntu', 'f1dbb7ed-c575-4154-8d01-216a59d7cb5e')
 
@@ -32,7 +32,7 @@ export const navBar = () => {
             "class": "rdicon app-logo",
             "label": "ENTERPRISE 3.4.0",
             "visible": true,
-            "widget": RundeckInfo.extend({
+            "widget": markRaw({
                 props: {
                     version: {
                         default: version
@@ -40,7 +40,11 @@ export const navBar = () => {
                     server: {
                         default: server
                     }
-                }
+                },
+                components: {
+                    RundeckInfo,
+                },
+                template: '<RundeckInfo app-info="" :server="server" latest="" :version="version"></RundeckInfo>'
             })
         },
         {
@@ -75,7 +79,8 @@ export const navBar = () => {
         }
     ] as Array<UtilityBarItem>)
 
-    return Vue.extend({
+    window._rundeck.rootStore = rootStore
+    return {
         components: { UtilityBar },
         template: '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
         mounted: function() {
@@ -88,10 +93,10 @@ export const navBar = () => {
         provide: () => ({
             rootStore: rootStore,
         })
-    })
+    }
 }
 
-export const widgetCounter = () => {
+export const widgetCounter: StoryFn<typeof UtilityBar> = (args) => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
     rootStore.utilityBar.addItems([
@@ -109,7 +114,10 @@ export const widgetCounter = () => {
 
     const item = rootStore.utilityBar.getItem('utility-instance')
 
-    return Vue.extend({
+    return {
+        setup() {
+            return { ...args }
+        },
         components: { UtilityBar },
         template: '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
         mounted: function() {
@@ -122,13 +130,13 @@ export const widgetCounter = () => {
         provide: () => ({
             rootStore: rootStore,
         }),
-        props: {
-            count: {default:  5}
-        },
         watch: {
             count(newVal, oldVal) {
                 item.count = newVal
             }
         }
-    })
+    }
+}
+widgetCounter.args = {
+    count: 5,
 }

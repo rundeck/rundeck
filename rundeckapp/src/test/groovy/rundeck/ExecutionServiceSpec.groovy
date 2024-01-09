@@ -1,6 +1,6 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -70,13 +70,13 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.sql.Time
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
@@ -2927,7 +2927,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
 
@@ -4107,7 +4107,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -4185,7 +4185,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Map secureOptsExposed = [:]
         Map secureOpts = [:]
         def authContext = Mock(AuthContext)
-        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        Map<String, String> args = OptionsParserUtil.parseOptsFromString(job.argString)
         service.storageService = Mock(StorageService)
 
         def jobcontext = [:]
@@ -6078,22 +6078,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "metrics data from criteria result"(){
         given:
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             def critresult=[
                 count:3,
-                durationMax: new Time(0,9,0),
-                durationMin: new Time(0,2,0),
-                durationSum: new Time(0,15,0),
+                durationMax: new Long(1L),
+                durationMin: new Long(2L),
+                durationSum: new Long(3L),
             ]
         when:
             def result = service.metricsDataFromCriteriaResult(critresult)
         then:
-            result.total == 3
-            result.duration.average == 5L * 60L * 1000L
-            result.duration.min == 2L * 60L * 1000L
-            result.duration.max == 9L * 60L * 1000L
-
-
+        result.total == 3
+        result.duration.average == 1000L
+        result.duration.min == 2000L
+        result.duration.max == 1000L
     }
+
     def "metrics data from projection result"(){
         given:
             Date now = new Date()

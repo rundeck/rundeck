@@ -10,6 +10,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String options
     String filter
     String id
+    String uuid
     String retryOriginalId
     String retryPrevId
     String retryNextId
@@ -29,6 +30,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String toString() {
         return "ExecutionReference{" +
                 "id='" + id + '\'' +
+                "uuid='" + uuid + '\'' +
                 ", status='" + status + '\'' +
                 ", filter='" + filter + '\'' +
                 ", options='" + options + '\'' +

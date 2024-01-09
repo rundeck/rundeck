@@ -27,9 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
@@ -54,7 +52,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -73,6 +70,7 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.rundeck.core.projects.ProjectPluginListConfigurable
+import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
@@ -97,16 +95,12 @@ import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import rundeck.User
-import rundeck.NodeFilter
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
@@ -147,7 +141,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    FeatureService featureService
 
     // the delete, save and update actions only
     // accept POST requests
@@ -155,9 +148,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         apiSourceWriteContent    : 'POST',
         apiSystemAcls            : ['GET', 'PUT', 'POST', 'DELETE'],
         createProjectPost        : 'POST',
-        deleteNodeFilter         : 'POST',
         saveProject              : 'POST',
-        storeNodeFilter          : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
         saveProjectPluginsAjax   : 'POST',
@@ -202,17 +193,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.filterName=='.*'){
             query.filter='.*'
             usedFilter='.*'
-        }else if (params.filterName) {
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    query = query2
-                    params.filter=query.asFilter()
-                    usedFilter = params.filterName
-                }
-            }
         } else if (!query.filter && prefs['nodes']) {
             return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
@@ -298,27 +278,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (params.exec) {
             runCommand = params.exec
         }
-        def usedFilter = null
-        if (params.filterName) {
-            RdUser u = userService.findOrCreateUser(session.user)
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    //XXX: node query doesn't use pagination, as it is not an actual DB query
-                    query = query2
-                    def props = query.properties
-                    params.putAll(props)
-                    usedFilter = params.filterName
-                }
-            }
-        }
-
-        if (params['Clear']) {
-            query = new ExtNodeFilters()
-            usedFilter = null
-        }
 
         query.project = params.project
         def result
@@ -330,9 +289,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def model = result//[query: query, params: params]
 
-        if (usedFilter) {
-            model['filterName'] = usedFilter
-        }
         return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()]
     }
 
@@ -533,14 +489,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (filterpref['nodes']) {
             defaultFilter = filterpref['nodes']
         }
-        def filters=[]
-        //load a named filter and create a query from it
-        if (u) {
-            def filterResults = NodeFilter.findAllByUserAndProject(User.get(u.getId()), project, [sort: 'name', order: 'desc'])
-            filters = filterResults.collect {
-                [name: it.name, filter: it.asFilter(), project: project]
-            }
-        }
 
         def fwkproject = frameworkService.getFrameworkProject(project)
         INodeSet nodes1 = fwkproject.getNodeSet()
@@ -549,7 +497,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         tagsummary = tagsummary.keySet().sort().collect{
             [tag:it,count:tagsummary[it]]
         }
-        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,filters:filters,defaultFilter:defaultFilter] as JSON)
+        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,defaultFilter:defaultFilter] as JSON)
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
@@ -572,36 +520,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         RdUser u = userService.findOrCreateUser(session.user)
-        def usedFilter = null
-        def usedFilterExclude = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if (filterpref['nodes']) {
                 params.filterName = filterpref['nodes']
-            }
-        }
-        if (params.filterName) {
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    query2.excludeFilterUncheck = query.excludeFilterUncheck
-                    //XXX: node query doesn't use pagination, as it is not an actual DB query
-                    query = query2
-                    usedFilter = params.filterName
-                }
-            }
-        }
-        if (params.filterExcludeName) {
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, User.get(u.getId()))
-                if (filter) {
-                    def queryExclude = filter.createExtNodeFilters()
-                    query.filterExclude = queryExclude.filter
-                    query.filterExcludeName = null
-                    usedFilterExclude = params.filterExcludeName
-                }
             }
         }
 
@@ -620,12 +542,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         query.project = params.project
         def result = nodesdata(query)
         result.colkeys = filterSummaryKeys(query)
-        if (usedFilter) {
-            result['filterName'] = usedFilter
-        }
-        if (usedFilterExclude) {
-            result['filterExcludeName'] = usedFilterExclude
-        }
+
         if (!result.nodesvalid) {
             request.error = "Error parsing file \"${result.nodesfile}\": " + result.nodeserror ? result.nodeserror*.message?.
                     join("\n") : 'no message'
@@ -689,103 +606,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         }
                 ]) as JSON)
             }
-            xml{
-                return render (result as XML)
+            if (isAllowXml()) {
+                xml {
+                    return render(result as XML)
+                }
             }
         }
     }
 
-    def storeNodeFilter(ExtNodeFilters query, StoreFilterCommand storeFilterCommand) {
-        if (query.hasErrors()) {
-            request.errors = query.errors
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorView([:])
-        }
-        if (storeFilterCommand.hasErrors()) {
-            request.errors = storeFilterCommand.errors
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorView([:])
-        }
-        withForm{
-        g.refreshFormTokensHeader()
-        RdUser u = userService.findOrCreateUser(session.user)
-        def NodeFilter filter
-        def boolean saveuser=false
-        if(params.newFilterName){
-            def ofilter = NodeFilter.findByNameAndUser(params.newFilterName, User.get(u.getId()))
-            if(ofilter){
-                ofilter.properties = query.properties
-                filter=ofilter
-            }else{
-                filter= new NodeFilter(query.properties)
-                filter.name=params.newFilterName
-                filter.user=u
-                saveuser=true
-            }
-        }else if(!params.newFilterName){
-            flash.error="Filter name not specified"
-            params.saveFilter=true
-            return chain(controller:'framework',action:'nodes',params:params)
-        }
-        if(!filter.save(flush:true)){
-            flash.error=filter.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            params.saveFilter=true
-            return chain(controller:'framework',action:'nodes',params:params)
-        }
-        if(saveuser){
-            User user = User.get(u.getId())
-            user.addToNodefilters(filter)
-            if(!user.save(flush: true)){
-//                u.errors.allErrors.each { log.error(g.message(error:it)) }
-//                flash.error="Unable to save filter for user"
-                return renderErrorView(user.errors.allErrors.collect { g.message(error: it) }.join("\n"))
-            }
-        }
-        if(params.isJobEdit){
-            return render(contentType: 'application/json'){
-                success true
-            }
-        }
-
-        redirect(controller:'framework',action:'nodes',params:[filterName:filter.name,project:params.project])
-        }.invalidToken{
-            response.status=HttpServletResponse.SC_BAD_REQUEST
-            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
-        }
-    }
-    def deleteNodeFilter={
-        withForm{
-            RdUser u = userService.findOrCreateUser(session.user)
-            def filtername=params.delFilterName
-            final def ffilter = NodeFilter.findByNameAndUser(filtername, User.get(u.getId()))
-            if(ffilter){
-                ffilter.delete(flush:true)
-            }
-            redirect(controller:'framework',action:'nodes',params:[project: params.project])
-        }.invalidToken{
-            request.error=g.message(code:'request.error.invalidtoken.message')
-            renderErrorView([:])
-        }
-    }
-
-    def deleteNodeFilterAjax(String project, String filtername){
-        withForm{
-            g.refreshFormTokensHeader()
-            RdUser u = userService.findOrCreateUser(session.user)
-            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, User.get(u.getId()), project)
-            if(ffilter){
-                ffilter.delete(flush:true)
-            }
-            render(contentType: 'application/json'){
-                success true
-            }
-        }.invalidToken{
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'request.error.invalidtoken.message',
-            ])
-        }
-    }
 
     /**
      * Handles POST when creating a new project
@@ -2885,7 +2713,7 @@ Since: v23''',
                 }
             ),
 
-            [formats: ['json', 'xml']]
+            [formats: responseFormats]
         )
     }
 
@@ -3073,7 +2901,7 @@ Since: v23''',
                     }
                 }
             }
-        } catch (IOException exc){
+        } catch (IOException | StorageException exc){
             log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
@@ -3236,7 +3064,7 @@ Since: v23''',
                 errors: errors,
                 resources: sourceContent
             ),
-            [formats: ['json', 'xml']]
+            [formats: responseFormats]
         )
     }
 
@@ -3351,27 +3179,27 @@ Since: v14''',
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(!params.name){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['name']])
         }
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 AuthConstants.ACTION_READ, params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
@@ -3940,7 +3768,7 @@ by:
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -4065,12 +3893,16 @@ by:
                 def j={
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderXmlAclpolicyValidation(validation,delegate)
+
+                json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderXmlAclpolicyValidation(validation, delegate)
+                        }
                     }
                 }
-                json j
                 '*' j
             }
         }
@@ -4087,17 +3919,21 @@ by:
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, baos)
             withFormat{
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
-                    }
 
-                }
                 def j={
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
                 json j
+
+                if (isAllowXml()) {
+                    xml {
+                        render(contentType: 'application/xml') {
+                            apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                        }
+
+                    }
+                }
                 '*' j
             }
         }
@@ -4126,13 +3962,17 @@ by:
                         def content = [contents:baos.toString()]
                         render content as JSON
                     }
-                    xml{
-                        render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat, delegate)
-                        }
-
-                    }
                     json j
+
+                    if(isAllowXml()) {
+                        xml {
+                            render(contentType: 'application/xml') {
+                                apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
+                            }
+
+                        }
+                    }
+
                     '*' j
                 }
             }
@@ -4159,18 +3999,6 @@ by:
         //list aclpolicy files in the dir
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
         withFormat{
-            xml{
-                render(contentType: 'application/xml'){
-                    apiService.xmlRenderDirList(
-                            '',
-                            { String p -> p },
-                            { String p -> renderAclHref(p) },
-                            list,
-                            delegate
-                    )
-                }
-
-            }
             def j ={
                 render apiService.jsonRenderDirlist(
                             '',
@@ -4180,6 +4008,21 @@ by:
                     ) as JSON
             }
             json j
+
+            if (isAllowXml()) {
+                xml {
+                    render(contentType: 'application/xml') {
+                        apiService.xmlRenderDirList(
+                                '',
+                                { String p -> p },
+                                { String p -> renderAclHref(p) },
+                                list,
+                                delegate
+                        )
+                    }
+
+                }
+            }
             '*' j
         }
     }

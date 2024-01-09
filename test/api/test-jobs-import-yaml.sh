@@ -51,13 +51,13 @@ fi
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
-succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
-skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
+failedcount=$(jq -r ".failed| length" $DIR/curl.out)
+succount=$(jq -r ".succeeded| length" $DIR/curl.out)
+skipcount=$(jq -r ".skipped| length" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
-    echo $($XMLSTARLET sel -T -t -m "//failed" -v "job/error" $DIR/curl.out)
+    echo $(jq  ".failed"  $DIR/curl.out)
     exit 2
 else
     echo "OK"
@@ -83,9 +83,9 @@ fi
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
-succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
-skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
+failedcount=$(jq -r ".failed| length" $DIR/curl.out)
+succount=$(jq -r ".succeeded| length" $DIR/curl.out)
+skipcount=$(jq -r ".skipped| length" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."

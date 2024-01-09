@@ -1,6 +1,10 @@
 const Path = require('path')
 const webpack = require('webpack')
 
+const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`
+
+process.env.VUE_APP_BUILD_COPYRIGHT = BUILD_COPYRIGHT
+
 module.exports = {
   pages: {
     'components/central':                     { entry: './src/app/components/central/main.ts'},
@@ -15,7 +19,8 @@ module.exports = {
     'components/theme':                       { entry: './src/app/components/theme/main.ts'},
     'components/tour':                        { entry: './src/app/components/tour/main.js'},
     'components/version':                     { entry: './src/app/components/version/main.js'},
-    'components/server-identity':             { entry: './src/app/components/server-identity/serverIdentity.js'},
+    'components/server-identity':             { entry: './src/app/components/server-identity/serverIdentity.ts'},
+    'components/readme-motd':                 { entry: './src/app/components/readme-motd/main.ts'},
     'pages/storage':                          { entry: './src/app/pages/storage/main.ts'},
     'pages/login':                            { entry: './src/app/pages/login/main.ts'},
     'pages/project-dashboard':                { entry: './src/app/pages/project-dashboard/main.js'},
@@ -28,9 +33,12 @@ module.exports = {
     'pages/project-config':                   { entry: './src/app/pages/project-config/main.js'},
     'pages/execution-show':                   { entry: './src/app/pages/execution-show/main.js'},
     'pages/webhooks':                         { entry: './src/app/pages/webhooks/main.js'},
-    'pages/user-summary':                     {entry: './src/app/pages/menu/main.js'},
-    'pages/dynamic-form':                     {entry: './src/app/pages/dynamic-form/main.js'},
-    'pages/job/editor':                       {entry: './src/app/pages/job/editor/main.js'},
+    'pages/user-summary':                     { entry: './src/app/pages/menu/main.js'},
+    'pages/dynamic-form':                     { entry: './src/app/pages/dynamic-form/main.js'},
+    'pages/job/editor':                       { entry: './src/app/pages/job/editor/main.js'},
+    'pages/nodes':                            { entry: './src/app/pages/nodes/main.ts'},
+    'pages/job/browse':                       { entry: './src/app/pages/job/browse/main.ts'},
+    'pages/home':                             { entry: './src/app/pages/home/main.ts'},
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
@@ -42,7 +50,7 @@ module.exports = {
     /** Workaround for Vue CLI accounting for nested page paths
      * https://github.com/vuejs/vue-cli/issues/4378
     */
-    extract: process.env.VUE_APP_CSS_EXTRACT == 'true' ? {
+    extract: process.env.VUE_APP_CSS_EXTRACT === 'true' ? {
       filename: '/css/[name].css',
       chunkFilename: '/css/[name].css',
     } : false
@@ -94,5 +102,6 @@ module.exports = {
         include: [/\.css$/]
       })
     ]
-  }
+  },
+  transpileDependencies: ['uiv']
 };

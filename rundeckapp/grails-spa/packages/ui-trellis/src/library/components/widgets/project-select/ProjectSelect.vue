@@ -12,13 +12,13 @@
                         placeholder="Search all projects"/>
                 </div>
             </div>
-            <Skeleton :loading="!projects.loaded">
+            <Skeleton :loading="!projectStore.loaded">
                 <RecycleScroller
                     ref="scroller"
-                    :items="projects.search(searchTerm)"
+                    :items="projectStore.search(searchTerm)"
                     :item-size="25"
-                    :key="projects.search(searchTerm).length"
-                    v-slot="{ item }"
+                    :key="projectStore.search(searchTerm).length"
+                    v-slot:default="{ item }"
                     key-field="name"
                     class="scroller"
                 >
@@ -41,81 +41,73 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import {Component, Inject} from 'vue-property-decorator'
-import { autorun } from 'mobx'
-import {Observer} from 'mobx-vue'
+import { ref, nextTick, defineComponent} from 'vue'
 import PerfectScrollbar from 'perfect-scrollbar'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
-import { getAppLinks } from '../../../rundeckService'
-import {RootStore} from '../../../stores/RootStore'
-import { ProjectStore, Project } from '../../../stores/Projects'
+import {getAppLinks} from '../../../rundeckService'
 import Skeleton from '../../skeleton/Skeleton.vue'
 import {url} from '../../../rundeckService'
+import {Project} from "../../../stores/Projects";
 
+const ps = ref<PerfectScrollbar>()
 RecycleScroller.updated = function() {
-    if (!this.ps)
-        this.$nextTick().then(() => {this.ps = new PerfectScrollbar(this.$el, {minScrollbarLength: 20})})
+    if (!ps.value)
+        nextTick().then(() => {ps.value = new PerfectScrollbar(this.$el, {minScrollbarLength: 20})})
     else
-        this.ps.update()
+        ps.value.update()
 }
 
-const destroy = RecycleScroller.beforeDestroy
-RecycleScroller.beforeDestroy = function() {
-    destroy.bind(this)()
-    if (this.ps) {
+const unmount = RecycleScroller.beforeUnmount
+RecycleScroller.beforeUnmount = function() {
+    unmount.bind(this)()
+    if (ps.value) {
         try {
-            this.ps.destroy()
-            this.ps = null
+            ps.value.destroy()
+            ps.value = null
         } catch {}
     }
 }
 
-@Observer
-@Component({components: {
-    RecycleScroller,
-    Skeleton
-}})
-export default class ProjectSelect extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    projects!: ProjectStore
-
-    ps!: PerfectScrollbar
-
-    searchTerm: string = ''
-
-    get allProjectsLink(): string {
-        return getAppLinks().menuHome
-    }
-    get createProjectLink() {
-        return url('resources/createProject')
-    }
-    itemHref(project:any){
-        return url(`?project=${project.name}`).href
-    }
-
-    created() {
-        this.projects = this.rootStore.projects
-        this.projects.load()
-    }
-
-    mounted() {
-        autorun(() => {
-            if (this.projects.projects.length) {
-                /** May be necessary for virtual scroller to update */
-                this.$forceUpdate()
-            }
-        })
-        this.$nextTick().then(() => {
-            (<HTMLElement>this.$refs['search']).focus()
-        })
-    }
-
-}
+export default defineComponent({
+  name:"ProjectSelect",
+  components: {
+    Skeleton,
+    RecycleScroller
+  },
+  data() {
+      return {
+          projectStore : window._rundeck.rootStore.projects,
+          searchTerm : ''
+      }
+  },
+  computed: {
+      allProjectsLink() {
+          return getAppLinks().menuHome
+      },
+      createProjectLink() {
+          return url('resources/createProject').href
+      }
+  },
+  methods: {
+      itemHref(project: Project){
+          return url(`?project=${project.name}`).href
+      }
+  },
+  beforeMount() {
+      this.projectStore.load()
+  },
+  mounted() {
+      if (this.projectStore.projects.length) {
+          /** May be necessary for virtual scroller to update */
+          this.proxy?.$forceUpdate()
+      }
+      nextTick().then(() => {
+          (<HTMLElement>this.$refs['search']).focus()
+      })
+  }
+})
 </script>
 
 <style scoped lang="scss">

@@ -1,12 +1,18 @@
 <template>
-    <span :class="css">{{date | moment(format)}}</span>
+    <span :class="css">{{formattedDate}}</span>
 </template>
 <script lang="ts">
 
-import Vue from 'vue'
+import {defineComponent} from 'vue'
+import {formatDate} from "../../utilities/DateTimeFormatters";
 
-export default Vue.extend({
-
+export default defineComponent({
+  name:"VersionDateDisplay",
+  computed: {
+    formattedDate() {
+        return formatDate(this.date, this.format)
+    }
+  },
   props: {
     format: {
       type: String, required: false, default:'YYYY-MM-DD'
@@ -17,6 +23,6 @@ export default Vue.extend({
     date: {
       type: String, required: true
     },
-  }
+  },
 })
 </script>

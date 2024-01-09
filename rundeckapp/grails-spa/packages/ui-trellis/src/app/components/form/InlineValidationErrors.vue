@@ -1,20 +1,23 @@
 <template>
   <div class="text-warning" v-if="errors  && errors.length>0">
     <ul>
-      <ol v-for="err in errors">{{ err }}</ol>
+      <li v-for="err in errors">{{ err }}</li>
     </ul>
     <i class="glyphicon glyphicon-warning-sign"></i>
   </div>
 </template>
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop} from 'vue-property-decorator'
+import { defineComponent } from 'vue'
+import type { PropType } from 'vue'
 
-@Component
-export default class InlineValidationErrors extends Vue {
-  @Prop({required: true})
-  errors!: Array<string>
-}
+export default defineComponent({
+  name: 'InlineValidationErrors',
+  props: {
+    errors: {
+      type: Array as PropType<string[]>,
+      required: true,
+    }
+  }
+})
 </script>

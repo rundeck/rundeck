@@ -111,7 +111,7 @@ public class ExecutionServiceImpl implements ExecutionService {
                 result = executor.executeWorkflowStep(context, item);
             } finally {
                 if (null != pluginLogging) {
-                    pluginLogging.end();
+                    pluginLogging.end(result);
                 }
             }
         } finally {
@@ -207,7 +207,7 @@ public class ExecutionServiceImpl implements ExecutionService {
                 result = interpreter.executeNodeStep(nodeContext, item, node);
             } finally {
                 if (null != pluginLogging) {
-                    pluginLogging.end();
+                    pluginLogging.end(result);
                 }
             }
             if (!result.isSuccess()) {

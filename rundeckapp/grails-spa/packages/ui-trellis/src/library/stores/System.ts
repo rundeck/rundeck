@@ -1,18 +1,17 @@
-import { action, computed, observable } from 'mobx'
-
 import {RundeckClient} from '@rundeck/client'
 
 import { RundeckVersion } from '../utilities/RundeckVersion'
 import { Serial } from '../utilities/Async'
 
 import {RootStore} from './RootStore'
+import {ref} from "vue";
 
 export class SystemStore {
-    @observable versionInfo: VersionInfo
-    @observable serverInfo?: ServerInfo
-    @observable appInfo: AppInfo
+    versionInfo: VersionInfo
+    serverInfo?: ServerInfo
+    appInfo: AppInfo
 
-    @observable loaded = false
+    loaded = false
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         this.versionInfo = new VersionInfo()
@@ -53,14 +52,14 @@ export class AppInfo {
 }
 
 export class VersionInfo {
-    @observable full!: string
-    @observable number!: string
-    @observable tag!: string
-    @observable name!: string
-    @observable color!: string
-    @observable date!: Date
-    @observable icon!: string
-    @observable edition = 'Community'
+    full!: string
+    number!: string
+    tag!: string
+    name!: string
+    color!: string
+    date!: Date
+    icon!: string
+    edition = 'Community'
 
     constructor() {}
 

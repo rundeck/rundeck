@@ -1,12 +1,12 @@
 <template>
   <div class="card splash-screen">
-    <div class="row">
+    <div class="row" v-if="loaded">
       <div class="col-md-9 mb-6">
           <div v-if="system.loaded" class="splash-screen--title">
             <RundeckVersion :title="system.appInfo.title" :number="system.versionInfo.number" :tag="system.versionInfo.tag" :logocss="system.appInfo.logocss"/>
           </div>
           <div class="splash-screen--linkitems">
-            <div v-if="system.appInfo.title != 'Rundeck' ">
+            <div v-if="system.appInfo.title !== 'Rundeck'">
               <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>  
             </div>
             <div v-else>
@@ -41,48 +41,47 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Observer } from 'mobx-vue'
-import {Component, Prop, Inject} from 'vue-property-decorator'
+import {defineComponent, ref} from 'vue'
 
-import { ServerInfo, SystemStore } from '../../stores/System'
-import { getAppLinks }             from  '../../rundeckService'
-import { AppLinks }                from  '../../interfaces/AppLinks'
-import { RootStore }               from  '../../stores/RootStore'
+import { SystemStore } from '../../stores/System'
+import {getAppLinks, getRundeckContext} from '../../rundeckService'
+import { AppLinks } from  '../../interfaces/AppLinks'
 
-import RundeckVersion              from  '../version/RundeckVersionDisplay.vue'
+import RundeckVersion from  '../version/RundeckVersionDisplay.vue'
 
+export default defineComponent({
+  name: 'FirstRun',
+  components: {
+    RundeckVersion,
+  },
+  setup() {
+    const links = ref<AppLinks>()
+    const loaded = ref<boolean>(false)
 
-@Observer
-@Component({components: {
-    RundeckVersion
-}})
-export default class FirstRun extends Vue {
-    @Inject()
-    rootStore!: RootStore
+    const system = ref<SystemStore>()
 
-    @Prop()
-    server!: ServerInfo
-    
-    links!: AppLinks
-    loaded = false
-
-    system!: SystemStore
-
-    async created() {
-      this.system = this.rootStore.system
-      this.links = getAppLinks()
-
-      try {
-        await Promise.all([
-          this.rootStore.system.load(),
-          this.rootStore.releases.load()
-        ])
-      } catch(e) {}
-      this.loaded = true
+    return {
+      links,
+      loaded,
+      system,
     }
+  },
+  async mounted() {
+    const rootStore = getRundeckContext().rootStore
+    this.system = rootStore.system
+    this.links = getAppLinks()
+
+    try {
+      await Promise.all([
+        this.system.value.load(),
+        rootStore.releases.load()
+      ])
+    } catch(e) {}
+    this.loaded = true
+  }
+})
  
-}
+
 </script>
 
 <style lang="scss" scoped>

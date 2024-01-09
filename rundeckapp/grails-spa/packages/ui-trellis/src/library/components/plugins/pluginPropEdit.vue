@@ -58,7 +58,7 @@
 
       <input  type="hidden" :id="rkey" :name="prop.name">
 
-      <dynamic-form-plugin-prop :id="rkey" :fields="value" v-model="currentValue"
+      <dynamic-form-plugin-prop :id="rkey" :fields="modelValue" v-model="currentValue"
            :hasOptions="hasAllowedValues()"
            :options="parseAllowedValues()"
            :element="rkey" :name="prop.name"></dynamic-form-plugin-prop>
@@ -307,7 +307,7 @@
         <select v-model="currentValue" class="form-control input-sm">
           <option disabled value>-- Select Plugin Type --</option>
           <option
-            v-for="opt in propsComputedSelectorData[prop.name]"
+            v-for="opt in selectorDataForName"
             v-bind:value="opt.value"
             v-bind:key="opt.key"
           >{{opt.key}}</option>
@@ -317,10 +317,20 @@
         <job-config-picker v-model="currentValue" :btnClass="`btn-primary`"></job-config-picker>
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
-        <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                              :allow-upload="true"
-                              :value="keyPath"
-                              :read-only="renderReadOnly"/>
+        <div v-if="useRunnerSelector===true">
+          <ui-socket section="plugin-runner-key-selector" location="nodes" :event-bus="eventBus" :socket-data="{storageFilter: prop.options['storage-file-meta-filter'], allowUpload: true, readOnly: renderReadOnly, value: currentValue, handleUpdate: (val)=>this.currentValue=val}">
+            <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                  :allow-upload="true"
+                                  :value="keyPath"
+                                  :read-only="renderReadOnly"/>
+          </ui-socket>
+        </div>
+        <div v-else>
+          <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                                :allow-upload="true"
+                                :value="keyPath"
+                                :read-only="renderReadOnly"/>
+        </div>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -340,7 +350,7 @@
               <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
           </summary>
 
-          <markdown-it-vue class="markdown-body" :content="extraDescription" />
+          <VMarkdownView class="markdown-body" :content="extraDescription" mode="" />
 
       </details>
       <div class="help-block" v-else>{{prop.desc}}</div>
@@ -352,10 +362,8 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from "vue"
-import MarkdownItVue from 'markdown-it-vue'
-// import 'markdown-it-vue/dist/markdown-it-vue.css'
-import { Typeahead } from 'uiv';
+import {defineComponent} from "vue"
+import {VMarkdownView} from "vue3-markdown"
 
 import JobConfigPicker from './JobConfigPicker.vue'
 import KeyStorageSelector from './KeyStorageSelector.vue'
@@ -365,20 +373,36 @@ import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import TextAutocomplete from '../utils/TextAutocomplete.vue'
+import type {PropType} from "vue";
+import { getRundeckContext } from "../../rundeckService";
+import {EventBus} from "@/library";
+import UiSocket from "../utils/UiSocket.vue";
+interface Prop {
+  type: string
+  defaultValue: any
+  title: string
+  required: boolean
+  options: any
+  allowed: string
+  name: string
+  desc: string
+  staticTextDefaultValue: string
+}
 
-export default Vue.extend({
+export default defineComponent({
   components:{
     DynamicFormPluginProp,
     AceEditor,
     JobConfigPicker,
-    MarkdownItVue,
+    VMarkdownView,
     PluginPropVal,
     KeyStorageSelector,
-    TextAutocomplete
+    TextAutocomplete,
+    UiSocket
   },
   props:{
     'prop':{
-      type:Object,
+      type:Object as PropType<Prop>,
       required:true
      },
     'readOnly':{
@@ -386,18 +410,27 @@ export default Vue.extend({
       default:false,
       required:false
     },
-    'value':{
+    'modelValue':{
       required:false,
       default:''
      },
+    'useRunnerSelector':{
+      type:Boolean,
+      default:false,
+      required:false
+    },
     'inputValues':{
       type:Object,
       required:false
      },
     'validation':{
-      type:Object,
+      type:Object as PropType<any>,
       required:false
      },
+    'eventBus':{
+      type:Object as PropType<typeof EventBus>,
+      required:false
+    },
     'rkey':{
       type:String,
       required:false,
@@ -426,8 +459,13 @@ export default Vue.extend({
     'autocompleteCallback':{
       type:Function,
       required:false
+    },
+    selectorData: {
+      type: Object as PropType<any>,
+      required: true,
     }
   },
+  emits: ['update:modelValue','pluginPropsMounted'],
   methods:{
     inputColSize(prop: any) {
       if (prop.options && prop.options['selectionAccessor']) {
@@ -439,7 +477,7 @@ export default Vue.extend({
       if((jobUuid && jobUuid.length > 0) && (this.prop.options && this.prop.options['displayType']==='RUNDECK_JOB')) {
         client.jobInfoGet(jobUuid).then(response => {
           if(response.name) {
-            var output = ''
+            let output = ''
             if(response.group) output += response.group+"/"
             output += response.name + " ("+response.project+")"
             this.jobName = output
@@ -450,6 +488,9 @@ export default Vue.extend({
     parseAllowedValues(){
       return JSON.stringify(this.prop.allowed);
     },
+    handleUpdate(val: any){
+      this.currentValue= val;
+    },
     hasAllowedValues(){
       if(this.prop.allowed!=null){
         return 'true';
@@ -459,7 +500,6 @@ export default Vue.extend({
   },
   data(){
     return{
-      currentValue: this.value,
       jobName: '',
       keyPath:'',
       jobContext: [] as any,
@@ -469,7 +509,7 @@ export default Vue.extend({
   },
   watch:{
     currentValue:function(newval){
-      this.$emit('input',newval)
+      this.$emit('update:modelValue',newval)
       this.setJobName(newval)
     },
     value:function(newval){
@@ -493,13 +533,25 @@ export default Vue.extend({
             return desc.substring(desc.indexOf("\n") + 1);
         }
         return null;
+    },
+    selectorDataForName(): any[] {
+      return this.selectorData[this.prop.name]
+    },
+    currentValue: {
+        get() {
+            return this.modelValue
+        },
+        set(val: any) {
+            this.$emit('update:modelValue',val)
+            this.setJobName(val)
+        }
     }
   },
   mounted(){
     this.$emit("pluginPropsMounted")
-    this.setJobName(this.value)
-    if (window._rundeck && window._rundeck.projectName) {
-      this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
+    this.setJobName(this.modelValue)
+    if (getRundeckContext() && getRundeckContext().projectName) {
+      this.keyPath = 'keys/project/' + getRundeckContext().projectName +'/'
     }
 
     if(this.autocompleteCallback && this.contextAutocomplete){
@@ -525,6 +577,8 @@ export default Vue.extend({
 })
 </script>
 <style scoped lang="scss">
+@import '~vue3-markdown/dist/style.css';
+
 .longlist{
   max-height: 500px;
   overflow-y: auto

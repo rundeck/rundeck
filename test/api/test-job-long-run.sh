@@ -71,12 +71,12 @@ cat > $DIR/temp.out <<END
 
 END
 
-jobid=$(uploadJob "$DIR/temp.out" "$project"  2 "dupeOption=update" "//succeeded/job[1]/id")
+jobid=$(uploadJob "$DIR/temp.out" "$project"  2 "dupeOption=update" ".succeeded[0].id")
 if [ 0 != $? ] ; then
   errorMsg "failed job upload"
   exit 2
 fi
-ref_jobid=$(xmlsel "//succeeded/job[2]/id" $DIR/curl.out)
+ref_jobid=$(jq -r ".succeeded[1].id" < $DIR/curl.out)
 
 
 runJob() {
@@ -100,10 +100,9 @@ runJob() {
 
     #get execid
 
-    execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-    execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+    execid=$(jq -r ".id" < $DIR/curl.out)
 
-    if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    if [  "" != "${execid}" ] ; then
         :
     else
         errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -130,10 +129,7 @@ runJob() {
     $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     #Check projects list
-    itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
-    assert "1" "$itemcount" "execution count should be 1"
-    status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
-    assert "succeeded" "$status" "execution status should be succeeded"
+    assert_json_value "succeeded" ".status" $DIR/curl.out
 
     echo "OK"
 

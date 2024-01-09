@@ -3,7 +3,7 @@
             v-model="open"
             tag="section"
             :position-element="inputEl">
-    <template slot="dropdown">
+    <template v-slot:dropdown>
       <slot name="item" :items="items"  :select="selectItem" :highlight="highlight">
         <li v-for="(item,index) in items" >
           <a href="#" @click.prevent="selectItem(item)">
@@ -18,15 +18,16 @@
 
 <script lang="ts">
 
-import Dropdown from 'uiv'
+import { Dropdown } from 'uiv'
 
-import Vue from "vue";
+import {defineComponent} from "vue"
 
-export default Vue.extend({
+export default defineComponent({
   name: "TextAutocomplete",
   extends: Dropdown,
+  emits:['update:modelValue'],
   props: {
-    value: {
+    modelValue: {
       required: true
     },
     data: Array,
@@ -52,13 +53,23 @@ export default Vue.extend({
       selectedValue: ""
     }
   },
+  computed: {
+    value: {
+        get() {
+            return this.modelValue
+        },
+        set(val: any) {
+            this.$emit('update:modelValue', val)
+        }
+    }
+  },
   methods: {
     selectItem (item: any) {
       let value = this.inputEl.value.toString()
       let preItem = value.substr(0, this.selectionStart)
       let postItem = value.substr(this.currentSelection+1, value.length)
       let finalValue =  preItem + item + postItem
-      this.$emit('input', finalValue)
+      this.value = finalValue
       this.cleanItem ()
     },
     cleanItem () {
@@ -68,10 +79,10 @@ export default Vue.extend({
       this.selectedValue = ""
     },
     highlight (item: any) {
-      let value = this.itemKey ? item[this.itemKey] : item
+      let _value = this.itemKey ? item[this.itemKey] : item
       let inputValue = "\\" + this.autocompleteKey + this.selectedValue.substr(1 , this.selectedValue.length)
       let regex = new RegExp(`${inputValue}`)
-      return value.replace(regex, '<b>$&</b>')
+      return _value.replace(regex, '<b>$&</b>')
     },
     getItems (data: any) {
       this.items = []

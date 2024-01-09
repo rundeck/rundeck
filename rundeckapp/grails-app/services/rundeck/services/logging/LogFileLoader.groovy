@@ -33,4 +33,5 @@ class LogFileLoader implements ExecutionFileLoader {
     List<String> errorData
     File file
     long retryBackoff
+    InputStream stream
 }

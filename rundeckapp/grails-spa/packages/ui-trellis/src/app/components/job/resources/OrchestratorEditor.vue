@@ -21,7 +21,7 @@
                   Select an Orchestrator
                   </span>
         </btn>
-        <template slot="dropdown">
+        <template v-slot:dropdown>
           <li v-for="plugin in pluginProviders" :key="plugin.name">
             <a role="button"
                @click="setOrchestratorType(plugin.name)"
@@ -86,60 +86,88 @@
 </template>
 <script lang="ts">
 import InlineValidationErrors from '../../../components/form/InlineValidationErrors.vue'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import {Prop, Watch} from 'vue-property-decorator'
+import {defineComponent, ref} from 'vue'
+import type { PropType } from "vue"
 
 import PluginInfo from '../../../../library/components/plugins/PluginInfo.vue'
 import PluginConfig from '../../../../library/components/plugins/pluginConfig.vue'
 import pluginService from '../../../../library/modules/pluginService'
 import ExtendedDescription from '../../../../library/components/utils/ExtendedDescription.vue'
 
-@Component({components: {InlineValidationErrors, PluginInfo, PluginConfig, ExtendedDescription}})
-export default class OrchestratorEditor extends Vue {
-  /**
-   * Orchestrator type and config value
-   */
-  @Prop({required: true})
-  value: any
-
-  @Prop({required: false, default: 'col-sm-2 control-label'})
-  labelColClass!: string
-
-  @Prop({required: false, default: 'col-sm-10'})
-  fieldColSize!: string
-
-  @Prop({required: false, default:()=>{}})
-  editValidation!: any
-
-  pluginProviders: Array<any> = []
-  pluginLabels: { [name: string]: string } = {}
-
-  updatedValue: any = {}
-
-  @Watch('updatedValue')
-  async valueUpdated() {
-    this.$emit('input', this.updatedValue)
-  }
-  remove(){
-    Vue.set(this.updatedValue, 'type', null)
-    Vue.set(this.updatedValue, 'config', {})
-  }
-
-  setOrchestratorType(name:string){
-    Vue.set(this.updatedValue, 'type', name)
-  }
-  getProviderFor(name:string) {
-    return this.pluginProviders.find(p => p.name === name)
-  }
-
-  async mounted() {
-    this.updatedValue = Object.assign({type: null, config: {}}, this.value)
-    let data = await pluginService.getPluginProvidersForService('Orchestrator')
-    if (data.service) {
-      this.pluginProviders = data.descriptions
-      this.pluginLabels = data.labels
+export default defineComponent({
+  name: 'OrchestratorEditor',
+  components: {
+    InlineValidationErrors,
+    PluginInfo,
+    PluginConfig,
+    ExtendedDescription,
+  },
+  props: {
+    modelValue: {
+      /**
+       * Orchestrator type and config value
+       */
+      type: Object as PropType<any>,
+      required: true,
+    },
+    labelColClass: {
+      type: String,
+      required: false,
+      default: 'col-sm-2 control-label',
+    },
+    fieldColSize: {
+      type: String,
+      required: false,
+      default: 'col-sm-10',
+    },
+    editValidation: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => {
+      },
+    },
+  },
+  emits: ['update:modelValue'],
+  setup() {
+    const pluginProviders = ref<any[]>([])
+    const pluginLabels = ref<{ [name: string]: string }>({})
+    const updatedValue = ref<{ [name: string]: string }>({})
+    return {
+      pluginProviders,
+      pluginLabels,
+      updatedValue,
     }
-  }
-}
+  },
+  methods: {
+    remove() {
+      this.updatedValue.type = null
+      this.updatedValue.config = {}
+    },
+    setOrchestratorType(name: string) {
+      this.updatedValue.type = name
+    },
+    getProviderFor(name: string) {
+      return this.pluginProviders.find(p => p.name === name)
+    },
+    async onMount() {
+      this.updatedValue = Object.assign({type: null, config: {}}, this.modelValue)
+      let data = await pluginService.getPluginProvidersForService('Orchestrator')
+      if (data.service) {
+        this.pluginProviders = data.descriptions
+        this.pluginLabels = data.labels
+      }
+    }
+  },
+  mounted() {
+    this.onMount()
+  },
+  watch: {
+    updatedValue: {
+      handler() {
+        this.$emit('update:modelValue', this.updatedValue)
+      },
+      deep: true,
+    },
+  },
+})
 </script>

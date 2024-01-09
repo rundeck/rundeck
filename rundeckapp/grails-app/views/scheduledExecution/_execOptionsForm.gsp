@@ -44,12 +44,7 @@
 
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
-    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-    <div class=" collapse" id="queryFilterHelp">
-        <div class="help-block">
-            <g:render template="/common/nodefilterStringHelp"/>
-        </div>
-    </div>
+    <g:embedJSON id="filterParamsJSON" data="${[filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
 
 
 
@@ -307,10 +302,6 @@
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
 
-                        <user:getNodeFilters user="${session.user}">
-                            <g:set var="filterset" value="${filters.findAll { it.project == project }}"/>
-                        </user:getNodeFilters>
-
                         <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                             <div class="spacing">
@@ -320,19 +311,18 @@
                                         <g:hiddenField name="offset" value="${offset}"/>
                                         <g:hiddenField name="formInput" value="true"/>
 
-                                        <div>
-                                            <span class=" input-group multiple-control-input-group" >
-                                                <g:render template="/framework/nodeFilterInputGroup"
-                                                          model="[filterFieldName: 'extra.nodefilter',filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
-                                            </span>
+                                        <div class="vue-ui-socket">
+                                            <ui-socket section="job-show-page"
+                                                       location="exec-options-node-filter-input"
+                                                       socket-data="${enc(attr: [
+                                                               filter: filtvalue?:'',
+                                                               koVarName:'nodeFilter',
+                                                               filterFieldName:'extra.nodefilter',
+                                                       ].encodeAsJSON())}">
+                                            </ui-socket>
                                         </div>
                                     </g:form>
 
-                                    <div class=" collapse" id="queryFilterHelp">
-                                        <div class="help-block">
-                                            <g:render template="/common/nodefilterStringHelp"/>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -514,15 +504,7 @@
                     nodesTitleSingular: message('Node'),
                     nodesTitlePlural: message('Node.plural')
                 }));
-
-            // ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-        //show selected named filter
-        nodeFilter.filterName.subscribe(function (val) {
-            if (val) {
-                jQuery('a[data-node-filter-name]').removeClass('active');
-                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-            }
-        });
+        window.nodeFilter = nodeFilter
 
         nodeSummary.reload();
         nodeFilter.updateMatchedNodes();

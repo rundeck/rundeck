@@ -1,13 +1,14 @@
-import Vue from 'vue'
+import {createApp} from 'vue'
 
 import {autorun} from 'mobx'
 
 import LogViewer from '../../../library/components/execution-log/logViewer.vue'
 import { getRundeckContext } from '../../../library'
+import * as uiv from 'uiv'
 
 const rootStore = getRundeckContext().rootStore
 
-window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
+window._rundeck.eventBus.on('ko-exec-show-output', (nodeStep: any) => {
     const execId = nodeStep.flow.executionId()
     const stepCtx = nodeStep.stepctx
     const node = nodeStep.node.name
@@ -24,7 +25,6 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     const template = `\
     <LogViewer
         class="wfnodestep"
-        v-if="this.$el.parentNode.display != 'none'"
         executionId="${execId}"
         node="${node}"
         stepCtx="${stepCtx}"
@@ -34,8 +34,8 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     />
     `
 
-    const vue = new Vue({
-        el: div,
+    const vue = createApp({
+        name:"NodeLogViewerApp",
         components: {LogViewer},
         template: template,
         provide: {
@@ -51,6 +51,8 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
             })}
         },
     })
+    vue.use(uiv)
+    vue.mount(elm)
 
     /** Update the KO code when this views output starts showing up */
     const execOutput = rootStore.executionOutputStore.createOrGet(execId)
@@ -62,7 +64,7 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
             if (execOutput.completed) {
                 reaction.dispose()
                 nodeStep.outputLineCount(0)
-                vue.$el.remove()
+                vue._container.remove()
                 return
             } else {
                 return

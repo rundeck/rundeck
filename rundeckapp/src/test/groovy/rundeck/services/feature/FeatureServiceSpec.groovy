@@ -82,17 +82,6 @@ class FeatureServiceSpec extends Specification implements ServiceUnitTest<Featur
         true      | _
         false     | _
     }
-    void "get feature config"() {
-        given:
-        service.configurationService = Mock(ConfigurationService)
-
-        when:
-        service.getFeatureConfig('afeature')
-
-        then:
-        1 * service.configurationService.getConfig('feature.afeature.config')
-
-    }
 
     void "feature present with defaultEnabled flag"() {
         given:

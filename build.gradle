@@ -167,6 +167,7 @@ project(':rundeckapp') {
     it.ext.bundledPlugins = buildConf.rundeck.plugins
 
     it.ext.bundledPlugins += [
+        project(':plugins:script-node-step-plugin'),
         project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
         project(':plugins:localexec-plugin'),
@@ -254,4 +255,13 @@ buildScan {
 // Limit heap size in forked test processes for CI
 test {
     maxHeapSize = "512m"
+}
+
+// Get the full path to the application war.
+tasks.register('printBootWarPath') {
+    doLast {
+        def rundeckapp = project(":rundeckapp")
+        def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
+        println "${bootArchiveFile}"
+    }
 }

@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "jsx": "react",
+        "jsx": "preserve",
         "outDir": "lib",
         "baseUrl": ".",
         "sourceMap": true,
@@ -23,7 +23,9 @@
     ],
     "exclude": [
         "./src/app",
-        "./src/library/components/**/*",
+        "**/*.stories.ts",
+        "**/*.stories.tsx",
+        "**/*.test.ts",
         "./src/library/stories/**/*"
     ]
 }

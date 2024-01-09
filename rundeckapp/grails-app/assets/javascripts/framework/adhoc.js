@@ -68,7 +68,7 @@ function runFormSubmit(elem) {
     if (running || !$F('runFormExec')) {
         return false;
     }
-    if (!nodeFilter.filter() && !nodeFilter.filterName()) {
+    if (!nodeFilter.filter() ) {
         //no node filter
         return false;
     }
@@ -111,7 +111,7 @@ function startRunFollow(data) {
         }), function (resp, status, jqxhr) {
             if (status == 'success') {
                 /** Kick this event into Vue Land */
-                window._rundeck.eventBus.$emit('ko-adhoc-running', data)
+                window._rundeck.eventBus.emit('ko-adhoc-running', data)
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);
@@ -290,13 +290,6 @@ function init() {
 
     adhocCommand = new AdhocCommand({commandString:pageParams.runCommand}, nodeFilter);
 
-    //show selected named filter
-    nodeFilter.filterName.subscribe(function (val) {
-        if (val) {
-            jQuery('a[data-node-filter-name]').removeClass('active');
-            jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-        }
-    });
     nodeFilter.total.subscribe(function(val){
         if (val && val != "0" && !running) {
             adhocCommand.canRun(true);

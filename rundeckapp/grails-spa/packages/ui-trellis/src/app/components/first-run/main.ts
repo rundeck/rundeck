@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 
 import { getRundeckContext } from '../../../library/rundeckService'
 import { getAppLinks } from '../../../library'
@@ -16,10 +16,11 @@ function init() {
     if (!el)
         return
 
-    const component = new Vue({
-        el,
+    const component = createApp({
+        name:"FirstRunApp",
         components: { FirstRun },
         provide: { rootStore },
         template: `<FirstRun />`
     })
+    component.mount(el)
 }

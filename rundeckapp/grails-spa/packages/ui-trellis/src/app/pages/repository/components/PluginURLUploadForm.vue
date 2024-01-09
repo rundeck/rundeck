@@ -17,8 +17,11 @@
   </div>
 </template>
 <script>
+import { defineComponent } from 'vue'
+import { mapActions } from 'vuex'
+
 import {client} from "../../../../library/modules/rundeckClient"
-export default {
+export default defineComponent({
   name: "PluginUrlUploadForm",
   data() {
     return {
@@ -26,8 +29,9 @@ export default {
     };
   },
   methods: {
+    ...mapActions('overlay', ['openOverlay']),
     submitUrl() {
-      this.$store.dispatch("overlay/openOverlay", {
+      this.openOverlay({
         loadingMessage: "Installing",
         loadingSpinner: true
       });
@@ -40,7 +44,7 @@ export default {
         method: 'POST'
       }).then(response => {
         if (response.status === 200) {
-          this.$store.dispatch("overlay/openOverlay");
+          this.openOverlay({})
           if (response.parsedBody.err) {
             this.$alert({
               title: "Error Uploading",
@@ -53,7 +57,7 @@ export default {
             });
           }
         }else if (response.status >= 300) {
-          this.$store.dispatch("overlay/openOverlay");
+          this.openOverlay({});
           let message = `Error: ${response.status}`
           if (response.parsedBody && response.parsedBody.message) {
             message = response.parsedBody.message
@@ -68,7 +72,7 @@ export default {
       });
     }
   }
-};
+})
 </script>
 <style lang="scss" scoped>
 .input-text{

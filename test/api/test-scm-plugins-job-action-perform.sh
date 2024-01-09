@@ -22,49 +22,6 @@ setup_export_job(){
 }
 
 
-test_job_action_perform_xml(){
-	local project=$1
-	local integration=export
-
-	local JOBID=$(setup_export_job $project)
-	local actionId="job-commit"
-	
-	local commitMessage="a test commit"
-
-	sleep 2
-
-
-	METHOD=POST
-	ACCEPT=application/xml
-	TYPE=application/xml
-	EXPECT_STATUS=200
-	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/action/$actionId"
-
-	TMPDIR=`tmpdir`
-	tmp=$TMPDIR/commit.xml
-	cat >$tmp <<END
-<scmAction>
-	<input>
-		<entry key="message">$commitMessage</entry>
-	</input>
-</scmAction>
-END
-	POSTFILE=$tmp
-
-
-	test_begin "SCM Job Action Perform (xml)"
-	api_request $ENDPOINT $DIR/curl.out
-
-	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-	assert_xml_value "true" '/scmActionResult/success' $DIR/curl.out
-	assert_xml_value "SCM export Action was Successful: $actionId" '/scmActionResult/message' $DIR/curl.out
-
-
-	test_succeed
-
-	remove_project $project
-}
 
 
 test_job_action_perform_json(){
@@ -110,7 +67,6 @@ END
 }
 
 main(){
-	test_job_action_perform_xml "testscm1"
 	test_job_action_perform_json "testscm2"
 }
 

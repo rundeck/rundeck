@@ -18,6 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -31,12 +34,12 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import grails.core.GrailsApplication
+import com.fasterxml.jackson.databind.ObjectMapper
+import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
@@ -146,10 +149,8 @@ class ExecutionUtilService {
                 }
             }
         } finally {
-            sysThreadBoundOut.close()
-            sysThreadBoundOut.removeThreadStream()
-            sysThreadBoundErr.close()
-            sysThreadBoundErr.removeThreadStream()
+            sysThreadBoundOut.removeThreadStream()?.close()
+            sysThreadBoundErr.removeThreadStream()?.close()
             loghandler.close()
         }
     }
@@ -185,79 +186,25 @@ class ExecutionUtilService {
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd= step as CommandExec
+            String type
             if (null != cmd.getAdhocRemoteString()) {
-
-                final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
-                final String[] args = strings.toArray(new String[strings.size()]);
-
-                return ExecutionItemFactory.createExecCommand(
-                        args,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
+                type = ExecCommand.EXEC_COMMAND_TYPE
             } else if (null != cmd.getAdhocLocalString()) {
-                final String script = cmd.getAdhocLocalString();
-                final String[] args;
-                if (null != cmd.getArgString()) {
-                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
-                    args = strings.toArray(new String[strings.size()]);
-                } else {
-                    args = new String[0];
-                }
-                return ExecutionItemFactory.createScriptFileItem(
-                        cmd.getScriptInterpreter(),
-                        cmd.getFileExtension(),
-                        !!cmd.interpreterArgsQuoted,
-                        script,
-                        args,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
-
+                type = ScriptCommand.SCRIPT_COMMAND_TYPE;
             } else if (null != cmd.getAdhocFilepath()) {
-                final String filepath = cmd.getAdhocFilepath();
-                final String[] args;
-                if (null != cmd.getArgString()) {
-                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
-                    args = strings.toArray(new String[strings.size()]);
-                } else {
-                    args = new String[0];
-                }
-                if(filepath ==~ /^(?i:https?|file):.*$/) {
-                    return ExecutionItemFactory.createScriptURLItem(
-                            cmd.getScriptInterpreter(),
-                            cmd.getFileExtension(),
-                            !!cmd.interpreterArgsQuoted,
-                            filepath,
-                            args,
-                            handler,
-                            !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
-                    )
-                }else {
-                    return ExecutionItemFactory.createScriptFileItem(
-                            cmd.getScriptInterpreter(),
-                            cmd.getFileExtension(),
-                            !!cmd.interpreterArgsQuoted,
-                            new File(filepath),
-                            args,
-                            handler,
-                            !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
-                            !!cmd.expandTokenInScriptFile
-                    );
-
-                }
+                type = ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE;
             }else {
                 throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
+
+            return ExecutionItemFactory.createScriptFileItem(
+                    type,
+                    cmd.convertToPluginConfig(),
+                    handler,
+                    !!cmd.keepgoingOnSuccess,
+                    cmd.description,
+                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+            )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
 

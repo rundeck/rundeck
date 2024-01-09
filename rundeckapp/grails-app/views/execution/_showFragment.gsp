@@ -106,6 +106,7 @@
   <div data-bind="visible: logoutput().fileLoadError" class="executionshow alert alert-warning" style="display: none">
     <span data-bind="text: logoutput().fileLoadError" ></span>
   </div>
+  <div class="execution-show-log"></div>
 
 </g:if>
 <div class="executionshow ${inlineView ? 'card-content tight inlineexecution' : ''}">

@@ -15,7 +15,7 @@
         <i :class="'fas '+value" v-else-if="typeof(value)==='string' && value.startsWith('fa-')"></i>
         <i :class="'fab fa-'+(value.substring(4))" v-else-if="typeof(value)==='string' && value.startsWith('fab-')"></i>
       </template>
-      {{ prop.selectLabels && prop.selectLabels[value] || value }}
+      {{ prop.selectLabels && prop.selectLabels[`${value}`] || value }}
     </template>
     <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</template>
     <template v-else>{{ value }}</template>
@@ -23,17 +23,19 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue"
-export default Vue.extend({
+import {defineComponent} from "vue"
+
+export default defineComponent({
   props: {
-    'prop': {
+    prop: {
       type: Object,
       required: true
     },
-    'value': {
+    value: {
+      type: [String, Boolean],
       required: true,
       default: ''
     }
-  }
+  },
 })
 </script>

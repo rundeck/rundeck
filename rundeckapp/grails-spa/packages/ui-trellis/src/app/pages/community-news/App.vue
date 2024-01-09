@@ -4,7 +4,7 @@
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
-            {{$t("message.communityNews")}}
+            {{$t("message_communityNews")}}
             <div class="pull-right">
               <newsletter-subscribe/>
             </div>
@@ -20,16 +20,17 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import axios from "axios";
 import Trellis, {
   getRundeckContext,
   getSynchronizerToken,
   RundeckBrowser
 } from "../../../library";
-import CommunityNewsFeed from "./CommunityNewsFeed";
-import NewsletterSubscribe from "./NewsletterSubscribe";
+import CommunityNewsFeed from "./CommunityNewsFeed.vue";
+import NewsletterSubscribe from "./NewsletterSubscribe.vue";
 
-export default {
+export default defineComponent({
   name: "CommunityNews",
   components: {
     CommunityNewsFeed,
@@ -42,7 +43,7 @@ export default {
   },
   methods: {},
   mounted() {}
-};
+})
 </script>
 
 <style lang="scss" scoped>

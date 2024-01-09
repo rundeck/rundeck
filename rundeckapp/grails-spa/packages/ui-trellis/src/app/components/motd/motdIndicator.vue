@@ -41,12 +41,12 @@ export default {
   },
   methods:{
     activate(){
-      this.eventBus.$emit('motd-indicator-activated')
+      this.eventBus.emit('motd-indicator-activated')
       this.hasNewMessage=false
     }
   },
   mounted(){
-      this.eventBus.$on('motd-message-available',(val)=>{
+      this.eventBus.on('motd-message-available',(val)=>{
         this.hasMessage=val.hasMessage
         this.hasNewMessage=val.hasNewMessage
         this.style=val.style

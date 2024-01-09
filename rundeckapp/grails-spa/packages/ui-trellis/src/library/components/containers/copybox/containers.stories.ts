@@ -1,13 +1,13 @@
-import Vue from 'vue'
-import {addons} from '@storybook/addons'
+import type {Meta, StoryFn} from "@storybook/vue3";
 
 import CopyBox from './CopyBox.vue'
 
 export default {
-    title: 'Containers'
-}
+    title: 'Containers',
+    component: CopyBox,
+} as Meta<typeof CopyBox>
 
-function setupStory(vue: Vue) {
+function setupStory(vue) {
     const el = vue.$el as any
     el.parentNode.style.height = '100vh'
     el.parentNode.style.overflow = 'hidden'
@@ -16,37 +16,43 @@ function setupStory(vue: Vue) {
     document.body.style.overflow = 'hidden'
 }
 
-export const copyBox = () => {
+export const copyBox: StoryFn<typeof CopyBox> = (args) => {
 
-    return Vue.extend({
-        template: `
-        <CopyBox v-bind="$props"/>`,
-        components: {CopyBox},
-        props: {
-            content: {default: 'Text to copy!'}
+    return {
+        setup() {
+            return { args }
         },
+        template: `
+        <CopyBox v-bind="args"/>`,
+        components: {CopyBox},
         mounted() {
             setupStory(this)
         },
         methods: {
         }
-    })
+    }
+}
+copyBox.args = {
+    content: 'Text to copy!'
 }
 
 
-export const copyBoxLongContent = () => {
+export const copyBoxLongContent: StoryFn<typeof CopyBox> = (args) => {
 
-    return Vue.extend({
-        template: `
-        <CopyBox v-bind="$props"/>`,
-        components: {CopyBox},
-        props: {
-            content: {default: 'http://localhost:8080/api/40/webhook/OSUK4zGjC9jx1Dhfdi9SYaaADUTBBhuZ#Generic'}
+    return {
+        setup() {
+            return { args }
         },
+        template: `
+        <CopyBox v-bind="args"/>`,
+        components: {CopyBox},
         mounted() {
             setupStory(this)
         },
         methods: {
         }
-    })
+    }
+}
+copyBoxLongContent.args = {
+    content: 'http://localhost:8080/api/40/webhook/OSUK4zGjC9jx1Dhfdi9SYaaADUTBBhuZ#Generic'
 }

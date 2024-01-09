@@ -15,8 +15,7 @@
         <input type="text" v-model=datetime class="form-control"  />
       </div>
 
-      <template slot="dropdown"  class="date-time-picker">
-
+      <template v-slot:dropdown>
         <li style="padding: 10px">
         <date-time-picker v-model="datetime" dateClass="flex-item-1" timeClass="flex-item-auto" class="flex-container"/>
         </li>
@@ -26,34 +25,41 @@
   </div>
 </template>
 <script>
+import { defineComponent } from 'vue'
 import _ from 'lodash'
 import DateTimePicker from './dateTimePicker.vue'
-export default {
-  props: ["value"],
+
+export default defineComponent({
+  props: ["modelValue"],
   components:{
     DateTimePicker
   },
+  emits: ['update:modelValue'],
   data() {
     return {
       uid:_.uniqueId(),
-      enabled: this.value.enabled,
-      datetime: this.value.datetime,
+      enabled: this.modelValue.enabled,
+      datetime: this.modelValue.datetime,
       picker:false
     };
   },
   watch:{
     enabled:{
       handler(newVal,oldVal){
-        this.$emit('input',{enabled:this.enabled,datetime:this.datetime})
+        this.$emit('update:modelValue',{enabled:this.enabled,datetime:this.datetime})
       }
     },
     datetime:{
       handler(newVal,oldVal){
-        this.$emit('input',{enabled:this.enabled,datetime:this.datetime})
+        this.$emit('update:modelValue',{enabled:this.enabled,datetime:this.datetime})
       }
+    },
+    modelValue() {
+      this.enabled= this.modelValue.enabled
+      this.datetime= this.modelValue.datetime
     }
   }
-};
+})
 </script>
 <style lang="scss" scoped>
 .label-holder{

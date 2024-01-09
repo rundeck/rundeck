@@ -3,18 +3,18 @@
         <ul class="nav-bar__list" ref="list" v-if="navBar">
             <li>
                 <ul class="nav-bar__list-group" ref="group-main">
-                    <template v-for="item in navBar.containerGroupItems('root', 'main')">
-                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" itemStyle="icon" />
-                        <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
+                    <template v-for="item in getItems('root', 'main')">
+                        <NavBarItem v-if="item.type === 'link'" :item="item" :key="item.id" itemStyle="icon" />
+                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" />
                     </template>
                 </ul>
             </li>
             <li style="margin-top: auto;width: 100%">
                 <ul class="nav-bar__list-group nav-bar__list-group--bottom" ref="group-bottom">
                     <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" />
-                    <template v-for="item in navBar.containerGroupItems('root', 'bottom')">
-                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" itemStyle="icon" />
-                        <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
+                    <template v-for="item in getItems('root', 'bottom')">
+                        <NavBarItem v-if="item.type === 'link'" :item="item" :key="item.id" itemStyle="icon" />
+                        <NavBarContainer v-if="item.type === 'container'" :item="(item as NavContainer)" :key="item.id" />
                     </template>
                 </ul>
             </li>
@@ -23,66 +23,62 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import {Component, Inject} from 'vue-property-decorator'
-import {Observer} from 'mobx-vue'
+import {defineComponent, ref} from 'vue'
 
-import {NavBar} from '../../stores/NavBar'
-import {RootStore} from '../../stores/RootStore'
+import {NavBar, NavContainer, NavItem} from '../../stores/NavBar'
 
 import NavBarItem from './NavBarItem.vue'
 import NavBarContainer from './NavBarContainer.vue'
 
-@Observer
-@Component({components: {
+export default defineComponent({
+  name: 'NavBar',
+  components: {
     NavBarItem,
     NavBarContainer
-}})
-export default class NavigationBar extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
+  },
+  mounted() {
+    window.addEventListener('resize', this.overflow)
+    /** After layout and before render handle overflow */
+    window.requestAnimationFrame(this.overflow)
+  },
+  data() {
+    return {
+      navBar: window._rundeck.rootStore.navBar
 
-    navBar!: NavBar
-
-    created() {
-        this.navBar = this.rootStore.navBar
     }
-
-    mounted() {
-        window.addEventListener('resize', this.overflow)
-        /** After layout and before render handle overflow */
-        window.requestAnimationFrame(this.overflow)
-    }
-
+  },
+  methods: {
+    getItems(ctr: string, grp: string): NavItem[] {
+      return this.navBar.containerGroupItems(ctr, grp)
+    },
     /**
      * Moves menu items into the "more" container until the navbar is no
      * longer overflowing.
      */
     overflow() {
-        const el = this.$el as HTMLElement
-        const list = this.$refs['list'] as HTMLElement
+      const el = this.$el as HTMLElement
+      const mainGroup = this.$refs['group-main'] as HTMLElement
 
-        const mainGroup = this.$refs['group-main'] as HTMLElement
-
+      /**
+       * Check for overflow. At different zoom levels this could be off by one in the positive
+       * even though no overflow is occuring. Testing indicates checking for negative difference
+       * works at all zoom levels.
+       */
+      if (el.offsetHeight - el.scrollHeight < 0) {
+        this.navBar.overflowOne()
         /**
-         * Check for overflow. At different zoom levels this could be off by one in the positive
-         * even though no overflow is occuring. Testing indicates checking for negative difference
-         * works at all zoom levels.
-         */
-        if (el.offsetHeight - el.scrollHeight < 0) {
-            this.navBar.overflowOne()
-            /**
-             * Continue to force layout until no longer overflowing.
-             * This provides for the least amount of flicker on page load.
-             **/
-            this.$forceUpdate()
-            window.requestAnimationFrame(this.overflow)
-        } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 240 < el.offsetHeight) {
-            this.navBar.showOne()
-            window.requestAnimationFrame(this.overflow)
-        }
+         * Continue to force layout until no longer overflowing.
+         * This provides for the least amount of flicker on page load.
+         **/
+        this.$forceUpdate()
+        window.requestAnimationFrame(this.overflow)
+      } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 240 < el.offsetHeight) {
+        this.navBar.showOne()
+        window.requestAnimationFrame(this.overflow)
+      }
     }
-}
+  }
+})
 </script>
 
 <style lang="scss" scoped>

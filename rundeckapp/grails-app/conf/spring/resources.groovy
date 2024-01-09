@@ -109,9 +109,16 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
+import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
+import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
+import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
+import org.rundeck.app.data.project.ProjectConfigMetadataComponent
+import org.rundeck.app.data.project.ProjectScmMetadataComponent
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
+import org.rundeck.app.data.providers.GormExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
@@ -123,6 +130,7 @@ import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
+import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -163,6 +171,8 @@ import rundeck.services.audit.AuditEventsService
 import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
+import rundeck.services.workflow.DefaultStateExecutionFileProducer
+import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
@@ -913,6 +923,13 @@ beans={
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
     workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
+        logFileStorageService = ref('logFileStorageService')
+    }
+    stateExecutionFileProducer(DefaultStateExecutionFileProducer) {
+        workflowService = ref('workflowService')
+    }
+    quartzJobSpecifier(ExecutionJobQuartzJobSpecifier)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
@@ -922,9 +939,18 @@ beans={
     execReportDataProvider(GormExecReportDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
     jobDataProvider(GormJobDataProvider)
+    executionDataProvider(GormExecutionDataProvider)
     pluginMetaDataProvider(GormPluginMetaDataProvider)
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
     logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
+
+    //job metadtata components
+    jobScheduleMetadataComponent(JobScheduleMetadataComponent)
+    jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
+    jobScmMetadataComponent(JobScmMetadataComponent)
+    projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
+    projectConfigMetadataComponent(ProjectConfigMetadataComponent)
+    projectScmMetadataComponent(ProjectScmMetadataComponent)
 
 }

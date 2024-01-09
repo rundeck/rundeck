@@ -3,18 +3,10 @@ const webpack = require('webpack')
 const path = require('path');
 
 module.exports = {
+    typescript: {
+        check: false,
+    },
     addons: [
-        {
-            name: '@storybook/preset-typescript',
-            options: {
-                framework: 'vue',
-                forkTsCheckerWebpackPluginOptions: {
-                    compilerOptions: {
-                        experimentalDecorators: true
-                    }
-                }
-            }
-        },
         {
             name: '@storybook/addon-docs',
             options: {
@@ -25,19 +17,36 @@ module.exports = {
                 },
             },
         },
-       // '@storybook/addon-knobs',
+        "@storybook/addon-links",
+        "@storybook/addon-essentials",
+        "@storybook/addon-interactions",
         'storybook-dark-mode',
+        {
+            name: "@storybook/addon-styling",
+            options: {
+                scssBuildRule: {
+                    test: /\.scss$/,
+                    use: [
+                        {loader: 'vue-style-loader'},
+                        {loader: 'css-loader', options: {sourceMap: true}},
+                        {loader: 'postcss-loader', options: {sourceMap: true, postcssOptions: { plugins: [require('autoprefixer')]}}},
+                        {loader: 'sass-loader', options: {sourceMap: true}},
+                    ],
+                }
+            }
+        },
         '@storybook/addon-backgrounds'
     ],
+    "framework": "@storybook/vue3",
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
-
-    webpackFinal: (config) => {
-        const vueLoader = config.module.rules.find(r => String(r.test) == String(/\.vue$/))
+    staticDirs: ['../public','../src/library/theme','../tests/data'],
+    async webpackFinal(config, { configType }) {
+        const vueLoader = config.module.rules.find(r => String(r.test) === String(/\.vue$/))
         vueLoader.options.compilerOptions = {
             preserveWhitespace: false
         }
 
-        const cssLoader = config.module.rules.find(r => String(r.test) == String(/\.css$/))
+        const cssLoader = config.module.rules.find(r => String(r.test) === String(/\.css$/))
         cssLoader.use[1].options.sourceMap = true
 
         config.optimization.splitChunks = false
@@ -55,29 +64,17 @@ module.exports = {
                 },
             }],
         },
-        {
-            test: /\.less$/,
-            use: [
-            'style-loader',
-            {loader: 'css-loader', options: {sourceMap: true}},
-            {loader: 'postcss-loader', options: {sourceMap: true, plugins: [require('autoprefixer')]}},
-            {loader: 'less-loader',
-            options: {
-                sourceMap: true,
-                lessOptions: {
-                    javascriptEnabled: true
-                }
-            }}]
-        },
-        {
-            test: /\.scss$/,
-            use: [
-              {loader: 'vue-style-loader'},
-              {loader: 'css-loader', options: {sourceMap: true}},
-              {loader: 'postcss-loader', options: {sourceMap: true, plugins: [require('autoprefixer')] }},
-              {loader: 'sass-loader', options: {sourceMap: true}},
-            ],
-        });
+            {
+                test: /\.(ts|js)x?$/,
+                include: /uiv/,
+                use: { loader: "babel-loader" },
+            },
+            {
+                test: /\.mjs$/,
+                include: /node_modules/,
+                type: 'javascript/auto',
+            }
+        );
 
         config.plugins.unshift(new webpack.NormalModuleReplacementPlugin( /index.less/, function(resource) {
             if (resource.resource) {

@@ -1,11 +1,10 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
-import { action, computed, observable } from 'mobx'
 
 export class NavBar {
-    @observable items: Array<NavItem> = []
+    items: Array<NavItem> = []
 
-    @observable overflow: Array<NavItem> = []
+    overflow: Array<NavItem> = []
 
     overflowItem: NavContainer = {
         id: 'overflow',
@@ -20,7 +19,7 @@ export class NavBar {
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         if (window._rundeck.navbar) {
-            window._rundeck.navbar.items.forEach((i:NavItem) => {
+            window._rundeck.navbar.items.forEach((i: NavItem) => {
                 this.items.push({...i, visible: true, container: i.container || 'root'})
             })
         }
@@ -31,7 +30,6 @@ export class NavBar {
         return this.items.slice().sort((a, b) => a.priority - b.priority)
     }
 
-    @action
     addItems(items: Array<NavItem>) {
         items.forEach(i => this.items.push(i))
         this.items.sort((a, b) => a.priority - b.priority)
@@ -53,17 +51,14 @@ export class NavBar {
         return items
     }
 
-    @computed
     get isOverflowing() {
         return this.items.some(i => i.container == 'overflow')
     }
 
-    @computed
     get visibleItems(): Array<NavItem> {
         return this.items
     }
 
-    @action
     overflowOne() {
         const candidate = this.containerGroupItems('root', 'main').slice().reverse().shift()
 
@@ -71,7 +66,6 @@ export class NavBar {
             candidate.container = 'overflow'
     }
 
-    @action
     showOne() {
         const candidate = this.containerGroupItems('overflow', 'main').slice().shift()
 
@@ -88,6 +82,7 @@ export interface NavItem {
     container?: string
     group?: string
     visible: boolean
+    type: string
 }
 
 export interface NavLink extends NavItem {

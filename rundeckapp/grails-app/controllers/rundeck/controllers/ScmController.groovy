@@ -40,9 +40,11 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeProject
 import rundeck.ScheduledExecution
+import rundeck.services.ScmService
 
 import javax.servlet.http.HttpServletResponse
 
@@ -67,6 +69,7 @@ class ScmController extends ControllerBase {
             apiProjectDisable      : ['POST'],
             apiProjectActionInput  : ['GET'],
             apiProjectActionPerform: ['POST'],
+            apiProjectToggleSCM    : ['POST'],
 
 
             apiJobStatus           : ['GET'],
@@ -190,7 +193,7 @@ Since: v15
                     )
         }
 
-        respond list, [formats: ['xml', 'json']]
+        respond list, [formats: responseFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
@@ -260,7 +263,7 @@ Since: v15''',
 
         respond(
                 new ScmPluginSetupInput(type: pluginInputTypeReq.type, integration: pluginInputTypeReq.integration, fields: properties),
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -389,7 +392,7 @@ Since: v15''',
     private def respondActionResult(IntegrationRequest scm, result, Map messages = [:]) {
         ScmActionResult actionResult
         def secondary = scm.hasProperty('type') ? scm.type : scm.hasProperty('actionId') ? scm.actionId : null
-        def map = [formats: ['xml', 'json'],]
+        def map = [formats: responseFormats]
         if (result.error || !result.valid) {
             map.status = HttpServletResponse.SC_BAD_REQUEST
 
@@ -501,26 +504,29 @@ Since: v15''',
         }
         ScmPluginConfig config = new ScmPluginConfig()
         String errormsg = ''
-        def valid = apiService.parseJsonXmlWith(request, response, [
+
+        def handlers = [
                 json: { data ->
                     config.config = data.config
                     if (!data.config) {
                         errormsg += " json: expected 'config' property"
                     }
-                },
-                xml : { xml ->
-                    def data = [:]
-                    xml?.config?.entry?.each {
-                        data[it.'@key'.text()] = it.text()
-                    }
-                    if (!data) {
-                        errormsg += " xml: expected 'config' element: ${xml.config}"
-                    } else {
-                        config.config = data
-                    }
                 }
         ]
-        )
+        if(isAllowXml()){
+            handlers.xml = { xml ->
+                def data = [:]
+                xml?.config?.entry?.each {
+                    data[it.'@key'.text()] = it.text()
+                }
+                if (!data) {
+                    errormsg += " xml: expected 'config' element: ${xml.config}"
+                } else {
+                    config.config = data
+                }
+            }
+        }
+        def valid = apiService.parseJsonXmlWith(request, response, handlers)
         if (!valid) {
             return
         }
@@ -529,7 +535,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
                     [
-                            formats: ['xml', 'json'],
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -685,6 +691,90 @@ Since: v15''',
                 error  : 'scmController.action.enable.error.message',
                 success: 'scmController.action.enable.success.message'
         ]
+        )
+    }
+
+    @Post(uri='/project/{project}/scm/toggle')
+    @Operation(
+        method = 'POST',
+        summary = 'Toggle SCM for a Project',
+        description = ''' Toggle SCM enabled/disabled for a Project.
+
+This endpoint will enable or disable all configured SCM plugins for the project. 
+Specify whether to enable or disable in the request body.
+
+This action is idempotent.
+
+Authorization Required: `configure` for the Project resource (app context)
+
+Since: v46''',
+        tags = ['scm', 'plugins'],
+        requestBody = @RequestBody(
+            description='Configuration values for the plugin.',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object', implementation = ScmToggleRequest),
+                examples=@ExampleObject('''{
+    "enabled": true
+}''')
+            )
+        ),
+        responses = @ApiResponse(
+            description="Success",
+            responseCode = "200",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ScmToggleResponse)
+            )
+        )
+    )
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
+    def apiProjectToggleSCM(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project Name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(hidden = true) ScmToggleRequest toggleRequest
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
+        def ePluginConfig = scmService.loadScmConfig(project, ScmService.EXPORT)
+        def iPluginConfig = scmService.loadScmConfig(project, ScmService.IMPORT)
+        def eConfiguredPlugin = null
+        def iConfiguredPlugin = null
+        if (ePluginConfig?.type) {
+            eConfiguredPlugin = scmService.getPluginDescriptor(ScmService.EXPORT, ePluginConfig.type)
+        }
+        if (iPluginConfig?.type) {
+            iConfiguredPlugin = scmService.getPluginDescriptor(ScmService.IMPORT, iPluginConfig.type)
+        }
+        def eEnabled = ePluginConfig?.enabled && scmService.projectHasConfiguredPlugin(ScmService.EXPORT, project)
+        def iEnabled = iPluginConfig?.enabled && scmService.projectHasConfiguredPlugin(ScmService.IMPORT, project)
+        boolean modified=false
+        if((eEnabled || iEnabled) && !toggleRequest.enabled){
+            //at least one active plugin, disable
+            if(eConfiguredPlugin){
+                scmService.disablePlugin(ScmService.EXPORT, project, eConfiguredPlugin.name)
+            }
+            if(iConfiguredPlugin){
+                scmService.disablePlugin(ScmService.IMPORT, project, iConfiguredPlugin.name)
+            }
+            modified=true
+        } else if ((!eEnabled || !iEnabled) && toggleRequest.enabled) {
+            if(eConfiguredPlugin){
+                scmService.enablePlugin(projectAuthContext, ScmService.EXPORT, project, eConfiguredPlugin.name)
+            }
+            if(iConfiguredPlugin){
+                scmService.enablePlugin(projectAuthContext, ScmService.IMPORT, project, iConfiguredPlugin.name)
+            }
+            modified=true
+        }
+        respond(
+            new ScmToggleResponse(modified: modified)
         )
     }
 
@@ -920,12 +1010,12 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmProjectStatus, [formats: ['xml', 'json']]
+        respond scmProjectStatus, [formats: responseFormats]
     }
 
     @Get(uri='/project/{project}/scm/{integration}/config')
@@ -1006,7 +1096,7 @@ Since: v15''',
         )
 
 
-        respond result, [formats: ['xml', 'json']]
+        respond result, [formats: responseFormats]
 
     }
 
@@ -1151,7 +1241,7 @@ Since: v15''',
                         importItems: importActionItems,
                         exportItems: exportActionItems
                 ),
-                [formats: ['xml', 'json']]
+                [formats: responseFormats]
         )
     }
 
@@ -1490,7 +1580,8 @@ Since: v15''',
     private ScmAction parseScmActionInput(boolean inputOnly = false) {
         ScmAction actionInput
         String errormsg = ''
-        boolean valid = apiService.parseJsonXmlWith(request, response, [
+
+        def handlers = [
                 json: { data ->
                     def invalid = ScmAction.validateJson(data, inputOnly)
                     if (invalid) {
@@ -1498,17 +1589,19 @@ Since: v15''',
                         return
                     }
                     actionInput = ScmAction.parseWithJson(data)
-                },
-                xml : { xml ->
-                    def invalid = ScmAction.validateXml(xml)
-                    if (invalid) {
-                        errormsg += invalid
-                        return
-                    }
-                    actionInput = ScmAction.parseWithXml(xml)
                 }
         ]
-        )
+        if(isAllowXml()){
+            handlers.xml = { xml ->
+                def invalid = ScmAction.validateXml(xml)
+                if (invalid) {
+                    errormsg += invalid
+                    return
+                }
+                actionInput = ScmAction.parseWithXml(xml)
+            }
+        }
+        boolean valid = apiService.parseJsonXmlWith(request, response, handlers)
         if (!valid) {
             return null
         }
@@ -1516,7 +1609,7 @@ Since: v15''',
             return respond(
                     new ScmActionResult(success: false, message: errormsg ?: message(code: "invalid.format")),
                     [
-                            formats: ['xml', 'json'],
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
@@ -1949,12 +2042,12 @@ Export plugin values for `$synchState`:
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobStatus, [formats: ['xml', 'json']]
+        respond scmJobStatus, [formats: responseFormats]
     }
 
     private void loadJobStatus(
@@ -2123,12 +2216,12 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
             return respond(
                     new ScmActionResult(success: false, message: message),
                     [
-                            formats: ['xml', 'json'],
+                            formats: responseFormats,
                             status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                     ]
             )
         }
-        respond scmJobDiff, [formats: ['xml', 'json']]
+        respond scmJobDiff, [formats: responseFormats]
     }
 
     /**

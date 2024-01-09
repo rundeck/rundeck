@@ -57,4 +57,8 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
         return false;
     }
 
+    default String getConfiguredPathTemplate(){
+        return null;
+    }
+
 }

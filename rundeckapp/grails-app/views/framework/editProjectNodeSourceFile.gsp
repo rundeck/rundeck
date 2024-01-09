@@ -80,7 +80,9 @@
             <tmpl:legacyEditProjectNodeSourceFile/>
           </g:if>
           <g:else>
-            <ui-socket class="vue-ui-socket" section="edit-project-node-source-file" location="main"/>
+            <div class="vue-ui-socket">
+              <ui-socket section="edit-project-node-source-file" location="main" :event-bus="EventBus"/>
+            </div>
           </g:else>
       </div>
     </div>

@@ -31,6 +31,7 @@ mkdir -p $(dirname $FWKPROPS)
 
 export RUNDECK_PORT=${RUNDECK_PORT:-4440}
 export RUNDECK_URL=${RUNDECK_URL:-http://$RUNDECK_NODE:$RUNDECK_PORT}
+export RUNDECK_CLI_OPTS=${RUNDECK_CLI_OPTS:-}
 
 
 # if [ -n "$SETUP_SSL" ] ; then
@@ -79,7 +80,7 @@ cat > $HOME/etc/profile <<END
 RDECK_BASE=$RDECK_BASE
 export RDECK_BASE
 
-JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-8-openjdk-amd64}
+JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
 export JAVA_HOME
 
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
@@ -168,8 +169,11 @@ setup_project_api(){
   }
 END
 
-  RD_OPTS="-Djavax.net.ssl.trustStore=$DIR/etc/truststore" \
-  RD_URL=$RUNDECK_URL RD_TOKEN=$TOK rd projects create -p "$PROJ" -f $DIR/projects/$PROJ/etc/project.json -F json
+  set -x
+  RD_OPTS=$RUNDECK_CLI_OPTS \
+  RD_URL=$RUNDECK_URL \
+  RD_TOKEN=$TOK \
+  rd projects create -p "$PROJ" -f $DIR/projects/$PROJ/etc/project.json -F json
 
 }
 
@@ -199,6 +203,9 @@ setup_ssl(){
 cat >> $HOME/etc/profile <<END
 export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$DIR/server/config/ssl.properties -Dserver.https.port=$RUNDECK_PORT"
 END
+
+  export RUNDECK_CLI_OPTS+=" -Djavax.net.ssl.trustStore=$DIR/etc/truststore -Djavax.net.ssl.trustStorePassword=adminadmin "
+
 }
 
 if [ -n "$SETUP_SSL" ] ; then

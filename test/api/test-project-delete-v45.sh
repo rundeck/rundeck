@@ -5,7 +5,6 @@
 
 # use api V45
 API_VERSION=45
-API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -22,27 +21,27 @@ echo "TEST: DELETE /api/45/project/${test_proj}?deferred=false"
 ##
 
 cat > $DIR/proj_create.post <<END
-<project>
-    <name>$test_proj</name>
-    <description>API test. Please delete me.</description>
-    <config>
-        <property key="test.property" value="test value"/>
-    </config>
-</project>
+{
+    "name":"$test_proj",
+    "description":"test1",
+    "config":{
+        "test.property":"test value"
+    }
+}
 END
 
 # get listing
-docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
 assert_http_status 201 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
-assert_xml_value "$test_proj" "/project/name" $DIR/curl.out
+assert_json_value "$test_proj" ".name" $DIR/curl.out
 
 
 ##

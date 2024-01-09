@@ -984,7 +984,7 @@ function _ajaxWFAction(url, params) {
 }
 
 function _vueEmitJobEdited() {
-  window._rundeck.eventBus.$emit('job-edit:edited', true)
+  window._rundeck.eventBus.emit('job-edit:edited', true)
 }
 
 function _updateWFUndoRedo() {

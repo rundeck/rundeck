@@ -26,7 +26,7 @@ dependencies {
     }
 
     // Use the awesome Spock testing and specification framework
-    testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "org.testcontainers:testcontainers:1.16.0"
 }

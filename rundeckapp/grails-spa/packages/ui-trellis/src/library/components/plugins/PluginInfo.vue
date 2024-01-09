@@ -8,66 +8,66 @@
       <i :class="'fab fa-'+fabicon" v-else-if="fabicon"></i>
       <i class="rdicon icon-small plugin" v-else></i>
     </span>
-    <span :class="titleCss" v-if="showTitle" style="margin-left: 5px;">{{title}}</span>
-    <span :class="descriptionCss" v-if="showDescription" style="margin-left: 5px;">{{shortDescription}}</span>
-    <details class="more-info details-reset" :class="extendedCss" v-if="showDescription && showExtended && extraDescription">
-        <summary>
-            More...
-            <span class="more-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-right"/></span>
-            <span class="less-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-down"/></span>
-        </summary>
-
-    {{extraDescription}}
-
-    </details>
+    <span :class="titleCss" v-if="showTitle" style="margin-left: 5px">
+       {{ title }}
+    </span>
+    <PluginDetails
+        :showDescription="showDescription"
+        :showExtended="showExtended"
+        :description="description"
+        :descriptionCss="descriptionCss"
+        :extendedCss="extendedCss"
+    />
 
     <slot name="suffix"></slot>
   </span>
 </template>
 <script lang="ts">
-import Vue from "vue";
+import {defineComponent} from "vue";
+import PluginDetails from "./PluginDetails.vue";
 
-export default Vue.extend({
+export default defineComponent({
     name: 'PluginInfo',
     components: {
+      PluginDetails
     },
     props: {
-        'showIcon': {
-            'type': Boolean,
-            'default': true,
-            'required': false
+        showIcon: {
+            type: Boolean,
+            default: true,
+            required: false
         },
-        'showTitle': {
-            'type': Boolean,
-            'default': true,
-            'required': false
+        showTitle: {
+            type: Boolean,
+            default: true,
+            required: false
         },
-        'titleCss':{
+        titleCss:{
             type:String,
             default:'text-strong',
             required:false
         },
-        'showDescription': {
+        showDescription: {
             'type': Boolean,
             'default': true,
             'required': false
         },
-        'descriptionCss':{
+        descriptionCss:{
             type:String,
             default:'',
             required:false
         },
-        'showExtended': {
+        showExtended: {
             'type': Boolean,
             'default': true,
             'required': false
         },
-        'extendedCss':{
+        extendedCss:{
             type:String,
             default:'text-muted',
             required:false
         },
-        'detail': {
+        detail: {
             'type': Object,
             'required': true
         }
@@ -99,20 +99,6 @@ export default Vue.extend({
         fabicon() :string{
             return this.providerMeta.fabicon;
         },
-        shortDescription() :string{
-          const desc = this.description
-            if (desc && desc.indexOf("\n") > 0) {
-                return desc.substring(0, desc.indexOf("\n"));
-            }
-            return desc;
-        },
-        extraDescription() :string|null{
-          const desc = this.description
-            if (desc && desc.indexOf("\n") > 0) {
-                return desc.substring(desc.indexOf("\n") + 1);
-            }
-            return null;
-        }
     },
 
 })

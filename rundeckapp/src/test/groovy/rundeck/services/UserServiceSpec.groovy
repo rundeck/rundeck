@@ -230,12 +230,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         def roles = service.getUserGroupSourcePluginRoles(userA)
 
         then:
-        roles == groups
+        roles == expect
 
         where:
-        userA | groups
-        "any" | ["one","two"]
-        "any" | []
+        userA | groups           | expect
+        "any" | ["one", "two"]   | ["one", "two"]
+        "any" | []               | []
+        //make sure nulls are filtered
+        "any" | ["a", null, "b"] | ["a", "b"]
     }
 
     def "User Group Source Plugin doesn't process misconfigured plugin"() {
@@ -440,5 +442,31 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         new Date() | baseDate - 2 | 2
         new Date() | null         | 3
         new Date() | baseDate     | 0
+    }
+
+    def "validateUserNameWithSingleQuotes"() {
+        def userName = "O'Test, First"
+        setup:
+        User uone = new User(login: userName)
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(userName)
+
+        then:
+        result == true
+    }
+
+    def "validateInvalidUserName"() {
+        def userName = "O|Test, First"
+        setup:
+        User uone = new User(login: userName)
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(userName)
+
+        then:
+        result == false
     }
 }

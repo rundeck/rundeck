@@ -1,33 +1,40 @@
 <template>
-    <div class="rd-copybox" :title="title()" @click="handleClick">
+    <div class="rd-copybox" :title="title" @click="handleClick">
         <div ref="content" class="rd-copybox__content" :class="{'rd-copybox__content--active': active}">
             {{content}}
         </div>
-        <div class="rd-copybox__spacer" :class="{'rd-copybox__content--active': active}"/>
+        <div class="rd-copybox__spacer" :class="{'rd-copybox__content--active': active}"></div>
         <div class="rd-copybox__icon">
-            <i class="fas fa-clipboard"/>
+            <i class="fas fa-clipboard"></i>
         </div>
-        <span class="rd-copybox__success" :class="{'rd-copybox__success--active': active}">Copied to clipboard!</span>
+        <span v-if="active" class="rd-copybox__success" :class="{'rd-copybox__success--active': active}">Copied to clipboard!</span>
+        <span v-if="hasFailed" class="rd-copybox__success error" :class="{'rd-copybox__success--active': hasFailed}">Copy failed!</span>
     </div>
 </template>
 
 <script lang="ts">
-import Vue, { VNode } from 'vue'
+import {defineComponent, VNode} from 'vue'
 
 import {CopyToClipboard} from '../../../utilities/Clipboard'
 
-export default Vue.extend({
+export default defineComponent({
     name: 'rd-copybox',
     props: {
-        content: String
+        content: {
+          type: String,
+          required: true,
+        }
     },
     data() { return {
-        active: false
+        active: false,
+        hasFailed: false,
     }},
-    methods: {
+    computed: {
         title() {
             return this.content
-        },
+        }
+    },
+    methods: {
         async handleClick() {
             const content = (<HTMLElement>this.$refs['content'])
 
@@ -37,10 +44,18 @@ export default Vue.extend({
             const sel = window.getSelection()
             sel?.removeAllRanges()
 
-            await CopyToClipboard(this.content)
-            this.active = true
-            setTimeout(() => this.active = false, 400)
-            setTimeout(() => {sel?.addRange(range)}, 700)
+            try {
+              await CopyToClipboard(this.content)
+              this.active = true
+              setTimeout(() => this.active = false, 400)
+              setTimeout(() => {
+                sel?.addRange(range)
+              }, 700)
+            } catch (e) {
+              this.hasFailed = true
+              setTimeout(() => this.hasFailed = false, 400)
+              console.error(e)
+            }
         }
     }
 })
@@ -99,6 +114,10 @@ export default Vue.extend({
     opacity: 0;
 
     transition: opacity 200ms ease-in-out;
+
+    &.error {
+      color: var(--danger-color);
+    }
 
     &--active {
         opacity: 1;

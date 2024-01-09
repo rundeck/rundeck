@@ -1,25 +1,25 @@
 <template>
     <li :id="item.id" class="utility-bar__item" @click="handleClick">
-        <i class="utility-bar__item-icon" :class="item.class"/>
+        <i class="utility-bar__item-icon" :class="item.class"></i>
         <span v-if="item.label">{{item.label}}</span>
         <span v-if="item.count" class="utility-bar__item-counter">{{item.count}}</span>
         <Popper v-if="open" @close="close">
             <div class="card card--popover utility-bar__widget">
-                <component :is="item.widget"/>
+                <component :is="item.widget" />
             </div>
         </Popper>
     </li>
 </template>
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
-import {Observer} from 'mobx-vue'
+import {defineComponent, PropType} from 'vue'
 
-import {UtilityItem} from '../../stores/UtilityBar'
+import { UtilityWidgetItem } from '../../stores/UtilityBar'
 
 import Popper from './Popper.vue'
 
-export default Observer(Vue.extend({
+export default defineComponent({
+    name: 'UtilityWidgetItem',
     data() { return {
         open: false
     }},
@@ -27,7 +27,10 @@ export default Observer(Vue.extend({
         Popper
     },
     props: {
-        item: Object as PropType<UtilityItem>
+        item: {
+          type: Object as PropType<UtilityWidgetItem>,
+          required: true,
+        }
     },
     methods: {
         handleClick() {
@@ -40,7 +43,7 @@ export default Observer(Vue.extend({
             return Date.now()
         }
     }
-}))
+})
 </script>
 
 <style scoped lang="scss">

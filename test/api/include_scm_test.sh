@@ -19,33 +19,6 @@ tmpdir(){
 	local TMPDIR=`mktemp -d -t ${tempfoo}.XXX` || exit 1
 	echo $TMPDIR
 }
-
-create_project(){
-	local projectName=$1
-	
-	ENDPOINT="${APIURL}/projects"
-	TMPDIR=`tmpdir`
-	tmp=$TMPDIR/create-project.xml
-	cat >$tmp <<END
-<project>
-    <name>$projectName</name>
-</project>
-END
-	TYPE=application/xml
-	POSTFILE=$tmp
-	METHOD=POST
-	EXPECT_STATUS=201
-	api_request $ENDPOINT $DIR/curl.out
-}
-remove_project(){
-	local projectName=$1
-
-	ENDPOINT="${APIURL}/project/$projectName"
-	METHOD=DELETE
-	EXPECT_STATUS=204
-	api_request $ENDPOINT $DIR/curl.out
-}
-
 baregitfile=$SRC_DIR/git-bare-init.zip
 
 setup_remote(){
@@ -132,7 +105,7 @@ create_job(){
 END
 	METHOD=POST
 	ENDPOINT="${APIURL}/project/$project/jobs/import"
-	ACCEPT=application/xml
+	ACCEPT=application/json
 	TYPE=application/xml
 	POSTFILE=$tmp
 
@@ -141,8 +114,8 @@ END
 	api_request $ENDPOINT $DIR/curl.out
 
 
-	assert_xml_value "1" '/result/succeeded/@count' $DIR/curl.out
-	local JOBID=$( xmlsel '/result/succeeded/job/id' $DIR/curl.out )
+	assert_json_value "1" '.succeeded|length' $DIR/curl.out
+	local JOBID=$( jq -r '.succeeded[0].id' < $DIR/curl.out )
 
 	echo $JOBID
 }

@@ -24,10 +24,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
 #Check projects list
-itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+itemcount=$(jq -r ".executions | length" $DIR/curl.out)
 echo "$itemcount executions"
 if [ "" == "$itemcount" ] ; then
     errorMsg "FAIL: executions count was not valid"

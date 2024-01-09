@@ -85,7 +85,7 @@
   </g:if>
     <div class="form-group ">
         <label for="label">
-            <g:message code="domain.Project.label.label" default="Label"/>
+            <g:message code="domain.Project.label.label" default="Project Display Name"/>
         </label>
         <g:textField name="label" size="50"  value="${projectLabel}" class="form-control"/>
     </div>
@@ -249,7 +249,7 @@
                                 <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                                 <i class="rdicon icon-small plugin"></i>
                                 <!-- /ko -->
-                                <span data-bind="text: title"></span>
+                                <span data-test-id="node-executor-selected" data-bind="text: title"></span>
                                 </span>
                             </span>
                         </span>
@@ -306,8 +306,8 @@
             <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
           <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
-          <div class=" " id="${enc(attr: nkey) + '_det'}"
-               data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
+          <div class=" vue-ui-socket-deferred " id="${enc(attr: nkey) + '_det'}"
+               data-bind="if: loaded() && defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
               <hr/>
 
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
@@ -340,16 +340,16 @@
 
     <div class=" form-group spacing-lg">
         <div class="col-sm-12">
-            <plugin-set-config
-                    class="project-config-plugins-vue"
-                    :event-bus="EventBus"
-                    service-name="PluginGroup"
-                    :mode-toggle="false"
-                    :config-list="[]"
-                    config-prefix="pluginValues.PluginGroup."
-                    @modified="EventBus.$emit('page-modified','Plugins')"
-                    @reset="EventBus.$emit('page-reset','Plugins')"
-            ></plugin-set-config>
+            <div class="project-config-plugins-vue">
+                <plugin-set-config :event-bus="EventBus"
+                                   service-name="PluginGroup"
+                                   :mode-toggle="false"
+                                   :config-list="[]"
+                                   config-prefix="pluginValues.PluginGroup."
+                                   @modified="EventBus.emit('page-modified','Plugins')"
+                                   @reset="EventBus.emit('page-reset','Plugins')"
+                ></plugin-set-config>
+            </div>
         </div>
     </div>
 </div>

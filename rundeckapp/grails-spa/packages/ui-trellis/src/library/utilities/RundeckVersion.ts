@@ -7,7 +7,7 @@ export class RundeckVersion {
   private iconIdentity: string
   private appId: string
   private serverName?: string
-  private nameTilt = 21
+  private nameTilt = 32
 
   constructor(data: any) {
     this.versionString = data['versionString']
@@ -159,6 +159,41 @@ export class RundeckVersion {
     'Wyvern',
 
   ]
+  static names5 = [
+    'Aconcagua',
+    'Aoraki',
+    'Carstenz',
+    'Chimborazo',
+    'Denali', //Dave Darby
+    'Elbrus',
+    'Erebus',
+    'Etna',
+    'Everest',
+    'Fairweather',
+    'Fansiban',
+    'Foraker',
+    'Fuji',
+    'Hood', //Greg Schueler
+    'K2',
+    'Kilimanjaro',
+    'Kinabalu',
+    'Kirkjufell',
+    'Logan',
+    'Matterhorn',
+    'Mauna Kea',
+    'Mont Blanc',
+    'Monte Fitz Roy',
+    'Olympus',
+    'Parinacota',
+    'Provincia', //Luis Toledo
+    'Rainier',
+    'Shasta',
+    'Stanley',
+    'Tupungato',
+    'Vinson',
+    'Whitney',
+    'Wycheproof'
+  ]
 
   splitVersion(versionString: string): { [p: string]: any } {
     let partsa = String(versionString).split(' ')
@@ -243,6 +278,9 @@ export class RundeckVersion {
   }
 
   nameForVersion(val: number) {
+    return this.inList(RundeckVersion.names5, val)
+  }
+  nameForVersion4(val: number) {
     return this.inList(RundeckVersion.names4, val)
   }
 

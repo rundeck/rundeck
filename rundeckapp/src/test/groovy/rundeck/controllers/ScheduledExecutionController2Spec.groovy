@@ -75,6 +75,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         mockCodec(URIComponentCodec)
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -928,25 +929,18 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             1 * authorizeProjectResource(_,[type: 'resource', kind: 'event'],'read',se.project)>>true
         }
 
-        sec.executionService = mockWith(ExecutionService) {
-            queryJobExecutions(1) { job, stat, offset, max ->
-                assert job == se
-                assert stat == testStatus
-                assert offset == testOffset
-                assert max == testMax
+        sec.executionService = Mock(ExecutionService) {
+            _*queryJobExecutions(se,testStatus,testOffset,testMax)>>
                 [total: 0, result: testResultList]
-            }
-            respondExecutionsXml(1) { HttpServletRequest request,HttpServletResponse response, List<Execution> executions, Map params ->
-                assertEquals(executions.size() ,testResultSize)
-                [result:true]
-            }
+
+            _*respondExecutionsJson(_,_, {it.size()==testResultSize},_)>>[result:true]
         }
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
     }
 
     public void testApiRunJob() {
-        when:
+        given:
         def sec = controller
         sec.response.format = "xml"
 
@@ -977,20 +971,20 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = new MockFor(ExecutionService, true)
+
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
+        sec.executionService = Mock(ExecutionService) {
+            1 * executeJob(_, _, _, _) >> {
+                [executionId: exec.id, name: it[0].jobName, execution: exec, success: true]
+            }
 
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
+            1 * respondExecutionsJson(_, _, _, _) >> true
         }
-        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
-            return true
-        }
-        sec.executionService = eServiceControl.proxyInstance()
+
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req,resp ->
@@ -1017,6 +1011,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             assert 1==execs.size()
         }
         session.user='anonymous'
+        request.method='POST'
+        when:
         sec.apiJobRun()
 
         then:
@@ -1064,23 +1060,19 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
-                                            String user,
-                                            Map input ->
-            assert userName == user
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
+        sec.executionService = Mock(ExecutionService) {
+            1*executeJob ( _,_,userName,_)>>{
+                [executionId: exec.id, name: it[0].jobName, execution: exec,success:true]
+            }
+
+            1*respondExecutionsJson (_,_,_,_)>> true
         }
-        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
-            return true
-        }
-        sec.executionService = eServiceControl.proxyInstance()
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
@@ -1117,6 +1109,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
             assert 1==execs.size()
             assert execs.contains(exec)
         }
+        request.method='POST'
 
         sec.apiJobRun()
     }
@@ -1175,8 +1168,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
+        svcMock.demand.requireApi { req, resp ->
             true
         }
 
@@ -1349,17 +1341,12 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def apiverslist=[4,14]
-        sec.apiService = mockWith(ApiService) {
-            requireApi(1..1){ req, resp, apivers ->
-                assert req.api_version==14
-                true
-            }
-            requireExists { response, exists, args ->
-                assertEquals(['project','test'],args)
-                return true
-            }
-            renderSuccessXml { request,response, closure ->
+        sec.apiService = Mock(ApiService) {
+            1 * requireApi(_,_)>>true
+
+            1 * requireExists(_,_,['project','test'])>> true
+
+            1 * renderSuccessJson(_,_)>> {
                 succeeded=true
                 return true
             }
@@ -1444,108 +1431,16 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        sec.apiService = mockWith(ApiService) {
-            requireApi { req, resp, apivers ->
-                assert apivers == 14
-                assert req.api_version==14
-                true
-            }
-            requireExists { response, exists, args ->
-                assertEquals(['project','test'],args)
-                return true
-            }
-            renderSuccessXml { request,response, closure ->
+        sec.apiService = Mock(ApiService) {
+            1 * requireApi(_,_)>>true
+
+            1 * requireExists(_,_,['project','test'])>> true
+
+            1 * renderSuccessJson(_,_)>> {
                 succeeded=true
                 return true
             }
         }
-        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
-        then:
-        assert succeeded
-        assert null==view
-        assertNull(response.redirectedUrl)
-        assert !model
-    }
-    public void testApiRunCommand_XML() {
-        when:
-        def sec = controller
-        sec.response.format = "xml"
-
-        //try to do api job run
-        def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.existsFrameworkProject(1..1) { project ->
-            true
-        }
-        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
-            false
-        }
-
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
-
-                0 * _(*_)
-            }
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-
-        sec.frameworkService = fwkControl.proxyInstance()
-        def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-
-            [scheduledExecution:new ScheduledExecution(),failed:false]
-        }
-        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
-            true
-        }
-
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.scheduleTempJob { auth, exec ->
-            [id:'fakeid',execution:exec,success:true]
-        }
-
-        sec.scheduledExecutionService = seServiceControl.proxyInstance()
-
-        def eServiceControl = new MockFor(ExecutionService, true)
-        def exec = new Execution(
-                user: "testuser", project: "testproj", loglevel: 'WARN',
-                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-        )
-        assert null!=exec.save()
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
-
-            exec
-        }
-        sec.executionService = eServiceControl.proxyInstance()
-
-
-        final subject = new Subject()
-        subject.principals << new Username('test')
-        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        request.setAttribute("subject", subject)
-        request.setAttribute("api_version", 5)
-//        request.api_version = 5
-        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
-            assert 1 == execs.size()
-            assert execs.contains(exec)
-        }
-        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        def succeeded=false
-        def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
-            true
-        }
-        svcMock.demand.requireExists { response, exists, args ->
-            assertEquals(['project','test'],args)
-            return true
-        }
-        svcMock.demand.renderSuccessXml { request,response, closure ->
-            succeeded=true
-            return true
-        }
-        sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         then:
         assert succeeded
@@ -1617,8 +1512,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
+        svcMock.demand.requireApi { req, resp ->
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1637,99 +1531,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         assertNull(response.redirectedUrl)
         assert !model
     }
-    public void testApiRunCommand_JSON_apiversionInvalid() {
-        when:
-        def sec = controller
-
-        //try to do api job run
-        def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.existsFrameworkProject(1..1) { project ->
-            true
-        }
-        fwkControl.demand.isFrameworkProjectDisabled(1..1) { project ->
-            false
-        }
-
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
-
-                0 * _(*_)
-            }
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-
-        sec.frameworkService = fwkControl.proxyInstance()
-        def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-
-            [scheduledExecution:new ScheduledExecution(),failed:false]
-        }
-        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
-            true
-        }
-
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.scheduleTempJob { auth, exec ->
-            [id:'fakeid',execution:exec,success:true]
-        }
-
-
-        sec.scheduledExecutionService = seServiceControl.proxyInstance()
-
-        def eServiceControl = new MockFor(ExecutionService, true)
-        def exec = new Execution(
-                user: "testuser", project: "testproj", loglevel: 'WARN',
-                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-        )
-        assert null!=exec.save()
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep { scheduledExecution, authContext, params ->
-
-            exec
-        }
-        sec.executionService = eServiceControl.proxyInstance()
-
-
-        final subject = new Subject()
-        subject.principals << new Username('test')
-        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        request.setAttribute("subject", subject)
-        request.setAttribute("api_version", 5)
-//        request.api_version = 5
-        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        def succeeded=false
-        def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
-            true
-        }
-        svcMock.demand.requireExists { response, exists, args ->
-            assertEquals(['project','test'],args)
-            return true
-        }
-        svcMock.demand.renderErrorFormat{response,data->
-            assertEquals([
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: ['json']
-            ],data)
-        }
-        svcMock.demand.renderSuccessJson { response, closure ->
-            succeeded=true
-            return true
-        }
-        sec.apiService = svcMock.proxyInstance()
-        sec.response.format='json'
-        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
-
-        then:
-        assert !succeeded
-        assert null==view
-        assertNull(response.redirectedUrl)
-        assert !model
-    }
-    public void testApiRunCommand_JSON_apiversionValid() {
+    public void testApiRunCommand_JSON() {
         when:
         def sec = controller
 
@@ -1791,8 +1593,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
+        svcMock.demand.requireApi { req, resp ->
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1815,9 +1616,9 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
     }
 
     public void testApiRunCommandAsUser() {
-        when:
+        given:
         def sec = controller
-        sec.response.format = "xml"
+        sec.response.format = "json"
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1878,42 +1679,30 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         request.setAttribute("api_version", 11)
 //        request.api_version = 5
 //        registerMetaClass(ExecutionController)
-        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
-            assert 1 == execs.size()
-            assert execs.contains(exec)
-        }
+
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
 
-        def svcMock = new MockFor(ApiService, true)
-        def requireFailed = true
-        svcMock.demand.requireApi { req, resp, version ->
-            version=14
-            true
+        sec.apiService = Mock(ApiService) {
+            1 * requireApi(_,_)>>true
+
+            1 * requireExists(_,_,['project','test'])>> true
+
+            1 * renderSuccessJson(_,_)>> {
+                succeeded=true
+                return true
+            }
+            0 * requireParameters({
+                it.exec && it.project
+            },_,['project','exec'])>>true
         }
-        svcMock.demand.requireExists { response, exists, args ->
-            assertEquals(['project', 'test'], args)
-            return true
-        }
-        svcMock.demand.renderSuccessXml { request, response, closure ->
-            succeeded = true
-            return true
-        }
-        svcMock.demand.requireParameters { reqparams, response, List needparams ->
-            assertTrue('project' in needparams)
-            assertTrue('exec' in needparams)
-            assertNotNull(reqparams.exec)
-            assertNotNull(reqparams.project)
-            requireFailed = false
-            return true
-        }
-        sec.apiService = svcMock.proxyInstance()
+        when:
         def result = sec.apiRunCommandv14()
 
         then:
         assert succeeded
         response.status==200
-        response.format=='xml'
+        response.format=='json'
         assertNull(response.redirectedUrl)
         assert !model
     }

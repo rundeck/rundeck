@@ -1,69 +1,93 @@
 <template>
-    <span v-if="items">
-        <slot v-if="items.length<1"></slot>
-        <template v-for="i in items">
-            <template v-if="i.text">{{ i.text }}</template>
-            <span v-else-if="i.html" v-html="i.html"></span>
-            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="itemData">
-                <slot></slot>
-            </component>
-        </template>
-    </span>
+    <slot v-if="items.length<1"></slot>
+    <template v-for="i in items">
+        <template v-if="i.text">{{ i.text }}</template>
+        <span v-else-if="i.html" v-html="i.html"></span>
+        <component v-else-if="i.widget && eventBus" :is="i.widget" :event-bus="eventBus" :item-data="itemData">
+            <slot></slot>
+        </component>
+        <component v-else-if="i.widget" :is="i.widget" :item-data="itemData">
+            <slot></slot>
+        </component>
+    </template>
 </template>
 <script lang="ts">
-
-import Vue from 'vue'
-import {Component, Prop, Watch} from 'vue-property-decorator'
+import { defineComponent, ref} from 'vue'
+import type { PropType } from 'vue'
 
 import {
     getRundeckContext,
 } from '../../rundeckService'
 import {UIItem, UIWatcher} from '../../stores/UIStore'
+import {EventBus} from "../../utilities/vueEventBus"
 
 
-const rootStore = getRundeckContext().rootStore
-
-@Component
-export default class UiSocket extends Vue {
-    @Prop({required: true}) readonly section!: string
-    @Prop({required: true}) readonly location!: string
-    @Prop({required: false}) readonly eventBus!: Vue
-    @Prop({required: false}) readonly socketData!: any
-
-    items: UIItem[] = []
-
-    loadItems() {
-        this.items = rootStore.ui.itemsForLocation(this.section, this.location).filter((a) => a.visible)
+export default defineComponent({
+  name: 'UiSocket',
+  props: {
+    section: {
+      type: String,
+      required: true,
+    },
+    location: {
+      type: String,
+      required: true,
+    },
+    eventBus: {
+      type: Object as PropType<typeof EventBus>,
+      required: false,
+    },
+    socketData: {
+      type: [String, Object] as PropType<string | Record<string, any>>,
+      required: false,
     }
-
-    destroyed() {
-        if(this.uiwatcher){
-            rootStore.ui.removeWatcher(this.uiwatcher)
-        }
+  },
+  setup() {
+    const items = ref<UIItem[]>([])
+    const uiwatcher = ref<UIWatcher>()
+    const rootStore = getRundeckContext()?.rootStore || null
+    return {
+      items,
+      uiwatcher,
+      rootStore,
     }
-    get itemData(){
-      if(typeof this.socketData === 'string'){
-        try{
+  },
+  computed: {
+    itemData() {
+      if (typeof this.socketData === 'string') {
+        try {
           return JSON.parse(this.socketData)
-        }catch (e){
+        } catch (e) {
           return this.socketData
         }
       }
       return this.socketData
-    }
-
-    uiwatcher: UIWatcher|null=null
-
-    mounted() {
-        this.loadItems()
-        this.uiwatcher = {
-            section: this.section,
-            location: this.location,
-            callback: (items: UIItem[])=>{
-                this.items=items
-            }
+    },
+  },
+  methods: {
+    loadItems() {
+      if(this.rootStore) {
+        this.items = this.rootStore.ui.itemsForLocation(this.section, this.location).filter((a) => a.visible)
+      }
+    },
+  },
+  mounted() {
+    this.loadItems()
+    if(this.rootStore) {
+      this.uiwatcher = {
+        section: this.section,
+        location: this.location,
+        callback: (uiItems: UIItem[]) => {
+          this.items = uiItems
         }
-        rootStore.ui.addWatcher(this.uiwatcher)
+      } as UIWatcher
+      this.rootStore.ui.addWatcher(this.uiwatcher)
     }
-}
+  },
+  unmounted() {
+    if (this.uiwatcher) {
+      this.rootStore.ui.removeWatcher(this.uiwatcher)
+    }
+  }
+})
 </script>

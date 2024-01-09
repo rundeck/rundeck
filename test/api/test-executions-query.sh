@@ -23,8 +23,8 @@ params="exec=echo+testing+adhoc+execution+query"
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-execid1=$(xmlsel "/execution/@id" $DIR/curl.out)
+#select id
+execid1=$(jq -r ".execution.id" < $DIR/curl.out)
 [ -n "$execid1" ] || fail "Didn't see execid"
 
 
@@ -36,8 +36,8 @@ params="exec=echo+testing+adhoc+execution+query+should+fail;false"
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-execid2=$(xmlsel "/execution/@id" $DIR/curl.out)
+#select id
+execid2=$(jq -r ".execution.id" < $DIR/curl.out)
 [ -n "$execid2" ] || fail "Didn't see execid"
 
 ###
@@ -139,18 +139,11 @@ runJob(){
 
     # get listing
     $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+#get execid
 
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+    assert_json_not_null ".id" $DIR/curl.out
+    execid=$(jq -r ".id" < $DIR/curl.out)
 
-    #get execid
-
-    execcount=$(xmlsel "/executions/@count" $DIR/curl.out)
-    execid=$(xmlsel "/executions/execution/@id" $DIR/curl.out)
-
-    if [ "1" != "${execcount}" -o "" == "${execid}" ] ; then
-        errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
-        exit 2
-    fi
     echo $execid
 }
 
@@ -201,11 +194,8 @@ testExecQuery(){
         errorMsg "ERROR: failed query request for test: $desc"
         exit 2
     fi
-
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
-
     #Check projects list
-    itemcount=$(xmlsel "/executions/@count" $DIR/curl.out)
+    itemcount=$(jq -r ".executions | length" $DIR/curl.out)
     #echo "$itemcount executions"
     expect=$1;shift
     if [ -n "${expect}" ] ; then

@@ -1,53 +1,28 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import Vue2Filters from 'vue2-filters'
+import {createApp} from 'vue'
 import VueCookies from 'vue-cookies'
 import VueScrollTo from 'vue-scrollto'
-import VueFuse from 'vue-fuse'
-import VueI18n from 'vue-i18n'
-import uivLang from '../../../library/utilities/uivi18n'
 import * as uiv from 'uiv'
 
-import store from './stores'
+import { store } from './stores'
 import router from './router'
-import App from './App'
+import App from './App.vue'
+import {initI18n} from "../../utilities/i18n"
 
-Vue.config.productionTip = false
+const i18n = initI18n()
 
-Vue.use(VueCookies)
-Vue.use(VueScrollTo)
-Vue.use(VueFuse)
-Vue.use(Vue2Filters)
-Vue.use(uiv)
-
-let locale = window._rundeck.locale || 'en_US'
-let lang = window._rundeck.language || 'en'
-
-// include any i18n injected in the page by the app
-let messages = {
-  [locale]: Object.assign({},
-    uivLang[locale] || uivLang[lang] || {},
-    window.Messages
-  )
-}
-
-console.log(messages)
-
-const i18n = new VueI18n({
-  silentTranslationWarn: true,
-  locale, // set locale
-  messages // set locale messages,
-})
-
-/* eslint-disable no-new */
-new Vue({
-  el: '#repository-vue',
-  store,
-  router,
+const app = createApp({
+  name: "RepositoryApp",
   components: {
     App
   },
-  template: '<App/>',
-  i18n
+  template: '<App/>'
 })
+app.use(store)
+app.use(router)
+app.use(VueCookies)
+app.use(VueScrollTo)
+app.use(uiv)
+app.use(i18n)
+app.mount('#repository-vue')

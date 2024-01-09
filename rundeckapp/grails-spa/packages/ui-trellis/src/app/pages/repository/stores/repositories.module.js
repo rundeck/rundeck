@@ -34,7 +34,7 @@ const mutations = {
   }
 }
 const actions = {
-  setInstallStatusOfPluginsVisbility({
+  setInstallStatusOfPluginsVisibility({
     commit
   }, showWhichPlugins) {
     commit("SET_PLUGIN_VISIBILITY_BY_INSTALL_STATUS", showWhichPlugins)

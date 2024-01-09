@@ -20,7 +20,7 @@ export default {
   },
   mounted () {
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      axios({
+      axios.request({
         method: 'get',
         headers: {'x-rundeck-ajax': true},
         url: `${window._rundeck.rdBase}menu/homeAjax`,

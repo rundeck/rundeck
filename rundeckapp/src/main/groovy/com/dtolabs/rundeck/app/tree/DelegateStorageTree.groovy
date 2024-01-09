@@ -24,7 +24,7 @@ class DelegateStorageTree implements StorageTree {
         return storageTree
     }
 
-    @Subscriber('rundeck.configuration.refreshed')
+    @Subscriber('rundeck.configuration.change')
     @CompileDynamic
     def updateTreeConfig(def event) {
         if(!refreshable){

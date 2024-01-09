@@ -33,9 +33,9 @@
         <progress-bar v-model="progress" label :labelText="progressText" />
       </div>
       <section>
-        <modal v-model="modal.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false" append-to-body>
-          <img :src="modal.image" :alt="modal.alt" class="img-responsive" />
-          <p class="modal-image-caption">{{modal.alt}}</p>
+        <modal v-model="modalData.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false" :append-to-body="true">
+          <img :src="modalData.image" :alt="modalData.alt" class="img-responsive" />
+          <p class="modal-image-caption">{{modalData.alt}}</p>
         </modal>
       </section>
     </div>
@@ -43,7 +43,7 @@
 </template>
 
 <script lang='ts'>
-  import Vue from 'vue';
+  import {defineComponent} from 'vue';
   import _ from "lodash";
   import Trellis, { getRundeckContext } from "../../../../library";
   import TourServices from "../services";
@@ -51,12 +51,12 @@
 
   const context = getRundeckContext();
 
-  export default Vue.extend({
+  export default defineComponent({
     name: "TourDisplay",
     props: ["eventBus", "pad"],
     data() {
       return {
-        modal: {
+        modalData: {
           show: false,
           image: null,
           alt: null
@@ -226,9 +226,9 @@
         });
       },
       openImageModal(event: any) {
-        this.modal.image = event.target.src;
-        this.modal.alt = event.target.alt;
-        this.modal.show = true;
+        this.modalData.image = event.target.src;
+        this.modalData.alt = event.target.alt;
+        this.modalData.show = true;
       },
       resume(){
         const step = this.tour.steps[this.stepIndex];
@@ -245,7 +245,7 @@
       const regEx = new RegExp(context.rdBase, "ig");
       this.currentUrl = window.location.href.replace(regEx, "");
 
-      this.eventBus.$on("tourSelected", (tour: Tour) => {
+      this.eventBus.on("tourSelected", (tour: Tour) => {
         this.initTour(tour, 0);
         this.initNextUrl();
       });

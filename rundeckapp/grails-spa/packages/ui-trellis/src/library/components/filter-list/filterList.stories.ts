@@ -1,6 +1,4 @@
-import Vue from 'vue'
-import {observable} from 'mobx'
-
+import type {Meta, StoryFn} from "@storybook/vue3";
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
@@ -15,22 +13,26 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'Filter List'
-}
+    title: 'Filter List',
+    component: FilterList
+} as Meta<typeof FilterList>
 
 
-export const filterList = () => {
+export const filterList: StoryFn<typeof FilterList> = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
+    window._rundeck.rootStore = rootStore
 
-    const items = observable.array([{label: 'Foo', name: 'Bar'}])
+    const items = [{label: 'Foo', name: 'Bar'}]
 
     setTimeout(() => {items.push({label: 'Fiz', name: 'Buz'})}, 2000)
     
-    return Vue.extend({
+    return {
         template: `
         <FilterList v-bind="$data">
-            <template slot="item" scope="{item}"><i class="fa fas fa-beer"/>Foo: {{item.name}}</template>
-            <div slot="footer">I'm a footer</div>
+            <template v-slot:item="item"><i class="fa fas fa-beer"/>Foo: {{item.name}}</template>
+            <template v-slot:default"footer">
+              <div>I'm a footer</div>
+            </template>
         </FilterList>
         `,
         provide: {rootStore},
@@ -48,7 +50,7 @@ export const filterList = () => {
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
-    })
+    }
 }
 
 

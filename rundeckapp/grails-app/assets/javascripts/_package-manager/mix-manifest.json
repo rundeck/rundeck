@@ -8,7 +8,7 @@
     "/vendor/knockout-mapping.js": "/vendor/knockout-mapping.js",
     "/vendor/perfect-scrollbar.js": "/vendor/perfect-scrollbar.js",
     "/vendor/perfect-scrollbar.css": "/vendor/perfect-scrollbar.css",
-    "/vendor/vue.js": "/vendor/vue.js",
-    "/vendor/vue.min.js": "/vendor/vue.min.js",
+    "/vendor/vue.global.js": "/vendor/vue.global.js",
+    "/vendor/vue.global.prod.js": "/vendor/vue.global.prod.js",
     "/vendor/bootstrap/bootstrap.js": "/vendor/bootstrap/bootstrap.js"
 }

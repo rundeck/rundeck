@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.Features
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import io.micronaut.http.MediaType
@@ -408,35 +409,14 @@ Since: v21''',
                     [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
             )){
                 def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
-
-                withFormat {
-                    json {
-                        return apiService.renderErrorJson(response, errorMap)
-                    }
-                    xml {
-                        return apiService.renderErrorXml(response, errorMap)
-                    }
-                    '*' {
-                        return apiService.renderErrorXml(response, errorMap)
-                    }
-                }
+                apiService.renderErrorFormat(response,errorMap)
                 return
             }
         }
         def userExists = userService.validateUserExists(username)
         if(!userExists){
             def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',username]]
-            withFormat {
-                xml {
-                    return apiService.renderErrorXml(response, errorMap)
-                }
-                json {
-                    return apiService.renderErrorJson(response, errorMap)
-                }
-                '*' {
-                    return apiService.renderErrorXml(response, errorMap)
-                }
-            }
+            apiService.renderErrorFormat(response,errorMap)
             return
         }
         RdUser u = userDataProvider.findByLogin(username)
@@ -478,10 +458,7 @@ Since: v21''',
                     email(u.email)
                 }
             }
-            xml {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
-            }
-            json {
+            def jsonClos = {
                 return apiService.renderSuccessJson(response) {
                     delegate.login=u.login
                     delegate.firstName=u.firstName
@@ -489,9 +466,13 @@ Since: v21''',
                     delegate.email=u.email
                 }
             }
-            '*' {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
+            json jsonClos
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response, xmlClosure)
+                }
             }
+            '*' jsonClos
         }
     }
 
@@ -530,17 +511,18 @@ Since: v30''',
                     }
                 }
             }
-            xml {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
-            }
-            json {
+            def jsonClos = {
                 return apiService.renderSuccessJson(response) {
                     delegate.roles=authContext.getRoles()
                 }
             }
-            '*' {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
+            json jsonClos
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response, xmlClosure)
+                }
             }
+            '*' jsonClos
         }
     }
 
@@ -606,17 +588,7 @@ For APIv27+, the results will contain additional fields:
         )){
             def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
 
-            withFormat {
-                json {
-                    return apiService.renderErrorJson(response, errorMap)
-                }
-                xml {
-                    return apiService.renderErrorXml(response, errorMap)
-                }
-                '*' {
-                    return apiService.renderErrorXml(response, errorMap)
-                }
-            }
+            apiService.renderErrorFormat(response,errorMap)
             return
         }
         def users = []
@@ -661,10 +633,7 @@ For APIv27+, the results will contain additional fields:
                         }
                     }
             }
-            xml {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
-            }
-            json {
+            def jsonClos = {
                 return apiService.renderSuccessJson(response) {
                     users.each {
                         def u
@@ -677,9 +646,13 @@ For APIv27+, the results will contain additional fields:
                     }
                 }
             }
-            '*' {
-                return apiService.renderSuccessXml(request, response, xmlClosure)
+            json jsonClos
+            if(isAllowXml()) {
+                xml {
+                    return apiService.renderSuccessXml(request, response, xmlClosure)
+                }
             }
+            '*' jsonClos
         }
 
     }

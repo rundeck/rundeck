@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import { addons } from '@storybook/addons'
 
 
@@ -6,7 +5,7 @@ export default {
     title: 'Inputs/MultiInput'
 }
 
-export const MultiInput = () => (Vue.extend({
+export const MultiInput = () => ({
     render(h) {
         return (
             <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">
@@ -73,4 +72,4 @@ export const MultiInput = () => (Vue.extend({
             </div>
         )
     }
-}))
+})

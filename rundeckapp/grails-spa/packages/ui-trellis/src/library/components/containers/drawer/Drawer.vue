@@ -1,7 +1,7 @@
 <template>
     <div class="rd-drawer__wrapper">
-        <div ref="drawer" class="rd-drawer" :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']">
-            <div v-if="displayHeader()" class="rd-drawer__header">
+        <div ref="drawer" v-if="display" class="rd-drawer" :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']">
+            <div v-if="displayHeader" class="rd-drawer__header">
                 <div v-if="title" class="rd-drawer__title">{{title}}</div>
                 <div v-if="closeable" class="btn btn-default btn-link" style="margin-left: auto;" @click="() => {$emit('close')}">Close</div>
             </div>
@@ -12,9 +12,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import {defineComponent} from 'vue'
 
-export default Vue.extend({
+export default defineComponent({
     name: 'rd-drawer',
     props: {
         title: {default: ''},
@@ -25,6 +25,7 @@ export default Vue.extend({
         height: {default: ''},
         mask: {default: true}
     },
+    emits: ['close'],
     data() { return {
         display: false
     }},
@@ -33,12 +34,10 @@ export default Vue.extend({
         (<HTMLElement>this.$el).style.setProperty('--rd-drawer-width', this.drawerWidth);
         (<HTMLElement>this.$el).style.setProperty('--rd-drawer-height', this.drawerHeight);
     },
-    methods: {
-        displayHeader(): boolean {
-            return (this.title?.length > 0 || this.closeable)
-        }
-    },
     computed: {
+        displayHeader(): boolean {
+          return (this.title?.length > 0 || this.closeable)
+        },
         drawerHeight(): string {
             if (['left', 'right'].includes(this.placement))
                 return this.height || '100%'

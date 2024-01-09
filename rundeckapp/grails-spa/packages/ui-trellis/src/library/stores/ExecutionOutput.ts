@@ -4,7 +4,7 @@ import {ObservableGroupMap, actionAsync, task} from 'mobx-utils'
 import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
 import { JobWorkflow, RenderedStepList } from '../utilities/JobWorkflow'
-import { ExecutionStatusGetResponse, ExecutionOutputGetResponse, ExecutionOutputEntry as ApiExecutionOutputEntry } from '@rundeck/client/dist/lib/models'
+import { ExecutionStatusGetResponse } from '@rundeck/client/dist/lib/models'
 import { Serial } from '../utilities/Async'
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
@@ -127,7 +127,7 @@ export class ExecutionOutput {
             },
             queryParameters: {
                 offset: offset.toString(),
-                maxlines: maxLines
+                maxlines: maxLines.toString()
             }
         }).then(response => {
             if (response.status != 200) {
