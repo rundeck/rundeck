@@ -2754,7 +2754,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     def "load jobs with secure options that has default values, get a message"(){
         given:
-        def userHint = "Job: testUploadErrorHandlers, has secure options: [secure_opt] set with default values, please consider overriding this values with a storage key path to avoid security issues."
+        def userHint = "Job: testUploadErrorHandlers, has secure options: [secure_opt, secure_opt2] set with default values, please consider overriding this values with a storage key path to avoid security issues."
         setupDoUpdate()
         service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
         service.fileUploadService = Mock(FileUploadService)
@@ -2769,7 +2769,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                 name: 'secure_opt',
                                 secureInput: true,
                                 defaultValue: 'default'
-                        )
+                        ),
+                        new Option(
+                                name: 'secure_opt2',
+                                secureInput: true,
+                                defaultValue: 'default'
+                        ),
                 ],
                 workflow: new Workflow(commands: [
                         new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")

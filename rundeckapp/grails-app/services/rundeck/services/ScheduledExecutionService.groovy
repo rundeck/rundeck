@@ -1850,21 +1850,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
     /**
-     * Checks if the imported job has secure options with default values (deprecated as of version 3.x.X) and
-     * populates a waring to the user.
+     * Returns the secure options with default values (deprecated as of version 3.x.x).
      *
      * @param importedJob
-     * @return secure options with default values
+     * @return list with the names of secure options with default values
      */
     def getSecureOptionsWithDefaultValues(ImportedJob<ScheduledExecution> importedJob){
         def options = importedJob.job.options
-        def optionsWithSecureOptsAndDefaultValues = new ArrayList<String>()
+        def secureOptionsWithDefaultValues = new ArrayList<Option>()
         options.each { option -> {
             if( option.secureInput && (option.defaultValue != null || !option.defaultValue.isEmpty()) ){
-                optionsWithSecureOptsAndDefaultValues << option.name
+                secureOptionsWithDefaultValues << option
             }
         }}
-        return optionsWithSecureOptsAndDefaultValues
+        return secureOptionsWithDefaultValues
     }
 
     /**
@@ -1941,8 +1940,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution = result.scheduledExecution
                 def secureOptionsWithDefaultValues = getSecureOptionsWithDefaultValues(importedJob)
                 if( secureOptionsWithDefaultValues.size() ){
+                    String optionsNamesInAString = secureOptionsWithDefaultValues.stream()
+                            .map(Option::getName)
+                            .collect(Collectors.joining(", "))
+
                     msgs << "Job: ${jobdata.jobName}, " +
-                            "has secure options: [${String.join(", ", secureOptionsWithDefaultValues)}] set with default values," +
+                            "has secure options: [${optionsNamesInAString}] set with default values," +
                             " please consider overriding this values with a storage key path to avoid security issues."
                 }
                 if (!success) {
@@ -2778,7 +2781,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Removes the deprecated default value from option if there is a storage path set in the definition
+     * Removes the deprecated default value from secure option if there is a storage path set in the definition
      * to avoid security issues.
      *
      * @param option
