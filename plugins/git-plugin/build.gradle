@@ -44,7 +44,7 @@ dependencies {
         exclude module: 'slf4j-api'
         exclude group: 'org.bouncycastle'
     }
-    pluginLibs ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:5.13.1.202206130422-r"){
+    pluginLibs ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.7.0.202309050840-r"){
         exclude module: 'slf4j-api'
         exclude group: 'org.bouncycastle'
     }
@@ -67,7 +67,7 @@ dependencies {
     testImplementation "cglib:cglib-nodep:2.2.2"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 
-    testImplementation( 'org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r')
+    testImplementation( 'org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r')
 }
 
 
