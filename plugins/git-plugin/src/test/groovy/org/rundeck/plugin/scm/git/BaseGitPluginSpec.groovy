@@ -37,7 +37,7 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.lib.BaseRepositoryBuilder
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.FetchConnection
-import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.transport.PushConnection
 import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.SshTransport
