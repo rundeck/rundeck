@@ -208,10 +208,24 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
-    def jobImportFile(String projectName, String pathXmlFile) {
-        def responseImport = client.doPost("/project/${projectName}/jobs/import", new File(pathXmlFile), "application/xml")
-        def jsonres = client.jsonValue(responseImport.body(), Map)
-        jsonres
+    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null) {
+        def pathXmlFile = getClass().getResource("/temp-files/${fileName}").getPath()
+        def xmlProjectContent = new File(pathXmlFile).text
+        def xmlProject = xmlProjectContent
+                .replaceAll('xml-project-name', projectName?:PROJECT_NAME)
+                .replaceAll('xml-args', args?:"echo hello there")
+                .replaceAll('xml-job-name', jobName?:'job-test')
+                .replaceAll('xml-job-group-name', groupName?:'group-test')
+                .replaceAll('xml-job-description-name', description?:'description-test')
+        new File(pathXmlFile).text = xmlProject
+        pathXmlFile
+    }
+
+    def jobImportFile(String projectName = null, String pathXmlFile) {
+        def responseImport = client.doPost("/project/${projectName?:PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
+        responseImport.successful
+        responseImport.code() == 200
+        client.jsonValue(responseImport.body(), Map)
     }
 
 }
