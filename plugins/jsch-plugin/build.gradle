@@ -1,0 +1,64 @@
+plugins {
+    id 'groovy'
+}
+
+defaultTasks 'clean','build'
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+ext.pluginClassNames='org.rundeck.plugins.jsch.JschNodeExecutor,org.rundeck.plugins.jsch.JschScpFileCopier'
+ext.pluginName = 'Script Node Step Plugin'
+ext.pluginName = 'JSCH Plugin'
+ext.pluginDescription ='SSH Node Executor and File Copier plugin based on JSCH library.'
+
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    implementation {
+        extendsFrom pluginLibs
+    }
+}
+
+dependencies {
+    implementation(project(":core"))
+
+    testImplementation 'junit:junit:4.13.2',
+            'org.mockito:mockito-all:1.10.19'
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "cglib:cglib-nodep:2.2.2"
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
+
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        attributes 'Rundeck-Plugin-Tags': 'java,executor'
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+

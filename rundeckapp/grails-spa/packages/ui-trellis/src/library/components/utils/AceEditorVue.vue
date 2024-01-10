@@ -39,7 +39,6 @@ export default defineComponent({
                 // @ts-ignore
                 this.editor!.getSession().setValue(this.resolveValue(val) ,1)
                 this.contentBackup = this.resolveValue(val)
-                this.attachChangeEventToEditor()
             }
         },
         theme: function (newTheme): void {
@@ -88,6 +87,7 @@ export default defineComponent({
         if (this.options)
             editor.setOptions(this.options)
         this.observeDarkMode()
+        this.attachChangeEventToEditor()
     },
     beforeUnmount: function() {
         this.editor!.destroy()

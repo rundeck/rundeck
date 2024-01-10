@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
+import org.rundeck.core.execution.ExecCommand;
 import org.rundeck.core.execution.ScriptCommand;
 import org.rundeck.core.execution.ScriptFileCommand;
 import org.slf4j.Logger;
@@ -202,7 +203,7 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         }
         if (null != instanceConfiguration) {
             CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
-            if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
+            if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ExecCommand.EXEC_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
             {
                 instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                         instanceConfiguration,

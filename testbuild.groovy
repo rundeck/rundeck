@@ -56,7 +56,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging']
+def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
 def externalPlugins=['ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer','sshj-plugin']
 
 //manifest describing expected build results
@@ -135,7 +135,8 @@ def manifest=[
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
     "plugins/audit-logging-plugin/${target}/rundeck-audit-logging-plugin-${version}.jar":[:],
-    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:]
+    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:],
+    "plugins/jsch-plugin/${target}/rundeck-jsch-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate

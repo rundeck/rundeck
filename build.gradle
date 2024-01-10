@@ -181,7 +181,8 @@ project(':rundeckapp') {
         project(':plugins:git-plugin'),
         project(':plugins:audit-logging-plugin'),
         project(':plugins:source-refresh-plugin'),
-        project(':plugins:upvar-plugin')
+        project(':plugins:upvar-plugin'),
+        project(':plugins:jsch-plugin')
     ]
 
     //extra grails plugins
