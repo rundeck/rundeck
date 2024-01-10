@@ -7,8 +7,7 @@ import org.rundeck.app.data.model.v1.page.Page;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public interface JobDataProvider extends JobQueryProvider {
     /**
@@ -26,6 +25,13 @@ public interface JobDataProvider extends JobQueryProvider {
      * @return Job if found, otherwise null
      */
     JobData findByUuid(String uuid);
+
+    /**
+     * Retrieve basic job details from a UUID
+     * @param uuid UUID
+     * @return JobDataSummary, or empty if not found
+     */
+    Optional<JobDataSummary> findBasicByUuid(String uuid);
 
     /**
      * Checks if the job exists in the database

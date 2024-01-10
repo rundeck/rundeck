@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
+import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.utils.StreamLineIterator
 
 /*

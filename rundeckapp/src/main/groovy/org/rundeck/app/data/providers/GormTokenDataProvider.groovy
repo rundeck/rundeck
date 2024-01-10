@@ -47,58 +47,61 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
-        RdUser tokenOwner = userService.findOrCreateUser(data.ownerName)
-        if (!tokenOwner) {
-            throw new DataAccessException("Couldn't find user: ${data.ownerName}")
-        }
-
-        def tokenType = AuthenticationToken.AuthTokenType.valueOf(data.type.toString())
-
-        AuthToken token = new AuthToken(
-                token: data.token,
-                authRoles: AuthenticationToken.generateAuthRoles(data.getAuthRolesSet()),
-                user: User.get(tokenOwner.getId()),
-                expiration: data.expiration,
-                uuid: id,
-                creator: data.creator,
-                name: data.name,
-                type: tokenType,
-                tokenMode: (tokenType == AuthenticationToken.AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
-        )
-        if (token.save(flush: true)) {
-            return token.uuid
-        } else {
-            log.warn(token.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-            throw new DataAccessException("Failed to save token for User ${tokenOwner.login}")
+        AuthToken.withTransaction {
+            RdUser tokenOwner = userService.findOrCreateUser(data.ownerName)
+            if (!tokenOwner) {
+                throw new DataAccessException("Couldn't find user: ${data.ownerName}")
+            }
+            def tokenType = AuthenticationToken.AuthTokenType.valueOf(data.type.toString())
+            AuthToken token = new AuthToken(
+                    token: data.token,
+                    authRoles: AuthenticationToken.generateAuthRoles(data.getAuthRolesSet()),
+                    user: User.get(tokenOwner.getId()),
+                    expiration: data.expiration,
+                    uuid: id,
+                    creator: data.creator,
+                    name: data.name,
+                    type: tokenType,
+                    tokenMode: (tokenType == AuthenticationToken.AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+            )
+            if (token.save(flush: true)) {
+                return token.uuid
+            } else {
+                log.warn(token.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
+                throw new DataAccessException("Failed to save token for User ${tokenOwner.login}")
+            }
         }
     }
 
     @Override
     void update(final String id, final AuthenticationToken data) throws DataAccessException {
-        def token = authTokenDataService.getByUuid(id)
-        if (!token) {
-            throw new DataAccessException("Not found: token with ID: ${id}")
-        }
-        token.name = data.name
-        token.setAuthRoles(AuthToken.generateAuthRoles(data.getAuthRolesSet()))
-
-        try {
-            token.save(failOnError: true)
-        } catch (Exception e) {
-            throw new DataAccessException("Error: could not update token ${id}: ${e}", e)
+        AuthToken.withTransaction {
+            def token = authTokenDataService.getByUuid(id)
+            if (!token) {
+                throw new DataAccessException("Not found: token with ID: ${id}")
+            }
+            token.name = data.name
+            token.setAuthRoles(AuthToken.generateAuthRoles(data.getAuthRolesSet()))
+            try {
+                token.save(failOnError: true)
+            } catch (Exception e) {
+                throw new DataAccessException("Error: could not update token ${id}: ${e}", e)
+            }
         }
     }
 
     @Override
     void delete(final String id) throws DataAccessException {
-        def token = authTokenDataService.getByUuid(id)
-        if (!token) {
-            throw new DataAccessException("Not found: token with ID: ${id}")
-        }
-        try {
-            authTokenDataService.deleteByUuid(id)
-        } catch (Exception e) {
-            throw new DataAccessException("Could not delete token ${id}: ${e}", e)
+        AuthToken.withTransaction {
+            def token = authTokenDataService.getByUuid(id)
+            if (!token) {
+                throw new DataAccessException("Not found: token with ID: ${id}")
+            }
+            try {
+                authTokenDataService.deleteByUuid(id)
+            } catch (Exception e) {
+                throw new DataAccessException("Could not delete token ${id}: ${e}", e)
+            }
         }
     }
 

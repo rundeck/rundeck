@@ -109,6 +109,12 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
+import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
+import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
+import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
+import org.rundeck.app.data.project.ProjectConfigMetadataComponent
+import org.rundeck.app.data.project.ProjectScmMetadataComponent
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
@@ -938,5 +944,13 @@ beans={
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
     logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
+
+    //job metadtata components
+    jobScheduleMetadataComponent(JobScheduleMetadataComponent)
+    jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
+    jobScmMetadataComponent(JobScmMetadataComponent)
+    projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
+    projectConfigMetadataComponent(ProjectConfigMetadataComponent)
+    projectScmMetadataComponent(ProjectScmMetadataComponent)
 
 }

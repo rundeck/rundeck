@@ -77,30 +77,50 @@
                         <g:message code="framework.service.WorkflowNodeStep.description" />
                     </span>
                 </div>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.exec.title')}','${message(code:'step.type.exec.description')}')"
-                       class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
-                        <i class="rdicon icon-small shell"></i>
-                        <span class="text-strong"><g:message code="step.type.exec.title"/></span>
-                        <span>- <g:message code="step.type.exec.description"/></span>
-                    </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}','${message(code:'step.type.script.description')}')"
-                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
-                        <i class="rdicon icon-small script"></i>
-                        <span class="text-strong"><g:message code="step.type.script.title"/></span>
-                        <span>- <g:message code="step.type.script.description"/></span>
-                    </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}','${message(code:'step.type.scriptfile.description')}')"
-                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
-                        <i class="rdicon icon-small scriptfile"></i>
-                        <span class="text-strong"><g:message code="step.type.scriptfile.title"/></span>
-                        <span>- <g:message code="step.type.scriptfile.description"/></span>
-                    </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}','${message(code:'step.type.jobreference.nodestep.description')}')"
-                       class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
-                        <i class="glyphicon glyphicon-book"></i>
-                        <span class="text-strong"><g:message code="step.type.jobreference.title"/></span>
-                        <span>- <g:message code="step.type.jobreference.nodestep.description"/></span>
-                    </a>
+                    <g:if test="${nodeStepDescriptionsHighlighted}">
+                        <g:each in="${nodeStepDescriptionsHighlighted.sort{a,b->a.order<=>b.order}}" var="typedeschl">
+                            <g:if test="${typedeschl.name == 'job'}">
+                                <blocklist:pluginEnabled name="${typedeschl.name}" service="workflowNodeStep">
+                                    <a data-bind="visible: isDefaultStepsVisible('${typedeschl.title}','${typedeschl.description}')"
+                                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="${typedeschl.name}">
+                                        <i class="${typedeschl.iconClass ?: 'rdicon icon-small plugin'}"></i>
+                                        <span class="text-strong">${typedeschl.title}</span>
+                                        <span>- ${typedeschl.description}</span>
+                                    </a>
+                                </blocklist:pluginEnabled>
+                            </g:if>
+                            <g:else>
+                                <a data-bind="visible: isVisible('${(typedeschl.name)}')"
+                                   class="list-group-item textbtn  add_node_step_type"
+                                   data-node-step-type="${enc(attr:typedeschl.name)}" href="#">
+                                    <stepplugin:pluginIcon service="WorkflowNodeStep"
+                                                           name="${typedeschl.name}"
+                                                           width="16px"
+                                                           height="16px">
+                                        <i class="rdicon icon-small plugin"></i>
+                                    </stepplugin:pluginIcon>
+                                    <span class="text-strong">
+                                        <stepplugin:message
+                                                service="WorkflowNodeStep"
+                                                name="${typedeschl.name}"
+                                                code="plugin.title"
+                                                default="${typedeschl.title}"/>
+                                    </span>
+                                    <span>-
+                                    <g:render template="/scheduledExecution/description"
+                                              model="[firstLineOnly:true,
+                                                      description: stepplugin.messageText(
+                                                              service: 'WorkflowNodeStep',
+                                                              name: typedeschl.name,
+                                                              code: 'plugin.description',
+                                                              default: typedeschl.description
+                                                      ), textCss         : '',
+                                                      mode       : 'hidden', rkey: g.rkey()]"/>
+                                    </span>
+                                </a>
+                            </g:else>
+                        </g:each>
+                    </g:if>
                 <g:if test="${nodeStepDescriptions}">
                     <div class="list-group-item text-info text-strong">
                         <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" />
@@ -196,7 +216,7 @@
 </div>
 </div>
 
-    <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[])}"/>
+    <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[]) + (nodeStepDescriptionsHighlighted?:[])}"/>
     <g:set var="stepDescriptionsData" value="${stepDescriptionsAll.collect{[name:it.name,title:it.title,description:it.description,properties:it.properties.collect{[name:it.name,title:it.title,description:it.description]}] } }"/>
     <g:embedJSON data="${stepDescriptionsData}" id="stepDescriptions_json"/>
     <g:javascript>

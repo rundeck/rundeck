@@ -62,6 +62,7 @@ class ScheduledExecutionToJobConverter {
         if(se.scheduled) job.schedule = se.schedule
         job.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(se.orchestrator)
         job.pluginConfigMap = se.getPluginConfigMap()
+        job.serverNodeUUID = se.serverNodeUUID
         addJobComponents(job)
         return job
     }

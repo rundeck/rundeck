@@ -21,12 +21,10 @@ import org.junit.Test
 
 import static org.junit.Assert.*
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
-
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
-
+import com.dtolabs.rundeck.core.logging.internal.LineLogFormat
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
 /**
  * $INTERFACE is ...
  * User: greg

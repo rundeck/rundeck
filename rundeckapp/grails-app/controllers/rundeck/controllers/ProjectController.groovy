@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.api.project.ProjectExport
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
@@ -3408,4 +3409,61 @@ Note: `other_errors` included since API v35""",
         )
     }
 
+    @Get('/{project}/meta')
+    @Operation(
+        method = "GET",
+        summary = "Get Project UI Metadata",
+        description = """Get project metadata.
+
+Requires `read` authorization for the project resource.
+Since: v46"""
+
+    )
+    @Tags(
+        [
+            @Tag(name="project")
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = "Project Metadata results",
+        content = [
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = ItemMeta))
+            )
+        ]
+
+    )
+    @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
+    def apiProjectMeta(
+        @Parameter(
+            name = 'project',
+            in = ParameterIn.PATH,
+            description = 'Project name',
+            required = true,
+            schema = @Schema(type = 'string')
+        ) String project,
+        @Parameter(
+            name = 'meta',
+            in = ParameterIn.QUERY,
+            description = 'Comma-separated list of metadata items to include, or "*" for all (default)',
+            schema = @Schema(type = 'string')
+        ) String meta
+    ) {
+        if (!apiService.requireApi(request, response, ApiVersions.V46)) {
+            return
+        }
+        if (!meta) {
+            meta = '*'
+        }
+        def result = projectService.loadProjectMetaItems(
+            project,
+            new HashSet<>(meta.split(',').toList()),
+            projectAuthContext
+        )
+
+        respond result
+    }
 }

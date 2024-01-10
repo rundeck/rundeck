@@ -56,6 +56,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
+import org.hibernate.ObjectNotFoundException
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
@@ -1169,55 +1170,59 @@ class ScmService {
      * @return [true/false , message]
      */
     @CompileStatic
-    def userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
-        def hasAccess = true;
-        def defaultResponse = scmAuthenticationResponse.apply([integration: integration, access: hasAccess] as LinkedHashMap<String, Boolean>)
-        if( null == auth || null == integration ){
-            return defaultResponse;
-        }
+    boolean userHasAccessToScmConfiguredKeyOrPassword(UserAndRolesAuthContext auth, String integration, String project){
         def ctx = scmOperationContext(auth, project)
-        if( ctx ){
-            switch(integration){
-                case IMPORT:
-                    def plugin = getLoadedImportPluginFor project
-                    if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
-                    }
-                    return defaultResponse
-                    break;
-                case EXPORT:
-                    def plugin = getLoadedExportPluginFor project
-                    if( plugin ){
-                        return scmAuthenticationResponse.apply([integration: integration, access: plugin.userHasAccessToKeyOrPassword(ctx)] as LinkedHashMap<String, Boolean>)
-                    }
-                    return defaultResponse
-                    break;
-                default:
-                    return defaultResponse
-            }
+
+        switch(integration){
+            case IMPORT:
+                def plugin = getLoadedImportPluginFor project
+                if( plugin ){
+                    return plugin.userHasAccessToKeyOrPassword(ctx)
+                }
+                break;
+            case EXPORT:
+                def plugin = getLoadedExportPluginFor project
+                if( plugin ){
+                    return plugin.userHasAccessToKeyOrPassword(ctx)
+                }
+                break;
         }
-        return defaultResponse
+
+        return true
     }
 
     /**
-     * Return a k(boolean)/v(string) structure if the user has access to the SCM integration configured ssh or password
-     * @param userAuthenticated: a boolean which will be a decisive parameter to return an unauthorized message or not.
-     * @return [true/false , message]
+     * Return a map of status for jobs by id
+     * @param project project name
+     * @param auth auth context
+     * @param jobIds list of job ids
+     * @param runClusterFix if true, run the cluster fix
+     * @param jobsPluginMeta map of job id to plugin metadata
+     * @return
      */
-    Function<LinkedHashMap<String, Boolean>, LinkedHashMap<Boolean, String>> scmAuthenticationResponse = integrationAndAccess -> {
-        def integration = integrationAndAccess.integration
-        def access = integrationAndAccess.access
-        def responsePrefix = "[SCM - ${integration}]"
-        def unauthorizedMessage = "${responsePrefix} User don't have access to the configured key or password yet."
-        def authorizedMessage = "${responsePrefix} User has access to the configured key or password."
-        if( access ){
-            return [ hasAccess: access, message: authorizedMessage ]
-        }
-        return [ hasAccess: access, message: unauthorizedMessage ]
+    Map<String, JobState> exportStatusForJobIds(
+        String project,
+        UserAndRolesAuthContext auth,
+        Collection<String> jobIds,
+        boolean runClusterFix,
+        Map<String, Map> jobsPluginMeta
+    ) {
+        List<ScheduledExecution> jobs = jobIds.collect {
+            ScheduledExecution.findByProjectAndUuid(project, it)
+        }.grep { it }
+
+        return exportStatusForJobs(
+            project,
+            auth,
+            jobs,
+            runClusterFix,
+            jobsPluginMeta
+        )
     }
 
     /**
      * Return a map of status for jobs
+     * todo: provide interface that does not not require ScheduledExecution objects
      * @param jobs
      * @return
      */
@@ -1273,6 +1278,23 @@ class ScmService {
     }
     /**
      * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobImportState> importStatusForJobIds(String project, UserAndRolesAuthContext auth, Collection<String> jobIds,  boolean runClusterFix , Map<String, Map> jobsPluginMeta ) {
+        return importStatusForJobs(
+            project,
+            auth,
+            jobIds.collect {
+                ScheduledExecution.findByProjectAndUuid(project, it)
+            }.grep { it },
+            runClusterFix,
+            jobsPluginMeta
+        )
+    }
+    /**
+     * Return a map of status for jobs
+     * todo: provide interface that does not not require ScheduledExecution objects
      * @param jobs
      * @return
      */
@@ -1557,8 +1579,12 @@ class ScmService {
     }
 
     Map<String, Map> getJobsPluginMeta(String project, String type){
-        List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
-        jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+        try{
+            List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
+            jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+        }catch(ObjectNotFoundException ignored){
+            log.debug("No jobs plugin metadata found")
+        }
     }
 
     // check if jobs has the SCM metadata stored in the DB

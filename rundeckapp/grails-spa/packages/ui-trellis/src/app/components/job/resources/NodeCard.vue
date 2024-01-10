@@ -106,6 +106,15 @@
 
       <!-- TABS -->
       <div class="tab-content">
+        <div v-if="error" class="row row-space">
+          <div class="col-sm-12">
+              <span class="text-danger">
+                <i class="glyphicon glyphicon-warning-sign"></i>
+                <span>{{ error }}</span>
+              </span>
+          </div>
+        </div>
+
         <div class="tab-pane" :class="{'active': !nodeFilterStore.filter}" id="summary1" :key="`${nodeFilterStore.filter}summary`">
           <div class="row">
             <div class="col-xs-6">
@@ -139,68 +148,16 @@
               <h5 class="column-title text-uppercase text-strong">
                 {{ $t("filters") }}
               </h5>
-
-              <ul class="list-unstyled">
-                <li>
-                  <a
-                      class="nodefilterlink btn btn-default btn-xs"
-                      @click.prevent="saveFilter({filter: '.*'})"
-                  >
-                    {{ $t("all.nodes") }} {{ nodeSummary? nodeSummary.totalCount! : 0 }}
-                  </a>
-                  <div class="btn-group" style="margin-left: 4px">
-                    <button
-                        type="button"
-                        class="btn btn-default btn-xs btn-simple dropdown-toggle"
-                        style="padding: 0 5px"
-                        title="Filter Actions"
-                        data-toggle="dropdown"
-                        aria-expanded="false"
-                    >
-                      <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                      <li>
-                        <a
-                            href="#"
-                            @click="
-                            isDefaultFilter
-                              ? removeDefaultFilter
-                              : setDefaultFilter
-                          "
-                        >
-                          <i
-                              class="glyphicon"
-                              :class="[
-                              isDefaultFilter
-                                ? 'glyphicon-ban-circle'
-                                : 'glyphicon-filter',
-                            ]"
-                          ></i>
-                          {{
-                            isDefaultFilter
-                                ? $t("remove.all.nodes.as.default.filter")
-                                : $t("set.all.nodes.as.default.filter")
-                          }}
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
+              <node-default-filter-dropdown
+                :node-summary="nodeSummary"
+                :is-default-filter="isDefaultFilter"
+                @filter="saveFilter"
+              />
             </div>
           </div>
         </div>
 
         <div class="tab-pane" :class="{'active': nodeFilterStore.filter}" id="result1" :key="`${nodeFilterStore.filter}result`">
-          <div v-if="error" class="row row-space">
-            <div class="col-sm-12">
-              <span class="text-danger">
-                <i class="glyphicon glyphicon-warning-sign"></i>
-                <span>{{ error }}</span>
-              </span>
-            </div>
-          </div>
           <div class="clear matchednodes" id="nodeview">
             <NodeTable
                 :node-set="nodeSet"
@@ -225,21 +182,26 @@
 
 <script lang="ts">
 import {defineComponent, PropType} from "vue";
-import axios from "axios";
 import { _genUrl } from "@/app/utilities/genUrl";
-import { getAppLinks } from "@/library";
+import {getAppLinks, getRundeckContext} from "@/library";
 import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
-import { getRundeckContext } from "../../../../../build/pack";
 import NodeTable from "@/app/components/job/resources/NodeTable.vue";
 import {getExecutionMode, getNodes, getNodeSummary} from "@/app/components/job/resources/services/nodeServices";
+import {NodeSummary} from "@/app/components/job/resources/types/nodeTypes";
+import NodeDefaultFilterDropdown from "@/app/components/job/resources/NodeDefaultFilterDropdown.vue";
 
 export default defineComponent({
   name: "NodeCard",
   components: {
+    NodeDefaultFilterDropdown,
     NodeTable,
     NodeFilterLink,
   },
   props: {
+    project: {
+      type: String,
+      required: true,
+    },
     runAuthorized: {
       type: Boolean,
       required: true,
@@ -256,7 +218,8 @@ export default defineComponent({
   data() {
     return {
       nodeSet: {},
-      nodeSummary: {},
+      nodeSummary: {} as NodeSummary,
+      eventBus: getRundeckContext().eventBus,
       allCount: null as number | null,
       total: 0,
       executionMode: null,
@@ -313,6 +276,10 @@ export default defineComponent({
     async fetchNodeSummary() {
       try {
         this.nodeSummary = await getNodeSummary();
+        this.nodeSummary = {
+          ...this.nodeSummary,
+          ...this.nodeFilterStore.loadStoredProjectNodeFilters(this.project),
+        }
       } catch(e) {
         this.error = "Node Summary: request failed: " + e.message;
       }
@@ -358,24 +325,11 @@ export default defineComponent({
         this.maxShown = data.max;
 
       } catch(e) {
-        this.error = "Nodes Query: request failed: " + e.message;
+        this.error = e.message;
       } finally {
         this.loading = false;
       }
     },
-    async setDefaultFilter() {
-      // TODO: finish this - need to find out wth is the selectedFilterName for default
-      // this.nodeFilterStore.setStoredDefaultFilter(
-      //   this.project,
-      //   this.selectedFilterName
-      // );
-      // this.nodeSummary.defaultFilter = this.selectedFilterName;
-    },
-    async removeDefaultFilter() {
-      // this.nodeFilterStore.removeStoredDefaultFilter(this.project);
-      // this.nodeSummary.defaultFilter = null;
-    },
-
     runCommand() {
       if (this.runAuthorized) {
         document.location = _genUrl(getAppLinks().frameworkAdhoc, {
@@ -407,11 +361,19 @@ export default defineComponent({
     await this.fetchNodeSummary();
     await this.fetchExecutionMode();
     await this.fetchNodes();
+
+    if(this.nodeSummary.defaultFilter){
+      let filterToEmit = this.nodeSummary.defaultFilter;
+      if(filterToEmit !== ".*"){
+        filterToEmit = this.nodeSummary.filters.filter(f => f.filterName === this.nodeSummary.defaultFilter)[0]
+      }
+      this.saveFilter(filterToEmit);
+    }
+    this.eventBus.on('nodefilter:savedFilters:changed',this.fetchNodeSummary)
   },
   watch: {
     nodeFilterStore: {
       async handler(newValue) {
-
         if (newValue.selectedFilter === '' && this.hideAll) {
           this.filterAll = true;
         }else if(newValue.selectedFilter ===".*"){

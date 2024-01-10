@@ -19,11 +19,13 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -35,6 +37,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -90,6 +93,7 @@ import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 import java.nio.file.Files
@@ -106,7 +110,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
+            _ * featurePresent(Features.LEGACY_UI) >> true
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -1470,6 +1476,80 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             true      | true          | false
     }
 
+    def "api returns expected json containing homeSummary information"() {
+        given:
+        def execCount = 0
+        def totalFailedCount = 0
+        def recentUsers = []
+        def recentProjects = []
+        def frameworkNodeName = 'localhost'
+
+        controller.apiService = Mock(ApiService){
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
+        }
+        new Project(name: 'proj',description: 'desc').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+            getAuthContextForSubject(_)>>Mock(UserAndRolesAuthContext)
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager)
+                getFrameworkNodeName() >> frameworkNodeName
+            }
+            projectNames(_ as AuthContext) >> ['proj']
+        }
+
+
+        controller.configurationService = Mock(ConfigurationService){
+            getBoolean("menuController.projectStats.queryAlt",false)>>false
+        }
+
+
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService)
+
+        when:
+        request.api_version = 45
+        response.format='json'
+
+        def result = controller.apiHomeSummary()
+
+        then:
+        def json=response.json
+        assert execCount == json.execCount
+        assert totalFailedCount == json.totalFailedCount
+        assert recentUsers == json.recentUsers
+        assert recentProjects == json.recentProjects
+        assert frameworkNodeName == json.frameworkNodeName
+    }
+
+    def "api returns error for homeSummary if request isn't json/all"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
+            _ * renderErrorFormat(_, { it.status == 415 }) >> {
+                it[0].status = 415
+            }
+        }
+
+        when:
+        request.api_version = 45
+
+        def result = controller.apiHomeSummary()
+
+        then:
+            assert response.status == 415
+    }
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
@@ -1477,7 +1557,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                     controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData){
@@ -1522,7 +1602,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
@@ -1576,7 +1656,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: true, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> true
         }
         controller.storageService = Mock(StorageService)
         def project = 'test'
@@ -1635,7 +1715,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)
@@ -1690,7 +1770,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             getEnabled() >> true
         }
         controller.scmService = Mock(ScmService){
-            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> [hasAccess: access, message: 'message']
+            it.userHasAccessToScmConfiguredKeyOrPassword(_,_,_) >> access
             it.loadScmConfig(_,integration) >> scmConfig
         }
         controller.storageService = Mock(StorageService)

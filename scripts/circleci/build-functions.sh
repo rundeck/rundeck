@@ -20,7 +20,7 @@ rundeck_docker_build() {
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT
 
-    docker tag "${DOCKER_REPO}:latest" "${ECR_REPO}:${ECR_IMAGE_TAG}"
+    docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
@@ -31,9 +31,9 @@ rundeck_docker_build() {
 }
 
 rundeck_docker_push() {
-    docker_ecr_login
+    docker_login
 
-    docker push "${ECR_REPO}:${ECR_IMAGE_TAG}"
+    docker push "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
@@ -56,5 +56,5 @@ rundeck_verify_build() {
 }
 
 rundeck_gradle_functional_tests() {
-    ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} --info
+    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" ${GRADLE_BUILD_OPTS} --info
 }

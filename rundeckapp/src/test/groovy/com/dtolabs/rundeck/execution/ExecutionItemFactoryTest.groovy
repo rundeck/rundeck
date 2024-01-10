@@ -19,11 +19,9 @@ package com.dtolabs.rundeck.execution
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem
 import com.dtolabs.rundeck.core.execution.HasFailureHandler
+import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import org.junit.Assert
@@ -40,179 +38,73 @@ import org.junit.runners.JUnit4
 class ExecutionItemFactoryTest {
     @Test
     public void creatScriptFileWithScript(){
+        Map config = [scriptInterpreter: 'interp',
+                      fileExtension: 'ext',
+                      interpreterArgsQuoted: true,
+                      script: 'script string',
+                      serverScriptFilePath: null,
+                      scriptAsStream: null,
+                      args: ['args', 'args2'] as String[],
+                      keepgoingOnSuccess: true
+        ]
         StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
-                "interp",
-                "ext",
-                true,
-                "script string",
-                ['args', 'args2'] as String[],
+                "a_type",
+                config,
                 null,
                 true,
+                null,
                 null
         )
-        Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals "script string",testcommand.script
-        Assert.assertEquals null,testcommand.serverScriptFilePath
-        Assert.assertEquals null,testcommand.scriptAsStream
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
+        Assert.assertTrue(test instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl testcommand=(PluginNodeStepExecutionItemImpl) test
+        Assert.assertEquals "interp",testcommand.stepConfiguration.scriptInterpreter
+        Assert.assertEquals "ext",testcommand.stepConfiguration.fileExtension
+        Assert.assertEquals true,testcommand.stepConfiguration.interpreterArgsQuoted
+        Assert.assertEquals "script string",testcommand.stepConfiguration.script
+        Assert.assertEquals null,testcommand.stepConfiguration.serverScriptFilePath
+        Assert.assertEquals null,testcommand.stepConfiguration.scriptAsStream
+        Assert.assertEquals "NodeDispatch",testcommand.getType()
+        Assert.assertEquals "a_type",testcommand.getNodeStepType()
+        Assert.assertEquals( ['args','args2'],testcommand.stepConfiguration.args as List)
+        Assert.assertEquals( true,testcommand.stepConfiguration.keepgoingOnSuccess)
     }
     @Test
     public void creatScriptFileWithScript_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a','b'] as String[],null,false,
-                                                                           null)
+        StepExecutionItem handler = ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
+        Map config = [scriptInterpreter: 'interp',
+                      fileExtension: 'ext',
+                      interpreterArgsQuoted: true,
+                      script: 'script string',
+                      serverScriptFilePath: null,
+                      scriptAsStream: null,
+                      args: ['args', 'args2'] as String[],
+                      keepgoingOnSuccess: true
+        ]
         StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
-                "interp",
-                "ext",
-                true,
-                "script string",
-                ['args', 'args2'] as String[],
+                "a_type",
+                config,
                 handler,
                 true,
-                null
-        )
-        Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals "script string",testcommand.script
-        Assert.assertEquals null,testcommand.serverScriptFilePath
-        Assert.assertEquals null,testcommand.scriptAsStream
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertTrue(test instanceof HasFailureHandler)
-        Assert.assertEquals(handler,test.failureHandler)
-    }
-    @Test
-    public void creatScriptFileWithFile(){
-        StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
-                "interp",
-                "ext",
-                true,
-                new File("/path/test/testscript"),
-                ['args', 'args2'] as String[],
                 null,
-                true,
                 null
         )
-        Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals null,testcommand.script
-        Assert.assertEquals '/path/test/testscript',testcommand.serverScriptFilePath
-        Assert.assertEquals null,testcommand.scriptAsStream
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-    }
-    @Test
-    public void creatScriptFileWithFile_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
-        StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
-                "interp",
-                "ext",
-                true,
-                new File("/path/test/testscript"),
-                ['args', 'args2'] as String[],
-                handler,
-                true,
-                null
-        )
-        Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
-        ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals null,testcommand.script
-        Assert.assertEquals '/path/test/testscript',testcommand.serverScriptFilePath
-        Assert.assertEquals null,testcommand.scriptAsStream
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertTrue(test instanceof HasFailureHandler)
-        Assert.assertEquals(handler, test.failureHandler)
-    }
-    @Test
-    public void creatScriptUrl(){
-        StepExecutionItem test = ExecutionItemFactory.createScriptURLItem(
-                "interp",
-                "ext",
-                true,
-                "http://example.com/nothing",
-                ['args', 'args2'] as String[],
-                null,
-                true,
-                null
-        )
-        Assert.assertTrue(test instanceof ScriptURLCommandExecutionItem)
-        ScriptURLCommandExecutionItem testcommand=(ScriptURLCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals 'http://example.com/nothing',testcommand.URLString
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-    }
-    @Test
-    public void creatScriptUrl_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
-        StepExecutionItem test = ExecutionItemFactory.createScriptURLItem(
-                "interp",
-                "ext",
-                true,
-                "http://example.com/nothing",
-                ['args', 'args2'] as String[],
-                handler,
-                true,
-                null
-        )
-        Assert.assertTrue(test instanceof ScriptURLCommandExecutionItem)
-        ScriptURLCommandExecutionItem testcommand=(ScriptURLCommandExecutionItem) test
-        Assert.assertEquals "interp",testcommand.scriptInterpreter
-        Assert.assertEquals "ext",testcommand.fileExtension
-        Assert.assertEquals true,testcommand.interpreterArgsQuoted
-        Assert.assertEquals 'http://example.com/nothing',testcommand.URLString
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertTrue(test instanceof HasFailureHandler)
-        Assert.assertEquals(handler, test.failureHandler)
-    }
-    @Test
-    public void createCommand(){
-        StepExecutionItem test = ExecutionItemFactory.createExecCommand(
-                ['args', 'args2'] as String[],
-                null,
-                true,
-                null
-        )
-        Assert.assertTrue(test instanceof ExecCommandExecutionItem)
-        ExecCommandExecutionItem testcommand=(ExecCommandExecutionItem) test
-        Assert.assertEquals( ['args','args2'],testcommand.command as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-    }
-    @Test
-    public void createCommand_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
-        StepExecutionItem test = ExecutionItemFactory.createExecCommand(
-                ['args', 'args2'] as String[],
-                handler,
-                true,
-                null
-        )
-        Assert.assertTrue(test instanceof ExecCommandExecutionItem)
-        ExecCommandExecutionItem testcommand=(ExecCommandExecutionItem) test
-        Assert.assertEquals( ['args','args2'],testcommand.command as List)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertTrue(test instanceof HasFailureHandler)
-        Assert.assertEquals(handler, test.failureHandler)
+        Assert.assertTrue(test instanceof PluginNodeStepExecutionItemImpl)
+        PluginNodeStepExecutionItemImpl testcommand=(PluginNodeStepExecutionItemImpl) test
+        Assert.assertEquals "interp",testcommand.stepConfiguration.scriptInterpreter
+        Assert.assertEquals "ext",testcommand.stepConfiguration.fileExtension
+        Assert.assertEquals true,testcommand.stepConfiguration.interpreterArgsQuoted
+        Assert.assertEquals "script string",testcommand.stepConfiguration.script
+        Assert.assertEquals null,testcommand.stepConfiguration.serverScriptFilePath
+        Assert.assertEquals null,testcommand.stepConfiguration.scriptAsStream
+        Assert.assertEquals( ['args','args2'],testcommand.stepConfiguration.args as List)
+        Assert.assertEquals( true,testcommand.stepConfiguration.keepgoingOnSuccess)
+        Assert.assertEquals( "NodeDispatch",testcommand.getType())
+        Assert.assertEquals "a_type",testcommand.getNodeStepType()
+        Assert.assertTrue(testcommand instanceof HasFailureHandler)
+        Assert.assertEquals(handler, testcommand.failureHandler)
     }
     @Test
     public void createJobRef(){
@@ -469,8 +361,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRef_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
@@ -533,8 +427,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRefNodeStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
@@ -620,8 +516,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createPluginStepItem(
                 "myplugin",
                 [a:'b'],
@@ -672,8 +570,10 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginNodeStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
+        StepExecutionItem handler =  ExecutionItemFactory.createScriptFileItem(
+                ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE,
+                [script: 'script string'],null,false,null, null)
+
         StepExecutionItem test = ExecutionItemFactory.createPluginNodeStepItem(
                 "myplugin",
                 [a:'b'],

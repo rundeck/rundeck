@@ -44,6 +44,7 @@ function EditProject (data) {
     var self = this
     self.create = ko.observable(data.create || !data.name)
     self.name = ko.observable(data.name)
+    self.loaded = ko.observable(false)
     self.descriptions = {}
     if (data.descriptions) {
         for (let p in data.descriptions) {
@@ -71,4 +72,7 @@ jQuery(function () {
     var projectData = loadJsonData('projectDataJSON')
     window.projectEditor = new EditProject(projectData)
     initKoBind(null, {editProject: projectEditor})
+    //hack to trigger dynamic dom change inside the knockout content,
+    //so mutation observer will always get triggered for it
+    projectEditor.loaded(true)
 })

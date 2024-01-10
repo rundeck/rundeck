@@ -16,8 +16,8 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+
+import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext

@@ -8,14 +8,17 @@
             <option v-for="themeOpt in themes" :key="themeOpt">{{themeOpt}}</option>
           </select>
         </div>
+        <ui-socket location="after" section="theme-select" />
     </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import UiSocket from "../../utils/UiSocket.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-    name:"ThemeSelect",
+    name: "ThemeSelect",
+    components: { UiSocket },
     data() {
         return {
             themes : ['system', 'light', 'dark'],

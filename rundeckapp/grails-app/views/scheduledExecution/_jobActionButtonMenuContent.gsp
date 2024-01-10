@@ -23,13 +23,7 @@
 <g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
 <g:set var="authOtherProject" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project, others: true)}"/>
 <g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
-<g:set var="authProjectExport" value="${auth.resourceAllowedTest(
-        context: AuthConstants.CTX_APPLICATION,
-        type: AuthConstants.TYPE_PROJECT,
-        action: [AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
-        any: true,
-        name: scheduledExecution.project
-)}"/>
+
 <g:set var="renderedActions" value="${0}"/>
 <g:if test="${authUpdate}">
     %{renderedActions++}%

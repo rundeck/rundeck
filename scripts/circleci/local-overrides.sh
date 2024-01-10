@@ -18,11 +18,6 @@ testdeck_pull_rdtest() {
 
 }
 
-testdeck_pull_rundeck() {
-    echo "!!! [testdeck_pull_rdtest] ran but OVERRIDEN locally !!!"
-    docker tag "${ECR_REPO}:${ECR_IMAGE_TAG}" rundeck/testdeck
-}
-
 
 fetch_ci_shared_resources() {
     echo "!!! [fetch_ci_shared_resources] ran but OVERRIDEN locally !!!"

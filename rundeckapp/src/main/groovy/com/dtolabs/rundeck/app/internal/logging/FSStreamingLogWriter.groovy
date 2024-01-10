@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.logging.internal.DefaultLogEvent
+import com.dtolabs.rundeck.core.logging.internal.OutputLogFormat
 
 /**
  * Logs to a file using the OutputLogFormat
