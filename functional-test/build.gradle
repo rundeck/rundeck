@@ -24,7 +24,6 @@ dependencies {
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
     testImplementation "org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}"
-    testImplementation "io.github.bonigarcia:webdrivermanager:${webDriverManagerVersion}"
 }
 
 //This prevents tasks from being cached

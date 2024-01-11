@@ -1,7 +1,6 @@
 package org.rundeck.util.container
 
 import groovy.transform.CompileStatic
-import io.github.bonigarcia.wdm.WebDriverManager
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
@@ -28,7 +27,6 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     @Delegate
     WebDriver getDriver() {
         if (null == _driver) {
-            WebDriverManager.chromedriver().setup()
             ChromeOptions options = new ChromeOptions()
             options.addArguments("start-maximized")
             options.addArguments("enable-automation")
