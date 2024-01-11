@@ -208,11 +208,11 @@ class ExecutionSpec extends BaseContainer {
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id
         when:"import jobs 1"
-            def pathFile1 = updateFile("test-executions-query.xml", newProject)
+            def pathFile1 = updateFile("job-template-common.xml", newProject, "test exec query", "api-test/execquery", "A job to test the executions query API", null, "api-v5-test-exec-query")
         then:
             def jobId1 = jobImportFile(newProject, pathFile1).succeeded[0].id
         when:"import jobs 2"
-            def pathFile2 = updateFile("test-executions-query-2.xml", newProject)
+            def pathFile2 = updateFile("job-template-common.xml", newProject, "second test for exec query", "api-test/execquery", "A job to test the executions query API2", null, "api-v5-test-exec-query2")
         then:
             def jobId2 = jobImportFile(newProject, pathFile2).succeeded[0].id
         when:"run job 1 and 2"

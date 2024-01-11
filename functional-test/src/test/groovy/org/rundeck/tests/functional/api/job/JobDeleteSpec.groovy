@@ -12,14 +12,9 @@ class JobDeleteSpec extends BaseContainer {
 
     def "DELETE for /api/job/{id}"() {
         given:
-            def client = getClient()
-            def pathXmlFile = getClass().getResource("/temp-files/api-test-execution-state.xml").getPath()
-            def xmlContent = new File(pathXmlFile).text
-                    .replaceAll('xml-project-name', PROJECT_NAME)
-                    .replaceAll('xml-args', "echo hello there")
-            new File(pathXmlFile).text = xmlContent
+            def pathFile = updateFile("api-test-execution-state.xml")
         when:
-            def jobId = jobImportFile(pathXmlFile).succeeded[0].id
+            def jobId = jobImportFile(pathFile).succeeded[0].id
         then:
             def responseDelete = doDelete("/job/${jobId}")
         when:
@@ -28,7 +23,7 @@ class JobDeleteSpec extends BaseContainer {
             verifyAll {
                 responseDelete.code() == 204
                 responseGet.code() == 404
-                def json = client.jsonValue(responseGet.body(), Map)
+                def json = jsonValue(responseGet.body(), Map)
                 json.message == "Job ID does not exist: ${jobId}"
             }
     }
