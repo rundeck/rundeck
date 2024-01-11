@@ -1,8 +1,9 @@
 package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.execution.apiResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.execution.apiResponseModels.JobExecutionsResponse
+import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
+import org.rundeck.tests.functional.api.ResponseModels.Job
+import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
@@ -187,7 +188,92 @@ class ExecutionSpec extends BaseContainer {
         then:
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
         parsedExecutionsResponseForExecution2AfterEnable.executions.size() == 2
+    }
 
+    def "test-job-flip-scheduleEnabled-bulk"(){
+        given:
+        def projectName = "project-test"
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-flip-scheduleEnabled-bulk",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobName1 = "scheduledJob1"
+        def jobXml1 = generateScheduledJobsXml(jobName1)
+
+        def jobName2 = "scheduledJob2"
+        def jobXml2 = generateScheduledJobsXml(jobName2)
+
+        def job1CreatedResponse = createJob(projectName, jobXml1)
+        assert job1CreatedResponse.successful
+
+        def job2CreatedResponse = createJob(projectName, jobXml2)
+        assert job2CreatedResponse.successful
+
+        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
+
+        CreateJobResponse job2CreatedParsedResponse = mapper.readValue(job2CreatedResponse.body().string(), CreateJobResponse.class)
+        def job2Id = job2CreatedParsedResponse.succeeded[0]?.id
+
+        when: "assert_job_schedule_enabled for job1"
+        def job1Detail = getJobDetailsById(job1Id as String, mapper)
+        then:
+        job1Detail?.executionEnabled
+
+        when: "assert_job_schedule_enabled for job2"
+        def job2Detail = getJobDetailsById(job2Id as String, mapper)
+        then:
+        job2Detail?.executionEnabled
+
+        Thread.sleep(WaitingTime.LOW.milliSeconds) // As the original test says
+
+        when: "TEST: bulk job schedule disable"
+        Object idList = [
+            "idlist" : List.of(
+                    job1Id,
+                    job2Id
+            )
+        ]
+        def disableSchedulesResponse = doPost("/jobs/schedule/disable", idList)
+        assert disableSchedulesResponse.successful
+        def job1DetailAfterDisable = getJobDetailsById(job1Id as String, mapper)
+        def job2DetailAfterDisable = getJobDetailsById(job2Id as String, mapper)
+
+        then:
+        !job1DetailAfterDisable?.scheduleEnabled
+        !job2DetailAfterDisable?.scheduleEnabled
+
+        when: "TEST: bulk job schedule enable"
+        def enableSchedulesResponse = doPost("/jobs/schedule/enable", idList)
+        assert enableSchedulesResponse.successful
+        def job1DetailAfterEnable = getJobDetailsById(job1Id as String, mapper)
+        def job2DetailAfterEnable = getJobDetailsById(job2Id as String, mapper)
+
+        then:
+        job1DetailAfterEnable?.scheduleEnabled
+        job2DetailAfterEnable?.scheduleEnabled
+    }
+
+    Job getJobDetailsById(final String jobId, final ObjectMapper mapper){
+        def jobInfo = client.doGetAcceptAll("/job/${jobId}")
+        List<Job> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, Job.class))
+        return jobs[0]
     }
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
@@ -218,6 +304,31 @@ class ExecutionSpec extends BaseContainer {
                 "        <threadcount>1</threadcount>\n" +
                 "        <keepgoing>true</keepgoing>\n" +
                 "      </dispatch>\n" +
+                "      <sequence>\n" +
+                "        <command>\n" +
+                "        <exec>echo hello there</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
+    }
+
+    private def generateScheduledJobsXml(String jobname){
+        return "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>${jobname}</name>\n" +
+                "      <group>api-test</group>\n" +
+                "      <description></description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "      <schedule>\n" +
+                "        <time hour='*' seconds='*' minute='0/20' />\n" +
+                "        <month month='*' />\n" +
+                "        <year year='*' />\n" +
+                "      </schedule>\n" +
                 "      <sequence>\n" +
                 "        <command>\n" +
                 "        <exec>echo hello there</exec>\n" +

@@ -44,6 +44,16 @@ class RdClient {
         ).execute()
     }
 
+    Response doGetAcceptAll(final String path) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrl(path)).
+                        header('Accept', '*/*').
+                        get().
+                        build()
+        ).execute()
+    }
+
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
