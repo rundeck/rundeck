@@ -362,7 +362,7 @@ class ExecutionSpec extends BaseContainer {
         then: "assert_job_execution_count job1"
         parsedExecutionsResponseForExecution1AfterExec.executions.size() == 1
 
-        when: "execute_job 1"
+        when: "execute_job 2"
         def jobExecResponseFor2 = executeJob job2Id
         assert jobExecResponseFor2.successful
         def executions2AfterExecResponse = doGet("/job/${job2Id}/executions")
