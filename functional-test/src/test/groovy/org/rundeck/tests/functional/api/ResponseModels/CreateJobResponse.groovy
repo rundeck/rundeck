@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.api.execution.apiResponseModels
+package org.rundeck.tests.functional.api.ResponseModels
 
 class CreateJobResponse {
     List<Object> succeeded
