@@ -3,7 +3,7 @@ package org.rundeck.plugin.scm.git.ssh
 import groovy.transform.CompileStatic
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.transport.CredentialsProvider
-import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.transport.RemoteSession
 import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.URIish
