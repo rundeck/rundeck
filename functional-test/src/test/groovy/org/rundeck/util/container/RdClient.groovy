@@ -104,8 +104,6 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
-<<<<<<< HEAD
-=======
     Response doPost(final String path, final File file, final String contentType) {
         RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
@@ -124,7 +122,6 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
->>>>>>> d03cfd8c61 (Started to build the test)
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
         jsonValue(doPost(path, body).body(), clazz)
     }
