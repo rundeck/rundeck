@@ -92,7 +92,7 @@ class ExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = client.doPost("/projects", projectJsonMap)
+        def responseProject = createSampleProject(projectName, projectJsonMap)
         assert responseProject.successful
 
         def jobName1 = "xmljob"
@@ -140,9 +140,20 @@ class ExecutionSpec extends BaseContainer {
         parsedExecutionsResponseForExecution2AfterExec.executions.size() == 1
 
         when: "TEST: bulk job execution disable"
-        def idList = "idlist=${job1Id},${job2Id}"
-        def disabledJobsResponse = doPost("/jobs/execution/disable?idlist=${idList}", "{}")
+        Object idList = [
+                "idlist": List.of(
+                        job1Id,
+                        job2Id
+                )
+        ]
+        def disabledJobsResponse = doPost("/jobs/execution/disable", idList)
         assert disabledJobsResponse.successful
+
+        def jobExecResponseFor1AfterDisable = executeJob job1Id
+        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+
+        def jobExecResponseFor2AfterDisable = executeJob job2Id
+        assert jobExecResponseFor2AfterDisable.code() == 500  // bc execs are disabled
 
         def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
         JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
@@ -155,7 +166,7 @@ class ExecutionSpec extends BaseContainer {
         parsedExecutionsResponseForExecution2AfterDisable.executions.size() == 1
 
         when: "TEST: bulk job execution enable"
-        def enabledJobsResponse = doPost("/jobs/execution/enable?idlist=${idList}", "{}")
+        def enabledJobsResponse = doPost("/jobs/execution/enable", idList)
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
@@ -177,6 +188,10 @@ class ExecutionSpec extends BaseContainer {
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
         parsedExecutionsResponseForExecution2AfterEnable.executions.size() == 2
 
+    }
+
+    def createSampleProject = (String projectName, Object projectJsonMap) -> {
+        return client.doPost("/projects", projectJsonMap)
     }
 
     def executeJob = (jobId) -> {
