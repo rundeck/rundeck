@@ -1,0 +1,31 @@
+<joblist>
+    <job>
+        <name>test custom job status query</name>
+        <group>test/api/executions</group>
+        <description>Test the /job/ID/executions API endpoint with custom status</description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+            <options>
+                <option name="opt1" value="testvalue" required="true"/>
+                <option name="opt2" values="a,b,c" required="true"/>
+            </options>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <description>halt with custom status</description>
+                <step-plugin type='flow-control'>
+                    <configuration>
+                        <entry key='fail' value='false' />
+                        <entry key='halt' value='true' />
+                        <entry key='status' value='test status code' />
+                    </configuration>
+                </step-plugin>
+            </command>
+        </sequence>
+    </job>
+</joblist>

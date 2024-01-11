@@ -162,7 +162,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'aborted',
                 'failed',
                 'succeeded',
-                'timedout'
+                'timedout',
+                'other'
         ]
         while(true) {
             def exec = client.get("/execution/${response.id}/output", Map)
@@ -185,7 +186,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 'aborted',
                 'failed',
                 'succeeded',
-                'timedout'
+                'timedout',
+                'other'
         ]
         while(true) {
             def exec = client.get("/execution/${executionId}/output", Map)
@@ -208,10 +210,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
-    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null) {
-        def pathXmlFile = getClass().getResource("/temp-files/${fileName}").getPath()
+    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null, String uuid = null) {
+        def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
         def xmlProject = xmlProjectContent
+                .replaceAll('xml-uuid', uuid?:UUID.randomUUID().toString())
                 .replaceAll('xml-project-name', projectName?:PROJECT_NAME)
                 .replaceAll('xml-args', args?:"echo hello there")
                 .replaceAll('xml-job-name', jobName?:'job-test')
