@@ -151,7 +151,7 @@ class ExecutionSpec extends BaseContainer {
 
     def "test-job-flip-executionEnabled-bulk"(){
         given:
-        def projectName = "project-test"
+        def projectName = "test-job-flip-executionEnabled-bulk"
         def apiVersion = 40
         client.apiVersion = apiVersion
         def client = getClient()
@@ -268,7 +268,7 @@ class ExecutionSpec extends BaseContainer {
 
     def "test-job-flip-scheduleEnabled-bulk"(){
         given:
-        def projectName = "project-test"
+        def projectName = "test-job-flip-scheduleEnabled-bulk"
         def apiVersion = 40
         def client = getClient()
         client.apiVersion = apiVersion
