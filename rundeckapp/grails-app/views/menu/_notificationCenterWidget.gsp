@@ -35,8 +35,10 @@
 <g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
 
 <div>
-    %{--Insert vue app here--}%
-    <ul class="dropdown-menu dropdown-menu-right scroll-area" style="max-height: 95vh; width:80vh; height: 40vh;">
-
+    <ul class="dropdown-menu dropdown-menu-right scroll-area" style="width: 65vw; height: 50vh;">
+        <div class="vue-ui-socket" style="width: 100%; height: 100%;">
+            <ui-socket section="project-notification-center" location="main" :socket-data="">
+            </ui-socket>
+        </div>
     </ul>
 </div>

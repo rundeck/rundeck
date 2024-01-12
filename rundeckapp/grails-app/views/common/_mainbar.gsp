@@ -1,9 +1,9 @@
 <%@ page import="com.opensymphony.module.sitemesh.RequestConstants; org.rundeck.core.auth.AuthConstants" %>
   <g:set var="selectParams" value="${[:]}"/>
-  <g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
-    <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
-  </g:if>
-  <nav id="mainbar" class="mainbar">
+<g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
+  <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
+</g:if>
+<nav id="mainbar" class="mainbar">
     <div id="nav-rd-home">
       <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
       <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}">
@@ -152,6 +152,7 @@
             </li>
 
           </g:ifExecutionMode>
+          <g:if test="${selectParams?.project != null}">
           <li id="appNotificationCenter">
             <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
@@ -166,6 +167,7 @@
               <g:render template="/menu/notificationCenterWidget"/>
             </div>
           </li>
+          </g:if>
           <li id="appAdmin">
             <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">

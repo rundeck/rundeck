@@ -321,6 +321,8 @@
 <!-- VUE JS MODULES -->
 <asset:stylesheet href="static/css/components/motd.css"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/project-notification-center.js"/>
+<asset:stylesheet src="static/css/components/project-notification-center.css"/>
 <asset:stylesheet href="static/css/components/version.css"/>
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/server-identity.js"/>
