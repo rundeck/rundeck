@@ -35,10 +35,10 @@
 <g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
 
 <div>
-    <ul class="dropdown-menu dropdown-menu-right scroll-area" style="width: 65vw; height: 50vh;">
+    <div class="dropdown-menu dropdown-menu-right scroll-area" style="width: 35vw; max-height: 80vh; height: 1000px;">
         <div class="vue-ui-socket" style="width: 100%; height: 100%;">
             <ui-socket section="project-notification-center" location="main" :socket-data="">
             </ui-socket>
         </div>
-    </ul>
+    </div>
 </div>
