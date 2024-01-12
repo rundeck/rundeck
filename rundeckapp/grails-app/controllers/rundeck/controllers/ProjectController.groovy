@@ -653,7 +653,10 @@ Authorization required: `read` for project resource
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
-`project.properties` file in the file system or in the DB storage.''',
+`project.properties` file in the file system or in the DB storage.
+
+*Since API version 46*: add the project `metadata` to the response. To retrieve this information, use the query param meta
+(Comma-separated list of metadata items to include, or "*" for all (default)).''',
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 array = @ArraySchema(schema = @Schema(type = 'object')),
