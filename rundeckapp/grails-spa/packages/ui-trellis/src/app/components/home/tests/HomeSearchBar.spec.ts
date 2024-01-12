@@ -1,6 +1,7 @@
 import { mount, VueWrapper } from '@vue/test-utils';
 import HomeSearchBar from '../HomeSearchBar.vue';
 
+
 const mountHomeSearchBar = async (props?: Record<string, any>): Promise<VueWrapper<any>> => {
     return mount(HomeSearchBar, {
         props: {
@@ -25,9 +26,8 @@ describe('HomeSearchBar', () => {
 
     it('emits "update:modelValue" event when search input changes', async () => {
         const wrapper = await mountHomeSearchBar();
-        const inputValue = 'Test Input';
 
-        await wrapper.setData({ search: inputValue });
+        await wrapper.setData({ search: 'Test Input' });
 
         expect(wrapper.emitted('update:modelValue')).toHaveLength(1);
         expect(wrapper.emitted('update:modelValue')[0]).toEqual(['Test Input']);
@@ -63,9 +63,7 @@ describe('HomeSearchBar', () => {
 
     it('updates search value when modelValue prop changes', async () => {
         const wrapper = await mountHomeSearchBar();
-        const newModelValue = 'New Model Value';
-
-        await wrapper.setProps({ modelValue: newModelValue });
+        await wrapper.setProps({ modelValue: 'New Model Value' });
 
         expect(wrapper.vm.search).toBe('New Model Value');
     });

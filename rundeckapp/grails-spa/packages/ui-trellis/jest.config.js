@@ -17,6 +17,10 @@ module.exports = {
   },
   setupFiles: ['<rootDir>/setupTests.js'],
   roots: ['<rootDir>/src/app', '<rootDir>/src/library', '<rootDir>/tests'],
+  moduleNameMapper: {
+    '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
+    "^@/(.*)$": "<rootDir>/src/$1"
+  },
   modulePathIgnorePatterns: [
     '<rootDir>/public',
   ],
@@ -27,4 +31,5 @@ module.exports = {
   verbose: true,
   testEnvironment: "@happy-dom/jest-environment",
   transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+  clearMocks: true,
 };

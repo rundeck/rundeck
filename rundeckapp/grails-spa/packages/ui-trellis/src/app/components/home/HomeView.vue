@@ -1,56 +1,56 @@
 <template>
   <div id="layoutBody">
-    <div class="container-fluid" v-if="projectCount > 0 || !loadedProjectNames">
-      <div class="row" v-if="isFirstRun">
-        <HomeWelcome
-          :appTitle="appTitle"
-          :buildIdent="buildIdent"
-          :logoImage="logoImage"
-          :helpLinkUrl="helpLinkUrl"
-        />
-      </div>
-      <HomeHeader
-        :createProjectAllowed="createProjectAllowed"
-        :projectCount="projectCount"
-        :summaryRefresh="summaryRefresh"
-        :refreshDelay="refreshDelay"
-      />
-    </div>
-    <div class="container-fluid" v-if="projectCount === 0">
-      <FirstRun v-if="createProjectAllowed" />
-    </div>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-12">
-          <div
-            class="card"
-            v-if="
-              projectCount < 1 && loadedProjectNames && !createProjectAllowed
-            "
-          >
-            <div class="card-content">
-              <div class="well">
-                <h2 class="text-warning">
-                  {{ $t("no.authorized.access.to.projects") }}
-                </h2>
-                <p>
-                  {{
-                    $t(
-                      "no.authorized.access.to.projects.contact.your.administrator.user.roles.0",
-                      [roles.join(", ")]
-                    )
-                  }}
-                </p>
-              </div>
-            </div>
-          </div>
-          <HomeCardList
-            :loaded-project-names="loadedProjectNames"
-            :projects="projects"
+      <div class="container-fluid" v-if="dataLoaded && projectCount > 0 || !loadedProjectNames">
+        <div class="row" v-if="isFirstRun">
+          <HomeWelcome
+              :appTitle="appTitle"
+              :buildIdent="buildIdent"
+              :logoImage="logoImage"
+              :helpLinkUrl="helpLinkUrl"
           />
         </div>
+        <HomeHeader
+            :createProjectAllowed="createProjectAllowed"
+            :projectCount="projectCount"
+            :summaryRefresh="summaryRefresh"
+            :refreshDelay="refreshDelay"
+        />
       </div>
-    </div>
+      <div class="container-fluid" v-if="dataLoaded && projectCount === 0">
+        <FirstRun v-if="createProjectAllowed" />
+      </div>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-xs-12">
+            <div
+                class="card"
+                v-if="
+              projectCount < 1 && loadedProjectNames && !createProjectAllowed
+            "
+            >
+              <div class="card-content">
+                <div class="well">
+                  <h2 class="text-warning">
+                    {{ $t("no.authorized.access.to.projects") }}
+                  </h2>
+                  <p>
+                    {{
+                      $t(
+                          "no.authorized.access.to.projects.contact.your.administrator.user.roles.0",
+                          [roles.join(", ")]
+                      )
+                    }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <HomeCardList
+                :loaded-project-names="loadedProjectNames"
+                :projects="projects"
+            />
+          </div>
+        </div>
+      </div>
   </div>
 </template>
 
@@ -114,6 +114,7 @@ export default defineComponent({
       projectCount: 0,
       loadedProjectNames: false,
       projects: null,
+      dataLoaded: false,
     };
   },
   methods: {
@@ -124,6 +125,8 @@ export default defineComponent({
         this.loadedProjectNames = true;
       } catch (e) {
         console.error(e);
+      } finally {
+        this.dataLoaded= true;
       }
     },
   },
