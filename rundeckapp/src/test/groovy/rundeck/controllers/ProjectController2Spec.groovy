@@ -52,6 +52,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1442,8 +1443,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(_,_,_,_,_)>>{
+                1 * handleApiImport(_,_,_,_,_)>>{
                     [success:false,joberrors:['error1','error2']]
                 }
             }
@@ -1486,8 +1490,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         given:
             setupImportApiService(format)
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it.importExecutions
                     it.jobUuidOption == 'preserve'
@@ -1523,8 +1530,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         given:
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it."$param"==val
                 }
@@ -1603,7 +1613,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectImport()
         then:
             with(controller.projectService){
-                0 * importToProject(*_)>>[success:true]
+                0 * handleApiImport(*_)>>[success:true]
             }
             1 * controller.apiService.renderErrorFormat(_,
                 [
@@ -1622,6 +1632,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
             setupGetResource()
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 1 * authResourceForProjectAcl('test')>>[acl:true]
                 0 *authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -1639,7 +1652,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
 
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
@@ -1692,6 +1705,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
                 2 * project(_, _) >> Mock(AuthorizingProject) {
                     1 * getResource() >> {
@@ -1718,7 +1734,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
         then:
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [

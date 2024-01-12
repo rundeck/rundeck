@@ -73,11 +73,17 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+
 import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportEvents
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
 import webhooks.component.project.WebhooksProjectComponent
 
@@ -105,6 +111,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
+    AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
     FileUploadService fileUploadService
@@ -1949,6 +1956,145 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             notify('projectDeleteFailed', project.name)
         }
         return result
+    }
+
+    /**
+     * Creates the status file in db storage, the status file is the document that will have all the information
+     * about what is going on in the whole import operation. Will be requested in 'apiProjectAsyncImportStatus'
+     * endpoint.
+     *
+     * @param projectName
+     * @return true/false if its created or not
+     */
+    Boolean createAsyncImportStatusFile(String projectName){
+        try{
+            return asyncImportService.createStatusFile(projectName)
+        }catch(Exception e){
+            projectLogger.error("There was an unexpected error during async project import status file creation", e)
+            throw new AsyncImportException("There was an unexpected error during async project import status file creation", e)
+        }
+    }
+
+    /**
+     * Gets the info of a existing status file in db, if there isn't a status file.
+     *
+     * @param projectName
+     * @return
+     */
+    AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
+        try{
+            if( !asyncImportService.statusFileExists(projectName) ){
+                throw new AsyncImportException("No status file in DB for project: ${projectName}")
+            }
+            def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
+            return dto
+        }catch(Exception e){
+            projectLogger.error("Unexpected error while getting async project import status file in db", e)
+            throw new AsyncImportException("Unexpected error while getting async project import status file in db", e)
+        }
+    }
+
+    /**
+     * Starts async import milestones 1 and 2.
+     *
+     * @param projectName
+     * @param authContext
+     * @param project
+     * @param milestoneNumber
+     */
+    void beginAsyncImportMilestone(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project,
+            final int asyncImportStep
+    ){
+        switch (asyncImportStep){
+            case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+                break
+            case AsyncImportMilestone.M3_IMPORTING.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+                break
+            default:
+                throw new AsyncImportException("Invalid milestone number: ${asyncImportStep} please, provide a valid async import milestone number.")
+        }
+    }
+
+    /**
+     * Handles project api import, returns the import result.
+     *
+     * Based on the params, the method will handle async or regular import.
+     *
+     * @param framework - Rundeck framework from Framework service
+     * @param userAndRolesAuthContext - Auth context from controller
+     * @param project - Rundeck project
+     * @param is - Stream made with uploaded project
+     * @param params - Archive params passed in request
+     */
+    def handleApiImport(
+            IFramework framework,
+            UserAndRolesAuthContext userAndRolesAuthContext,
+            IRundeckProject project,
+            InputStream is,
+            ProjectArchiveParams params
+    ) {
+        try{
+            if (params.asyncImport) {
+                // Creates the async import status file
+                if( !createAsyncImportStatusFile(project.name) ){
+                    throw new AsyncImportException("Error creating status file.")
+                }
+                // Start the process synchronously
+                return asyncImportService.startAsyncImport(
+                        project.name,
+                        userAndRolesAuthContext,
+                        project,
+                        is,
+                        params
+                )
+            }else{
+                return importToProject(
+                        project,
+                        framework,
+                        userAndRolesAuthContext,
+                        is,
+                        params
+                )
+            }
+        }catch(AsyncImportException e){
+            def badResult = [success: false, importerErrors: [async_importer_errors: e.message]]
+            return badResult
+        }
+    }
+
+    /**
+     * Checks if an async import status operation is not complete for given project
+     *
+     * @param projectName
+     * @return
+     */
+    boolean isIncompleteAsyncImportForProject(String projectName){
+        def incomplete = true
+        try{
+            def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
+            if (statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber) {
+                incomplete = false
+            }
+        }catch (Exception e){
+            throw new AsyncImportException("There was an error while retrieving import status information.", e)
+        }
+        return incomplete
+    }
+
+    /**
+     * Restart a complete async import operation for given project.
+     *
+     * @param projectName
+     * @return
+     */
+    boolean restartAsyncImport(String projectName) {
+        projectLogger.info("Restarting async project import for project: ${projectName}")
+        return asyncImportService.removeAsyncImportStatusFile(projectName)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

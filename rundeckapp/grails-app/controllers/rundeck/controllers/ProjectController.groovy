@@ -68,6 +68,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.asyncimport.AsyncImportService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -85,6 +86,7 @@ class ProjectController extends ControllerBase{
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
+    AsyncImportService asyncImportService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -98,6 +100,7 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
+            apiProjectAsyncImportStatus: ['GET']
     ]
 
     def index () {
@@ -3271,13 +3274,26 @@ Note: `other_errors` included since API v35""",
             archiveParams.importNodesSources = archiveParams.importConfig
         }
 
-        def result = projectService.importToProject(
-                project,
+        if( asyncImportService.statusFileExists(project.name) ){
+            if( projectService.isIncompleteAsyncImportForProject(project.name) ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.status.file.exist',
+                        args: [project.name],
+                        format:respFormat
+                ])
+            }
+            projectService.restartAsyncImport(project.name)
+        }
+
+        def result = projectService.handleApiImport(
                 framework,
                 projectAuthContext,
+                project,
                 stream,
                 archiveParams
         )
+
         switch (respFormat) {
 
             case 'xml':
@@ -3328,8 +3344,9 @@ Note: `other_errors` included since API v35""",
                 }
             case 'json':
                 render(contentType: 'application/json'){
-                    import_status result.success?'successful':'failed'
+                    import_status result.success ? 'successful' : 'failed'
                     successful result.success
+
                     if (!result.success) {
                         //list errors
                         errors result.joberrors
@@ -3353,6 +3370,43 @@ Note: `other_errors` included since API v35""",
                 }
                 break;
         }
+    }
+
+    /**
+     * Status endpoint, gives status for the given project if the process has been started (status file exists in db)
+     *
+     * @param project (name) - mandatory to hit the endpoint
+     * @return JSON with info
+     */
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiProjectAsyncImportStatus(){
+        def statusFileContent
+        try{
+            if( !params.project ){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.async.import.projectName.param.missing',
+                ])
+            }
+            def projectName = params.project as String
+            statusFileContent = projectService.getAsyncImportStatusFileForProject(projectName)
+        }catch(Exception e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.async.import.status.file.retrieval.error',
+                    args: [e.message]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                lastUpdate        : statusFileContent.lastUpdate,
+                                lastUpdated       : statusFileContent.lastUpdated,
+                                errors            : statusFileContent.errors ? statusFileContent.errors : "No errors."
+                        ]
+                ) as JSON
+        )
     }
 
     @Get('/{project}/meta')

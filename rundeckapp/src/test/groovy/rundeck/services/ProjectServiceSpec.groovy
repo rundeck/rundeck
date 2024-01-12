@@ -65,6 +65,10 @@ import retrofit2.mock.Calls
 import retrofit2.mock.NetworkBehavior
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -2944,6 +2948,89 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertEquals EXEC_XML_TEST6, str
     }
 
+    def "Handle API import with exception"(){
+        given:
+        def framework = Mock(IFramework)
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject){
+            getName() >> "test"
+        }
+        def inputStream = Mock(FileInputStream)
+        def params = Mock(ProjectArchiveParams){
+            asyncImport >> true
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            createStatusFile(project.name) >> false
+        }
+
+        when:
+        def result = service.handleApiImport(
+                framework,
+                auth,
+                project,
+                inputStream,
+                params
+        )
+
+        then:
+        result.importerErrors != null
+    }
+
+    def "Handle API import with exception at import"(){
+        given:
+        def framework = Mock(IFramework)
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject){
+            getName() >> "test"
+        }
+        def inputStream = Mock(FileInputStream)
+        def params = Mock(ProjectArchiveParams){
+            asyncImport >> true
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            createStatusFile(project.name) >> true
+            1 * startAsyncImport(
+                    project.name,
+                    _,
+                    project,
+                    _,
+                    params
+            ) >> { throw new AsyncImportException("A message") }
+        }
+
+        when:
+        def result = service.handleApiImport(
+                framework,
+                auth,
+                project,
+                inputStream,
+                params
+        )
+
+        then:
+        result.importerErrors != null
+    }
+
+    def "restart async import calls to service for status file removal"(){
+        given:
+        def projectName = "test"
+        service.asyncImportService = Mock(AsyncImportService){
+            removeAsyncImportStatusFile(projectName) >> whenMethodReturns
+        }
+
+        when:
+        def result = service.restartAsyncImport(projectName)
+        flagWillBe = result
+
+        then:
+        1 * service.asyncImportService.removeAsyncImportStatusFile(projectName)
+
+        where:
+        whenMethodReturns | flagWillBe
+        false             | false
+        true              | true
+    }
+
     def testExportExecutionWithScheduledExecutionBackupJobEnabled(){
         given:
 
@@ -3041,6 +3128,133 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         assertEquals(localFile, executionFile.localFile)
         assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
+    }
+
+    def "Async import events calls"(){
+        given:
+        def projectName = "test"
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject)
+        def eventBusMock = Mock(EventBus)
+        service.setTargetEventBus(eventBusMock)
+
+        when: "we invoke the milestones events"
+        service.beginAsyncImportMilestone(projectName, auth, project, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber)
+
+        then: "the event bus notifies"
+        1 * eventBusMock.notify(*_)
+    }
+
+    def "Async import is called with exception"(){
+        given:
+        def projectName = "test"
+
+        when:
+        service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        thrown AsyncImportException
+    }
+
+    def "Async import is called twice"(){
+        given:
+        def projectName = "test"
+        def mockDto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber)
+        service.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(projectName) >> true
+            getAsyncImportStatusForProject(projectName) >> mockDto
+        }
+
+        when:
+        def isIncomplete = service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        isIncomplete
+    }
+
+    def "Async import is called when operation is complete"(){
+        given:
+        def projectName = "test"
+        def mockDto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber)
+        service.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(projectName) >> true
+            getAsyncImportStatusForProject(projectName) >> mockDto
+        }
+
+        when:
+        def isIncomplete = service.isIncompleteAsyncImportForProject(projectName)
+
+        then:
+        !isIncomplete
+    }
+
+    def "Async import events calls with a invalid milestone number"(){
+        given:
+        def projectName = "test"
+        def auth = Mock(UserAndRolesAuthContext)
+        def project = Mock(IRundeckProject)
+        def eventBusMock = Mock(EventBus)
+        service.setTargetEventBus(eventBusMock)
+
+        when: "we invoke the milestones events"
+        service.beginAsyncImportMilestone(projectName, auth, project, 999)
+
+        then: "the event bus notifies"
+        0 * eventBusMock.notify(*_)
+        thrown AsyncImportException
+    }
+
+    def "Get async status file for project"(){
+        given:
+        def projectName = "test"
+        def mockedStatus = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = "Its a mock!"
+            return it
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            it.getAsyncImportStatusForProject(projectName) >> mockedStatus
+            it.statusFileExists(projectName) >> true
+        }
+
+        when:
+        def status = service.getAsyncImportStatusFileForProject(projectName)
+
+        then:
+        status != null
+    }
+
+    def "Failed async status file for project retrieval"(){
+        given:
+        def projectName = "test"
+        def mockedStatus = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = "Its a mock!"
+            return it
+        }
+        service.asyncImportService = Mock(AsyncImportService){
+            it.statusFileExists(projectName) >> true
+            1 * it.getAsyncImportStatusForProject(projectName) >> { throw new AsyncImportException("Some error") }
+        }
+
+        when:
+        def status = service.getAsyncImportStatusFileForProject(projectName)
+
+        then:
+        thrown AsyncImportException
+    }
+
+    def "Create async status file for project"(){
+        given:
+        def projectName = "test"
+        service.asyncImportService = Mock(AsyncImportService){
+            it.createStatusFile(projectName) >> true
+        }
+
+        when:
+        def created = service.createAsyncImportStatusFile(projectName)
+
+        then:
+        created
+
     }
 }
 
