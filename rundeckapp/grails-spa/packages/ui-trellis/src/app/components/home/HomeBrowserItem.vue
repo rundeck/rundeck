@@ -1,5 +1,5 @@
 <template>
-  <div class="project_list_item" :key="`project${index}`">
+  <div class="project_list_item" :key="`project${index}`" :data-project="project.name">
     <div class="row row-hover row-border-top">
       <div class="col-sm-6 col-md-8">
         <a
@@ -113,6 +113,7 @@
       <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
         <div v-if="showMotd">
           <span
+              data-test="motd"
             v-if="messageMeta.data.readme.motdHTML"
             v-html="messageMeta.data.readme.motdHTML"
           ></span>
@@ -120,6 +121,7 @@
         <div v-if="showReadme">
           <div>
             <span
+                data-test="readme"
               v-if="messageMeta.data.readme.readmeHTML"
               v-html="messageMeta.data.readme.readmeHTML"
             ></span>
@@ -127,17 +129,17 @@
         </div>
       </div>
     </div>
-    <template v-if="project.extra">
-      <div v-for="extra in project.extra" v-html="extra"></div>
-    </template>
+    <div v-if="project.extra">
+      <ui-socket></ui-socket>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import {defineComponent, PropType} from "vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
-import HomeActionsMenu from "@/app/components/home/HomeActionsMenu.vue";
-import {ConfigMeta, MessageMeta, Project} from "@/app/components/home/types/projectTypes";
+import HomeActionsMenu from "./HomeActionsMenu.vue";
+import {ConfigMeta, MessageMeta, Project} from "./types/projectTypes";
 
 export default defineComponent({
   name: "HomeBrowserItem",

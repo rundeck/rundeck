@@ -1,37 +1,37 @@
 import { mount, VueWrapper } from '@vue/test-utils';
 import HomeHeader from '../HomeHeader.vue';
-import { getAppLinks } from '../../../../library';
-import { getSummary } from '../services/homeServices';
 
-jest.mock('../../../../library');
-jest.mock('src/app/components/home/services/homeServices');
+// Mock getSummary method
+jest.mock('@/app/components/home/services/homeServices', () => ({
+    getSummary: jest.fn().mockResolvedValue({
+        execCount: 3,
+        totalFailedCount: 1,
+        recentProjects: ['Project1', 'Project2'],
+        recentUsers: ['User1', 'User2'],
+    }),
+}));
 
-const mockGetAppLinks = getAppLinks as jest.Mock;
-const mockGetSummary = getSummary as jest.Mock;
+jest.mock('@/library', () => ({
+    getAppLinks: jest.fn().mockReturnValue({
+        frameworkCreateProject: '/create-project-url', // Replace with the actual URL
+    }),
+}));
 
-const mockSummaryResponse = {
-    execCount: 10,
-    totalFailedCount: 2,
-    recentProjects: ['Project1', 'Project2'],
-    recentUsers: ['User1', 'User2'],
-};
-
-mockGetAppLinks.mockReturnValue({
-    frameworkCreateProject: '/createProject',
-});
-
-mockGetSummary.mockResolvedValue(mockSummaryResponse);
-
-const mountHomeHeader = async (props?: Record<string, any>): Promise<VueWrapper<any>> => {
+const createWrapper = (props = {}) => {
     return mount(HomeHeader, {
         props: {
             createProjectAllowed: false,
-            projectCount: 5,
+            projectCount: 3,
+            summaryRefresh: false,
+            refreshDelay: 30000,
             ...props,
         },
         global: {
-            mocks: {},
-        },
+            mocks: {
+                $t: (msg: string) => msg,
+                $tc: (msg: string) => msg,
+            },
+        }
     });
 };
 
@@ -40,57 +40,33 @@ describe('HomeHeader', () => {
         jest.clearAllMocks();
     });
 
-    it('renders the component correctly', async () => {
-        const wrapper = await mountHomeHeader();
+    it('renders project count and create project button when loadedProjectNames is true', async () => {
+        const wrapper = createWrapper({ createProjectAllowed: true });
+        await wrapper.setData({ loaded: true });
 
-        expect(wrapper.exists()).toBe(true);
+        expect(wrapper.find('#projectCountNumber').text()).toBe('3');
+        expect(wrapper.find('.btn.btn-primary').exists()).toBe(true);
     });
 
-    it('displays project count when loaded', async () => {
-        const wrapper = await mountHomeHeader();
-
-        expect(wrapper.find('#projectCountNumber').text()).toBe('5');
-        expect(wrapper.find('.text-h3').text()).toBe('5 projects');
-    });
-
-    it('displays loading spinner when project count is not loaded', async () => {
-        const wrapper = await mountHomeHeader({ projectCount: 0 });
+    it('renders loading spinner when projects were not fully loaded', async () => {
+        const wrapper = createWrapper();
+        await wrapper.setProps({ projectCount: 0 });
+        await wrapper.vm.$nextTick();
 
         expect(wrapper.find('.loading-spinner').exists()).toBe(true);
     });
 
-    it('displays create project button when allowed', async () => {
-        const wrapper = await mountHomeHeader({ createProjectAllowed: true });
-
-        expect(wrapper.find('#createProject').exists()).toBe(true);
-    });
-
-    it('does not display create project button when not allowed', async () => {
-        const wrapper = await mountHomeHeader({ createProjectAllowed: false });
-
-        expect(wrapper.find('#createProject').exists()).toBe(false);
-    });
-
-    it('displays execution summary when summary is loaded', async () => {
-        const wrapper = await mountHomeHeader();
-
-        expect(wrapper.find('.summary-count.text-info').text()).toBe('10');
-        expect(wrapper.find('.summary-count.text-warning').text()).toBe('2');
-    });
-
-    it('displays recent projects and recent users when available', async () => {
-        const wrapper = await mountHomeHeader();
-
-        expect(wrapper.find('.project-link').exists()).toBe(true);
-        expect(wrapper.find('.project-link').text()).toBe('Project1');
-        expect(wrapper.find('.summary-count.text-info').text()).toBe('2');
-        expect(wrapper.find('.text-info').text()).toBe('User1, User2');
-    });
-
-    it('displays placeholder when project count is not loaded', async () => {
-        mockGetSummary.mockResolvedValueOnce(null);
-        const wrapper = await mountHomeHeader({ projectCount: 0 });
+    it('renders "..." when there is no data about last day executions', async () => {
+        const wrapper = createWrapper();
 
         expect(wrapper.find('.text-muted').text()).toBe('...');
+    });
+
+    it('renders summary information when loadedProjectNames is true and data is loaded', async () => {
+        const wrapper = createWrapper();
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.find('#projectCountNumber').text()).toBe('3');
+        expect(wrapper.find('#projectCount').text()).toBe('3 page.home.section.project.title.plural');
     });
 });

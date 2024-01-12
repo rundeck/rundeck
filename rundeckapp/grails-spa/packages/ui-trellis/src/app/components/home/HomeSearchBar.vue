@@ -1,6 +1,7 @@
 <template>
   <div class="input-group">
     <input
+        data-test="searchInput"
         type="search"
         name="search"
         :placeholder="placeholder"

@@ -1,18 +1,20 @@
 <template>
   <div class="card">
     <div id="project-list" class="card-content">
-      <HomeSearchBar
-          :placeholder="$t('page.home.search.projects.input.placeholder')"
-          v-model="search"
-          @on-focus="hideResults"
-          @on-enter="handleSearch"
-          @on-blur="handleSearch"
-      />
-      <p class="alert alert-info" v-if="showSearchResults && loadedProjectNames">
-        <span :class="{ 'text-white': searchedProjectsCount>0, 'text-warning': searchedProjectsCount<1 }">
-          {{ $tc('page.home.search.project.title', searchedProjectsCount) }}
-        </span>
-      </p>
+      <div>
+        <HomeSearchBar
+            :placeholder="$t('page.home.search.projects.input.placeholder')"
+            v-model="search"
+            @on-focus="hideResults"
+            @on-enter="handleSearch"
+            @on-blur="handleSearch"
+        />
+        <p data-test="searchResults" class="alert alert-info" v-if="showSearchResults && loadedProjectNames">
+          <span :class="{ 'text-white': searchResultsCount>0, 'text-warning': searchResultsCount<1 }">
+            {{ $tc('page.home.search.project.title', searchResultsCount) }}
+          </span>
+        </p>
+      </div>
 
       <div class="project_list_header">
         <div class="row row-border-top p-4">
@@ -69,7 +71,7 @@ export default defineComponent({
     }
   },
   computed: {
-    searchedProjectsCount(): number {
+    searchResultsCount(): number {
       return this.filteredProjects?.length || 0
     },
   },
