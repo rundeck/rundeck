@@ -73,6 +73,82 @@ class ExecutionSpec extends BaseContainer {
         jsonValue(response.body()).errorCode == 'api.error.item.doesnotexist'
     }
 
+    def "test-job-flip-executionEnabled"(){
+        given:
+        def projectName = "test-job-flip-executionEnabled"
+        def apiVersion = 40
+        client.apiVersion = apiVersion
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test1",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobName1 = "xmljob"
+        def jobXml1 = generateExecForEnabledXmlTest(jobName1)
+
+        def job1CreatedResponse = createJob(projectName, jobXml1)
+        assert job1CreatedResponse.successful
+
+        when: "TEST: when execution is on, job does execute"
+        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
+        def executions1 = doGet("/job/${job1Id}/executions")
+        JobExecutionsResponse parsedExecutionsResponseForExecution1 = mapper.readValue(executions1.body().string(), JobExecutionsResponse.class)
+        then:
+        parsedExecutionsResponseForExecution1.executions.size() == 0
+
+        when:
+        def jobExecResponseFor1 = executeJob job1Id
+        assert jobExecResponseFor1.successful
+        def executions1AfterExecResponse = doGet("/job/${job1Id}/executions")
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterExec = mapper.readValue(executions1AfterExecResponse.body().string(), JobExecutionsResponse.class)
+        then: "assert_job_execution_count job1"
+        parsedExecutionsResponseForExecution1AfterExec.executions.size() == 1
+
+        when: "TEST: when execution is off, job doesn't execute"
+        def disabledJobsResponse = client.doPostWithoutBody("/job/${job1Id}/execution/disable")
+        assert disabledJobsResponse.successful
+
+        def jobExecResponseFor1AfterDisable = executeJob job1Id
+        assert jobExecResponseFor1AfterDisable.code() == 500 // bc execs are disabled
+
+        def executionsForJob1AfterDisable = doGet("/job/${job1Id}/executions")
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterDisable = mapper.readValue(executionsForJob1AfterDisable.body().string(), JobExecutionsResponse.class)
+
+        then:
+        parsedExecutionsResponseForExecution1AfterDisable.executions.size() == 1
+
+        when: "TEST: when execution is off and then on again, job does execute"
+        def enabledJobsResponse = client.doPostWithoutBody("/job/${job1Id}/execution/enable")
+        assert enabledJobsResponse.successful
+
+        // Necessary since the api needs to breathe after enable execs
+        Thread.sleep(WaitingTime.LOW.milliSeconds)
+
+        def jobExecResponseFor1AfterEnable = executeJob job1Id
+        assert jobExecResponseFor1AfterEnable.successful
+
+
+        def executionsForJob1AfterEnable = doGet("/job/${job1Id}/executions")
+        JobExecutionsResponse parsedExecutionsResponseForExecution1AfterEnable = mapper.readValue(executionsForJob1AfterEnable.body().string(), JobExecutionsResponse.class)
+
+        then:
+        parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
+    }
+
     def "test-job-flip-executionEnabled-bulk"(){
         given:
         def projectName = "project-test"
