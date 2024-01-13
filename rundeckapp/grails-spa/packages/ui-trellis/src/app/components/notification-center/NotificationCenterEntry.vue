@@ -7,7 +7,13 @@
       :icon-string="iconString"
       :icon-label="iconLabel"
     />
-    <NotificationCenterEntryContent />
+    <NotificationCenterEntryContent
+        :notification-entry-title="notificationEntryTitle"
+        :notification-entry-started-at="notificationEntryStartedAt"
+        :notification-entry-status="notificationEntryStatus"
+        :notification-entry-completed-proportion="notificationEntryCompletedProportion"
+        :notification-entry-progress-proportion="notificationEntryProgressProportion"
+    />
   </li>
 </template>
 
@@ -28,13 +34,20 @@
         NotificationCenterEntryContent
       },
       props: [
-          'iconString',
-          'iconLabel'
+        'iconString',
+        'iconLabel',
+        'notificationEntryTitle',
+        'notificationEntryStartedAt',
+        'notificationEntryStatus',
+        'notificationEntryCompletedProportion',
+        'notificationEntryProgressProportion'
       ],
       data(){
         return{
           message: 'Lets begin!'
         }
+      },
+      mounted(){
       }
     })
 </script>

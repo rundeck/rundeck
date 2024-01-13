@@ -161,7 +161,7 @@
                       data-toggle="tooltip"
                       data-placement="bottom">
 
-                  <i class="fa fa-comments fa-lg" style="color: white;"></i>
+                  <i class="fa fa-comments fa-lg" style="color: var(--blue-400);"></i>
                 </span>
               </a>
               <g:render template="/menu/notificationCenterWidget"/>

@@ -8,7 +8,11 @@
           :key="index"
           :icon-string="entry.entry_type.iconString"
           :icon-label="entry.entry_type.value"
-
+          :notification-entry-title="entry.title"
+          :notification-entry-started-at="entry.started_at"
+          :notification-entry-status="entry.status"
+          :notification-entry-completed-proportion="entry.completed_proportion"
+          :notification-entry-progress-proportion="entry.progress_proportion"
         />
       </ul>
     </div>

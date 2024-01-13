@@ -20,10 +20,10 @@
         </div>
         <div>
           <!--  Progress bar -->
-          <span>
-                  40%
-                </span>
-          <div></div>
+            <span>
+                  {{progressBarValue}}%
+            </span>
+          <div :style="{ width: progressBarValue + '%', backgroundColor: progressBarColor }"></div>
         </div>
       </div>
     </div>
@@ -46,7 +46,25 @@
       ],
       data(){
         return{
+          progressBarValue: 0,
+          progressBarColor: 'var(--primary-color)'
         }
+      },
+      methods: {
+        calculateProgressBar(){
+          const totalProportion = this.notificationEntryCompletedProportion
+          const progressProportion = this.notificationEntryProgressProportion
+          this.progressBarValue = Math.round((progressProportion * 100)/totalProportion)
+          this.translateProgressBarColor()
+        },
+        translateProgressBarColor(){
+          if( this.progressBarValue === 100 ){
+            this.progressBarColor = 'var(--success-color)'
+          }
+        }
+      },
+      mounted() {
+        this.calculateProgressBar()
       }
     })
 </script>
@@ -105,7 +123,7 @@
   margin-top: 1rem;
   margin-bottom: 1rem;
   border-radius: 2.5px;
-  background-color: var(--background-color-lvl3);
+  background-color: var(--default-states-color);
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -121,14 +139,13 @@
     margin-left: auto;
     margin-right: auto;
     width: 100px;
+    color: var(--white-color);
   }
 }
 
 .projectNotificationContainer > div:nth-of-type(2) > div:nth-of-type(1) {
-  width: 40%;
   height: 100%;
   z-index: 999;
-  background-color: var(--card-default-background-color);
   border-radius: 2.5px;
 }
 </style>

@@ -15,17 +15,26 @@ export const NotificationCenterEntries = [
         entry_type: EntryTypes.TASK,
         title: "Project Import",
         started_at: "Fri Jan 13 2024 23:00:51",
-        status: "In progress...",
+        status: "Almost there...",
         completed_proportion: 5,
         progress_proportion: 4
     },
     {
         id: 2,
         entry_type: EntryTypes.TASK,
-        title: "Project Export",
-        started_at: "Fri Jan 05 2024 10:00:51",
-        status: "In progress...",
-        completed_proportion: 3,
-        progress_proportion: 1
+        title: "Scm Job Replication",
+        started_at: "Fri Jan 06 2024 13:00:52",
+        status: "Completed",
+        completed_proportion: 5,
+        progress_proportion: 5
     },
+    {
+        id: 3,
+        entry_type: EntryTypes.TASK,
+        title: "Scm Job Replication",
+        started_at: "Fri Jan 06 2024 13:00:52",
+        status: "Completed",
+        completed_proportion: 5,
+        progress_proportion: 0
+    }
 ]
