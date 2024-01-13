@@ -130,7 +130,7 @@
       </div>
     </div>
     <div v-if="project.extra">
-      <ui-socket></ui-socket>
+      <ui-socket section="home" location="projectExtra"></ui-socket>
     </div>
   </div>
 </template>
