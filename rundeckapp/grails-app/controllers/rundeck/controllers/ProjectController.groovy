@@ -615,7 +615,7 @@ class ProjectController extends ControllerBase{
         if(version>=ApiVersions.V46 && params.meta) {
             String meta = params.meta
             def authContext =
-                    rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, pject.name)
+                    rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, name)
 
 
             retMap.meta = projectService.loadProjectMetaItems(
