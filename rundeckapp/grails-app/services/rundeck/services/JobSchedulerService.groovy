@@ -142,6 +142,8 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     Date scheduleJob(final String quartzJobName, final String quartzJobGroup, final Map data, final Date atTime, final boolean pending)
             throws JobScheduleFailure
     {
+        interruptScheduleOnPassiveMode()
+
         data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
@@ -170,6 +172,8 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     boolean scheduleJobNow(final String quartzJobName, final String quartzJobGroup, final Map data, final boolean pending) throws JobScheduleFailure {
+        interruptScheduleOnPassiveMode()
+
         data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
@@ -284,5 +288,10 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
         reschedulePendingJob(ident.jobname, ident.groupname)
+    }
+
+    private void interruptScheduleOnPassiveMode() throws JobScheduleFailure{
+        if(!frameworkService.configurationService.isExecutionModeActive())
+            throw new JobScheduleFailure("Execution mode is PASSIVE")
     }
 }

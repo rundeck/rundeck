@@ -63,6 +63,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.events.EventPublisher
 import grails.events.annotation.Publisher
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
@@ -228,6 +229,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     @PreDestroy
     void cleanUp() {
         applicationIsShutdown = true;
+    }
+
+    @Subscriber("rdpro.shutdown")
+    void forceInactive(){
+        log.debug("Enterprise Shutdown Received")
+        configurationService.setExecutionModeActive(false)
     }
 
     /**
@@ -2258,10 +2265,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
 
-        if(!getExecutionsAreActive()){
-            return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
-        }
-
         if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
             return [success:false,failed:true,error:'disabled',message:lookupMessage('project.execution.disabled',null)]
         }
@@ -3130,6 +3133,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                                              retryContext.user, input, retryContext.secureOpts,
                                              retryContext.secureOptsExposed, count + 1,execution.id,originalId)
+
+                log.trace("saveExecutionState_currentTransaction: retry execute job (${scheduledExecution.getJobName()} - id: ${execution.id}) result status: ${result}")
                 if (result.success) {
                     execution.retryExecution = result.execution
                 }
