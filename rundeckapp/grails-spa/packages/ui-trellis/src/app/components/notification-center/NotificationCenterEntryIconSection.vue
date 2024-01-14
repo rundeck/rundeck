@@ -7,7 +7,7 @@
           id="notificationWidgetCardImageWrapper"
           class="notificationWidgetCardImageWrapper"
       >
-        <i :class="iconString"></i>
+        <i :class="iconClass"></i>
       </div>
       <p>{{iconLabel}}</p>
     </div>
@@ -21,12 +21,30 @@
     import {defineComponent} from "vue";
     import {getRundeckContext} from "@/library";
     import NotificationCenterHeader from "@/app/components/notification-center/NotificationCenterHeader.vue";
+    import EntryTypes from "@/app/components/notification-center/EntryTypes";
 
     const rundeckClient = getRundeckContext().rundeckClient
 
     export default defineComponent({
       name: "NotificationCenterEntryIconSection",
-      props: ['iconString', 'iconLabel']
+      props: ['iconString', 'iconLabel'],
+      data(){
+        return {
+          iconClass: ''
+        }
+      },
+      methods: {
+        translateIconString(){
+          switch (this.iconString) {
+            case EntryTypes.TASK.id:
+              this.iconClass = EntryTypes.TASK.iconString
+              break;
+          }
+        }
+      },
+      mounted() {
+        this.translateIconString()
+      }
     })
 </script>
 

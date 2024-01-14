@@ -69,6 +69,7 @@ import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.notificationcenter.ProjectNotificationCenterService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -87,6 +88,7 @@ class ProjectController extends ControllerBase{
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
     AsyncImportService asyncImportService
+    ProjectNotificationCenterService projectNotificationCenterService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -100,7 +102,8 @@ class ProjectController extends ControllerBase{
             apiProjectAcls:['GET','POST','PUT','DELETE'],
             importArchive: ['POST'],
             delete: ['POST'],
-            apiProjectAsyncImportStatus: ['GET']
+            apiProjectAsyncImportStatus: ['GET'],
+            getProjectNotificationEntries: ['GET']
     ]
 
     def index () {
@@ -3465,5 +3468,18 @@ Since: v46"""
         )
 
         respond result
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def getProjectNotificationEntries(){
+        def entries = projectNotificationCenterService.getEntries()
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                entries        : entries,
+                        ]
+                ) as JSON
+        )
     }
 }

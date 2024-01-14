@@ -5,7 +5,7 @@
       <ul>
         <NotificationCenterEntry v-for="(entry, index) in entries"
           :key="index"
-          :icon-string="entry.entry_type.iconString"
+          :icon-string="entry.entry_type.id"
           :icon-label="entry.entry_type.value"
           :notification-entry-title="entry.title"
           :notification-entry-started-at="entry.started_at"
@@ -23,7 +23,6 @@
     import {getRundeckContext} from "@/library";
     import NotificationCenterHeader from "@/app/components/notification-center/NotificationCenterHeader.vue";
     import NotificationCenterEntry from "@/app/components/notification-center/NotificationCenterEntry.vue";
-    import {NotificationCenterEntries} from "@/app/components/notification-center/TransientHelper";
 
     const rundeckClient = getRundeckContext().rundeckClient
 
@@ -36,8 +35,24 @@
       data(){
         return{
           message: 'Lets begin!',
-          entries: NotificationCenterEntries
+          entries: []
         }
+      },
+      methods: {
+        async getEntries(){
+          const entriesUri = "/api/40/project/test-s3/notifications/entries";
+          let result = await rundeckClient.sendRequest({
+            method: 'GET',
+            url: entriesUri
+          })
+          if (result.status === 200) {
+            this.entries = result.parsedBody.entries
+          }
+        }
+      },
+      mounted() {
+        // Interval call
+        this.getEntries()
       }
     })
 </script>

@@ -100,5 +100,5 @@ w.appLinks = {
     workflowSave: "/workflow/save",
     workflowSaveStepFilter: "/workflow/saveStepFilter",
     workflowUndo: "/workflow/undo",
-    workflowValidateStepFilter: "/workflow/validateStepFilter",
+    workflowValidateStepFilter: "/workflow/validateStepFilter"
 }
