@@ -188,6 +188,13 @@
       </ul>
     </div>
   </nav>
+<g:javascript>
+jQuery(function(){
+    jQuery('body').on('click', '#notificationCenter', function (e){
+        e.stopPropagation()
+    })
+})
+</g:javascript>
 %{--  <g:javascript>--}%
 %{--    jQuery(function(){--}%
 %{--      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){--}%

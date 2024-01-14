@@ -1,10 +1,9 @@
 <template>
-  <section class="content mainWrapper">
+  <section id="notificationCenter" class="content mainWrapper menu-item">
     <NotificationCenterHeader :notification-count="1" />
     <div id="notificationWidgetsListWrapper" class="notificationWidgetsListWrapper">
       <ul>
-        <NotificationCenterEntry
-          v-for="(entry, index) in entries"
+        <NotificationCenterEntry v-for="(entry, index) in entries"
           :key="index"
           :icon-string="entry.entry_type.iconString"
           :icon-label="entry.entry_type.value"
