@@ -44,6 +44,16 @@ class RdClient {
         ).execute()
     }
 
+    Response doGetAcceptAll(final String path) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrl(path)).
+                        header('Accept', '*/*').
+                        get().
+                        build()
+        ).execute()
+    }
+
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
@@ -100,6 +110,33 @@ class RdClient {
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("PUT", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPost(final String path, final File file, final String contentType) {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithRawText(final String path, final String contentType, final String rawBody) {
+        RequestBody body = RequestBody.create(rawBody, MediaType.parse(contentType))
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithoutBody(final String path) {
+        RequestBody body = RequestBody.create(null, new byte[]{});
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
                 .build()
         httpClient.newCall(request).execute()
     }
