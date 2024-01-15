@@ -220,8 +220,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 .replaceAll('xml-job-name', jobName?:'job-test')
                 .replaceAll('xml-job-group-name', groupName?:'group-test')
                 .replaceAll('xml-job-description-name', description?:'description-test')
-        new File(pathXmlFile).text = xmlProject
-        pathXmlFile
+        def tempFile = File.createTempFile("temp", ".xml")
+        tempFile.text = xmlProject
+        tempFile.deleteOnExit()
+        tempFile.path
     }
 
     def jobImportFile(String projectName = null, String pathXmlFile) {
