@@ -10,14 +10,17 @@ import spock.lang.Stepwise
 class JobExecutionSpec extends BaseContainer {
 
     @Shared String jobId
+    @Shared String jobId2
     @Shared int execId
     @Shared int execId2
 
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateFile("job-template-common.xml", null, "test job", "test/api/executions", "Test the /job/ID/executions API endpoint", "echo testing /job/ID/executions result", "api-v5-test-exec-query")
+        def pathFile = updateFile("job-template-common.xml", null, "test job", "test/api/executions", "Test the /job/ID/executions API endpoint", "echo testing /job/ID/executions result")
         jobId = jobImportFile(pathFile).succeeded[0].id
+        def pathFile2 = updateFile("job-template-common.xml", null, "test job", "test/api/executions 2", "Test the /job/ID/executions API endpoint", "/bin/false this should fail")
+        jobId2 = jobImportFile(pathFile2).succeeded[0].id
     }
 
     def "job/jobId/executions should succeed with 0 results"() {
@@ -132,6 +135,26 @@ class JobExecutionSpec extends BaseContainer {
                 def json = jsonValue(response.body())
                 json.message == "Job ID does not exist: fake"
             }
+    }
+
+    def "job/id/executions?status=failed with 1 results"() {
+        when:
+            execId2 = runJob(jobId2, ["options":["opt2": "a"]])
+        then:
+            verifyAll {
+                execId2 > 0
+            }
+        when:
+            sleep 5000
+            def response = doGet("/job/${jobId2}/executions?status=failed")
+        then:
+        verifyAll {
+            response.successful
+            response.code() == 200
+            def json = jsonValue(response.body())
+            json.executions.size() == 1
+            json.executions[0].id == execId2
+        }
     }
 
 }
