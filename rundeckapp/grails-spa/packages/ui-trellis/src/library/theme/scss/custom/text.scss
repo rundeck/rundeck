@@ -1,10 +1,10 @@
 @import "../runstrap/variables";
 
-.text-truncated-to-first-character{
-  display:block;
-  visibility:hidden;
+.text-truncated-to-first-character {
+  display: block;
+  visibility: hidden;
   &:first-letter {
-      visibility:visible;
+    visibility: visible;
   }
 }
 
@@ -33,7 +33,11 @@
   font-weight: $font-weight-bold;
 }
 
-.text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
+.text-h1,
+.text-h2,
+.text-h3,
+.text-h4,
+.text-h5 {
   color: var(--font-color);
   a {
     color: var(--font-color) !important;
@@ -45,47 +49,57 @@
   font-size: $font-size-h1;
   font-weight: 700;
 }
-.text-h1 { @extend %text-h1; }
+.text-h1 {
+  @extend %text-h1;
+}
 
 %text-h2 {
   font-size: $font-size-h2;
   font-weight: 700;
 }
-.text-h2 { @extend %text-h2; }
+.text-h2 {
+  @extend %text-h2;
+}
 
 %text-h3 {
   font-size: $font-size-h3;
   font-weight: 700;
 }
-.text-h3 { @extend %text-h3 }
-
+.text-h3 {
+  @extend %text-h3;
+}
 
 %text-h4 {
   font-size: $font-size-h4;
   font-weight: 700;
 }
-.text-h4 { @extend %text-h4 }
+.text-h4 {
+  @extend %text-h4;
+}
 
 %text-h5 {
   font-size: $font-size-h5;
   font-weight: 700;
   line-height: 1.4em;
 }
-.text-h5 { @extend %text-h5; }
+.text-h5 {
+  @extend %text-h5;
+}
 
 %text-h6 {
   font-size: $font-size-h6;
   font-weight: 700;
   text-transform: uppercase;
 }
-.text-h6 { @extend %text-h6; }
+.text-h6 {
+  @extend %text-h6;
+}
 
 .text-base {
   font-size: $font-size-base;
 }
 
 .row.row-hover:hover {
-
   background-color: var(--background-color-accent-lvl2);
 }
 
@@ -96,12 +110,12 @@
 }
 
 .colon-after::after {
-  content: ':'
+  content: ":";
 }
 
-pre.snippet .line{
-  display:block;
-  &.error{
+pre.snippet .line {
+  display: block;
+  &.error {
     color: red;
   }
 }

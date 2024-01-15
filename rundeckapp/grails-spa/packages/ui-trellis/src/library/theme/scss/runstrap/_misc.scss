@@ -2,7 +2,7 @@
 body {
   color: var(--font-color);
   font-size: $font-size-base;
-  font-family: 'Muli', Arial, sans-serif;
+  font-family: "Muli", Arial, sans-serif;
   .wrapper {
     min-height: 100vh;
     position: relative;
@@ -13,12 +13,14 @@ a {
   color: var(--link-primary-color);
   font-weight: 600;
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     color: var(--primary-highlight-color);
   }
 }
 
-a:focus, a:active,
+a:focus,
+a:active,
 button::-moz-focus-inner,
 input::-moz-focus-inner,
 select::-moz-focus-inner,
@@ -33,7 +35,6 @@ button:focus {
   outline: 0 !important;
 }
 
-
 /*           Animations              */
 .form-control,
 .input-group-addon,
@@ -42,7 +43,6 @@ button:focus {
 .navbar .alert {
   @include transition($general-transition-time, $transition-linear);
 }
-
 
 .sidebar .nav a,
 .sidebar .nav .collapse i,
@@ -53,7 +53,7 @@ button:focus {
 .sidebar .logo a.logo-mini,
 .sidebar .logo a.logo-normal,
 .table > tbody > tr .td-actions,
-.caret{
+.caret {
   @include transition($fast-transition-time, $transition-ease-in);
 }
 
@@ -103,7 +103,7 @@ hr {
 
 .icon-container {
   width: 240px;
-  padding: .7em 0;
+  padding: 0.7em 0;
   float: left;
   position: relative;
   text-align: left;
@@ -114,7 +114,7 @@ hr {
   color: #000;
   position: absolute;
   margin-top: 3px;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .icon-container:hover [class^="ti-"],
@@ -130,8 +130,8 @@ hr {
 .icon-name {
   color: #aaa;
   margin-left: 35px;
-  font-size: .8em;
-  transition: .3s;
+  font-size: 0.8em;
+  transition: 0.3s;
 }
 
 .icon-container:hover .icon-name {
@@ -139,7 +139,7 @@ hr {
 }
 
 .places-buttons .btn {
-  margin-bottom: 30px
+  margin-bottom: 30px;
 }
 
 .sidebar .nav > li.active-pro {
@@ -151,7 +151,7 @@ hr {
 .sidebar .nav > li.active-pro a {
   background: rgba(255, 255, 255, 0.14);
   opacity: 1;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .table-upgrade td:nth-child(2),
@@ -159,13 +159,13 @@ hr {
   text-align: center;
 }
 
-.animation-transition-general{
+.animation-transition-general {
   @include transition($general-transition-time, $transition-linear);
 }
 
-.animation-transition-fast{
+.animation-transition-fast {
   @include transition($fast-transition-time, $transition-linear);
 }
-.animation-transition-ultra-fast{
+.animation-transition-ultra-fast {
   @include transition($ultra-fast-transition-time, $transition-ease-in);
 }

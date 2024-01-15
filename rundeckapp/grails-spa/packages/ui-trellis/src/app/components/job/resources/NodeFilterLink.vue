@@ -6,30 +6,26 @@
   </a>
 </template>
 <script lang="ts">
+import { _genUrl } from "../../../utilities/genUrl";
+import { defineComponent } from "vue";
 
-import {_genUrl} from '../../../utilities/genUrl'
-import { defineComponent } from 'vue'
+import { getRundeckContext, url } from "../../../../library";
 
-import {
-  getRundeckContext,
-  url
-} from '../../../../library'
-
-const rdBase = getRundeckContext().rdBase
-const project = getRundeckContext().projectName
+const rdBase = getRundeckContext().rdBase;
+const project = getRundeckContext().projectName;
 
 export default defineComponent({
-  name: 'NodeFilterLink',
+  name: "NodeFilterLink",
   props: {
     nodeFilterName: {
       type: String,
       required: false,
-      default: '',
+      default: "",
     },
     nodeFilter: {
       type: String,
       required: false,
-      default: '',
+      default: "",
     },
     exclude: {
       type: Boolean,
@@ -39,66 +35,73 @@ export default defineComponent({
     filterKey: {
       type: String,
       required: false,
-      default: '',
+      default: "",
     },
     filterVal: {
       type: String,
       required: false,
-      default: '',
+      default: "",
     },
     text: {
       type: String,
       required: false,
-      default: '',
+      default: "",
     },
   },
-  emits: ['nodefilterclick'],
+  emits: ["nodefilterclick"],
+  computed: {
+    filterParam() {
+      return this.exclude ? "filterExclude" : "filter";
+    },
+    filterParamValues() {
+      const params = { [this.filterParam]: this.getFilter() };
+      if (this.nodeFilterName) {
+        params[this.exclude ? "filterNameExclude" : "filterName"] =
+          this.nodeFilterName;
+      }
+      return params;
+    },
+    href() {
+      return url(
+        _genUrl(
+          "/project/" + project + "/nodes",
+          Object.assign({}, this.filterParamValues),
+        ),
+      ).href;
+    },
+  },
   methods: {
     handleClick() {
-      this.$emit('nodefilterclick', this.filterParamValues)
+      this.$emit("nodefilterclick", this.filterParamValues);
     },
 
     getText() {
       if (this.text) {
-        return this.text
+        return this.text;
       } else if (this.nodeFilterName) {
-        return this.nodeFilterName
+        return this.nodeFilterName;
       } else if (this.filterVal) {
-        return this.filterVal
+        return this.filterVal;
       }
-      return this.getFilter()
+      return this.getFilter();
     },
 
     getFilter() {
       if (this.nodeFilter) {
-        let nodeFilterCpy = this.nodeFilter.trim()
-        let idxKey = nodeFilterCpy.indexOf(": ") + 2
+        let nodeFilterCpy = this.nodeFilter.trim();
+        const idxKey = nodeFilterCpy.indexOf(": ") + 2;
         if (nodeFilterCpy.slice(idxKey).includes(" ")) {
-          nodeFilterCpy += "\""
-          nodeFilterCpy = nodeFilterCpy.slice(0, idxKey) + "\"" + nodeFilterCpy.slice(idxKey)
+          nodeFilterCpy += '"';
+          nodeFilterCpy =
+            nodeFilterCpy.slice(0, idxKey) + '"' + nodeFilterCpy.slice(idxKey);
 
-          return nodeFilterCpy
+          return nodeFilterCpy;
         }
-        return this.nodeFilter
+        return this.nodeFilter;
       } else if (this.filterKey && this.filterVal) {
-        return `${this.filterKey}: \"${this.filterVal}\"`
+        return `${this.filterKey}: \"${this.filterVal}\"`;
       }
     },
   },
-  computed: {
-    filterParam() {
-      return this.exclude ? 'filterExclude' : 'filter'
-    },
-    filterParamValues() {
-      let params = {[this.filterParam]: this.getFilter()}
-      if (this.nodeFilterName) {
-        params[this.exclude?'filterNameExclude':'filterName'] = this.nodeFilterName
-      }
-      return params
-    },
-    href() {
-      return url(_genUrl('/project/' + project + '/nodes', Object.assign({}, this.filterParamValues))).href
-    }
-  },
-})
+});
 </script>

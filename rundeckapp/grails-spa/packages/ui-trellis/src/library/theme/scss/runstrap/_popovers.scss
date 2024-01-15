@@ -2,7 +2,6 @@
 // Popovers
 // --------------------------------------------------
 
-
 .popover {
   position: absolute;
   top: 0;
@@ -20,13 +19,21 @@
   border: 1px solid $popover-fallback-border-color;
   border: 1px solid var(--border-color);
   border-radius: $border-radius-large;
-  @include box-shadow(0 5px 10px rgba(0, 0, 0, .2));
+  @include box-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
 
   // Offset the popover to account for the popover arrow
-  &.top { margin-top: -$popover-arrow-width; }
-  &.right { margin-left: $popover-arrow-width; }
-  &.bottom { margin-top: $popover-arrow-width; }
-  &.left { margin-left: -$popover-arrow-width; }
+  &.top {
+    margin-top: -$popover-arrow-width;
+  }
+  &.right {
+    margin-left: $popover-arrow-width;
+  }
+  &.bottom {
+    margin-top: $popover-arrow-width;
+  }
+  &.left {
+    margin-left: -$popover-arrow-width;
+  }
 
   // Arrows
   // .arrow is outer, .arrow:after is inner
@@ -131,27 +138,28 @@
   // td, th{
   //   background-color: var(--background-color) !important;
   // }
-  .calendar-table{
+  .calendar-table {
     background-color: var(--background-color) !important;
     border-color: var(--background-color) !important;
   }
   td {
     background-color: var(--background-color) !important;
   }
-  td.today{
+  td.today {
     color: var(--accent-color);
   }
   th {
     background-color: var(--background-color-lvl-2) !important;
   }
-  th.available span{
+  th.available span {
     border-color: var(--font-color) !important;
   }
   td.in-range {
     background-color: var(--background-color-lvl3) !important;
     color: var(--font-color) !important;
   }
-  td.active.start-date.in-range, td.active.end-date.in-range{
+  td.active.start-date.in-range,
+  td.active.end-date.in-range {
     background-color: var(--grey-900) !important;
   }
 }

@@ -1,20 +1,20 @@
 @import "../runstrap/variables";
 
-.radio{
-  .help-block{
-    margin-left:10px;
+.radio {
+  .help-block {
+    margin-left: 10px;
   }
 }
 
 //style text like a form label
 .text-form-label {
-    margin-bottom: 5px;
-    font-weight: bold;
+  margin-bottom: 5px;
+  font-weight: bold;
 }
 
-@media (min-width: $screen-md-min){
-  .form-horizontal{
-    .form-control-static{
+@media (min-width: $screen-md-min) {
+  .form-horizontal {
+    .form-control-static {
       padding-top: 12px !important;
     }
   }

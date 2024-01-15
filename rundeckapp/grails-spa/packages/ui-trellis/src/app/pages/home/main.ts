@@ -1,30 +1,29 @@
-import {defineComponent, markRaw} from "vue";
-import {getRundeckContext} from '../../../library'
+import { defineComponent, markRaw } from "vue";
+import { getRundeckContext } from "../../../library";
 import HomeHeader from "../../components/home/HomeHeader.vue";
 
-
-let rundeckContext = getRundeckContext();
+const rundeckContext = getRundeckContext();
 function init() {
-    rundeckContext.rootStore.ui.addItems([
-        {
-            section: 'home',
-            location: 'header',
-            visible: true,
-            widget: markRaw(defineComponent(
-                {
-                    data() {
-                        return {
-                            project: rundeckContext.projectName,
-                        }
-                    },
-                    props: ['itemData'],
-                    components: { HomeHeader },
-                    template: `
+  rundeckContext.rootStore.ui.addItems([
+    {
+      section: "home",
+      location: "header",
+      visible: true,
+      widget: markRaw(
+        defineComponent({
+          components: { HomeHeader },
+          props: ["itemData"],
+          data() {
+            return {
+              project: rundeckContext.projectName,
+            };
+          },
+          template: `
                       <HomeHeader :createProjectAllowed="itemData.createProjectAllowed" :projectCount="itemData.projectCount" />
                     `,
-                }
-            ))
-        },
-    ])
+        }),
+      ),
+    },
+  ]);
 }
-window.addEventListener('DOMContentLoaded', init)
+window.addEventListener("DOMContentLoaded", init);

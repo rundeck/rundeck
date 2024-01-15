@@ -44,7 +44,7 @@
   }
 }
 
-.exec-output[data-mode=black] {
+.exec-output[data-mode="black"] {
   &.exec-output-bg {
     background: black;
     color: white;
@@ -53,7 +53,6 @@
   table.execoutput {
     tr.node-new > td {
       border-top: 1px solid #444444;
-
     }
 
     tr.contextRow {
@@ -71,19 +70,20 @@
       &.down td {
         border-top: 1px solid #555555;
       }
-
-
     }
 
     .ctxcounter {
       color: #777777;
 
-      &.ERROR, &.SEVERE {
+      &.ERROR,
+      &.SEVERE {
         color: #ff9999;
       }
     }
 
-    td.time, td.node, td.stepnum {
+    td.time,
+    td.node,
+    td.stepnum {
       color: #777777;
       background-color: #333333;
     }
@@ -104,11 +104,11 @@
         color: #ffff99;
       }
 
-      &.log_verbose, &.log_debug {
+      &.log_verbose,
+      &.log_debug {
         color: #999999;
       }
     }
-
   }
 
   .inset-node {
@@ -118,13 +118,13 @@
 }
 
 @media print {
-  .main-panel{
-    overflow: visible  !important;
+  .main-panel {
+    overflow: visible !important;
   }
-  .card-content-full-width{
-    height: auto  !important;
+  .card-content-full-width {
+    height: auto !important;
   }
   .execution-log {
-    overflow: visible  !important;
+    overflow: visible !important;
   }
 }

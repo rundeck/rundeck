@@ -16,9 +16,8 @@
 @import "../runstrap/variables";
 
 .table.item_details {
-
-  &>tr>td:first-child,
-  &>tbody>tr>td:first-child,
+  & > tr > td:first-child,
+  & > tbody > tr > td:first-child,
   td.displabel {
     text-align: right;
     vertical-align: top;
@@ -34,7 +33,8 @@
 }
 
 .jobstats {
-  .job-stats-item {}
+  .job-stats-item {
+  }
 
   .job-stats-value {
     font-weight: bold;
@@ -81,7 +81,6 @@
 }
 
 .job_list_group_header {
-
   border-radius: 3px;
 
   &:hover {
@@ -96,7 +95,7 @@
   }
 }
 
-.expandComponentHolder.expanded>.job_list_group_header>.jobgroupexpand {
+.expandComponentHolder.expanded > .job_list_group_header > .jobgroupexpand {
   //todo: emphasize expanded groups. but, expander widget doesn't correctly set expanded state for nested elements yet
   //color: #454545;
   //text-decoration: underline;
@@ -113,7 +112,6 @@
     border-color: var(--border-color);
   }
 }
-
 
 @media (min-width: 993px) {
   .execution-aux-info.flex-item-1 {

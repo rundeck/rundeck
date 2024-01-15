@@ -1,5 +1,5 @@
 .multiple-control-input-group {
-  .input-group-addon-title{
+  .input-group-addon-title {
     border-top: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     border-left: 1px solid var(--border-color);
@@ -15,10 +15,10 @@
       border-left: 0;
     }
   }
-  #runFormExec{
+  #runFormExec {
     border: 1px solid var(--grey-500);
   }
-  .act_adhoc_history_dropdown{
+  .act_adhoc_history_dropdown {
     background-color: var(--grey-300);
   }
 }
@@ -28,6 +28,6 @@
     margin-bottom: 0;
   }
 }
-input.form-control.boxed{
+input.form-control.boxed {
   border: 1px solid var(--grey-500);
 }

@@ -1,17 +1,17 @@
 export interface JobBrowseItem {
-    job: boolean;
-    jobName?: string;
-    groupPath: string;
-    id?: string;
-    description?: string;
-    meta?: JobBrowseMeta[];
+  job: boolean;
+  jobName?: string;
+  groupPath: string;
+  id?: string;
+  description?: string;
+  meta?: JobBrowseMeta[];
 }
 
 export interface JobBrowseMeta {
-    name: string;
-    data: { [key: string]: any };
+  name: string;
+  data: { [key: string]: any };
 }
 export interface JobBrowseList {
-  path: string
-  items: JobBrowseItem[]
+  path: string;
+  items: JobBrowseItem[];
 }
