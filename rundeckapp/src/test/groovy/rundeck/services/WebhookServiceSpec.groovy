@@ -630,10 +630,11 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         existing.save()
 
         when:
-        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], false,false)
+        def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], true,false)
 
         then:
-        result
+        result.msg == "Webhook test imported"
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
 
     }
 
