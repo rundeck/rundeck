@@ -13,8 +13,8 @@ module.exports = {
     withDefaults: "readonly",
   },
   rules: {
-    // 'prefer-const': WARN,
-    // 'no-unused-vars': ERROR,
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-explicit-any": "off",
   },
   ignorePatterns: ["build", "test", ".storybook"],
   extends: [
