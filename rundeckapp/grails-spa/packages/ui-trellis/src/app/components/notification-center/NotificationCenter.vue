@@ -1,12 +1,12 @@
 <template>
-  <section id="notificationCenter" class="content mainWrapper menu-item">
+  <section id="notificationCenter" class="content mainWrapper menu-item" @click="update">
     <NotificationCenterHeader :notification-count="1" />
     <div id="notificationWidgetsListWrapper" class="notificationWidgetsListWrapper">
       <ul>
         <NotificationCenterEntry v-for="(entry, index) in entries"
           :key="index"
           :icon-string="entry.entry_type.id"
-          :icon-label="entry.entry_type.value"
+          :icon-label="entry.entry_type.renderedValue"
           :notification-entry-title="entry.title"
           :notification-entry-started-at="entry.started_at"
           :notification-entry-status="entry.status"
@@ -47,8 +47,9 @@
           })
           if (result.status === 200) {
             this.entries = result.parsedBody.entries
+            console.log(result.parsedBody.entries)
           }
-        }
+        },
       },
       mounted() {
         // Interval call

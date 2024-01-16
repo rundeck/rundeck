@@ -30,7 +30,7 @@
       props: ['iconString', 'iconLabel'],
       data(){
         return {
-          iconClass: ''
+          iconClass: '',
         }
       },
       methods: {

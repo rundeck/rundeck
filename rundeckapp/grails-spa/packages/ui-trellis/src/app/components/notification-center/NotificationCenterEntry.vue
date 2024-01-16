@@ -2,6 +2,7 @@
   <li
       id="notificationWidgetRenderer"
       class="notificationWidgetRenderer"
+      @click="update"
   >
     <NotificationCenterEntryIconSection
       :icon-string="iconString"
@@ -47,7 +48,10 @@
           message: 'Lets begin!'
         }
       },
+      methods: {
+      },
       mounted(){
+        console.log(this.iconLabel)
       }
     })
 </script>

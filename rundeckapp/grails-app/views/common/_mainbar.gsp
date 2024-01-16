@@ -154,7 +154,7 @@
           </g:ifExecutionMode>
           <g:if test="${selectParams?.project != null}">
           <li id="appNotificationCenter">
-            <div class="dropdown">
+            <div class="dropdown open">
               <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
                 <span class="has_tooltip"
                       title="Notification center"
