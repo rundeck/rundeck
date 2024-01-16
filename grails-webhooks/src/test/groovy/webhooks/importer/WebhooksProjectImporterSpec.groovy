@@ -37,6 +37,6 @@ class WebhooksProjectImporterSpec extends Specification {
     }
 
     static interface MockWebhookService {
-        def importWebhook(UserAndRolesAuthContext authContext, def hookData, boolean regenFlag, boolean test2 )
+        def importWebhook(UserAndRolesAuthContext authContext, def hookData, boolean regenFlag, boolean regenUuid )
     }
 }

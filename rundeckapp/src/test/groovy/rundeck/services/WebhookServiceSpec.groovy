@@ -341,6 +341,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
+        //_ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
         result
 
     }
