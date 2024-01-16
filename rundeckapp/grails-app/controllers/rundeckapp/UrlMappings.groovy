@@ -151,6 +151,8 @@ class UrlMappings {
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
         "/api/$api_version/project/$project/import/status"(controller: 'project',action: 'apiProjectAsyncImportStatus')
         "/api/$api_version/project/$project/notifications/entries"(controller: 'project', action: 'getProjectNotificationEntries')
+        "/api/$api_version/project/$project/notifications/entry"(controller: 'project', action: 'apiCreateProjectNotificationCenterEntry')
+        "/api/$api_version/project/$project/notifications/entry/test"(controller: 'project', action: 'apiTestNotifications')
 //        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/sources"(controller: 'framework') {
             action = [GET: "apiSourcesList"]

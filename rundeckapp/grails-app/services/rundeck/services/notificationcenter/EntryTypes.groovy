@@ -31,4 +31,26 @@ enum EntryTypes {
         }
     }
 
+    static EntryType resolveEntryTypeById(final int id){
+        EntryType entryType = null
+        switch (id){
+            case 0:
+                entryType = getTaskValues()
+                break;
+        }
+        return entryType
+    }
+
+    static isValidEntryType(final int id){
+        def entryTypesAvailable = [
+                TASK.id
+        ]
+
+        if( !(id in entryTypesAvailable) ){
+            return false
+        }
+
+        return true
+    }
+
 }

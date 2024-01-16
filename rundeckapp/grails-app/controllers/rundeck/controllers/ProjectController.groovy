@@ -69,6 +69,8 @@ import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.notificationcenter.EntryTypes
+import rundeck.services.notificationcenter.ProjectNotificationCenterEntry
 import rundeck.services.notificationcenter.ProjectNotificationCenterService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
@@ -100,6 +102,7 @@ class ProjectController extends ControllerBase{
             apiProjectDelete:['DELETE'],
             apiProjectImport: ['PUT'],
             apiProjectAcls:['GET','POST','PUT','DELETE'],
+            apiCreateProjectNotificationCenterEntry:['POST'],
             importArchive: ['POST'],
             delete: ['POST'],
             apiProjectAsyncImportStatus: ['GET'],
@@ -3481,5 +3484,101 @@ Since: v46"""
                         ]
                 ) as JSON
         )
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiCreateProjectNotificationCenterEntry(){
+        def body = request.JSON
+        def reqParams = [
+                body.entryTypeId,
+                body.title,
+                body.started_at,
+                body.status,
+                body.completed_proportion,
+                body.progress_proportion
+        ]
+
+        if( null in reqParams ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.bad.request'
+            ])
+        }
+
+        if( !EntryTypes.isValidEntryType(body.entryTypeId) ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.invalid.entryType'
+            ])
+        }
+
+        ProjectNotificationCenterEntry entry = new ProjectNotificationCenterEntry().with {
+            id = 0
+            entry_type = EntryTypes.resolveEntryTypeById(body.entryTypeId as int)
+            title = body.title
+            started_at = body.started_at
+            status = body.status
+            completed_proportion = body.completed_proportion
+            progress_proportion = body.progress_proportion
+            return it
+        }
+
+        def created = projectNotificationCenterService.saveNotificationCenterEntry(
+            params.project as String,
+            entry
+        )
+
+        if( !created.size() ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.notification.center.server.error'
+            ])
+        }
+
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                resourceCreated        : created
+                        ]
+                ) as JSON
+        )
+
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def apiTestNotifications(){
+        def projectName = params.project
+
+        projectNotificationCenterService.initNotificationsForProject(projectName as String)
+
+        def newEntry = new ProjectNotificationCenterEntry().with {
+            entry_type = EntryTypes.getTaskValues()
+            title = "Test notification"
+            started_at = new Date()
+            status = "In progress..."
+            completed_proportion = "10"
+            progress_proportion = "5"
+            return it
+        }
+
+        def createdId = projectNotificationCenterService.saveNotificationCenterEntry(
+                projectName as String,
+                newEntry
+        )
+
+        def entries = projectNotificationCenterService.getNotificationsEntriesForProject(
+                projectName as String
+        )
+
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                entries        : entries
+                        ]
+                ) as JSON
+        )
+
     }
 }

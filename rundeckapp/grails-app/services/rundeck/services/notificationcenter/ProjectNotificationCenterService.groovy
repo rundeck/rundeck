@@ -1,37 +1,107 @@
 package rundeck.services.notificationcenter
 
+import grails.converters.JSON
 import grails.events.EventPublisher
+import grails.gorm.transactions.Transactional
+import groovy.json.JsonSlurper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.transaction.annotation.Propagation
+import rundeck.services.FrameworkService
+
+import java.nio.charset.StandardCharsets
 
 class ProjectNotificationCenterService implements EventPublisher{
 
-    def p = new ProjectNotificationCenterEntry().with {
-        id = "0"
-        entry_type = EntryTypes.getTaskValues()
-        title = "Asynchronous Import"
-        started_at = new Date()
-        status = "In progress..."
-        completed_proportion = "10"
-        progress_proportion = "2"
-        return it
-    }
-    def p1 = new ProjectNotificationCenterEntry().with {
-        id = "1"
-        entry_type = EntryTypes.getTaskValues()
-        title = "Project Export"
-        started_at = new Date()
-        status = "In progress..."
-        completed_proportion = "7"
-        progress_proportion = "3"
-        return it
+    static Logger logger = LoggerFactory.getLogger(this.class)
+
+    private static final String NOTIFICATION_STORED_RESOURCE_PREFIX = "NC_"
+    private static final String NOTIFICATION_STORED_RESOURCE_EXT = ".JSON"
+    private static final String NOTIFICATIONS_LIST_FIRST_ID = "0"
+
+    FrameworkService frameworkService
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean initNotificationsForProject(final String projectName){
+        try{
+            List<ProjectNotificationCenterEntry> entries = new ArrayList<ProjectNotificationCenterEntry>()
+            def empty = entries as JSON
+            def inputStream = new ByteArrayInputStream(empty.toString().getBytes(StandardCharsets.UTF_8));
+            final def fwkProject = frameworkService.getFrameworkProject(projectName)
+            final def filename = NOTIFICATION_STORED_RESOURCE_PREFIX + projectName + NOTIFICATION_STORED_RESOURCE_EXT
+            fwkProject.storeFileResource(filename, inputStream)
+            inputStream.close();
+            return true
+        }catch(Exception e){
+            throw new NotificationCenterException("Error initializing notifications for project: ${projectName} in db.", e)
+        }
     }
 
-    def sampleTasks = List.of(
-            p,
-            p1
-    )
+    List<ProjectNotificationCenterEntry> getNotificationsEntriesForProject(final String projectName){
+        try(def out = new ByteArrayOutputStream()){
+            final def fwkProject = frameworkService.getFrameworkProject(projectName)
+            fwkProject.loadFileResource(
+                    NOTIFICATION_STORED_RESOURCE_PREFIX +
+                            projectName +
+                            NOTIFICATION_STORED_RESOURCE_EXT,
+                    out)
+            List<ProjectNotificationCenterEntry> entries = new JsonSlurper().parseText(out.toString()) as ArrayList<ProjectNotificationCenterEntry>
+            logger.debug("Notifications for project: ${projectName}: ${entries.toString()}")
+            return entries
+        }catch(Exception e){
+            throw new NotificationCenterException("Error getting notifications for project: ${projectName} from db.", e)
+        }
+    }
 
-    List<ProjectNotificationCenterEntry> getEntries(){
-        return sampleTasks
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    String saveNotificationCenterEntry(
+            String projectName,
+            ProjectNotificationCenterEntry newEntry = null){
+        def newId = null
+        def existingNotificationsForProject = getNotificationsEntriesForProject(projectName)
+        try{
+            if( newEntry != null ){
+                newId = appendNewEntryAndSave(
+                        projectName,
+                        existingNotificationsForProject,
+                        newEntry
+                )
+                return newId
+            }
+        }catch(Exception e){
+            throw new NotificationCenterException("Error saving new notification entry in db.", e)
+        }
+        return newId
+    }
+
+    private String appendNewEntryAndSave(
+            String projectName,
+            List<ProjectNotificationCenterEntry> oldEntries,
+            ProjectNotificationCenterEntry newEntry
+    ) {
+        String newId = ""
+
+        if( oldEntries.isEmpty() ){
+            oldEntries = new ArrayList<ProjectNotificationCenterEntry>()
+            newId = NOTIFICATIONS_LIST_FIRST_ID
+        }else{
+            def lastId = oldEntries[-1]?.id
+            newId = String.valueOf(Integer.valueOf(lastId)++)
+        }
+
+        // Give the new entry an id
+        newEntry.id = newId
+        oldEntries.push(newEntry)
+
+        // persistence
+        def jsonEntry = oldEntries as JSON
+        def inputStream = new ByteArrayInputStream(jsonEntry.toString().getBytes(StandardCharsets.UTF_8))
+        final def fwkProject = frameworkService.getFrameworkProject(projectName)
+        final def filename = NOTIFICATION_STORED_RESOURCE_PREFIX + projectName + NOTIFICATION_STORED_RESOURCE_EXT
+        fwkProject.storeFileResource(filename, inputStream)
+        inputStream.close()
+
+        return newId
     }
 
 }
