@@ -12,7 +12,7 @@
             {{ $t(option.text) }}
           </a>
         </li>
-        <li class="divider" v-if="option.show && index !== availableOptions.length -1"></li>
+        <li class="divider" v-if="option.show && index !== availableOptions.length -1 && visibleOptions > 1"></li>
       </template>
     </template>
   </dropdown>
@@ -64,6 +64,9 @@ export default defineComponent({
           text: 'upload.definition.button.label',
         },
       ]
+    },
+    visibleOptions(): number {
+      return this.availableOptions.filter(option => option.show === true).length;
     }
   }
 })
