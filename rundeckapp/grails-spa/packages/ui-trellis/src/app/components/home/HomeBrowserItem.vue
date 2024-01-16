@@ -2,6 +2,7 @@
   <div class="project_list_item" :key="`project${index}`" :data-project="project.name">
     <div class="row row-hover row-border-top">
       <div class="col-sm-6 col-md-8">
+        <ui-socket location="project-favorite" section="home" />
         <a
           :href="`/?project=${project.name}`"
           class="link-hover text-inverse project_list_item_link link-quiet"
@@ -20,7 +21,7 @@
             </span>
           </tooltip>
 
-          <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" v-if="!scheduleEnabled">
+          <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" :class="{'ml-1': !executionsEnabled}" v-if="!scheduleEnabled">
             <span
                 class="text-base text-warning"
                 :data-container="`#project${index}`"
@@ -32,7 +33,7 @@
           <span
             v-if="project.description.length > 0"
             class="text-secondary text-base"
-            style="margin-left: 5px"
+            :class="{'ml-1': !scheduleEnabled || !executionsEnabled}"
           >
             {{ project.description }}
           </span>
@@ -190,3 +191,9 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped lang="scss">
+.ml-1 {
+  margin-left: 0.25rem;
+}
+</style>
