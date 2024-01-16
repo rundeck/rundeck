@@ -7,9 +7,13 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.container.RdClient
 
 @APITest
 class ExecutionSpec extends BaseContainer {
+
+    private static final String EXECUTION_SUCCEEDED = "succeeded"
+    private static final String EXECUTION_RUNNING = "running"
 
     def setupSpec(){
         startEnvironment()
@@ -344,6 +348,197 @@ class ExecutionSpec extends BaseContainer {
         then:
         job1DetailAfterEnable?.scheduleEnabled
         job2DetailAfterEnable?.scheduleEnabled
+    }
+
+    def "test-job-flip-scheduleEnabled"(){
+        given:
+        def projectName = "test-job-flip-scheduleEnabled"
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-flip-scheduleEnabled",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobName1 = "scheduledJob1"
+        def jobXml1 = JobUtils.generateScheduledJobsXml(jobName1)
+
+        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
+        assert job1CreatedResponse.successful
+
+
+        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
+
+
+        when: "assert_job_schedule_enabled for job1"
+        def job1Detail = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+        then:
+        job1Detail?.executionEnabled
+
+        when: "TEST: when schedule is on, job does execute"
+        def disableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/disable")
+        assert disableSchedulesResponse.successful
+        def job1DetailAfterDisable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+
+        then:
+        !job1DetailAfterDisable?.scheduleEnabled
+
+        when: "TEST: bulk job schedule enable"
+        def enableSchedulesResponse = client.doPostWithoutBody("/job/${job1Id}/schedule/enable")
+        assert enableSchedulesResponse.successful
+        def job1DetailAfterEnable = JobUtils.getJobDetailsById(job1Id as String, mapper, client)
+
+        then:
+        job1DetailAfterEnable?.scheduleEnabled
+    }
+
+    def "test-job-long-run"(){
+        given:
+        def projectName = "test-job-long-run"
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-long-run",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def longRunXml = (String project, String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>Long Run Job</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <uuid>db9a5f0d</uuid>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${project}</project>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "   <job>\n" +
+                    "      <name>Long Run Wrapper</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <uuid>r2d2</uuid>\n" +
+                    "      <description/>\n" +
+                    "      <executionEnabled>true</executionEnabled>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "       <context>\n" +
+                    "          <project>${project}</project>\n" +
+                    "      </context>\n" +
+                    "      <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                    "      <sequence keepgoing=\"false\" strategy=\"parallel\">\n" +
+                    "         <command>\n" +
+                    "             <jobref name=\"Long Run Job\">\n" +
+                    "               <uuid>db9a5f0d</uuid>\n" +
+                    "             </jobref>\n" +
+                    "         </command>\n" +
+                    "         <command>\n" +
+                    "             <jobref name=\"Long Run Job\" nodeStep=\"true\">\n" +
+                    "               <uuid>db9a5f0d</uuid>\n" +
+                    "             </jobref>\n" +
+                    "         </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def longRunJobArgs = "sleep 12" // As the original test states
+        def testXml = longRunXml(projectName, longRunJobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "Job and referenced job created"
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+        def refJobId = jobCreatedResponse.succeeded[1]?.id
+
+        then:
+        jobId != null
+        refJobId != null
+
+        when: "run job test"
+        def jobRun = JobUtils.executeJob(jobId, client)
+        assert jobRun.successful
+
+        JobExecutionsResponse JobExecutionStatus = waitForExecutionToSucceed(
+                jobId as String,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds
+        )
+
+        then:
+        JobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+
+        when: "run job test"
+        def referencedJobRun = JobUtils.executeJob(refJobId, client)
+        assert referencedJobRun.successful
+
+        JobExecutionsResponse refJobExecutionStatus = waitForExecutionToSucceed(
+                refJobId as String,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds
+        )
+
+        then:
+        refJobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+
+    }
+
+    JobExecutionsResponse waitForExecutionToSucceed(
+            String jobId,
+            ObjectMapper mapper,
+            RdClient client,
+            int waitingTime
+    ){
+        JobExecutionsResponse executionStatus
+        def refJobExec = client.doGet("/job/${jobId}/executions")
+        executionStatus = mapper.readValue(refJobExec.body().string(), JobExecutionsResponse.class)
+        while(executionStatus.executions[0].status == EXECUTION_RUNNING){
+            def transientExecutionResponse = doGet("/job/${jobId}/executions")
+            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), JobExecutionsResponse.class)
+            Thread.sleep(waitingTime)
+        }
+        return executionStatus
     }
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
