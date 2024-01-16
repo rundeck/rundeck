@@ -41,6 +41,9 @@ class Job {
     @JsonProperty("schedule")
     private Schedule;
 
+    @JsonProperty("schedules")
+    private List<String> schedules;
+
     public static class Plugins {
         @JsonProperty("ExecutionLifecycle")
         private Object ExecutionLifecycle;
