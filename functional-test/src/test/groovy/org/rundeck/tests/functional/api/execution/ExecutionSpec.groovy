@@ -9,6 +9,8 @@ import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient
 
+import java.util.concurrent.TimeUnit
+
 @APITest
 class ExecutionSpec extends BaseContainer {
 
@@ -502,7 +504,8 @@ class ExecutionSpec extends BaseContainer {
                 jobId as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
 
         then:
@@ -516,7 +519,8 @@ class ExecutionSpec extends BaseContainer {
                 refJobId as String,
                 mapper,
                 client,
-                WaitingTime.MODERATE.milliSeconds
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
 
         then:
@@ -528,15 +532,20 @@ class ExecutionSpec extends BaseContainer {
             String jobId,
             ObjectMapper mapper,
             RdClient client,
-            int waitingTime
+            int iterationGap,
+            int timeout
     ){
         JobExecutionsResponse executionStatus
         def refJobExec = client.doGet("/job/${jobId}/executions")
         executionStatus = mapper.readValue(refJobExec.body().string(), JobExecutionsResponse.class)
+        long initTime = System.currentTimeMillis()
         while(executionStatus.executions[0].status == EXECUTION_RUNNING){
+            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
+                throw new InterruptedException("Timeout reached (${timeout} seconds).")
+            }
             def transientExecutionResponse = doGet("/job/${jobId}/executions")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), JobExecutionsResponse.class)
-            Thread.sleep(waitingTime)
+            Thread.sleep(iterationGap)
         }
         return executionStatus
     }
