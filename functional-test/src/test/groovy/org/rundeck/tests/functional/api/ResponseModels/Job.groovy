@@ -1,9 +1,6 @@
 package org.rundeck.tests.functional.api.ResponseModels
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonPropertyOrder
-
-import java.time.Year
 
 class Job {
     @JsonProperty("description")
