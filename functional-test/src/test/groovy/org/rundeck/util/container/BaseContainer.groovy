@@ -210,13 +210,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
-    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null, String uuid = null) {
+    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null, String args2 = null, String uuid = null) {
         def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
         def xmlProject = xmlProjectContent
                 .replaceAll('xml-uuid', uuid?:UUID.randomUUID().toString())
                 .replaceAll('xml-project-name', projectName?:PROJECT_NAME)
                 .replaceAll('xml-args', args?:"echo hello there")
+                .replaceAll('xml-2-args', args2?:"echo hello there 2")
                 .replaceAll('xml-job-name', jobName?:'job-test')
                 .replaceAll('xml-job-group-name', groupName?:'group-test')
                 .replaceAll('xml-job-description-name', description?:'description-test')
