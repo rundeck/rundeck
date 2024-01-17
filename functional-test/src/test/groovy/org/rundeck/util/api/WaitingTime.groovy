@@ -3,7 +3,8 @@ package org.rundeck.util.api
 enum WaitingTime {
 
     LOW("A Second", 1000),
-    MODERATE("Five Seconds", 5000)
+    MODERATE("Five Seconds", 5000),
+    EXCESSIVE("Twenty seconds", 20000)
 
     public final String label
     public final int milliSeconds
