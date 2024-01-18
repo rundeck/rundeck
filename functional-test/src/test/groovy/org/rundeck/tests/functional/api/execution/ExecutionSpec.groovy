@@ -880,6 +880,72 @@ class ExecutionSpec extends BaseContainer {
 
     }
 
+    def "test-job-run-GET-405.sh"(){
+        given:
+        def projectName = "test-job-run-GET-405"
+        def apiVersion = 40
+        client.apiVersion = apiVersion
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-run-GET-405",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobXml = (String project, String args) -> "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>cli job</name>\n" +
+                "      <group>api-test/job-run</group>\n" +
+                "      <description></description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <context>\n" +
+                "          <project>${projectName}</project>\n" +
+                "          <options>\n" +
+                "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                "          </options>\n" +
+                "      </context>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "      <sequence>\n" +
+                "        <command>\n" +
+                "        <exec>${args}</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
+
+        def jobXml1 = jobXml(projectName, "echo hello there")
+
+        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
+        assert job1CreatedResponse.successful
+
+        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
+        def argString = "-opt2+a"
+
+        when: "we do the request api response code is 405 and exec should fail"
+        def response = JobUtils.executeJobWithArgsInvalidMethod(job1Id, client, argString)
+
+        then:
+        !response.successful
+        response.code() == 405
+
+    }
+
     Execution waitForExecutionToBe(
             String state,
             String executionId,
