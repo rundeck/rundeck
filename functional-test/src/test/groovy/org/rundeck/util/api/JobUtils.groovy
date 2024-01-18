@@ -10,6 +10,10 @@ class JobUtils {
         return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
     }
 
+    static executeJobWithArgsInvalidMethod = (String jobId, RdClient client, String args) -> {
+        return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}")
+    }
+
     static def executeJob = (jobId, RdClient client) -> {
         return client.doPost("/job/${jobId}/run", "{}")
     }
