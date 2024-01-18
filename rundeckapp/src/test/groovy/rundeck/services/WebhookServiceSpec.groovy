@@ -331,6 +331,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         service.userService = Mock(MockUserService) {
             validateUserExists(_) >> { true }
         }
+        service.apiService = Mock(MockApiService)
         service.pluginService = Mock(MockPluginService) {
             validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: new Validator.Report(),valid:true) }
             getPlugin(_,_) >> { new TestWebhookEventPlugin() }
@@ -341,8 +342,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
-        //_ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
-        result
+        _ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        result.msg == "Saved webhook"
 
     }
 
