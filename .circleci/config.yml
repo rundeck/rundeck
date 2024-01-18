@@ -599,6 +599,18 @@ require-build: &require-build
   requires:
     - Build
 
+filters:
+  all: &filter-default
+    filters:
+      tags: {only: '/^v.*/'}
+  ignore-tags: &filter-no-tags
+    filters:
+      tags: {ignore: '/^v.*/'}
+
+  tags: &filter-tags
+    filters:
+      branches: {ignore: /.*/}
+      tags: {only: '/^v.*/'}
 
 workflows:
 
@@ -610,21 +622,25 @@ workflows:
       - build-rundeck:
           name: Build Release
           <<: *slack-defaults
+          <<: *filter-tags
       - packaging-publish:
           name: Package and Release
           requires:
             - Build Release
           <<: *slack-defaults
+          <<: *filter-tags
       - maven-publish:
           name: Maven Publish
           requires:
             - Build Release
           <<: *slack-defaults
+          <<: *filter-tags
       - docker-publish:
           name: Docker Publish
           requires:
             - Build Release
           <<: *slack-defaults
+          <<: *filter-tags
 
 
   build_and_test:
