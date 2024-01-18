@@ -6,6 +6,10 @@ import org.rundeck.util.container.RdClient
 
 class JobUtils {
 
+    static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
+        return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
+    }
+
     static def executeJob = (jobId, RdClient client) -> {
         return client.doPost("/job/${jobId}/run", "{}")
     }
