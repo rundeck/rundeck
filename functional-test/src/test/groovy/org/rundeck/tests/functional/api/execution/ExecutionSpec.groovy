@@ -309,6 +309,8 @@ class ExecutionSpec extends BaseContainer {
         }
     }
 
+    // +++++++++++++++++++ JOBS TESTS +++++++++++++++++++++++++++++++
+
     def "test-job-flip-executionEnabled"(){
         given:
         def projectName = "test-job-flip-executionEnabled"
@@ -730,8 +732,11 @@ class ExecutionSpec extends BaseContainer {
         def jobRun = JobUtils.executeJob(jobId, client)
         assert jobRun.successful
 
-        JobExecutionsResponse JobExecutionStatus = waitForJobExecutionToSucceed(
-                jobId as String,
+        Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
+
+        Execution JobExecutionStatus = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                exec.id as String,
                 mapper,
                 client,
                 WaitingTime.MODERATE.milliSeconds,
@@ -739,14 +744,17 @@ class ExecutionSpec extends BaseContainer {
         )
 
         then:
-        JobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+        JobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
         when: "run job test"
         def referencedJobRun = JobUtils.executeJob(refJobId, client)
         assert referencedJobRun.successful
 
-        JobExecutionsResponse refJobExecutionStatus = waitForJobExecutionToSucceed(
-                refJobId as String,
+        Execution refExec = mapper.readValue(referencedJobRun.body().string(), Execution.class)
+
+        Execution refJobExecutionStatus = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                refExec.id as String,
                 mapper,
                 client,
                 WaitingTime.MODERATE.milliSeconds,
@@ -754,7 +762,7 @@ class ExecutionSpec extends BaseContainer {
         )
 
         then:
-        refJobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+        refJobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
     }
 
@@ -872,28 +880,6 @@ class ExecutionSpec extends BaseContainer {
 
     }
 
-    JobExecutionsResponse waitForJobExecutionToSucceed(
-            String jobId,
-            ObjectMapper mapper,
-            RdClient client,
-            int iterationGap,
-            int timeout
-    ){
-        JobExecutionsResponse executionStatus
-        def refJobExec = client.doGet("/job/${jobId}/executions")
-        executionStatus = mapper.readValue(refJobExec.body().string(), JobExecutionsResponse.class)
-        long initTime = System.currentTimeMillis()
-        while(executionStatus.executions[0].status == ExecutionStatus.SUCCEEDED.state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds).")
-            }
-            def transientExecutionResponse = doGet("/job/${jobId}/executions")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), JobExecutionsResponse.class)
-            Thread.sleep(iterationGap)
-        }
-        return executionStatus
-    }
-
     Execution waitForExecutionToBe(
             String state,
             String executionId,
@@ -912,6 +898,7 @@ class ExecutionSpec extends BaseContainer {
             }
             def transientExecutionResponse = doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
+            if( executionStatus.status == state ) break
             Thread.sleep(iterationGap)
         }
         return executionStatus
