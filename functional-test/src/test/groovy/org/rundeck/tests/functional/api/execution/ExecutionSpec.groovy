@@ -11,6 +11,7 @@ import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
 import java.time.LocalDateTime
@@ -944,6 +945,94 @@ class ExecutionSpec extends BaseContainer {
         !response.successful
         response.code() == 405
 
+    }
+
+
+    def "test-job-run-later.sh"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-run-later",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${PROJECT_NAME}</project>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+
+        when: "TEST: POST job/id/run should succeed with future time"
+        def runtime = generateRuntime(50)
+        def runLaterExecResponse = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime.string
+        )
+        assert runLaterExecResponse.successful
+        Execution parsedExec = mapper.readValue(runLaterExecResponse.body().string(), Execution.class)
+        String execId = parsedExec.id
+        def dateS = parsedExec.dateStarted.date
+
+
+        then:
+        execId != null
+        dateS.toString() == runtime.date.toString()
+
+    }
+
+    def generateRuntime(int secondsInFuture){
+        TimeZone timeZone = TimeZone.getDefault()
+        Calendar cal = Calendar.getInstance(timeZone)
+        cal.add(Calendar.SECOND, secondsInFuture)
+        SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        iso8601Format.setTimeZone(TimeZone.getTimeZone("UTC"))
+        return [string: iso8601Format.format(cal.time), date: cal.time]
     }
 
     Execution waitForExecutionToBe(
