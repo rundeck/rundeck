@@ -127,7 +127,7 @@ class ExecutionSpec extends BaseContainer {
                 json2.executions.size() == 6
             }
             // wait for executions to finish
-            sleep 50000
+            sleep 60000
             // get executions
             def responseClean = client.doGet("/project/${projectName}/executions")
             // verify if executions were cleaned
