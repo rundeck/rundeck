@@ -52,6 +52,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
+import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1364,6 +1365,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.apiService=Mock(ApiService)
+            controller.configurationService = Mock(ConfigurationService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
                 getFrameworkProject('test1')>>Mock(IRundeckProject){
@@ -1437,7 +1439,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
                 ]
             }
-
+            controller.configurationService = Mock(ConfigurationService){
+                getBoolean("api.project.config.enablePluginValidation",_)>>true
+            }
 
             Description desc = new AbstractBaseDescription() {
                 public String getName() {
