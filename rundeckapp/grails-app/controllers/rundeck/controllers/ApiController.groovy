@@ -39,12 +39,14 @@ import org.rundeck.app.api.model.SystemInfoModel
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.sun.management.OperatingSystemMXBean
 import grails.web.mapping.LinkGenerator
+import org.rundeck.app.data.model.v1.AuthTokenType
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
@@ -530,7 +532,7 @@ Includes current latest API Version, and base API URL.''',
 
 
         def data = new ListTokens(user, !user, tokenlist.findAll {tkn->
-            tkn.getType() != AuthenticationToken.AuthTokenType.WEBHOOK
+            tkn.getType() != AuthTokenType.WEBHOOK
         }.collect {
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
@@ -686,7 +688,7 @@ Since: v11
         }
         Set<String> rolesSet=null
         if (roles instanceof String) {
-            rolesSet = AuthenticationToken.parseAuthRoles(roles)
+            rolesSet = AuthenticationTokenUtils.parseAuthRoles(roles)
         } else if (roles instanceof Collection) {
             rolesSet = new HashSet(roles)
         }
@@ -711,7 +713,7 @@ Since: v11
                     tokenuser,
                     rolesSet,
                     true,
-                    AuthenticationToken.AuthTokenType.USER,
+                    AuthTokenType.USER,
                     tokenName
             )
         } catch (Exception e) {

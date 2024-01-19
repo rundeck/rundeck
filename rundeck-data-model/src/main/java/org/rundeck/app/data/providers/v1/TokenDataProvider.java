@@ -1,5 +1,6 @@
 package org.rundeck.app.data.providers.v1;
 
+import org.rundeck.app.data.model.v1.AuthTokenType;
 import org.rundeck.app.data.model.v1.AuthenticationToken;
 import org.rundeck.app.data.model.v1.page.Pageable;
 import org.rundeck.spi.data.DataAccessException;
@@ -96,7 +97,7 @@ public interface TokenDataProvider extends DataProvider {
      * @param pageable paging attributes
      * @return list of AuthenticationTokens
      */
-    List<AuthenticationToken> findAllTokensByType(AuthenticationToken.AuthTokenType type, Pageable pageable);
+    List<AuthenticationToken> findAllTokensByType(AuthTokenType type, Pageable pageable);
 
     /**
      *
@@ -122,7 +123,7 @@ public interface TokenDataProvider extends DataProvider {
      * @param type of the AuthenticationToken, format AuthTokenType
      * @return authenticationToken if found, otherwise null
      */
-    AuthenticationToken findByTokenAndType(String token, AuthenticationToken.AuthTokenType type);
+    AuthenticationToken findByTokenAndType(String token, AuthTokenType type);
 
     /**
      * Finds a user token from the provided value.
@@ -139,7 +140,7 @@ public interface TokenDataProvider extends DataProvider {
      * @param type of the AuthenticationToken, format AuthTokenType
      * @return authenticationToken if found, otherwise null
      */
-    AuthenticationToken tokenLookupWithType(String token, AuthenticationToken.AuthTokenType type);
+    AuthenticationToken tokenLookupWithType(String token, AuthTokenType type);
 
     /**
      * Retrieves an AuthenticationToken by token and creator.
@@ -179,7 +180,7 @@ public interface TokenDataProvider extends DataProvider {
      * @param type - the type of AuthenticationToken
      * @return count of tokens matching the type parameter
      */
-    Integer countTokensByType(AuthenticationToken.AuthTokenType type);
+    Integer countTokensByType(AuthTokenType type);
 
     /**
      * Counts the number of AuthenticationTokens by creator and type
@@ -188,6 +189,6 @@ public interface TokenDataProvider extends DataProvider {
      * @param type - the type of AuthenticationToken
      * @return count of tokens matching the creator and type parameters
      */
-    Integer countTokensByCreatorAndType(String creatorLoginName, AuthenticationToken.AuthTokenType type);
+    Integer countTokensByCreatorAndType(String creatorLoginName, AuthTokenType type);
 
 }

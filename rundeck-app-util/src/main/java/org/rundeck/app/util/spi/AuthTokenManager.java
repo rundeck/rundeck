@@ -16,6 +16,7 @@
 package org.rundeck.app.util.spi;
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+import org.rundeck.app.data.model.v1.AuthTokenType;
 import org.rundeck.app.data.model.v1.AuthenticationToken;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,7 @@ public interface AuthTokenManager {
      * @param type type
      * @return AuthenticationToken
      */
-    AuthenticationToken getTokenWithType(String token, AuthenticationToken.AuthTokenType type);
+    AuthenticationToken getTokenWithType(String token, AuthTokenType type);
 
     /**
      * Update the roles associated with the authentication token
@@ -60,7 +61,7 @@ public interface AuthTokenManager {
      * @param type token type
      * @return true if the update completed successfully
      */
-    boolean deleteByTokenWithType(String token, AuthenticationToken.AuthTokenType type);
+    boolean deleteByTokenWithType(String token, AuthTokenType type);
 
     /**
      * Parse a comma separated list of roles into a role Set

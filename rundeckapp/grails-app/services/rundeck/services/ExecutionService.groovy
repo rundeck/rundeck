@@ -78,7 +78,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
+import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider

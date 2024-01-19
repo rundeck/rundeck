@@ -1,18 +1,12 @@
-package org.rundeck.app.data.model.v1.report.dto;
+package rundeck.data.report
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import groovy.util.logging.Slf4j;
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest;
 
 import java.lang.reflect.Field;
-import java.util.*;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Slf4j
-public class SaveReportRequestImpl implements SaveReportRequest {
+class SaveReportRequestImpl implements SaveReportRequest {
     Long executionId;
     Date dateStarted;
     String jobId;
@@ -32,7 +26,7 @@ public class SaveReportRequestImpl implements SaveReportRequest {
     String adhocScript;
     String tags;
 
-    public static void buildFromMap(SaveReportRequestImpl obj, Map<String, Object> data) {
+    static void buildFromMap(SaveReportRequestImpl obj, Map<String, Object> data) {
         for (String key : data.keySet()) {
             Field field;
             try {
@@ -55,11 +49,11 @@ public class SaveReportRequestImpl implements SaveReportRequest {
                                 obj.dateStarted = (Date)data.get("dateStarted");
                             }
                         }else if(key == "executionId"){
-                            field.set(obj, new Long((Integer)data.get(key)));
+                            obj.executionId = new Long((Integer)data.get(key));
                         }else if(key == "adhocExecution"){
-                            field.set(obj, Boolean.parseBoolean(String.valueOf(data.get(key))));
+                            obj.adhocExecution = Boolean.parseBoolean(String.valueOf(data.get(key)));
                         }else{
-                            field.set(obj, data.get(key));
+                            obj[key] = data.get(key)
                         }
                     }
                 }
@@ -73,7 +67,7 @@ public class SaveReportRequestImpl implements SaveReportRequest {
             }
         }
     }
-    public static SaveReportRequestImpl fromMap(Map data) {
+    static SaveReportRequestImpl fromMap(Map data) {
         SaveReportRequestImpl SaveReportRequest = new SaveReportRequestImpl();
         buildFromMap(SaveReportRequest, data);
         return SaveReportRequest;

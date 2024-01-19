@@ -32,16 +32,17 @@ import grails.web.mapping.LinkGenerator
 import org.quartz.Scheduler
 import org.quartz.SchedulerMetaData
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.model.v1.AuthTokenType
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.UtilityTagLib
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
@@ -76,7 +77,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         bob2.save()
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -85,7 +86,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         createdToken.save()
         AuthToken webhookToken = new AuthToken(
             user: bob,
-            type: AuthenticationToken.AuthTokenType.WEBHOOK,
+            type: AuthTokenType.WEBHOOK,
             tokenMode: AuthTokenMode.LEGACY,
             token: 'whk',
             authRoles: 'a,b',
@@ -139,7 +140,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         bob.save()
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -290,7 +291,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator: 'elf',
                 )
         createdToken.save(flush: true)
-        def roles = AuthenticationToken.parseAuthRoles('api_token_group')
+        def roles = AuthenticationTokenUtils.parseAuthRoles('api_token_group')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -334,7 +335,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthenticationToken.parseAuthRoles('a,b')
+        def roles = AuthenticationTokenUtils.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -390,7 +391,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthenticationToken.parseAuthRoles('a,b')
+        def roles = AuthenticationTokenUtils.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:

@@ -1,13 +1,14 @@
 package rundeck.services
 
+import org.rundeck.app.data.model.v1.AuthTokenType
 import org.rundeck.app.util.spi.AuthTokenManager
 import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.data.providers.v1.TokenDataProvider
+import rundeck.data.util.AuthenticationTokenUtils
 
 @Transactional
 @GrailsCompileStatic
@@ -29,7 +30,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     @Override
     boolean updateAuthRoles(UserAndRolesAuthContext authContext, final String token, final Set<String> roleSet)
         throws Exception {
-        AuthenticationToken token1 = tokenDataProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
+        AuthenticationToken token1 = tokenDataProvider.findByTokenAndType(token, AuthTokenType.WEBHOOK)
         if (!token1) {
             return false
         }
@@ -76,7 +77,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
     @Override
     Set<String> parseAuthRoles(final String authRoles) {
-        return AuthenticationToken.parseAuthRoles(authRoles)
+        return AuthenticationTokenUtils.parseAuthRoles(authRoles)
     }
 
     @Override
@@ -89,12 +90,12 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
         if (tokenDataProvider.tokenLookup(token)) {
             throw new Exception("Cannot import webhook token")
         }
-        AuthenticationToken webhookToken = tokenDataProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
+        AuthenticationToken webhookToken = tokenDataProvider.findByTokenAndType(token, AuthTokenType.WEBHOOK)
         if (webhookToken) {
             return updateAuthRoles(authContext, token, roleSet)
         }
 
-        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthenticationToken.AuthTokenType.WEBHOOK)
+        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthTokenType.WEBHOOK)
 
         return true
     }

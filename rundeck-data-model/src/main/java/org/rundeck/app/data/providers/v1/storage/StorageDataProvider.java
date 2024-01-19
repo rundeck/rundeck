@@ -3,7 +3,6 @@ package org.rundeck.app.data.providers.v1.storage;
 import org.rundeck.app.data.model.v1.storage.RundeckStorage;
 import org.rundeck.app.data.providers.v1.DataProvider;
 import org.rundeck.spi.data.DataAccessException;
-import org.rundeck.storage.api.Path;
 
 import java.io.Serializable;
 import java.util.List;
@@ -76,7 +75,7 @@ public interface StorageDataProvider extends DataProvider {
      * @param path Path for storage
      * @return true if a RundeckStorage exists, otherwise false
      */
-    boolean hasPath(final String ns, final Path path);
+    boolean hasPath(final String ns, final String path);
 
     /**
      * Checks if a Rundeck Storage exists in a given directory path
@@ -85,7 +84,7 @@ public interface StorageDataProvider extends DataProvider {
      * @param path Path for storage
      * @return true if a RundeckStorage exists, otherwise false
      */
-    boolean hasDirectory(final String ns, final Path path);
+    boolean hasDirectory(final String ns, final String path);
 
     /**
      * Finds all RundeckStorages in a directory
@@ -94,7 +93,7 @@ public interface StorageDataProvider extends DataProvider {
      * @param path Path for storage
      * @return List of RundeckStorages
      */
-    List<RundeckStorage> listDirectory(String ns, Path path);
+    List<RundeckStorage> listDirectory(String ns, final String path);
 
     /**
      * Finds all RundeckStorages in a directory subdirectories
@@ -103,7 +102,7 @@ public interface StorageDataProvider extends DataProvider {
      * @param path Path for storage
      * @return List of RundeckStorages
      */
-    List<RundeckStorage> listDirectorySubdirs(final String ns, final Path path);
+    List<RundeckStorage> listDirectorySubdirs(final String ns, final String path);
 
 
     }
