@@ -1007,7 +1007,7 @@ class ExecutionSpec extends BaseContainer {
         def jobId = jobCreatedResponse.succeeded[0]?.id
 
         when: "TEST: POST job/id/run should succeed with future time"
-        def runtime = generateRuntime(50)
+        def runtime = generateRuntime(25)
         def runLaterExecResponse = JobUtils.executeJobLaterWithArgs(
                 jobId,
                 client,
@@ -1019,10 +1019,59 @@ class ExecutionSpec extends BaseContainer {
         String execId = parsedExec.id
         def dateS = parsedExec.dateStarted.date
 
-
         then:
         execId != null
         dateS.toString() == runtime.date.toString()
+
+        when: "Wait until execution succeeds"
+        def execAfterWait = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        )
+
+        then: "OK"
+        execAfterWait.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "We call the execution to be ran later, wrong method, gets 405"
+        def runtime1 = generateRuntime(25)
+        def runLaterExecResponse1 = JobUtils.executeJobLaterWithArgsInvalidMethod(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime1.string
+        )
+
+        then: "OK"
+        !runLaterExecResponse1.successful
+        runLaterExecResponse1.code() == 405
+
+        when: "TEST: POST job/id/run with scheduled time in the past should fail"
+        def runtime2 = generateRuntime(-1000) // Generates a past runtime string
+        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime2.string
+        )
+
+        then: "OK"
+        !runLaterExecResponse2.successful
+
+        when: "TEST: POST job/id/run with invalid schedule time"
+        def invalidRuntime = "1999/01/01 11:10:01.000+0000"
+        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                invalidRuntime
+        )
+
+        then: "OK"
+        !runLaterExecResponse3.successful
 
     }
 
