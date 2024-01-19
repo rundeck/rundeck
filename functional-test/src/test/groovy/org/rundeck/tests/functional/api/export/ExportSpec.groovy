@@ -161,7 +161,6 @@ class ExportSpec extends BaseContainer {
     }
 
     def validateYaml(String yamlContent) {
-        print yamlContent
         if (!yamlContent.contains(':') || !yamlContent.contains('\n')) {
             return "ERROR: Response was not valid YAML"
         }
