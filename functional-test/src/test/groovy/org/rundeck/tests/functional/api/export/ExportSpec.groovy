@@ -161,6 +161,7 @@ class ExportSpec extends BaseContainer {
     }
 
     def validateYaml(String yamlContent) {
+        print yamlContent
         if (!yamlContent.contains(':') || !yamlContent.contains('\n')) {
             return "ERROR: Response was not valid YAML"
         }
@@ -171,7 +172,7 @@ class ExportSpec extends BaseContainer {
                 yamlMap[parts[0].trim()] = parts[1].trim()
             }
         }
-        if (!yamlMap.containsKey('schedules')) {
+        if (!yamlMap.containsKey('name')) {
             return "ERROR: Response did not contain expected result"
         }
         String jobIdAux = yamlMap['id']
