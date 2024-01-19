@@ -2268,6 +2268,8 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             request.content = 'test'.bytes
             params.importWebhooks='true'
             params.whkRegenAuthTokens='true'
+            params.whkRegenUuid='true'
+        Map<String, String> exportOpts = [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS):"true",(WebhooksProjectImporter.WHK_REGEN_UUID):"true"]
         when: "import project via api"
             controller.apiProjectImport(aparams)
         then: "webhook component import options are set"
@@ -2280,7 +2282,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
 //            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
             1 * controller.projectService.handleApiImport(_,_,project,_,{ ProjectArchiveImportRequest req->
                 req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
+                req.importOpts.webhooks == exportOpts
             }) >> [success:true]
     }
 
