@@ -20,7 +20,9 @@ import org.rundeck.app.data.model.v1.AuthTokenMode
 
 import grails.testing.gorm.DataTest
 import org.apache.commons.codec.digest.DigestUtils
+import org.rundeck.app.data.model.v1.AuthTokenType
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import rundeck.data.util.AuthenticationTokenUtils
 import spock.lang.Specification
 
 /**
@@ -37,7 +39,7 @@ class AuthTokenSpec extends Specification implements DataTest {
     def "parseAuthRoles"() {
 
         when:
-        def result = AuthenticationToken.parseAuthRoles(input)
+        def result = AuthenticationTokenUtils.parseAuthRoles(input)
 
         then:
         result == expected as Set
@@ -56,7 +58,7 @@ class AuthTokenSpec extends Specification implements DataTest {
 
     def "generate"() {
         when:
-        def result = AuthenticationToken.generateAuthRoles(input)
+        def result = AuthenticationTokenUtils.generateAuthRoles(input)
 
         then:
         result == expected
@@ -152,7 +154,7 @@ class AuthTokenSpec extends Specification implements DataTest {
             user: user,
             authRoles: "admin",
             token: TOKEN_CLEAR_VALUE,
-            type: AuthenticationToken.AuthTokenType.USER,
+            type: AuthTokenType.USER,
             tokenMode: AuthTokenMode.SECURED
         )
         newToken.save(flush: true, failOnError: true)

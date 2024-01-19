@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.app.api.tokens
 
-import com.dtolabs.rundeck.app.api.FormattedDate
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ApiVersion
 import com.dtolabs.rundeck.app.api.marshall.CollectionElement
@@ -25,6 +24,7 @@ import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 import io.swagger.v3.oas.annotations.media.Schema
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.AuthTokenMode
+import rundeck.data.util.AuthenticationTokenUtils
 
 /**
  * @author greg
@@ -88,6 +88,6 @@ class Token {
         this.user = token.ownerName
         this.roles = token.getAuthRolesSet()
         this.expiration = token.expiration
-        this.expired = token.tokenIsExpired(token)
+        this.expired = AuthenticationTokenUtils.tokenIsExpired(token)
     }
 }

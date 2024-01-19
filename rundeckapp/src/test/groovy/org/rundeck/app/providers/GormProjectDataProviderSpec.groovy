@@ -19,8 +19,6 @@ import rundeck.services.data.ProjectDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
-
 class GormProjectDataProviderSpec extends Specification implements DataTest{
     GormProjectDataProvider provider = new GormProjectDataProvider()
 

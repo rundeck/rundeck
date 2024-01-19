@@ -15,17 +15,17 @@
  */
 package org.rundeck.app.data.model.v1.storage;
 
-import org.rundeck.storage.api.Path;
-
 import java.io.Serializable;
 import java.util.*;
 
 public interface RundeckStorage {
     Serializable getId();
     String getNamespace();
+    String getDir();
+    String getName();
+    String getPathSha();
     Map<String,String> getStorageMeta();
     byte[] getData();
     Date getLastUpdated();
     Date getDateCreated();
-    Path getPath();
 }

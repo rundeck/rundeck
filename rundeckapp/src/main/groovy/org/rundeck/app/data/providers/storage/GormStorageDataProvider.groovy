@@ -33,9 +33,8 @@ class GormStorageDataProvider implements StorageDataProvider {
     @Override
     Long create(RundeckStorage data) throws DataAccessException {
         Storage.withTransaction {
-            def parent = PathUtil.parentPath(data.getPath())
-            String dir = parent ? parent.path : ''
-            String name = data.getPath().name
+            String dir = data.dir
+            String name = data.name
             Storage s = new Storage(namespace: data.getNamespace(),
                     name: name,
                     dir: dir,
@@ -57,16 +56,14 @@ class GormStorageDataProvider implements StorageDataProvider {
     @Override
     void update(final RundeckStorage source, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
         Storage.withTransaction {
-            def sourceParent = PathUtil.parentPath(source.getPath())
-            String sourceDir = sourceParent ? sourceParent.path : ''
-            String sourceName = source.getPath().name
+            String sourceDir = source.dir
+            String sourceName = source.name
             Storage storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
             if (!storage) {
                 throw new DataAccessException("Not found: storage with ID: ${source.id}")
             }
-            def parent = PathUtil.parentPath(data.getPath())
-            String dir = parent ? parent.path : ''
-            String name = data.getPath().name
+            String dir = data.dir
+            String name = data.name
             Map<String, String> existingMeta = storage.storageMeta ?: [:]
             storage.storageMeta = existingMeta + metadata
             storage.namespace = data.getNamespace()
@@ -85,9 +82,8 @@ class GormStorageDataProvider implements StorageDataProvider {
     @Override
     void delete(final RundeckStorage source) throws DataAccessException {
         Storage.withTransaction {
-            def sourceParent = PathUtil.parentPath(source.getPath())
-            String sourceDir = sourceParent ? sourceParent.path : ''
-            String sourceName = source.getPath().name
+            String sourceDir = source.dir
+            String sourceName = source.name
             def storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
             if (!storage) {
                 throw new DataAccessException("Not found: storage with ID: ${source.id}")
@@ -129,7 +125,8 @@ class GormStorageDataProvider implements StorageDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    boolean hasPath(String ns, Path path) {
+    boolean hasPath(String ns, String strpath) {
+        Path path = PathUtil.asPath(strpath)
         def parent = PathUtil.parentPath(path)
         String dir = parent?parent.path:''
         String name = path.name
@@ -160,7 +157,8 @@ class GormStorageDataProvider implements StorageDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    boolean hasDirectory(String ns,Path path) {
+    boolean hasDirectory(String ns,String strpath) {
+        Path path = PathUtil.asPath(strpath)
         def c = Storage.createCriteria()
         c.get {
             if (ns) {
@@ -180,7 +178,8 @@ class GormStorageDataProvider implements StorageDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    List<RundeckStorage> listDirectory(String ns, Path path) {
+    List<RundeckStorage> listDirectory(String ns, String strpath) {
+        Path path = PathUtil.asPath(strpath)
         def c = Storage.createCriteria()
         def pathkey= path.path ? (path.path + '/') : ''
         c.list {
@@ -199,7 +198,8 @@ class GormStorageDataProvider implements StorageDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    List<RundeckStorage> listDirectorySubdirs(String ns,Path path) {
+    List<RundeckStorage> listDirectorySubdirs(String ns,String strpath) {
+        Path path = PathUtil.asPath(strpath)
         def c = Storage.createCriteria()
         def pathkey = path.path ? (path.path + '/') : ''
         c.list {
