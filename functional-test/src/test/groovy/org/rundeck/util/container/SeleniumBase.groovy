@@ -38,7 +38,7 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-extensions")
             options.addArguments("--disable-popup-blocking")
             options.addArguments("--disable-default-apps")
-            options.addArguments("--headless")
+            options.addArguments("--headless") // Only for circleci, remove to test in locally
             _driver = new ChromeDriver(options)
         }
         return _driver
