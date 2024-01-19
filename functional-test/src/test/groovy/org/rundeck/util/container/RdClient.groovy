@@ -2,6 +2,7 @@ package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -39,6 +40,16 @@ class RdClient {
                 new Request.Builder().
                         url(apiUrl(path)).
                         header('Accept', 'application/json').
+                        get().
+                        build()
+        ).execute()
+    }
+
+    Response doGetAddHeaders(final String path, Headers headers) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrl(path)).
+                        headers(headers).
                         get().
                         build()
         ).execute()
