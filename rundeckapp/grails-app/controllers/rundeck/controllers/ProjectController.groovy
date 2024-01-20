@@ -3543,7 +3543,7 @@ Since: v46"""
         }
 
         ProjectNotificationCenterEntry entry = new ProjectNotificationCenterEntry().with {
-            id = 0
+            id = body.id ? body.id : null
             entry_type = EntryTypes.resolveEntryTypeById(body.entryTypeId as int)
             title = body.title
             started_at = body.started_at
@@ -3588,22 +3588,43 @@ Since: v46"""
     def apiTestNotifications(){
         def projectName = params.project
 
-        def newEntry = new ProjectNotificationCenterEntry().with {
-            entry_type = EntryTypes.getTaskValues()
-            title = "Test notification 2"
-            started_at = new Date()
-            status = "In progress... 2"
-            completed_proportion = "20"
-            progress_proportion = "10"
+        def body = request.JSON
+        def reqParams = [
+                body.entryTypeId,
+                body.title,
+                body.started_at,
+                body.status,
+                body.completed_proportion,
+                body.progress_proportion
+        ]
+
+        if( null in reqParams ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.bad.request'
+            ])
+        }
+
+        if( !EntryTypes.isValidEntryType(body.entryTypeId as int) ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.invalid.entryType'
+            ])
+        }
+
+        ProjectNotificationCenterEntry newEntry = new ProjectNotificationCenterEntry().with {
+            id = body.id ? body.id : null
+            entry_type = EntryTypes.resolveEntryTypeById(body.entryTypeId as int)
+            title = body.title
+            started_at = body.started_at
+            status = body.status
+            completed_proportion = body.completed_proportion
+            progress_proportion = body.progress_proportion
             return it
         }
 
-        def createdId = projectNotificationCenterService.saveNotificationCenterEntry(
-                projectName as String,
-                newEntry
-        )
-
-        def entries = projectNotificationCenterService.getNotificationsEntriesForProject(
+        def updated = projectNotificationCenterService.updateEntry(
+                newEntry,
                 projectName as String
         )
 
@@ -3611,7 +3632,7 @@ Since: v46"""
                 contentType: 'application/json', text:
                 (
                         [
-                                entries        : entries
+                                updated        : updated.id
                         ]
                 ) as JSON
         )

@@ -77,24 +77,26 @@ class ProjectNotificationCenterService implements EventPublisher{
         if( !entriesExistForProject(projectName) ){
             throw new NotificationCenterException("Notification Center not initialized for project: ${projectName}.")
         }
-        def existingNotificationsForProject = getNotificationsEntriesForProject(projectName)
         try {
-            newId = appendNewEntryAndSave(
-                    projectName,
-                    existingNotificationsForProject,
-                    newEntry
-            )
+            if( newEntry.id != null ){
+                newId = appendUpdatedEntry(projectName, newEntry)
+            }else{
+                newId = appendNewEntryAndSave(
+                        projectName,
+                        newEntry
+                )
+            }
         } catch (Exception e) {
             throw new NotificationCenterException("Error saving new notification entry in db.", e)
         }
         return newId
     }
 
-    private String appendNewEntryAndSave(
+    String appendNewEntryAndSave(
             String projectName,
-            List<ProjectNotificationCenterEntry> oldEntries,
             ProjectNotificationCenterEntry newEntry
     ) {
+        def oldEntries = getNotificationsEntriesForProject(projectName)
         String newId = ""
 
         if( oldEntries.isEmpty() ){ // When its new (0 notifications)
@@ -109,15 +111,119 @@ class ProjectNotificationCenterService implements EventPublisher{
         newEntry.id = newId
         oldEntries.push(newEntry)
 
-        // persistence
-        def jsonEntry = oldEntries as JSON
-        def inputStream = new ByteArrayInputStream(jsonEntry.toString().getBytes(StandardCharsets.UTF_8))
-        final def fwkProject = frameworkService.getFrameworkProject(projectName)
-        final def filename = NOTIFICATION_STORED_RESOURCE_PREFIX + projectName + NOTIFICATION_STORED_RESOURCE_EXT
-        fwkProject.storeFileResource(filename, inputStream)
-        inputStream.close()
+        persistEntries(projectName, oldEntries)
 
         return newId
+    }
+
+    String appendUpdatedEntry(final String projectName, final ProjectNotificationCenterEntry entry){
+        try{
+            def existingEntries = getNotificationsEntriesForProject(projectName)
+            existingEntries.push(entry)
+            persistEntries(projectName, existingEntries)
+            return entry.id
+        }catch (Exception e){
+            throw new NotificationCenterException("Error appending updated entry to resource.", e)
+        }
+    }
+
+    void persistEntries(final String projectName, List<ProjectNotificationCenterEntry> entries){
+        try{
+            def jsonEntry = entries as JSON
+            def inputStream = new ByteArrayInputStream(jsonEntry.toString().getBytes(StandardCharsets.UTF_8))
+            final def fwkProject = frameworkService.getFrameworkProject(projectName)
+            final def filename = NOTIFICATION_STORED_RESOURCE_PREFIX + projectName + NOTIFICATION_STORED_RESOURCE_EXT
+            fwkProject.storeFileResource(filename, inputStream)
+            inputStream.close()
+        }catch(Exception e){
+            throw new NotificationCenterException("Error persisting resource in db.", e)
+        }
+    }
+
+    boolean entryExists(final String projectName, final String entryId){
+        try{
+            def existingEntries = getNotificationsEntriesForProject(projectName)
+            Optional<ProjectNotificationCenterEntry> found = existingEntries.stream().filter {
+                it -> it.id == entryId
+            }.findFirst()
+            if( !found.isPresent() ){
+                return false
+            }
+            return true
+        }catch (Exception e){
+            throw new NotificationCenterException("Errors trying to find entry by id: ${entryId}", e)
+        }
+    }
+
+    ProjectNotificationCenterEntry getEntryInProjectById(final String projectName, final String entryId){
+        def existingEntries = getNotificationsEntriesForProject(projectName)
+        Optional<ProjectNotificationCenterEntry> entry = existingEntries.stream().filter {
+            it -> it.id == entryId
+        }.findFirst()
+        if( !entry.isPresent() ){
+            return null
+        }
+        return entry.get()
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    ProjectNotificationCenterEntry updateEntry(
+            final ProjectNotificationCenterEntry newEntry,
+            final String projectName
+    ){
+        if( !newEntry.id ){
+            throw new NotificationCenterException("No entry id received")
+        }
+        try{
+            deleteEntry(newEntry.id, projectName)
+            saveNotificationCenterEntry(projectName, newEntry)
+            return getEntryInProjectById(projectName, newEntry.id)
+        }catch(NotificationCenterException e){
+            throw new NotificationCenterException("There was some errors while getting information from store: ", e)
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    String deleteEntry(
+            final String oldEntryId,
+            final String projectName
+    ){
+        def entryToRemove = null
+        def entries = null
+        try{
+            entries = getNotificationsEntriesForProject(projectName)
+            entryToRemove = getEntryInProjectById(projectName, oldEntryId)
+            if( entries.isEmpty() ){
+                return null
+            }
+            if( !entryToRemove ){
+                return null
+            }
+            entries.removeIf { it -> it.id == oldEntryId }
+            refreshNotificationCenterEntries(projectName, entries)
+            return oldEntryId
+        }catch(Exception e){
+            throw new NotificationCenterException("Cannot remove entry: ", e)
+        }
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean refreshNotificationCenterEntries(
+            String projectName,
+            List<ProjectNotificationCenterEntry> newEntries) {
+        try {
+            // persistence
+            def jsonEntries = newEntries as JSON
+            def inputStream = new ByteArrayInputStream(jsonEntries.toString().getBytes(StandardCharsets.UTF_8))
+            final def fwkProject = frameworkService.getFrameworkProject(projectName)
+            final def filename = NOTIFICATION_STORED_RESOURCE_PREFIX + projectName + NOTIFICATION_STORED_RESOURCE_EXT
+            fwkProject.storeFileResource(filename, inputStream)
+            inputStream.close()
+            return true
+        } catch (Exception e) {
+            throw new NotificationCenterException("Error saving refreshing notifications entries in db.", e)
+        }
     }
 
 }
