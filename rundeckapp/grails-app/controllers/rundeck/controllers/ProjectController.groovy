@@ -70,6 +70,7 @@ import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.notificationcenter.EntryTypes
+import rundeck.services.notificationcenter.NotificationCenterException
 import rundeck.services.notificationcenter.ProjectNotificationCenterEntry
 import rundeck.services.notificationcenter.ProjectNotificationCenterService
 import webhooks.component.project.WebhooksProjectComponent
@@ -3487,7 +3488,36 @@ Since: v46"""
     }
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def initNotificationCenter(){
+        if( !params.project ){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.bad.request'
+            ])
+        }
+        def projectName = params.project as String
+        try{
+            projectNotificationCenterService.initNotificationsForProject(projectName)
+        }catch(NotificationCenterException e){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.notification.center.server.error.withMessage',
+                    args: [e]
+            ])
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                status        : "Notification Center initialized for project: ${projectName}."
+                        ]
+                ) as JSON
+        )
+    }
+
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiCreateProjectNotificationCenterEntry(){
+        def newId = null
         def body = request.JSON
         def reqParams = [
                 body.entryTypeId,
@@ -3505,7 +3535,7 @@ Since: v46"""
             ])
         }
 
-        if( !EntryTypes.isValidEntryType(body.entryTypeId) ){
+        if( !EntryTypes.isValidEntryType(body.entryTypeId as int) ){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.notification.center.invalid.entryType'
@@ -3523,12 +3553,20 @@ Since: v46"""
             return it
         }
 
-        def created = projectNotificationCenterService.saveNotificationCenterEntry(
-            params.project as String,
-            entry
-        )
+        try{
+            newId = projectNotificationCenterService.saveNotificationCenterEntry(
+                    params.project as String,
+                    entry
+            )
+        }catch (NotificationCenterException ignored){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.error.notification.center.server.error.withMessage',
+                    args: [ignored]
+            ])
+        }
 
-        if( !created.size() ){
+        if( !newId.size() && newId != null ){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.error.notification.center.server.error'
@@ -3539,7 +3577,7 @@ Since: v46"""
                 contentType: 'application/json', text:
                 (
                         [
-                                resourceCreated        : created
+                                newId        : newId
                         ]
                 ) as JSON
         )
@@ -3550,15 +3588,13 @@ Since: v46"""
     def apiTestNotifications(){
         def projectName = params.project
 
-        projectNotificationCenterService.initNotificationsForProject(projectName as String)
-
         def newEntry = new ProjectNotificationCenterEntry().with {
             entry_type = EntryTypes.getTaskValues()
-            title = "Test notification"
+            title = "Test notification 2"
             started_at = new Date()
-            status = "In progress..."
-            completed_proportion = "10"
-            progress_proportion = "5"
+            status = "In progress... 2"
+            completed_proportion = "20"
+            progress_proportion = "10"
             return it
         }
 
