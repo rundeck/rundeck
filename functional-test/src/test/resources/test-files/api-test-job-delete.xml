@@ -1,0 +1,20 @@
+<joblist>
+    <job>
+        <name>cli job</name>
+        <group>api-test/job-delete</group>
+        <description></description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>xml-args</exec>
+            </command>
+        </sequence>
+    </job>
+</joblist>

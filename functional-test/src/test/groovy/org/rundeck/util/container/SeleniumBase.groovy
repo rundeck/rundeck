@@ -35,6 +35,9 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
             options.addArguments("--disable-dev-shm-usage")
             options.addArguments("--disable-browser-side-navigation")
             options.addArguments("--disable-gpu")
+            options.addArguments("--disable-extensions")
+            options.addArguments("--disable-popup-blocking")
+            options.addArguments("--disable-default-apps")
             _driver = new ChromeDriver(options)
         }
         return _driver
