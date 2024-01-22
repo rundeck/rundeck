@@ -655,6 +655,42 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             imported=     [uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test2", authToken: "12345", eventPlugin: "log-webhook-event"]
     }
 
+    def "import a webhook that already exits in a project"() {
+        given:"webhook exists with token in project A"
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook", "test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook", "test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_, _, _) >> { return new ValidatedPlugin(report: new Validator.Report(), valid: true) }
+            getPlugin(_, _) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event": new TestWebhookEventPlugin()] }
+        }
+        def webhookUUID="c1c6dcf7-dd12-4858-9373-c12639c689d4"
+        def definition=     [uuid: webhookUUID, name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"]
+
+        Webhook existing = new Webhook(definition)
+        existing.save()
+
+
+        when:"import data with same token into project A"
+        def result = service.importWebhook(mockUserAuth, definition, false)
+
+
+        then:"should fail"
+        def existingWebhooks = service.webhookDataProvider.findAllByProject("Test")
+        result == [msg:'Webhook test imported']
+        existingWebhooks.size() == 1
+
+    }
+
     def "getWebhookWithAuth"() {
         setup:
         Webhook hook = new Webhook()
