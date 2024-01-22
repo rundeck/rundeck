@@ -12,7 +12,6 @@ class ScheduleSpec extends BaseContainer{
 
     def setupSpec() {
         startEnvironment()
-        setupProject()
     }
 
     def "TEST: when schedule is flipped, job remains scheduled"(){
