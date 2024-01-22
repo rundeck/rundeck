@@ -193,6 +193,11 @@ export default defineComponent({
       }
     },
   },
+  mounted() {
+    if(this.jumpToLine) {
+      this.onSelectLine(this.jumpToLine)
+    }
+  }
 })
 </script>
 
