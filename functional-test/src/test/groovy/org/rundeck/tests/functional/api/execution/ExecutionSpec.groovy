@@ -2,13 +2,16 @@ package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
+import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
 import java.time.LocalDateTime
@@ -16,9 +19,6 @@ import java.time.format.DateTimeFormatter
 
 @APITest
 class ExecutionSpec extends BaseContainer {
-
-    private static final String EXECUTION_SUCCEEDED = "succeeded"
-    private static final String EXECUTION_RUNNING = "running"
 
     def setupSpec(){
         startEnvironment()
@@ -309,6 +309,8 @@ class ExecutionSpec extends BaseContainer {
                 itemCount == expect
         }
     }
+
+    // +++++++++++++++++++ JOBS TESTS +++++++++++++++++++++++++++++++
 
     def "test-job-flip-executionEnabled"(){
         given:
@@ -731,8 +733,11 @@ class ExecutionSpec extends BaseContainer {
         def jobRun = JobUtils.executeJob(jobId, client)
         assert jobRun.successful
 
-        JobExecutionsResponse JobExecutionStatus = waitForExecutionToSucceed(
-                jobId as String,
+        Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
+
+        Execution JobExecutionStatus = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                exec.id as String,
                 mapper,
                 client,
                 WaitingTime.MODERATE.milliSeconds,
@@ -740,14 +745,17 @@ class ExecutionSpec extends BaseContainer {
         )
 
         then:
-        JobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+        JobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
         when: "run job test"
         def referencedJobRun = JobUtils.executeJob(refJobId, client)
         assert referencedJobRun.successful
 
-        JobExecutionsResponse refJobExecutionStatus = waitForExecutionToSucceed(
-                refJobId as String,
+        Execution refExec = mapper.readValue(referencedJobRun.body().string(), Execution.class)
+
+        Execution refJobExecutionStatus = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                refExec.id as String,
                 mapper,
                 client,
                 WaitingTime.MODERATE.milliSeconds,
@@ -755,27 +763,346 @@ class ExecutionSpec extends BaseContainer {
         )
 
         then:
-        refJobExecutionStatus.executions[0].status == EXECUTION_SUCCEEDED
+        refJobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
     }
 
-    JobExecutionsResponse waitForExecutionToSucceed(
-            String jobId,
+    def "test-job-retry.sh"(){
+        given:
+        def projectName = "test-job-retry"
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-retry",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobRetry = (String args) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job</name>\n" +
+                    "      <group>api-test/job-run-timeout-retry</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <retry>2</retry>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${args}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo hello there ; false" // As the original test states
+        def testXml = jobRetry(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "Job and referenced job created"
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+
+        then:
+        jobId != null
+
+        when: "run job test"
+        def execArgs = "-opt2 a"
+        def jobRun = JobUtils.executeJobWithArgs(jobId, client, execArgs)
+        assert jobRun.successful
+        Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
+        def execId = parsedExecutionsResponse.id
+
+        then:
+        execId > 0
+
+        when: "fail and retry 1"
+        def execDetails = waitForExecutionToBe(
+                ExecutionStatus.FAILED_WITH_RETRY.state,
+                execId as String,
+                mapper,
+                client,
+                1,
+                WaitingTime.MODERATE.milliSeconds
+        )
+        def retryId1 = execDetails.retriedExecution.id
+
+        then:
+        retryId1 > 0
+
+        when: "fail and retry 2"
+        def execDetails2 = waitForExecutionToBe(
+                ExecutionStatus.FAILED_WITH_RETRY.state,
+                retryId1 as String,
+                mapper,
+                client,
+                1,
+                WaitingTime.MODERATE.milliSeconds
+        )
+        def retryId2 = execDetails2.retriedExecution.id
+
+        then:
+        retryId2 > 0
+
+        when: "final retry"
+        def execDetailsFinal = waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                retryId2 as String,
+                mapper,
+                client,
+                1,
+                WaitingTime.MODERATE.milliSeconds
+        )
+
+        then:
+        execDetailsFinal.retriedExecution == null
+        execDetailsFinal.retryAttempt == 2
+        execDetailsFinal.status == ExecutionStatus.FAILED.state
+
+    }
+
+    def "test-job-run-GET-405.sh"(){
+        given:
+        def projectName = "test-job-run-GET-405"
+        def apiVersion = 40
+        client.apiVersion = apiVersion
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-run-GET-405",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectName, projectJsonMap)
+        assert responseProject.successful
+
+        def jobXml = (String project, String args) -> "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>cli job</name>\n" +
+                "      <group>api-test/job-run</group>\n" +
+                "      <description></description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <context>\n" +
+                "          <project>${projectName}</project>\n" +
+                "          <options>\n" +
+                "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                "          </options>\n" +
+                "      </context>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "      <sequence>\n" +
+                "        <command>\n" +
+                "        <exec>${args}</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
+
+        def jobXml1 = jobXml(projectName, "echo hello there")
+
+        def job1CreatedResponse = JobUtils.createJob(projectName, jobXml1, client)
+        assert job1CreatedResponse.successful
+
+        CreateJobResponse job1CreatedParsedResponse = mapper.readValue(job1CreatedResponse.body().string(), CreateJobResponse.class)
+        def job1Id = job1CreatedParsedResponse.succeeded[0]?.id
+        def argString = "-opt2+a"
+
+        when: "we do the request api response code is 405 and exec should fail"
+        def response = JobUtils.executeJobWithArgsInvalidMethod(job1Id, client, argString)
+
+        then:
+        !response.successful
+        response.code() == 405
+
+    }
+
+
+    def "test-job-run-later.sh"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName.toString(),
+                "description": "test-job-run-later",
+                "config": [
+                        "test.property": "test value",
+                        "project.execution.history.cleanup.enabled": "true",
+                        "project.execution.history.cleanup.retention.days": "1",
+                        "project.execution.history.cleanup.batch": "500",
+                        "project.execution.history.cleanup.retention.minimum": "0",
+                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
+                ]
+        ]
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${PROJECT_NAME}</project>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+
+        when: "TEST: POST job/id/run should succeed with future time"
+        def runtime = generateRuntime(25)
+        def runLaterExecResponse = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime.string
+        )
+        assert runLaterExecResponse.successful
+        Execution parsedExec = mapper.readValue(runLaterExecResponse.body().string(), Execution.class)
+        String execId = parsedExec.id
+        def dateS = parsedExec.dateStarted.date
+
+        then:
+        execId != null
+        dateS.toString() == runtime.date.toString()
+
+        when: "Wait until execution succeeds"
+        def execAfterWait = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        )
+
+        then: "OK"
+        execAfterWait.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "We call the execution to be ran later, wrong method, gets 405"
+        def runtime1 = generateRuntime(25)
+        def runLaterExecResponse1 = JobUtils.executeJobLaterWithArgsInvalidMethod(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime1.string
+        )
+
+        then: "OK"
+        !runLaterExecResponse1.successful
+        runLaterExecResponse1.code() == 405
+
+        when: "TEST: POST job/id/run with scheduled time in the past should fail"
+        def runtime2 = generateRuntime(-1000) // Generates a past runtime string
+        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                runtime2.string
+        )
+
+        then: "OK"
+        !runLaterExecResponse2.successful
+
+        when: "TEST: POST job/id/run with invalid schedule time"
+        def invalidRuntime = "1999/01/01 11:10:01.000+0000"
+        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgs(
+                jobId,
+                client,
+                "-opt2+a",
+                invalidRuntime
+        )
+
+        then: "OK"
+        !runLaterExecResponse3.successful
+
+    }
+
+    def generateRuntime(int secondsInFuture){
+        TimeZone timeZone = TimeZone.getDefault()
+        Calendar cal = Calendar.getInstance(timeZone)
+        cal.add(Calendar.SECOND, secondsInFuture)
+        SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        iso8601Format.setTimeZone(TimeZone.getTimeZone("UTC"))
+        return [string: iso8601Format.format(cal.time), date: cal.time]
+    }
+
+    Execution waitForExecutionToBe(
+            String state,
+            String executionId,
             ObjectMapper mapper,
             RdClient client,
             int iterationGap,
             int timeout
     ){
-        JobExecutionsResponse executionStatus
-        def refJobExec = client.doGet("/job/${jobId}/executions")
-        executionStatus = mapper.readValue(refJobExec.body().string(), JobExecutionsResponse.class)
+        Execution executionStatus
+        def execDetail = client.doGet("/execution/${executionId}")
+        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
         long initTime = System.currentTimeMillis()
-        while(executionStatus.executions[0].status == EXECUTION_RUNNING){
+        while(executionStatus.status != state){
             if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
                 throw new InterruptedException("Timeout reached (${timeout} seconds).")
             }
-            def transientExecutionResponse = doGet("/job/${jobId}/executions")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), JobExecutionsResponse.class)
+            def transientExecutionResponse = doGet("/execution/${executionId}")
+            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
+            if( executionStatus.status == state ) break
             Thread.sleep(iterationGap)
         }
         return executionStatus
