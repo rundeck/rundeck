@@ -9,6 +9,7 @@
             @on-enter="handleSearch"
             @on-blur="handleSearch"
         />
+        <ui-socket location="table-header" section="home" />
         <p data-test="searchResults" class="alert alert-info" v-if="showSearchResults && loadedProjectNames">
           <span :class="{ 'text-white': searchResultsCount>0, 'text-warning': searchResultsCount<1 }">
             {{ $tc('page.home.search.project.title', searchResultsCount) }}
@@ -46,10 +47,13 @@ import {defineComponent, PropType} from 'vue'
 import HomeSearchBar from "./HomeSearchBar.vue";
 import HomeBrowser from "./HomeBrowser.vue";
 import {Project} from "@/app/components/home/types/projectTypes";
+import UiSocket from "@/library/components/utils/UiSocket.vue";
+import {getRundeckContext} from "@/library";
 
 export default defineComponent({
   name: "HomeCardList",
   components: {
+    UiSocket,
     HomeSearchBar,
     HomeBrowser
   },
@@ -67,12 +71,22 @@ export default defineComponent({
     return {
       search: "",
       filteredProjects: [],
-      showSearchResults: false
+      favoriteProjectNames: [],
+      showSearchResults: false,
+      filterFavoritesOnly: false,
+      eventBus: getRundeckContext().eventBus
     }
   },
   computed: {
     searchResultsCount(): number {
       return this.filteredProjects?.length || 0
+    },
+    favoriteProjects(): Project[] {
+      if (!this.projects || !this.favoriteProjectNames) {
+        return []
+      }
+
+      return this.projects.filter((project) => this.favoriteProjectNames.includes(project.name))
     },
   },
   methods: {
@@ -84,20 +98,39 @@ export default defineComponent({
         //simple match which is case-insensitive, escaping special regex chars
         regex = new RegExp(this.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
       }
-      this.filteredProjects = this.projects.filter((project) => {
-        return project.name.match(regex) || project.label && project.label.match(regex);
-      });
 
-      this.showSearchResults = true;
+      if(this.filterFavoritesOnly) {
+        this.filteredProjects = this.favoriteProjects.filter((project) => {
+          return project.name.match(regex) || project.label && project.label.match(regex);
+        });
+      } else {
+        this.filteredProjects = this.projects.filter((project) => {
+          return project.name.match(regex) || project.label && project.label.match(regex);
+        });
+      }
+
+      if (this.search !== "") {
+        this.showSearchResults = true;
+      }
     },
     hideResults() {
       this.showSearchResults = false;
-    }
+    },
+  },
+  mounted() {
+    this.eventBus.on("home-card-list:toggleFavorites",  ({favsOnly, favoriteProjects}) => {
+      this.filterFavoritesOnly = favsOnly;
+      this.favoriteProjectNames = favoriteProjects;
+      // eventBus might emit before projects are loaded
+      if(this.projects){
+        this.handleSearch();
+      }
+    });
   },
   watch: {
     projects(newVal) {
-      if(this.search === "") {
-        this.filteredProjects = newVal
+      if(newVal.length) {
+        this.handleSearch();
       }
     }
   }

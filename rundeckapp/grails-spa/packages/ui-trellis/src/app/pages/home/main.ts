@@ -25,7 +25,6 @@ function init() {
         return
     }
 
-
     rundeckContext.rootStore.ui.addItems([
         {
             section: 'home',
