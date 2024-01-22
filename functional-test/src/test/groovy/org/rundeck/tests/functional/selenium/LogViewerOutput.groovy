@@ -72,7 +72,7 @@ class LogViewerOutput extends SeleniumBase{
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
         jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
         jobCreatePage.waitForStepToBeShown(By.name("pluginConfig.adhocRemoteString"))
-        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("for i in {1..2}; do echo NUMBER \$i; sleep 0.2; done")
+        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("for i in {1..60}; do echo NUMBER \$i; sleep 0.2; done")
         jobCreatePage.getSaveStepButton().click()
         jobCreatePage.waitForSavedStep(0)
         jobCreatePage.getCreateButton().click()
