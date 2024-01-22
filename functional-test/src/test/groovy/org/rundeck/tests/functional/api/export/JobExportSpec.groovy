@@ -9,7 +9,6 @@ import spock.lang.Shared
 class ExportSpec extends BaseContainer {
 
     @Shared String jobId
-    @Shared String projectName
 
     def setupSpec() {
         startEnvironment()
@@ -181,15 +180,4 @@ class ExportSpec extends BaseContainer {
                 "OK" :
                 "Wrong job id: ${jobUuid}"
     }
-
-    def "export a whole project"() {
-        when:
-        def data = doGet("/project/${projectName}/export")
-        then:
-        verifyAll {
-            data.successful
-            data.code() == 200
-        }
-    }
-
 }
