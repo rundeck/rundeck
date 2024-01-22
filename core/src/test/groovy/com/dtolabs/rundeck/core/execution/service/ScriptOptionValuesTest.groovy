@@ -23,18 +23,33 @@ import spock.lang.Specification
 
 
 class ScriptOptionValuesTest extends Specification {
+    def isPosixSystem() {
+        def osName = System.getProperty("os.name").toLowerCase()
+        return !(osName.contains("win") || osName.contains("mac") || osName.contains("sunos"))
+    }
+
     def "GetOptionValues"() {
         when:
 
         TestScriptOptionValuesProvider testProvider = new TestScriptOptionValuesProvider()
-        testProvider.scriptFile = File.createTempFile("option","values")
-        testProvider.scriptFile.setExecutable(true,true)
         testProvider.archiveFile = File.createTempFile("option","archive")
         testProvider.contentsBaseDir = File.createTempDir()
-        testProvider.scriptFile << """echo "==START_OPTIONS=="
+        if (isPosixSystem()) {
+            testProvider.scriptFile = File.createTempFile("option","values")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """echo "==START_OPTIONS=="
                                     echo "First Option:opt1"
                                     echo "Second Option:opt2"
                                     echo "==END_OPTIONS==" """
+        } else {
+            testProvider.scriptFile = File.createTempFile("option",".bat")
+            testProvider.scriptFile.setExecutable(true,true)
+            testProvider.scriptFile << """@echo off
+                                    echo ==START_OPTIONS==
+                                    echo First Option:opt1
+                                    echo Second Option:opt2
+                                    echo ==END_OPTIONS== """
+        }
         ScriptOptionValues scriptOptionValues = new ScriptOptionValues(testProvider, Stub(ServiceProviderLoader))
         def result = scriptOptionValues.getOptionValues([:])
 

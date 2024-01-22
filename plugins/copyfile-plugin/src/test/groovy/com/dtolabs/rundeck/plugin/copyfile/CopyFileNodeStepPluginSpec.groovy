@@ -170,9 +170,10 @@ class CopyFileNodeStepPluginSpec extends Specification {
             1 * execSvc.fileCopyFiles(_, _, _, destPath, node
             ) >> {
                 def coll1 = it[2]*.getAbsolutePath().collect { it.substring(srcPath.length()) }
-                assert coll1.containsAll(expectList)
-                assert expectList.containsAll(coll1)
-                expectList.toArray()
+                def modifiedExpectList = expectList.collect { it.replace('/', File.separator) }
+                assert coll1.containsAll(modifiedExpectList)
+                assert modifiedExpectList.containsAll(coll1)
+                modifiedExpectList.toArray()
             }
         }
         0 * execSvc._(*_)
