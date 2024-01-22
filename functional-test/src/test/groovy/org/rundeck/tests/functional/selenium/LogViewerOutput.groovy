@@ -72,21 +72,21 @@ class LogViewerOutput extends SeleniumBase{
         jobCreatePage.getTab(JobTab.WORKFLOW).click()
         jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
         jobCreatePage.waitForStepToBeShown(By.name("pluginConfig.adhocRemoteString"))
-        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("for i in {1..60}; do echo NUMBER \$i; sleep 0.2; done")
+        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("for i in {1..6}; do echo NUMBER \$i; sleep 0.5; done")
         jobCreatePage.getSaveStepButton().click()
         jobCreatePage.waitForSavedStep(0)
         jobCreatePage.getCreateButton().click()
         jobShowPage.getRunJobBtn().click()
         jobShowPage.getLogOutputBtn().click()
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
-        def firstLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),35,40)
-        def finalLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.el(By.xpath("//span[contains(@class, 'execution-log_gutter-entry')]")).click()
+        def lineToClick = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]/ancestor::div[contains(@class, 'execution-log__line')]/div[@class='execution-log__gutter']"))
+
+        lineToClick.click();
+        jobCreatePage.waitForURL("#outputL1")
         driver.navigate().refresh();
 
         then:
-        def selectedLine = jobShowPage.el(By.xpath("//span[contains(@class, 'execution-log_gutter-entry')]/ancestor::div[3]"))
+        def selectedLine = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]/ancestor::div[contains(@class, 'execution-log__line')]"))
         selectedLine.getAttribute("class").contains("execution-log_gutter-entry--selected")
     }
 }

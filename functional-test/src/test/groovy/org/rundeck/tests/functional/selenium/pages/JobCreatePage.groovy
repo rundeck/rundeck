@@ -112,7 +112,10 @@ class JobCreatePage extends BasePage {
 
     void waitForAddNewStepBtn(By jobAddStepButton){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobAddStepButton))
+    }
 
+    void waitForURL(String url){
+        new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.urlContains(url))
     }
 }
 
