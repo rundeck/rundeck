@@ -87,6 +87,6 @@ class LogViewerOutput extends SeleniumBase{
 
         then:
         def selectedLine = jobShowPage.el(By.xpath("//span[contains(@class, 'execution-log_gutter-entry')]/ancestor::div[3]"))
-        waitForAttributeContains selectedLine, 'class', 'execution-log_gutter-entry--selected'
+        selectedLine.getAttribute("class").contains("execution-log_gutter-entry--selected")
     }
 }
