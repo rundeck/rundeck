@@ -2,7 +2,7 @@
   <div class="project_list_item" :key="`project${index}`" :data-project="project.name">
     <div class="row row-hover row-border-top">
       <div class="col-sm-6 col-md-8">
-        <ui-socket location="project-favorite" section="home" />
+        <ui-socket location="project-favorite" section="home" :socket-data="{projectName: project.name}" />
         <a
           :href="`/?project=${project.name}`"
           class="link-hover text-inverse project_list_item_link link-quiet"
@@ -193,6 +193,10 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.h5 {
+  margin: 0;
+}
+
 .ml-1 {
   margin-left: 0.25rem;
 }

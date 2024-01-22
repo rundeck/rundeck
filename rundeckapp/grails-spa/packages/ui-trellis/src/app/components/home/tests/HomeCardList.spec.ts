@@ -2,6 +2,11 @@ import { shallowMount } from '@vue/test-utils';
 import HomeCardList from '../HomeCardList.vue';
 import HomeSearchBar from "../HomeSearchBar.vue";
 
+
+jest.mock('@/library/rundeckService.ts', () => ({
+    getRundeckContext: jest.fn().mockImplementation(() => ({ eventBus: { on: jest.fn() } })),
+}));
+
 const createWrapper = (props = {}) => {
     return shallowMount(HomeCardList, {
         props: {
