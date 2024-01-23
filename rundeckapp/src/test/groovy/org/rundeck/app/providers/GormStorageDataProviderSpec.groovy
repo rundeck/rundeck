@@ -66,14 +66,14 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
                                         .build()
 
         Long storageId = provider.create(data)
-
+        def storage = provider.getData(storageId)
         def oldStorageName = provider.getData(storageId).path.name
         SimpleStorageBuilder updateData =  SimpleStorageBuilder.builder()
                 .data('def'.bytes)
                 .path(PathUtil.asPath("updated"))
                 .namespace("changed")
                 .build()
-        provider.update(storageId, updateData, [def: 'abc'])
+        provider.update(storage, updateData, [def: 'abc'])
         def storage1 = provider.getData(storageId)
 
         then:
@@ -89,7 +89,7 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         def storage = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
 
-        provider.delete(storage.id)
+        provider.delete(storage)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
         then:
         store1 == null
@@ -109,6 +109,7 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         def res1 = provider.listDirectorySubdirs(null, PathUtil.asPath(''))
         then:
         res1.size() == 5
+        res1.contains(storage1)
     }
 
     def "list Directory"() {
@@ -126,5 +127,6 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         res1.size() == 0
         res2 != null
         res2.size() == 4
+        res2.contains(storage1)
     }
 }

@@ -135,8 +135,8 @@ class JobCreatePage extends BasePage {
 
     void waitForAddNewStepBtn(By jobAddStepButton){
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.elementToBeClickable(jobAddStepButton))
-
     }
+
 }
 
 enum NotificationType {
