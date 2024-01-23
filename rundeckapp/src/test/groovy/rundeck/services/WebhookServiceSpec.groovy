@@ -684,7 +684,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.importWebhook(mockUserAuth, definition, false)
 
 
-        then:"should fail"
+        then:"should have 1 webhook"
         def existingWebhooks = service.webhookDataProvider.findAllByProject("Test")
         result == [msg:'Webhook test imported']
         existingWebhooks.size() == 1
