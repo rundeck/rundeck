@@ -84,10 +84,13 @@ class LogViewerOutput extends SeleniumBase{
         lineToClick.click();
         jobShowPage.waitForUrlToContain("#outputL1")
         driver.navigate().refresh();
+//        def href = commandPage.runningButtonLink().getAttribute("href")
+//        jobShowPage.driver.get href + "#outputL1"
+
         jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
 
         then:
-        def selectedLine = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log_gutter-entry--selected')]"))
+        def selectedLine = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log__line--selected')]"))
 
         assert selectedLine != null : "Expected at least one element with the specified class to be present"
     }
