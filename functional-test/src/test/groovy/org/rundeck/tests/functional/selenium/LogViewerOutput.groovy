@@ -84,6 +84,7 @@ class LogViewerOutput extends SeleniumBase{
         lineToClick.click();
         jobShowPage.waitForUrlToContain("#outputL1")
         driver.navigate().refresh();
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
 
         then:
         def selectedLine = jobShowPage.waitForElementVisible(By.xpath("//div[contains(@class, 'execution-log_gutter-entry--selected')]"))
