@@ -213,7 +213,7 @@ class DbStorageService implements NamespacedStorage{
         if (!storage1) {
             throw StorageException.deleteException(path, "Not found")
         }
-        storageDataProvider.delete(storage1.getId())
+        storageDataProvider.delete(storage1)
         return true
     }
 
@@ -238,7 +238,7 @@ class DbStorageService implements NamespacedStorage{
     protected RundeckStorage saveStorage(RundeckStorage storage, ResourceMeta content,String namespace, Path path, String event) {
         def id = storage?.id
         def retry = true
-        RundeckStorage saved=null;
+        RundeckStorage saved=null
         def data = content.getInputStream().bytes
         def saveStorage={
             try {
@@ -254,7 +254,7 @@ class DbStorageService implements NamespacedStorage{
                 storageBuilder.setData( data)
                 try {
                     if (id) {
-                        storageDataProvider.update(id, storageBuilder, content.meta)
+                        storageDataProvider.update(storage, storageBuilder, content.meta)
 
                     } else {
                         id = storageDataProvider.create(storageBuilder)
@@ -269,7 +269,7 @@ class DbStorageService implements NamespacedStorage{
                 }
 
                 retry = false
-                return true;
+                return true
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 if (!retry) {
                     throw new StorageException("Failed to save content at path ${path}: content was modified", e,
@@ -280,7 +280,7 @@ class DbStorageService implements NamespacedStorage{
                     Thread.sleep(1000)
                 }
             }
-            return false;
+            return false
         }
         try{
             if(!saveStorage()){

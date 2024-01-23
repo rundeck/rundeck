@@ -1,13 +1,11 @@
 package org.rundeck.app.data.providers.v1.storage;
 
-import org.rundeck.app.data.model.v1.page.Pageable;
 import org.rundeck.app.data.model.v1.storage.RundeckStorage;
 import org.rundeck.app.data.providers.v1.DataProvider;
 import org.rundeck.spi.data.DataAccessException;
 import org.rundeck.storage.api.Path;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -39,18 +37,18 @@ public interface StorageDataProvider extends DataProvider {
      *
      * @param metadata RundeckStorage metadata
      * @param data RundeckStorage attributes
-     * @param id id
+     * @param storage RundeckStorage base data
      * @throws DataAccessException on error
      */
-    void update(final Serializable id, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException;
+    void update(final RundeckStorage storage, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException;
 
     /**
      * Removes a RundeckStorage
      *
-     * @param id of the RundeckStorage
+     * @param storage RundeckStorage data
      * @throws DataAccessException on error
      */
-    void delete(final Serializable id) throws DataAccessException;
+    void delete(final RundeckStorage storage) throws DataAccessException;
 
     /**
      * Finds a RundeckStorage based on namespace, directory and name
@@ -75,9 +73,7 @@ public interface StorageDataProvider extends DataProvider {
      * Checks if a Rundeck Storage exists with a given path, namespace, name and directory
      *
      * @param ns, namespace
-     * @param path
-     * @param name
-     * @param dir
+     * @param path Path for storage
      * @return true if a RundeckStorage exists, otherwise false
      */
     boolean hasPath(final String ns, final Path path);
@@ -86,7 +82,7 @@ public interface StorageDataProvider extends DataProvider {
      * Checks if a Rundeck Storage exists in a given directory path
      *
      * @param ns, namespace
-     * @param path
+     * @param path Path for storage
      * @return true if a RundeckStorage exists, otherwise false
      */
     boolean hasDirectory(final String ns, final Path path);
@@ -95,7 +91,7 @@ public interface StorageDataProvider extends DataProvider {
      * Finds all RundeckStorages in a directory
      *
      * @param ns, namespace
-     * @param path
+     * @param path Path for storage
      * @return List of RundeckStorages
      */
     List<RundeckStorage> listDirectory(String ns, Path path);
@@ -104,7 +100,7 @@ public interface StorageDataProvider extends DataProvider {
      * Finds all RundeckStorages in a directory subdirectories
      *
      * @param ns, namespace
-     * @param path
+     * @param path Path for storage
      * @return List of RundeckStorages
      */
     List<RundeckStorage> listDirectorySubdirs(final String ns, final Path path);
