@@ -400,9 +400,12 @@ export default defineComponent({
       }
     },
     loadPluginData(data: any) {
+      console.log('loadPluginData', data)
+      console.log('props', data.props)
       this.props = data.props
 
             this.props.forEach((prop: any) => {
+              console.log('prop', prop)
                 if (data.dynamicProps && data.dynamicProps[prop.name]) {
                     prop.allowed = data.dynamicProps[prop.name]
                 }

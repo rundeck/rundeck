@@ -149,27 +149,31 @@
                       <div class="tab-pane" id="node_settings">
 
                           %{--updated UI--}%
-                          <g:form action="saveProjectNodeSources" method="post" useToken="true" class="form">
+%{--                          <g:form action="saveProjectNodeSources" method="post" useToken="true" class="form">--}%
 
 
-                                  <g:hiddenField name="project" value="${project}"/>
-                                  <%--Render project configuration settings for 'resourceModelSource'--%>
-                                  <g:render template="projectConfigurableForm"
-                                            model="${[extraConfigSet: extraConfig?.values(),
-                                                      category      : 'resourceModelSource',
-                                                      categoryPrefix: 'extra.category.resourceModelSource.',
+%{--                                  <g:hiddenField name="project" value="${project}"/>--}%
+%{--                                  <%--Render project configuration settings for 'resourceModelSource'--%>--}%
+%{--                                  <g:render template="projectConfigurableForm"--}%
+%{--                                            model="${[extraConfigSet: extraConfig?.values(),--}%
+%{--                                                      category      : 'resourceModelSource',--}%
+%{--                                                      categoryPrefix: 'extra.category.resourceModelSource.',--}%
 
-                                                      helpCode      : 'project.configuration.extra.category.resourceModelSource.description'
-                                            ]}"/>
-
-
+%{--                                                      helpCode      : 'project.configuration.extra.category.resourceModelSource.description'--}%
+%{--                                            ]}"/>--}%
 
 
-                              <div class="card-footer">
+%{--                              <div class="card-footer">--}%
 
-                                <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>
-                              </div>
-                          </g:form>
+%{--                                <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>--}%
+%{--                              </div>--}%
+%{--                          </g:form>--}%
+                        <div class="project-plugin-config-vue">
+                          <project-configurable-form
+                          :category="'resourceModelSource'"
+                          >
+                          </project-configurable-form>
+                        </div>
 
                       </div>
 

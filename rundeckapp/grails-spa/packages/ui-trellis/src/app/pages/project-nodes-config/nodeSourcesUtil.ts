@@ -37,3 +37,21 @@ export async function getProjectNodeSources(): Promise<NodeSource[]> {
     return resp.parsedBody as NodeSource[];
   }
 }
+
+export async function getProjectConfigurable(project: string, category: string) {
+  const resp = await client.sendRequest({
+    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+    pathTemplate: "/project/" +project + "/configurable",
+    method: "GET",
+    queryParameters: {
+        category: category,
+        project: project
+    }
+  });
+
+  if (resp.status === 200) {
+    return {success: true, response: resp.parsedBody};
+  } else {
+    throw {success: false, message: resp.parsedBody.message};
+  }
+}

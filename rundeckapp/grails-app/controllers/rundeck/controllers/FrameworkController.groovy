@@ -152,6 +152,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
         saveProjectPluginsAjax   : 'POST',
+        getProjectConfigurable   : 'GET',
     ]
 
     def index = {
@@ -1725,6 +1726,46 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 parseExceptions   : parseExceptions,
                 writeableSources  : writeableModelSources,
         ]
+    }
+
+    def getProjectConfigurable() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        String category = params.category as String
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+                AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties,
+                category
+        )
+        def propertyConfig =[]
+        for (entry in extraConfig) {
+            propertyConfig.add([
+                    name: entry.key,
+                    properties: entry.value["propertyList"],
+                    propertiesMapping: entry.value["mapping"],
+                    values: entry.value["values"],
+            ])
+        }
+
+        respond(
+                formats: ['json'],
+                [
+                    project                  : project,
+                    projectConfigurable      : propertyConfig
+                ]
+        )
     }
 
     def saveProjectNodeSources() {
