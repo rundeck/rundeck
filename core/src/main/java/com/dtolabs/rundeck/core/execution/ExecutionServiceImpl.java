@@ -132,7 +132,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         final NodeStepExecutor interpreter;
         try {
             interpreter =
-                    getExecutionProviders().getNodeStepExecutorForItem(item, context.getFrameworkProject());
+                    getExecutionProviders().getNodeStepExecutorForItem(item, context, node);
         } catch (ExecutionServiceException e) {
             throw new NodeStepException(e, ServiceFailureReason.ServiceFailure, node.getNodename());
         }

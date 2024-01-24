@@ -53,7 +53,7 @@ public class BaseFrameworkExecutionProviders
     }
 
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, final String project)
+    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, ExecutionContext context, INodeEntry node)
             throws ExecutionServiceException
     {
         return executionServices.getNodeStepExecutorService().getExecutorForExecutionItem(item);
