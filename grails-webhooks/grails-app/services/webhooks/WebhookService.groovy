@@ -185,10 +185,11 @@ class WebhookService {
         if(saveWebhookRequest.id) {
             hook = webhookDataProvider.getWebhookByUuid(saveWebhookRequest.uuid)
             if (!hook) return [err: "Webhook not found"]
+
+            shouldUpdate = true
             if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
                     rundeckAuthTokenManagerService.updateAuthRoles(authContext, hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))
-                    shouldUpdate = true
                     validateNulls(hook, saveWebhookRequest)
                 } catch (Exception e) {
                     return [err: "Failed to update Auth Token roles: "+e.message]
