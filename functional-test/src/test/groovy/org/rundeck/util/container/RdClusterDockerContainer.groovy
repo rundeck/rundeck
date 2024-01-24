@@ -33,7 +33,7 @@ class RdClusterDockerContainer extends DockerComposeContainer<RdClusterDockerCon
         withRemoveImages(RemoveImages.ALL)
         waitingFor(DEFAULT_SERVICES_TO_EXPOSE,
                 Wait.forLogMessage(".*Grails application running.*", 1)
-                        .withStartupTimeout(Duration.ofMinutes(5)))
+                        .withStartupTimeout(Duration.ofMinutes(10)))
     }
 
     @Override
