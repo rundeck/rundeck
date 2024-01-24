@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
+import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
@@ -13,6 +14,9 @@ import org.rundeck.util.container.RdClient
 import spock.lang.Shared
 import spock.lang.Stepwise
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
@@ -845,18 +849,6 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
-        Object projectJsonMap = [
-                "name": projectName.toString(),
-                "description": "test-job-run-later",
-                "config": [
-                        "test.property": "test value",
-                        "project.execution.history.cleanup.enabled": "true",
-                        "project.execution.history.cleanup.retention.days": "1",
-                        "project.execution.history.cleanup.batch": "500",
-                        "project.execution.history.cleanup.retention.minimum": "0",
-                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
-                ]
-        ]
 
         def xmlJob = (String stepArgs) -> {
             return "<joblist>\n" +
@@ -965,6 +957,150 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
+    def "test-job-run-steps.sh"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>test job</name>\n" +
+                    "      <group>api-test/job-run-steps</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "         <command>\n" +
+                    "        <scriptargs>\${option.opt2}</scriptargs>\n" +
+                    "        <script><![CDATA[#!/bin/bash\n" +
+                    "\n" +
+                    "echo \"option opt1: \$RD_OPTION_OPT1\"\n" +
+                    "echo \"option opt1: @option.opt1@\"\n" +
+                    "echo \"node: @node.name@\"\n" +
+                    "echo \"option opt2: \$1\"]]></script>\n" +
+                    "      </command>\n" +
+                    "         <command>\n" +
+                    "        <scriptargs>\${option.opt2}</scriptargs>\n" +
+                    "        <script><![CDATA[#!/bin/bash\n" +
+                    "\n" +
+                    "echo \"this is script 2, opt2 is \$RD_OPTION_OPT2\"]]></script>\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='secondary job' group='api-test/job-run-steps'>\n" +
+                    "          <arg line='-opt1 asdf -opt2 asdf2' />\n" +
+                    "        </jobref>\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <scriptfile>/home/darwis/Desktop/script1.txt</scriptfile>\n" +
+                    "        <scriptargs />\n" +
+                    "      </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "   <job>\n" +
+                    "      <name>secondary job</name>\n" +
+                    "      <group>api-test/job-run-steps</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when: "TEST: job/id/run should succeed"
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+
+        def optionA = 'a'
+        Object optionsToMap = [
+                "options": [
+                    opt2: optionA
+                ]
+        ]
+
+        def runResponse = JobUtils.executeJobWithOptions(jobId, client, optionsToMap)
+        assert runResponse.successful
+
+        Execution execId = mapper.readValue(runResponse.body().string(), Execution.class)
+
+        Execution jobExecStatusAfterSuccess = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId.id as String,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        )
+
+        then:
+        jobExecStatusAfterSuccess.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "TEST: execution output"
+        def system = doGet("/system/info")
+        SystemInfo systemInfo = mapper.readValue(system.body().string(), SystemInfo.class)
+
+        def expectedOutputContent = "asd\n" +
+                "option opt1: testvalue\n" +
+                "option opt1: testvalue\n" +
+                "node: ${systemInfo.system.rundeck.node}\n" +
+                "option opt2: a\n" +
+                "this is script 2, opt2 is a\n" +
+                "asd\n" +
+                "this is script 1, opt1 is testvalue"
+
+        File tempFile = File.createTempFile("temp", ".txt")
+        writeFile(expectedOutputContent, tempFile)
+
+        List<String> expectedContent = readFile(Paths.get(tempFile.toString()))
+        assert expectedOutputContent.size() > 0
+
+        def execOutput = client.doGetAcceptAll("/execution/${execId.id}/output.text")
+        def execOutputString = execOutput.body().string()
+        String[] lines = execOutputString.split("\n");
+        List<String> outputContent = new ArrayList<>(Arrays.asList(lines))
+
+        then:
+        Arrays.equals(expectedContent.toArray(), outputContent.toArray())
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
@@ -1000,6 +1136,22 @@ class JobExecutionSpec extends BaseContainer {
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
         return client.doPost("/projects", projectJsonMap)
+    }
+
+    def readFile(final Path filePath){
+        try{
+            return Files.readAllLines(filePath)
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+    }
+
+    def writeFile(String fileContent, final File file){
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(fileContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
