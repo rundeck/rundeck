@@ -13,10 +13,12 @@ COPY --chown=rundeck:root remco /etc/remco
 COPY --chown=rundeck:root lib docker-lib
 COPY --chown=rundeck:root etc etc
 
-RUN chmod -R 0775 etc
+RUN chmod -R 0775 etc && \
+    mkdir -p /home/rundeck/var/logs && \
+    chmod -R 0775 /home/rundeck/var/logs
 
 VOLUME ["/home/rundeck/server/data"]
-
+VOLUME /home/rundeck/var/logs
 
 EXPOSE 4440
 ENTRYPOINT [ "/tini", "--", "docker-lib/entry.sh" ]
