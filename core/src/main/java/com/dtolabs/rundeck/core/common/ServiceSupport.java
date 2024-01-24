@@ -135,8 +135,8 @@ public class ServiceSupport implements IFrameworkServices {
         return executionServices.getNodeStepExecutorService();
     }
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, final String project) throws ExecutionServiceException {
-        return executionProviders.getNodeStepExecutorForItem(item, project);
+    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, ExecutionContext context, INodeEntry node) throws ExecutionServiceException {
+        return executionProviders.getNodeStepExecutorForItem(item, context,node);
     }
     @Override
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
