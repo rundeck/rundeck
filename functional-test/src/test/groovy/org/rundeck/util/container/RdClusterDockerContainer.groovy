@@ -25,15 +25,14 @@ class RdClusterDockerContainer extends DockerComposeContainer<RdClusterDockerCon
     RdClusterDockerContainer(URI dockerFileLocation) {
         super(new File(dockerFileLocation))
         withExposedService(DEFAULT_SERVICES_TO_EXPOSE, DEFAULT_PORT,
-                Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(10)))
+                Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(15)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withLogConsumer(DEFAULT_SERVICES_TO_EXPOSE, new Slf4jLogConsumer(log))
-        withRemoveVolumes(true)
-        withRemoveImages(RemoveImages.ALL)
         waitingFor(DEFAULT_SERVICES_TO_EXPOSE,
-                Wait.forLogMessage(".*Grails application running.*", 1)
-                        .withStartupTimeout(Duration.ofMinutes(10)))
+                Wait.forHttp("/api/14/system/info")
+                        .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
+                        .withStartupTimeout(Duration.ofMinutes(15)))
     }
 
     @Override
