@@ -225,7 +225,16 @@ commands:
 #### Job Definitions ####
 
 # Default job config
-job-defaults: &job-defaults
+job-defaults-java17: &job-defaults-java17
+  # Using an absolute path here prevents issues with bash interpolations.
+  working_directory: /home/circleci/workspace
+  environment:
+    CIRCLE_PIPELINE_NUM: << pipeline.number >>
+    GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
+    JAVA_OPTS: -XX:MaxRAMPercentage=80.0
+    JAVA_HOME: /usr/lib/jvm/zulu17
+
+job-defaults-java11: &job-defaults-java11
   # Using an absolute path here prevents issues with bash interpolations.
   working_directory: /home/circleci/workspace
   environment:
@@ -238,7 +247,7 @@ jobs:
 
   # Build rundeck War
   build-rundeck:
-    <<: *job-defaults
+    <<: *job-defaults-java11
     executor:
       name: docker-builder
       resource_class: large
@@ -279,7 +288,7 @@ jobs:
 
   # Run Gradle Tests
   test-gradle:
-    <<: *job-defaults
+    <<: *job-defaults-java11
     executor:
       name: docker-builder
     steps:
@@ -297,7 +306,7 @@ jobs:
 
   # Run twistlock scan
   twistlock-scan-image:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     parameters:
@@ -321,7 +330,7 @@ jobs:
 
   #Openapi tests
   test-openapi:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
     steps:
@@ -347,7 +356,7 @@ jobs:
 
   # Publish Docker Images
   docker-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -367,7 +376,7 @@ jobs:
 
   # Publish Maven Packages to sonatype
   maven-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -382,9 +391,41 @@ jobs:
           step-name: Publish to Sonatype
           command: packaging_publish_maven
 
+  test-gradle-functional:
+    <<: *job-defaults-java11
+    executor:
+      name: machine-builder
+      docker_layer_caching: true
+      resource_class: medium
+    parameters:
+      test-image:
+        description: Test image tag
+        default: "rundeck/testdeck"
+        type: string
+      gradle-task:
+        type: string
+    steps:
+      - checkout
+      - install-build-dependencies
+      - restore-build-cache
+      - attach_workspace:
+          at: ~/workspace
+      - run-build-step:
+          step-name: Pull images
+          command: rundeck_pull_image
+      - run-build-step:
+          step-name: Runs gradle test task << parameters.gradle-task >>
+          command: |
+            TEST_IMAGE=<< parameters.test-image >>
+            GRADLE_TASK=<< parameters.gradle-task >>
+            rundeck_gradle_functional_tests
+      - collect-gradle-tests
+      - store_artifacts:
+          path: ~/workspace/functional-test/build/test-results/images
+
   # Publish all packages to packagecloud
   packaging-publish:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -420,7 +461,7 @@ jobs:
 
   # Test packaging
   packaging-test:
-    <<: *job-defaults
+    <<: *job-defaults-java11
     executor:
       name: docker-builder
 
@@ -454,7 +495,7 @@ jobs:
 
   # Run Testdeck job on docker executor.
   test-docker:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: docker-builder
 
@@ -478,7 +519,7 @@ jobs:
 
 
   test-machine:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -507,7 +548,7 @@ jobs:
 
   # Run Testdeck job on machine executor.
   testdeck:
-    <<: *job-defaults
+    <<: *job-defaults-java17
     executor:
       name: machine-builder
       docker_layer_caching: true
@@ -553,39 +594,6 @@ jobs:
           destination: images
       - store_test_results:
           path: << parameters.workdir >>/test_out
-
-  test-gradle-functional:
-    <<: *job-defaults
-    executor:
-      name: machine-builder
-      docker_layer_caching: true
-      resource_class: medium
-    parameters:
-      test-image:
-        description: Test image tag
-        default: "rundeck/testdeck"
-        type: string
-      gradle-task:
-        type: string
-    steps:
-      - checkout
-      - install-build-dependencies
-      - restore-build-cache
-      - attach_workspace:
-          at: ~/workspace
-      - run-build-step:
-          step-name: Pull images
-          command: rundeck_pull_image
-      - run-build-step:
-          step-name: Runs gradle test task << parameters.gradle-task >>
-          command: |
-            TEST_IMAGE=<< parameters.test-image >>
-            GRADLE_TASK=<< parameters.gradle-task >>
-            rundeck_gradle_functional_tests
-      - collect-gradle-tests
-      - store_artifacts:
-          path: ~/workspace/functional-test/build/test-results/images
-
 
 
 #### WORKFLOWS ####

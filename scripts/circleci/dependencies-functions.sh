@@ -52,7 +52,7 @@ dependencies_testdeck_setup() {
     sudo apt-get update
     sudo apt-get -y --no-install-recommends install \
         xmlstarlet \
-        openjdk-11-jdk-headless \
+        openjdk-17-jdk-headless \
         file \
         dpkg \
         jq
