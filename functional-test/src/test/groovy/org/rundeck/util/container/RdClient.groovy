@@ -12,6 +12,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 @CompileStatic
@@ -30,6 +31,9 @@ class RdClient {
         new RdClient(
                 baseUrl,
                 new OkHttpClient.Builder().
+                        connectTimeout(30, TimeUnit.SECONDS).
+                        writeTimeout(30, TimeUnit.SECONDS).
+                        readTimeout(60, TimeUnit.SECONDS).
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
                         build()
         )
