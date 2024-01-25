@@ -241,12 +241,17 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
 
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         def token = projectService.exportProjectToInstanceAsync(
-            project1,
-            framework,
-            authorizing.authContext.username,
-            archiveParams,
-            authorizing.authContext
+                project1,
+                framework,
+                authorizing.authContext.username,
+                options,
+                archiveParams.targetproject,
+                archiveParams.apitoken,
+                archiveParams.url,
+                archiveParams.preserveuuid,
+                authorizing.authContext
         )
         return redirect(action: 'exportWait',
                         params: [
