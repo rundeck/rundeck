@@ -1101,6 +1101,88 @@ class JobExecutionSpec extends BaseContainer {
         Arrays.equals(expectedContent.toArray(), outputContent.toArray())
     }
 
+    def "test-job-run-webhook.sh"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+        def rundeckUrl = client.baseUrl
+        def hostUrl = rundeckUrl.substring(0, rundeckUrl.length() - 5)
+        def randomPort = new Random().nextInt(8888 - 1000 + 1) + 1000
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>webhook job</name>\n" +
+                    "      <group>api-test/job-run-webhook</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${projectName}</project>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "\n" +
+                    "      <notification>\n" +
+                    "        <onsuccess>\n" +
+                    "        <webhook urls=\"${hostUrl}:${randomPort}/test?id=\${execution.id}&amp;status=\${execution.status}\"/>\n" +
+                    "        </onsuccess>\n" +
+                    "      </notification>\n" +
+                    "\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+
+        when:
+//        def process = "echo -ne 'HTTP/1.1 200 OK\\r\\n\\r\\nOK.\\r\\n\' | nc -l -4 -w 30 -p ${randomPort} > /home/darwis/Desktop/output.out".execute()
+        def echo = "echo 'asd' > spock.output".execute(null, new File("/tmp"))
+        echo.waitFor()
+
+        then:
+        Files.exists(Paths.get("/tmp/spock.output"))
+
+//        when:
+//        CreateJobResponse jobCreatedResponse = mapper.readValue(
+//                created.body().string(),
+//                CreateJobResponse.class
+//        )
+//
+//        def jobId = jobCreatedResponse.succeeded[0]?.id
+//        def optionA = 'a'
+//        Object optionsToMap = [
+//                "options": [
+//                        opt2: optionA
+//                ]
+//        ]
+//        def runResponse = JobUtils.executeJobWithOptions(jobId, client, optionsToMap)
+//        assert runResponse.successful
+//
+//        then:
+//        true
+//
+//        cleanup:
+//        process.waitForOrKill(WaitingTime.MODERATE.milliSeconds)
+
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
