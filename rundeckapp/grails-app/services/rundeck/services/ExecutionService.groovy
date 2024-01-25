@@ -301,7 +301,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def renderBulkExecutionDeleteResult(request, response, result) {
         def respFormat = 'json'
 
-        if(featureService.featurePresent(Features.LEGACY_XML, false)) {
+        if(featureService.featurePresent(Features.LEGACY_XML)) {
              respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
         }
         def total = result.successTotal + result.failures.size()
