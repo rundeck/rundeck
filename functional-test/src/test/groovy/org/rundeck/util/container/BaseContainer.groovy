@@ -36,6 +36,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                     RdClient clientWithToken(String token) {
                         return RdClient.create(System.getenv("TEST_RUNDECK_URL"), token)
                     }
+
+                    @Override
+                    RdClient getClusterClient() {
+                        return RdClient.create("http://localhost:4440", "admintoken")
+                    }
                 }
             }
         } else if (DEFAULT_DOCKERFILE_LOCATION != null && !DEFAULT_DOCKERFILE_LOCATION.isEmpty() && CLIENT_PROVIDER == null && DEFAULT_CLUSTER_PATH == null){
@@ -95,6 +100,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     RdClient _client
+    RdClient _clientSecond
     @Override
     RdClient getClient() {
         if (null == _client) {
@@ -106,6 +112,11 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     RdClient createClient() {
         return clientProvider.getClient()
     }
+
+    RdClient createSecondClient() {
+        return clientProvider.getClusterClient()
+    }
+
     Map<String, RdClient> tokenProviders = [:]
 
     @Override
@@ -114,6 +125,14 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             tokenProviders[token] = clientProvider.clientWithToken(token)
         }
         return tokenProviders[token]
+    }
+
+    @Override
+    RdClient getClusterClient() {
+        if (null == _clientSecond) {
+            _clientSecond = createSecondClient()
+        }
+        return _clientSecond
     }
 
     void startEnvironment() {
@@ -143,6 +162,10 @@ abstract class BaseContainer extends Specification implements ClientProvider {
 
     <T> T get(String path, Class<T> clazz) {
         return client.get(path, clazz)
+    }
+
+    <T> T getSecondCluster(String path, Class<T> clazz) {
+        return clusterClient.get(path, clazz)
     }
 
     Response doPost(String path, Object body = null) {

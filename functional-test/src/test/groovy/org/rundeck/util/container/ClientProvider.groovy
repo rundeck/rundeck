@@ -4,4 +4,6 @@ interface ClientProvider {
     RdClient getClient()
 
     RdClient clientWithToken(String token)
+
+    RdClient getClusterClient()
 }

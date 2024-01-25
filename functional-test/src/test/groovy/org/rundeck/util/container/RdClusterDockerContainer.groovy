@@ -17,6 +17,7 @@ import java.time.Duration
 class RdClusterDockerContainer extends DockerComposeContainer<RdClusterDockerContainer> implements ClientProvider {
 
     public static final String DEFAULT_SERVICES_TO_EXPOSE = System.getenv("TEST_RUNDECK_CONTAINERS_SERVICE") ?: 'rundeck-1'
+    public static final String DEFAULT_SERVICES_TO_EXPOSE_SECOND = System.getenv("TEST_RUNDECK_CONTAINERS_SERVICE_SECOND") ?: 'rundeck-2'
     private static final String STATIC_TOKEN = System.getenv("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
     private static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
     public static final String RUNDECK_IMAGE = System.getenv("TEST_IMAGE") ?: System.getProperty("TEST_IMAGE")
@@ -26,10 +27,17 @@ class RdClusterDockerContainer extends DockerComposeContainer<RdClusterDockerCon
         super(new File(dockerFileLocation))
         withExposedService(DEFAULT_SERVICES_TO_EXPOSE, DEFAULT_PORT,
                 Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(15)))
+        withExposedService(DEFAULT_SERVICES_TO_EXPOSE_SECOND, DEFAULT_PORT,
+                Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(15)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withLogConsumer(DEFAULT_SERVICES_TO_EXPOSE, new Slf4jLogConsumer(log))
+        withLogConsumer(DEFAULT_SERVICES_TO_EXPOSE_SECOND, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICES_TO_EXPOSE,
+                Wait.forHttp("/api/14/system/info")
+                        .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
+                        .withStartupTimeout(Duration.ofMinutes(15)))
+        waitingFor(DEFAULT_SERVICES_TO_EXPOSE_SECOND,
                 Wait.forHttp("/api/14/system/info")
                         .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
                         .withStartupTimeout(Duration.ofMinutes(15)))
@@ -46,5 +54,9 @@ class RdClusterDockerContainer extends DockerComposeContainer<RdClusterDockerCon
 
     RdClient clientWithToken(String token) {
         RdClient.create("http://${getServiceHost(DEFAULT_SERVICES_TO_EXPOSE, DEFAULT_PORT)}:${getServicePort(DEFAULT_SERVICES_TO_EXPOSE, DEFAULT_PORT)}", token)
+    }
+
+    RdClient getClusterClient() {
+        RdClient.create("http://${getServiceHost(DEFAULT_SERVICES_TO_EXPOSE_SECOND, DEFAULT_PORT)}:${getServicePort(DEFAULT_SERVICES_TO_EXPOSE_SECOND, DEFAULT_PORT)}", STATIC_TOKEN)
     }
 }
