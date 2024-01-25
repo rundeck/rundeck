@@ -211,10 +211,10 @@
             />
             <label for="inputdate_">
               {{ $t("form.option.date.label") }}
+              <span class="text-strong">
+                {{ $t("form.option.date.description") }}
+              </span>
             </label>
-            <span class="text-strong">
-              {{ $t("form.option.date.description") }}
-            </span>
           </div>
           <div v-if="option.isDate">
             <label>
@@ -228,7 +228,7 @@
                 placeholder="MM/DD/YYYY hh:mm a"
               />
             </label>
-            <span class="text-strong">
+            <span class="help-block">
               <VMarkdownView
                 class=" markdown-body"
                 mode=""
@@ -247,11 +247,11 @@
             />
             <label for="sectrue_">
               {{ $t("form.option.secureExposed.true.label") }}
-              <span class="text-danger small">&dagger;</span>
+              <span class="text-danger small"> &dagger; </span>
+              <span class="text-strong">
+                {{ $t("form.option.secureExposed.true.description") }}
+              </span>
             </label>
-            <span class="text-strong">
-              {{ $t("form.option.secureExposed.true.description") }}
-            </span>
           </div>
 
           <div class="radio">
@@ -264,11 +264,11 @@
             />
             <label for="secexpfalse_">
               {{ $t("form.option.secureExposed.false.label") }}
-              <span class="text-danger small">&dagger;</span>
+              <span class="text-danger small"> &dagger; </span>
+              <span class="text-strong">
+                {{ $t("form.option.secureExposed.false.description") }}
+              </span>
             </label>
-            <span class="text-strong">
-              {{ $t("form.option.secureExposed.false.description") }}
-            </span>
           </div>
           <div class="help-block">
             <span class="text-danger small">&dagger;</span>
@@ -621,8 +621,8 @@
                 <input type="radio" v-model="enforcedType" value="none" id="enforcedType_none"/>
                 <label for="enforcedType_none">
                   {{ $t('none') }}
+                  <span class="text-strong">{{ $t('form.option.enforcedType.none.label') }}</span>
                 </label>
-                <span class="text-strong">{{ $t('form.option.enforcedType.none.label') }}</span>
               </div>
               <div class="radio">
                 <input type="radio" v-model="enforcedType" value="enforced"
@@ -849,17 +849,11 @@
           </div>
           <div>
             {{ $t("commandline.arguments.prompt") }}
-            <code
-              >$<!-- -->
-              {option.{{ option.name }}}</code
-            >
+            <code>${option.{{ option.name }}}</code>
           </div>
           <div>
             {{ $t("commandline.arguments.prompt.unquoted") }}
-            <code
-              >$<!-- -->
-              {unquotedoption.{{ option.name }}}</code
-            >
+            <code>${unquotedoption.{{ option.name }}}</code>
             {{ $t("commandline.arguments.prompt.unquoted.warning") }}
           </div>
           <div>
@@ -890,10 +884,7 @@
           </div>
           <div>
             {{ $t("commandline.arguments.prompt") }}
-            <code
-              >$<!-- -->
-              {file.{{ option.name }}}</code
-            >
+            <code>${file.{{ option.name }}}</code>
           </div>
           <div>
             {{ $t("script.content.prompt") }}
@@ -909,10 +900,7 @@
           </div>
           <div>
             {{ $t("commandline.arguments.prompt") }}
-            <code
-              >$<!-- -->
-              {file.{{ option.name }}.fileName}</code
-            >
+            <code>${file.{{ option.name }}.fileName}</code>
           </div>
           <div>
             {{ $t("script.content.prompt") }}
@@ -926,10 +914,7 @@
           </div>
           <div>
             {{ $t("commandline.arguments.prompt") }}
-            <code
-              >$<!-- -->
-              {file.{{ option.name }}.sha}</code
-            >
+            <code>${file.{{ option.name }}.sha}</code>
           </div>
           <div>
             {{ $t("script.content.prompt") }}
