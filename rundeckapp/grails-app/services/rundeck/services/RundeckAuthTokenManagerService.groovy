@@ -1,13 +1,13 @@
 package rundeck.services
 
-import org.rundeck.app.data.model.v1.AuthTokenType
 import org.rundeck.app.util.spi.AuthTokenManager
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import rundeck.data.util.AuthenticationTokenUtils
 
 @Transactional

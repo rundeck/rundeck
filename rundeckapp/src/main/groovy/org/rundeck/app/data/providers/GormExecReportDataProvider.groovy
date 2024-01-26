@@ -9,7 +9,7 @@ import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
 import rundeck.data.report.SaveReportResponseImpl;
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.MessageSource

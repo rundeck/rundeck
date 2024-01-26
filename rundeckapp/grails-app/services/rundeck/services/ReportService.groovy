@@ -27,7 +27,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.query.RdExecQuery
 import rundeck.data.report.SaveReportRequestImpl
 import rundeck.data.report.SaveReportResponseImpl
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution

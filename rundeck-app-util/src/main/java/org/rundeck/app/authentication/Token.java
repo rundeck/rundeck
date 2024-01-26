@@ -1,7 +1,6 @@
 package org.rundeck.app.authentication;
 
-import org.rundeck.app.data.model.v1.AuthTokenType;
-import org.rundeck.app.data.model.v1.AuthenticationToken;
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType;
 
 import java.io.Serializable;
 import java.security.Principal;

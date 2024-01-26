@@ -1,7 +1,7 @@
 package rundeck.data.util
 
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 
 import java.time.Clock
 import java.util.stream.Collectors

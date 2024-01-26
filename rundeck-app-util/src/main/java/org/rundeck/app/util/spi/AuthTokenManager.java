@@ -16,9 +16,9 @@
 package org.rundeck.app.util.spi;
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
-import org.rundeck.app.data.model.v1.AuthTokenType;
-import org.rundeck.app.data.model.v1.AuthenticationToken;
-import java.util.List;
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType;
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken;
+
 import java.util.Set;
 
 /**

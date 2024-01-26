@@ -18,7 +18,7 @@ package rundeck.services
 
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
-import org.rundeck.app.data.providers.v1.PluginMetaDataProvider
+import org.rundeck.app.data.providers.v1.pluginmeta.PluginMetaDataProvider
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 

@@ -62,7 +62,7 @@ import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.report.SaveReportRequestImpl
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.client.RundeckClient
