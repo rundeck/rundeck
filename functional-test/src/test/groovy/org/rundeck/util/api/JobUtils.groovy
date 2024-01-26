@@ -14,7 +14,7 @@ class JobUtils {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobLaterWithArgs = (
+    static executeJobLaterWithArgsAndRuntime = (
             String jobId,
             RdClient client,
             String args,
