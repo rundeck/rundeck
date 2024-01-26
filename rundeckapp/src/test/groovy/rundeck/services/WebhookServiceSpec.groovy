@@ -39,9 +39,9 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services

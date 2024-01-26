@@ -1,10 +1,10 @@
 package org.rundeck.app.providers
 
 import grails.testing.gorm.DataTest
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.context.MessageSource
@@ -52,7 +52,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
 
         where:
         token       | ownerName  | roles     | type                   | name  | uuid
-        "Token1"    | "user1"    | 'a,b'     | AuthTokenType.WEBHOOK  | null  | UUID.randomUUID().toString()
+        "Token1"    | "user1"    | 'a,b'     | AuthTokenType.WEBHOOK | null | UUID.randomUUID().toString()
         "Token2"    | "user2"    | 'a,b'     | AuthTokenType.WEBHOOK  | 'abc' | UUID.randomUUID().toString()
         "Token3"    | "user3"    | 'd'       | AuthTokenType.WEBHOOK  | 'def' | UUID.randomUUID().toString()
     }
