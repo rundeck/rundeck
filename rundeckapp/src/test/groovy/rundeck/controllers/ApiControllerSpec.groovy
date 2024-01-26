@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.config.RundeckConfigBase
 import org.grails.web.json.JSONArray
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
@@ -32,10 +32,9 @@ import grails.web.mapping.LinkGenerator
 import org.quartz.Scheduler
 import org.quartz.SchedulerMetaData
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.data.model.v1.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.app.authorization.domain.AppAuthorizer
-import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeSystem

@@ -16,12 +16,11 @@
 
 package rundeck
 
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 
 import grails.testing.gorm.DataTest
 import org.apache.commons.codec.digest.DigestUtils
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import rundeck.data.util.AuthenticationTokenUtils
 import spock.lang.Specification
 

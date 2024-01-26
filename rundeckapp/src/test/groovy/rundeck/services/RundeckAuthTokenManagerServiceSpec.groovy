@@ -4,9 +4,11 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.app.data.model.v1.*
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 
 import rundeck.AuthToken
 import rundeck.User
@@ -48,9 +50,9 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             result instanceof AuthenticationToken
         where:
             type <<[
-                AuthTokenType.WEBHOOK,
-                AuthTokenType.USER,
-                AuthTokenType.RUNNER,
+                    AuthTokenType.WEBHOOK,
+                    AuthTokenType.USER,
+                    AuthTokenType.RUNNER,
             ]
     }
 
