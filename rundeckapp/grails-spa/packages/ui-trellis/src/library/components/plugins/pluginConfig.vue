@@ -326,41 +326,51 @@ export default defineComponent({
       return prop.options && prop.options['selectionAccessor'] === 'STORAGE_PATH'
     },
     prepareInputs () {
+      console.log('prepareInputs')
+      debugger
       if (!this.isShowConfigForm) {
         return
       }
       this.inputLoaded=false
+      console.log('prepareInputs 2')
+      console.log('prepareInputs saved props: ',this.inputSavedProps)
 
-      if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
-        for (const i of this.inputSavedProps) {
-          if (typeof this.inputSaved[i] === 'undefined') {
-            this.inputSaved[i] = this.modelValue[i]
-          }
-        }
-      }
+      // if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
+      //   for (const i of this.inputSavedProps) {
+      //     console.log('prepareInputs saved prop: ',i)
+      //       if (typeof this.inputSaved[i] === 'undefined') {
+      //         this.inputSaved[i] = this.modelValue[i]
+      //       }
+      //   }
+      // }
+      console.log('prepareInputs 3')
 
-      const config = this.modelValue.config
+      const config = this.modelValue?.config
 
       const modeCreate = this.isCreateMode
+      console.log('debugger')
+      debugger
 
       // set up defaults and convert Options to array
       this.props.forEach((prop: any) => {
-        if (config[prop.name]) {
+        console.log("top of for each")
+        if (config && config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name]
         }
+        console.log("null check")
         if (modeCreate && !this.inputValues[prop.name] && prop.defaultValue) {
           this.inputValues[prop.name] = prop.defaultValue
         }
-        if (prop.type === 'Options' && typeof this.inputValues[prop.name] === 'string') {
+        if (prop && prop.type === 'Options' && typeof this.inputValues[prop.name] === 'string') {
           // convert to array
           this.inputValues[prop.name] = this.inputValues[prop.name].split(/, */)
-        } else if (prop.type === 'Options' && typeof this.inputValues[prop.name] === 'undefined') {
+        } else if (prop && prop.type === 'Options' && typeof this.inputValues[prop.name] === 'undefined') {
           // convert to array
           this.inputValues[prop.name] = []
-        } else if (prop.type === 'Select' && typeof this.inputValues[prop.name] === 'undefined') {
+        } else if (prop && prop.type === 'Select' && typeof this.inputValues[prop.name] === 'undefined') {
           // select box should use blank string to preselect disabled option
           this.inputValues[prop.name] = ''
-        } else if (prop.type === 'Boolean' && typeof this.inputValues[prop.name] === 'string') {
+        } else if (prop && prop.type === 'Boolean' && typeof this.inputValues[prop.name] === 'string') {
           // boolean should convert to boolean
           this.inputValues[prop.name] = this.inputValues[prop.name]==='true'
         }
