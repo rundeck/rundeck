@@ -2,14 +2,15 @@
   <div>
     <div class="form-horizontal">
         <plugin-config
+            v-if="isConfigSet"
             :mode="'edit'"
-            :serviceName="this.category"
             :show-title="false"
             :show-description="false"
             :use-runner-selector="true"
-            :event-bus="this.rundeckContext.eventBus"
-            :plugin-config="this.pluginConfig"
-            :category="this.category"
+            v-model="testConfig"
+            :event-bus="rundeckContext.eventBus"
+            :plugin-config="pluginConfig"
+            :category="category"
         />
     </div>
   </div>
@@ -38,6 +39,8 @@ export default defineComponent({
       rundeckContext: {} as RundeckContext,
       pluginConfig: {},
       extraConfigSet: {},
+      isConfigSet: false,
+      testConfig: {config: {}}
     };
   },
   props: ['category', 'categoryPrefix', 'helpCode', 'serviceName'],
@@ -48,19 +51,26 @@ export default defineComponent({
         const config = await getProjectConfigurable(window._rundeck.projectName, this.category);
         console.log(config)
         this.extraConfigSet =  config.response["projectConfigurable"] as [ConfigurableItem];
-        const properties = []
+        let properties = []
         this.extraConfigSet.forEach((item: ConfigurableItem) => {
           properties.push(item.properties)
         });
+        let resolvedProps = []
+        properties.forEach((item: any) => {
+          item.forEach((prop: any) => {
+            resolvedProps.push(prop)
+          })
+        })
         console.log("propeties", properties)
-        this.pluginConfig = { type: 'ResourceModelSource', props: properties };
+        this.pluginConfig = { type: 'ResourceModelSource', props: resolvedProps };
+        this.isConfigSet = true;
         console.log("pluginConfig", this.pluginConfig)
       } catch (err) {
         console.error(err);
       }
     }
   },
-  async beforeMount(){
+  async mounted(){
     await this.loadConfig();
   }
 });
