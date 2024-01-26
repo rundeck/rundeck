@@ -4,61 +4,64 @@
       <div class="col-sm-6 col-md-8">
         <ui-socket location="project-favorite" section="home" :socket-data="{projectName: project.name}" />
         <a
-          :href="`/?project=${project.name}`"
-          class="link-hover text-inverse project_list_item_link link-quiet"
-          :id="`project${index}`"
+            :href="`/?project=${project.name}`"
+            class="link-hover text-inverse project_list_item_link link-quiet"
+            :id="`project${index}`"
         >
           <p class="h5">
             {{ project.label ? project.label : project.name }}
           </p>
 
-          <tooltip :text="$t('project.execution.disabled')" data-placement="right" class="h5" v-if="!executionsEnabled">
+          <template v-if="loaded">
+            <tooltip :text="$t('project.execution.disabled')" data-placement="right" class="h5" v-if="!executionsEnabled">
             <span
                 class="text-base text-warning"
                 :data-container="`#project${index}`"
             >
               <i class="glyphicon glyphicon-pause"></i>
             </span>
-          </tooltip>
+            </tooltip>
 
-          <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" :class="{'ml-1': !executionsEnabled}" v-if="!scheduleEnabled">
+            <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" :class="{'ml-1': !executionsEnabled}" v-if="!scheduleEnabled">
             <span
                 class="text-base text-warning"
                 :data-container="`#project${index}`"
             >
               <i class="glyphicon glyphicon-ban-circle"></i>
             </span>
-          </tooltip>
+            </tooltip>
 
-          <span
-            v-if="project.description.length > 0"
-            class="text-secondary text-base"
-            :class="{'ml-1': !scheduleEnabled || !executionsEnabled}"
-          >
+            <span
+                v-if="project.description.length > 0"
+                class="text-secondary text-base"
+                :class="{'ml-1': !scheduleEnabled || !executionsEnabled}"
+            >
             {{ project.description }}
           </span>
+          </template>
         </a>
       </div>
-<!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
-      <div class="col-sm-6 col-md-2 text-center">
-        <a
-          :href="`/project/${project.name}/activity`"
-          class="as-block link-hover link-block-padded text-inverse"
-          :class="{ 'text-secondary': project.execCount < 1 }"
-          data-toggle="popover"
-          data-placement="bottom"
-          data-trigger="hover"
-          data-container="body"
-          data-delay='{"show":0,"hide":200}'
-          data-popover-template-class="popover-wide popover-primary"
-          :bootstrapPopover="true"
-          :bootstrapPopoverContentRef="`#exec_detail_${project}`"
-        >
-          <span
-            class="summary-count"
-            :class="{ 'text-info': project.execCount > 0 }"
+
+        <!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
+        <div class="col-sm-6 col-md-2 text-center">
+          <a
+              :href="`/project/${project.name}/activity`"
+              class="as-block link-hover link-block-padded text-inverse"
+              :class="{ 'text-secondary': project.execCount < 1 }"
+              data-toggle="popover"
+              data-placement="bottom"
+              data-trigger="hover"
+              data-container="body"
+              data-delay='{"show":0,"hide":200}'
+              data-popover-template-class="popover-wide popover-primary"
+              :bootstrapPopover="true"
+              :bootstrapPopoverContentRef="`#exec_detail_${project}`"
           >
-            <span v-if="!project.loaded">...</span>
+          <span
+              class="summary-count"
+              :class="{ 'text-info': project.execCount > 0 }"
+          >
+            <span data-test="activity-loading"  v-if="!project.loaded">...</span>
             <span v-else>
               <span v-if="project.execCount > 0">
                 <span class="text-h3">
@@ -68,63 +71,64 @@
               <span v-if="project.execCount < 1">None</span>
             </span>
           </span>
-        </a>
+          </a>
 
-        <div
-          v-if="project.userCount > 0"
-          :id="`exec_detail_${project}`"
-          style="display: none"
-        >
+          <div
+              v-if="project.userCount > 0"
+              :id="`exec_detail_${project}`"
+              style="display: none"
+          >
           <span v-if="project.execCount > 0">
             {{ project.execCount }}
           </span>
-          <span>
+            <span>
             {{ $tc("Execution", project.execCount) }}
           </span>
-          {{ $t("page.home.duration.in.the.last.day") }}
-          {{ $t("by") }}
-          <span class="text-info">
+            {{ $t("page.home.duration.in.the.last.day") }}
+            {{ $t("by") }}
+            <span class="text-info">
             {{ project.userCount }}
           </span>
-          <span> {{ $tc("user", project.userCount) }}: </span>
-          <span>
+            <span> {{ $tc("user", project.userCount) }}: </span>
+            <span>
             {{ project.userSummary.join(", ") }}
           </span>
-        </div>
+          </div>
 
-        <a
-          v-if="project.failedCount > 0"
-          class="text-warning"
-          :href="`/project/${project.name}/activity?statFilter=fail`"
-        >
+          <a
+              v-if="project.failedCount > 0"
+              class="text-warning"
+              :href="`/project/${project.name}/activity?statFilter=fail`"
+          >
           <span>
             {{ project.failedCount }}{{ $t("page.home.project.executions.0.failed.parenthetical") }}
           </span>
-        </a>
-      </div>
+          </a>
+        </div>
 
-      <div class="col-sm-12 col-md-2 col-last">
-        <HomeActionsMenu :index="index" :project="project" />
-      </div>
+        <div class="col-sm-12 col-md-2 col-last">
+          <p data-test="actions-loading" v-if="!loaded">...</p>
+          <HomeActionsMenu v-else :index="index" :project="project" />
+        </div>
     </div>
   </div>
 
-  <div>
+  <div v-if="loaded">
     <div class="row" v-if="showMessage">
       <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
         <div v-if="showMotd">
           <span
               data-test="motd"
-            v-if="messageMeta.data.readme.motdHTML"
-            v-html="messageMeta.data.readme.motdHTML"
+              v-if="messageMeta.data.readme.motdHTML"
+              v-html="messageMeta.data.readme.motdHTML"
           ></span>
         </div>
         <div v-if="showReadme">
           <div>
             <span
                 data-test="readme"
-              v-if="messageMeta.data.readme.readmeHTML"
-              v-html="messageMeta.data.readme.readmeHTML"
+                v-if="messageMeta.data.readme.readmeHTML"
+                v-html="messageMeta.data.readme.readmeHTML"
             ></span>
           </div>
         </div>
@@ -137,14 +141,14 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, PropType} from "vue";
+import {defineComponent, PropType} from 'vue'
 import UiSocket from "@/library/components/utils/UiSocket.vue";
-import HomeActionsMenu from "./HomeActionsMenu.vue";
-import {ConfigMeta, MessageMeta, Project} from "./types/projectTypes";
+import HomeActionsMenu from "@/app/components/home/HomeActionsMenu.vue";
+import {ConfigMeta, MessageMeta, Project} from "@/app/components/home/types/projectTypes";
 
 export default defineComponent({
-  name: "HomeBrowserItem",
-  components: {HomeActionsMenu, UiSocket },
+  name: "HomeProjectItem",
+  components: {HomeActionsMenu, UiSocket},
   props: {
     project: {
       type: Object as PropType<Project>,
@@ -154,15 +158,19 @@ export default defineComponent({
       type: Number,
       required: true,
     },
+    loaded: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     configSettings(): ConfigMeta {
       const emptyConfig = {name: 'config', data: {}};
-      return this.project.meta.filter(metaObject => metaObject.name === 'config')[0] || emptyConfig;
+      return this.project.meta ? this.project.meta.filter(metaObject => metaObject.name === 'config')[0] : emptyConfig;
     },
     messageMeta(): MessageMeta {
       const emptyMessageMeta = {name: 'message', data: {}};
-      return this.project.meta.filter(metaObject => metaObject.name === 'message')[0] || emptyMessageMeta;
+      return  this.project.meta ? this.project.meta.filter(metaObject => metaObject.name === 'message')[0] : emptyMessageMeta;
     },
     executionsEnabled(): boolean {
       return this.configSettings.data.executionsEnabled || false;
@@ -189,7 +197,7 @@ export default defineComponent({
       return readme && (this.showMotd || this.showReadme);
     }
   }
-});
+})
 </script>
 
 <style scoped lang="scss">

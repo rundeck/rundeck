@@ -6,8 +6,8 @@
             :placeholder="$t('page.home.search.projects.input.placeholder')"
             v-model="search"
             @on-focus="hideResults"
-            @on-enter="handleSearch"
-            @on-blur="handleSearch"
+            @on-enter="handleSearch()"
+            @on-blur="handleSearch()"
         />
         <ui-socket location="table-header" section="home" />
         <p data-test="searchResults" class="alert alert-info" v-if="showSearchResults && loadedProjectNames">
@@ -15,6 +15,11 @@
             {{ $tc('page.home.search.project.title', searchResultsCount) }}
           </span>
         </p>
+        <offset-pagination
+            :pagination="pagination"
+            @change="changePageOffset"
+            :showPrefix="true"
+        ></offset-pagination>
       </div>
 
       <div class="project_list_header">
@@ -36,8 +41,7 @@
           </div>
         </div>
       </div>
-
-      <HomeBrowser :projects="filteredProjects" />
+      <HomeBrowser v-if="searchResultsCount > 0" :key="searchResultsCount" :projects="resultsPage" :allProjects="projects" :loaded="loadedProjectNames" />
     </div>
   </div>
 </template>
@@ -49,13 +53,15 @@ import HomeBrowser from "./HomeBrowser.vue";
 import {Project} from "@/app/components/home/types/projectTypes";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {getRundeckContext} from "@/library";
+import OffsetPagination from "@/library/components/utils/OffsetPagination.vue";
 
 export default defineComponent({
   name: "HomeCardList",
   components: {
     UiSocket,
     HomeSearchBar,
-    HomeBrowser
+    HomeBrowser,
+    OffsetPagination
   },
   props: {
     loadedProjectNames: {
@@ -70,11 +76,17 @@ export default defineComponent({
   data() {
     return {
       search: "",
-      filteredProjects: [],
-      favoriteProjectNames: [],
+      filteredProjects: [] as Project[],
+      favoriteProjectNames: [] as Project[],
+      resultsPage: [] as Project[],
       showSearchResults: false,
       filterFavoritesOnly: false,
-      eventBus: getRundeckContext().eventBus
+      eventBus: getRundeckContext().eventBus,
+      pagination: {
+        offset: 0,
+        max: 30,
+        total: -1
+      }
     }
   },
   computed: {
@@ -90,7 +102,15 @@ export default defineComponent({
     },
   },
   methods: {
-    handleSearch() {
+    // filters the projects based on the search input and if the user has selected to only show favorites
+    // search input can either be a string or a regex, and the search is case-insensitive
+    // updates the pagination to reflect the total number of projects and sets flag to show search results message
+    // if the search input is not empty
+    handleSearch(resetPagination = true) {
+      if (resetPagination) {
+        this.pagination.offset = 0;
+      }
+
       let regex;
       if (this.search.charAt(0) === '/' && this.search.charAt(this.search.length - 1) === '/') {
         regex = new RegExp(this.search.substring(1, this.search.length - 1),'i');
@@ -109,6 +129,11 @@ export default defineComponent({
         });
       }
 
+      this.resultsPage = this.paginateResults(this.filteredProjects);
+
+      // update the pagination to reflect the total number of projects
+      this.pagination.total = this.searchResultsCount;
+
       if (this.search !== "") {
         this.showSearchResults = true;
       }
@@ -116,21 +141,35 @@ export default defineComponent({
     hideResults() {
       this.showSearchResults = false;
     },
+    changePageOffset(offset: any) {
+      this.pagination.offset = offset;
+      this.handleSearch(false);
+    },
+    paginateResults(results = this.filteredProjects): Project[] {
+      const offset = this.pagination.offset;
+      const max = this.pagination.max;
+      return results.slice(offset, offset + max);
+    }
   },
   mounted() {
     this.eventBus.on("home-card-list:toggleFavorites",  ({favsOnly, favoriteProjects}) => {
       this.filterFavoritesOnly = favsOnly;
       this.favoriteProjectNames = favoriteProjects;
       // eventBus might emit before projects are loaded
-      if(this.projects){
+      if(this.projects) {
         this.handleSearch();
       }
     });
   },
   watch: {
-    projects(newVal) {
-      if(newVal.length) {
-        this.handleSearch();
+    projects: {
+      immediate: true,
+      deep: true,
+      handler(newVal) {
+          if(newVal && newVal.length) {
+            this.handleSearch();
+            this.pagination.total = newVal.length;
+          }
       }
     }
   }
@@ -159,5 +198,20 @@ export default defineComponent({
 
 .has_tooltip {
   margin-right: var(--spacing-2);
+}
+
+:deep(.paging_links .pagination) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.paging_links :deep(.pagination)) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.pagination) {
+  display: flex;
+  align-items: center;
 }
 </style>

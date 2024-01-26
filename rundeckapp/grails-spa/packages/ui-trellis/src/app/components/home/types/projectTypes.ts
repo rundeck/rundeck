@@ -63,11 +63,11 @@ type MetaType = AuthzMeta | ConfigMeta | SysModeMeta | ScmExportMeta | ScmImport
 
 interface Project {
     name: string;
-    url: string;
-    description: string;
+    url?: string;
+    description?: string;
     label?: string;
     config?: object;
-    meta: MetaType[];
+    meta?: MetaType[];
     extra?: any;
 }
 

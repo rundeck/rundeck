@@ -1,17 +1,14 @@
 <template>
       <DynamicScroller
-          v-if="projects.length > 0"
         ref="scroller"
         :items="projects"
         :min-item-size="43"
-        key-field="created"
+        key-field="name"
         item-tag="div"
-        page-mode
       >
-
         <template #default="{ item, index, active }">
-          <DynamicScrollerItem v-if="active" :item="item" :active="active" :size-dependecies="[item.description, item.meta]" :index="index">
-            <HomeBrowserItem :project="item" :index="index" />
+          <DynamicScrollerItem :item="item" :index="index" :active="active" :size-dependecies="[item.description, item.meta]">
+            <HomeBrowserItem :project="item" :index="getProjectIndex(item)" :loaded="loaded" />
           </DynamicScrollerItem>
         </template>
       </DynamicScroller>
@@ -32,6 +29,25 @@ export default defineComponent({
       type: Array as PropType<Project[]>,
       required: true,
     },
+    allProjects: {
+      type: Array as PropType<Project[]>,
+      default: () => [] as Project[],
+    },
+    loaded: {
+      type: Boolean,
+      default: false,
+    }
   },
+  methods: {
+    getProjectIndex(project: Project) {
+      if (!this.allProjects) {
+        return this.projects.findIndex((p) => p.name === project.name);
+      }
+      // dynamic scroller loses the reference of the index when the items prop (projects) changes.
+      // so we need to find the index of the project in the allProjects array,
+      // as this array won't be mutated by any action in the view.
+      return this.allProjects.findIndex((p) => p.name === project.name);
+    }
+  }
 });
 </script>

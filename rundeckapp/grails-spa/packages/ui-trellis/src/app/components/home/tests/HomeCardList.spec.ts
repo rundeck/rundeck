@@ -4,7 +4,7 @@ import HomeSearchBar from "../HomeSearchBar.vue";
 
 
 jest.mock('@/library/rundeckService.ts', () => ({
-    getRundeckContext: jest.fn().mockImplementation(() => ({ eventBus: { on: jest.fn() } })),
+    getRundeckContext: jest.fn().mockImplementation(() => ({ eventBus: { on: jest.fn(), emit: jest.fn() } })),
 }));
 
 const createWrapper = (props = {}) => {
@@ -29,9 +29,7 @@ describe('HomeCardList', () => {
     });
 
     it('renders HomeSearchBar and table header when no projects are available', async () => {
-        const wrapper = createWrapper({
-            loadedProjectNames: true
-        });
+        const wrapper = createWrapper();
         await wrapper.vm.$nextTick();
 
         expect(wrapper.findComponent(HomeSearchBar).exists()).toBe(true);
@@ -40,10 +38,12 @@ describe('HomeCardList', () => {
 
     it('renders correct alert info message based on searchedProjectsCount', async () => {
         const wrapper = createWrapper({
-            loadedProjectNames: true, projects: [{ name: 'Project1' }, { name: 'Project2' }]
+            projects: [{ name: 'Project1' }, { name: 'Project2' }],
+            loadedProjectNames: true
         });
 
-        await wrapper.setData({ search: 'gibberish'});
+        // First, search for non-existing project
+        await wrapper.setData({ search: 'gibberish' });
         wrapper.vm.handleSearch();
         await wrapper.vm.$nextTick();
 
@@ -54,7 +54,7 @@ describe('HomeCardList', () => {
         const spanElement = searchResultsElement.find('span');
         expect(spanElement.classes('text-warning')).toBe(true);
 
-
+        // Then, search for an existing project
         await wrapper.setData({ search: 'Project' });
         await wrapper.vm.$nextTick();
 
@@ -97,5 +97,30 @@ describe('HomeCardList', () => {
 
         await wrapper.vm.hideResults();
         expect(wrapper.vm.showSearchResults).toBe(false);
+    });
+
+    it('ensures that resultsPage contains only favorite projects when filterFavoritesOnly and favoriteProjectNames are provided', async () => {
+        const wrapper = createWrapper({
+            loadedProjectNames: true,
+            projects: [
+                { name: 'Project1', label: 'Label1' },
+                { name: 'Project2', label: 'Label2' },
+                { name: 'Project3', label: 'Label3' },
+            ],
+        });
+
+        // Set filterFavoritesOnly and favoriteProjectNames directly
+        await wrapper.setData({
+            filterFavoritesOnly: true,
+            favoriteProjectNames: ['Project1', 'Project2']
+        });
+
+        // Trigger handleSearch
+        await wrapper.vm.handleSearch();
+
+        // Assert that resultsPage contains only favorite projects
+        expect(wrapper.vm.resultsPage).toHaveLength(2);
+        expect(wrapper.vm.resultsPage[0].name).toBe('Project1');
+        expect(wrapper.vm.resultsPage[1].name).toBe('Project2');
     });
 });
