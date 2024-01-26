@@ -58,7 +58,6 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     implementation project(":core")
-    implementation project(':rundeck-data-model')
     implementation project(':rundeck-app-util')
 
 

@@ -7,9 +7,9 @@ import com.dtolabs.rundeck.core.authentication.Username
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.rundeck.app.access.InterceptorHelper
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext

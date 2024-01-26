@@ -39,8 +39,8 @@ import org.rundeck.app.api.model.SystemInfoModel
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.sun.management.OperatingSystemMXBean
 import grails.web.mapping.LinkGenerator
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem

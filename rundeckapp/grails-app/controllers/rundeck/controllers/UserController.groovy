@@ -36,12 +36,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType

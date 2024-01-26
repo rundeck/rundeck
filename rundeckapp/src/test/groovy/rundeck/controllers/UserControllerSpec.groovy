@@ -7,12 +7,10 @@ import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess

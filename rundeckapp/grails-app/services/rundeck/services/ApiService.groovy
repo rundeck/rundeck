@@ -28,12 +28,12 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes

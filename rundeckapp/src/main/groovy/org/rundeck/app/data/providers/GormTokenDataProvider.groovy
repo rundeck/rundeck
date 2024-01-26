@@ -1,15 +1,15 @@
 package org.rundeck.app.data.providers
 
 import groovy.transform.CompileStatic
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.compiler.GrailsCompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.page.Pageable
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource

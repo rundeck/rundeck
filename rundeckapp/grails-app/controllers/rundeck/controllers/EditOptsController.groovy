@@ -27,7 +27,7 @@ import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import groovy.transform.PackageScope
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger

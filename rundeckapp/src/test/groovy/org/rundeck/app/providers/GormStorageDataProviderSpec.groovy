@@ -4,8 +4,6 @@ import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.PathUtil
 import rundeck.Storage
 import rundeck.services.data.StorageDataService
 import spock.lang.Specification

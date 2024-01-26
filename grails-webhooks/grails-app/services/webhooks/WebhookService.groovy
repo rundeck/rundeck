@@ -26,12 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
-import org.rundeck.app.data.model.v1.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
-import org.rundeck.app.data.providers.v1.WebhookDataProvider
+import org.rundeck.app.data.providers.v1.webhook.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
