@@ -1,10 +1,11 @@
 import { shallowMount } from '@vue/test-utils';
 import HomeView from '../HomeView.vue';
-import { getProjects } from '../services/homeServices';
+import { getProjects, getProjectNames } from '../services/homeServices';
 
 jest.mock('@/app/components/home/services/homeServices');
 
 const mockedGetProjects = getProjects as jest.MockedFunction<typeof getProjects>;
+const mockedGetProjectNames = getProjectNames as jest.MockedFunction<typeof getProjectNames>;
 
 const createWrapper = (props = {}) => {
     return shallowMount(HomeView, {
@@ -26,9 +27,8 @@ const createWrapper = (props = {}) => {
 
 describe('HomeView', () => {
     beforeEach(() => {
-        console.warn = jest.fn()
-        console.warn('you cant see me')
-    })
+        console.warn = jest.fn();
+    });
 
     afterEach(() => {
         jest.clearAllMocks();
@@ -65,5 +65,39 @@ describe('HomeView', () => {
         await wrapper.setData({ dataLoaded: true, projectCount: 1 });
 
         expect(wrapper.findComponent({ name: 'HomeCardList' }).exists()).toBe(true);
+    });
+
+    it('calls getProjects and getProjectNames on component mount', async () => {
+        const getProjectsSpy = jest.spyOn(HomeView.methods, 'getProjects');
+        const getPartialDataSpy = jest.spyOn(HomeView.methods, 'getPartialData');
+
+        createWrapper();
+
+        expect(getProjectsSpy).toHaveBeenCalled();
+        expect(getPartialDataSpy).toHaveBeenCalled();
+
+        getProjectsSpy.mockRestore();
+        getPartialDataSpy.mockRestore();
+    });
+
+    it('correctly sets projects and projectCount when getProjects is successful', async () => {
+        const projectsData = [{ name: 'Project1' }, { name: 'Project2' }];
+        mockedGetProjects.mockResolvedValueOnce(projectsData);
+        const wrapper = createWrapper();
+
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.vm.projects).toEqual(projectsData);
+        expect(wrapper.vm.projectCount).toBe(projectsData.length);
+    });
+
+    it('correctly sets projectCount when getPartialData is successful', async () => {
+        const projectNamesData = ['Project1', 'Project2'];
+        mockedGetProjectNames.mockResolvedValueOnce(projectNamesData);
+        const wrapper = createWrapper();
+
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.vm.projectCount).toBe(projectNamesData.length);
     });
 });

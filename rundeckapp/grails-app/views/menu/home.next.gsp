@@ -103,8 +103,6 @@
   </div>
   <!-- VUE JS MODULES -->
   <asset:stylesheet href="static/css/pages/home.css"/>
-  <asset:stylesheet href="static/css/components/first-run.css"/>
-  <asset:javascript src="static/components/first-run.js"/>
   <asset:javascript src="static/components/version-notification.js"/>
   <!-- /VUE JS MODULES -->
 </body>

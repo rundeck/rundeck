@@ -16,10 +16,10 @@
 <template>
   <Pagination v-model="currentPage" :total-pages="totalPages" @change="changePage" :disabled="disabled" v-if="pagination.total">
     <template v-if="showPrefix" v-slot:prefix>
-    <span>
-      <span class="text-info">{{pagination.offset + 1}}-{{pagination.offset + pagination.max}}</span>
-      <span class="text-muted">of {{pagination.total}}</span>
-    </span>
+      <span>
+        <span class="text-info">{{pagination.offset + 1}}-{{pagination.offset + pagination.max}} </span>
+        <span class="text-muted">of {{pagination.total}}</span>
+      </span>
     </template>
   </Pagination>
 </template>
@@ -72,6 +72,15 @@ export default defineComponent({
   },
   mounted() {
     this.currentPage = this.pageNumberForOffset(this.pagination.offset)
+  },
+  watch: {
+    'pagination.offset': {
+      handler(newVal) {
+        if(this.pagination.offset !== newVal) {
+          this.currentPage = this.pageNumberForOffset(newVal)
+        }
+      },
+    }
   }
 })
 </script>

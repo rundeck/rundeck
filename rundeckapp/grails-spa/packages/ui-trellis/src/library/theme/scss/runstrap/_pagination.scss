@@ -2,7 +2,8 @@
 // Pagination (multiple pages)
 // --------------------------------------------------
 .pagination {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   padding-left: 0;
   margin: $line-height-computed 0;
   border-radius: $border-radius-small;

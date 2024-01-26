@@ -31,15 +31,16 @@ const projectData = {
     userCount: 2,
     userSummary: ['User1', 'User2'],
     failedCount: 1,
-    loaded: true,
 };
 
 // Helper function to mount the component
-const mountHomeBrowserItem = async (): Promise<VueWrapper<any>> => {
+const mountHomeBrowserItem = async (options = {}): Promise<VueWrapper<any>> => {
     const wrapper = mount(HomeBrowserItem, {
         props: {
             project: projectData,
             index: 0,
+            loaded: true,
+            ...options,
         },
         global: {
             mocks: {
@@ -114,6 +115,18 @@ describe('HomeBrowserItem', () => {
         // Assert that MOTD and Readme HTML content is rendered
         expect(wrapper.find('[data-test="motd"]').html()).toContain('<p>MOTD HTML</p>');
         expect(wrapper.find('[data-test="readme"]').html()).toContain('<p>Readme HTML</p>');
+    });
+
+
+    it('renders loading state when loaded is false', async () => {
+        const wrapper = await mountHomeBrowserItem({
+            loaded: false
+        });
+
+
+        // Assert that loading state is rendered
+        expect(wrapper.find('[data-test="actions-loading"]').exists()).toBe(true);
+        expect(wrapper.find('[data-test="activity-loading"]').exists()).toBe(true);
     });
 });
 
