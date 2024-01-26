@@ -930,7 +930,7 @@
         </div>
       </div>
     </section>
-    <div class="floatr" style="margin: 10px 0">
+    <div class="flow-h" style="margin: 10px 0">
       <template v-if="newOption">
         <btn
           size="sm"
@@ -1184,4 +1184,12 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+
+.flow > * + * {
+  margin-top: var(--spacing-2);
+}
+.flow-h > * + * {
+  margin-left: var(--spacing-2);
+}
+</style>
