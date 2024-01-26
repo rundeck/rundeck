@@ -1,5 +1,7 @@
 package org.rundeck.tests.functional.api.ResponseModels
 
+import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -44,6 +46,9 @@ class Job {
 
     @JsonProperty("schedules")
     private List<String> schedules;
+
+    @JsonProperty("options")
+    private Map<String, Object> options = new HashMap<>()
 
     public static class Plugins {
         @JsonProperty("ExecutionLifecycle")
@@ -94,5 +99,15 @@ class Job {
     public static class Weekday {
         @JsonProperty("day")
         private String day
+    }
+
+    @JsonAnySetter
+    void setOptions(String key, Object value) {
+        options.put(key, value);
+    }
+
+    @JsonIgnore
+    Object getOptions(String key) {
+        return options.get(key);
     }
 }
