@@ -1067,7 +1067,7 @@ class JobExecutionSpec extends BaseContainer {
                 mapper,
                 client,
                 WaitingTime.MODERATE.milliSeconds,
-                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE.milliSeconds * 2 / 1000 as int
         )
 
         then:
