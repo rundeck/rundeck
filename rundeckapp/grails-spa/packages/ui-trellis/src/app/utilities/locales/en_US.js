@@ -532,10 +532,6 @@ const messages = {
     "all":"All",
     "job.tree.breakpoint.hit.info":"Notice: Not all Job detail was loaded because this group contains too many jobs. Click the button to load missing detail.",
     "job.tree.breakpoint.load.button.title":"Load All Job Detail",
-    'job.list.filter.save.modal.title':'Save Filter',
-    'job.filter.save.button.title':'Save as a Filter…',
-    'job.list.filter.save.button':'Save Filter',
-    'job.list.filter.delete.filter.link.text':'Delete Filter "{0}"',
     "app.firstRun.title": "Welcome to {0} {1}",
     "you.can.see.this.message.again.by.clicking.the": "You can see this message again by clicking the",
     "version.number": "version number",
@@ -662,11 +658,18 @@ const messages = {
     "Option.required.description": "Require this option to have a non-blank value when running the Job",
     "Option.hidden.label": "Should be hidden",
     "form.option.regex.placeholder":"Enter a Regular Expression",
+    'job.list.filter.save.modal.title':'Save Filter',
+    'job.filter.save.button.title':'Save as a Filter…',
+    'job.list.filter.save.button':'Save Filter',
+    'job.list.filter.delete.filter.link.text':'Delete Filter "{0}"',
     "home.user": "{n} Users | {n} User | {n} Users",
     "home.table.projects": "Projects",
     "home.table.activity": "Activity",
     "home.table.actions": "Actions",
-    "option.click.to.edit.title": "Click to edit"
+    "option.click.to.edit.title": "Click to edit",
+    "form.option.name.validation.error":"Invalid Option Name: It must match the pattern: {0}",
+    "form.field.required.message":"This field is required",
+    "form.option.validation.errors.message":"Correct validation errors before saving changes"
 
 }
 

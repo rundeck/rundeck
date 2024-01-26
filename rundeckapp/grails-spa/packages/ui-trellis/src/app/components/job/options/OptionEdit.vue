@@ -48,7 +48,7 @@
     </div>
 
     <!-- name -->
-    <div class="form-group">
+    <div class="form-group" :class="{'has-error':validationErrors['name'],'has-warning':validationWarnings['name']}">
       <label
         for="optname_"
         class="col-sm-2 control-label"
@@ -61,12 +61,20 @@
         <input
           type="text"
           v-model="option.name"
+          @input="validateOptionName"
+          @blur="validateOptionName"
           name="name"
-          class="form-control restrictOptName"
+          class="form-control"
           size="40"
           :placeholder="$t('form.option.name.label')"
           id="optname_"
         />
+        <div class="help-block" v-if="validationErrors['name']">
+          {{validationErrors['name']}}
+        </div>
+        <div class="help-block" v-if="validationWarnings['name']">
+          {{validationWarnings['name']}}
+        </div>
       </div>
     </div>
 
@@ -657,7 +665,6 @@
 
             </div>
           </div>
-          <!-- /ko -->
 
       <!-- end MAIN section -->
     </template>
@@ -833,7 +840,7 @@
     <section
       id="preview_"
       class="section-separator-solo"
-      v-if="option.name && option.optionType !== 'file'"
+      v-if="option.name && option.optionType !== 'file' && !validationErrors['name']"
     >
       <div class="row">
         <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
@@ -870,7 +877,7 @@
     </section>
     <section
       id="file_preview_"
-      v-if="option.name && option.optionType === 'file'"
+      v-if="option.name && option.optionType === 'file' && !validationErrors['name']"
       class="section-separator-solo"
     >
       <div class="row">
@@ -937,6 +944,7 @@
           type="cta"
           @click="doSave"
           :title="$t('form.option.create.title')"
+          :disabled="hasFormErrors"
           >{{ $t("save") }}
         </btn>
       </template>
@@ -952,11 +960,15 @@
           type="cta"
           @click="doSave"
           :title="$t('form.option.save.title')"
+          :disabled="hasFormErrors"
           >{{ $t("save") }}
         </btn>
       </template>
       <span class="text-warning cancelsavemsg" style="display: none">
         {{ $t("scheduledExecution.option.unsaved.warning") }}
+      </span>
+      <span class="text-danger" v-if="hasFormErrors">
+        {{ $t("form.option.validation.errors.message") }}
       </span>
     </div>
   </div>
@@ -1008,7 +1020,9 @@ export default defineComponent({
         {value:'BASIC', label:this.$t('form.option.valuesType.url.authType.basic.label')},
         {value:'API_KEY', label:this.$t('form.option.valuesType.url.authType.apiKey.label')},
         {value:'BEARER_TOKEN', label:this.$t('form.option.valuesType.url.authType.bearerToken.label')},
-      ]
+      ],
+      validationErrors:{},
+      validationWarnings:{}
     };
   },
   watch: {
@@ -1113,10 +1127,16 @@ export default defineComponent({
           this.urlChoice=false
         }
       }
+    },
+    hasFormErrors(){
+      return Object.keys(this.validationErrors).length > 0 || Object.keys(this.validationWarnings).length > 0
     }
   },
   methods: {
     doSave(){
+      if(this.hasFormErrors){
+        return
+      }
       this.$emit('update:modelValue', this.option)
     },
     hasError(field: string) {
@@ -1145,6 +1165,21 @@ export default defineComponent({
           .replace(/[{}$]/, "")
       );
     },
+    validateOptionName(){
+      if(!this.option.name){
+        this.validationWarnings.name = this.$t('form.field.required.message')
+        return
+      }else{
+        delete this.validationWarnings.name
+      }
+      var validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
+      var inputResult = validOptionNameRegex.test(this.option.name);
+      if(inputResult){
+        delete this.validationErrors.name
+      }else {
+        this.validationErrors.name = this.$t('form.option.name.validation.error',[validOptionNameRegex.toString()])
+      }
+    }
   },
 });
 </script>
