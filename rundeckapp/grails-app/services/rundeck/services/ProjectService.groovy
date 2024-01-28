@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.net.api.RundeckClient
 import com.dtolabs.rundeck.net.model.ErrorDetail
 import com.dtolabs.rundeck.net.model.ErrorResponse
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -65,7 +66,6 @@ import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
-import org.rundeck.client.RundeckClient
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -98,9 +98,7 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import org.rundeck.client.util.Client
-import org.rundeck.client.api.RundeckApi
-import org.rundeck.client.api.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import okhttp3.RequestBody
 import retrofit2.Response
 
@@ -687,7 +685,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ) throws ProjectServiceException {
         File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
 
-        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build())
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, new RundeckClient(archiveParams.url,archiveParams.apitoken))
 
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
@@ -716,12 +714,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param exportArchiveParams metadata of the archive to export from this server
      * @return an import status object where the import progress of the destiny server is updated
      */
-    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, Client<RundeckApi> rundeckClient) throws RuntimeException {
+    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, RundeckClient rundeckClient) throws RuntimeException {
         ProjectImportStatus response = new ProjectImportStatus()
         response.successful = true
         boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
 
-        Response<ProjectImportStatus> status = rundeckClient.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
+        Response<ProjectImportStatus> status = rundeckClient.importProjectArchive(
+                exportArchiveParams.getTargetproject(),
                 exportArchiveParams.preserveuuid?'preserve':'remove',
                 exportArchiveParams.exportExecutions,
                 exportArchiveParams.exportConfigs,
@@ -731,8 +730,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
                 exportArchiveParams.exportConfigs,
                 prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
-                RequestBody.create(archiveToExport, Client.MEDIA_TYPE_ZIP)
-        ).execute()
+                RequestBody.create(archiveToExport, RundeckClient.MEDIA_TYPE_ZIP)
+        )
 
         if(status.isSuccessful()){
             if(null != status.body()) {
