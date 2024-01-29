@@ -52,7 +52,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
 
         where:
         token       | ownerName  | roles     | type                   | name  | uuid
-        "Token1"    | "user1"    | 'a,b'     | AuthTokenType.WEBHOOK | null | UUID.randomUUID().toString()
+        "Token1"    | "user1"    | 'a,b'     | AuthTokenType.WEBHOOK  | null  | UUID.randomUUID().toString()
         "Token2"    | "user2"    | 'a,b'     | AuthTokenType.WEBHOOK  | 'abc' | UUID.randomUUID().toString()
         "Token3"    | "user3"    | 'd'       | AuthTokenType.WEBHOOK  | 'def' | UUID.randomUUID().toString()
     }

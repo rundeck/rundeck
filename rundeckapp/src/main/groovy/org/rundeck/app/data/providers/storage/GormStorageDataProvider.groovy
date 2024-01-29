@@ -56,9 +56,7 @@ class GormStorageDataProvider implements StorageDataProvider {
     @Override
     void update(final RundeckStorage source, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
         Storage.withTransaction {
-            String sourceDir = source.dir
-            String sourceName = source.name
-            Storage storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
+            Storage storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, source.dir, source.name)
             if (!storage) {
                 throw new DataAccessException("Not found: storage with ID: ${source.id}")
             }
@@ -82,9 +80,7 @@ class GormStorageDataProvider implements StorageDataProvider {
     @Override
     void delete(final RundeckStorage source) throws DataAccessException {
         Storage.withTransaction {
-            String sourceDir = source.dir
-            String sourceName = source.name
-            def storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, sourceDir, sourceName)
+            def storage = storageDataService.findByNamespaceAndDirAndName(source.namespace, source.dir, source.name)
             if (!storage) {
                 throw new DataAccessException("Not found: storage with ID: ${source.id}")
             }
