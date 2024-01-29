@@ -181,7 +181,43 @@ class ConfigSpec extends BaseContainer{
 
         cleanup:
         deleteProject(projectName)
+    }
 
+    def "test-project-create-json"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14 // as the original test
+        def projectName = "testProjectCreate"
+        def projectDescription = "a description"
+        Object testProperties = [
+                "name": projectName,
+                "description": projectDescription,
+                "config": [
+                        "test.property": "test value",
+                        "test.property2": "test value2"
+                ]
+        ]
+        def mapper = new ObjectMapper()
+
+        when:
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+        assert response.successful
+        ProjectCreateResponse parsedResponse = mapper.readValue(
+                response.body().string(),
+                ProjectCreateResponse.class
+        )
+
+        then:
+        parsedResponse.name != null
+        parsedResponse.name == projectName
+
+        parsedResponse.config."test.property" == "test value"
+        parsedResponse.config."test.property2" == "test value2"
+
+        parsedResponse.description == projectDescription
     }
 
 }
