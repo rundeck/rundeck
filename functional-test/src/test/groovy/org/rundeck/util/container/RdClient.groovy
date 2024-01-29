@@ -125,6 +125,18 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    Response doPutWithJsonBody(final String path, final Object body) {
+        RequestBody requestBody = RequestBody.create(
+                mapper.writeValueAsBytes(body),
+                MediaType.parse("application/json")
+        )
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("PUT", requestBody)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
     Response doPost(final String path, final File file, final String contentType) {
         RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
