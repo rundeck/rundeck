@@ -890,12 +890,12 @@ Authorization under the key path `project/{project}` can be granted at the proje
         }
         AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
-        def found = storageService.hasPath(authContext, resourcePath)
-        if(!found){
-            response.status=404
-            return renderError("resource not found: ${resourcePath}")
-        }
         try{
+            def found = storageService.hasPath(authContext, resourcePath)
+            if(!found){
+                response.status=404
+                return renderError("resource not found: ${resourcePath}")
+            }
             def resource = storageService.getResource(authContext, resourcePath)
             if (resource.directory) {
                 //list directory and render resources
