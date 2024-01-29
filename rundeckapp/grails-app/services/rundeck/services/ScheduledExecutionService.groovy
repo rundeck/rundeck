@@ -1859,8 +1859,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def options = importedJob.job.options
         def secureOptionsWithDefaultValues = new ArrayList<Option>()
         options.each { option -> {
-            if( option.secureInput && (option.defaultValue != null || !option.defaultValue.isEmpty()) ){
-                secureOptionsWithDefaultValues << option
+            if (option.secureInput && !option?.defaultValue?.isEmpty()) {
+                if( option?.defaultValue != null ){
+                    secureOptionsWithDefaultValues << option
+                }
             }
         }}
         return secureOptionsWithDefaultValues
