@@ -27,7 +27,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
-import org.rundeck.client.api.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.api.RundeckApi
+import com.dtolabs.rundeck.net.api.RundeckClient
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.async.Promises
 import grails.events.bus.EventBus
@@ -53,8 +55,6 @@ import org.rundeck.app.components.project.ProjectComponent
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
-import org.rundeck.client.util.Client
-import org.rundeck.client.api.RundeckApi
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import retrofit2.Call
@@ -1812,6 +1812,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     def "should result success and no error msgs when export to another instance is success"() {
         given:
         ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
+                targetproject:'project-target',
                 project : 'project-target',
                 preserveuuid : 'preserve',
                 exportExecutions : true,
@@ -1843,6 +1844,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         ProjectArchiveParams exportArchiveParams = new ProjectArchiveParams([
                 project : 'project-target',
+                targetproject:'project-target',
                 preserveuuid : 'preserve',
                 exportExecutions : true,
                 exportConfigs : true,
@@ -3280,8 +3282,8 @@ abstract class MockRundeckApi implements RundeckApi{
     }
 
 
-    Client<RundeckApi> getRundeckClient(){
-        return new Client<>(this, retrofit,null, null, 0, false, null)
+    RundeckClient getRundeckClient(){
+        return new RundeckClient(this, retrofit)
     }
 
     private void setupRetrofit(){

@@ -17,11 +17,10 @@ public class RundeckClient {
 
     public static final String APPLICATION_ZIP = "application/zip";
     public static final MediaType MEDIA_TYPE_ZIP = MediaType.parse(APPLICATION_ZIP);
-
     private final RundeckApi rundeckApi;
+    private final Retrofit retrofit;
 
     public RundeckClient(String url, String apiToken) {
-        Retrofit retrofit;
         OkHttpClient.Builder okhttp = new OkHttpClient.Builder();
         okhttp.addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("X-Rundeck-Auth-Token", apiToken).build()));
         final String apiBaseUrl;
@@ -35,7 +34,11 @@ public class RundeckClient {
                 .build();
 
         rundeckApi = retrofit.create(RundeckApi.class);
+    }
 
+    public RundeckClient(RundeckApi rundeckApi, Retrofit retrofit){
+        this.rundeckApi = rundeckApi;
+        this.retrofit = retrofit;
     }
     public Response<ProjectImportStatus> importProjectArchive(
             String projectName,
@@ -78,5 +81,8 @@ public class RundeckClient {
             return baseUrl + "/";
         }
         return baseUrl;
+    }
+    public Retrofit getRetrofit() {
+        return retrofit;
     }
 }
