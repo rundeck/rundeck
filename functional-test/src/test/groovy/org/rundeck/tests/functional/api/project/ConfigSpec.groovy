@@ -13,7 +13,7 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         client.apiVersion = 14 // as the original test
-        def projectName = "testKeyProject"
+        def projectName = "testConfigJson"
         Object testProperties = [
                 "name": projectName,
                 "config": [
@@ -117,6 +117,71 @@ class ConfigSpec extends BaseContainer{
 
         cleanup:
         deleteProject(projectName)
+    }
+
+    def "test-project-config.sh"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14 // as the original test
+        def projectName = "testConfig"
+        Object testProperties = [
+                "name": projectName,
+                "config": [
+                        "test.property": "test value",
+                        "test.property2": "test value2"
+                ]
+        ]
+        def mapper = new ObjectMapper()
+
+        when:
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+        assert response.successful
+        ProjectCreateResponse parsedResponse = mapper.readValue(
+                response.body().string(),
+                ProjectCreateResponse.class
+        )
+
+        then:
+        parsedResponse.name != null
+        parsedResponse.name == projectName
+
+        parsedResponse.config."test.property" == "test value"
+        parsedResponse.config."test.property2" == "test value2"
+
+        when: "TEST: GET config"
+        def responseForProp1 = doGet("/project/${projectName}/config/test.property")
+        assert responseForProp1.successful
+        ConfigProperty prop1 = mapper.readValue(responseForProp1.body().string(), ConfigProperty.class)
+
+        def responseForProp2 = doGet("/project/${projectName}/config/test.property2")
+        assert responseForProp2.successful
+        ConfigProperty prop2 = mapper.readValue(responseForProp2.body().string(), ConfigProperty.class)
+
+        then:
+        prop1.key == "test.property"
+        prop1.value == "test value"
+
+        prop2.key == "test.property2"
+        prop2.value == "test value2"
+
+        when: "bulk update"
+        def updatedProps = [
+                "test.property":"updated value 1",
+                "test.property3":"created value 3"
+        ]
+        def updatedResponse = client.doPutWithJsonBody("/project/${projectName}/config", updatedProps)
+        Map<String, Object> parsedUpdatedProps = mapper.readValue(updatedResponse.body().string(), HashMap<String, Object>.class)
+
+        then:
+        parsedUpdatedProps."test.property" == "updated value 1"
+        parsedUpdatedProps."test.property3" == "created value 3"
+
+        cleanup:
+        deleteProject(projectName)
+
     }
 
 }
