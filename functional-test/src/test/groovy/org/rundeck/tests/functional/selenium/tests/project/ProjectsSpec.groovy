@@ -1,7 +1,6 @@
 package org.rundeck.tests.functional.selenium.tests.project
 
 
-import org.rundeck.tests.functional.selenium.pages.ProjectListPage
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.container.SeleniumBase
