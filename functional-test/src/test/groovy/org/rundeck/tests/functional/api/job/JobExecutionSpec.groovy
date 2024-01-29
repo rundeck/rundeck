@@ -1008,7 +1008,7 @@ class JobExecutionSpec extends BaseContainer {
                     "        </jobref>\n" +
                     "      </command>\n" +
                     "      <command>\n" +
-                    "        <scriptfile>/home/darwis/Desktop/script1.txt</scriptfile>\n" +
+                    "        <scriptfile>/home/rundeck/job-run-steps-test-script1.txt</scriptfile>\n" +
                     "        <scriptargs />\n" +
                     "      </command>\n" +
                     "      </sequence>\n" +
