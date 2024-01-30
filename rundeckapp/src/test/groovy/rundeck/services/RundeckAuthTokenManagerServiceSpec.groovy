@@ -4,9 +4,11 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.app.data.model.v1.*
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 
 import rundeck.AuthToken
 import rundeck.User
@@ -48,9 +50,9 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             result instanceof AuthenticationToken
         where:
             type <<[
-                AuthenticationToken.AuthTokenType.WEBHOOK,
-                AuthenticationToken.AuthTokenType.USER,
-                AuthenticationToken.AuthTokenType.RUNNER,
+                    AuthTokenType.WEBHOOK,
+                    AuthTokenType.USER,
+                    AuthTokenType.RUNNER,
             ]
     }
 
@@ -65,7 +67,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
         when:
             service.importWebhookToken(auth, token, user, roles)
         then:
-            1 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthenticationToken.AuthTokenType.WEBHOOK)
+            1 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
     }
 
     def "importWebhookToken existing"() {
@@ -82,7 +84,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
                 token: '123',
                 authRoles: 'a,b',
                 user: user1,
-                type: AuthenticationToken.AuthTokenType.WEBHOOK,
+                type: AuthTokenType.WEBHOOK,
                 tokenMode: AuthTokenMode.LEGACY
             )
             existing.save(flush: true)
@@ -97,7 +99,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             updated.authRoles == 'a,b,c'
             1 * service.apiService.checkTokenAuthorization(auth, 'auser', roles) >>
             new ApiService.TokenRolesAuthCheck(authorized: true, roles: roles, user: user)
-            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthenticationToken.AuthTokenType.WEBHOOK)
+            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
 
     }
 
@@ -111,7 +113,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
                     token: '123',
                     authRoles: 'a,b',
                     user: user1,
-                    type: AuthenticationToken.AuthTokenType.USER
+                    type: AuthTokenType.USER
             )
             existing.save(flush: true)
             def auth = Mock(UserAndRolesAuthContext)
@@ -124,7 +126,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             Exception e = thrown()
             e.message == 'Cannot import webhook token'
             0 * service.apiService.checkTokenAuthorization(auth, 'auser', roles)
-            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthenticationToken.AuthTokenType.WEBHOOK)
+            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
 
     }
 
@@ -154,9 +156,9 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
 
         where:
         tokenValue              | expectedValue     | tokenType
-        'abc'                   | true              | AuthenticationToken.AuthTokenType.WEBHOOK
-        'abc'                   | true              | AuthenticationToken.AuthTokenType.USER
-        'abc'                   | true              | AuthenticationToken.AuthTokenType.RUNNER
+        'abc'                   | true              | AuthTokenType.WEBHOOK
+        'abc'                   | true              | AuthTokenType.USER
+        'abc'                   | true              | AuthTokenType.RUNNER
     }
 
     def cleanup() {

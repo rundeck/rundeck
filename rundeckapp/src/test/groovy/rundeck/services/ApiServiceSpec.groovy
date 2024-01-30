@@ -26,7 +26,6 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
@@ -34,6 +33,7 @@ import org.rundeck.core.auth.AuthConstants
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.controllers.ApiController
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -358,7 +358,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result != null
         result.getOwnerName() == user.login
-        result.generateAuthRoles(result.getAuthRolesSet()) == 'role1'
+        AuthenticationTokenUtils.generateAuthRoles(result.getAuthRolesSet()) == 'role1'
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
@@ -399,7 +399,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result != null
         result.getOwnerName() == user.login
-        result.authRolesSet == AuthenticationToken.parseAuthRoles('role1,svc_roleA')
+        result.authRolesSet == AuthenticationTokenUtils.parseAuthRoles('role1,svc_roleA')
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         if (tokenaction == 'admin') {
@@ -445,7 +445,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result != null
         result.getOwnerName() == tokenUser
-        result.authRolesSet == AuthenticationToken.parseAuthRoles('role1,svc_roleA')
+        result.authRolesSet == AuthenticationTokenUtils.parseAuthRoles('role1,svc_roleA')
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
