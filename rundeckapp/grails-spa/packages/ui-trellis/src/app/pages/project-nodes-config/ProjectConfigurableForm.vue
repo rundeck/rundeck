@@ -53,6 +53,10 @@ export default defineComponent({
         this.extraConfigSet =  config.response["projectConfigurable"] as [ConfigurableItem];
         let properties = []
         this.extraConfigSet.forEach((item: ConfigurableItem) => {
+          const itemName = item.name
+          item.properties.forEach((prop: any) => {
+            prop.name = itemName+prop.name
+          })
           properties.push(item.properties)
         });
         let resolvedProps = []
