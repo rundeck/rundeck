@@ -2,6 +2,7 @@ package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import okhttp3.ConnectionPool
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType
@@ -13,6 +14,7 @@ import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 @CompileStatic
@@ -32,11 +34,7 @@ class RdClient {
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
-                        addInterceptor(new HeaderInterceptor("Connection", "close")).
-                        retryOnConnectionFailure(true).
-                        connectTimeout(Duration.ofSeconds(30)).
-                        readTimeout(Duration.ofSeconds(30)).
-                        writeTimeout(Duration.ofSeconds(30)).
+                        connectionPool(new ConnectionPool(0, 15, TimeUnit.SECONDS)).
                         build()
         )
     }
