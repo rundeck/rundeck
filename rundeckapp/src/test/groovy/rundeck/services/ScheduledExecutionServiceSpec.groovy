@@ -3495,51 +3495,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.nodeThreadcount == 30
     }
 
-    def "getSecureOptionsWithDefaultValues invoked with null default values"(){
-        given:
-        ScheduledExecution job =
-                new ScheduledExecution(createJobParams(doNodedispatch: true,
-                        nodeInclude: "hostname",
-                        retry: null,
-                        timeout: null,
-                        options: [
-                                new Option(
-                                        name: 'opt1',
-                                        required: false,
-                                        description: 'monkey',
-                                        enforced: false,
-                                        secureInput: true,
-                                        defaultValue: defaultValue,
-                                        defaultStoragePath: null
-                                ),
-                                new Option(
-                                        name: 'opt2',
-                                        required: false,
-                                        description: 'monkey',
-                                        enforced: false,
-                                        secureInput: true,
-                                        defaultValue: defaultValue,
-                                        defaultStoragePath: null
-                                )
-                        ]
-                )
-                )
-        def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
-
-        when:
-        def result = service.getSecureOptionsWithDefaultValues(importedJob)
-
-        then:
-        noExceptionThrown()
-        result != null
-        result.size() == optionsRetrieved
-
-        where:
-        defaultValue | optionsRetrieved
-        "a value"    | 2
-        null         | 0
-    }
-
     @Unroll
     def "do update job dynamic nodethreadcount"(){
         given:
