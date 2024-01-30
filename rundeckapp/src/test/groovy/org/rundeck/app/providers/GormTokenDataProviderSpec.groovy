@@ -1,20 +1,20 @@
 package org.rundeck.app.providers
 
 import grails.testing.gorm.DataTest
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
-
-import static org.rundeck.app.data.model.v1.AuthenticationToken.*
 
 class GormTokenDataProviderSpec extends Specification implements DataTest{
     GormTokenDataProvider provider = new GormTokenDataProvider()
@@ -35,7 +35,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                 .setToken(token)
                 .setOwnerName(ownerName)
-                .setAuthRolesSet(AuthenticationToken.parseAuthRoles(roles))
+                .setAuthRolesSet(AuthenticationTokenUtils.parseAuthRoles(roles))
                 .setType(type)
                 .setName(name)
                 .setUuid(uuid)
@@ -45,7 +45,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         then:
         createdUuid == uuid
         createdToken.getOwnerName() == ownerName
-        createdToken.getAuthRolesSet() == AuthenticationToken.parseAuthRoles(roles)
+        createdToken.getAuthRolesSet() == AuthenticationTokenUtils.parseAuthRoles(roles)
         createdToken.type == type
         createdToken.name == name
         createdToken.uuid == createdUuid
@@ -67,7 +67,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         }
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                                        .setType(AuthTokenType.WEBHOOK)
-                                       .setAuthRolesSet(AuthenticationToken.parseAuthRoles('a,b'))
+                                       .setAuthRolesSet(AuthenticationTokenUtils.parseAuthRoles('a,b'))
 
 
         provider.create(data)
@@ -87,7 +87,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         String uuid = '123uuid'
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'g,f',
                 uuid: uuid,
@@ -96,13 +96,13 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         createdToken.save(flush: true);
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                 .setToken(token)
-                .setAuthRolesSet(AuthenticationToken.parseAuthRoles(roles))
+                .setAuthRolesSet(AuthenticationTokenUtils.parseAuthRoles(roles))
                 .setName(name)
         provider.update(uuid, data)
         AuthenticationToken updatedToken = provider.getData(uuid)
 
         then:
-        updatedToken.getAuthRolesSet() == AuthenticationToken.parseAuthRoles(roles)
+        updatedToken.getAuthRolesSet() == AuthenticationTokenUtils.parseAuthRoles(roles)
         updatedToken.name == name
         updatedToken.uuid == uuid
 
@@ -123,7 +123,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         String uuid = '123uuid'
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'g,f',
                 uuid: uuid,
@@ -147,7 +147,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         String uuid = '123uuid'
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'g,f',
                 uuid: uuid,
@@ -172,7 +172,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         String uuid = '123uuid'
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthenticationToken.AuthTokenType.USER,
+                type: AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'g,f',
                 uuid: uuid,
