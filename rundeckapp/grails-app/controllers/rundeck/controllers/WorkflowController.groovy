@@ -837,7 +837,7 @@ class WorkflowController extends ControllerBase {
                 if (params.nodeStep instanceof String) {
                     item.nodeStep = params.nodeStep == 'true'
                 }
-            } else if([ExecCommand.EXEC_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE].contains(params.type)){
+            } else if(PluginStep.isOldBuiltInType(params.type)){
                 item = PluginStep.fromMap(params)
             } else {
                 item = new CommandExec(params)
