@@ -17,6 +17,9 @@
 package rundeck
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 
 class PluginStep extends WorkflowStep{
     Boolean nodeStep = false
@@ -60,8 +63,21 @@ class PluginStep extends WorkflowStep{
         pluginConfigData(type: 'text')
     }
 
+    static isOldBuiltInType(String type) {
+        return [ExecCommand.EXEC_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE].contains(type)
+    }
+
     public Map toMap() {
         def map=[type: type, nodeStep:nodeStep]
+
+        if(isOldBuiltInType(this.type)){//keep job defs compatibility with old Rundeck versions prior to 5.x
+            CommandExec commandExec = new CommandExec(this.configuration)
+            commandExec.description = this.description
+            commandExec.errorHandler = this.errorHandler
+            commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
+            return commandExec.toMap()
+        }
+
         if(this.configuration){
             map.put('configuration',this.configuration)
         }
