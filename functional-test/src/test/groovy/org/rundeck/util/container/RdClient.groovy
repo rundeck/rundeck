@@ -12,6 +12,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
+import java.time.Duration
 import java.util.function.Consumer
 
 @CompileStatic
@@ -31,6 +32,11 @@ class RdClient {
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
+                        addInterceptor(new HeaderInterceptor("Connection", "close")).
+                        retryOnConnectionFailure(true).
+                        connectTimeout(Duration.ofSeconds(30)).
+                        readTimeout(Duration.ofSeconds(30)).
+                        writeTimeout(Duration.ofSeconds(30)).
                         build()
         )
     }
@@ -100,17 +106,19 @@ class RdClient {
     }
 
     Response doPost(final String path, final Object body = null) {
-        def builder = new Request.Builder().
-                url(apiUrl(path)).
-                header('Accept', 'application/json')
+        RequestBody requestBuilder
         if (body) {
-            builder.post(
-                    RequestBody.create(
-                            mapper.writeValueAsBytes(body),
-                            MediaType.parse("application/json")
-                    )
-            )
+            requestBuilder = RequestBody.create(
+                    mapper.writeValueAsBytes(body),
+                    MediaType.parse("application/json"))
+        } else {
+            requestBuilder = RequestBody.create()
         }
+        def builder = new Request.Builder()
+                .url(apiUrl(path))
+                .header('Accept', 'application/json')
+                .method("POST", requestBuilder)
+
         httpClient.newCall(
                 builder.build()
         ).execute()
