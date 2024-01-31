@@ -1,6 +1,8 @@
 import {createApp} from 'vue'
 import * as uiv from 'uiv'
 import VueCookies from "vue-cookies"
+import PrimeVue from "primevue/config";
+// import "primevue/resources/themes/lara-light-amber/theme.css"
 
 import {getRundeckContext} from '../../../library'
 import { UiMessage } from '../../../library/stores/UIStore'
@@ -60,6 +62,8 @@ function initUiComponents(elmElement:any) {
   vue.use(VueCookies)
   vue.use(i18n)
   vue.use(uiv)
+  vue.use(PrimeVue)
+
   vue.provide('registerComponent', (name, comp) => {
     vue.component(name, comp)
   })
