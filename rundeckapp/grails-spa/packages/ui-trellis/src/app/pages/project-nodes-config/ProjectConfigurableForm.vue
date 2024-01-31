@@ -3,7 +3,7 @@
     <div class="form-horizontal">
         <plugin-config
             v-if="isConfigSet"
-            :mode="'edit'"
+            :mode="'create'"
             :show-title="false"
             :show-description="false"
             :use-runner-selector="true"
@@ -11,7 +11,21 @@
             :event-bus="rundeckContext.eventBus"
             :plugin-config="pluginConfig"
             :category="category"
-        />
+        >
+          <template v-slot:extra>
+            <div class="row">
+              <div class="col-xs-12 col-sm-12">
+                    <span>
+                        <a
+                            class="btn btn-cta btn-xs"
+                            @click="saveConfig"
+                            :key="'save'"
+                        >{{"Save"}}</a>
+                    </span>
+              </div>
+            </div>
+          </template>
+        </plugin-config>
     </div>
   </div>
 </template>
@@ -40,6 +54,7 @@ export default defineComponent({
       pluginConfig: {},
       extraConfigSet: {},
       isConfigSet: false,
+      projectConfigurableNames: [],
       testConfig: {config: {}}
     };
   },
@@ -54,6 +69,7 @@ export default defineComponent({
         let properties = []
         this.extraConfigSet.forEach((item: ConfigurableItem) => {
           const itemName = item.name
+          this.projectConfigurableNames.push(itemName)
           item.properties.forEach((prop: any) => {
             prop.name = itemName+prop.name
           })
@@ -62,6 +78,7 @@ export default defineComponent({
         let resolvedProps = []
         properties.forEach((item: any) => {
           item.forEach((prop: any) => {
+            prop.desc = prop.description
             resolvedProps.push(prop)
           })
         })
@@ -72,6 +89,9 @@ export default defineComponent({
       } catch (err) {
         console.error(err);
       }
+    },
+    saveConfig(){
+      // send plugin configurable data to new endpoint
     }
   },
   async mounted(){
