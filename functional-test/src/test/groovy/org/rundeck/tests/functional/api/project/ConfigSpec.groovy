@@ -218,6 +218,55 @@ class ConfigSpec extends BaseContainer{
         parsedResponse.config."test.property2" == "test value2"
 
         parsedResponse.description == projectDescription
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    def "test-project-create.sh"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14 // as the original test
+        def projectName = "testProjectCreate"
+        def projectDescription = "a description"
+        Object testProperties = [
+                "name": projectName,
+                "description": projectDescription,
+                "config": [
+                        "test.property": "test value",
+                ]
+        ]
+        def mapper = new ObjectMapper()
+
+        when: "TEST: POST /api/14/projects"
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+        assert response.successful
+        ProjectCreateResponse parsedResponse = mapper.readValue(
+                response.body().string(),
+                ProjectCreateResponse.class
+        )
+
+        then:
+        parsedResponse.name != null
+        parsedResponse.name == projectName
+
+        parsedResponse.config."test.property" == "test value"
+
+        when: "TEST: POST /api/14/projects (existing project results in conflict)"
+        def conflictedResponse = client.doPost(
+                "/projects",
+                testProperties
+        )
+
+        then:
+        !conflictedResponse.successful
+        conflictedResponse.code() == 409
+
+        cleanup:
+        deleteProject(projectName)
     }
 
 }
