@@ -1,11 +1,13 @@
 package com.dtolabs.rundeck.core.event;
 
 import lombok.Data;
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQuery;
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType;
 
 import java.util.Date;
 
 @Data
-public class EventQueryImpl implements EventQuery {
+public class EventQueryImpl implements StoredEventQuery {
     String projectName;
     String subsystem;
     String topic;
@@ -15,5 +17,5 @@ public class EventQueryImpl implements EventQuery {
     Integer maxResults = 20;
     Integer offset = 0;
     Long sequence;
-    EventQueryType queryType = EventQueryType.SELECT;
+    StoredEventQueryType queryType = StoredEventQueryType.SELECT;
 }

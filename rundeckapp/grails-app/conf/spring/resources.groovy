@@ -129,6 +129,7 @@ import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvid
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
+import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.services.EnhancedNodeService
@@ -944,6 +945,7 @@ beans={
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
     logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
+    storedEventProvider(GormStoredEventProvider)
 
     //job metadtata components
     jobScheduleMetadataComponent(JobScheduleMetadataComponent)

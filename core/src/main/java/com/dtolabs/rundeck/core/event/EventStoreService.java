@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.event;
 
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQuery;
 import org.rundeck.app.spi.AppService;
 
 import java.util.List;
@@ -9,7 +10,7 @@ public interface EventStoreService extends AppService {
 
     void storeEventBatch(List<Event> events);
 
-    EventQueryResult query(EventQuery query);
+    EventQueryResult query(StoredEventQuery query);
 
-    EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate);
+    EventStoreService scoped(Event eventTemplate, StoredEventQuery queryTemplate);
 }

@@ -1,8 +1,8 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.domain.EventSeverity
 import com.dtolabs.rundeck.core.event.Event
 import grails.compiler.GrailsCompileStatic
+import org.rundeck.app.data.model.v1.storedevent.EventSeverity
 
 @GrailsCompileStatic
 class StoredEvent implements Event {

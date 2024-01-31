@@ -1,9 +1,10 @@
 package rundeck
 
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Rollback
 import grails.testing.gorm.DataTest
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
+import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import rundeck.services.Evt
 import rundeck.services.EvtQuery
 import rundeck.services.FrameworkService
@@ -25,6 +26,7 @@ class GormEventStoreServiceSpec extends Specification implements DataTest {
             it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
         }
         service = new GormEventStoreService()
+        service.storedEventProvider = new GormStoredEventProvider()
         service.frameworkService = framework
     }
 
@@ -79,8 +81,8 @@ class GormEventStoreServiceSpec extends Specification implements DataTest {
                 [projectName: 'B', topic: 'test', subsystem: 'cluster'] as Evt,
         ])
 
-        def oneRes = service.query([projectName: 'A', subsystem: 'webhooks', queryType: EventQueryType.COUNT] as EvtQuery)
-        def twoRes = service.query([projectName: 'A', queryType: EventQueryType.COUNT] as EvtQuery)
+        def oneRes = service.query([projectName: 'A', subsystem: 'webhooks', queryType: StoredEventQueryType.COUNT] as EvtQuery)
+        def twoRes = service.query([projectName: 'A', queryType: StoredEventQueryType.COUNT] as EvtQuery)
         then:
         oneRes.totalCount == 1
         oneRes.events.size() == 0
@@ -174,7 +176,7 @@ class GormEventStoreServiceSpec extends Specification implements DataTest {
         threeRes.totalCount == 3
 
         when:
-        def delRes = service.query([projectName: 'A', queryType: EventQueryType.DELETE] as EvtQuery)
+        def delRes = service.query([projectName: 'A', queryType: StoredEventQueryType.DELETE] as EvtQuery)
         def oneRes = service.query([:] as EvtQuery)
 
         then:
