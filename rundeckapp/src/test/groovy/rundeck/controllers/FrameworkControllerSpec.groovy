@@ -65,6 +65,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     def setup() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.featureService = Mock(FeatureService)
 
         defineBeans {
             configurationService(ConfigurationService) {

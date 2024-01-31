@@ -660,8 +660,9 @@ Authorization required: `read` for project resource
             return
         }
         def projlist = frameworkService.projects(systemAuthContext)
+        def controller = this
         withFormat{
-            def jsonClos={
+            '*' {
                 List details = []
                 projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                     //don't include config data
@@ -670,8 +671,7 @@ Authorization required: `read` for project resource
 
                 render details as JSON
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         delegate.'projects'(count: projlist.size()) {
@@ -683,7 +683,6 @@ Authorization required: `read` for project resource
                     }
                 }
             }
-            '*' jsonClos
         }
 
     }
@@ -729,11 +728,12 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
         def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
         def pject = authorizingProject.resource
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
 
                     apiService.renderSuccessXml(request, response) {
@@ -790,8 +790,7 @@ Authorization required: `create` for resource type `project`
         }
         //allow Accept: header, but default to the request format
 
-        def allowedFormats = allowXml?['xml', 'json']:['json']
-        def respFormat = apiService.extractResponseFormat(request,response, allowedFormats,'json')
+        def respFormat = apiService.extractResponseFormat(request,response, responseFormats,'json')
 
         def project = null
         def description = null
@@ -1643,13 +1642,13 @@ Since: v14""",
         }else{
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, baos)
-            withFormat{
-                json{
+            def controller = this
+            withFormat {
+                '*' {
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
-
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(contentType: 'application/xml') {
                             apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
@@ -1685,12 +1684,13 @@ Since: v14""",
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, baos)
-                withFormat{
-                    json{
+                def controller = this
+                withFormat {
+                    '*' {
                         def content = [contents: baos.toString()]
                         render content as JSON
                     }
-                    if (isAllowXml()) {
+                    if (controller.isAllowXml()) {
                         xml {
                             render(contentType: 'application/xml') {
                                 apiService.renderWrappedFileContentsXml(baos.toString(), 'xml', delegate)
@@ -1726,8 +1726,9 @@ Since: v14""",
         //list aclpolicy files in the dir
         def projectName = project.name
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(projectName))
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render apiService.jsonRenderDirlist(
                             '',
                             {p->p},
@@ -1735,7 +1736,7 @@ Since: v14""",
                             list
                     ) as JSON
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: 'application/xml') {
                         apiService.xmlRenderDirList(
