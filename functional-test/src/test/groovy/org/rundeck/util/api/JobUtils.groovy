@@ -1,8 +1,11 @@
 package org.rundeck.util.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.Job
 import org.rundeck.util.container.RdClient
+
+import java.util.concurrent.TimeUnit
 
 class JobUtils {
 
@@ -96,5 +99,29 @@ class JobUtils {
         def jobInfo = client.doGetAcceptAll("/job/${jobId}")
         List<Job> jobs = mapper.readValue(jobInfo.body().string(), mapper.getTypeFactory().constructCollectionType(List.class, Job.class))
         return jobs[0]
+    }
+
+    static Execution waitForExecutionToBe(
+            String state,
+            String executionId,
+            ObjectMapper mapper,
+            RdClient client,
+            int iterationGap,
+            int timeout
+    ){
+        Execution executionStatus
+        def execDetail = client.doGet("/execution/${executionId}")
+        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
+        long initTime = System.currentTimeMillis()
+        while(executionStatus.status != state){
+            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
+                throw new InterruptedException("Timeout reached (${timeout} seconds).")
+            }
+            def transientExecutionResponse = client.doGet("/execution/${executionId}")
+            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
+            if( executionStatus.status == state ) break
+            Thread.sleep(iterationGap)
+        }
+        return executionStatus
     }
 }

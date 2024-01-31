@@ -631,7 +631,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
 
-        Execution JobExecutionStatus = waitForExecutionToBe(
+        Execution JobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
                 mapper,
@@ -649,7 +649,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution refExec = mapper.readValue(referencedJobRun.body().string(), Execution.class)
 
-        Execution refJobExecutionStatus = waitForExecutionToBe(
+        Execution refJobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 refExec.id as String,
                 mapper,
@@ -733,7 +733,7 @@ class JobExecutionSpec extends BaseContainer {
         execId > 0
 
         when: "fail and retry 1"
-        def execDetails = waitForExecutionToBe(
+        def execDetails = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
                 mapper,
@@ -747,7 +747,7 @@ class JobExecutionSpec extends BaseContainer {
         retryId1 > 0
 
         when: "fail and retry 2"
-        def execDetails2 = waitForExecutionToBe(
+        def execDetails2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 retryId1 as String,
                 mapper,
@@ -761,7 +761,7 @@ class JobExecutionSpec extends BaseContainer {
         retryId2 > 0
 
         when: "final retry"
-        def execDetailsFinal = waitForExecutionToBe(
+        def execDetailsFinal = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 retryId2 as String,
                 mapper,
@@ -907,7 +907,7 @@ class JobExecutionSpec extends BaseContainer {
         dateS.toString() == runtime.date.toString()
 
         when: "Wait until execution succeeds"
-        def execAfterWait = waitForExecutionToBe(
+        def execAfterWait = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
                 mapper,
@@ -1062,7 +1062,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execId = mapper.readValue(runResponse.body().string(), Execution.class)
 
-        Execution jobExecStatusAfterSuccess = waitForExecutionToBe(
+        Execution jobExecStatusAfterSuccess = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId.id as String,
                 mapper,
@@ -1246,7 +1246,7 @@ class JobExecutionSpec extends BaseContainer {
         Execution execRes3 = mapper.readValue(exec3.body().string(), Execution.class)
         String execId3 = execRes3.id
 
-        Execution execStatus1 = waitForExecutionToBe(
+        Execution execStatus1 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId1,
                 mapper,
@@ -1255,7 +1255,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.EXCESSIVE.milliSeconds * 2 / 1000 as int
         )
 
-        Execution execStatus2 = waitForExecutionToBe(
+        Execution execStatus2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId2,
                 mapper,
@@ -1264,7 +1264,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.EXCESSIVE.milliSeconds * 2 / 1000 as int
         )
 
-        Execution execStatus3 = waitForExecutionToBe(
+        Execution execStatus3 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
                 mapper,
@@ -1358,7 +1358,7 @@ class JobExecutionSpec extends BaseContainer {
         Execution execRes = mapper.readValue(response.body().string(), Execution.class)
         String execId = execRes.id
 
-        def execution = waitForExecutionToBe(
+        def execution = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
                 mapper,
@@ -1376,7 +1376,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes2 = mapper.readValue(response2.body().string(), Execution.class)
         String execId2 = execRes2.id
-        def execution2 = waitForExecutionToBe(
+        def execution2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 execId2,
                 mapper,
@@ -1397,7 +1397,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes3 = mapper.readValue(response3.body().string(), Execution.class)
         String execId3 = execRes3.id
-        def execution3 = waitForExecutionToBe(
+        def execution3 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId3,
                 mapper,
@@ -1421,7 +1421,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution execRes4 = mapper.readValue(response4.body().string(), Execution.class)
         String execId4 = execRes4.id
-        def execution4 = waitForExecutionToBe(
+        def execution4 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId4,
                 mapper,
@@ -1461,30 +1461,6 @@ class JobExecutionSpec extends BaseContainer {
         SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
         iso8601Format.setTimeZone(TimeZone.getTimeZone("UTC"))
         return [string: iso8601Format.format(cal.time), date: cal.time]
-    }
-
-    Execution waitForExecutionToBe(
-            String state,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            int iterationGap,
-            int timeout
-    ){
-        Execution executionStatus
-        def execDetail = client.doGet("/execution/${executionId}")
-        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
-        long initTime = System.currentTimeMillis()
-        while(executionStatus.status != state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds).")
-            }
-            def transientExecutionResponse = doGet("/execution/${executionId}")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
-            if( executionStatus.status == state ) break
-            Thread.sleep(iterationGap)
-        }
-        return executionStatus
     }
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
