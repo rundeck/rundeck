@@ -451,6 +451,7 @@ Since: v21''',
                 ])
             }
         }
+        def controller = this
         withFormat {
             def xmlClosure = {
                 delegate.'user' {
@@ -460,7 +461,7 @@ Since: v21''',
                     email(u.email)
                 }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     delegate.login=u.login
                     delegate.firstName=u.firstName
@@ -468,13 +469,11 @@ Since: v21''',
                     delegate.email=u.email
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
     }
 
@@ -505,6 +504,7 @@ Since: v30''',
             return
         }
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        def controller = this
         withFormat {
             def xmlClosure = {
                 delegate.'roles' {
@@ -513,18 +513,16 @@ Since: v30''',
                     }
                 }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     delegate.roles=authContext.getRoles()
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
     }
 
@@ -617,7 +615,7 @@ For APIv27+, the results will contain additional fields:
             users = userDataProvider.findAll()
         }
 
-
+        def controller = this
         withFormat {
             def xmlClosure = {
                     users.each { u ->
@@ -635,7 +633,7 @@ For APIv27+, the results will contain additional fields:
                         }
                     }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     users.each {
                         def u
@@ -648,13 +646,11 @@ For APIv27+, the results will contain additional fields:
                     }
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
 
     }

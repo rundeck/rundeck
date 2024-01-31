@@ -2457,8 +2457,9 @@ Fields:
                 'missingCount',
                 'retriesCount'
         ]
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 apiService.renderSuccessJson(response) {
                     enabled = data.pluginName ? true : false
                     pluginName = data.pluginName
@@ -2467,7 +2468,7 @@ Fields:
                     }
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
 
                     apiService.renderSuccessXml(request, response) {
@@ -2588,8 +2589,9 @@ Since: V17''',
         def retryIds=logFileStorageService.getQueuedRetryRequestIds()
         def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 apiService.renderSuccessJson(response) {
                     delegate.'total' = total
                     max = query.max ?: 20
@@ -2618,7 +2620,7 @@ Since: V17''',
                     }
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         logstorage {
@@ -2684,13 +2686,14 @@ Since: V17''',
         }
 
         logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+        def controller = this
         withFormat {
-            json {
+            '*'  {
                 apiService.renderSuccessJson(response) {
                     resumed=true
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
 
                     apiService.renderSuccessXml(request, response) {
@@ -3002,6 +3005,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
             )
             return
         }
+        def controller = this
         withFormat {
             def xmlresponse= {
                 return apiService.renderSuccessXml(request, response) {
@@ -3028,7 +3032,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            def jsonresp= {
+            '*'  {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
                         def jobparams = [id         : se.extid,
@@ -3051,11 +3055,9 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                     }
                 }
             }
-            json jsonresp
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml xmlresponse
             }
-            '*' jsonresp
         }
     }
     @Get(uri='/scheduler/jobs')
@@ -3607,9 +3609,9 @@ if executed in cluster mode.
 
         def results = nowrunning(query)
 
-        withFormat{
-
-            json {
+        def controller = this
+        withFormat {
+            '*'  {
                 return executionService.respondExecutionsJson(
                         request,
                         response,
@@ -3622,7 +3624,7 @@ if executed in cluster mode.
                 )
             }
 
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return executionService.respondExecutionsXml(
                             request,

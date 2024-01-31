@@ -1485,11 +1485,11 @@ JSON response requires API v14.
     def tailExecutionOutput () {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
         def reqError=false
-
+        def controller= this
         def apiError = { String code, List args, int status = 0 ->
             def message=code?g.message(code:code,args:args):'Unknown error'
             withFormat {
-                json {
+                '*' {
                     if (status > 0) {
                         response.setStatus(status)
                     }
@@ -1507,7 +1507,7 @@ JSON response requires API v14.
                     }
                     render(contentType: "text/plain", text: message)
                 }
-                if(isAllowXml()) {
+                if(controller.isAllowXml()) {
                     xml {
                         apiService.renderErrorXml(response, [code: code, args: args, status: status])
                     }
@@ -1578,7 +1578,7 @@ JSON response requires API v14.
                 dataMap.message=errmsg
             }
             withFormat {
-                json {
+                '*' {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
@@ -1598,7 +1598,7 @@ JSON response requires API v14.
                         ''
                     }
                 }
-                if(isAllowXml()) {
+                if(controller.isAllowXml()) {
                     xml {
                         apiService.renderSuccessXml(request, response) {
                             output {
@@ -1626,7 +1626,7 @@ JSON response requires API v14.
                     retryBackoff  : reader.retryBackoff
             ] + clusterInfo
             withFormat {
-                json {
+                '*' {
                     render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
@@ -1643,7 +1643,7 @@ JSON response requires API v14.
                         ''
                     }
                 }
-                if(isAllowXml()) {
+                if(controller.isAllowXml()) {
                     xml {
                         apiService.renderSuccessXml(request, response) {
                             output {
@@ -1717,7 +1717,7 @@ JSON response requires API v14.
 
                 withFormat {
 
-                    json {
+                    '*' {
                         render renderOutputFormatJson(dataMap,[]) as JSON
                     }
                     text {
@@ -1736,7 +1736,7 @@ JSON response requires API v14.
                             ''
                         }
                     }
-                    if(isAllowXml()) {
+                    if(controller.isAllowXml()) {
                         xml {
                             apiService.renderSuccessXml(request, response) {
                                 output {
@@ -1914,7 +1914,7 @@ JSON response requires API v14.
         ] + clusterInfo
 
         withFormat {
-            json {
+            '*' {
                 render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
             }
             text{
@@ -1936,7 +1936,7 @@ JSON response requires API v14.
                     appendOutput(response, it.mesg+lineSep)
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         output {
@@ -2147,11 +2147,12 @@ JSON response requires API v14.
                     format: response.format
             ])
         }
+        def controller=this
         withFormat{
-            json{
+            '*' {
                 return executionService.respondExecutionsJson(request,response, [e],[single:true])
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return executionService.respondExecutionsXml(request, response, [e])
                 }
@@ -2448,11 +2449,12 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
                 }else {
                     errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: loader.errorCode, args: loader.errorData]
                 }
+                def controller = this
                 withFormat {
-                    json {
+                    '*' {
                         return apiService.renderErrorJson(response, errormap)
                     }
-                    if(isAllowXml()) {
+                    if(controller.isAllowXml()) {
                         xml {
                             return apiService.renderErrorXml(response, errormap)
                         }
@@ -2517,11 +2519,12 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
             }
             newmap
         }
+        def controller=this
         withFormat {
-            json{
+            '*' {
                 return render(contentType: "application/json", encoding: "UTF-8",text:state.encodeAsJSON())
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return render(contentType: "text/xml", encoding: "UTF-8") {
                         result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
@@ -2653,8 +2656,9 @@ Authorization required:
             reportstate.reason= abortresult.reason
         }
 
+        def controller=this
         withFormat{
-            json{
+            '*' {
                 return render ([
                         abort    : reportstate,
                         execution: [
@@ -2665,7 +2669,7 @@ Authorization required:
                         ]
                     ] as JSON)
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         abort(reportstate) {
@@ -3133,11 +3137,12 @@ if executed in cluster mode.""",
         //filter query results to READ authorized executions
         def filtered = rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
 
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
                 }
@@ -3213,13 +3218,14 @@ Since: V32
             respStatus =  params.boolean('passiveAs503') ? HttpServletResponse.SC_SERVICE_UNAVAILABLE : HttpServletResponse.SC_OK
         }
 
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 render(status: respStatus,contentType: "application/json") {
                     delegate.executionMode(executionStatus ? 'active' : 'passive')
                 }
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(status: respStatus, contentType: "application/xml") {
                         delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
@@ -3312,21 +3318,20 @@ Since: v14
         }
 
         executionService.setExecutionsAreActive(active)
+        def controller = this
         withFormat{
-            def jsonClos={
+            '*' {
                 render(contentType: "application/json") {
                     delegate.executionMode (active?'active':'passive')
                 }
             }
-            json jsonClos
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: "application/xml") {
                         delegate.'executions'(executionMode: active ? 'active' : 'passive')
                     }
                 }
             }
-            '*' jsonClos
         }
     }
 
@@ -3627,11 +3632,12 @@ Note: This endpoint has the same query parameters and response as the `/executio
         ])
 
 
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 render metrics as JSON
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: "application/xml") {
                         delegate.'result' {
