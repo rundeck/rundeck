@@ -17,6 +17,9 @@
 package rundeck
 
 import grails.testing.gorm.DataTest
+import org.rundeck.core.execution.ExecCommand
+import org.rundeck.core.execution.ScriptCommand
+import org.rundeck.core.execution.ScriptFileCommand
 import spock.lang.Specification
 
 import static org.junit.Assert.assertEquals
@@ -38,5 +41,44 @@ class PluginStepTests  extends Specification implements DataTest{
         assertEquals(true, j1.nodeStep)
         assertEquals(true, !!j1.keepgoingOnSuccess)
         assertNull(j1.errorHandler)
+    }
+
+    def testToMap() {
+        when:
+        PluginStep t = new PluginStep(type: 'blah',configuration: [elf:'hello'],nodeStep: true, keepgoingOnSuccess: true)
+        then:
+        Map configMap = t.toMap()
+        assertEquals([elf:'hello'], configMap.configuration)
+        assertEquals(true, configMap.nodeStep)
+        assertEquals(true, !!configMap.keepgoingOnSuccess)
+        assertNull(t.toMap().errorHandler)
+    }
+
+    def testToMapKeepCompatibilityWithOldBuiltInTypes(){
+        when:
+        PluginStep t = new PluginStep(type: type,configuration: pluginConfig,nodeStep: true, keepgoingOnSuccess: true)
+        then:
+        Map configMap = t.toMap()
+        assertEquals(true, !!configMap.keepgoingOnSuccess)
+        assertNull(configMap.errorHandler)
+        if(type == ExecCommand.EXEC_COMMAND_TYPE) {
+            assertEquals('adhocRemoteString', configMap.exec)
+        }else if(type == ScriptCommand.SCRIPT_COMMAND_TYPE) {
+            assertEquals('adhocLocalString', configMap.script)
+        }else if(type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE) {
+            assertEquals('adhocFilepath', configMap.scriptfile)
+        }else{
+            assertEquals(pluginConfig, configMap.configuration)
+            assertEquals(null, configMap.script)
+            assertEquals(null, configMap.exec)
+            assertEquals(null, configMap.scriptfile)
+        }
+
+        where:
+        type                                       | pluginConfig
+        "blah"                                     | ["argString": "", "adhocRemoteString": "adhocRemoteString","adhocLocalString": "adhocLocalString","adhocFilepath": "adhocFilepath","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
+        ExecCommand.EXEC_COMMAND_TYPE              | ["argString": "", "adhocRemoteString": "adhocRemoteString","adhocLocalString": "adhocLocalString","adhocFilepath": "","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
+        ScriptCommand.SCRIPT_COMMAND_TYPE          | ["argString": "", "adhocRemoteString": "","adhocLocalString": "adhocLocalString","adhocFilepath": "","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
+        ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE | ["argString": "", "adhocRemoteString": "","adhocLocalString": "","adhocFilepath": "adhocFilepath","scriptInterpreter": "bash","fileExtension": "sh", "interpreterArgsQuoted": true,"expandTokenInScriptFile": true]
     }
 }
