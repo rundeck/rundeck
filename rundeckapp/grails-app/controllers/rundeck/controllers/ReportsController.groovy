@@ -573,8 +573,9 @@ List the event history for a project.''',
             (ExecutionService.EXECUTION_FAILED_WITH_RETRY): ExecutionService.EXECUTION_FAILED_WITH_RETRY,
             timeout: ExecutionService.EXECUTION_TIMEDOUT,
             (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
+        def controller = this
         withFormat{
-            def jsonClos={
+            '*' {
                 return apiService.renderSuccessJson(response){
                     paging=[
                             count:model.reports.size(),
@@ -633,8 +634,7 @@ List the event history for a project.''',
                     }
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
                         delegate.'events'(count: model.reports.size(), total: model.total, max: model.max, offset: model.offset) {
@@ -685,7 +685,6 @@ List the event history for a project.''',
 
                 }
             }
-            '*' jsonClos
         }
     }
 }
