@@ -2789,7 +2789,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     public void cleanSecureOptionIfHasDefaultValueAndStoragePath(Option option){
         if( option.secureInput ){
-            if( option.defaultValue != null && option.defaultStoragePath != null ){
+            if( option.defaultValue != null ){
                 log.info("Overriding old default value of secure input: ${option.name} with storage key.")
                 option.defaultValue = null
             }
