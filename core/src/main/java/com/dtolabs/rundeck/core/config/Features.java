@@ -39,7 +39,9 @@ public enum Features implements FeaturesDefinition{
     PLUGIN_GROUPS("pluginGroups"),
     VUE_KEY_STORAGE("vueKeyStorage"),
     LEGACY_UI("legacyUi"),
-    LEGACY_XML("legacyXml");
+    LEGACY_XML("legacyXml"),
+
+    API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation");
 
     private final String propertyName;
 
