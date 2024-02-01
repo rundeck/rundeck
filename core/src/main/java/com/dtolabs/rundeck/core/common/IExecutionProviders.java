@@ -44,11 +44,11 @@ public interface IExecutionProviders {
     /**
      * provide node step executor for item and project
      * @param item
-     * @param project
+     * @param ExecutionContext context
      * @return
      * @throws ExecutionServiceException
      */
-    NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, final String project) throws ExecutionServiceException;
+    NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, ExecutionContext context , INodeEntry node) throws ExecutionServiceException;
 
     /**
      * provide node dispatcher for context
