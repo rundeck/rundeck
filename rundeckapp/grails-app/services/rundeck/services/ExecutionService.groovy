@@ -1188,6 +1188,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParams=[:]
                 }
                 Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
                         args, jobcontext, secureOptionNodeDeferred)
             }
@@ -1284,6 +1285,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             loghandler.close()
             return null
+        }
+    }
+
+    /**
+     * Nullify the secure options with default values in order to prevent
+     * its usage at execution time.
+     *
+     * @param scheduledExecution
+     * @param extraParams
+     * @param extraParamsExposed
+     */
+    static void ignoreDefaultValuesForSecureOptions(
+            ScheduledExecution scheduledExecution,
+            Map extraParams,
+            Map extraParamsExposed
+    ){
+        def secureOptionsWithDefaultValues = scheduledExecution.options?.findAll{
+            it.secureInput && it.defaultValue
+        }?.findAll{
+            extraParamsExposed.containsKey(it.name) || extraParams.containsKey(it.name)
+        }
+        if( secureOptionsWithDefaultValues ){
+            secureOptionsWithDefaultValues.each {option ->
+                if( extraParamsExposed.containsKey(option.name)){
+                    extraParamsExposed.remove(option.name)
+                }
+                if( extraParams.containsKey(option.name)){
+                    extraParams.remove(option.name)
+                }
+            }
         }
     }
 

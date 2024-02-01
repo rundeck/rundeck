@@ -2752,48 +2752,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     }
 
-    def "load jobs with secure options that has default values, get a message"(){
-        given:
-        def userHint = "Job: testUploadErrorHandlers, has secure options: [secure_opt, secure_opt2] set with default values, please consider overriding this values with a storage key path to avoid security issues."
-        setupDoUpdate()
-        service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,_,_) >> true
-        service.fileUploadService = Mock(FileUploadService)
-
-        def upload = new ScheduledExecution(
-                jobName: 'testUploadErrorHandlers',
-                groupPath: "testgroup",
-                project: 'AProject',
-                description: 'desc',
-                options: [
-                        new Option(
-                                name: 'secure_opt',
-                                secureInput: true,
-                                defaultValue: 'default'
-                        ),
-                        new Option(
-                                name: 'secure_opt2',
-                                secureInput: true,
-                                defaultValue: 'default'
-                        ),
-                ],
-                workflow: new Workflow(commands: [
-                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
-                ])
-        )
-        service.jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> upload.scheduled
-        }
-
-        upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
-        service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
-        when:
-        def result = service.loadImportedJobs([upload], 'update',null, [:],  mockAuth())
-
-        then:
-        result!=null
-        result.msgs == [userHint]
-    }
-
     def "load jobs cannot load job with same uuid in different project"(){
         given:
         setupDoUpdate()
@@ -3535,6 +3493,34 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.save()
         then:
         job.nodeThreadcount == 30
+    }
+
+    def "Option validation removes the default value from a secure option"(){
+        given:
+        def opt1 = new Option(
+                name: 'opt1',
+                required: false,
+                description: 'monkey1',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+        )
+        def opt2 = new Option(
+                name: 'opt2',
+                required: false,
+                description: 'monkey',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+                defaultStoragePath: "keys/keypath/key.key"
+        )
+        when:
+        service.cleanSecureOptionFromDefaultValue(opt1)
+        service.cleanSecureOptionFromDefaultValue(opt2)
+
+        then:
+        opt2.defaultValue == null
+        opt1.defaultValue == null
     }
 
     @Unroll
@@ -5102,24 +5088,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
             !failed
             !job.errors.hasErrors()
-    }
-
-    def "Option validation removes the default value from a secure option if the definition has a storage path set"(){
-        given:
-        def opt2 = new Option(
-                name: 'opt2',
-                required: false,
-                description: 'monkey',
-                enforced: false,
-                secureInput: true,
-                defaultValue: "default",
-                defaultStoragePath: "keys/keypath/key.key"
-        )
-        when:
-        service.cleanSecureOptionIfHasDefaultValueAndStoragePath(opt2)
-
-        then:
-        opt2.defaultValue == null
     }
 
     def "validate definition options should have errors for option"() {

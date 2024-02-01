@@ -1849,22 +1849,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         )
     }
-    /**
-     * Returns the secure options with default values (deprecated as of version 3.4.x) .
-     *
-     * @param importedJob
-     * @return list with the names of secure options with default values
-     */
-    def getSecureOptionsWithDefaultValues(ImportedJob<ScheduledExecution> importedJob){
-        def options = importedJob.job.options
-        def secureOptionsWithDefaultValues = new ArrayList<Option>()
-        options.each { option -> {
-            if( option.secureInput && (option.defaultValue != null || !option.defaultValue.isEmpty()) ){
-                secureOptionsWithDefaultValues << option
-            }
-        }}
-        return secureOptionsWithDefaultValues
-    }
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
@@ -1887,7 +1871,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def skipjobs = []
         def jobChangeEvents = []
         def remappedIds = [:]
-        def msgsToUser = []
 
         def updateAuthActions = [AuthConstants.ACTION_UPDATE]
         def createAuthActions = [AuthConstants.ACTION_CREATE]
@@ -1938,16 +1921,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errdata=[:]
                 def success = result.success
                 scheduledExecution = result.scheduledExecution
-                def secureOptionsWithDefaultValues = getSecureOptionsWithDefaultValues(importedJob)
-                if( secureOptionsWithDefaultValues.size() ){
-                    String optionsNamesInAString = secureOptionsWithDefaultValues.stream()
-                            .map(Option::getName)
-                            .collect(Collectors.joining(", "))
-
-                    msgs << "Job: ${jobdata.jobName}, " +
-                            "has secure options: [${optionsNamesInAString}] set with default values," +
-                            " please consider overriding this values with a storage key path to avoid security issues."
-                }
                 if (!success) {
                     if(result.error){
                         errorStrings << result.error
@@ -1972,8 +1945,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsgs           : errorStrings,
                     errmsg            : errorStrings.join('\n'),
                     errdata           : errdata,
-                    scheduledExecution: scheduledExecution,
-                    msgs              : msgs
+                    scheduledExecution: scheduledExecution
                 ]
             }
 
@@ -2009,8 +1981,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
                         errmsgs = xresult.errmsgs
-                        msgsToUser = xresult.msgs
-
                     } catch (Exception e) {
                         errmsg = e.getMessage()
                         System.err.println("caught exception: " + errmsg);
@@ -2054,7 +2024,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
                         errmsgs = xresult.errmsgs
-                        msgsToUser = xresult.msgs
 
                     } catch (Exception e) {
                         System.err.println("caught exception");
@@ -2077,7 +2046,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             i++
 
         }
-        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds, msgs: msgsToUser]
+        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds]
     }
     static Logger jobChangeLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 
@@ -2760,8 +2729,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
-            // If a secure option has a default value AND a storage path set, remove the default value.
-            cleanSecureOptionIfHasDefaultValueAndStoragePath(origopt)
+            cleanSecureOptionFromDefaultValue(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
@@ -2781,15 +2749,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Removes the deprecated default value from secure option if there is a storage path set in the definition
-     * to avoid security issues.
+     * Removes the deprecated default value from secure option
      *
      * @param option
      */
     @CompileStatic
-    public void cleanSecureOptionIfHasDefaultValueAndStoragePath(Option option){
+    void cleanSecureOptionFromDefaultValue(Option option){
         if( option.secureInput ){
-            if( option.defaultValue != null && option.defaultStoragePath != null ){
+            if( option.defaultValue != null ){
                 log.info("Overriding old default value of secure input: ${option.name} with storage key.")
                 option.defaultValue = null
             }
@@ -2837,6 +2804,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
+
     /**
      *
      * @param scheduledExecution
