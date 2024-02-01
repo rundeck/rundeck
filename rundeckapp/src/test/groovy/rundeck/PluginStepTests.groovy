@@ -56,22 +56,26 @@ class PluginStepTests  extends Specification implements DataTest{
 
     def testToMapKeepCompatibilityWithOldBuiltInTypes(){
         when:
-        PluginStep t = new PluginStep(type: type,configuration: pluginConfig,nodeStep: true, keepgoingOnSuccess: true)
+        PluginStep t = new PluginStep(type: type,configuration: pluginConfig,nodeStep: true, keepgoingOnSuccess: true, pluginConfigData: '{"key1": "value1"}')
         then:
         Map configMap = t.toMap()
         assertEquals(true, !!configMap.keepgoingOnSuccess)
         assertNull(configMap.errorHandler)
         if(type == ExecCommand.EXEC_COMMAND_TYPE) {
             assertEquals('adhocRemoteString', configMap.exec)
+            assertEquals(['key1': 'value1'], configMap.plugins)
         }else if(type == ScriptCommand.SCRIPT_COMMAND_TYPE) {
             assertEquals('adhocLocalString', configMap.script)
+            assertEquals(['key1': 'value1'], configMap.plugins)
         }else if(type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE) {
             assertEquals('adhocFilepath', configMap.scriptfile)
+            assertEquals(['key1': 'value1'], configMap.plugins)
         }else{
             assertEquals(pluginConfig, configMap.configuration)
             assertEquals(null, configMap.script)
             assertEquals(null, configMap.exec)
             assertEquals(null, configMap.scriptfile)
+            assertEquals(['key1': 'value1'], configMap.plugins)
         }
 
         where:
