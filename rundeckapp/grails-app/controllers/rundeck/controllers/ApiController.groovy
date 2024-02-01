@@ -876,14 +876,14 @@ Since: v11
         }
 
         SystemInfoModel systemInfoModel = new SystemInfoModel(systemInfoMap)
-
+        def controller= this
         withFormat{
-            json{
+            '*' {
                 return apiService.renderSuccessJson(response){
                     systemInfoModel
                 }
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml{
                     return apiService.renderSuccessXml(request,response){
                         delegate.'system'{
