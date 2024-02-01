@@ -435,6 +435,7 @@ public class RundeckConfigBase {
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
+        Enabled apiProjectConfigValidation = new Enabled(false);
 
 
         @Data

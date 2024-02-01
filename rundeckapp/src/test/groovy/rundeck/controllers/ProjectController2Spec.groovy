@@ -1365,7 +1365,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.apiService=Mock(ApiService)
-            controller.configurationService = Mock(ConfigurationService)
+            controller.featureService = Mock(FeatureService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
                 getFrameworkProject('test1')>>Mock(IRundeckProject){
@@ -1439,8 +1439,8 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
                 ]
             }
-            controller.configurationService = Mock(ConfigurationService){
-                getBoolean("api.project.config.enablePluginValidation",_)>>true
+            controller.featureService = Mock(FeatureService){
+                featurePresent("apiProjectConfigValidation")>>true
             }
 
             Description desc = new AbstractBaseDescription() {
