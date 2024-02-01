@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -2523,7 +2524,7 @@ Authorization required: `configure` access for `project` resource type or `admin
         def key_ = apiService.restoreUriPath(request, params.keypath)
         boolean enablePluginValidation = params.get("enablePluginValidation", false)
 
-        if(configurationService.getBoolean("api.project.config.enablePluginValidation",false)){
+        if(featureService.featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)){
             enablePluginValidation = true
         }
 
