@@ -56,7 +56,7 @@ class PluginStepTests  extends Specification implements DataTest{
 
     def testToMapKeepCompatibilityWithOldBuiltInTypes(){
         when:
-        PluginStep t = new PluginStep(type: type,configuration: pluginConfig,nodeStep: true, keepgoingOnSuccess: true, pluginConfigData: "{'key1': 'value1'}")
+        PluginStep t = new PluginStep(type: type,configuration: pluginConfig,nodeStep: true, keepgoingOnSuccess: true, pluginConfigData: '{"key1": "value1"}')
         then:
         Map configMap = t.toMap()
         assertEquals(true, !!configMap.keepgoingOnSuccess)
