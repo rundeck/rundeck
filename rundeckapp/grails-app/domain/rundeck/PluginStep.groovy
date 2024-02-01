@@ -75,6 +75,7 @@ class PluginStep extends WorkflowStep{
             commandExec.description = this.description
             commandExec.errorHandler = this.errorHandler
             commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess
+            commandExec.pluginConfigData = this.pluginConfigData
             return commandExec.toMap()
         }
 
