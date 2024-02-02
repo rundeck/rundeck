@@ -956,11 +956,6 @@ Since: v11
 
                 }
             }
-            '*'{
-                return apiService.renderSuccessJson(response){
-                    systemInfoModel
-                }
-            }
         }
     }
 }
