@@ -364,7 +364,7 @@ class ConfigSpec extends BaseContainer{
     def "test-project-json"(){
         given:
         def client = getClient()
-        def projectName = "test"
+        def projectName = "RhetoricalMiscalculationElephant"
         def mapper = new ObjectMapper()
 
         when:
@@ -378,11 +378,11 @@ class ConfigSpec extends BaseContainer{
 
     }
 
-    def "test-project-resources-404"(){
+    def "test-project-missing"(){
         given:
         def client = getClient()
         client.apiVersion = 14
-        def projectName = "test"
+        def projectName = "RhetoricalMiscalculationElephant"
 
         when:
         def jsonResponseBody = client.doGet("/project/$projectName/resources")
@@ -436,7 +436,7 @@ class ConfigSpec extends BaseContainer{
         response.code() == 400
     }
 
-    def "test-project-resource"(){
+    def "test-project-resources"(){
         given:
         setupProject()
         def mapper = new ObjectMapper()
