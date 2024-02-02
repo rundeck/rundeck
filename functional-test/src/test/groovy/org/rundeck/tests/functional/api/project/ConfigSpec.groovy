@@ -376,4 +376,23 @@ class ConfigSpec extends BaseContainer{
 
     }
 
+    def "test-project-missing"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14
+        def mapper = new ObjectMapper()
+
+        when:
+        def jsonResponseBody = client.doGet("/project")
+        def validJsonParse = mapper.readValue(jsonResponseBody.body().string(), Object.class)
+
+        then:
+        !jsonResponseBody.successful
+        jsonResponseBody.code() == 404
+        validJsonParse.errorCode == "api.error.invalid.request"
+        validJsonParse.error
+        validJsonParse.message == "Invalid API Request: /api/14/project"
+
+    }
+
 }
