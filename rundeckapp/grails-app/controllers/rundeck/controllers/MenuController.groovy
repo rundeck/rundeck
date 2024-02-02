@@ -1910,7 +1910,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             statsLoaded=true
         }
 
-        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
+        if (params.nextUi == 'true') {
             params.nextUi = true
             return render(view: 'home.next', model: [
                     isFirstRun:isFirstRun,
