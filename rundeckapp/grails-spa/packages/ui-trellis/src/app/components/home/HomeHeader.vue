@@ -61,7 +61,7 @@
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {getAppLinks} from "@/library";
+import {getAppLinks, getRundeckContext} from "@/library";
 import {getSummary} from "./services/homeServices";
 
 export default defineComponent({
@@ -109,7 +109,7 @@ export default defineComponent({
   },
   methods: {
     projectLink(project: string): string {
-      return `/project/${project}/`
+      return `${getRundeckContext().rdBase}/project/${project}/`
     },
     async fetchSummary() {
       try {

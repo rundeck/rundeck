@@ -4,40 +4,40 @@
       <div class="col-sm-6 col-md-8">
         <ui-socket location="project-favorite" section="home" :socket-data="{projectName: project.name}" />
         <a
-            :href="`/?project=${project.name}`"
+            :href="createLink(`/?project=${project.name}`)"
             class="link-hover text-inverse project_list_item_link link-quiet"
             :id="`project${index}`"
         >
-          <p class="h5">
+          <span class="h5">
             {{ project.label ? project.label : project.name }}
-          </p>
+          </span>
 
           <template v-if="loaded">
-            <tooltip :text="$t('project.execution.disabled')" data-placement="right" class="h5" v-if="!executionsEnabled">
-            <span
-                class="text-base text-warning"
-                :data-container="`#project${index}`"
-            >
-              <i class="glyphicon glyphicon-pause"></i>
-            </span>
+            <tooltip :text="$t('project.execution.disabled')" placement="right" class="h5 ml-1" v-if="!executionsEnabled">
+              <span
+                  class="text-base text-warning"
+                  :data-container="`#project${index}`"
+              >
+                <i class="glyphicon glyphicon-pause"></i>
+              </span>
             </tooltip>
 
-            <tooltip :text="$t('project.schedule.disabled')" data-placement="right" class="h5" :class="{'ml-1': !executionsEnabled}" v-if="!scheduleEnabled">
-            <span
-                class="text-base text-warning"
-                :data-container="`#project${index}`"
-            >
-              <i class="glyphicon glyphicon-ban-circle"></i>
-            </span>
+            <tooltip :text="$t('project.schedule.disabled')" placement="right" class="h5 ml-1" v-if="!scheduleEnabled">
+              <span
+                  class="text-base text-warning"
+                  :data-container="`#project${index}`"
+              >
+                <i class="glyphicon glyphicon-ban-circle"></i>
+              </span>
             </tooltip>
 
             <span
                 v-if="project.description.length > 0"
-                class="text-secondary text-base"
+                class="text-secondary text-base ml-1"
                 :class="{'ml-1': !scheduleEnabled || !executionsEnabled}"
             >
-            {{ project.description }}
-          </span>
+              {{ project.description }}
+            </span>
           </template>
         </a>
       </div>
@@ -45,7 +45,7 @@
         <!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
         <div class="col-sm-6 col-md-2 text-center">
           <a
-              :href="`/project/${project.name}/activity`"
+              :href="createLink(`/project/${project.name}/activity`)"
               class="as-block link-hover link-block-padded text-inverse"
               :class="{ 'text-secondary': project.execCount < 1 }"
               data-toggle="popover"
@@ -98,7 +98,7 @@
           <a
               v-if="project.failedCount > 0"
               class="text-warning"
-              :href="`/project/${project.name}/activity?statFilter=fail`"
+              :href="createLink(`/project/${project.name}/activity?statFilter=fail`)"
           >
           <span>
             {{ project.failedCount }}{{ $t("page.home.project.executions.0.failed.parenthetical") }}
@@ -145,6 +145,7 @@ import {defineComponent, PropType} from 'vue'
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import HomeActionsMenu from "@/app/components/home/HomeActionsMenu.vue";
 import {ConfigMeta, MessageMeta, Project} from "@/app/components/home/types/projectTypes";
+import {getRundeckContext} from "@/library";
 
 export default defineComponent({
   name: "HomeProjectItem",
@@ -195,6 +196,11 @@ export default defineComponent({
 
       const { readme } = this.messageMeta.data;
       return readme && (this.showMotd || this.showReadme);
+    }
+  },
+  methods: {
+    createLink(restOfUrl: string): string {
+      return `${getRundeckContext().rdBase}${restOfUrl}`
     }
   }
 })

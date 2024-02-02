@@ -47,6 +47,7 @@
             <HomeCardList
                 :loaded-project-names="loadedProjectNames"
                 :projects="projects"
+                :paging-max="pagingMax"
             />
           </div>
         </div>
@@ -107,7 +108,11 @@ export default defineComponent({
     refreshDelay: {
       type: Number,
       default: 30000
-    }
+    },
+    pagingMax: {
+      type: Number,
+      default: 30,
+    },
   },
   data() {
     return {
@@ -122,8 +127,11 @@ export default defineComponent({
     async getPartialData() {
       try {
         const arrayOfProjectNames: string[] =  await getProjectNames();
-        this.projects = arrayOfProjectNames.map(projectName => ({name: projectName}))
-        this.projectCount = this.projects.length;
+        if(arrayOfProjectNames && arrayOfProjectNames.length > 0){
+          this.projects = arrayOfProjectNames.map(projectName => ({name: projectName}))
+        }
+
+        this.projectCount = this.projects ? this.projects.length : 0;
       } catch (e) {
         console.error(e);
       }
@@ -131,7 +139,7 @@ export default defineComponent({
     async getProjects() {
       try {
         this.projects = await getProjects();
-        if (this.projectCount !== this.projects.length) {
+        if (this.projects && this.projectCount !== this.projects.length) {
           this.projectCount = this.projects.length;
         }
         this.loadedProjectNames = true;

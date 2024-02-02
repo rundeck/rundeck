@@ -9,6 +9,10 @@ const dropdownStub = {
     template: '<div></div>',
 }
 
+jest.mock('@/library', () => ({
+    getRundeckContext: jest.fn().mockReturnValue({ rdBase: 'http://localhost:4440' }),
+}));
+
 const projectData = {
     name: 'example',
     label: 'Example Project',
@@ -72,7 +76,7 @@ describe('HomeBrowserItem', () => {
         const wrapper = await mountHomeBrowserItem();
 
         // Assert that project details are rendered correctly
-        expect(wrapper.find('.project_list_item_link').attributes('href')).toBe('/?project=example');
+        expect(wrapper.find('.project_list_item_link').attributes('href')).toBe('http://localhost:4440/?project=example');
         expect(wrapper.find('.h5').text()).toBe('Example Project');
         expect(wrapper.find('.text-secondary').text()).toBe('This is an example project');
     });

@@ -8,6 +8,10 @@ const VMarkdownViewStub = {
     template: '<div>{{content}}</div>',
 }
 
+jest.mock('@/library', () => ({
+    getRundeckContext: jest.fn().mockReturnValue({ rdBase: 'http://localhost:4440' }),
+}));
+
 const mountHomeWelcome = async (props?: Record<string, any>): Promise<VueWrapper<any>> => {
     return shallowMount(HomeWelcome, {
         props: {

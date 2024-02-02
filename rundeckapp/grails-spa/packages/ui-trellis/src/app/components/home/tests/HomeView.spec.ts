@@ -3,6 +3,9 @@ import HomeView from '../HomeView.vue';
 import { getProjects, getProjectNames } from '../services/homeServices';
 
 jest.mock('@/app/components/home/services/homeServices');
+jest.mock('@/library', () => ({
+    getRundeckContext: jest.fn().mockReturnValue({ rdBase: 'http://localhost:4440' }),
+}));
 
 const mockedGetProjects = getProjects as jest.MockedFunction<typeof getProjects>;
 const mockedGetProjectNames = getProjectNames as jest.MockedFunction<typeof getProjectNames>;

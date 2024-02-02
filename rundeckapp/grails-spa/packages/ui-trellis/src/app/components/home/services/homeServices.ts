@@ -19,7 +19,8 @@ export async function getSummary(): Promise<any> {
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         } else {
-            throw {message: `Error: ${response.status}`, response: response};
+            // intentionally throw an error to be caught locally
+            throw {message: response.status, response: response};
         }
     } catch (e: any) {
         // e.message in this case is the error message from the server response
@@ -47,7 +48,8 @@ export async function getProjectNames(): Promise<any> {
         if (response.status >= 200 && response.status < 300) {
             return response.data.projectNames;
         } else {
-            throw {message: `Error: ${response.status}`, response: response};
+            // intentionally throw an error to be caught locally
+            throw {message: response.status, response: response};
         }
     } catch (e: any) {
         // e.message in this case is the error message from the server response
@@ -72,6 +74,7 @@ export async function getProjects(): Promise<any> {
         if (response.status >= 200 && response.status < 300) {
             return response.data;
         } else {
+            // intentionally throw an error to be caught locally
             throw {message: `Error: ${response.status}`, response: response};
         }
     } catch (e: any) {

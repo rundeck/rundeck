@@ -583,7 +583,6 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     @PackageScope
-    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
     def renderApiProjectJson (def pject, hasConfigAuth=false, vers=1){
         Map data=basicProjectDetails(pject,vers)
         Map json = [url: data.url, name: data.name, description: data.description]
@@ -615,7 +614,7 @@ class ProjectController extends ControllerBase{
                 retMap.created = created?:''
             }
         }
-        if(version>=ApiVersions.V46 && params.meta) {
+        if(version>=ApiVersions.V47 && params.meta) {
             String meta = params.meta
             def authContext =
                     rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, name)
