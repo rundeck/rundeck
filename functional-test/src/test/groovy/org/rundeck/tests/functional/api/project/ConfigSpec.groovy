@@ -359,4 +359,21 @@ class ConfigSpec extends BaseContainer{
 
     }
 
+    def "test-project-json"(){
+        given:
+        def client = getClient()
+        def projectName = "test"
+        def mapper = new ObjectMapper()
+
+        when:
+        def jsonResponseBody = client.doGet("/project/$projectName")
+        def validJsonParse = mapper.readValue(jsonResponseBody.body().string(), Object.class)
+
+        then:
+        !jsonResponseBody.successful
+        jsonResponseBody.code() == 404
+        validJsonParse != null
+
+    }
+
 }
