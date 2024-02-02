@@ -1441,7 +1441,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 ]
             }
             controller.featureService = Mock(FeatureService){
-                featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)>>true
+                featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)>>enableValidation
             }
 
             Description desc = new AbstractBaseDescription() {
@@ -1511,7 +1511,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectConfigKeyPut()
         then:
             with(controller.frameworkService) {
-                1 * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
+                (enableValidation ? 1 : 0) * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
             }
             with(controller.apiService){
                 (valid ? 0 : 1) * renderErrorFormat(_, [
@@ -1522,9 +1522,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             }
 
         where:
-        inputValue     | valid | reportError
-        "value1"       | true  | null
-        "invalidValue" | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        inputValue     | enableValidation   | valid | reportError
+        "value1"       | true               | true  | null
+        "invalidValue" | true               | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        "invalidValue" | false              | true  | null
 
     }
 
