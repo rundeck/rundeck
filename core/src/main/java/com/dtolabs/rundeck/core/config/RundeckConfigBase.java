@@ -109,7 +109,6 @@ public class RundeckConfigBase {
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
         PaginateJobs paginatejobs;
-        ProjectConfig project;
 
         @Data
         public static class PaginateJobs {
@@ -125,17 +124,6 @@ public class RundeckConfigBase {
         public static class ApiTokensDuration {
             String max;
         }
-
-        @Data
-        public static class ProjectConfig {
-            ProjectConfigUpdate config;
-        }
-
-        @Data
-        public static class ProjectConfigUpdate {
-            Boolean enablePluginValidation;
-        }
-
     }
 
     @Data
