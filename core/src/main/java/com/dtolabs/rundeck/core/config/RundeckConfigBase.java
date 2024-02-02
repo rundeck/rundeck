@@ -430,6 +430,7 @@ public class RundeckConfigBase {
         Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled(false);
         Enabled legacyXml = new Enabled(false);
+        Enabled apiProjectConfigValidation = new Enabled(false);
 
 
         @Data
