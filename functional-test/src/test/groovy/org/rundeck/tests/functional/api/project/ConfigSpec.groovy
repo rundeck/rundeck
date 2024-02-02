@@ -409,4 +409,30 @@ class ConfigSpec extends BaseContainer{
         validJsonParse.message == "Invalid API Request: /api/14/project"
     }
 
+    def "test-project-space-in-name-fails"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14 // as the original test
+        def mapper = new ObjectMapper()
+        def projectName = "test project"
+        Object testProperties = [
+                "name": projectName,
+                "description":"project name with spaces",
+                "config": [
+                        "test.property": "test value",
+                        "test.property2": "test value2"
+                ]
+        ]
+
+        when:
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+
+        then:
+        !response.successful
+        response.code() == 400
+    }
+
 }
