@@ -203,6 +203,7 @@ public class RundeckConfigBase {
     @Data
     public static class Enabled {
         Boolean enabled;
+        Boolean defaultEnabled;
 
         public Enabled() { this(false); }
         public Enabled(final Boolean enabled) {
@@ -423,14 +424,14 @@ public class RundeckConfigBase {
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
-        Enabled pluginSecurity = new Enabled(false);
+        Enabled pluginSecurity = new Enabled();
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         Enabled vueKeyStorage = new Enabled(true);
-        Enabled legacyUi = new Enabled(false);
-        Enabled legacyXml = new Enabled(false);
-        Enabled apiProjectConfigValidation = new Enabled(false);
+        Enabled legacyUi = new Enabled();
+        Enabled legacyXml = new Enabled();
+        Enabled apiProjectConfigValidation = new Enabled();
 
 
         @Data
