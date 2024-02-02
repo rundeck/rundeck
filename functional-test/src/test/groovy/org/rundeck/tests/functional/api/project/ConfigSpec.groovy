@@ -376,7 +376,22 @@ class ConfigSpec extends BaseContainer{
 
     }
 
-    def "test-project-missing"(){
+    def "test-project-resources-404"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14
+        def projectName = "test"
+
+        when:
+        def jsonResponseBody = client.doGet("/project/$projectName/resources")
+
+        then:
+        !jsonResponseBody.successful
+        jsonResponseBody.code() == 404
+
+    }
+
+    def "test-project-resources-404"(){
         given:
         def client = getClient()
         client.apiVersion = 14
@@ -392,7 +407,6 @@ class ConfigSpec extends BaseContainer{
         validJsonParse.errorCode == "api.error.invalid.request"
         validJsonParse.error
         validJsonParse.message == "Invalid API Request: /api/14/project"
-
     }
 
 }
