@@ -205,7 +205,7 @@ public class RundeckConfigBase {
         Boolean enabled;
         Boolean defaultEnabled;
 
-        public Enabled() { this(false); }
+        public Enabled() { this(null); }
         public Enabled(final Boolean enabled) {
             this.enabled = enabled;
         }
