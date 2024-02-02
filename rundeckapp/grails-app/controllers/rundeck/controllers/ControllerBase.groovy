@@ -35,6 +35,7 @@ import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.services.ApiService
 import rundeck.services.UiPluginService
+import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
@@ -52,6 +53,7 @@ class ControllerBase {
     AppAuthorizer rundeckAppAuthorizer
     WebExceptionHandler rundeckExceptionHandler
     WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
+    FeatureService featureService
     def grailsApplication
 
     protected UserAndRolesAuthContext getSystemAuthContext(){

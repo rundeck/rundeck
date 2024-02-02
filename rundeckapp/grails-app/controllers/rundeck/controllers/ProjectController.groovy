@@ -2486,21 +2486,17 @@ Authorization required: `configure` access for `project` resource type or `admin
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+
         boolean enablePluginValidation = params.get("enablePluginValidation", false)
 
         if(featureService.featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)){
             enablePluginValidation = true
         }
 
-        def allowedFormats = ['json', 'text']
-        if(isAllowXml()) {
-            allowedFormats << 'xml'
-        }
-        def respFormat = apiService.extractResponseFormat(request, response, allowedFormats)
         def value_=null
         def errors=[]
         if(request.format in ['text']){
-           value_ = request.inputStream.text
+            value_ = request.inputStream.text
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
                     xml:{xml->
