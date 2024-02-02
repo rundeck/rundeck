@@ -1,10 +1,12 @@
 package org.rundeck.tests.functional.api.project
 
 import org.rundeck.tests.functional.api.ResponseModels.ConfigProperty
+import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
+import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
 @APITest
 class ConfigSpec extends BaseContainer{
@@ -413,7 +415,6 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         client.apiVersion = 14 // as the original test
-        def mapper = new ObjectMapper()
         def projectName = "test project"
         Object testProperties = [
                 "name": projectName,
@@ -433,6 +434,52 @@ class ConfigSpec extends BaseContainer{
         then:
         !response.successful
         response.code() == 400
+    }
+
+    def "test-project-resource"(){
+        given:
+        setupProject()
+        def mapper = new ObjectMapper()
+        def client = getClient()
+        client.apiVersion = 40 // as the original test
+
+        when: "YAML"
+        def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
+        def responseBody = yamlResponse.body().string()
+        mapper.readValue(responseBody, Object.class)
+
+        then: "Invalid JSON"
+        thrown Exception
+
+        when: "Valid YAML"
+        def yaml = new Yaml().load(responseBody)
+
+        then:
+        noExceptionThrown()
+        yaml != null
+
+        when:
+        def jsonResponse = client.doGet("/project/$PROJECT_NAME/resources?format=json")
+        def responseJsonBody = jsonResponse.body().string()
+        def json = mapper.readValue(responseJsonBody, Object.class)
+
+        then: "Yaml is valid"
+        !isYamlValid(responseJsonBody)
+        json != null
+
+        when: "A unsupported format"
+        def unsupportedResponse = client.doGetAcceptAll("/project/$PROJECT_NAME/resources?format=unsupported")
+        def unsupportedParsedResponse = mapper.readValue(unsupportedResponse.body().string(), Object.class)
+
+        then: "unsupported"
+        unsupportedParsedResponse.errorCode == "api.error.resource.format.unsupported"
+        unsupportedParsedResponse.error
+        unsupportedParsedResponse.message == "The format specified is unsupported: unsupported"
+    }
+
+    boolean isYamlValid(String yamlString) {
+        def yamlRegex = /^(?:\s*[\w-]+(\s*:\s*(?:(?:\s*".*?"\s*)|(?:\s*'.*?'\s*)|(?:.*?))\s*)?\s*)+$/
+        yamlString =~ yamlRegex
     }
 
 }
