@@ -147,7 +147,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    FeatureService featureService
 
     // the delete, save and update actions only
     // accept POST requests
