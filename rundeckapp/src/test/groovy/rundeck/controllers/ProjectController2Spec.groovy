@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -1221,7 +1222,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 ]
             }
             controller.featureService = Mock(FeatureService){
-                featurePresent("apiProjectConfigValidation")>>true
+                featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)>>true
             }
 
             Description desc = new AbstractBaseDescription() {
