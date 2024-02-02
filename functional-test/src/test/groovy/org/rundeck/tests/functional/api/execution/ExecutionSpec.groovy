@@ -1,18 +1,7 @@
 package org.rundeck.tests.functional.api.execution
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.ExecutionStatus
-import org.rundeck.util.api.JobUtils
-import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.container.RdClient
-
-import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

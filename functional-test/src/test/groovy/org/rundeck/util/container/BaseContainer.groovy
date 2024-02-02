@@ -186,6 +186,25 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
+    boolean waitExecution(int executionId) {
+        def finalStatus = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout',
+                'other',
+                'failed-with-retry'
+        ]
+        while(true) {
+            def exec = client.get("/execution/${executionId}/output", Map)
+            if (finalStatus.contains(exec.execState)) {
+                return true
+            } else {
+                sleep 10000
+            }
+        }
+    }
+
     void deleteProject(String projectName) {
         def response = client.doDelete("/project/${projectName}")
         if (!response.successful) {
