@@ -1,9 +1,9 @@
 <template>
-  <dropdown menu-right append-to-body ref="dropdown">
-    <a role="button" class="as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle">
+  <dropdown menu-right append-to-body ref="dropdown" v-if="createPermissions || isAdmin">
+    <btn type="link" class="dropdown-toggle" data-toggle="dropdown">
       {{ $t('button.Action') }}
-      <span class="caret"></span>
-    </a>
+      <i class="caret"></i>
+    </btn>
     <template #dropdown>
       <template v-for="(option, index) in availableOptions">
         <li v-if="option.show" :key="`item${index}`">
@@ -21,6 +21,7 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {AuthzMeta, ProjectActionsItemDropdown} from "@/app/components/home/types/projectTypes";
+import {getRundeckContext} from "@/library";
 
 export default defineComponent({
   name: "HomeActionsMenu",
@@ -43,23 +44,24 @@ export default defineComponent({
       const values: boolean[] = Object.values(this.authConfig.data.project);
       return values.some(val => val === true);
     },
+    createPermissions(): boolean {
+      return !!this.authConfig.data.types.job.create;
+    },
     availableOptions(): ProjectActionsItemDropdown[] {
-      const createPermissions = !!this.authConfig.data.types.job.create;
-
       return [{
           show: this.isAdmin,
-          link: `/project/${this.project.name}/configure`,
+          link: `${getRundeckContext().rdBase}/project/${this.project.name}/configure`,
           text: 'edit.configuration',
         },
         {
-          show: createPermissions,
-          link: `/project/${this.project.name}/job/create`,
+          show: this.createPermissions,
+          link: `${getRundeckContext().rdBase}/project/${this.project.name}/job/create`,
           icon: 'glyphicon-plus',
           text: 'new.job.button.label',
         },
         {
-          show: createPermissions,
-          link: `/project/${this.project.name}/job/upload`,
+          show: this.createPermissions,
+          link: `${getRundeckContext().rdBase}/project/${this.project.name}/job/upload`,
           icon: 'glyphicon-upload',
           text: 'upload.definition.button.label',
         },

@@ -19,7 +19,7 @@
         />
         <p class="h6 text-strong" style="margin-top: 1em">
           {{ $t("you.can.see.this.message.again.by.clicking.the") }}
-          <a href="/menu/welcome">
+          <a :href="welcomeUrl">
             {{ $t("version.number") }}
           </a>
           {{ $t("in.the.page.footer") }}
@@ -32,6 +32,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { VMarkdownView } from "vue3-markdown";
+import {getRundeckContext} from "@/library";
+
 
 export default defineComponent({
   name: "HomeWelcome",
@@ -52,6 +54,11 @@ export default defineComponent({
     helpLinkUrl: {
       type: String,
       required: true
+    }
+  },
+  data() {
+    return {
+      welcomeUrl: getRundeckContext().rdBase + "/menu/welcome"
     }
   }
 });

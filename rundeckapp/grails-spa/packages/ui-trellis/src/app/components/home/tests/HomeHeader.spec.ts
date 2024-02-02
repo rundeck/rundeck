@@ -15,7 +15,9 @@ jest.mock('@/library', () => ({
     getAppLinks: jest.fn().mockReturnValue({
         frameworkCreateProject: '/create-project-url', // Replace with the actual URL
     }),
+    getRundeckContext: jest.fn().mockReturnValue({ rdBase: 'http://localhost:4440' }),
 }));
+
 
 const createWrapper = (props = {}) => {
     return mount(HomeHeader, {

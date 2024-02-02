@@ -1,10 +1,14 @@
 import {mount, VueWrapper} from '@vue/test-utils';
 import HomeActionsMenu from '../HomeActionsMenu.vue';
-import {Dropdown} from 'uiv';
+import {Dropdown, Btn} from 'uiv';
 import {AuthzMeta} from "../types/projectTypes";
 
 
 const defaultMeta: AuthzMeta  = { name: 'authz', data: { project: {admin: true}, types: { job: { create: true } } } }
+
+jest.mock('@/library', () => ({
+    getRundeckContext: jest.fn().mockReturnValue({ rdBase: 'http://localhost:4440' }),
+}));
 
 const mountHomeActionsMenu = async (): Promise<VueWrapper<any>> => {
     const wrapper = mount(HomeActionsMenu, {
@@ -21,7 +25,8 @@ const mountHomeActionsMenu = async (): Promise<VueWrapper<any>> => {
             },
         },
         components: {
-            Dropdown
+            Dropdown,
+            btn: Btn
         }
     });
 
@@ -40,20 +45,20 @@ describe('HomeActionsMenu', () => {
     it('displays edit configuration link for admin', async () => {
         const wrapper = await mountHomeActionsMenu();
 
-        expect(wrapper.find('[href="/project/example/configure"]').exists()).toBe(true);
+        expect(wrapper.find('[href="http://localhost:4440/project/example/configure"]').exists()).toBe(true);
     });
 
     it('does not display edit configuration link for non-admin', async () => {
         defaultMeta.data.project.admin = false;
         const wrapper = await mountHomeActionsMenu();
 
-        expect(wrapper.find('[href="/project/example/configure"]').exists()).toBe(false);
+        expect(wrapper.find('[href="http://localhost:4440/project/example/configure"]').exists()).toBe(false);
     });
 
     it('displays create job link for users with create permissions', async () => {
         const wrapper = await mountHomeActionsMenu();
 
-        expect(wrapper.find('[href="/project/example/job/create"]').exists()).toBe(true);
+        expect(wrapper.find('[href="http://localhost:4440/project/example/job/create"]').exists()).toBe(true);
     });
 
     it('does not display create job link for users without create permissions', async () => {
@@ -63,6 +68,6 @@ describe('HomeActionsMenu', () => {
         const wrapper = await mountHomeActionsMenu();
 
         // Assert that the create job link is not displayed
-        expect(wrapper.find('[href="/project/example/job/create"]').exists()).toBe(false);
+        expect(wrapper.find('[href="http://localhost:4440/project/example/job/create"]').exists()).toBe(false);
     });
 });

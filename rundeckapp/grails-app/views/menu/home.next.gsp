@@ -31,7 +31,7 @@
   <meta name="skipPrototypeJs" content="true"/>
 
   <title><g:appTitle/></title>
-  <g:set var="uiType" value="${params.nextUi ? 'next' : params.legacyUi ? 'legacy' : 'current'}"/>
+  <g:set var="uiType" value="next"/>
   <g:if test="${!projectNames}">
     <g:embedJSON data="${[projectNames: [], projectNamesTotal: -1]}" id="projectNamesData"/>
   </g:if>
@@ -98,6 +98,7 @@
                 helpLinkUrl: '${helpLinkUrl}',
                 summaryRefresh: ${cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true)},
                 refreshDelay: ${cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000)},
+                pagingMax: ${params.getInt('pagingMax') ?: cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30)},
                 }"></ui-socket>
     </div>
   </div>

@@ -41,7 +41,13 @@
           </div>
         </div>
       </div>
-      <HomeBrowser v-if="searchResultsCount > 0" :key="searchResultsCount" :projects="resultsPage" :allProjects="projects" :loaded="loadedProjectNames" />
+      <HomeBrowser
+          v-if="searchResultsCount > 0"
+          :key="searchResultsCount"
+          :projects="resultsPage"
+          :allProjects="projects"
+          :loaded="loadedProjectNames"
+      />
     </div>
   </div>
 </template>
@@ -71,6 +77,10 @@ export default defineComponent({
     projects: {
       type: Array as PropType<Project[]>,
       default: () => []
+    },
+    pagingMax: {
+      type: Number,
+      default: 30
     }
   },
   data() {
@@ -84,7 +94,7 @@ export default defineComponent({
       eventBus: getRundeckContext().eventBus,
       pagination: {
         offset: 0,
-        max: 30,
+        max: this.pagingMax,
         total: -1
       }
     }
@@ -98,7 +108,7 @@ export default defineComponent({
         return []
       }
 
-      return this.projects.filter((project) => this.favoriteProjectNames.includes(project.name))
+      return this.projects.filter((project: Project) => this.favoriteProjectNames.includes(project.name))
     },
   },
   methods: {
@@ -106,12 +116,12 @@ export default defineComponent({
     // search input can either be a string or a regex, and the search is case-insensitive
     // updates the pagination to reflect the total number of projects and sets flag to show search results message
     // if the search input is not empty
-    handleSearch(resetPagination = true) {
+    handleSearch(resetPagination : boolean = true) {
       if (resetPagination) {
         this.pagination.offset = 0;
       }
 
-      let regex;
+      let regex: RegExp;
       if (this.search.charAt(0) === '/' && this.search.charAt(this.search.length - 1) === '/') {
         regex = new RegExp(this.search.substring(1, this.search.length - 1),'i');
       }else{
@@ -119,24 +129,17 @@ export default defineComponent({
         regex = new RegExp(this.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
       }
 
-      if(this.filterFavoritesOnly) {
-        this.filteredProjects = this.favoriteProjects.filter((project) => {
-          return project.name.match(regex) || project.label && project.label.match(regex);
-        });
-      } else {
-        this.filteredProjects = this.projects.filter((project) => {
-          return project.name.match(regex) || project.label && project.label.match(regex);
-        });
-      }
+      let searchSet = this.filterFavoritesOnly ? this.favoriteProjects : this.projects
+      this.filteredProjects = searchSet.filter((project: Project) => {
+        return project.name.match(regex) || project.label && project.label.match(regex);
+      });
 
       this.resultsPage = this.paginateResults(this.filteredProjects);
 
       // update the pagination to reflect the total number of projects
       this.pagination.total = this.searchResultsCount;
 
-      if (this.search !== "") {
-        this.showSearchResults = true;
-      }
+      this.showSearchResults = this.search !== "" || this.filterFavoritesOnly;
     },
     hideResults() {
       this.showSearchResults = false;
@@ -152,7 +155,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.eventBus.on("home-card-list:toggleFavorites",  ({favsOnly, favoriteProjects}) => {
+    this.eventBus.on("project-favorites-toggle:status",  ({favsOnly, favoriteProjects}) => {
       this.filterFavoritesOnly = favsOnly;
       this.favoriteProjectNames = favoriteProjects;
       // eventBus might emit before projects are loaded
@@ -165,7 +168,7 @@ export default defineComponent({
     projects: {
       immediate: true,
       deep: true,
-      handler(newVal) {
+      handler(newVal: Project[]) {
           if(newVal && newVal.length) {
             this.handleSearch();
             this.pagination.total = newVal.length;
@@ -198,20 +201,5 @@ export default defineComponent({
 
 .has_tooltip {
   margin-right: var(--spacing-2);
-}
-
-:deep(.paging_links .pagination) {
-  display: flex;
-  align-items: center;
-}
-
-:deep(.paging_links :deep(.pagination)) {
-  display: flex;
-  align-items: center;
-}
-
-:deep(.pagination) {
-  display: flex;
-  align-items: center;
 }
 </style>
