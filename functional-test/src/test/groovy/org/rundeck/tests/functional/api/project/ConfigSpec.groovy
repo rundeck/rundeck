@@ -345,4 +345,18 @@ class ConfigSpec extends BaseContainer{
         deleteResponse.code() == 204
     }
 
+    def "test-project-invalid"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14
+        def projectName = "RhetoricalMiscalculationElephant"
+
+        when:
+        def response = client.doGet("/project/$projectName")
+
+        then:
+        !response.successful
+
+    }
+
 }
