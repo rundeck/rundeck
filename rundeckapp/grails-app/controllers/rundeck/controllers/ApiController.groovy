@@ -329,7 +329,11 @@ Includes current latest API Version, and base API URL.''',
             String key = e.getKey().toString()
             Object value = e.getValue()
             if(value != null && value.hasProperty("enabled")) {
-                result.add(new FeatureEnabledResult(key, (Boolean)value.getAt("enabled")))
+                def enabled=value.getAt('enabled')
+                if(enabled==null){
+                    enabled = value.hasProperty('defaultEnabled')?value.getAt('defaultEnabled')?:false:false
+                }
+                result.add(new FeatureEnabledResult(key, (Boolean)enabled))
             }
         }
 
