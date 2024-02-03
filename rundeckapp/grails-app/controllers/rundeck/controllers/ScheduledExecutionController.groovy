@@ -722,14 +722,15 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             scheduledExecution.project
         )
         def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
+        def controller = this
         withFormat {
-            json {
+            '*' {
                 render(contentType: 'application/json') {
                     workflow wfdata
                 }
             }
 
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: 'application/xml') {
                         workflow wfdata
@@ -1252,13 +1253,14 @@ Since: V14''',
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
+            def controller = this
             return withFormat {
 
-                json {
+                '*' {
                     render ([success: true] as JSON)
                 }
 
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
                     }
@@ -1364,13 +1366,13 @@ Since: V14''',
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
+            def controller = this
             return withFormat {
-
-                json {
+                '*' {
                     render ([success: true] as JSON)
                 }
 
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
                     }
@@ -1753,10 +1755,9 @@ Failed results will contain:
         def successful = result.success
         def errors=result.errors
 
-        withFormat{
-
-
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
                     enabled=params.status
@@ -1777,7 +1778,7 @@ Failed results will contain:
                     }
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
                         delegate.'toggleExecution'(
@@ -1973,10 +1974,9 @@ Failed results will contain:
         def successful = result.success
         def errors=result.errors
 
-        withFormat{
-
-
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
                     enabled=params.status
@@ -1997,7 +1997,7 @@ Failed results will contain:
                     }
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
                         delegate.'toggleSchedule'(
@@ -2160,10 +2160,9 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             }
         }
 
-        withFormat{
-
-
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     requestCount= ids.size()
                     allsuccessful=(successful.size()==ids.size())
@@ -2183,7 +2182,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                     }
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
                         delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful: (successful.size() == ids.size())) {
@@ -3818,24 +3817,20 @@ Each job entry contains:
         ScheduledExecution.withSession { session->
             session.flush()
         }
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 apiService.renderSuccessJson(response){
                     renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
                         }
                     }
-                }
-            }
-            '*'{
-                apiService.renderSuccessJson(response){
-                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
             }
         }
@@ -4228,18 +4223,16 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             }
         }
         def e = result.execution
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
 
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return executionService.respondExecutionsXml(request, response, [e])
                 }
-            }
-            '*' {
-                return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
         }
     }
@@ -5363,8 +5356,9 @@ For Content-Type: `multipart/form-data`
                         code: 'api.error.execution.failed', args: [errors.join(", ")]])
             }
         } else {
-            withFormat{
-                json{
+            def controller = this
+            withFormat {
+                '*' {
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("Immediate execution scheduled (${results.id})")
                         delegate.'execution' = [
@@ -5374,7 +5368,7 @@ For Content-Type: `multipart/form-data`
                         ]
                     }
                 }
-                if(isAllowXml()) {
+                if(controller.isAllowXml()) {
                     xml {
 
                         return apiService.renderSuccessXml(request, response) {
@@ -5710,12 +5704,13 @@ return.''',
                 params.int('max') :
                 configurationService.getInteger("pagination.default.max", 20)
         def total=result.total
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 return executionService.respondExecutionsJson(request,response,result.result,[total:total,offset:resOffset,max:resMax])
             }
 
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return executionService.respondExecutionsXml(request, response, result.result, [total: total, offset: resOffset, max: resMax])
                 }
@@ -5905,8 +5900,9 @@ Since: v14''',
             ])
         }
         if (!frameworkService.isClusterModeEnabled()) {
+            def controller = this
             withFormat {
-                json {
+                '*'  {
 
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("No action performed, cluster mode is not enabled.")
@@ -5915,7 +5911,7 @@ Since: v14''',
                         self=[server:[uuid:frameworkService.getServerUUID()]]
                     }
                 }
-                if(isAllowXml()) {
+                if(controller.isAllowXml()) {
                     xml {
                         return apiService.renderSuccessXml(request, response) {
                             delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
@@ -6001,8 +5997,9 @@ Since: v14''',
             delegate.'job'(jobData(entry))
         }
         def successMessage= "Schedule Takeover successful for ${successCount}/${reclaimMap.size()} Jobs."
+        def controller = this
         withFormat {
-            json{
+            '*' {
                 def datamap=serverAll?[server:[all:true]]:[server:[uuid: serverUUID]]
                 if(project){
                     datamap.project=project
@@ -6021,7 +6018,7 @@ Since: v14''',
                     ]
                 ] as JSON)
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response) {
                         delegate.'takeoverSchedule' {

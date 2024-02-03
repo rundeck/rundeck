@@ -164,19 +164,18 @@ class StorageController extends ControllerBase{
 
     private def renderDirectory(HttpServletRequest request, HttpServletResponse response, Resource resource,
                                 Set<Resource<ResourceMeta>> dirlist) {
+        def controller = this
         withFormat {
-            def jsonClos = {
+            '*'  {
                 render jsonRenderResource(resource,dirlist) as JSON
             }
-            json  jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     render(contentType: 'application/xml') {
                         xmlRenderResource(delegate, resource, dirlist)
                     }
                 }
             }
-            '*' jsonClos
         }
     }
     private boolean resourceContentsMasked(Resource resource){
@@ -249,16 +248,16 @@ class StorageController extends ControllerBase{
         if(!(response.format in ['json','xml'])){
             return jsonResponseclosure.call()
         }
+        def controller = this
         withFormat {
-            json(jsonResponseclosure)
-            if(isAllowXml()) {
+            '*' (jsonResponseclosure)
+            if(controller.isAllowXml()) {
                 xml {
                     render(contentType: "application/xml") {
                         delegate.'error'(message)
                     }
                 }
             }
-            '*' jsonResponseclosure
         }
     }
 
