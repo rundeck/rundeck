@@ -49,6 +49,7 @@ public class RundeckClient {
             Boolean importScm,
             Boolean importWebhooks,
             Boolean whkRegenAuthTokens,
+            Boolean whkRegenUuid,
             Boolean importNodesSources,
             Map<String,String> params,
             RequestBody requestBody
@@ -63,6 +64,7 @@ public class RundeckClient {
                 importScm,
                 importWebhooks,
                 whkRegenAuthTokens,
+                whkRegenUuid,
                 importNodesSources,
                 params,
                 requestBody
