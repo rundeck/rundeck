@@ -4,7 +4,8 @@ enum ExecutionStatus {
     SUCCEEDED("succeeded"),
     FAILED_WITH_RETRY("failed-with-retry"),
     RUNNING("running"),
-    FAILED("failed")
+    FAILED("failed"),
+    TIMEDOUT("timedout")
 
     String state
 

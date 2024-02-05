@@ -5,9 +5,6 @@ import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 import spock.lang.Stepwise
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 @APITest
 @Stepwise
 class JobExecutionStatusSpec extends BaseContainer {
@@ -18,7 +15,7 @@ class JobExecutionStatusSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateFile("api-test-execution-state-2.xml")
+        def pathFile = updateJobFile([fileName: "api-test-execution-state-2.xml"])
         jobId = jobImportFile(pathFile).succeeded[0].id
     }
 

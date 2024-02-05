@@ -3,9 +3,11 @@ package org.rundeck.util.container
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import okhttp3.ConnectionPool
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -13,7 +15,6 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
-import java.time.Duration
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -149,6 +150,33 @@ class RdClient {
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPost(final String path, final String file, final String contentType, final Headers headers = null) {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
+        Request.Builder request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+        if (headers) {
+            request.headers(headers)
+        }
+        httpClient.newCall(request.build()).execute()
+    }
+
+    Response doPostWithMultipart(final String path, MultipartBody multipartBody) {
+        def request = new Request.Builder()
+                .url(apiUrl(path))
+                .post(multipartBody)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithFormData(final String path, FormBody formBody) {
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .post(formBody)
                 .build()
         httpClient.newCall(request).execute()
     }
