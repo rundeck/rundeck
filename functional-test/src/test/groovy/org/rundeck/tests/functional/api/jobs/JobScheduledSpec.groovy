@@ -1,6 +1,10 @@
 package org.rundeck.tests.functional.api.jobs
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.ExecutionStatus
+import org.rundeck.util.api.JobUtils
+import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 import java.time.LocalDateTime
@@ -45,9 +49,16 @@ class JobScheduledSpec extends BaseContainer {
             def path = generatePath1()
             def jobId = jobImportFile(path).succeeded[0].id
         when:
-            def execId = runJob(jobId, ["options":["opt2": "a"]])
-            waitExecution(execId)
-            def responseExec = get("/execution/${execId}", Map)
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            def execId = jsonValue(jobRun.body()).id
+            def responseExec = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.TIMEDOUT.state,
+                    execId as String,
+                    new ObjectMapper(),
+                    client,
+                    1,
+                    WaitingTime.MODERATE.milliSeconds
+            )
         then:
             verifyAll {
                 responseExec.status == 'timedout'
@@ -59,20 +70,34 @@ class JobScheduledSpec extends BaseContainer {
             def path = generatePath2()
             def jobId = jobImportFile(path).succeeded[0].id
         when:
-            def execId = runJob(jobId, ["options":["opt2": "a"]])
-            waitExecution(execId)
-            def responseExec = get("/execution/${execId}", Map)
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            def execId = jsonValue(jobRun.body()).id
+            def response = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.FAILED_WITH_RETRY.state,
+                    execId as String,
+                    new ObjectMapper(),
+                    client,
+                    1,
+                    WaitingTime.MODERATE.milliSeconds
+            )
         then:
             verifyAll {
-                responseExec.status == 'failed-with-retry'
-                responseExec.retriedExecution.id != null
+                response.status == 'failed-with-retry'
+                response.retriedExecution.id != null
             }
         when:
-            def responseExec1 = get("/execution/${responseExec.retriedExecution.id}", Map)
+            def responseExec1 = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.TIMEDOUT.state,
+                    response.retriedExecution.id as String,
+                    new ObjectMapper(),
+                    client,
+                    1,
+                    WaitingTime.MODERATE.milliSeconds
+            )
         then:
             verifyAll {
                 responseExec1.status == 'timedout'
-                responseExec.retriedExecution != null
+                response.retriedExecution != null
             }
     }
 

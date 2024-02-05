@@ -10,12 +10,10 @@ import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.container.RdClient
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 @APITest
 @Stepwise
@@ -31,11 +29,11 @@ class JobExecutionSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateFile("job-template-common.xml", null, "test job", "test/api/executions", "Test the /job/ID/executions API endpoint", "echo testing /job/ID/executions result")
+        def pathFile = updateJobFile([fileName: "job-template-common.xml", jobName: "test job", groupName: "test/api/executions", description: "Test the /job/ID/executions API endpoint", args: "echo testing /job/ID/executions result"])
         jobId = jobImportFile(pathFile).succeeded[0].id
-        def pathFile2 = updateFile("job-template-common.xml", null, "test job", "test/api/executions 2", "Test the /job/ID/executions API endpoint", "/bin/false this should fail")
+        def pathFile2 = updateJobFile([fileName: "job-template-common.xml", jobName: "test job", groupName: "test/api/executions 2", description: "Test the /job/ID/executions API endpoint", args: "/bin/false this should fail"])
         jobId2 = jobImportFile(pathFile2).succeeded[0].id
-        def pathFile3 = updateFile("job-template-common-2.xml", null, "test job", "test/api/executions 3", "Test the /job/ID/executions API endpoint", "echo this job will be killed...", "sleep 240")
+        def pathFile3 = updateJobFile([fileName: "job-template-common.xml", jobName: "test job", groupName: "test/api/executions 3", description: "Test the /job/ID/executions API endpoint", args: "echo this job will be killed...", args2: "sleep 240"])
         jobId3 = jobImportFile(pathFile3).succeeded[0].id
     }
 

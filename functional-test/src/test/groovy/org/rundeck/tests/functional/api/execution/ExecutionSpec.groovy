@@ -12,6 +12,7 @@ class ExecutionSpec extends BaseContainer {
     def setupSpec(){
         startEnvironment()
         setupProject()
+        setupProject("test-job-id-success")
     }
 
     def cleanup(){
@@ -168,9 +169,9 @@ class ExecutionSpec extends BaseContainer {
     }
 
     def "POST job/id/run should succeed"() {
-        given:
-            def pathFile = updateFile("api-test-execution-state.xml")
-            def responseImport = jobImportFile(pathFile)
+        setup:
+            def pathFile = updateJobFile([fileName: "api-test-execution-state.xml"])
+            def responseImport = jobImportFile("test-job-id-success", pathFile) as Map
         when:
             def jobId = responseImport.succeeded[2].id
             def output = runJobAndWait(jobId, ["options":["opt1": "foobar"]])
@@ -182,6 +183,8 @@ class ExecutionSpec extends BaseContainer {
                 def localnode = state.serverNode
                 state.steps[0].nodeStates."${localnode}".executionState == 'SUCCEEDED'
             }
+        cleanup:
+            deleteProject("test-job-id-success")
     }
 
     def "execution query OK"() {
@@ -201,11 +204,11 @@ class ExecutionSpec extends BaseContainer {
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id
         when:"import jobs 1"
-            def pathFile1 = updateFile("job-template-common.xml", newProject, "test exec query", "api-test/execquery", "A job to test the executions query API", null, "api-v5-test-exec-query")
+            def pathFile1 = updateJobFile([fileName: "job-template-common.xml", newProject: newProject, jobName: "test exec query", groupName: "api-test/execquery", description: "A job to test the executions query API", uuid: "api-v5-test-exec-query"])
         then:
             def jobId1 = jobImportFile(newProject, pathFile1).succeeded[0].id
         when:"import jobs 2"
-            def pathFile2 = updateFile("job-template-common.xml", newProject, "second test for exec query", "api-test/execquery", "A job to test the executions query API2", null, "api-v5-test-exec-query2")
+            def pathFile2 = updateJobFile([fileName: "job-template-common.xml", newProject: newProject, jobName: "second test for exec query", groupName: "api-test/execquery", description: "A job to test the executions query API2", uuid: "api-v5-test-exec-query2"])
         then:
             def jobId2 = jobImportFile(newProject, pathFile2).succeeded[0].id
         when:"run job 1 and 2"
