@@ -46,6 +46,7 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    def featureService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
 
