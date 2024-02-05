@@ -34,10 +34,6 @@ class JobUtils {
         return client.doPost("/job/${jobId}/run", "{}")
     }
 
-    static def executeJobWithOptions = (jobId, RdClient client, Object options) -> {
-        return client.doPost("/job/${jobId}/run", options)
-    }
-
     static def createJob(
             final String project,
             final String jobDefinitionXml,
