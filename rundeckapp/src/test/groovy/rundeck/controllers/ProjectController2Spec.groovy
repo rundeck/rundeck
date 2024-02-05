@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -52,6 +53,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
+import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1364,6 +1366,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.apiService=Mock(ApiService)
+            controller.featureService = Mock(FeatureService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
                 getFrameworkProject('test1')>>Mock(IRundeckProject){
@@ -1437,7 +1440,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
                 ]
             }
-
+            controller.featureService = Mock(FeatureService){
+                featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)>>enableValidation
+            }
 
             Description desc = new AbstractBaseDescription() {
                 public String getName() {
@@ -1506,7 +1511,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectConfigKeyPut()
         then:
             with(controller.frameworkService) {
-                1 * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
+                (enableValidation ? 1 : 0) * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
             }
             with(controller.apiService){
                 (valid ? 0 : 1) * renderErrorFormat(_, [
@@ -1517,9 +1522,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             }
 
         where:
-        inputValue     | valid | reportError
-        "value1"       | true  | null
-        "invalidValue" | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        inputValue     | enableValidation   | valid | reportError
+        "value1"       | true               | true  | null
+        "invalidValue" | true               | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        "invalidValue" | false              | true  | null
 
     }
 

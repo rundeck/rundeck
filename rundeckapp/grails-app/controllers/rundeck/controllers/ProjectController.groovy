@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -85,6 +87,7 @@ class ProjectController extends ControllerBase{
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
+    FeatureService featureService
 
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
@@ -2431,6 +2434,14 @@ Authorization required: `configure` access for `project` resource type or `admin
                             allowEmptyValue = false,
                             required = true,
                             schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'enablePluginValidation',
+                            in = ParameterIn.QUERY,
+                            description = 'Enable plugin validation',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
                     )
             ]
     )
@@ -2477,10 +2488,17 @@ Authorization required: `configure` access for `project` resource type or `admin
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
+
+        boolean enablePluginValidation = params.get("enablePluginValidation", false)
+
+        if(featureService.featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)){
+            enablePluginValidation = true
+        }
+
         def value_=null
         def errors=[]
         if(request.format in ['text']){
-           value_ = request.inputStream.text
+            value_ = request.inputStream.text
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
                     xml:{xml->
@@ -2515,32 +2533,35 @@ Authorization required: `configure` access for `project` resource type or `admin
 
         Properties projProp = new Properties(prop)
 
-        //validate plugin property values
-        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
-        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
-            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
-            providers.each { String provider, Map<String, String> providerConfig ->
-                def desc = pluginDescriptions.find { it.name == provider }
-                if (desc) {
-                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
-                    if (!validation.valid) {
-                        Validator.Report report = validation.report
-                        errors << (
-                                report.errors ?
-                                        "${provider} configuration was invalid: " + report.errors :
-                                        "${provider} configuration was invalid"
-                        )
+        if(enablePluginValidation){
+            //validate plugin property values
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> providerConfig ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
                     }
                 }
             }
+            if(errors){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message:errors,
+                        format:respFormat
+                ])
+            }
         }
-        if(errors){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    message:errors,
-                    format:respFormat
-            ])
-        }
+
         def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){
