@@ -3,11 +3,12 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import org.rundeck.app.data.model.v1.AuthTokenMode
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.rundeck.app.access.InterceptorHelper
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
@@ -188,11 +189,11 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         User u1 = new User(login: "admin")
         User u2 = new User(login: "whk")
         AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
-        AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
-        AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
-        AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.USER, tokenMode: null)
-        AuthToken runnerTk1 = new AuthToken(token: "RN1", user:u1, authRoles:"admin", type: AuthenticationToken.AuthTokenType.RUNNER, tokenMode: AuthTokenMode.SECURED)
-        AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthenticationToken.AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
+        AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
+        AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: null)
+        AuthToken runnerTk1 = new AuthToken(token: "RN1", user:u1, authRoles:"admin", type: AuthTokenType.RUNNER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
         u1.save()
         u2.save()
         userTk1.save()
@@ -237,7 +238,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         given:
         User u1 = new User(login: "admin")
 
-        AuthToken userTk3 = new AuthToken(token: tk, user:u1, authRoles:authRoles, type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken userTk3 = new AuthToken(token: tk, user:u1, authRoles:authRoles, type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
         u1.save()
         userTk3.save()
         def svCtx = Mock(ServletContext)
@@ -281,7 +282,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         GroovyMock(ConfigurationService, global: true)
 
         User u1 = new User(login: "_runner")
-        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"_runner",type: AuthenticationToken.AuthTokenType.RUNNER)
+        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"_runner",type: AuthTokenType.RUNNER)
         u1.save()
         userTk1.save()
 

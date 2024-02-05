@@ -1,0 +1,75 @@
+<joblist>
+    <job>
+        <name>grandchild</name>
+        <group>api-test/execution-state</group>
+        <description></description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+            <options />
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>echo this is the grandchild job</exec>
+            </command>
+        </sequence>
+    </job>
+
+    <job>
+        <name>child</name>
+        <group>api-test/execution-state</group>
+        <description></description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+            <options>
+                <option name="opt1" value="testvalue" required="true"/>
+            </options>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>echo this is the child job</exec>
+            </command>
+            <command>
+                <description>Run a child job</description>
+                <jobref group="api-test/execution-state" name="grandchild" nodeStep="true" />
+            </command>
+        </sequence>
+    </job>
+
+    <job>
+        <name>parent</name>
+        <group>api-test/execution-state</group>
+        <description></description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>xml-project-name</project>
+            <options>
+                <option name="opt1" value="testvalue" required="true"/>
+            </options>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>echo hello world</exec>
+            </command>
+            <command>
+                <description>Run a child job</description>
+                <jobref group="api-test/execution-state" name="child" nodeStep="true">
+                    <arg line="-opt1 testvalue" />
+                </jobref>
+            </command>
+        </sequence>
+    </job>
+</joblist>

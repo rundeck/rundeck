@@ -1,6 +1,9 @@
 <template>
   <span>
-    <dropdown v-if="query.recentFilter !== '-' && displayOpts.showRecentFilter">
+    <dropdown
+      v-if="query.recentFilter !== '-' && displayOpts.showRecentFilter"
+      style="vertical-align: inherit"
+    >
       <span class="dropdown-toggle text-info cursor-pointer mr-2">
         {{ $t(`period.label.${period.name}`) }}
         <span class="caret"></span>

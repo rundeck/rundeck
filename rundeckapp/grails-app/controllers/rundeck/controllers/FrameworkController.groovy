@@ -591,8 +591,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         result.remove('query')
         result.remove('params')
         def nodes=result.remove('allnodes')
+        def controller = this
         withFormat {
-            json{
+            '*' {
                 return render ((result + [
                         allnodes: nodes.collect{entry->
                             [
@@ -606,7 +607,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         }
                 ]) as JSON)
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     return render(result as XML)
                 }
@@ -3889,21 +3890,19 @@ by:
         Validation validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), filename, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
+            def controller = this
             return withFormat{
-                def j={
+                '*' {
                     render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
 
-                json j
-
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(contentType: 'application/xml') {
                             apiService.renderXmlAclpolicyValidation(validation, delegate)
                         }
                     }
                 }
-                '*' j
             }
         }
 
@@ -3918,15 +3917,14 @@ by:
         }else{
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, baos)
+            def controller = this
             withFormat{
-
-                def j={
+                '*' {
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
-                json j
 
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(contentType: 'application/xml') {
                             apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
@@ -3934,7 +3932,6 @@ by:
 
                     }
                 }
-                '*' j
             }
         }
     }
@@ -3957,14 +3954,14 @@ by:
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), projectFilePath, baos)
+                def controller = this
                 withFormat{
-                    def j={
+                    '*' {
                         def content = [contents:baos.toString()]
                         render content as JSON
                     }
-                    json j
 
-                    if(isAllowXml()) {
+                    if(controller.isAllowXml()) {
                         xml {
                             render(contentType: 'application/xml') {
                                 apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
@@ -3972,8 +3969,6 @@ by:
 
                         }
                     }
-
-                    '*' j
                 }
             }
         }else{
@@ -3998,8 +3993,9 @@ by:
 
         //list aclpolicy files in the dir
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
+        def controller = this
         withFormat{
-            def j ={
+            '*' {
                 render apiService.jsonRenderDirlist(
                             '',
                             { String p -> p },
@@ -4007,9 +4003,8 @@ by:
                             list
                     ) as JSON
             }
-            json j
 
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: 'application/xml') {
                         apiService.xmlRenderDirList(
@@ -4023,7 +4018,6 @@ by:
 
                 }
             }
-            '*' j
         }
     }
 

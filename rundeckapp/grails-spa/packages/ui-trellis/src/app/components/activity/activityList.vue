@@ -1,39 +1,37 @@
 <template>
   <div class="activity-list">
-    <section class="section-space-bottom">
-      <span>
-        <span
-          v-if="pagination.total > 0 && pagination.total > pagination.max"
-          class="text-muted"
-        >
-          {{ pagination.offset + 1 }}
-          -
-          <span v-if="!loading">
-            {{ pagination.offset + reports.length }}
-          </span>
-          <span v-else class="text-muted">
-            <i class="fas fa-spinner fa-pulse"></i>
-          </span>
-          of
+    <section class="section-space-bottom spacing-x">
+      <span
+        v-if="pagination.total > 0 && pagination.total > pagination.max"
+        class="text-muted"
+      >
+        {{ pagination.offset + 1 }}
+        -
+        <span v-if="!loading">
+          {{ pagination.offset + reports.length }}
         </span>
-
-        <a :href="activityHref" class="link-quiet">
-          <span
-            v-if="pagination.total >= 0"
-            class="summary-count"
-            :class="{
-              'text-strong': pagination.total < 1,
-              'text-info': pagination.total > 0,
-            }"
-          >
-            {{ pagination.total }}
-          </span>
-          <span v-else-if="!loadError" class="text-muted">
-            <i class="fas fa-spinner fa-pulse"></i>
-          </span>
-          {{ $tc("execution", pagination.total > 0 ? pagination.total : 0) }}
-        </a>
+        <span v-else class="text-muted">
+          <i class="fas fa-spinner fa-pulse"></i>
+        </span>
+        of
       </span>
+
+      <a :href="activityHref" class="link-quiet">
+        <span
+          v-if="pagination.total >= 0"
+          class="summary-count"
+          :class="{
+            'text-strong': pagination.total < 1,
+            'text-info': pagination.total > 0,
+          }"
+        >
+          {{ pagination.total }}
+        </span>
+        <span v-else-if="!loadError" class="text-muted">
+          <i class="fas fa-spinner fa-pulse"></i>
+        </span>
+        {{ $tc("execution", pagination.total > 0 ? pagination.total : 0) }}
+      </a>
 
       <activity-filter
         v-if="showFilters"
@@ -104,10 +102,9 @@
       :title="$t('Clear bulk selection')"
       append-to-body
     >
-      <p>
-        {{ $t("clearselected.confirm.text") }}
+      <i18n-t keypath="clearselected.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
-      </p>
+      </i18n-t>
 
       <template #footer>
         <div>
@@ -141,11 +138,10 @@
       :title="$t('Bulk Delete Executions')"
       append-to-body
     >
-      <p>
-        {{ $t("delete.confirm.text") }}
+      <i18n-t keypath="delete.confirm.text" tag="p">
         <strong>{{ bulkSelectedIds.length }}</strong>
         <span>{{ $tc("execution", bulkSelectedIds.length) }}</span>
-      </p>
+      </i18n-t>
 
       <template #footer>
         <div>
@@ -219,7 +215,7 @@
       </template>
     </modal>
     <div class="card-content-full-width">
-      <table class="table table-hover table-condensed">
+      <table class="table table-hover table-condensed activity-list-table">
         <tbody
           v-if="running && running.executions && running.executions.length > 0"
           class="running-executions"
@@ -434,10 +430,9 @@
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
-              class="right date"
+              class="date"
             >
-              >
-              <span v-if="rpt.dateCompleted">
+              <span v-if="rpt.dateCompleted" class="spacing-x-2">
                 <span class="timeabs">
                   {{ momentJobFormatDate(rpt.dateCompleted) }}
                 </span>
@@ -1179,8 +1174,18 @@ export default defineComponent({
 td.eventtitle.adhoc {
   font-style: italic;
 }
-.table > tbody > tr > td.eventicon {
-  padding: 0 0 0 10px;
+.table.activity-list-table {
+  > tbody > tr {
+    > td.eventicon {
+      width: 24px;
+      padding: 0 0 0 10px;
+    }
+    > td.node-stats {
+      white-space: nowrap;
+      text-align: right;
+      width: 5%;
+    }
+  }
 }
 $since-bg: #ccf;
 .table tbody.since-count-data {
@@ -1211,7 +1216,12 @@ $since-bg: #ccf;
 }
 .spacing-x {
   * + * {
-    margin-left: 1rem;
+    margin-left: var(--spacing-1);
+  }
+}
+.spacing-x-2 {
+  * + * {
+    margin-left: var(--spacing-2);
   }
 }
 </style>

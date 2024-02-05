@@ -67,6 +67,9 @@
             <h3>There was an unexpected error</h3>
             <h4>Please check the service log for more details.</h4>
             <h4>At ${new Date()}</h4>
+            <g:if test="${request.getAttribute('javax.servlet.error.message')}">
+              <h5><g:enc>${request.getAttribute('javax.servlet.error.message')}</g:enc></h5>
+            </g:if>
             <h5><g:enc>${exception?.message}</g:enc></h5>
             <div>
               <h5>

@@ -1,8 +1,9 @@
 package org.rundeck.tests.functional.api.ResponseModels
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonPropertyOrder
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Job {
     @JsonProperty("description")
     private String description;
@@ -39,7 +40,10 @@ class Job {
     private String uuid;
 
     @JsonProperty("schedule")
-    private Schedule;
+    private Schedule schedule;
+
+    @JsonProperty("schedules")
+    private List<String> schedules;
 
     public static class Plugins {
         @JsonProperty("ExecutionLifecycle")
@@ -73,7 +77,7 @@ class Job {
         private Weekday weekday
 
         @JsonProperty("year")
-        private Weekday year
+        private String year
     }
 
     public static class Time {

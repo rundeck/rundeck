@@ -83,19 +83,6 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    void setupProjectWithNodes(String name, String projectImportLocation) {
-        def getProject = client.doGet("/project/${name}")
-        if (getProject.code() == 404) {
-            def post = client.doPost("/projects", [name: name])
-            if (!post.successful) {
-                throw new RuntimeException("Failed to create project: ${post.body().string()}")
-            }
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
-        }else if(getProject.code() == 200){
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
-        }
-    }
-
     RdClient _client
     @Override
     RdClient getClient() {
@@ -155,8 +142,83 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         return client.post(path, body, clazz)
     }
 
+    Map runJobAndWait(String jobId, Object body = null) {
+        def path = "/job/${jobId}/run"
+        def response = client.post(path, body, Map)
+        def finalStatus = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout',
+                'other'
+        ]
+        while(true) {
+            def exec = client.get("/execution/${response.id}/output", Map)
+            if (finalStatus.contains(exec.execState)) {
+                return exec
+            } else {
+                sleep 10000
+            }
+        }
+    }
+
+    Integer runJob(String jobId, Object body = null) {
+        def path = "/job/${jobId}/run"
+        def response = client.post(path, body, Map)
+        response.id as Integer
+    }
+
+    Map obtainExecution(int executionId) {
+        def finalStatus = [
+                'aborted',
+                'failed',
+                'succeeded',
+                'timedout',
+                'other'
+        ]
+        while(true) {
+            def exec = client.get("/execution/${executionId}/output", Map)
+            if (finalStatus.contains(exec.execState)) {
+                return exec
+            } else {
+                sleep 10000
+            }
+        }
+    }
+
+    void deleteProject(String projectName) {
+        def response = client.doDelete("/project/${projectName}")
+        if (!response.successful) {
+            throw new RuntimeException("Failed to delete project: ${response.body().string()}")
+        }
+    }
+
     def setupSpec() {
         startEnvironment()
+    }
+
+    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null, String args2 = null, String uuid = null) {
+        def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
+        def xmlProjectContent = new File(pathXmlFile).text
+        def xmlProject = xmlProjectContent
+                .replaceAll('xml-uuid', uuid?:UUID.randomUUID().toString())
+                .replaceAll('xml-project-name', projectName?:PROJECT_NAME)
+                .replaceAll('xml-args', args?:"echo hello there")
+                .replaceAll('xml-2-args', args2?:"echo hello there 2")
+                .replaceAll('xml-job-name', jobName?:'job-test')
+                .replaceAll('xml-job-group-name', groupName?:'group-test')
+                .replaceAll('xml-job-description-name', description?:'description-test')
+        def tempFile = File.createTempFile("temp", ".xml")
+        tempFile.text = xmlProject
+        tempFile.deleteOnExit()
+        tempFile.path
+    }
+
+    def jobImportFile(String projectName = null, String pathXmlFile) {
+        def responseImport = client.doPost("/project/${projectName?:PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
+        responseImport.successful
+        responseImport.code() == 200
+        client.jsonValue(responseImport.body(), Map)
     }
 
 }

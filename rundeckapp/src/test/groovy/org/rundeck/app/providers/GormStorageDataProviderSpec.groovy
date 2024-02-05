@@ -4,8 +4,6 @@ import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.PathUtil
 import rundeck.Storage
 import rundeck.services.data.StorageDataService
 import spock.lang.Specification
@@ -28,8 +26,8 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         when:
         RundeckStorage res = provider.getData(storage1.id)
         then:
-        res.path.name == 'abc'
-        PathUtil.parentPath(res.getPath()).path ==  'def'
+        res.name == 'abc'
+        res.dir == 'def'
         res.getNamespace() == 'other'
         res.getData() == 'abc1'.bytes
     }
@@ -37,10 +35,10 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
     def "Create"() {
 
         when:
-        Path path = PathUtil.asPath("xyz/abc")
         SimpleStorageBuilder data = SimpleStorageBuilder.builder()
                                     .data('abc'.bytes)
-                                    .path(path)
+                                    .dir("xyz")
+                                    .name("abc")
                                     .storageMeta([abc: 'xyz'])
                                     .build()
         def storageId = provider.create(data)
@@ -58,27 +56,27 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
     def "Update"() {
 
         when:
-        Path path = PathUtil.asPath("xyz/abc")
         SimpleStorageBuilder data =  SimpleStorageBuilder.builder()
                                         .data('abc'.bytes)
-                                        .path(path)
+                                        .dir("xyz")
+                                        .name("abc")
                                         .storageMeta([abc: 'xyz'])
                                         .build()
 
         Long storageId = provider.create(data)
-
-        def oldStorageName = provider.getData(storageId).path.name
+        def storage = provider.getData(storageId)
+        def oldStorageName = provider.getData(storageId).name
         SimpleStorageBuilder updateData =  SimpleStorageBuilder.builder()
                 .data('def'.bytes)
-                .path(PathUtil.asPath("updated"))
+                .name("updated")
                 .namespace("changed")
                 .build()
-        provider.update(storageId, updateData, [def: 'abc'])
+        provider.update(storage, updateData, [def: 'abc'])
         def storage1 = provider.getData(storageId)
 
         then:
         oldStorageName == 'abc'
-        storage1.path.name == 'updated'
+        storage1.name == 'updated'
         storage1.dir == ''
         storage1.namespace == 'changed'
         storage1.data == 'def'.bytes
@@ -89,7 +87,7 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         def storage = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
 
-        provider.delete(storage.id)
+        provider.delete(storage)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
         then:
         store1 == null
@@ -106,9 +104,12 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         new Storage(data: 'abc3'.bytes, name: 'def', dir: 'zinc/pyx',
                 storageMeta: [abc: 'xyz3']).save(flush: true)
         when:
-        def res1 = provider.listDirectorySubdirs(null, PathUtil.asPath(''))
+        def res1 = provider.listDirectorySubdirs(null, '')
+        def res2 = provider.listDirectorySubdirs(null, 'xyz')
         then:
         res1.size() == 5
+        res1.contains(storage1)
+        res2.size() == 1
     }
 
     def "list Directory"() {
@@ -119,12 +120,13 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'abc3', dir: 'xyz', storageMeta: [abc: 'xyz3']).save(flush:true)
         new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
                 storageMeta: [abc: 'xyz3']).save(flush:true)
-        def res1 = provider.listDirectory(null, PathUtil.asPath(''))
-        def res2 = provider.listDirectory('other',PathUtil.asPath(''))
+        def res1 = provider.listDirectory(null, '')
+        def res2 = provider.listDirectory('other', '')
         then:
         res1 != null
         res1.size() == 0
         res2 != null
         res2.size() == 4
+        res2.contains(storage1)
     }
 }
