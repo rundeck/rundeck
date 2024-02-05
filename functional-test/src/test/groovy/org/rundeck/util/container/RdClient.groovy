@@ -2,6 +2,7 @@ package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import okhttp3.ConnectionPool
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType
@@ -12,6 +13,8 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 @CompileStatic
@@ -31,6 +34,7 @@ class RdClient {
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
+                        connectionPool(new ConnectionPool(2, 10, TimeUnit.SECONDS)).
                         build()
         )
     }
@@ -100,17 +104,19 @@ class RdClient {
     }
 
     Response doPost(final String path, final Object body = null) {
-        def builder = new Request.Builder().
-                url(apiUrl(path)).
-                header('Accept', 'application/json')
+        RequestBody requestBuilder
         if (body) {
-            builder.post(
-                    RequestBody.create(
-                            mapper.writeValueAsBytes(body),
-                            MediaType.parse("application/json")
-                    )
-            )
+            requestBuilder = RequestBody.create(
+                    mapper.writeValueAsBytes(body),
+                    MediaType.parse("application/json"))
+        } else {
+            requestBuilder = RequestBody.create()
         }
+        def builder = new Request.Builder()
+                .url(apiUrl(path))
+                .header('Accept', 'application/json')
+                .method("POST", requestBuilder)
+
         httpClient.newCall(
                 builder.build()
         ).execute()
