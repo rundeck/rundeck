@@ -8,7 +8,7 @@
             class="link-hover text-inverse project_list_item_link link-quiet"
             :id="`project${index}`"
         >
-          <span class="h5">
+          <span class="h5" :class="{'display-block': project.label}">
             {{ project.label ? project.label : project.name }}
           </span>
 
@@ -207,6 +207,9 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.display-block {
+  display: block;
+}
 .h5 {
   margin: 0;
 }
