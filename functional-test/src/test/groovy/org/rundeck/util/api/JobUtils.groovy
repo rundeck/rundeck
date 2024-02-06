@@ -14,12 +14,16 @@ class JobUtils {
         return client.doGetAcceptAll("/job/${jobId}/run?argString=${args}")
     }
 
-    static executeJobLaterWithArgs = (
+    static executeJobLaterWithArgsAndRuntime = (
             String jobId,
             RdClient client,
             String args,
             String runtime) -> {
         return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}&runAtTime=${runtime}")
+    }
+
+    static def executeJobWithOptions = (jobId, RdClient client, Object options) -> {
+        return client.doPost("/job/${jobId}/run", options)
     }
 
     static executeJobLaterWithArgsInvalidMethod = (

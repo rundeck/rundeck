@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
+import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
@@ -886,7 +887,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run should succeed with future time"
         def runtime = generateRuntime(25)
-        def runLaterExecResponse = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -929,7 +930,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run with scheduled time in the past should fail"
         def runtime2 = generateRuntime(-1000) // Generates a past runtime string
-        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -941,7 +942,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run with invalid schedule time"
         def invalidRuntime = "1999/01/01 11:10:01.000+0000"
-        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -950,6 +951,180 @@ class JobExecutionSpec extends BaseContainer {
 
         then: "OK"
         !runLaterExecResponse3.successful
+
+    }
+
+    def "test-job-run"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def apiVersion = 40
+        def client = getClient()
+        client.apiVersion = apiVersion
+        ObjectMapper mapper = new ObjectMapper()
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${PROJECT_NAME}</project>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job2</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <nodefilters>\n" +
+                    "        <filter>.*</filter>\n" +
+                    "      </nodefilters>\n" +
+                    "      <nodesSelectedByDefault>false</nodesSelectedByDefault>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId1 = jobCreatedResponse.succeeded[0]?.id
+        def jobId2 = jobCreatedResponse.succeeded[1]?.id
+
+        when: "TEST: POST job/id/run should succeed"
+        def optionA = 'a'
+        Object optionsToMap = [
+                "options": [
+                        opt2: optionA
+                ]
+        ]
+        def response = JobUtils.executeJobWithOptions(jobId1, client, optionsToMap)
+        assert response.successful
+
+        Execution execRes = mapper.readValue(response.body().string(), Execution.class)
+        String execId = execRes.id
+
+        def execution = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "TEST: POST job/id/run should fail"
+        def response2 = JobUtils.executeJob(jobId2, client)
+        assert response2.successful
+
+        Execution execRes2 = mapper.readValue(response2.body().string(), Execution.class)
+        String execId2 = execRes2.id
+        def execution2 = waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                execId2,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution2.status == ExecutionStatus.FAILED.state // should fail
+
+        when: "TEST: POST job/id/run should succeed w/ filter"
+        Object filter = [
+                "filter": "name: .*"
+        ]
+        def response3 = JobUtils.executeJobWithOptions(jobId2, client, filter)
+        assert response3.successful
+
+        Execution execRes3 = mapper.readValue(response3.body().string(), Execution.class)
+        String execId3 = execRes3.id
+        def execution3 = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId3,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution3.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "TEST: POST job/id/run with JSON"
+        Object optionsJson = [
+                "options": [
+                        opt1:"xyz",
+                        opt2:"def"
+                ]
+        ]
+        def response4 = JobUtils.executeJobWithOptions(jobId1, client, optionsJson)
+        assert response4.successful
+
+        Execution execRes4 = mapper.readValue(response4.body().string(), Execution.class)
+        String execId4 = execRes4.id
+        def execution4 = waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId4,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution4.status == ExecutionStatus.SUCCEEDED.state
+        execution4.argstring == "-opt1 xyz -opt2 def"
+        execution4.job.options?.opt1 == "xyz"
+        execution4.job.options?.opt2 == "def"
+
+        when: "TEST: GET job/id/run should fail 405"
+        def response5 = JobUtils.executeJobWithArgsInvalidMethod(jobId1, client, "-opt+a")
+        assert !response5.successful
+
+        then:
+        response5.code() == 405
+
+        when: "TEST: POST job/id/run without required opt should fail"
+        def response6 = JobUtils.executeJob(jobId1, client)
+        assert !response6.successful
+        ErrorResponse error = ErrorResponse.fromJson(response6.body().string())
+
+        then:
+        response6.code() == 400
+        error.message == "Job options were not valid: Option 'opt2' is required."
 
     }
 
