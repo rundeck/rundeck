@@ -1799,7 +1799,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         assert response.json[1].created != null
     }
 
-    void apiProjectList_json_date_v46_meta(){
+    void apiProjectList_json_date_v47_meta(){
         given:
         def mockAuth = Mock(UserAndRolesAuthContext)
         when:
@@ -1838,7 +1838,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     new ItemMeta(name: 'meta3', data: Collections.singletonMap('key1', 'value1')),
             ]
         }
-        request.setAttribute('api_version', 46)
+        request.setAttribute('api_version', 47)
         params.meta='*'
         response.format='json'
         controller.apiProjectList()
