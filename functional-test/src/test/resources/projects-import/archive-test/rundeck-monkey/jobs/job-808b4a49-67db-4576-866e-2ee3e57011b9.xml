@@ -1,0 +1,30 @@
+<joblist>
+  <job>
+    <id>808b4a49-67db-4576-866e-2ee3e57011b9</id>
+    <loglevel>INFO</loglevel>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>uptime</exec>
+      </command>
+    </sequence>
+    <description>runs uptime on the nodes</description>
+    <name>uptime</name>
+    <context>
+      <project>monkey</project>
+      <options>
+        <option name='node' required='true' />
+      </options>
+    </context>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>true</keepgoing>
+      <excludePrecedence>true</excludePrecedence>
+      <rankOrder>ascending</rankOrder>
+    </dispatch>
+    <uuid>808b4a49-67db-4576-866e-2ee3e57011b9</uuid>
+    <nodefilters>
+      <filter>${option.node}</filter>
+    </nodefilters>
+    <group>utility</group>
+  </job>
+</joblist>

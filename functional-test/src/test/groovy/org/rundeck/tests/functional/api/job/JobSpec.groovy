@@ -8,7 +8,8 @@ class JobSpec extends BaseContainer {
 
     def setupSpec() {
         startEnvironment()
-        setupProject("TestJobs", "/projects-import/TestJobs.zip")
+//        setupProject("TestJobs", "/projects-import/TestJobs.zip")
+        setupProjectArchiveDirectoryResource("TestJobs", "/projects-import/TestJobs")
     }
 
     def "Runs workflow steps" () {

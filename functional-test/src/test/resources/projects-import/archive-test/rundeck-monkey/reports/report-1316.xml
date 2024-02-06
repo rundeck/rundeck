@@ -1,0 +1,18 @@
+<report>
+  <node>1/0/1</node>
+  <title>uname -a</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>monkey</ctxProject>
+  <reportId>utility/uname</reportId>
+  <tags />
+  <author>admin</author>
+  <message>Job completed successfully</message>
+  <dateStarted>2014-03-06T18:46:42Z</dateStarted>
+  <dateCompleted>2014-03-06T18:46:42Z</dateCompleted>
+  <jcExecId>1299</jcExecId>
+  <jcJobId>1574a71c-56b8-47ed-8a5e-a52e362cf572</jcJobId>
+  <adhocExecution>false</adhocExecution>
+  <adhocScript />
+  <abortedByUser />
+</report>

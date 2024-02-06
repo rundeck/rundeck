@@ -1,0 +1,7 @@
+^text/x-rundeck-log-v2.0^
+^2014-03-06T18:47:41Z|stepbegin||{node=dignan|step=1|stepctx=1|user=admin}|^
+^2014-03-06T18:47:41Z|nodebegin||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:47:41Z|||{node=dignan|step=1|stepctx=1|user=greg}|10:47  up 8 days, 23:35, 11 users, load averages: 2.18 2.20 2.01^
+^2014-03-06T18:47:41Z|nodeend||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:47:41Z|stepend||{node=dignan|step=1|stepctx=1|user=admin}|^
+^END^
