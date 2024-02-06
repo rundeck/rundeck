@@ -227,7 +227,7 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         client.apiVersion = 14 // as the original test
-        def projectName = "testProjectCreate"
+        def projectName = "testProjectCreateConflict"
         def projectDescription = "a description"
         Object testProperties = [
                 "name": projectName,
@@ -267,6 +267,82 @@ class ConfigSpec extends BaseContainer{
 
         cleanup:
         deleteProject(projectName)
+    }
+
+    def "test-project-delete-v45.sh"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 45 // as the original test
+        def projectName = "testProjectDeleteDeferred"
+        def projectDescription = "a description"
+        Object testProperties = [
+                "name": projectName,
+                "description": projectDescription,
+                "config": [
+                        "test.property": "test value",
+                ]
+        ]
+        def mapper = new ObjectMapper()
+
+        when: "TEST: POST /api/14/projects"
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+        assert response.successful
+        ProjectCreateResponse parsedResponse = mapper.readValue(
+                response.body().string(),
+                ProjectCreateResponse.class
+        )
+
+        then:
+        parsedResponse.name != null
+        parsedResponse.name == projectName
+
+        when: "#TEST: delete project"
+        def deleteResponse = doDelete("/project/${projectName}?deferred=false")
+        assert deleteResponse.successful
+
+        then:
+        deleteResponse.code() == 204
+    }
+
+    def "test-project-delete.sh"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 14 // as the original test
+        def projectName = "testProjectDelete"
+        def projectDescription = "a description"
+        Object testProperties = [
+                "name": projectName,
+                "description": projectDescription,
+                "config": [
+                        "test.property": "test value",
+                ]
+        ]
+        def mapper = new ObjectMapper()
+
+        when: "TEST: POST /api/14/projects"
+        def response = client.doPost(
+                "/projects",
+                testProperties
+        )
+        assert response.successful
+        ProjectCreateResponse parsedResponse = mapper.readValue(
+                response.body().string(),
+                ProjectCreateResponse.class
+        )
+
+        then:
+        parsedResponse.name != null
+        parsedResponse.name == projectName
+
+        when: "#TEST: delete project"
+        def deleteResponse = doDelete("/project/${projectName}")
+        assert deleteResponse.successful
+
+        then:
+        deleteResponse.code() == 204
     }
 
 }
