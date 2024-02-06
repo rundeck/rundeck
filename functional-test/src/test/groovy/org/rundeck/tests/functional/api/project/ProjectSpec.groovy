@@ -11,7 +11,7 @@ class ProjectSpec extends BaseContainer {
         setupProject("TestProject", null)
     }
 
-    def "Test project" () {
+    def "Test Project api" () {
         given:
         def projectName = "TestProject"
         def response = getProject(projectName)
