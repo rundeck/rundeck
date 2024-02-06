@@ -1,0 +1,18 @@
+<report>
+  <node>1/0/1</node>
+  <title>uptime</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>monkey</ctxProject>
+  <reportId>adhoc</reportId>
+  <tags />
+  <author>admin</author>
+  <message>Job completed successfully</message>
+  <dateStarted>2014-03-06T18:45:37Z</dateStarted>
+  <dateCompleted>2014-03-06T18:45:38Z</dateCompleted>
+  <jcExecId>1297</jcExecId>
+  <jcJobId />
+  <adhocExecution>false</adhocExecution>
+  <adhocScript />
+  <abortedByUser />
+</report>

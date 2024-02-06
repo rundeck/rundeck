@@ -1,0 +1,50 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='opt1' required='true' value='testvalue' />
+        <option name='opt2' required='true' values='a,b,c' valuesListDelimiter=',' />
+      </options>
+    </context>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <group>api-test/job-run-steps</group>
+    <id>9b43e4ab-7ff2-4159-9fc7-7437901914f7</id>
+    <loglevel>INFO</loglevel>
+    <name>test job</name>
+    <nodeFilterEditable>true</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hello there</exec>
+      </command>
+      <command>
+        <script><![CDATA[#!/bin/bash
+
+echo "option opt1: $RD_OPTION_OPT1"
+echo "option opt1: @option.opt1@"
+echo "node: @node.name@"
+echo "option opt2: $1"]]></script>
+        <scriptargs>${option.opt2}</scriptargs>
+      </command>
+      <command>
+        <script><![CDATA[#!/bin/bash
+
+echo "this is script 2, opt1 is $RD_OPTION_OPT1"
+]]></script>
+        <scriptargs>${option.opt2}</scriptargs>
+      </command>
+      <command>
+        <jobref group='api-test/job-run-steps' name='secondary job'>
+          <arg line='-opt1 asdf -opt2 asdf2' />
+        </jobref>
+      </command>
+      <command>
+        <scriptargs />
+        <scriptfile>./job-run-steps-test-script1.txt</scriptfile>
+      </command>
+    </sequence>
+    <uuid>9b43e4ab-7ff2-4159-9fc7-7437901914f7</uuid>
+  </job>
+</joblist>

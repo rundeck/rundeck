@@ -1,0 +1,32 @@
+<executions>
+  <execution id='1298'>
+    <jobId>6e21cf79-a6c7-46f5-9e30-204762ec3359</jobId>
+    <dateStarted>2014-03-06T18:46:03Z</dateStarted>
+    <dateCompleted>2014-03-06T18:46:04Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath>output-1298.rdlog</outputfilepath>
+    <failedNodeList />
+    <succeededNodeList>dignan</succeededNodeList>
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString />
+    <loglevel>INFO</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>true</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>.*</filter>
+    </nodefilters>
+    <project>monkey</project>
+    <user>admin</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hi this is a test project</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>

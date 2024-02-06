@@ -1,0 +1,23 @@
+<joblist>
+    <job>
+        <context>
+            <options preserveOrder='true'>
+                <option name='reqOpt1' required='true' />
+            </options>
+        </context>
+        <defaultTab>nodes</defaultTab>
+        <description>has required option</description>
+        <executionEnabled>true</executionEnabled>
+        <group>test</group>
+        <id>0088e04a-0db3-4b03-adda-02e8a4baf709</id>
+        <loglevel>INFO</loglevel>
+        <name>selenium-option-test1</name>
+        <scheduleEnabled>true</scheduleEnabled>
+        <sequence keepgoing='false' strategy='node-first'>
+            <command>
+                <exec>echo option is ${reqOpt1}</exec>
+            </command>
+        </sequence>
+        <uuid>0088e04a-0db3-4b03-adda-02e8a4baf709</uuid>
+    </job>
+</joblist>
