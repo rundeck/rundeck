@@ -505,61 +505,12 @@ jobs:
           command: << parameters.command >>
 
 
-  # Run Testdeck job on machine executor.
-  testdeck:
-    <<: *job-defaults
-    executor:
-      name: machine-builder
-      docker_layer_caching: true
-      resource_class: << parameters.resource_class >>
-
-    parameters:
-      resource_class:
-        type: string
-        default: medium
-      workdir:
-        description: Working directory
-        type: string
-        default: .
-      command:
-        description: Command that will execute the docker tests
-        type: string
-
-    steps:
-
-      - checkout
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
-      - install-testdeck-dependencies
-      - attach_workspace:
-          at: ~/workspace
-      - run-build-step:
-          step-name: Pull Rundeck Image
-          command: rundeck_pull_image
-      - run-build-step:
-          step-name: Test
-          command: |
-            cd << parameters.workdir >>
-            ./bin/deck bootstrap
-            << parameters.command >>
-      - run-build-step:
-          step-name: Print Logs
-          when: always
-          command: |
-            cd << parameters.workdir >>
-            ./bin/deck cluster logs
-      - store_artifacts:
-          path: << parameters.workdir >>/test_out/images
-          destination: images
-      - store_test_results:
-          path: << parameters.workdir >>/test_out
-
   test-gradle-functional:
     <<: *job-defaults
     executor:
       name: machine-builder
       docker_layer_caching: true
-      resource_class: medium
+      resource_class: << parameters.resource_class >>
     parameters:
       test-image:
         description: Test image tag
@@ -567,6 +518,9 @@ jobs:
         type: string
       gradle-task:
         type: string
+      resource_class:
+        type: string
+        default: medium
     steps:
       - checkout
       - install-build-dependencies
@@ -733,6 +687,7 @@ workflows:
       - test-gradle-functional:
           name: New Selenium Test
           gradle-task: seleniumCoreTest
+          resource_class: large
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:

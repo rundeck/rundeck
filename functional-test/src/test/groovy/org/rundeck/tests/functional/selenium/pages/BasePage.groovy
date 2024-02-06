@@ -29,6 +29,7 @@ abstract class BasePage {
     BasePage(final SeleniumContext context) {
         this.context = context
         this.context.driver.manage().window().setSize(new Dimension(1200, 1050))
+        this.context.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(30))
     }
 
     abstract String getLoadPath()
@@ -36,7 +37,7 @@ abstract class BasePage {
      * Go to the page and validate
      */
     void go() {
-        if (loadPath) {
+        if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
             validatePage()

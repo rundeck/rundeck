@@ -367,9 +367,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.fillBasicJob 'a job with workflow undo-redo test'
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
-            jobCreatePage.wfUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButton
-            jobCreatePage.wfRedoButton.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfUndoButtonLink
+            jobCreatePage.wfUndoButtonLink.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButtonLink
+            jobCreatePage.wfRedoButtonLink.click()
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 2
         expect:
             jobCreatePage.workFlowList.size() == 2
