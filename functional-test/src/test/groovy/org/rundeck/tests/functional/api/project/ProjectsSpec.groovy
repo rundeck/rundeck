@@ -10,7 +10,7 @@ class ProjectsSpec extends BaseContainer{
         setupProject("ProjectsSpec", null)
     }
 
-    def "Test ProjectsSpec" () {
+    def "Test Projects" () {
         given:
         def response = getProjects()
         expect:
