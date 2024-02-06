@@ -7,7 +7,11 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import spock.lang.Specification
 
+import java.text.SimpleDateFormat
 import java.util.function.Consumer
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 
 /**
  * Base class for tests, starts a shared static container for all tests
@@ -70,16 +74,143 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    void setupProject(String name, String projectImportLocation) {
+    /**
+     * Build a url query string from a map of parameters
+     * @param params
+     * @return
+     */
+    static String buildUrlParams(Map params){
+        return params.collect{
+            "${it.key}=${it.value}"
+        }.join("&")
+    }
+    /**
+     * Setup a project with a project archive file resource path
+     * @param name
+     * @param archiveFileResourcePath
+     */
+    void setupProject(String name, String archiveFileResourcePath) {
+        setupProject(
+            name,
+            archiveFileResourcePath,
+            [
+                importConfig: true,
+                importACL: true,
+                importNodesSources: true
+            ]
+        )
+    }
+    /**
+     * Setup a project with a project archive file resource path
+     * @param name
+     * @param archiveFileResourcePath
+     * @param params URL parameters for the import request
+     */
+    void setupProject(String name, String archiveFileResourcePath, Map params) {
+        setupProjectArchiveFile(name,new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
+    }
+
+    /**
+     * Setup a project with a project archive directory resource path
+     * @param name
+     * @param projectArchiveDirectoryResourcePath
+     */
+    void setupProjectArchiveDirectoryResource(String name, String projectArchiveDirectoryResourcePath) {
+        setupProjectArchiveDirectory(
+            name,
+            new File(getClass().getResource(projectArchiveDirectoryResourcePath).getPath())
+        )
+    }
+    /**
+     * Setup a project with a project archive directory
+     * @param name
+     * @param projectArchiveDirectory
+     */
+    void setupProjectArchiveDirectory(String name, File projectArchiveDirectory) {
+        setupProjectArchiveDirectory(
+            name,
+            projectArchiveDirectory,
+            [
+                importConfig      : true,
+                importACL         : true,
+                importNodesSources: true
+            ]
+        )
+    }
+    /**
+     * Setup a project with a project archive directory
+     * @param name
+     * @param projectArchiveDirectory
+     * @param params URL parameters for the import request
+     */
+    void setupProjectArchiveDirectory(String name, File projectArchiveDirectory, Map params) {
+        File tempFile = createArchiveJarFile(name, projectArchiveDirectory)
+        setupProjectArchiveFile(name, tempFile, params)
+        tempFile.delete()
+    }
+
+    /**
+     * Create a temp file containing a rundeck project archive (jar) from the contents of a directory
+     * @param name project name
+     * @param projectArchiveDirectory directory containing the project files
+     * @return
+     */
+    File createArchiveJarFile(String name, File projectArchiveDirectory) {
+        if(!projectArchiveDirectory.isDirectory()){
+            throw new IllegalArgumentException("Must be a directory")
+        }
+        //create a project archive from the contents of the directory
+        def tempFile = File.createTempFile("import-temp-${name}", ".zip")
+        tempFile.deleteOnExit()
+        //create Manifest
+        def manifest = new Manifest()
+        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
+        manifest.mainAttributes.putValue("Rundeck-Archive-Project-Name", name)
+        manifest.mainAttributes.putValue("Rundeck-Archive-Format-Version", "1.0")
+        manifest.mainAttributes.putValue("Rundeck-Application-Version", "5.0.0")
+        manifest.mainAttributes.putValue(
+            "Rundeck-Archive-Export-Date",
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
+        )
+
+        tempFile.withOutputStream { os ->
+            def jos = new JarOutputStream(os, manifest)
+
+            jos.withCloseable { jarOutputStream ->
+
+                projectArchiveDirectory.eachFileRecurse { file ->
+                    def entry = new JarEntry(projectArchiveDirectory.toPath().relativize(file.toPath()).toString())
+                    jarOutputStream.putNextEntry(entry)
+                    if (file.isFile()) {
+                        file.withInputStream { is ->
+                            jarOutputStream << is
+                        }
+                    }
+                }
+            }
+        }
+        tempFile
+    }
+
+    /**
+     * Import a project with a project archive file
+     * @param name
+     * @param projectArchive the project archive file
+     * @param params URL parameters for the import request
+     */
+    void setupProjectArchiveFile(String name, File projectArchive, Map params) {
+        if(!projectArchive.isFile()){
+            throw new IllegalArgumentException("Must be a file")
+        }
         def getProject = client.doGet("/project/${name}")
         if (getProject.code() == 404) {
             def post = client.doPost("/projects", [name: name])
             if (!post.successful) {
                 throw new RuntimeException("Failed to create project: ${post.body().string()}")
             }
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
         }else if(getProject.code() == 200){
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
         }
     }
 
