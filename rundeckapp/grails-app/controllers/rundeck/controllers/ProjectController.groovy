@@ -649,6 +649,16 @@ class ProjectController extends ControllerBase{
 Authorization required: `read` for project resource
 ''',
         tags = ['project'],
+        parameters = [
+                @Parameter(
+                        name = 'meta',
+                        in = ParameterIn.QUERY,
+                        description = 'Comma-separated list of metadata items to include, or "*" for all',
+                        allowEmptyValue = false,
+                        required = false,
+                        schema = @Schema(implementation = String.class)
+                ),
+        ],
         responses = @ApiResponse(
             responseCode = '200',
             description = '''
@@ -657,7 +667,7 @@ Authorization required: `read` for project resource
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
 `project.properties` file in the file system or in the DB storage.
 
-*Since API version 46*: add the project `metadata` to the response. To retrieve this information, use the query param meta
+*Since API version 47*: add the project `metadata` to the response. To retrieve this information, use the query param meta
 (Comma-separated list of metadata items to include, or "*" for all (default)).''',
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
