@@ -220,5 +220,15 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         responseImport.code() == 200
         client.jsonValue(responseImport.body(), Map)
     }
+    Map getProject(String projectName) {
+        def exec = client.get("/project/${projectName}", Map)
+        return exec
+    }
 
+    ArrayList getProjects() {
+        def exec = client.get("/projects", ArrayList)
+        return exec
+    }
+
+    
 }
