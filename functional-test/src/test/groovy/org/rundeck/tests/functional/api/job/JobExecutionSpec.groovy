@@ -845,18 +845,6 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
-        Object projectJsonMap = [
-                "name": projectName.toString(),
-                "description": "test-job-run-later",
-                "config": [
-                        "test.property": "test value",
-                        "project.execution.history.cleanup.enabled": "true",
-                        "project.execution.history.cleanup.retention.days": "1",
-                        "project.execution.history.cleanup.batch": "500",
-                        "project.execution.history.cleanup.retention.minimum": "0",
-                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
-                ]
-        ]
 
         def xmlJob = (String stepArgs) -> {
             return "<joblist>\n" +
