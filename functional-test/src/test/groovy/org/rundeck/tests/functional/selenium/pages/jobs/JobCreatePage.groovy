@@ -67,7 +67,9 @@ class JobCreatePage extends BasePage {
     By ansibleBinariesPathBy = By.name("pluginConfig.ansible-binaries-dir-path")
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
     By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
+    By wfUndoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_undo flash_undo']")
     By wfRedoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[2]")
+    By wfRedoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_redo flash_undo']")
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
@@ -371,8 +373,16 @@ class JobCreatePage extends BasePage {
         el wfUndoButtonBy
     }
 
+    WebElement getWfUndoButtonLink() {
+        el wfUndoButtonLinkBy
+    }
+
     WebElement getWfRedoButton() {
         el wfRedoButtonBy
+    }
+
+    WebElement getWfRedoButtonLink() {
+        el wfRedoButtonLinkBy
     }
 
     WebElement getWfRevertAllButton() {
