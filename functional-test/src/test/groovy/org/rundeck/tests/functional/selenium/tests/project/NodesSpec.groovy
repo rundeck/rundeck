@@ -19,7 +19,7 @@ class NodesSpec extends SeleniumBase {
         when:
             loginPage.login(TEST_USER, TEST_PASS)
             nodeSourcePage.loadPath = "/project/${SELENIUM_BASIC_PROJECT}/nodes/sources"
-            nodeSourcePage.go()
+            nodeSourcePage.go("/project/${SELENIUM_BASIC_PROJECT}/nodes/sources")
         then:
             nodeSourcePage.waitForElementVisible nodeSourcePage.newNodeSourceButton
             nodeSourcePage.newNodeSourceButton != null

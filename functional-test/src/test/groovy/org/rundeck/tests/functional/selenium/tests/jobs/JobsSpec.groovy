@@ -237,6 +237,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
         expect:
             jobCreatePage.waitForOptionsToBe 1, 0
@@ -284,6 +285,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton
             jobCreatePage.optionRevertAllButton.click()
             jobCreatePage.optionConfirmRevertAllButton.click()
@@ -316,8 +318,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionRedoButton, 'disabled', null
             jobCreatePage.optionRedoButton.click()
         expect:
             !(jobCreatePage.optionLis 0 isEmpty())
