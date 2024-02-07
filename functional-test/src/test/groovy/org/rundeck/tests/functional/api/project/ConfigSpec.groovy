@@ -11,10 +11,9 @@ import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 @APITest
 class ConfigSpec extends BaseContainer{
 
-    def "test-project-config-key-json.sh"(){
+    def "test-project-config-key-json"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "testConfigJson"
         Object testProperties = [
                 "name": projectName,
@@ -121,10 +120,9 @@ class ConfigSpec extends BaseContainer{
         deleteProject(projectName)
     }
 
-    def "test-project-config.sh"(){
+    def "test-project-config"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "testConfig"
         Object testProperties = [
                 "name": projectName,
@@ -188,7 +186,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-create-json"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "testProjectCreate"
         def projectDescription = "a description"
         Object testProperties = [
@@ -228,7 +225,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-create.sh"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "testProjectCreateConflict"
         def projectDescription = "a description"
         Object testProperties = [
@@ -271,7 +267,7 @@ class ConfigSpec extends BaseContainer{
         deleteProject(projectName)
     }
 
-    def "test-project-delete-v45.sh"(){
+    def "test-project-delete-v45"(){
         given:
         def client = getClient()
         client.apiVersion = 45 // as the original test
@@ -309,10 +305,9 @@ class ConfigSpec extends BaseContainer{
         deleteResponse.code() == 204
     }
 
-    def "test-project-delete.sh"(){
+    def "test-project-delete"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "testProjectDelete"
         def projectDescription = "a description"
         Object testProperties = [

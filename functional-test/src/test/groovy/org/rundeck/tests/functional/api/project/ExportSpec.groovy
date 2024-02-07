@@ -13,10 +13,8 @@ class ExportSpec extends BaseContainer{
         setupProject()
     }
 
-    def "test-project-export.sh"(){
+    def "test-project-export"(){
         given:
-        def apiVersion = 14
-        client.apiVersion = apiVersion
         def client = getClient()
 
         when:

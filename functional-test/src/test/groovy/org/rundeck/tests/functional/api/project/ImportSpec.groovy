@@ -11,10 +11,9 @@ import org.rundeck.util.container.RdClient
 @APITest
 class ImportSpec extends BaseContainer {
 
-    def "test-project-import-readme-motd.sh"(){
+    def "test-project-import-readme-motd"(){
         given:
         def client = getClient()
-        client.apiVersion = 14
         String projectName = "motdTest"
         Object projectJsonMap = [
                 "name": projectName
@@ -48,11 +47,10 @@ class ImportSpec extends BaseContainer {
         deleteProject(projectName)
     }
 
-    def "test-project-import.sh"(){
+    def "test-project-import"(){
         given:
         def mapper = new ObjectMapper()
         def client = getClient()
-        client.apiVersion = 14
 
         String projectName = "APIImportTest"
         Object projectJsonMap = [
