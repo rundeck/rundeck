@@ -11,7 +11,7 @@ import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 @APITest
 class ConfigSpec extends BaseContainer{
 
-    def "test GET /api/14/project/name/config/key"(){
+    def "test-project-config-key-json.sh"(){
         given:
         def client = getClient()
         client.apiVersion = 14 // as the original test
@@ -350,30 +350,34 @@ class ConfigSpec extends BaseContainer{
     def "test-project-invalid"(){
         given:
         def client = getClient()
-        client.apiVersion = 14
         def projectName = "RhetoricalMiscalculationElephant"
+        def mapper = new ObjectMapper()
 
         when:
         def response = client.doGet("/project/$projectName")
+        def parsedBody = mapper.readValue(response.body().string(), Object.class)
 
         then:
-        !response.successful
+        response.code() == 404
+        parsedBody.errorCode == "api.error.project.missing"
+        parsedBody.message == "Project does not exist: $projectName"
 
     }
 
     def "test-project-json"(){
         given:
         def client = getClient()
+        client.apiVersion = 14
         def projectName = "RhetoricalMiscalculationElephant"
         def mapper = new ObjectMapper()
 
-        when:
+        when: "We check only the format of the response, regardless of the content"
         def jsonResponseBody = client.doGet("/project/$projectName")
-        def validJsonParse = mapper.readValue(jsonResponseBody.body().string(), Object.class)
+        def responseString = jsonResponseBody.body().string()
+        def validJsonParse = mapper.readValue(responseString, Object.class)
 
         then:
-        !jsonResponseBody.successful
-        jsonResponseBody.code() == 404
+        !isYamlValid(responseString)
         validJsonParse != null
 
     }
@@ -381,7 +385,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-missing"(){
         given:
         def client = getClient()
-        client.apiVersion = 14
         def projectName = "RhetoricalMiscalculationElephant"
 
         when:
@@ -414,7 +417,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-space-in-name-fails"(){
         given:
         def client = getClient()
-        client.apiVersion = 14 // as the original test
         def projectName = "test project"
         Object testProperties = [
                 "name": projectName,
@@ -441,7 +443,7 @@ class ConfigSpec extends BaseContainer{
         setupProject()
         def mapper = new ObjectMapper()
         def client = getClient()
-        client.apiVersion = 40 // as the original test
+        client.apiVersion = 14 // as the original test
 
         when: "YAML"
         def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
@@ -475,6 +477,16 @@ class ConfigSpec extends BaseContainer{
         unsupportedParsedResponse.errorCode == "api.error.resource.format.unsupported"
         unsupportedParsedResponse.error
         unsupportedParsedResponse.message == "The format specified is unsupported: unsupported"
+
+        when:
+        client.apiVersion = 2 // as the original test states
+        def unsupportedApiVersionResponse = client.doGetAcceptAll("/project/$PROJECT_NAME/resources")
+        def parsedUnsupportedApiVersionResponse = mapper.readValue(unsupportedApiVersionResponse.body().string(), Object.class)
+
+        then:
+        parsedUnsupportedApiVersionResponse.errorCode == "api.error.api-version.unsupported"
+        parsedUnsupportedApiVersionResponse.error
+        parsedUnsupportedApiVersionResponse.message?.contains("Unsupported API Version \"2\"")
     }
 
     boolean isYamlValid(String yamlString) {

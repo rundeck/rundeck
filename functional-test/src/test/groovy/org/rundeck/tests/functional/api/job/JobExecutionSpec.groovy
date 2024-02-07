@@ -957,9 +957,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-run"(){
         setup:
         def projectName = PROJECT_NAME
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = (String stepArgs) -> {
