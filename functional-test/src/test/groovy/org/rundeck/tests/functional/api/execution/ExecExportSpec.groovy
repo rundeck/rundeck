@@ -32,7 +32,6 @@ class ExecExportSpec extends BaseContainer{
     def "test-project-export-executions"(){
         given:
         def client = getClient()
-        client.apiVersion = 44 // as the original test
         def projectName = "testExportExecs"
         def tempFilePath = Files.createTempDirectory("testExportTemp")
         Object testProperties = [
@@ -213,10 +212,8 @@ class ExecExportSpec extends BaseContainer{
         def pathToExecs3 = pathToUnzippedExportDir3.toString() + "/rundeck-${projectName}/executions"
         assert Files.exists(Paths.get(pathToExecs3))
 
-        def archivesCheckForAnotherExec = assertArchiveContents(Paths.get(pathToExecs3), [exec2.id] as List<String>)
-
         then:
-        archivesCheckForAnotherExec
+        assertArchiveContents(Paths.get(pathToExecs3), [exec2.id] as List<String>)
 
         cleanup:
         FileUtils.deleteDirectory(new File(tempDir))

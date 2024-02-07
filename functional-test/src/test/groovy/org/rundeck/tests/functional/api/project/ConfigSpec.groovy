@@ -367,7 +367,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-json"(){
         given:
         def client = getClient()
-        client.apiVersion = 14
         def projectName = "RhetoricalMiscalculationElephant"
         def mapper = new ObjectMapper()
 
@@ -378,8 +377,9 @@ class ConfigSpec extends BaseContainer{
 
         then:
         !isYamlValid(responseString)
-        validJsonParse != null
-
+        validJsonParse.errorCode == "api.error.project.missing"
+        validJsonParse.error
+        validJsonParse.message == "Project does not exist: $projectName"
     }
 
     def "test-project-missing"(){
