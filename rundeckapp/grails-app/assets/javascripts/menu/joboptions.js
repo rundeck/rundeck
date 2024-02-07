@@ -195,37 +195,18 @@ function Option(data) {
         if (self.hasRemote()) {
             //when remote values are loaded, set the multivalue entries with them
             self.remoteValues.subscribe(function (newval) {
-                var temp = [];
-                if(!self.enforced()) {
-                    //preserve the editable values
-                    temp = ko.utils.arrayFilter(self.multiValueList(),function (val) {
-                        return val.editable();
-                    });
-                }
+                var new_values = [];
+
                 ko.utils.arrayForEach(newval, function (val) {
-                    var selected = testselected(val.value());
-                    var hasselected = self.selectedMultiValues() && self.selectedMultiValues().length > 0;
-                    var found = ko.utils.arrayFirst(self.multiValueList(),function (oval) {
-                        return oval.value()==val.value() && oval.editable();
-                    });
-                    if(found){
-                        found.label(val.label());
-                        found.editable(false);
-                        found.selected(true);
-                        temp.push(found);
-                    }else {
-                        temp.push(self.createMultivalueEntry({
-                            label: val.label(),
-                            value: val.value(),
-                            selected: selected || (!hasselected && val.selected()),
-                            editable: false,
-                            multival: true
-                        }));
-                    }
+                    new_values.push(self.createMultivalueEntry({
+                        label: val.label(),
+                        value: val.value(),
+                        selected: testselected(val.value()) || val.selected(),
+                        editable: false,
+                        multival: true
+                    }));
                 });
-                var multiselected=self.selectedMultiValues();
-                self.multiValueList(temp);
-                addExtraSelected(multiselected);
+                self.multiValueList(new_values);
             });
         } else {
             addExtraSelected(self.selectedMultiValues());
