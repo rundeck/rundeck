@@ -656,6 +656,9 @@ class JobExecutionSpec extends BaseContainer {
         then:
         refJobExecutionStatus.status == ExecutionStatus.SUCCEEDED.state
 
+        cleanup:
+        deleteProject(projectName)
+
     }
 
     def "test-job-retry.sh"(){
