@@ -1824,7 +1824,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                         'node-wizard' : true
                 ],
                 exportOpts : [
-                        'webhooks' : ['inludeAuthTokens' : 'true']
+                        'webhooks' : ['inludeAuthTokens' : 'true', 'regenUuid':'true']
                 ],
         ])
         File archive = new File("testfile")
@@ -1855,7 +1855,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                         'node-wizard' : true
                 ],
                 exportOpts : [
-                        'webhooks' : ['inludeAuthTokens' : 'true']
+                        'webhooks' : ['inludeAuthTokens' : 'true', 'regenUuid':'true']
                 ],
         ])
         File archive = new File("testfile")
@@ -1883,7 +1883,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                         'node-wizard' : true
                 ],
                 exportOpts : [
-                        'webhooks' : ['inludeAuthTokens' : 'true']
+                        'webhooks' : ['inludeAuthTokens' : 'true', 'regenUuid':'true']
                 ],
         ])
         File archive = new File("testfile")
@@ -3309,6 +3309,7 @@ abstract class MockRundeckApi implements RundeckApi{
             Boolean importScm,
             Boolean importWebhooks,
             Boolean whkRegenAuthTokens,
+            Boolean whkRegenUuid,
             Boolean importNodesSources,
             Map<String,String> params,
             RequestBody body
@@ -3326,6 +3327,6 @@ abstract class MockRundeckApi implements RundeckApi{
             response = Response.error(responseStatusCode, errorResponseJsonBody)
         }
 
-        return delegate.returning(Calls.response(response)).importProjectArchive(project,jobUuidOption, importExecutions, importConfig, importACL, importScm, importWebhooks, whkRegenAuthTokens, importNodesSources, params, body)
+        return delegate.returning(Calls.response(response)).importProjectArchive(project,jobUuidOption, importExecutions, importConfig, importACL, importScm, importWebhooks, whkRegenAuthTokens,whkRegenUuid, importNodesSources, params, body)
     }
 }
