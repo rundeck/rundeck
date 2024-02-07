@@ -399,7 +399,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-resources-404"(){
         given:
         def client = getClient()
-        client.apiVersion = 14
         def mapper = new ObjectMapper()
 
         when:
