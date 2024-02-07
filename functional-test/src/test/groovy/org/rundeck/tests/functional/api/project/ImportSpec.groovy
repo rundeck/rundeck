@@ -13,21 +13,12 @@ class ImportSpec extends BaseContainer {
 
     def "test-project-import-readme-motd.sh"(){
         given:
-        String projectName = "motdTest"
-        Object projectJsonMap = [
-                "name": projectName,
-                "description": "test1",
-                "config": [
-                        "test.property": "test value",
-                        "project.execution.history.cleanup.enabled": "true",
-                        "project.execution.history.cleanup.retention.days": "1",
-                        "project.execution.history.cleanup.batch": "500",
-                        "project.execution.history.cleanup.retention.minimum": "0",
-                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
-                ]
-        ]
         def client = getClient()
         client.apiVersion = 14
+        String projectName = "motdTest"
+        Object projectJsonMap = [
+                "name": projectName
+        ]
         def responseProject = client.doPost("/projects", projectJsonMap)
         assert responseProject.successful
         def responseImport = client.doPut(

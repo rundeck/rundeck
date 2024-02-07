@@ -34,14 +34,9 @@ class ExecExportSpec extends BaseContainer{
         def client = getClient()
         client.apiVersion = 44 // as the original test
         def projectName = "testExportExecs"
-        def projectDescription = "A project to test the executions export"
         def tempFilePath = Files.createTempDirectory("testExportTemp")
         Object testProperties = [
-                "name": projectName,
-                "description": projectDescription,
-                "config": [
-                        "test.property": "test value",
-                ]
+                "name": projectName
         ]
         def mapper = new ObjectMapper()
 
