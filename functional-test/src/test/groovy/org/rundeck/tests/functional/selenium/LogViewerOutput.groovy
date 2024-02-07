@@ -29,6 +29,7 @@ class LogViewerOutput extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
+        projectHomePage.validatePage()
         projectHomePage.goProjectHome("AutoFollowTest")
         sideBar.goTo(NavLinkTypes.JOBS)
         jobListPage.getCreateJobLink().click()
@@ -65,6 +66,7 @@ class LogViewerOutput extends SeleniumBase{
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
+        projectHomePage.validatePage()
         projectHomePage.goProjectHome("AutoFollowTest")
         sideBar.goTo(NavLinkTypes.JOBS)
         jobListPage.getCreateJobLink().click()
