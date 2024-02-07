@@ -14,9 +14,6 @@ class BadVersionSpec extends BaseContainer {
     def "test-project-bad-version"() {
         when:
         def projectName = PROJECT_NAME
-        def apiVersion = 10 // As the original test
-        def client = getClient()
-        client.apiVersion = apiVersion
         def response = doGet("project/${projectName}")
         ErrorResponse errorResponse = ErrorResponse.fromJson(response.body().string())
 

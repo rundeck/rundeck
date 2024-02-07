@@ -205,8 +205,6 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-executionEnabled"(){
         given:
         def projectName = "test-job-flip-executionEnabled"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -281,8 +279,6 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-executionEnabled-bulk"(){
         given:
         def projectName = "test-job-flip-executionEnabled-bulk"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -398,9 +394,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-scheduleEnabled-bulk"(){
         given:
         def projectName = "test-job-flip-scheduleEnabled-bulk"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -479,9 +473,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-scheduleEnabled"(){
         given:
         def projectName = "test-job-flip-scheduleEnabled"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -536,9 +528,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-long-run"(){
         given:
         def projectName = "test-job-long-run"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -659,12 +649,10 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-retry.sh"(){
+    def "test-job-retry"(){
         given:
         def projectName = "test-job-retry"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -773,11 +761,9 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-run-GET-405.sh"(){
+    def "test-job-run-GET-405"(){
         given:
         def projectName = "test-job-run-GET-405"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -839,12 +825,10 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-run-later.sh"(){
+    def "test-job-run-later"(){
         setup:
         def projectName = PROJECT_NAME
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
 
         def xmlJob = (String stepArgs) -> {
