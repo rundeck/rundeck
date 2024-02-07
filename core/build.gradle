@@ -93,6 +93,7 @@ dependencies {
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         'com.squareup.retrofit2:retrofit:2.9.0',
         'com.squareup.retrofit2:converter-jackson:2.9.0',
+        'com.squareup.retrofit2:converter-jaxb:2.9.0',
         'javax.servlet:javax.servlet-api:4.0.1'
 
 
