@@ -403,15 +403,15 @@ class ConfigSpec extends BaseContainer{
         def mapper = new ObjectMapper()
 
         when:
-        def jsonResponseBody = client.doGet("/project")
+        def jsonResponseBody = client.doGet("/project/someProject/resources")
         def validJsonParse = mapper.readValue(jsonResponseBody.body().string(), Object.class)
 
         then:
         !jsonResponseBody.successful
         jsonResponseBody.code() == 404
-        validJsonParse.errorCode == "api.error.invalid.request"
+        validJsonParse.errorCode == "api.error.project.missing"
         validJsonParse.error
-        validJsonParse.message == "Invalid API Request: /api/14/project"
+        validJsonParse.message == "Project does not exist: someProject"
     }
 
     def "test-project-space-in-name-fails"(){
