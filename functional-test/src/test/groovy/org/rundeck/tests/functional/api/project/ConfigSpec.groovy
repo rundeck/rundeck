@@ -442,7 +442,6 @@ class ConfigSpec extends BaseContainer{
         setupProject()
         def mapper = new ObjectMapper()
         def client = getClient()
-        client.apiVersion = 14 // as the original test
 
         when: "YAML"
         def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
@@ -464,7 +463,7 @@ class ConfigSpec extends BaseContainer{
         def responseJsonBody = jsonResponse.body().string()
         def json = mapper.readValue(responseJsonBody, Object.class)
 
-        then: "Yaml is valid"
+        then: "JSON is invalid"
         !isYamlValid(responseJsonBody)
         json != null
 
