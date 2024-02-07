@@ -8,7 +8,6 @@ import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.page.Pageable
-import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +15,6 @@ import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.data.util.AuthenticationTokenUtils
-import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
 
 import javax.transaction.Transactional
@@ -29,7 +27,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Autowired
     AuthTokenDataService authTokenDataService
     @Autowired
-    UserService userService
+    GormUserDataProvider userDataProvider
     @Autowired
     MessageSource messageSource
 
@@ -50,7 +48,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Override
     String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
         AuthToken.withTransaction {
-            RdUser tokenOwner = userService.findOrCreateUser(data.ownerName)
+            User tokenOwner = userDataProvider.findOrCreateUser(data.ownerName)
             if (!tokenOwner) {
                 throw new DataAccessException("Couldn't find user: ${data.ownerName}")
             }
@@ -58,7 +56,7 @@ class GormTokenDataProvider implements TokenDataProvider {
             AuthToken token = new AuthToken(
                     token: data.token,
                     authRoles: AuthenticationTokenUtils.generateAuthRoles(data.getAuthRolesSet()),
-                    user: User.get(tokenOwner.getId()),
+                    user: tokenOwner,
                     expiration: data.expiration,
                     uuid: id,
                     creator: data.creator,
