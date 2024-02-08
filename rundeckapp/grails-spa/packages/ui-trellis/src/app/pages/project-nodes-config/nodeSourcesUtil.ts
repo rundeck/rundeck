@@ -55,3 +55,24 @@ export async function getProjectConfigurable(project: string, category: string) 
     throw {success: false, message: resp.parsedBody.message};
   }
 }
+
+export async function setProjectConfigurable(project: string, category: string, extraConfig: any) {
+  const resp = await client.sendRequest({
+    baseUrl: `${getRundeckContext().rdBase}api/${getRundeckContext().apiVersion}`,
+    pathTemplate: "/project/" +project + "/configurable",
+    method: "POST",
+    queryParameters: {
+      category: category
+    },
+    body: {
+      extraConfig: extraConfig
+    }
+  });
+
+  console.log(resp.parsedBody);
+  if (resp.parsedBody.result?.success) {
+    return {success: true, response: resp.parsedBody.result.success};
+  } else {
+    throw {success: false, message: resp.parsedBody.errors};
+  }
+}

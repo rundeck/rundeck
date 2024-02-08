@@ -133,7 +133,7 @@ class UrlMappings {
             action = [GET: 'apiProjectFileGet', PUT: 'apiProjectFilePut', DELETE: 'apiProjectFileDelete']
         }
         "/api/$api_version/project/$project/configurable"(controller: 'framework'){
-            action = [GET: 'getProjectConfigurable']
+            action = [GET: 'getProjectConfigurable', POST: 'saveProjectConfigurable']
         }
         "/api/$api_version/project/$project/motd.md"(controller: 'project'){
             filename='motd.md'

@@ -189,6 +189,13 @@ const messages = {
     'Please be sure that the ACL policies enable "read" access to the Key Storage in this project for the project URN path (urn:project:name). ',
   "unauthorized.status.help.4": "Go to {0} to create a Project ACL ",
   "unauthorized.status.help.5": "Go to {0} to create a System ACL ",
+  "use.the.node.sources.tab.2": "Tab to update your Node Sources.",
+  "project.node.sources.title.short": "Sources",
+  "use.the.node.sources.tab.1": "Use the",
+  "no.modifiable.sources.found": "No modifiable sources found",
+  "framework.service.NodeEnhancer.explanation":
+    "Node Enhancers can modify the data loaded from Node Sources.",
+  "framework.service.NodeEnhancer.label.short.plural": "Enhancers",
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",

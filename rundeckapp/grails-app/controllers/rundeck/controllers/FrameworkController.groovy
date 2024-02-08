@@ -153,6 +153,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProjectNodeSourceFile: 'POST',
         saveProjectPluginsAjax   : 'POST',
         getProjectConfigurable   : 'GET',
+        saveProjectConfigurable  : 'POST',
     ]
 
     def index = {
@@ -1764,6 +1765,53 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 [
                     project                  : project,
                     projectConfigurable      : propertyConfig
+                ]
+        )
+    }
+
+    def saveProjectConfigurable(){
+        def project = params.project
+        def category = params.category
+        def cfgPayload = request.JSON
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
+            return
+        }
+
+        def errors = []
+        //only attempt project create if form POST is used
+
+        def Set<String> removePrefixes = []
+
+
+        def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                cfgPayload.extraConfig,
+                'extraConfig.',
+                { String it -> it == category }
+        )
+        if (pconfigurable.errors) {
+            errors.addAll(pconfigurable.errors)
+        }
+
+        def projProps = new Properties()
+        projProps.putAll(pconfigurable.props)
+        removePrefixes.addAll(pconfigurable.remove)
+        def result = [success: false]
+        if (!errors) {
+            result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+            if (!result.success) {
+                errors << result.error
+            }
+        }
+
+        respond(
+                formats: ['json'],
+                [
+                        result                   : result,
+                        errors                   : errors
                 ]
         )
     }
