@@ -2,21 +2,21 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.event.Event
 import com.dtolabs.rundeck.core.event.EventImpl
-import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventStoreService
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQuery
 
 @CompileStatic
 class ScopedEventStoreService implements EventStoreService {
     EventStoreService service
 
     Event eventTemplate
-    EventQuery queryTemplate
+    StoredEventQuery queryTemplate
 
-    ScopedEventStoreService(EventStoreService service, Event eventTemplate, EventQuery queryTemplate) {
+    ScopedEventStoreService(EventStoreService service, Event eventTemplate, StoredEventQuery queryTemplate) {
         this.service = service
         this.eventTemplate = eventTemplate
         this.queryTemplate = queryTemplate
@@ -34,8 +34,8 @@ class ScopedEventStoreService implements EventStoreService {
         service.storeEvent(scopedEvent)
     }
 
-    EventQueryResult query(EventQuery query) {
-        EventQuery scopedQuery = scopeQuery(query)
+    EventQueryResult query(StoredEventQuery query) {
+        StoredEventQuery scopedQuery = scopeQuery(query)
         service.query(scopedQuery)
     }
 
@@ -46,11 +46,11 @@ class ScopedEventStoreService implements EventStoreService {
         return mergeObject(Event, EventImpl, event, eventTemplate) as Event
     }
 
-    private EventQuery scopeQuery(EventQuery query) {
+    private StoredEventQuery scopeQuery(StoredEventQuery query) {
         if (!this.queryTemplate)
             return query
 
-        mergeObject(EventQuery, EventQueryImpl, query, queryTemplate) as EventQuery
+        mergeObject(StoredEventQuery, EventQueryImpl, query, queryTemplate) as StoredEventQuery
     }
 
     /**
@@ -85,7 +85,7 @@ class ScopedEventStoreService implements EventStoreService {
         return  type.newInstance(merged) as C
     }
 
-    EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {
+    EventStoreService scoped(Event eventTemplate, StoredEventQuery queryTemplate) {
         return new ScopedEventStoreService(this, eventTemplate, queryTemplate)
     }
 }
