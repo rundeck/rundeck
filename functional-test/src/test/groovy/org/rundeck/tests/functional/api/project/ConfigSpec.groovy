@@ -2,7 +2,9 @@ package org.rundeck.tests.functional.api.project
 
 import org.rundeck.tests.functional.api.ResponseModels.ConfigProperty
 import org.rundeck.tests.functional.api.ResponseModels.Execution
+import org.rundeck.tests.functional.api.ResponseModels.Node
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
+import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
@@ -480,6 +482,73 @@ class ConfigSpec extends BaseContainer{
         parsedUnsupportedApiVersionResponse.errorCode == "api.error.api-version.unsupported"
         parsedUnsupportedApiVersionResponse.error
         parsedUnsupportedApiVersionResponse.message?.contains("Unsupported API Version \"2\"")
+    }
+
+    def "test-resource"(){
+        given:
+        def mapper = new ObjectMapper()
+        def testResourceNode = "test-node"
+        def projectName = "test-resource" // delete me
+        def projectMapJson = [
+                "name":projectName
+        ]
+        // Create test project with resources
+        def createResponse = createSampleProject(projectMapJson)
+        assert createResponse.successful
+        setupProject(projectName, "/projects-import/resourcesTest.zip")
+
+        //Extract local nodename
+        def systemInfoResponse = doGet("/system/info")
+        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        def localNode = systemInfo.system?.rundeck?.node
+
+        when: "Obtain project's resources data in JSON"
+        def localResourceNodeResponse = doGet("/project/$projectName/resource/$localNode")
+        def localResourceString = localResourceNodeResponse.body().string()
+        def parsedLocalNode = mapper.readValue(localResourceString, Map<String, Map>.class)
+        def nodes = parsedLocalNode.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def localNodeProps = nodes[localNode]
+
+        then:
+        localResourceNodeResponse.successful
+        localNodeProps.nodename == localNode
+
+        when: "Obtain project's resources data in YAML"
+        def localResourceNodeResponseYaml = doGet("/project/$projectName/resource/$localNode?format=yaml")
+        def localResourceYamlString = localResourceNodeResponseYaml.body().string()
+        def newYaml = new Yaml().load(localResourceYamlString)
+
+        then: "no errors and regex validation for YAML"
+        noExceptionThrown()
+        newYaml != null
+        isYamlValid(localResourceYamlString)
+
+        when: "If we attempt to use the response as JSON we'll get an exception"
+        def localResourceNodeResponseYamlForJson = doGet("/project/$projectName/resource/$localNode?format=yaml")
+        def localResourceYamlStringForJson = localResourceNodeResponseYamlForJson.body().string()
+        mapper.readValue(localResourceYamlStringForJson, Map<String, Map>.class)
+
+        then:
+        thrown Exception
+
+        when: "We try to get a specific node from project"
+        def specificResourceResponse = doGet("/project/$projectName/resource/$testResourceNode")
+        def specificResourceResponseString = specificResourceResponse.body().string()
+        def parsedSpecificResourceResponseString = mapper.readValue(specificResourceResponseString, Map<String, Map>.class)
+        def specificNodes = parsedSpecificResourceResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def specificNode = specificNodes[testResourceNode]
+
+        then:
+        specificNode != null
+        specificNode.nodename == testResourceNode
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
+    def createSampleProject = (Object projectJsonMap) -> {
+        return client.doPost("/projects", projectJsonMap)
     }
 
     boolean isYamlValid(String yamlString) {
