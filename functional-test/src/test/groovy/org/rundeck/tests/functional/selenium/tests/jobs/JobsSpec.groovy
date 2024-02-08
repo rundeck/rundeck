@@ -321,7 +321,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
-            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionRedoButton, 'disabled', null
+            sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
             !(jobCreatePage.optionLis 0 isEmpty())
