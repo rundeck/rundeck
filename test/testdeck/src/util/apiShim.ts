@@ -13,8 +13,6 @@ const skipTests = [
     'test-execution-output-utf8.sh',
     'test-execution-state.sh', // Reads framework.properties
 
-    '^test-scm',
-
     /** Misc */
     'test-history.sh',
     'test-metrics.sh', // .meters length 7 instead of 8 ?
