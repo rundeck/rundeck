@@ -83,7 +83,7 @@
           class="ready"
           @click="optaddnew"
           :title="$t('add.new.option')"
-          :disabled="createOption"
+          :disabled="!!createOption"
         >
           <b class="glyphicon glyphicon-plus"></b>
           {{ $t("add.an.option") }}
@@ -94,9 +94,10 @@
 </template>
 <script lang="ts">
 import { cloneDeep } from "lodash";
+import {JobOption, JobOptionEdit, JobOptionsData} from '../../../../library/types/jobs/JobEdit'
 import OptionItem from "./list/OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from 'vue'
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
 import mitt, { Emitter, EventType } from "mitt";
@@ -113,7 +114,7 @@ export default defineComponent({
   },
   props: {
     optionsData: {
-      type: Object,
+      type: Object as PropType<JobOptionsData>,
       required: true,
     },
     edit: {
@@ -127,7 +128,7 @@ export default defineComponent({
       error: "",
       createMode: false,
       editIndex: -1,
-      intOptions: [],
+      intOptions: [] as JobOption[],
       createOption: null,
       fileUploadPluginType: "",
       features: {},
