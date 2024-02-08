@@ -48,7 +48,13 @@
     </div>
 
     <!-- name -->
-    <div class="form-group" :class="{'has-error':validationErrors['name'],'has-warning':validationWarnings['name']}">
+    <div
+      class="form-group"
+      :class="{
+        'has-error': validationErrors['name'],
+        'has-warning': validationWarnings['name'],
+      }"
+    >
       <label
         for="optname_"
         class="col-sm-2 control-label"
@@ -70,10 +76,10 @@
           id="optname_"
         />
         <div class="help-block" v-if="validationErrors['name']">
-          {{validationErrors['name']}}
+          <ErrorsList :errors="validationErrors['name']" />
         </div>
         <div class="help-block" v-if="validationWarnings['name']">
-          {{validationWarnings['name']}}
+          <ErrorsList :errors="validationWarnings['name']" />
         </div>
       </div>
     </div>
@@ -129,7 +135,7 @@
     </div>
 
     <!-- TODO option MAIN section -->
-    <template v-if="option.optionType !== 'file'">
+    <div v-if="option.optionType !== 'file'">
       <div
         class="form-group"
         :class="{ 'has-error': hasError('defaultValue') }"
@@ -147,6 +153,9 @@
             :placeholder="$t('form.option.defaultValue.label')"
             v-model="option.defaultValue"
           />
+          <div class="help-block" v-if="validationErrors['defaultValue']">
+            <ErrorsList :errors="validationErrors['defaultValue']" />
+          </div>
         </div>
       </div>
 
@@ -238,7 +247,7 @@
             </label>
             <span class="help-block">
               <VMarkdownView
-                class=" markdown-body"
+                class="markdown-body"
                 mode=""
                 :content="$t(`form.option.dateFormat.description.md`)"
               />
@@ -283,391 +292,531 @@
             {{ $t("form.option.secureInput.description") }}
           </div>
         </div>
-
       </div>
-          <div class="form-group" v-if="!isSecureInput">
-            <label class="col-sm-2 control-label">{{ $t('form.option.values.label') }}</label>
-            <div  :class="{'col-sm-10':uiFeatures['next'],'col-sm-3':!uiFeatures['next']}">
+      <div class="form-group" v-if="!isSecureInput">
+        <label class="col-sm-2 control-label">{{
+          $t("form.option.values.label")
+        }}</label>
+        <div
+          :class="{
+            'col-sm-10': uiFeatures['next'],
+            'col-sm-3': !uiFeatures['next'],
+          }"
+        >
+          <select
+            v-model="valuesType"
+            class="form-control"
+            v-if="uiFeatures['next']"
+          >
+            <option value="list">
+              {{ $t("form.label.valuesType.list.label") }}
+            </option>
+            <option value="url">
+              {{ $t("form.option.valuesType.url.label") }}
+            </option>
+            <template v-if="features['optionValuesPlugin']">
+              <option
+                v-for="optionValPlugin in optionValuesPlugins"
+                :value="optionValPlugin.name"
+              >
+                {{ optionValPlugin.title || optionValPlugin.name }}
+              </option>
+            </template>
+          </select>
 
-              <select v-model="valuesType" class="form-control" v-if="uiFeatures['next']">
-                <option value="list">
-                  {{ $t('form.label.valuesType.list.label') }}
-                </option>
-                <option value="url">
-                  {{ $t('form.option.valuesType.url.label') }}
-                </option>
-                <template v-if="features['optionValuesPlugin']">
-                  <option v-for="optionValPlugin in optionValuesPlugins"  :value="optionValPlugin.name">
-                    {{ optionValPlugin.title||optionValPlugin.name }}
-                  </option>
-                </template>
-              </select>
-
-              <div v-if="!uiFeatures['next']">
-                <div class="radio">
-                  <input type="radio"
-                         name="valuesType"
-                           value="list"
-                         v-model="valuesType"
-                           id="vtrlist_"/>
-                  <label for="vtrlist_"
-                         :class="{ 'has-error': hasError('valuesList') }"
-                  >
-                    {{ $t('form.label.valuesType.list.label') }}
-                  </label>
-                </div>
-
-                <div class="radio">
-                  <input type="radio"
-                         name="valuesType"
-                         value="url"
-                         v-model="valuesType"
-                           id="vtrurl_"/>
-                  <label for="vtrurl_"
-                         class="left"
-                         :class="{ 'has-error': hasError('valuesUrl') }"
-                  >
-                    {{ $t('form.option.valuesType.url.label') }}
-                  </label>
-                </div>
-                <template v-if="features['optionValuesPlugin']">
-                  <template v-for="optionValPlugin in optionValuesPlugins" >
-                    <div class="radio">
-                      <input type="radio"
-                             name="valuesType"
-                             v-model="valuesType"
-                             :value="optionValPlugin.name"
-                               :id="'optvalplugin_'+optionValPlugin.name"/>
-                      <label :for="'optvalplugin_'+optionValPlugin.name"
-                             :class="{ 'has-error': hasError('valuesFromPlugin') }"
-                             :title="optionValPlugin.description"
-                      >
-                        <img :src="optionValPlugin.iconUrl" v-if="optionValPlugin.iconUrl" style="width: 16px; height: 16px; margin-right: 5px;"/>
-                        {{ optionValPlugin.title||optionValPlugin.name }}
-                      </label>
-                    </div>
-
-                  </template>
-                </template>
-              </div>
-
+          <div v-if="!uiFeatures['next']">
+            <div class="radio">
+              <input
+                type="radio"
+                name="valuesType"
+                value="list"
+                v-model="valuesType"
+                id="vtrlist_"
+              />
+              <label
+                for="vtrlist_"
+                :class="{ 'has-error': hasError('valuesList') }"
+              >
+                {{ $t("form.label.valuesType.list.label") }}
+              </label>
             </div>
-            <div  :class="{'col-sm-10 col-sm-offset-2':uiFeatures['next'],'col-sm-7':!uiFeatures['next']}">
 
-              <div id="vlist_section" v-if="valuesType==='list'"  :class="{ 'has-error': hasError('valuesList') }">
+            <div class="radio">
+              <input
+                type="radio"
+                name="valuesType"
+                value="url"
+                v-model="valuesType"
+                id="vtrurl_"
+              />
+              <label
+                for="vtrurl_"
+                class="left"
+                :class="{ 'has-error': hasError('valuesUrl') }"
+              >
+                {{ $t("form.option.valuesType.url.label") }}
+              </label>
+            </div>
+            <template v-if="features['optionValuesPlugin']">
+              <template v-for="optionValPlugin in optionValuesPlugins">
+                <div class="radio">
+                  <input
+                    type="radio"
+                    name="valuesType"
+                    v-model="valuesType"
+                    :value="optionValPlugin.name"
+                    :id="'optvalplugin_' + optionValPlugin.name"
+                  />
+                  <label
+                    :for="'optvalplugin_' + optionValPlugin.name"
+                    :class="{ 'has-error': hasError('valuesFromPlugin') }"
+                    :title="optionValPlugin.description"
+                  >
+                    <img
+                      :src="optionValPlugin.iconUrl"
+                      v-if="optionValPlugin.iconUrl"
+                      style="width: 16px; height: 16px; margin-right: 5px"
+                    />
+                    {{ optionValPlugin.title || optionValPlugin.name }}
+                  </label>
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+        <div
+          :class="{
+            'col-sm-10 col-sm-offset-2': uiFeatures['next'],
+            'col-sm-7': !uiFeatures['next'],
+          }"
+        >
+          <div
+            id="vlist_section"
+            v-if="valuesType === 'list'"
+            :class="{ 'has-error': hasError('valuesList') }"
+          >
+            <input
+              type="text"
+              name="valuesList"
+              class="form-control"
+              v-model="option.valuesList"
+              size="60"
+              :placeholder="$t('form.option.valuesList.placeholder')"
+            />
+          </div>
 
-                <input type="text" name="valuesList"
-                             class="form-control"
-                             v-model="option.valuesList"
-                             size="60"
-                             :placeholder="$t('form.option.valuesList.placeholder')"
-                />
+          <div
+            id="vurl_section"
+            v-else-if="valuesType === 'url'"
+            :class="{ 'has-error': hasError('valuesUrl') }"
+          >
+            <input
+              type="url"
+              class="form-control"
+              name="valuesUrl"
+              v-model="option.valuesUrl"
+              size="60"
+              :placeholder="$t('form.option.valuesURL.placeholder')"
+            />
+            <div class="help-block">
+              {{ $t("form.option.valuesUrl.description") }}
+              <a
+                href="https://docs.rundeck.com/docs/manual/job-options.html#option-model-provider"
+                target="_blank"
+              >
+                <i class="glyphicon glyphicon-question-sign"></i>
+                {{ $t("rundeck.user.guide.option.model.provider") }}
+              </a>
+            </div>
 
+            <div
+              class="row"
+              :class="{ 'has-error': hasError('configRemoteUrl') }"
+            >
+              <div class="col-md-12">
+                <label class="control-label">{{
+                  $t("form.option.valuesType.url.filter.label")
+                }}</label>
               </div>
 
-              <div id="vurl_section"
-                   v-else-if="valuesType==='url'"
-                   :class="{ 'has-error': hasError('valuesUrl') }">
-                <input type="url"
-                             class=" form-control"
-                             name="valuesUrl"
-                             v-model="option.valuesUrl"
-                             size="60"
-                             :placeholder="$t('form.option.valuesURL.placeholder')"
-                />
-                <div class="help-block">
-                  {{ $t('form.option.valuesUrl.description') }}
-                  <a href="https://docs.rundeck.com/docs/manual/job-options.html#option-model-provider"
-                     target="_blank">
-                    <i class="glyphicon glyphicon-question-sign"></i>
-                    {{ $t('rundeck.user.guide.option.model.provider') }}
-                  </a>
+              <div class="col-md-4">
+                <div class="">
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="remoteUrlJsonFilter"
+                    v-model="option.configRemoteUrl.jsonFilter"
+                    size="30"
+                  />
                 </div>
-
-                <div class="row" :class="{ 'has-error': hasError('configRemoteUrl') }">
-                  <div class="col-md-12">
-                    <label class="control-label">{{ $t('form.option.valuesType.url.filter.label') }}</label>
+              </div>
+              <div class="col-md-12">
+                <div class="">
+                  <div class="help-block">
+                    {{ $t("form.option.valuesType.url.filter.description") }}
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <div class="col-md-4">
-                    <div class="">
-                      <input type="text"
-                                   class=" form-control"
-                                   name="remoteUrlJsonFilter"
-                                   v-model="option.configRemoteUrl.jsonFilter"
-                                   size="30"
+            <div class="row">
+              <div class="col-md-12">
+                <label class="control-label">{{
+                  $t("form.option.valuesType.url.authType.label")
+                }}</label>
+              </div>
+
+              <div class="col-md-4">
+                <select
+                  class="form-control"
+                  v-model="option.remoteUrlAuthenticationType"
+                >
+                  <option value="" disabled>
+                    {{ $t("form.option.valuesType.url.authType.empty.label") }}
+                  </option>
+                  <option
+                    v-for="option in remoteUrlAuthenticationList"
+                    :value="option.value"
+                    :key="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-8">
+                <!--USER/PASSSWORD AUTH-->
+                <div
+                  id="remoteUrlUserAuth"
+                  v-if="option.remoteUrlAuthenticationType === 'BASIC'"
+                >
+                  <div>
+                    <div class="col-md-3">
+                      <label class="control-label">{{
+                        $t(
+                          "form.option.valuesType.url.authentication.username.label",
+                        )
+                      }}</label>
+                    </div>
+                    <div class="col-md-8 input-group">
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="remoteUrlUsername"
+                        v-model="option.configRemoteUrl.username"
+                        size="30"
                       />
                     </div>
                   </div>
-                  <div class="col-md-12">
-                    <div class="">
-                      <div class="help-block">
-                        {{ $t('form.option.valuesType.url.filter.description') }}
-                      </div>
+                  <div>
+                    <div class="col-md-3">
+                      <label class="control-label">{{
+                        $t(
+                          "form.option.valuesType.url.authentication.password.label",
+                        )
+                      }}</label>
                     </div>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-12">
-                    <label class="control-label">{{ $t('form.option.valuesType.url.authType.label') }}</label>
-                  </div>
-
-                  <div class="col-md-4">
-                    <select
-                      class="form-control"
-                      v-model="option.remoteUrlAuthenticationType"
+                    <div class="col-md-8 input-group">
+                      <span
+                        class="input-group-addon has_tooltip"
+                        :title="
+                          $t('form.option.defaultStoragePath.description')
+                        "
                       >
-                      <option value="" disabled>{{$t('form.option.valuesType.url.authType.empty.label')}}</option>
-                      <option v-for="option in remoteUrlAuthenticationList" :value="option.value" :key="option.value">
-                        {{ option.label }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-8">
-
-                    <!--USER/PASSSWORD AUTH-->
-                    <div id="remoteUrlUserAuth" v-if="option.remoteUrlAuthenticationType==='BASIC'">
-                      <div>
-                        <div class="col-md-3">
-                          <label class="control-label">{{ $t('form.option.valuesType.url.authentication.username.label') }}</label>
-                        </div>
-                        <div class="col-md-8 input-group">
-                          <input type="text"
-                                       class=" form-control"
-                                       name="remoteUrlUsername"
-                                       v-model="option.configRemoteUrl.username"
-                                       size="30"
-                          />
-                        </div>
-
-                      </div>
-                      <div>
-                        <div class="col-md-3">
-                          <label class="control-label">{{ $t('form.option.valuesType.url.authentication.password.label') }}</label>
-                        </div>
-                        <div class="col-md-8 input-group">
-                          <span class="input-group-addon has_tooltip" :title="$t('form.option.defaultStoragePath.description')">
-                              <i class="glyphicon glyphicon-lock"></i>
-                          </span>
-
-                          <input type="text"
-                                 class="form-control"
-                                 v-model="option.configRemoteUrl.passwordStoragePath"
-                                 size="20"
-                          />
-
-                          <span class="input-group-btn">
-                            <key-storage-selector v-model="option.configRemoteUrl.passwordStoragePath"
-                                                  :storage-filter="'Rundeck-data-type=password'"
-                                                  :allow-upload="true"
-                                                  :read-only="false"
-                            />
-                          </span>
-
-                        </div>
-                      </div>
-                    </div>
-                    <!--USER/PASSSWORD AUTH-->
-
-                    <!--TOKEN AUTH-->
-                    <div id="remoteUrlTokenAuth" v-if="option.remoteUrlAuthenticationType==='API_KEY'">
-
-                      <div>
-                        <div class="col-md-3">
-                          <label class="control-label">{{ $t('form.option.valuesType.url.authentication.key.label') }}</label>
-                        </div>
-                        <div class="col-md-8 input-group">
-                          <input type="text"
-                                       class=" form-control"
-                                       name="remoteUrlKey"
-                                       v-model="option.configRemoteUrl.keyName"
-                                       size="30"
-                          />
-                        </div>
-
-                      </div>
-                      <div>
-                        <div class="col-md-3">
-                          <label class="control-label">{{ $t('form.option.valuesType.url.authentication.token.label') }}</label>
-                        </div>
-                        <div class="col-md-8 input-group">
-                          <span class="input-group-addon has_tooltip" :title="$t('form.option.defaultStoragePath.description')">
-                          <i class="glyphicon glyphicon-lock"></i>
-                          </span>
-
-                          <input type="text"
-                                 class="form-control"
-                                 name="remoteUrlToken"
-                                 v-model="option.configRemoteUrl.tokenStoragePath"
-                                 size="20"
-                                 placeholder=""
-                          />
-
-                          <span class="input-group-btn">
-                              <key-storage-selector v-model="option.configRemoteUrl.tokenStoragePath"
-                                                    :storage-filter="'Rundeck-data-type=password'"
-                                                    :allow-upload="true"
-                                                    :read-only="false"
-                              />
-                          </span>
-
-                        </div>
-                      </div>
-                      <div>
-                        <div class="col-md-3">
-                          <label class="control-label">{{ $t('form.option.valuesType.url.authentication.tokenInformer.label') }}</label>
-                        </div>
-                        <div class="col-md-8 input-group">
-                          <select
-                            name="remoteUrlApiTokenReporter"
-                            class="form-control"
-                            v-model="option.configRemoteUrl.apiTokenReporter"
-                            >
-                            <option value="HEADER">
-                              {{$t('form.option.valuesType.url.authentication.tokenInformer.header.label')}}
-                            </option>
-                            <option value="QUERY_PARAM">
-                              {{$t('form.option.valuesType.url.authentication.tokenInformer.query.label')}}
-                            </option>
-                          </select>
-
-                        </div>
-                      </div>
-                    </div>
-                    <!--TOKEN AUTH-->
-
-                    <!--bearerToken AUTH-->
-                    <div id="remoteUrlBearerTokenAuth" v-if="option.remoteUrlAuthenticationType==='BEARER_TOKEN'">
-                      <div class="col-md-3">
-                        <label class="control-label">{{ $t('form.option.valuesType.url.authentication.token.label') }}</label>
-                      </div>
-                      <div class="col-md-8 input-group">
-                        <span class="input-group-addon has_tooltip" :title="$t('form.option.defaultStoragePath.description')">
                         <i class="glyphicon glyphicon-lock"></i>
-                        </span>
+                      </span>
 
-                        <input type="text"
-                               class="form-control"
-                               name="remoteUrlBearerToken"
-                               v-model="option.configRemoteUrl.tokenStoragePath"
-                               size="20"
-                               placeholder=""
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="option.configRemoteUrl.passwordStoragePath"
+                        size="20"
+                      />
+
+                      <span class="input-group-btn">
+                        <key-storage-selector
+                          v-model="option.configRemoteUrl.passwordStoragePath"
+                          :storage-filter="'Rundeck-data-type=password'"
+                          :allow-upload="true"
+                          :read-only="false"
                         />
-
-                        <span class="input-group-btn">
-                            <key-storage-selector v-model="option.configRemoteUrl.tokenStoragePath"
-                                                  :storage-filter="'Rundeck-data-type=password'"
-                                                  :allow-upload="true"
-                                                  :read-only="false"
-                            />
-                        </span>
-                      </div>
+                      </span>
                     </div>
-                    <!--bearerToken AUTH-->
-
                   </div>
-
                 </div>
-              </div>
-              <div v-else-if="valuesType && optionValuesPlugins && uiFeatures['next']">
-                <plugin-info
-                  :detail="getProviderFor(valuesType)"
-                  :show-description="true"
-                  :show-extended="true"
-                  description-css="help-block"
+                <!--USER/PASSSWORD AUTH-->
+
+                <!--TOKEN AUTH-->
+                <div
+                  id="remoteUrlTokenAuth"
+                  v-if="option.remoteUrlAuthenticationType === 'API_KEY'"
                 >
-                </plugin-info>
+                  <div>
+                    <div class="col-md-3">
+                      <label class="control-label">{{
+                        $t(
+                          "form.option.valuesType.url.authentication.key.label",
+                        )
+                      }}</label>
+                    </div>
+                    <div class="col-md-8 input-group">
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="remoteUrlKey"
+                        v-model="option.configRemoteUrl.keyName"
+                        size="30"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div class="col-md-3">
+                      <label class="control-label">{{
+                        $t(
+                          "form.option.valuesType.url.authentication.token.label",
+                        )
+                      }}</label>
+                    </div>
+                    <div class="col-md-8 input-group">
+                      <span
+                        class="input-group-addon has_tooltip"
+                        :title="
+                          $t('form.option.defaultStoragePath.description')
+                        "
+                      >
+                        <i class="glyphicon glyphicon-lock"></i>
+                      </span>
+
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="remoteUrlToken"
+                        v-model="option.configRemoteUrl.tokenStoragePath"
+                        size="20"
+                        placeholder=""
+                      />
+
+                      <span class="input-group-btn">
+                        <key-storage-selector
+                          v-model="option.configRemoteUrl.tokenStoragePath"
+                          :storage-filter="'Rundeck-data-type=password'"
+                          :allow-upload="true"
+                          :read-only="false"
+                        />
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="col-md-3">
+                      <label class="control-label">{{
+                        $t(
+                          "form.option.valuesType.url.authentication.tokenInformer.label",
+                        )
+                      }}</label>
+                    </div>
+                    <div class="col-md-8 input-group">
+                      <select
+                        name="remoteUrlApiTokenReporter"
+                        class="form-control"
+                        v-model="option.configRemoteUrl.apiTokenReporter"
+                      >
+                        <option value="HEADER">
+                          {{
+                            $t(
+                              "form.option.valuesType.url.authentication.tokenInformer.header.label",
+                            )
+                          }}
+                        </option>
+                        <option value="QUERY_PARAM">
+                          {{
+                            $t(
+                              "form.option.valuesType.url.authentication.tokenInformer.query.label",
+                            )
+                          }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <!--TOKEN AUTH-->
+
+                <!--bearerToken AUTH-->
+                <div
+                  id="remoteUrlBearerTokenAuth"
+                  v-if="option.remoteUrlAuthenticationType === 'BEARER_TOKEN'"
+                >
+                  <div class="col-md-3">
+                    <label class="control-label">{{
+                      $t(
+                        "form.option.valuesType.url.authentication.token.label",
+                      )
+                    }}</label>
+                  </div>
+                  <div class="col-md-8 input-group">
+                    <span
+                      class="input-group-addon has_tooltip"
+                      :title="$t('form.option.defaultStoragePath.description')"
+                    >
+                      <i class="glyphicon glyphicon-lock"></i>
+                    </span>
+
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="remoteUrlBearerToken"
+                      v-model="option.configRemoteUrl.tokenStoragePath"
+                      size="20"
+                      placeholder=""
+                    />
+
+                    <span class="input-group-btn">
+                      <key-storage-selector
+                        v-model="option.configRemoteUrl.tokenStoragePath"
+                        :storage-filter="'Rundeck-data-type=password'"
+                        :allow-upload="true"
+                        :read-only="false"
+                      />
+                    </span>
+                  </div>
+                </div>
+                <!--bearerToken AUTH-->
               </div>
             </div>
           </div>
-          <div class="form-group">
-
-            <label class="col-sm-2 control-label">{{ $t('form.option.sort.label') }}</label>
-
-            <div class="col-sm-3">
-              <div class="radio radio-inline">
-                <input type="radio" name="sortValues" :value="false" v-model="option.sortValues"/>
-                <label for="option-sort-values-no">
-                  {{ $t('no') }}
-                </label>
-              </div>
-              <div class="radio radio-inline">
-                <input type="radio"  name="sortValues" :value="true" v-model="option.sortValues"/>
-                <label for="option-sort-values-yes">
-                  {{ $t('yes') }}
-                </label>
-              </div>
-              <div class="help-block">
-                {{ $t('form.option.sort.description') }}
-              </div>
-            </div>
-
-            <div class="input-group col-sm-3"
-                 :class="{ 'has-error': hasError('delimiter') }"
+          <div
+            v-else-if="valuesType && optionValuesPlugins && uiFeatures['next']"
+          >
+            <plugin-info
+              :detail="getProviderFor(valuesType)"
+              :show-description="true"
+              :show-extended="true"
+              description-css="help-block"
             >
-              <div class="input-group-addon" style="background-color:#e0e0e0;">
-                {{ $t('form.option.valuesDelimiter.label') }}
-              </div>
-              <input type="text"
-                     name="valuesListDelimiter"
-                     v-model="option.valuesListDelimiter"
-                     size="5"
-                     class="form-control"
-              />
-
-            </div>
-            <span class="help-block">
-                {{ $t('form.option.valuesDelimiter.description') }}
-            </span>
+            </plugin-info>
           </div>
-          <div class="form-group opt_keystorage_disabled" v-if="!isSecureInput">
-            <label class="col-sm-2 control-label">{{ $t('form.option.enforcedType.label') }}</label>
-            <div class="col-sm-10">
-              <div class="radio">
-                <input type="radio" v-model="enforcedType" value="none" id="enforcedType_none"/>
-                <label for="enforcedType_none">
-                  {{ $t('none') }}
-                  <span class="text-strong">{{ $t('form.option.enforcedType.none.label') }}</span>
-                </label>
-              </div>
-              <div class="radio">
-                <input type="radio" v-model="enforcedType" value="enforced"
-                       id="enforcedType_enforced"/>
-                <label for="enforcedType_enforced"
-                       :class="{ 'has-error': hasError('enforced') }"
-                >
-                  {{ $t('form.option.enforced.label') }}
-                </label>
-              </div>
-              <div class="radio">
-                <input type="radio" v-model="enforcedType" value="regex" id="etregex_"/>
-                <label for="etregex_"
-                       :class="{ 'has-error': hasError('regex') }"
-                >
-                  {{ $t('form.option.regex.label') }}
-                </label>
-              </div>
-            </div>
-            <div class="col-sm-10 col-sm-offset-2" v-if="enforcedType==='regex'">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{
+          $t("form.option.sort.label")
+        }}</label>
 
-              <input type="text"
-                name="regex"
-                class="form-control"
-                v-model="option.regex"
-                size="40"
-                :placeholder="$t('form.option.regex.placeholder')"
-                id="vregex_"/>
-              <template v-if="errors['regex']">
-                <pre class="text-danger">{{errors['regex']}}</pre>
-              </template>
-
-            </div>
+        <div class="col-sm-3">
+          <div class="radio radio-inline">
+            <input
+              type="radio"
+              name="sortValues"
+              :value="false"
+              v-model="option.sortValues"
+            />
+            <label for="option-sort-values-no">
+              {{ $t("no") }}
+            </label>
           </div>
+          <div class="radio radio-inline">
+            <input
+              type="radio"
+              name="sortValues"
+              :value="true"
+              v-model="option.sortValues"
+            />
+            <label for="option-sort-values-yes">
+              {{ $t("yes") }}
+            </label>
+          </div>
+          <div class="help-block">
+            {{ $t("form.option.sort.description") }}
+          </div>
+        </div>
+
+        <div
+          class="input-group col-sm-3"
+          :class="{ 'has-error': hasError('delimiter') }"
+        >
+          <div class="input-group-addon" style="background-color: #e0e0e0">
+            {{ $t("form.option.valuesDelimiter.label") }}
+          </div>
+          <input
+            type="text"
+            name="valuesListDelimiter"
+            v-model="option.valuesListDelimiter"
+            size="5"
+            class="form-control"
+          />
+        </div>
+        <span class="help-block">
+          {{ $t("form.option.valuesDelimiter.description") }}
+        </span>
+      </div>
+      <div class="form-group opt_keystorage_disabled"
+           :class="{ 'has-error': hasError('regex') }"
+           v-if="!isSecureInput"
+      >
+        <label class="col-sm-2 control-label">{{
+          $t("form.option.enforcedType.label")
+        }}</label>
+        <div class="col-sm-10">
+          <div class="radio">
+            <input
+              type="radio"
+              v-model="enforcedType"
+              value="none"
+              id="enforcedType_none"
+            />
+            <label for="enforcedType_none">
+              {{ $t("none") }}
+              <span class="text-strong">{{
+                $t("form.option.enforcedType.none.label")
+              }}</span>
+            </label>
+          </div>
+          <div class="radio">
+            <input
+              type="radio"
+              v-model="enforcedType"
+              value="enforced"
+              id="enforcedType_enforced"
+            />
+            <label
+              for="enforcedType_enforced"
+              :class="{ 'has-error': hasError('enforced') }"
+            >
+              {{ $t("form.option.enforced.label") }}
+            </label>
+          </div>
+          <div class="radio">
+            <input
+              type="radio"
+              v-model="enforcedType"
+              value="regex"
+              id="etregex_"
+            />
+            <label for="etregex_">
+              {{ $t("form.option.regex.label") }}
+            </label>
+          </div>
+        </div>
+        <div class="col-sm-10 col-sm-offset-2" v-if="enforcedType === 'regex'">
+          <input
+            type="text"
+            name="regex"
+            class="form-control"
+            v-model="option.regex"
+            size="40"
+            :placeholder="$t('form.option.regex.placeholder')"
+            id="vregex_"
+          />
+          <div class="help-block" v-if="validationErrors['regex']">
+            <ErrorsList :errors="validationErrors['regex']" />
+          </div>
+          <template v-if="validationErrors['regexError']">
+            <pre class="text-danger">{{ validationErrors["regexError"][0] }}</pre>
+          </template>
+        </div>
+      </div>
 
       <!-- end MAIN section -->
-    </template>
+    </div>
     <!-- required -->
     <div class="form-group">
       <label class="col-sm-2 control-label">{{
@@ -705,7 +854,10 @@
     </div>
 
     <!-- hidden -->
-    <div class="form-group">
+    <div class="form-group"
+         v-if="option.optionType !== 'file'"
+          :class="{ 'has-error': hasError('hidden') }"
+    >
       <label class="col-sm-2 control-label">{{
         $t("Option.hidden.label")
       }}</label>
@@ -736,6 +888,10 @@
         </div>
         <div class="help-block">
           {{ $t("Option.hidden.description") }}
+        </div>
+
+        <div class="help-block" v-if="validationErrors['hidden']">
+          <ErrorsList :errors="validationErrors['hidden']" />
         </div>
       </div>
     </div>
@@ -772,13 +928,7 @@
             />
             <label
               for="cdelimiter_"
-              class="
-                ${hasErrors(bean:
-                option,
-                field:
-                'multivalued',
-                'fieldError')}
-              "
+              class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}"
             >
               {{ $t("yes") }}
             </label>
@@ -840,7 +990,9 @@
     <section
       id="preview_"
       class="section-separator-solo"
-      v-if="option.name && option.optionType !== 'file' && !validationErrors['name']"
+      v-if="
+        option.name && option.optionType !== 'file' && !validationErrors['name']
+      "
     >
       <div class="row">
         <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
@@ -877,7 +1029,9 @@
     </section>
     <section
       id="file_preview_"
-      v-if="option.name && option.optionType === 'file' && !validationErrors['name']"
+      v-if="
+        option.name && option.optionType === 'file' && !validationErrors['name']
+      "
       class="section-separator-solo"
     >
       <div class="row">
@@ -944,7 +1098,6 @@
           type="cta"
           @click="doSave"
           :title="$t('form.option.create.title')"
-          :disabled="hasFormErrors"
           >{{ $t("save") }}
         </btn>
       </template>
@@ -960,7 +1113,6 @@
           type="cta"
           @click="doSave"
           :title="$t('form.option.save.title')"
-          :disabled="hasFormErrors"
           >{{ $t("save") }}
         </btn>
       </template>
@@ -974,25 +1126,39 @@
   </div>
 </template>
 <script lang="ts">
-import {plugins} from '@/app/pages/repository/stores/pluginConfig.module'
-import {cloneDeep} from "lodash"
-import KeyStorageSelector from "../../../..//library/components/plugins/KeyStorageSelector.vue";
+import ErrorsList from "./ErrorsList.vue";
+import { validateJobOption } from "@/library/services/jobEdit";
+import { cloneDeep } from "lodash";
+import { defineComponent } from "vue";
+
+import { VMarkdownView } from "vue3-markdown";
+import { getRundeckContext } from "../../../../library";
+import KeyStorageSelector from "../../../../library/components/plugins/KeyStorageSelector.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
-import { defineComponent } from "vue";
+import {
+  JobOption,
+  JobOptionEdit,
+} from "../../../../library/types/jobs/JobEdit";
 
-import { VMarkdownView } from "vue3-markdown";
-
+const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "OptionEdit",
-  components: { KeyStorageSelector, PluginConfig, AceEditor, VMarkdownView, PluginInfo },
+  components: {
+    ErrorsList,
+    KeyStorageSelector,
+    PluginConfig,
+    AceEditor,
+    VMarkdownView,
+    PluginInfo,
+  },
   emits: ["update:modelValue", "cancel", "save"],
   props: {
     error: String,
     newOption: { type: Boolean, default: false },
-    modelValue: { type: Object, default: () => ({}) },
+    modelValue: { type: Object, default: () => ({}) as JobOption },
     features: { type: Object, default: () => ({}) },
     fileUploadPluginType: { type: String, default: "" },
     errors: { type: Object, default: () => ({}) },
@@ -1003,26 +1169,39 @@ export default defineComponent({
     return {
       option: Object.assign(
         {
-          configRemoteUrl:{},
-          defaultValue:'',
-          optionType:'text',
+          description: "",
+          name: "",
+          configRemoteUrl: {},
+          defaultValue: "",
+          optionType: "text",
           sortValues: false,
-          inputType:'plain',
-          hidden:false,
-          multiValued:false
+          inputType: "plain",
+          hidden: false,
+          multivalued: false,
         },
-        cloneDeep(this.modelValue)
-      ),
-      regexChoice:false,
-      urlChoice:false,
+        cloneDeep(this.modelValue),
+      ) as JobOptionEdit,
+      regexChoice: false,
+      urlChoice: false,
       bashVarPrefix: "RD_",
-      remoteUrlAuthenticationList:[
-        {value:'BASIC', label:this.$t('form.option.valuesType.url.authType.basic.label')},
-        {value:'API_KEY', label:this.$t('form.option.valuesType.url.authType.apiKey.label')},
-        {value:'BEARER_TOKEN', label:this.$t('form.option.valuesType.url.authType.bearerToken.label')},
+      remoteUrlAuthenticationList: [
+        {
+          value: "BASIC",
+          label: this.$t("form.option.valuesType.url.authType.basic.label"),
+        },
+        {
+          value: "API_KEY",
+          label: this.$t("form.option.valuesType.url.authType.apiKey.label"),
+        },
+        {
+          value: "BEARER_TOKEN",
+          label: this.$t(
+            "form.option.valuesType.url.authType.bearerToken.label",
+          ),
+        },
       ],
-      validationErrors:{},
-      validationWarnings:{}
+      validationErrors: {},
+      validationWarnings: {},
     };
   },
   watch: {
@@ -1038,24 +1217,25 @@ export default defineComponent({
     },
   },
   computed: {
-    plugins() {
-      return plugins
-    },
     fileUploadPluginEnabled() {
       return this.features["fileUploadPlugin"];
     },
     bashVarPreview() {
-      return this.option.name?this.tobashvar(this.option.name):'';
+      return this.option.name ? this.tobashvar(this.option.name) : "";
     },
     fileBashVarPreview() {
-      return this.option.name?this.tofilebashvar(this.option.name):'';
+      return this.option.name ? this.tofilebashvar(this.option.name) : "";
     },
 
     fileFileNameBashVarPreview() {
-      return this.option.name?this.tofilebashvar(this.option.name + ".fileName"):'';
+      return this.option.name
+        ? this.tofilebashvar(this.option.name + ".fileName")
+        : "";
     },
     fileShaBashVarPreview() {
-      return this.option.name?this.tofilebashvar(this.option.name + ".sha"):'';
+      return this.option.name
+        ? this.tofilebashvar(this.option.name + ".sha")
+        : "";
     },
     isDate() {
       return this.option.isDate;
@@ -1064,86 +1244,94 @@ export default defineComponent({
       return this.option.secureInput;
     },
     showDefaultValue() {
-      return !this.isSecureInput ;
+      return !this.isSecureInput;
     },
     shouldShowDefaultStorage() {
       return !this.showDefaultValue;
     },
-    enforcedType:{
-      get(){
-        if(this.option.enforced){
+    enforcedType: {
+      get() {
+        if (this.option.enforced) {
           return "enforced";
         }
-        if(this.option.regex || this.regexChoice){
+        if (this.option.regex || this.regexChoice) {
           return "regex";
         }
         return "none";
       },
-      set(val: string){
-        if(val === "enforced"){
+      set(val: string) {
+        if (val === "enforced") {
           this.option.enforced = true;
           this.option.regex = null;
           this.regexChoice = false;
-        }else if(val === "regex"){
+        } else if (val === "regex") {
           this.option.enforced = false;
           this.regexChoice = true;
           this.option.regex = "";
-        }else{
+        } else {
           this.regexChoice = false;
           this.option.enforced = false;
           this.option.regex = null;
         }
-      }
+      },
     },
-    valuesType:{
-      get(){
-        if(this.option.optionValuesPluginType){
+    valuesType: {
+      get() {
+        if (this.option.optionValuesPluginType) {
           return this.option.optionValuesPluginType;
         }
-        if(this.option.realValuesUrl || this.urlChoice){
+        if (this.option.realValuesUrl || this.urlChoice) {
           return "url";
         }
         return "list";
       },
-      set(val: string){
-        debugger
-        if(val === "url"){
+      set(val: string) {
+        if (val === "url") {
           this.option.optionValuesPluginType = "";
           this.option.realValuesUrl = "";
-          this.option.remoteUrlAuthenticationType='';
+          this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
-          this.urlChoice=true
-        }else if(val === "list"){
+          this.urlChoice = true;
+        } else if (val === "list") {
           this.option.optionValuesPluginType = "";
           this.option.realValuesUrl = null;
-          this.option.remoteUrlAuthenticationType='';
+          this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
-          this.urlChoice=false
-        }else{
+          this.urlChoice = false;
+        } else {
           this.option.optionValuesPluginType = val;
           this.option.realValuesUrl = null;
-          this.option.remoteUrlAuthenticationType='';
+          this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
-          this.urlChoice=false
+          this.urlChoice = false;
         }
-      }
+      },
     },
-    hasFormErrors(){
-      return Object.keys(this.validationErrors).length > 0 || Object.keys(this.validationWarnings).length > 0
-    }
+    hasFormErrors(): boolean {
+      return (
+        Object.keys(this.validationErrors).length > 0 ||
+        Object.keys(this.validationWarnings).length > 0
+      );
+    },
   },
   methods: {
-    doSave(){
-      if(this.hasFormErrors){
-        return
+    async doSave() {
+      this.validateOptionName()
+      await this.validateOption();
+      if (this.hasFormErrors) {
+        return;
       }
-      this.$emit('update:modelValue', this.option)
+      //TODO: emit when saved
+      eventBus.emit("job-edit:edited", true);
+      this.$emit("update:modelValue", this.option);
     },
     hasError(field: string) {
-      return this.errors[field] && this.errors[field].length > 0;
+      return (
+        this.validationErrors[field] && this.validationErrors[field].length > 0
+      );
     },
-    getProviderFor(name){
-      return this.optionValuesPlugins.find(p => p.name === name)
+    getProviderFor(name) {
+      return this.optionValuesPlugins.find((p) => p.name === name);
     },
     tofilebashvar(str: string) {
       return (
@@ -1165,27 +1353,39 @@ export default defineComponent({
           .replace(/[{}$]/, "")
       );
     },
-    validateOptionName(){
-      if(!this.option.name){
-        this.validationWarnings.name = this.$t('form.field.required.message')
-        return
-      }else{
-        delete this.validationWarnings.name
+    validateOptionName() {
+      if (!this.option.name) {
+        this.validationWarnings.name = this.$t("form.field.required.message");
+        return;
+      } else {
+        delete this.validationWarnings.name;
       }
       var validOptionNameRegex = /^[a-zA-Z_0-9.-]+$/;
       var inputResult = validOptionNameRegex.test(this.option.name);
-      if(inputResult){
-        delete this.validationErrors.name
-      }else {
-        this.validationErrors.name = this.$t('form.option.name.validation.error',[validOptionNameRegex.toString()])
+      if (inputResult) {
+        delete this.validationErrors.name;
+      } else {
+        this.validationErrors.name = [
+          this.$t("form.option.name.validation.error", [
+            validOptionNameRegex.toString(),
+          ]),
+        ];
       }
-    }
+    },
+    async validateOption() {
+      let res = await validateJobOption(getRundeckContext().projectName, {
+        ...this.option,
+        newoption: this.newOption,
+      });
+      if (res.messages) {
+        this.validationErrors = res.messages;
+      }
+    },
   },
 });
 </script>
 
 <style scoped lang="scss">
-
 .flow > * + * {
   margin-top: var(--spacing-2);
 }
