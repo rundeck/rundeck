@@ -18,7 +18,6 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -43,6 +42,7 @@ import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.providers.GormWebhookDataProvider
+import org.rundeck.app.data.providers.storedEvent.GormStoredEventProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.util.spi.AuthTokenManager
@@ -80,6 +80,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
         }
         eventStoreService.frameworkService = framework
+        eventStoreService.storedEventProvider = new GormStoredEventProvider()
         service.eventStoreService = eventStoreService
         service.rundeckAuthTokenManagerService = Mock(RundeckAuthTokenManagerService)
     }
