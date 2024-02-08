@@ -39,6 +39,17 @@ class RdClient {
         )
     }
 
+
+    Response doGetCustomApiVersion(final String path, final String customApiVersion) {
+        httpClient.newCall(
+                new Request.Builder().
+                        url(apiUrlCustomApiVersion(path, customApiVersion)).
+                        header('Accept', '*/*').
+                        get().
+                        build()
+        ).execute()
+    }
+
     Response doGet(final String path) {
         httpClient.newCall(
                 new Request.Builder().
@@ -97,6 +108,10 @@ class RdClient {
 
     private String apiUrl(String path) {
         baseUrl + "/api/${apiVersion}" + path
+    }
+
+    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
+        baseUrl + "/api/${customApiVersion}" + path
     }
 
     <T> T get(final String path, Class<T> clazz) {
