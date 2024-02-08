@@ -16,7 +16,10 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateRequest
+import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateResponse
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -48,7 +51,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-
+        controller.featureService = Mock(FeatureService)
         defineBeans {
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
@@ -172,20 +175,29 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             'undo' | 'undoOPTS'
 
     }
+
     def "validate opt required scheduled job with default storage path"() {
         given:
-        Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
+            Option opt = new Option(
+                required: true,
+                defaultValue: defval,
+                defaultStoragePath: defstorageval,
+                enforced: false,
+                name: 'aname',
+                valuesUrlLong: urlval?new URL(urlval):null
+            )
 
         when:
-        EditOptsController._validateOption(opt, provider, null, null, params, true)
+            EditOptsController._validateOption(opt, provider, null, null, params, true)
         then:
-        iserr == opt.errors.hasFieldErrors('defaultValue')
+            iserr == opt.errors.hasFieldErrors('defaultValue')
 
         where:
-        iserr | defval | defstorageval
-        true  | null   | null
-        false | 'abc'  | null
-        false | null   | 'abc'
+            iserr | defval | defstorageval | urlval
+            true  | null   | null          | null
+            false | 'abc'  | null          | null
+            false | null   | 'abc'         | null
+            false | null   | null          | 'http://example.com'
 
     }
 
@@ -837,4 +849,37 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         result.configRemoteUrl == null
     }
 
+    def "api option validate #propname validation"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest()
+            optionData[propname] = testvalue
+            request.method = 'POST'
+
+        when:
+            controller.apiValidateOption(project, false, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey(propname)
+            response.json.messages.get(propname).any{it.contains(message)}
+        where:
+            propname                      | testvalue | message
+            'name'                        | ''        | 'blank'
+            'name'                        | null      | 'null'
+            'name'                        | 'a b'     | 'required pattern [[a-zA-Z_0-9.-]+]'
+            'remoteUrlAuthenticationType' | 'asdf'    | 'not contained within the list [[BASIC, API_KEY, BEARER_TOKEN]]'
+    }
+
+    def "validate option "(){
+        given:
+            def opt = new OptionValidateRequest()
+            def resp = new OptionValidateResponse()
+            def msgSource = Mock(MessageSource)
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            resp.valid
+    }
 }
