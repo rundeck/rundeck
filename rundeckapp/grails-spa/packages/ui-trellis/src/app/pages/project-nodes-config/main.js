@@ -10,6 +10,7 @@ import ProjectNodeSourcesHelp from "./ProjectNodeSourcesHelp.vue";
 import WriteableProjectNodeSources from "./WriteableProjectNodeSources.vue";
 import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 import ProjectConfigurableForm from "./ProjectConfigurableForm.vue";
+import ProjectNodeSources from "./ProjectNodeSources.vue";
 import { getRundeckContext } from "../../../library";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
 
@@ -32,6 +33,7 @@ for (let i = 0; i < els.length; i++) {
       ProjectNodeSourcesHelp,
       PageConfirm,
       ProjectConfigurableForm,
+      ProjectNodeSources,
     },
   });
   app.use(VueCookies);
