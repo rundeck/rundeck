@@ -77,15 +77,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {JobOption} from '@/library/types/jobs/JobEdit'
+import {defineComponent, PropType} from 'vue'
 
 export default defineComponent({
   name: "OptionView",
   props: {
     option: {
-      type: Object,
-      required: true,
-      default: () => ({}),
+      type: Object as PropType<JobOption>,
+      required: true
     },
     editable: {
       type: Boolean,

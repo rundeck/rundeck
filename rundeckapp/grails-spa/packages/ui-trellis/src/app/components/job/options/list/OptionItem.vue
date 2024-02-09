@@ -65,8 +65,9 @@
   </div>
 </template>
 <script lang="ts">
+import {JobOption} from '@/library/types/jobs/JobEdit'
 import OptionView from "../OptionView.vue";
-import { defineComponent } from "vue";
+import {defineComponent, PropType} from 'vue'
 
 export default defineComponent({
   name: "OptionItem",
@@ -74,7 +75,7 @@ export default defineComponent({
   emits: ["edit", "duplicate", "moveUp", "moveDown", "delete"],
   props: {
     option: {
-      type: Object,
+      type: Object as () => PropType<JobOption>,
       required: true,
     },
     optIndex: {
