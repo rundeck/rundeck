@@ -333,13 +333,13 @@ export default defineComponent({
 
       if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
         for (const i of this.inputSavedProps) {
-            if (typeof this.inputSaved[i] === 'undefined') {
-              this.inputSaved[i] = this.modelValue[i]
-            }
+          if (typeof this.inputSaved[i] === 'undefined') {
+            this.inputSaved[i] = this.modelValue[i]
+          }
         }
       }
 
-      const config = this.modelValue?.config
+      const config = this.modelValue.config
 
       const modeCreate = this.isCreateMode
 

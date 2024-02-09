@@ -126,7 +126,7 @@ import ProjectNodeSourcesConfig from "./ProjectNodeSourcesConfig.vue";
 import ProjectNodeSourcesHelp from "./ProjectNodeSourcesHelp.vue";
 import WriteableProjectNodeSources from "./WriteableProjectNodeSources.vue";
 import ProjectPluginConfig from "./ProjectPluginConfig.vue";
-import {getRundeckContext, RundeckContext, EventBus} from "../../../library";
+import {getRundeckContext, RundeckContext} from "../../../library";
 import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 
 
@@ -156,7 +156,6 @@ export default {
   },
   methods: {
      navigateTabs(tabKey: number) {
-      console.log('navigateToTab', tabKey)
       this.activeTabKey = tabKey;
     },
   },
