@@ -16,7 +16,6 @@ export default {
   name: 'ErrorsList',
   props: {
     errors: {
-      type: Array,
       required: true,
     }
   }
