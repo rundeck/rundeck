@@ -1,57 +1,60 @@
 <template>
   <div id="layoutBody">
-      <div class="container-fluid" v-if="dataLoaded && projectCount > 0 || !loadedProjectNames">
-        <div class="row" v-if="isFirstRun">
-          <HomeWelcome
-              :appTitle="appTitle"
-              :buildIdent="buildIdent"
-              :logoImage="logoImage"
-              :helpLinkUrl="helpLinkUrl"
-          />
-        </div>
-        <HomeHeader
-            :createProjectAllowed="createProjectAllowed"
-            :projectCount="projectCount"
-            :summaryRefresh="summaryRefresh"
-            :refreshDelay="refreshDelay"
+    <div
+      class="container-fluid"
+      v-if="(dataLoaded && projectCount > 0) || !loadedProjectNames"
+    >
+      <div class="row" v-if="isFirstRun">
+        <HomeWelcome
+          :appTitle="appTitle"
+          :buildIdent="buildIdent"
+          :logoImage="logoImage"
+          :helpLinkUrl="helpLinkUrl"
         />
       </div>
-      <div class="container-fluid" v-if="dataLoaded && projectCount === 0">
-        <FirstRun v-if="createProjectAllowed" />
-      </div>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-xs-12">
-            <div
-                class="card"
-                v-if="
+      <HomeHeader
+        :createProjectAllowed="createProjectAllowed"
+        :projectCount="projectCount"
+        :summaryRefresh="summaryRefresh"
+        :refreshDelay="refreshDelay"
+      />
+    </div>
+    <div class="container-fluid" v-if="dataLoaded && projectCount === 0">
+      <FirstRun v-if="createProjectAllowed" />
+    </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12">
+          <div
+            class="card"
+            v-if="
               projectCount < 1 && loadedProjectNames && !createProjectAllowed
             "
-            >
-              <div class="card-content">
-                <div class="well">
-                  <h2 class="text-warning">
-                    {{ $t("no.authorized.access.to.projects") }}
-                  </h2>
-                  <p>
-                    {{
-                      $t(
-                          "no.authorized.access.to.projects.contact.your.administrator.user.roles.0",
-                          [roles.join(", ")]
-                      )
-                    }}
-                  </p>
-                </div>
+          >
+            <div class="card-content">
+              <div class="well">
+                <h2 class="text-warning">
+                  {{ $t("no.authorized.access.to.projects") }}
+                </h2>
+                <p>
+                  {{
+                    $t(
+                      "no.authorized.access.to.projects.contact.your.administrator.user.roles.0",
+                      [roles.join(", ")],
+                    )
+                  }}
+                </p>
               </div>
             </div>
-            <HomeCardList
-                :loaded-project-names="loadedProjectNames"
-                :projects="projects"
-                :paging-max="pagingMax"
-            />
           </div>
+          <HomeCardList
+            :loaded-project-names="loadedProjectNames"
+            :projects="projects"
+            :paging-max="pagingMax"
+          />
         </div>
       </div>
+    </div>
   </div>
 </template>
 
@@ -59,10 +62,12 @@
 import { defineComponent, PropType } from "vue";
 import HomeHeader from "./HomeHeader.vue";
 import HomeCardList from "./HomeCardList.vue";
-import {getProjectNames, getProjects} from "@/app/components/home/services/homeServices";
+import {
+  getProjectNames,
+  getProjects,
+} from "@/app/components/home/services/homeServices";
 import FirstRun from "@/library/components/first-run/FirstRun.vue";
 import HomeWelcome from "@/app/components/home/HomeWelcome.vue";
-
 
 export default defineComponent({
   name: "HomeView",
@@ -107,7 +112,7 @@ export default defineComponent({
     },
     refreshDelay: {
       type: Number,
-      default: 30000
+      default: 30000,
     },
     pagingMax: {
       type: Number,
@@ -120,15 +125,17 @@ export default defineComponent({
       loadedProjectNames: false,
       projects: null,
       dataLoaded: false,
-      test: null
+      test: null,
     };
   },
   methods: {
     async getPartialData() {
       try {
-        const arrayOfProjectNames: string[] =  await getProjectNames();
-        if(arrayOfProjectNames && arrayOfProjectNames.length > 0){
-          this.projects = arrayOfProjectNames.map(projectName => ({name: projectName}))
+        const arrayOfProjectNames: string[] = await getProjectNames();
+        if (arrayOfProjectNames && arrayOfProjectNames.length > 0) {
+          this.projects = arrayOfProjectNames.map((projectName) => ({
+            name: projectName,
+          }));
         }
 
         this.projectCount = this.projects ? this.projects.length : 0;
@@ -146,7 +153,7 @@ export default defineComponent({
       } catch (e) {
         console.error(e);
       } finally {
-        this.dataLoaded= true;
+        this.dataLoaded = true;
       }
     },
   },

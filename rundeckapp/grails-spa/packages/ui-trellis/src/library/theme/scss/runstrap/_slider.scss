@@ -1,15 +1,15 @@
 @import "variables";
 
-@mixin slider($name, $color, $height: 6px){
-  .slider-#{$name}{
+@mixin slider($name, $color, $height: 6px) {
+  .slider-#{$name} {
     .el-slider__bar {
       height: $height;
       background-color: var($color);
     }
-    .el-tooltip{
+    .el-tooltip {
       border: none;
     }
-    .el-slider__button{
+    .el-slider__button {
       &.hover,
       &:hover,
       &.dragging {
@@ -22,8 +22,8 @@
   }
 }
 
-@include slider('info', --info-color);
-@include slider('primary', --primary-color);
-@include slider('success', --success-color);
-@include slider('warning', --warning-color);
-@include slider('danger', --danger-color);
+@include slider("info", --info-color);
+@include slider("primary", --primary-color);
+@include slider("success", --success-color);
+@include slider("warning", --warning-color);
+@include slider("danger", --danger-color);

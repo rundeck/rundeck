@@ -1,67 +1,71 @@
 <template>
   <span>
     <details class="more-info" :class="extendedCss" v-if="extraDescription">
-          <summary>
-              <span :class="descriptionCss" >{{shortDescription}}</span>
-              <span class="more-indicator-verbiage btn-link btn-xs">More &hellip; </span>
-              <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
-          </summary>
-          <div class="more-info-content">
-            <VMarkdownView class="markdown-body" mode="" :content="extraDescription"/>
-          </div>
-      </details>
-      <span :class="basicCss" v-else>{{text}}</span>
+      <summary>
+        <span :class="descriptionCss">{{ shortDescription }}</span>
+        <span class="more-indicator-verbiage btn-link btn-xs"
+          >More &hellip;
+        </span>
+        <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
+      </summary>
+      <div class="more-info-content">
+        <VMarkdownView
+          class="markdown-body"
+          mode=""
+          :content="extraDescription"
+        />
+      </div>
+    </details>
+    <span :class="basicCss" v-else>{{ text }}</span>
   </span>
 </template>
 <script lang="ts">
-
-import {VMarkdownView} from 'vue3-markdown'
-import {defineComponent} from 'vue'
+import { VMarkdownView } from "vue3-markdown";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'ExtendedDescription',
-  components: {VMarkdownView},
-  computed:{
-    shortDescription() :string{
-      const desc = this.text
+  name: "ExtendedDescription",
+  components: { VMarkdownView },
+  computed: {
+    shortDescription(): string {
+      const desc = this.text;
       if (desc && desc.indexOf("\n") > 0) {
         return desc.substring(0, desc.indexOf("\n"));
       }
       return desc;
     },
-    extraDescription() :string|null{
-      const desc = this.text
+    extraDescription(): string | null {
+      const desc = this.text;
       if (desc && desc.indexOf("\n") > 0) {
         return desc.substring(desc.indexOf("\n") + 1);
       }
       return null;
-    }
+    },
   },
   props: {
-    'text': {
+    text: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
-    'extendedCss': {
+    extendedCss: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
-    'descriptionCss': {
+    descriptionCss: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
-    'basicCss': {
+    basicCss: {
       type: String,
       required: false,
-      default: ''
-    }
-  }
-})
-
+      default: "",
+    },
+  },
+});
 </script>
 <style>
-@import '~vue3-markdown/dist/style.css';
+@import "~vue3-markdown/dist/style.css";
 </style>

@@ -1,13 +1,13 @@
-import {ProjectFilters} from "../../../../../library/stores/NodeFilterLocalstore";
+import { ProjectFilters } from "../../../../../library/stores/NodeFilterLocalstore";
 
 interface Tag {
-    count: number,
-    tag: string
+  count: number;
+  tag: string;
 }
 
 interface NodeSummary extends ProjectFilters {
-    tags?: Tag[],
-    totalCount?: number,
+  tags?: Tag[];
+  totalCount?: number;
 }
 
-export { NodeSummary, Tag }
+export { NodeSummary, Tag };

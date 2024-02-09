@@ -1,5 +1,5 @@
-import { createApp } from "vue"
-import Pagination from '../../../library/components/utils/Pagination.vue'
+import { createApp } from "vue";
+import Pagination from "../../../library/components/utils/Pagination.vue";
 
 const template = `
     <Pagination 
@@ -7,53 +7,58 @@ const template = `
         :totalPages="totalPages"
         @change="handlePageChange"
     />
-    `
+    `;
 
 /** Adapt KO Pager with Paginator wrapper */
 const KoPaginator = {
-    template,
-    components: {Pagination},
-    props: ['pager'],
-    data() { return {
-        activePage: 0,
-        totalPages: 0,
-    }},
+  template,
+  components: { Pagination },
+  props: ["pager"],
+  data() {
+    return {
+      activePage: 0,
+      totalPages: 0,
+    };
+  },
 
-    created() {
-        this.activePage = this.pager.pageList().findIndex((p: any) => p.current) + 1
-        this.totalPages = this.pager.pageList().length
+  created() {
+    this.activePage =
+      this.pager.pageList().findIndex((p: any) => p.current) + 1;
+    this.totalPages = this.pager.pageList().length;
+  },
+
+  mounted() {
+    this.pager.pageList.subscribe((pages: any) => {
+      this.activePage = pages.findIndex((p: any) => p.current) + 1;
+      this.totalPages = pages.length;
+    });
+  },
+
+  methods: {
+    handlePageChange(page: number) {
+      this.pager.setPage(page - 1);
     },
+  },
+};
 
-    mounted() {
-        this.pager.pageList.subscribe((pages: any) => {
-            this.activePage = pages.findIndex((p: any) => p.current) + 1
-            this.totalPages = pages.length
-        })
-    },
-
-    methods: {
-        handlePageChange(page: number) {
-            this.pager.setPage(page-1)
-        }
-    }
-}
-
-const mounted = new Map<String, boolean>()
+const mounted = new Map<String, boolean>();
 
 /** Listen to events advertising pagination and mount to elements */
-window._rundeck.eventBus.on('ko-pagination', (event: any) => {
-    const {name, pager} = event
+window._rundeck.eventBus.on("ko-pagination", (event: any) => {
+  const { name, pager } = event;
 
-    if (!mounted.has(name)) {
-        const elements = document.querySelectorAll(`[data-ko-pagination='${name}']`)
+  if (!mounted.has(name)) {
+    const elements = document.querySelectorAll(
+      `[data-ko-pagination='${name}']`,
+    );
 
-        for (const elm of elements) {
-            const app = createApp(KoPaginator,{
-                pager
-            })
-            app.mount(elm)
-        }
-
-        mounted.set(name, true)
+    for (const elm of elements) {
+      const app = createApp(KoPaginator, {
+        pager,
+      });
+      app.mount(elm);
     }
-})
+
+    mounted.set(name, true);
+  }
+});

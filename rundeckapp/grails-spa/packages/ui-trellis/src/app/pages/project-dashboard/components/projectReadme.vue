@@ -3,9 +3,7 @@
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header">
-          <h4 class="card-title">
-            Readme
-          </h4>
+          <h4 class="card-title">Readme</h4>
         </div>
         <div class="card-content">
           <span v-if="project" v-html="project.readme.readmeHTML"></span>
@@ -17,26 +15,24 @@
 
 <script>
 export default {
-  name: 'Readme',
-  props: [
-    'project'
-  ],
-  data () {
+  name: "Readme",
+  props: ["project"],
+  data() {
     return {
-      showReadme: false
-    }
+      showReadme: false,
+    };
   },
   methods: {
-    shouldShowReadme () {
-      const display = this.project.readmeDisplay
-      if (display.indexOf('projectHome')>=0) {
-        return true
+    shouldShowReadme() {
+      const display = this.project.readmeDisplay;
+      if (display.indexOf("projectHome") >= 0) {
+        return true;
       }
-      return false
-    }
+      return false;
+    },
   },
-  mounted () {
-    this.showReadme = this.shouldShowReadme()
-  }
-}
+  mounted() {
+    this.showReadme = this.shouldShowReadme();
+  },
+};
 </script>

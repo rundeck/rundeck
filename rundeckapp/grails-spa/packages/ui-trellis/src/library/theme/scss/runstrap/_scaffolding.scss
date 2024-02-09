@@ -2,7 +2,6 @@
 // Scaffolding
 // --------------------------------------------------
 
-
 // Reset the box-sizing
 //
 // Heads up! This reset may cause conflicts with some third-party widgets.
@@ -15,7 +14,6 @@
 *:after {
   @include box-sizing(border-box);
 }
-
 
 // Body reset
 
@@ -42,7 +40,6 @@ textarea {
   line-height: inherit;
 }
 
-
 // Links
 
 a {
@@ -60,7 +57,6 @@ a {
   }
 }
 
-
 // Figures
 //
 // We reset this here because previously Normalize had no `figure` margins. This
@@ -69,7 +65,6 @@ a {
 figure {
   margin: 0;
 }
-
 
 // Images
 
@@ -96,7 +91,7 @@ img {
   background-color: $thumbnail-bg;
   border: 1px solid $thumbnail-border;
   border-radius: $thumbnail-border-radius;
-  @include transition(all .2s ease-in-out);
+  @include transition(all 0.2s ease-in-out);
 
   // Keep them at most 100% wide
   @include img-responsive(inline-block);
@@ -107,7 +102,6 @@ img {
   border-radius: 50%; // set radius in percents
 }
 
-
 // Horizontal rules
 
 hr {
@@ -116,7 +110,6 @@ hr {
   border: 0;
   border-top: 1px solid $hr-border;
 }
-
 
 // Only display content to screen readers
 //
@@ -148,7 +141,6 @@ hr {
     clip: auto;
   }
 }
-
 
 // iOS "clickable elements" fix for role="button"
 //

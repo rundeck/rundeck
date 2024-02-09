@@ -9,12 +9,16 @@
       <div class="col-md-10">
         <label>
           Community
-          <input type="checkbox" value="Community" v-model="supportType">
+          <input type="checkbox" value="Community" v-model="supportType" />
         </label>
 
         <label>
           Rundeck Supported
-          <input type="checkbox" value="Rundeck Supported" v-model="supportType">
+          <input
+            type="checkbox"
+            value="Rundeck Supported"
+            v-model="supportType"
+          />
         </label>
 
         <label>
@@ -23,7 +27,7 @@
             type="checkbox"
             value="Enterprise Exclusive"
             v-model="supportType"
-          >
+          />
         </label>
       </div>
     </div>
@@ -31,7 +35,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import { mapActions } from "vuex";
 
 export default defineComponent({
@@ -39,18 +43,18 @@ export default defineComponent({
 
   data() {
     return {
-      supportType: []
+      supportType: [],
     };
   },
   watch: {
-    supportType: function(newVal, oldVal) {
+    supportType: function (newVal, oldVal) {
       this.setSupportTypeFilter(newVal);
-    }
+    },
   },
   methods: {
-    ...mapActions(["setSupportTypeFilter"])
-  }
-})
+    ...mapActions(["setSupportTypeFilter"]),
+  },
+});
 </script>
 <style lang="scss" scoped>
 .support-filters {

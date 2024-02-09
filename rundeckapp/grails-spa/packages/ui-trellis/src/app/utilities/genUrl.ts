@@ -1,13 +1,15 @@
 export function _genUrlQuery(params: any) {
-  let urlparams = []
-  if (typeof (params) === 'string') {
-    urlparams = [params]
-  } else if (typeof (params) === 'object') {
+  let urlparams = [];
+  if (typeof params === "string") {
+    urlparams = [params];
+  } else if (typeof params === "object") {
     for (var e in params) {
-      urlparams.push(encodeURIComponent(e) + '=' + encodeURIComponent(params[e]))
+      urlparams.push(
+        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
+      );
     }
   }
-  return urlparams.join('&')
+  return urlparams.join("&");
 }
 
 /**
@@ -18,6 +20,9 @@ export function _genUrlQuery(params: any) {
  * @private
  */
 export function _genUrl(url: string, params: any) {
-  let paramString = _genUrlQuery(params)
-  return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
+  let paramString = _genUrlQuery(params);
+  return (
+    url +
+    (paramString.length ? (url.indexOf("?") > 0 ? "&" : "?") + paramString : "")
+  );
 }

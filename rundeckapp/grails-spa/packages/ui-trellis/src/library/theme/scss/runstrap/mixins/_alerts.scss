@@ -6,7 +6,7 @@
   border-color: var($border);
 }
 
-@mixin alert-style($background-color, $color){
-    background-color: var($background-color);
-    color: var($color);
+@mixin alert-style($background-color, $color) {
+  background-color: var($background-color);
+  color: var($color);
 }

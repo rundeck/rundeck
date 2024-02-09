@@ -2,7 +2,11 @@
   <div class="loading" v-show="overlay">
     <div class="loading-spinner" v-show="loadingSpinner">
       <i class="fas fa-spinner fa-spin fa-5x"></i>
-      <div class="loading-text" v-show="loadingMessage" v-html="loadingMessage"></div>
+      <div
+        class="loading-text"
+        v-show="loadingMessage"
+        v-html="loadingMessage"
+      ></div>
     </div>
     <div class="errors" v-if="errors && errors.length" v-show="errors">
       <div>
@@ -29,12 +33,12 @@ export default {
       "overlay",
       "errors",
       "loadingMessage",
-      "loadingSpinner"
-    ])
+      "loadingSpinner",
+    ]),
   },
   methods: {
-    ...mapActions("overlay", ["closeOverlay"])
-  }
+    ...mapActions("overlay", ["closeOverlay"]),
+  },
 };
 </script>
 <style lang="scss" scoped>

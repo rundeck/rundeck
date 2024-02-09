@@ -1,15 +1,15 @@
 <template>
   <div class="input-group">
     <input
-        data-test="searchInput"
-        type="search"
-        name="search"
-        :placeholder="placeholder"
-        class="form-control input-sm"
-        v-model="search"
-        @focus="handleFocus"
-        @keyup.enter="handleEnter"
-        @blur="handleBlur"
+      data-test="searchInput"
+      type="search"
+      name="search"
+      :placeholder="placeholder"
+      class="form-control input-sm"
+      v-model="search"
+      @focus="handleFocus"
+      @keyup.enter="handleEnter"
+      @blur="handleBlur"
     />
     <div class="input-group-addon">
       <i class="glyphicon glyphicon-search"></i>
@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "HomeSearchBar",
@@ -29,40 +29,39 @@ export default defineComponent({
     },
     name: {
       type: String,
-      default: "search"
+      default: "search",
     },
     modelValue: {
       type: [String, Number],
-      default: ""
+      default: "",
     },
-
   },
-  emits: ['update:modelValue', 'onEnter', 'onBlur', 'onFocus'],
+  emits: ["update:modelValue", "onEnter", "onBlur", "onFocus"],
   data() {
     return {
-      search: this.modelValue
-    }
+      search: this.modelValue,
+    };
   },
   methods: {
     handleEnter() {
-      this.$emit('onEnter')
+      this.$emit("onEnter");
     },
     handleBlur() {
-      this.$emit('onBlur')
+      this.$emit("onBlur");
     },
     handleFocus() {
-      this.$emit('onFocus')
-    }
+      this.$emit("onFocus");
+    },
   },
   watch: {
     modelValue(newVal) {
-      if(newVal !== this.search) {
-        this.search = newVal
+      if (newVal !== this.search) {
+        this.search = newVal;
       }
     },
     search(newVal) {
-      this.$emit('update:modelValue', newVal)
-    }
-  }
-})
+      this.$emit("update:modelValue", newVal);
+    },
+  },
+});
 </script>

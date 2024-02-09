@@ -2,7 +2,6 @@
 // Buttons
 // --------------------------------------------------
 
-
 // Base styles
 // --------------------------------------------------
 
@@ -17,7 +16,13 @@
   cursor: pointer;
   background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
   border: 1.5px solid transparent;
-  @include button-size($padding-base-vertical, $padding-base-horizontal, $font-size-base, $line-height-base, $btn-border-radius-base);
+  @include button-size(
+    $padding-base-vertical,
+    $padding-base-horizontal,
+    $font-size-base,
+    $line-height-base,
+    $btn-border-radius-base
+  );
   @include user-select(none);
 
   &,
@@ -41,7 +46,7 @@
   &.active {
     background-image: none;
     outline: 0;
-    @include box-shadow(inset 0 3px 5px rgba(0, 0, 0, .125));
+    @include box-shadow(inset 0 3px 5px rgba(0, 0, 0, 0.125));
   }
 
   &.disabled,
@@ -49,7 +54,7 @@
   &.btn-disabled,
   fieldset[disabled] & {
     cursor: $cursor-disabled;
-    @include opacity(.5);
+    @include opacity(0.5);
   }
 
   &#{&}-transparent {
@@ -57,7 +62,7 @@
     // border-color: transparent;
   }
 
-  &.btn-full{
+  &.btn-full {
     width: 100%;
   }
 
@@ -78,52 +83,114 @@ a.btn {
   }
 }
 
-
 // Alternate buttons
 // --------------------------------------------------
 
 .btn-default {
-  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --default-states-color, --default-states-color);
+  @include button-variant(
+    --font-color,
+    --font-fill-color,
+    --default-color,
+    --default-states-color,
+    --default-states-color,
+    --default-states-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple:not(:focus) { box-shadow: unset; }
+  &.btn-simple:not(:focus) {
+    box-shadow: unset;
+  }
 }
 .btn-primary {
-  @include button-variant(--font-fill-color, --font-fill-color, --primary-color, --primary-states-color, $btn-danger-border, --primary-light-color);
+  @include button-variant(
+    --font-fill-color,
+    --font-fill-color,
+    --primary-color,
+    --primary-states-color,
+    $btn-danger-border,
+    --primary-light-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple {
+    box-shadow: unset;
+  }
 }
 // Success appears as green
 .btn-success {
-  @include button-variant(--success-color, --font-fill-color, --success-color, --success-states-color, --success-color, --success-light-color);
+  @include button-variant(
+    --success-color,
+    --font-fill-color,
+    --success-color,
+    --success-states-color,
+    --success-color,
+    --success-light-color
+  );
   background-color: transparent;
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; border-color: transparent; }
+  &.btn-simple {
+    box-shadow: unset;
+    border-color: transparent;
+  }
 }
 // Info appears as blue-green
 .btn-info {
-  @include button-variant(--font-fill-color, --font-fill-color, --info-color, --info-states-color, $btn-info-border, --info-light-color);
+  @include button-variant(
+    --font-fill-color,
+    --font-fill-color,
+    --info-color,
+    --info-states-color,
+    $btn-info-border,
+    --info-light-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple {
+    box-shadow: unset;
+  }
 }
 // Warning appears as orange
 .btn-warning {
-  @include button-variant(--font-fill-color, --font-fill-color, --warning-color, --warning-states-color, $btn-warning-border, --warning-light-color);
+  @include button-variant(
+    --font-fill-color,
+    --font-fill-color,
+    --warning-color,
+    --warning-states-color,
+    $btn-warning-border,
+    --warning-light-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple {
+    box-shadow: unset;
+  }
 }
 // Danger and error appear as red
 .btn-danger {
-  @include button-variant(--font-fill-color, --font-fill-color, --danger-color, --danger-states-color, $btn-danger-border, --danger-light-color);
+  @include button-variant(
+    --font-fill-color,
+    --font-fill-color,
+    --danger-color,
+    --danger-states-color,
+    $btn-danger-border,
+    --danger-light-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple {
+    box-shadow: unset;
+  }
 }
 
 .btn-cta {
-  @include button-variant(--font-fill-color, --font-fill-color, --cta-color, --cta-states-color, $btn-danger-border, --cta-light-color);
+  @include button-variant(
+    --font-fill-color,
+    --font-fill-color,
+    --cta-color,
+    --cta-states-color,
+    $btn-danger-border,
+    --cta-light-color
+  );
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple {
+    box-shadow: unset;
+  }
 }
-
 
 // Link buttons
 // -------------------------
@@ -164,22 +231,38 @@ a.btn {
   }
 }
 
-
 // Button Sizes
 // --------------------------------------------------
 
 .btn-lg {
   // line-height: ensure even-numbered height of button next to large input
-  @include button-size($padding-large-vertical, $padding-large-horizontal, $font-size-large, $line-height-large, $btn-border-radius-large);
+  @include button-size(
+    $padding-large-vertical,
+    $padding-large-horizontal,
+    $font-size-large,
+    $line-height-large,
+    $btn-border-radius-large
+  );
 }
 .btn-sm {
   // line-height: ensure proper height of button next to small input
-  @include button-size($padding-small-vertical, $padding-small-horizontal, $font-size-small, $line-height-small, $btn-border-radius-small);
+  @include button-size(
+    $padding-small-vertical,
+    $padding-small-horizontal,
+    $font-size-small,
+    $line-height-small,
+    $btn-border-radius-small
+  );
 }
 .btn-xs {
-  @include button-size($padding-xs-vertical, $padding-xs-horizontal, $font-size-small, $line-height-small, $btn-border-radius-small);
+  @include button-size(
+    $padding-xs-vertical,
+    $padding-xs-horizontal,
+    $font-size-small,
+    $line-height-small,
+    $btn-border-radius-small
+  );
 }
-
 
 // Block button
 // --------------------------------------------------
@@ -203,15 +286,15 @@ input[type="button"] {
   }
 }
 
-.btn.btn-xs{
+.btn.btn-xs {
   line-height: var(--line-height-xs);
 }
-.btn-info-hollow.autohilite{
+.btn-info-hollow.autohilite {
   color: var(--font-color);
-    background-color: var(--default-color);
-    border-color: var(--default-states-color);
-    box-shadow: var(--button-box-shadow);
-  & + .btn.btn-danger.btn-xs{
+  background-color: var(--default-color);
+  border-color: var(--default-states-color);
+  box-shadow: var(--button-box-shadow);
+  & + .btn.btn-danger.btn-xs {
     line-height: var(--line-height-md);
     border: 1px solid var(--danger-color);
   }

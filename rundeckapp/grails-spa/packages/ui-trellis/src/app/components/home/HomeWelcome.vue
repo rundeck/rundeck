@@ -32,8 +32,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { VMarkdownView } from "vue3-markdown";
-import {getRundeckContext} from "@/library";
-
+import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "HomeWelcome",
@@ -41,25 +40,25 @@ export default defineComponent({
   props: {
     appTitle: {
       type: String,
-      required: true
+      required: true,
     },
     buildIdent: {
       type: String,
-      required: true
+      required: true,
     },
     logoImage: {
       type: String,
-      required: true
+      required: true,
     },
     helpLinkUrl: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
-      welcomeUrl: getRundeckContext().rdBase + "/menu/welcome"
-    }
-  }
+      welcomeUrl: getRundeckContext().rdBase + "/menu/welcome",
+    };
+  },
 });
 </script>

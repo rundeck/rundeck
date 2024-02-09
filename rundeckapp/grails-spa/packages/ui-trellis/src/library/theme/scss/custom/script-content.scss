@@ -5,9 +5,9 @@
   //max-height: 300px;
   // overflow: hidden;
   &.expanded {
-      max-width: none;
-      max-height: none;
-      overflow: auto;
-      white-space: pre;
+    max-width: none;
+    max-height: none;
+    overflow: auto;
+    white-space: pre;
   }
 }

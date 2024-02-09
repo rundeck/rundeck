@@ -1,28 +1,28 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import {defineComponent, markRaw} from 'vue'
-import ServerDisplay from '../../../library/components/version/ServerDisplay.vue'
-import {getRundeckContext} from '../../../library'
-import {ServerInfo} from '../../../library/stores/System'
+import { defineComponent, markRaw } from "vue";
+import ServerDisplay from "../../../library/components/version/ServerDisplay.vue";
+import { getRundeckContext } from "../../../library";
+import { ServerInfo } from "../../../library/stores/System";
 
 const ServerIdentityComp = defineComponent({
-  name: 'ServerIdentityComp',
+  name: "ServerIdentityComp",
   components: {
-    ServerDisplay
+    ServerDisplay,
   },
   data() {
     return {
-      serverInfo: null
-    }
+      serverInfo: null,
+    };
   },
   props: {
-    showId: {type: Boolean, default: true},
-    nameClass: {type: String, default: ''},
-    serverName: {type: String, default: ''},
-    serverUuid: {type: String, default: ''}
+    showId: { type: Boolean, default: true },
+    nameClass: { type: String, default: "" },
+    serverName: { type: String, default: "" },
+    serverUuid: { type: String, default: "" },
   },
- mounted() {
-      this.serverInfo = new ServerInfo(this.serverName, this.serverUuid)
+  mounted() {
+    this.serverInfo = new ServerInfo(this.serverName, this.serverUuid);
   },
   template: `
     <server-display :uuid="serverInfo.uuid"
@@ -31,25 +31,27 @@ const ServerIdentityComp = defineComponent({
                     :glyphicon="serverInfo.icon"
                     :show-id="showId"
                     v-if="serverInfo">
-    </server-display>`
-})
+    </server-display>`,
+});
 
-const rundeckContext = getRundeckContext()
+const rundeckContext = getRundeckContext();
 if (rundeckContext && rundeckContext.rootStore && rundeckContext.rootStore.ui) {
   rundeckContext.rootStore.ui.addItems([
     {
-      section: 'server-info-display',
-      location: 'main',
+      section: "server-info-display",
+      location: "main",
       visible: true,
-      widget: markRaw(defineComponent({
-        name: 'StatusIndicatorWrapper',
-        components: {
-          ServerIdentityComp
-        },
-        props: ['itemData'],
-        template: `
-          <server-identity-comp v-bind="itemData"/>`
-      }))
-    }
-  ])
+      widget: markRaw(
+        defineComponent({
+          name: "StatusIndicatorWrapper",
+          components: {
+            ServerIdentityComp,
+          },
+          props: ["itemData"],
+          template: `
+          <server-identity-comp v-bind="itemData"/>`,
+        }),
+      ),
+    },
+  ]);
 }

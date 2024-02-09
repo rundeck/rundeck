@@ -2,26 +2,34 @@
   <div id="remoteEditholder" class="popout">
     <span id="remoteEditHeader">
       <span class="welcomeMessage">
-        {{$t('node.remoteEdit.edit')}} <i class="fas fa-hdd"></i>
+        {{ $t("node.remoteEdit.edit") }} <i class="fas fa-hdd"></i>
         <span id="editNodeIdent"> {{ nodename }}</span>
       </span>
     </span>
-    <div v-if="!finished" class="toolbar" id="remoteEditToolbar" style="display: inline-block; margin-left: 4px;">
+    <div
+      v-if="!finished"
+      class="toolbar"
+      id="remoteEditToolbar"
+      style="display: inline-block; margin-left: 4px"
+    >
       <span
-          class="action"
-          @click="remoteEditCompleted"
-          title="Close the remote edit box and discard any changes"
+        class="action"
+        @click="remoteEditCompleted"
+        title="Close the remote edit box and discard any changes"
       >
-          <img src="/static/images/icon-tiny-removex-gray.png" alt="Close remote editing" />
-          Close remote editing
+        <img
+          src="/static/images/icon-tiny-removex-gray.png"
+          alt="Close remote editing"
+        />
+        Close remote editing
       </span>
     </div>
     <div v-else id="remoteEditResultHolder" class="info message">
       <span id="remoteEditResultText" class="info message">
-        {{ $t(success? "node.changes.success" : "node.changes.notsaved") }}
+        {{ $t(success ? "node.changes.success" : "node.changes.notsaved") }}
       </span>
       <span class="action" @click="remoteEditContinue">
-        {{ $t('node.remoteEdit.continue') }}
+        {{ $t("node.remoteEdit.continue") }}
       </span>
     </div>
     <div v-if="error" id="remoteEditError" class="error note"></div>
@@ -35,17 +43,16 @@
 import { defineComponent } from "vue";
 import { getRundeckContext } from "@/library";
 import { getAppLinks } from "@/library";
-let rundeckContext = getRundeckContext()
+let rundeckContext = getRundeckContext();
 
-const PROTOCOL = 'rundeck:node:edit';
-
+const PROTOCOL = "rundeck:node:edit";
 
 export default defineComponent({
   name: "NodeRemoteEdit",
   props: {
     nodename: {
       type: String,
-      required: false
+      required: false,
     },
     remoteUrl: {
       type: String,
@@ -61,29 +68,29 @@ export default defineComponent({
       error: null,
       remoteEditExpect: false,
       remoteSite: null,
-      project: rundeckContext.projectName
+      project: rundeckContext.projectName,
     };
   },
   methods: {
     remoteEditContinue() {
       if (this.shouldRefresh) {
-        document.location = getAppLinks().frameworkNodes
+        document.location = getAppLinks().frameworkNodes;
       } else {
         this.remoteEditCompleted();
       }
     },
-    fnRemoteEditExpect(){
+    fnRemoteEditExpect() {
       this.remoteEditExpect = true;
       this.remoteSite = this.remoteUrl;
       this.remoteEditStarted = false;
       //@ts-ignore
-      Event.observe(window, 'message', this._rdeckNodeEditOnmessage);
+      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
     },
     remoteEditCompleted() {
       this.remoteEditClear();
       this.remoteEditStop();
     },
-    remoteEditHide(){
+    remoteEditHide() {
       this.finished = false;
     },
     remoteEditClear() {
@@ -93,30 +100,40 @@ export default defineComponent({
       this.remoteEditExpect = false;
       this.remoteSite = null;
       //@ts-ignore
-      Event.observe(window, 'message', this._rdeckNodeEditOnmessage);
+      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
 
       this.$emit("remoteEditStop");
     },
     _rdeckNodeEditOnmessage(msg) {
-      if (!this.remoteEditExpect || !this.remoteSite || !this.remoteSite.startsWith(msg.origin + "/")) {
+      if (
+        !this.remoteEditExpect ||
+        !this.remoteSite ||
+        !this.remoteSite.startsWith(msg.origin + "/")
+      ) {
         return;
       }
       var data = msg.data;
-      if (!this.remoteEditStarted && PROTOCOL + ':started' == data) {
+      if (!this.remoteEditStarted && PROTOCOL + ":started" == data) {
         this.remoteEditStarted = true;
-      } else if (PROTOCOL + ':error' == data || data.startsWith(PROTOCOL + ':error:')) {
-        var err = data.substring((PROTOCOL + ':error').length);
+      } else if (
+        PROTOCOL + ":error" == data ||
+        data.startsWith(PROTOCOL + ":error:")
+      ) {
+        var err = data.substring((PROTOCOL + ":error").length);
         if (err.startsWith(":")) {
           err = err.substring(1);
         }
         this._rdeckNodeEditError(msg.origin, err ? err : "(No message)");
       } else if (this.remoteEditStarted) {
-        if (PROTOCOL + ':finished:true' == data) {
+        if (PROTOCOL + ":finished:true" == data) {
           this._rdeckNodeEditFinished(true);
-        } else if (PROTOCOL + ':finished:false' == data) {
+        } else if (PROTOCOL + ":finished:false" == data) {
           this._rdeckNodeEditFinished(false);
         } else {
-          this._rdeckNodeEditError(null, "Unexpected message received from [" + msg.origin + "]: " + data);
+          this._rdeckNodeEditError(
+            null,
+            "Unexpected message received from [" + msg.origin + "]: " + data,
+          );
         }
       }
     },
@@ -125,7 +142,7 @@ export default defineComponent({
     },
     _rdeckNodeEditFinished(changed) {
       this.success = changed;
-    }
+    },
   },
   mounted() {
     this.remoteEditClear();

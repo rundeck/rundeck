@@ -2,55 +2,54 @@
 @mixin select($type, $color) {
   .select-#{$type}.el-select {
   }
-  .select-#{$type}.el-select .el-input  {
-    .el-input__suffix{
+  .select-#{$type}.el-select .el-input {
+    .el-input__suffix {
       display: flex;
       align-items: center;
     }
-    &:hover{
+    &:hover {
       .el-input__icon,
       input {
-        &::placeholder{
+        &::placeholder {
           color: white;
         }
         color: white;
       }
       input,
-      .el-input__icon{
+      .el-input__icon {
         background-color: var($color);
       }
-
     }
-    .el-input__icon{
-      border-radius:20px;
+    .el-input__icon {
+      border-radius: 20px;
       height: 20px;
     }
 
-    input{
+    input {
       background-color: white;
       border-color: var($color) !important;
       border-width: 2px;
       border-radius: 20px;
       color: var($color);
     }
-    .el-input__icon{
-      color:var($color);
+    .el-input__icon {
+      color: var($color);
     }
   }
-  .select-#{$type}{
-
-    .el-tag, .el-tag.el-tag--info {
+  .select-#{$type} {
+    .el-tag,
+    .el-tag.el-tag--info {
       line-height: 24px;
       background-color: var($color) !important;
       border: none !important;
-      .el-tag__close{
+      .el-tag__close {
         width: 20px;
         height: 20px;
         top: 1px;
         color: white;
         background-color: transparent;
         &:hover {
-         background-color: white;
+          background-color: white;
         }
       }
     }
@@ -62,8 +61,8 @@
   }
 
   #{if(&, "&", "*")}.el-select-dropdown.is-multiple,
-  .el-select-dropdown__item.selected{
-    &.select-#{$type}{
+  .el-select-dropdown__item.selected {
+    &.select-#{$type} {
       color: var($color);
     }
   }
@@ -81,12 +80,12 @@
   }
 }
 .el-select-dropdown {
-  border-radius:10px;
+  border-radius: 10px;
 }
 
-@include select('default', --default-color);
-@include select('info', --info-color);
-@include select('primary', --primary-color);
-@include select('success', --success-color);
-@include select('warning', --warning-color);
-@include select('danger', --danger-color);
+@include select("default", --default-color);
+@include select("info", --info-color);
+@include select("primary", --primary-color);
+@include select("success", --success-color);
+@include select("warning", --warning-color);
+@include select("danger", --danger-color);

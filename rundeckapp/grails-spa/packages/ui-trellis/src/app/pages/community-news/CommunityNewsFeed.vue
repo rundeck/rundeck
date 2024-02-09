@@ -1,13 +1,12 @@
 <template>
   <div>
     <div v-show="error">
-      <h4>{{ $t("message_connectionError")}}</h4>
+      <h4>{{ $t("message_connectionError") }}</h4>
       <p>
         {{ $t("message_refresh") }}
-        <a
-          href="https://www.rundeck.com/community-updates"
-          target="_blank"
-        >Rundeck Community News</a>.
+        <a href="https://www.rundeck.com/community-updates" target="_blank"
+          >Rundeck Community News</a
+        >.
       </p>
     </div>
     <div v-show="!showLoading">
@@ -19,33 +18,37 @@
       >
         <div class="row">
           <div class="col-xs-12 col-sm-9">
-            <div style="padding-bottom:.5em;">
+            <div style="padding-bottom: 0.5em">
               <h6
                 class="pub-date"
-                style="padding-bottom:.6em; color: #989898;"
-              >{{DateTimeFormatters.formatPublishDate(blog.publish_date)}}</h6>
-              <h3 class="blog-title">{{blog.title}}</h3>
+                style="padding-bottom: 0.6em; color: #989898"
+              >
+                {{ DateTimeFormatters.formatPublishDate(blog.publish_date) }}
+              </h6>
+              <h3 class="blog-title">{{ blog.title }}</h3>
             </div>
-            <div>{{blog.meta_description}}</div>
+            <div>{{ blog.meta_description }}</div>
 
             <!-- <div v-html="blog.post_summary" class="blog-summary"></div> -->
           </div>
           <div class="col-xs-12 col-sm-3">
-            <img :src="blog.featured_image" alt class="img-responsive">
+            <img :src="blog.featured_image" alt class="img-responsive" />
           </div>
         </div>
       </article>
       <div>
         <div class="articles-footer">
-          <a
-            href="https://www.rundeck.com/community-updates"
-            target="_blank"
-          >{{ $t("message_readMore")}}</a>
+          <a href="https://www.rundeck.com/community-updates" target="_blank">{{
+            $t("message_readMore")
+          }}</a>
         </div>
       </div>
     </div>
-    <div v-show="showLoading && !error" style="text-align: center;margin: 10vh 0;">
-      <i class="fas fa-spinner fa-5x fa-pulse" style="color:#f7403a;"></i>
+    <div
+      v-show="showLoading && !error"
+      style="text-align: center; margin: 10vh 0"
+    >
+      <i class="fas fa-spinner fa-5x fa-pulse" style="color: #f7403a"></i>
     </div>
   </div>
 </template>
@@ -57,49 +60,49 @@ import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 
 export default defineComponent({
   name: "CommunityNewsFeed",
-    computed: {
-        DateTimeFormatters() {
-            return DateTimeFormatters
-        }
+  computed: {
+    DateTimeFormatters() {
+      return DateTimeFormatters;
     },
+  },
   data() {
     return {
       showLoading: true,
       blogs: [],
-      error: false
+      error: false,
     };
   },
   methods: {
     openBlog(url) {
       let win = window.open(url, "_blank");
       win.focus();
-    }
+    },
   },
   mounted() {
     axios
       .get("https://api.rundeck.com/news/v1/blog/list", {
         params: {
-          groupid: 7039074342
-        }
+          groupid: 7039074342,
+        },
       })
       .then(
-        response => {
+        (response) => {
           this.blogs = response.data.objects;
           this.showLoading = false;
           this.$cookies.set(
             "communityNewsMostRecentPost",
             this.blogs[0].publish_date,
-            60 * 60 * 24 * 7
+            60 * 60 * 24 * 7,
           );
           this.$cookies.set("communityNews", "false", 60 * 60 * 24);
         },
-        error => {
+        (error) => {
           this.error = true;
           console.log("Error connecting to Rundeck Community News API", error);
-        }
+        },
       );
-  }
-})
+  },
+});
 </script>
 
 <style lang="scss" scoped>

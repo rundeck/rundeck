@@ -1,31 +1,33 @@
-import type {Meta, StoryFn} from '@storybook/vue3'
+import type { Meta, StoryFn } from "@storybook/vue3";
 
-import VersionDisplay from './VersionDisplay.vue'
+import VersionDisplay from "./VersionDisplay.vue";
 
 export default {
-    title: 'Rundeck Version Atoms/Version Display',
-    component: VersionDisplay,
-} as Meta<typeof VersionDisplay>
+  title: "Rundeck Version Atoms/Version Display",
+  component: VersionDisplay,
+} as Meta<typeof VersionDisplay>;
 
-export const rundeckVersionDisplay: StoryFn<typeof VersionDisplay> = (args) => ({
-    setup() {
-        return {args}
-    },
-    components: {VersionDisplay},
-    template: `
-      <VersionDisplay v-bind="args"/>`
-})
+export const rundeckVersionDisplay: StoryFn<typeof VersionDisplay> = (
+  args,
+) => ({
+  setup() {
+    return { args };
+  },
+  components: { VersionDisplay },
+  template: `
+      <VersionDisplay v-bind="args"/>`,
+});
 rundeckVersionDisplay.args = {
-    version: '4.0.0',
-    date: '2022-03-09',
-    appName: 'Rundeck',
-}
+  version: "4.0.0",
+  date: "2022-03-09",
+  appName: "Rundeck",
+};
 export const rundeckVersionArray: StoryFn<typeof VersionDisplay> = (args) => ({
-    setup() {
-        return {...args}
-    },
-    components: {VersionDisplay},
-    template: `
+  setup() {
+    return { ...args };
+  },
+  components: { VersionDisplay },
+  template: `
       <table>
       <tr>
         <td>
@@ -136,8 +138,8 @@ export const rundeckVersionArray: StoryFn<typeof VersionDisplay> = (args) => ({
       </tr>
       </table>
     `,
-})
+});
 rundeckVersionArray.args = {
-    date: '2022-03-09',
-    appName: 'Rundeck',
-}
+  date: "2022-03-09",
+  appName: "Rundeck",
+};
