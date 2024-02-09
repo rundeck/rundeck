@@ -5,6 +5,9 @@
   "main": "./lib/index.js",
   "scripts": {
     "test": "jest --no-cache",
+    "test:unit": "jest",
+    "dev:test:unit": "jest",
+    "ci:test:unit": "jest",
     "dev:app:build": "npm install && npm run build:app",
     "ci:app:build": "npm ci && npm run build:app",
     "dev:library:build": "npm install && npm run build:library --prefer-offline --no-audit",
