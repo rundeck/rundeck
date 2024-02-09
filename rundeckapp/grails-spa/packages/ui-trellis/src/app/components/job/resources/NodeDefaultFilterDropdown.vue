@@ -3,30 +3,27 @@
     <li>
       <dropdown>
         <a
-            class="nodefilterlink btn btn-default btn-xs"
-            @click.prevent="saveFilter({ filter: '.*' })"
+          class="nodefilterlink btn btn-default btn-xs"
+          @click.prevent="saveFilter({ filter: '.*' })"
         >
-          {{ $t("all.nodes") }} {{ nodeSummary? nodeSummary.totalCount! : 0 }}
+          {{ $t("all.nodes") }} {{ nodeSummary ? nodeSummary.totalCount! : 0 }}
         </a>
         <btn size="xs" title="Filter Actions" class="dropdown-toggle">
           <span class="caret"></span>
         </btn>
         <template #dropdown>
           <li>
-            <a
-                role="button"
-                @click.prevent="toggleDefaultFilter"
-            >
+            <a role="button" @click.prevent="toggleDefaultFilter">
               <i
-                  class="glyphicon"
-                  :class="[
+                class="glyphicon"
+                :class="[
                   isDefaultFilter ? 'glyphicon-ban-circle' : 'glyphicon-filter',
                 ]"
               />
               {{
                 isDefaultFilter
-                    ? $t("remove.all.nodes.as.default.filter")
-                    : $t("set.all.nodes.as.default.filter")
+                  ? $t("remove.all.nodes.as.default.filter")
+                  : $t("set.all.nodes.as.default.filter")
               }}
             </a>
           </li>
@@ -133,16 +130,16 @@ export default defineComponent({
     deleteFilterConfirm(filter: StoredFilter) {
       this.eventBus.emit(
         "nodefilter:action:deleteSavedFilter",
-        filter.filterName
+        filter.filterName,
       );
     },
     toggleDefaultFilter() {
-      if(this.isDefaultFilter) {
+      if (this.isDefaultFilter) {
         this.removeDefault();
       } else {
         this.setDefaultAll();
       }
-    }
+    },
   },
 });
 </script>

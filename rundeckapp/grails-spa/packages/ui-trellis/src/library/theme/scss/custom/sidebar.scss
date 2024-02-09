@@ -3,7 +3,7 @@
     background-color: #000000;
 
     a.home {
-      font-family: 'Futura';
+      font-family: "Futura";
       text-transform: uppercase;
       color: #ffffff;
       padding: 15px 15px 15px 32px;
@@ -30,7 +30,7 @@
         color: white;
         position: absolute;
         left: -2.15em;
-        padding: .5em;
+        padding: 0.5em;
         top: -7px;
       }
 
@@ -49,7 +49,6 @@
 
       // sidebar closed
       .sidebar-mini & {
-
         i.fas.fa-ellipsis-v,
         i.fas.fa-sign-out-alt,
         i.fas.fa-chevron-left {
@@ -75,7 +74,6 @@
         top: -10px;
       }
     }
-
   }
 
   .nav {
@@ -99,13 +97,12 @@
       display: block;
     }
 
-
     .snapshot-version {
-      padding-top: .5em;
+      padding-top: 0.5em;
 
       a {
         opacity: 1;
-        color: #FFFFFF;
+        color: #ffffff;
       }
 
       .badge {
@@ -131,7 +128,7 @@ body.modal-open {
     display: block;
     max-width: 260px;
     filter: alpha(opacity=50);
-    opacity: .5;
+    opacity: 0.5;
   }
 
   &.sidebar-mini {
@@ -139,7 +136,7 @@ body.modal-open {
       display: block;
       max-width: 80px;
       filter: alpha(opacity=50);
-      opacity: .5;
+      opacity: 0.5;
     }
   }
 }
@@ -148,7 +145,7 @@ body.modal-open {
   .sidebar-mini:not(.nav-open) & {
     #sidebar-bottom {
       width: 80px;
-      transition: width .2s;
+      transition: width 0.2s;
     }
 
     a.home {

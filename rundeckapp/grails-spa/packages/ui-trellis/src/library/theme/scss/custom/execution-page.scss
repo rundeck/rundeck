@@ -41,32 +41,36 @@
   }
 
   a {
-    + a, + .btn, + .spacer {
+    + a,
+    + .btn,
+    + .spacer {
       margin-left: 10px;
     }
   }
 
   .btn {
-    + a, + .btn, + .spacer {
+    + a,
+    + .btn,
+    + .spacer {
       margin-left: 10px;
     }
   }
 
   .spacer {
-    + a, + .btn, + .spacer {
+    + a,
+    + .btn,
+    + .spacer {
       margin-left: 10px;
     }
   }
-
 }
-.execution-state-summary{
-
+.execution-state-summary {
   .execution-user,
-  .execution-retry{
-    display:block;
+  .execution-retry {
+    display: block;
   }
   .execution-summary-status,
-  .execution-duration{
+  .execution-duration {
     margin: 0 5px 0 0;
   }
 }

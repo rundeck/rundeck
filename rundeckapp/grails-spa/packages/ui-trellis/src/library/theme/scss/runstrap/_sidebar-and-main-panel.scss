@@ -1,4 +1,3 @@
-
 .content {
   // border-top: 1px solid #dadada;
   background-color: var(--background-color);
@@ -10,7 +9,7 @@
   // min-height: calc(100% - 120px);
   // min-height: calc(100% - 150px);
 
-  .row .col-md-12>.title {
+  .row .col-md-12 > .title {
     margin-top: 0;
   }
 }
@@ -38,7 +37,7 @@
   //   }
   // }
 
-  >.footer {
+  > .footer {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     display: inline-block;
     width: 100%;
@@ -54,8 +53,8 @@
 .sidebar-wrapper {
   -webkit-transition-property: top, bottom, width;
   transition-property: top, bottom, width;
-  -webkit-transition-duration: .2s, .2s, .35s;
-  transition-duration: .2s, .2s, .35s;
+  -webkit-transition-duration: 0.2s, 0.2s, 0.35s;
+  transition-duration: 0.2s, 0.2s, 0.35s;
   -webkit-transition-timing-function: linear, linear, ease;
   transition-timing-function: linear, linear, ease;
   -webkit-overflow-scrolling: touch;
@@ -67,10 +66,8 @@
   height: 100%;
 }
 
-
 // regular settings for perfect scrollbar off
 .perfect-scrollbar-off {
-
   .sidebar .sidebar-wrapper,
   .main-panel {
     overflow: auto;
@@ -79,7 +76,6 @@
 
 @media (min-width: $screen-md) {
   .sidebar-mini {
-
     .sidebar,
     .sidebar .sidebar-wrapper {
       width: 80px;
@@ -106,11 +102,17 @@
       }
 
       .sidebar-wrapper {
-
-        >.nav [data-toggle="collapse"]~div>ul>li>a .sidebar-normal,
-        .user .info [data-toggle="collapse"]~div>ul>li>a .sidebar-normal,
-        .user .info>a>span,
-        >.nav li>a p {
+        > .nav [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
+        .user
+          .info
+          [data-toggle="collapse"]
+          ~ div
+          > ul
+          > li
+          > a
+          .sidebar-normal,
+        .user .info > a > span,
+        > .nav li > a p {
           @include transform-translate-x(-25px);
           opacity: 0;
         }

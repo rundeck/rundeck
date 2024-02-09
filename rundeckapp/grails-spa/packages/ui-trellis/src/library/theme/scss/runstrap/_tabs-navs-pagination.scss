@@ -1,12 +1,12 @@
 /*             Navigation Tabs                 */
 .vue-tabs {
-  .nav-tabs-navigation{
+  .nav-tabs-navigation {
     // Base line
     &::before {
-      content: '';
+      content: "";
       width: 100%;
       height: 2px;
-      background-color: #D6D6D6;
+      background-color: #d6d6d6;
       position: absolute;
       bottom: 0;
     }
@@ -15,7 +15,7 @@
     margin-bottom: 30px;
     position: relative;
   }
-  .nav-tabs-wrapper{
+  .nav-tabs-wrapper {
     display: inline-block;
     margin-bottom: -5px;
     margin-left: 1.25%;
@@ -26,14 +26,14 @@
       float: right;
     }
   }
-  .nav-tabs{
+  .nav-tabs {
     font-size: $font-size-base;
     font-weight: $font-weight-bold;
     border-bottom: 0;
-    &:hover{
+    &:hover {
       li.active:before {
         left: 0%;
-        content: '';
+        content: "";
         position: absolute;
         height: 3px;
         border-bottom: 3px solid var(--brand-color);
@@ -43,7 +43,7 @@
       }
       li.active:hover:before {
         left: 0%;
-        content: '';
+        content: "";
         position: absolute;
         height: 3px;
         border-bottom: 3px solid var(--brand-color);
@@ -52,20 +52,20 @@
         border-radius: 1rem;
       }
     }
-    > li{
+    > li {
       transition: 0.3s cubic-bezier(0.55, 0, 0.1, 1);
-      > a{
+      > a {
         border: 0 none;
         color: var(--text-muted-color);
       }
-      > a:hover{
+      > a:hover {
         color: var(--font-color);
       }
     }
-    li{
+    li {
       &.active:before {
         left: 0%;
-        content: '';
+        content: "";
         position: absolute;
         height: 3px;
         border-bottom: 3px solid var(--brand-color);
@@ -73,13 +73,13 @@
         bottom: 1px;
         border-radius: 1rem;
       }
-      &:active{
+      &:active {
         transition: none;
       }
-      &:before{
+      &:before {
         left: 100%;
         transition: 0.1s cubic-bezier(0.55, 0, 0.1, 1);
-        content: '';
+        content: "";
         position: absolute;
         height: 3px;
         border-bottom: 3px solid var(--brand-color);
@@ -87,7 +87,7 @@
         bottom: 1px;
         border-radius: 1rem;
       }
-      &:hover:before{
+      &:hover:before {
         border-bottom-color: var(--brand-color);
         width: 100%;
         bottom: 1px;
@@ -98,11 +98,12 @@
     li:hover ~ li:before {
       left: 0;
     }
-    > li.active, .el-tabs__item.is-active{
+    > li.active,
+    .el-tabs__item.is-active {
       position: relative;
       > a,
       > a:hover,
-      > a:focus{
+      > a:focus {
         font-weight: $font-weight-bold;
         color: var(--font-color);
         background-color: transparent;
@@ -122,27 +123,27 @@
       // }
     }
   }
-  .nav-stacked{
+  .nav-stacked {
     border-right: 1px solid var(--medium-pale-bg);
     font-size: $font-size-base;
     font-weight: $font-weight-bold;
     padding: 20px 0;
 
     > li {
-      > a{
+      > a {
         color: var(--text-muted-color);
         padding: 7px 25px;
         text-align: right;
       }
-      > a:hover{
+      > a:hover {
         color: var(--font-color);
       }
     }
-    > li.active{
-      > a{
+    > li.active {
+      > a {
         color: var(--font-color);
       }
-      a:after{
+      a:after {
         border-right: 11px solid var(--white-color);
         border-top: 11px solid rgba(0, 0, 0, 0);
         border-bottom: 11px solid rgba(0, 0, 0, 0);
@@ -153,7 +154,7 @@
         bottom: 7px;
       }
 
-      a:before{
+      a:before {
         border-right: 11px solid var(--medium-pale-bg);
         border-top: 11px solid rgba(0, 0, 0, 0);
         border-bottom: 11px solid rgba(0, 0, 0, 0);
@@ -166,16 +167,15 @@
     }
   }
 
-  .left-vertical-tabs{
+  .left-vertical-tabs {
     width: 170px;
     float: left;
   }
 
-  .right-text-tabs{
+  .right-text-tabs {
     width: calc(100% - 170px);
     float: left;
     padding: 6px 15px;
-
   }
   /*             Navigation Pills               */
   .nav-pills {
@@ -188,7 +188,6 @@
       color: var(--default-color);
       margin-left: -1px;
       padding: 10px 20px;
-
     }
     > li.active > a,
     > li.active > a:hover,
@@ -196,43 +195,39 @@
       background-color: var(--default-color);
       color: var(--white-color);
     }
-    > li:first-child > a{
+    > li:first-child > a {
       border-radius: 30px 0 0 30px;
       margin: 0;
     }
-    > li:last-child > a{
+    > li:last-child > a {
       border-radius: 0 30px 30px 0;
     }
-
   }
 
   .tab-content {
-    text-align:center;
+    text-align: center;
   }
 }
-
-
-
 
 .pagination > li:first-child > a,
 .pagination > li:first-child > span,
 .pagination > li:last-child > a,
-.pagination > li:last-child > span{
-    border-radius: 20px;
+.pagination > li:last-child > span {
+  border-radius: 20px;
 }
 .pagination > li > a,
-.pagination > li > span{
-    background-color: transparent;
-    border: $border-thin solid var(--default-states-color);
-    border-radius: 5px;
-    color: var(--default-states-color);
-    height: $line-height;
-    font-weight: $font-weight-bold;
-    margin: 0 2px;
-    min-width: 36px;
-    padding: 6px;
-    line-height: 22px;
-    text-align: center;
+.pagination > li > span {
+  background-color: transparent;
+  border: $border-thin solid var(--default-states-color);
+  border-radius: 5px;
+  color: var(--default-states-color);
+  height: $line-height;
+  font-weight: $font-weight-bold;
+  margin: 0 2px;
+  min-width: 36px;
+  padding: 6px;
+  line-height: 22px;
+  text-align: center;
 }
 .pagination > li > a:hover,
 .pagination > li > a:focus,
@@ -243,20 +238,19 @@
 .pagination > li.active > span:hover,
 .pagination > li.active > a:focus,
 .pagination > li.active > span:focus {
-    background-color: var(--default-states-color);
-    border-color: var(--default-states-color);
-    color: var(--default-color);
-    cursor: pointer;
+  background-color: var(--default-states-color);
+  border-color: var(--default-states-color);
+  color: var(--default-color);
+  cursor: pointer;
 }
 
-.pagination{
-  > .disabled{
-    >span,
-    >a
-    {
+.pagination {
+  > .disabled {
+    > span,
+    > a {
       &,
       &:hover,
-      &:focus{
+      &:focus {
         color: var(--medium-gray);
         border-color: var(--medium-gray);
       }
@@ -264,15 +258,14 @@
   }
 }
 
-
-@mixin pagination($color, $name){
+@mixin pagination($color, $name) {
   .nav-pills-#{$name} > li > a,
   .pagination-#{$name} > li > a,
   .pagination-#{$name} > li > span,
   .pagination-#{$name} > li:first-child > a,
   .pagination-#{$name} > li:first-child > span,
   .pagination-#{$name} > li:last-child > a,
-  .pagination-#{$name} > li:last-child > span{
+  .pagination-#{$name} > li:last-child > span {
     border: 2px solid var($color);
     color: var($color);
   }
@@ -288,20 +281,19 @@
   .pagination-#{$name} > li.active > a:hover,
   .pagination-#{$name} > li.active > span:hover,
   .pagination-#{$name} > li.active > a:focus,
-  .pagination-#{$name} > li.active > span:focus{
+  .pagination-#{$name} > li.active > span:focus {
     background-color: var($color);
     border-color: var($color);
     color: var(--white-color);
   }
 
-  .pagination.pagination-#{$name}{
-    > .disabled{
-      >span,
-      >a
-      {
+  .pagination.pagination-#{$name} {
+    > .disabled {
+      > span,
+      > a {
         &,
         &:hover,
-        &:focus{
+        &:focus {
           filter: brightness(1.3);
         }
       }
@@ -309,17 +301,17 @@
   }
 }
 
-@include pagination(--primary-color, 'primary');
-@include pagination(--info-color, 'info');
-@include pagination(--success-color, 'success');
-@include pagination(--warning-color, 'warning');
-@include pagination(--danger-color, 'danger');
+@include pagination(--primary-color, "primary");
+@include pagination(--info-color, "info");
+@include pagination(--success-color, "success");
+@include pagination(--warning-color, "warning");
+@include pagination(--danger-color, "danger");
 
-.modal-pagination{
+.modal-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  &-item{
+  &-item {
     // border-top: 1px solid #cecece;
     // border-bottom: 1px solid #cecece;
     // border-right: 1px solid #cecece;
@@ -331,18 +323,18 @@
     margin: 0;
     border-radius: 0;
     cursor: pointer;
-    &:first-child{
+    &:first-child {
       // border: 1px solid #cecece;
       // border-top-left-radius: 5px;
       // border-bottom-left-radius: 5px;
     }
-    &:last-child{
+    &:last-child {
       // border-left: 0 solid #cecece;
       // border-top-right-radius: 5px;
       // border-bottom-right-radius: 5px;
     }
   }
-  .currentStep{
+  .currentStep {
     width: 20px;
     height: 20px;
     border: 1px solid #000;

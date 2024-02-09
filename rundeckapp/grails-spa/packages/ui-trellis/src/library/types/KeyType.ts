@@ -1,7 +1,7 @@
 export enum KeyType {
-    Public = 'publicKey',
-    Private = 'privateKey',
-    Password = 'password',
+  Public = "publicKey",
+  Private = "privateKey",
+  Password = "password",
 }
 
-export default KeyType
+export default KeyType;

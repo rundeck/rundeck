@@ -46,12 +46,15 @@ describe("Tabs", () => {
       },
     });
 
+
     const tabTitles = wrapper.findAll(".rdtabs__tab");
+
 
     // Simulate clicking on the second tab
     await tabTitles[1].trigger("click");
 
     const tabContent = wrapper.find(".rdtabs__pane");
+
 
     // Verify that the content of the second tab is displayed
     expect(tabContent.text()).toBe("Content 2");

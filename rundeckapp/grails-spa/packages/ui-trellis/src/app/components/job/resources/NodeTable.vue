@@ -1,13 +1,13 @@
 <template>
   <div>
-    <div id="nodes_tags" v-if="nodeSet.tagsummary">
+    <div v-if="nodeSet.tagsummary" id="nodes_tags">
       <span v-for="tag in Object.entries(nodeSet.tagsummary)">
         <span class="summary nodetags">
           <node-filter-link
-              class="label label-muted link-quiet"
-              filterKey="tags"
-              :filterVal="tag[0]"
-              @nodefilterclick="filterClick"
+            class="label label-muted link-quiet"
+            filter-key="tags"
+            :filter-val="tag[0]"
+            @nodefilterclick="filterClick"
           >
             <template #suffix> ({{ tag[1] }}) </template>
           </node-filter-link>
@@ -19,41 +19,41 @@
         <div class="col-sm-12">
           <table id="nodesTable" class="nodesTable">
             <thead>
-            <tr>
-              <th class="table-header">
-                {{ $t("Node") }}
-              </th>
-              <th
+              <tr>
+                <th class="table-header">
+                  {{ $t("Node") }}
+                </th>
+                <th
                   v-for="filter in filterColumns"
                   class="text-capitalize table-header"
-              >
-                {{ filter }}
-              </th>
-              <template v-if="useDefaultColumns">
-                <th class="table-header">
-                  {{ $t("resource.metadata.entity.tags") }}
+                >
+                  {{ filter }}
                 </th>
-                <th colspan="3" class="table-header">
-                  {{ $t("user.at.host") }}
-                </th>
-              </template>
-              <th></th>
-            </tr>
+                <template v-if="useDefaultColumns">
+                  <th class="table-header">
+                    {{ $t("resource.metadata.entity.tags") }}
+                  </th>
+                  <th colspan="3" class="table-header">
+                    {{ $t("user.at.host") }}
+                  </th>
+                </template>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-            <template v-for="(node, index) in nodeSet.nodes">
-              <tr
+              <template v-for="(node, index) in nodeSet.nodes">
+                <tr
                   class="node_entry hover-action-holder ansicolor-on"
                   :class="{ server: node.islocal || false }"
-              >
-                <td class="nodeident" :title="node.attributes.description">
-                  <a
+                >
+                  <td class="nodeident" :title="node.attributes.description">
+                    <a
                       class="link-quiet"
                       data-toggle="collapse"
                       :href="`#detail_${index}1`"
-                  >
-                    <i class="auto-caret text-muted"></i>
-                    <span
+                    >
+                      <i class="auto-caret text-muted"></i>
+                      <span
                         class="node_ident"
                         :class="[
                           { server: node.isLocal },
@@ -63,17 +63,17 @@
                           styleForNode(node.attributes),
                           'margin-left:4px',
                         ]"
-                    >
+                      >
                         <span
-                            :class="cssForIcon(node.attributes)"
-                            :style="[
+                          :class="cssForIcon(node.attributes)"
+                          :style="[
                             styleForIcon(node.attributes),
                             'margin-right: 4px',
                           ]"
                         >
                           <i
-                              v-if="node.attributes['ui:icon:name']"
-                              :class="
+                            v-if="node.attributes['ui:icon:name']"
+                            :class="
                               glyphiconForName(node.attributes['ui:icon:name'])
                             "
                           ></i>
@@ -83,37 +83,37 @@
                           {{ node.nodename }}
                         </span>
                       </span>
-                  </a>
+                    </a>
 
-                  <node-filter-link
+                    <node-filter-link
                       class="link-quiet"
                       style="margin: 0 5px"
                       filter-key="name"
                       :filter-val="node.nodename!"
                       @nodefilterclick="filterClick"
-                  >
-                    <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                  </node-filter-link>
+                    >
+                      <i class="glyphicon glyphicon-circle-arrow-right"></i>
+                    </node-filter-link>
 
-                  <span class="nodedesc"></span>
-                  <span class="text-strong">
+                    <span class="nodedesc"></span>
+                    <span class="text-strong">
                       <i
-                          v-if="node.attributes['ui:badges']"
-                          v-for="badge in glyphiconBadges(node.attributes)"
-                          :class="glyphiconForName(badge)"
-                          :key="badge"
+                        v-for="badge in glyphiconBadges(node.attributes)"
+                        v-if="node.attributes['ui:badges']"
+                        :key="badge"
+                        :class="glyphiconForName(badge)"
                       ></i>
                       <span>
                         {{ node.attributes.description }}
                       </span>
                     </span>
-                  <span
+                    <span
                       :class="statusIconCss(node.attributes)"
                       :style="statusIconStyle(node.attributes)"
-                  >
+                    >
                       <i
-                          v-if="node.attributes['ui:status:icon']"
-                          :class="
+                        v-if="node.attributes['ui:status:icon']"
+                        :class="
                           glyphiconForName(node.attributes['ui:status:icon'])
                         "
                       ></i>
@@ -121,18 +121,18 @@
                         {{ node.attributes["ui:status:text"] }}
                       </span>
                     </span>
-                </td>
+                  </td>
 
-                <td v-for="filter in filterColumns">
-                    <span class="value" v-if="node.attributes[filter]">
+                  <td v-for="filter in filterColumns">
+                    <span v-if="node.attributes[filter]" class="value">
                       <span v-if="filter === 'tags'">
                         <span class="nodetags">
                           <span v-for="tag in node.tags" :key="tag">
                             <node-filter-link
-                                class="label label-muted link-quiet"
-                                filter-key="tags"
-                                :filter-val="tag"
-                                @nodefilterclick="filterClick"
+                              class="label label-muted link-quiet"
+                              filter-key="tags"
+                              :filter-val="tag"
+                              @nodefilterclick="filterClick"
                             ></node-filter-link>
                           </span>
                         </span>
@@ -142,162 +142,158 @@
                           {{ node.attributes[filter] }}
                         </span>
                         <node-filter-link
-                            class="textbtn textbtn-info"
-                            :filter-key="filter"
-                            :filter-val="node.attributes[filter]"
-                            @nodefilterclick="filterClick"
+                          class="textbtn textbtn-info"
+                          :filter-key="filter"
+                          :filter-val="node.attributes[filter]"
+                          @nodefilterclick="filterClick"
                         >
                           <i
-                              class="
-                              glyphicon glyphicon-search
-                              textbtn-saturated
-                              hover-action
-                            "
+                            class="glyphicon glyphicon-search textbtn-saturated hover-action"
                           ></i>
                         </node-filter-link>
                       </span>
                     </span>
-                </td>
+                  </td>
 
-                <template v-if="useDefaultColumns">
-                  <td title="Tags" class="nodetags">
+                  <template v-if="useDefaultColumns">
+                    <td title="Tags" class="nodetags">
                       <span v-if="node.tags">
                         <span class="nodetags">
                           <span v-for="tag in node.tags">
                             <node-filter-link
-                                class="link-quiet"
-                                style="margin-right: 2px"
-                                filter-key="tags"
-                                :filter-val="tag"
-                                @nodefilterclick="filterClick"
+                              class="link-quiet"
+                              style="margin-right: 2px"
+                              filter-key="tags"
+                              :filter-val="tag"
+                              @nodefilterclick="filterClick"
                             ></node-filter-link>
                           </span>
                         </span>
                       </span>
-                  </td>
-                  <td class="username" :title="$t('node.metadata.username')">
+                    </td>
+                    <td class="username" :title="$t('node.metadata.username')">
                       <span v-if="node.attributes.username">
                         <node-filter-link
-                            class="link-quiet"
-                            filter-key="username"
-                            :filter-val="node.attributes.username"
-                            @nodefilterclick="filterClick"
+                          class="link-quiet"
+                          filter-key="username"
+                          :filter-val="node.attributes.username"
+                          @nodefilterclick="filterClick"
                         ></node-filter-link>
                         <span class="atsign">@</span>
                       </span>
-                  </td>
-                  <td class="hostname" title="Hostname">
+                    </td>
+                    <td class="hostname" title="Hostname">
                       <span v-if="node.attributes.hostname">
                         <node-filter-link
-                            class="link-quiet"
-                            filter-key="hostname"
-                            :filter-val="node.attributes.hostname"
-                            @nodefilterclick="filterClick"
+                          class="link-quiet"
+                          filter-key="hostname"
+                          :filter-val="node.attributes.hostname"
+                          @nodefilterclick="filterClick"
                         ></node-filter-link>
                       </span>
-                    <span v-else>
+                      <span v-else>
                         <span
-                            class="text-warning"
-                            :title="$t('node.hostname.unset.description')"
+                          class="text-warning"
+                          :title="$t('node.hostname.unset.description')"
                         >
                           {{ $t("node.hostname.unset.label") }}
                         </span>
                       </span>
-                  </td>
-                </template>
+                    </td>
+                  </template>
 
-                <td>
+                  <td>
                     <span v-if="node.attributes['remoteUrl']">
                       <span
-                          class="textbtn"
-                          :title="$t('edit.this.node.via.remote.url')"
-                          @click="triggerNodeRemoteEdit(node)"
+                        class="textbtn"
+                        :title="$t('edit.this.node.via.remote.url')"
+                        @click="triggerNodeRemoteEdit(node)"
                       >
                         {{ $t("edit.ellipsis") }}
                       </span>
                     </span>
-                  <span v-if="node.attributes['editUrl']">
+                    <span v-if="node.attributes['editUrl']">
                       <a
-                          target="_blank"
-                          :href="
+                        target="_blank"
+                        :href="
                           expandNodeAttributes(
                             node.attributes,
-                            node.attributes['editUrl']
+                            node.attributes['editUrl'],
                           )
                         "
-                          :title="
+                        :title="
                           $t('opens.a.link.to.edit.this.node.at.a.remote.site')
                         "
                       >
                         {{ $t("button.Edit.label") }}
                       </a>
                     </span>
-                </td>
-              </tr>
+                  </td>
+                </tr>
 
-              <tr
+                <tr
+                  :id="`detail_${index}1`"
                   class="detail_content nodedetail collapse collapse-expandable"
                   :class="{ server: node.isLocal }"
-                  :id="`detail_${index}1`"
-              >
-                <td :colspan="totalColumnsCount">
-                  <node-details-simple
+                >
+                  <td :colspan="totalColumnsCount">
+                    <node-details-simple
                       :key="node.nodename"
                       :attributes="node.attributes"
                       :authrun="node.authrun"
-                      :useNamespace="true"
+                      :use-namespace="true"
                       :tags="node.tags || []"
                       :node-columns="true"
                       :filter-columns="filterColumns"
                       @filter="filterClick"
-                  />
-                </td>
-              </tr>
-            </template>
+                    />
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
       </div>
       <div v-if="hasPaging && !loading">
         <div class="row row-space">
-          <div class="col-sm-12" id="nodesPaging">
+          <div id="nodesPaging" class="col-sm-12">
             <span class="paginate">
               <ul class="pagination pagination-sm pagination-embed">
                 <li :class="{ disabled: page === 0 || loading }">
                   <a
-                      :href="browseNodesPagePrevUrl"
-                      class="btn btn-xs btn-default"
-                      :class="{ visible: maxPages > 1 }"
-                      @click.prevent="browseNodesPagePrev"
-                      :title="$t('Previous')"
+                    :href="browseNodesPagePrevUrl"
+                    class="btn btn-xs btn-default"
+                    :class="{ visible: maxPages > 1 }"
+                    :title="$t('Previous')"
+                    @click.prevent="browseNodesPagePrev"
                   >
                     {{ $t("default.paginate.prev") }}
                   </a>
                 </li>
                 <li
-                    v-for="num in pageNumbersSkipped"
-                    :key="`skipped_${num}`"
-                    :class="{
+                  v-for="num in pageNumbersSkipped"
+                  :key="`skipped_${num}`"
+                  :class="{
                     active: num === page,
                     disabled: num === '..' || loading,
                   }"
                 >
                   <a v-if="num === '..'" href="#"> &hellip; </a>
                   <a
-                      v-else
-                      :href="browseNodesPageUrl(num)"
-                      @click.prevent="browseNodesPage(num)"
+                    v-else
+                    :href="browseNodesPageUrl(num)"
+                    @click.prevent="browseNodesPage(num)"
                   >
                     {{ num + 1 }}
                   </a>
                 </li>
                 <li :class="{ disabled: page === maxPages || loading }">
                   <a
-                      class="btn btn-xs btn-default"
-                      :class="{ visible: maxPages > 1 }"
-                      :href="browseNodesPageNextUrl"
-                      @click.prevent="browseNodesPageNext"
-                      :title="$t('Next')"
+                    class="btn btn-xs btn-default"
+                    :class="{ visible: maxPages > 1 }"
+                    :href="browseNodesPageNextUrl"
+                    :title="$t('Next')"
+                    @click.prevent="browseNodesPageNext"
                   >
                     {{ $t("default.paginate.next") }}
                   </a>
@@ -309,13 +305,15 @@
                 <label>
                   {{ $t("jump.to") }}
                   <input
-                      @input="event => browseNodesPage(Number(event.target.value) - 1)"
-                      :value="page + 1"
-                      :disabled="loading"
-                      class="form-control input-sm"
-                      type="number"
-                      min="1"
-                      :max="maxPages"
+                    :value="page + 1"
+                    :disabled="loading"
+                    class="form-control input-sm"
+                    type="number"
+                    min="1"
+                    :max="maxPages"
+                    @input="
+                      (event) => browseNodesPage(Number(event.target.value) - 1)
+                    "
                   />
                 </label>
               </div>
@@ -323,13 +321,13 @@
                 <label>
                   {{ $t("per.page") }}
                   <input
-                      @input="changePaginationMax"
-                      :value="pagingMax"
-                      :disabled="loading"
-                      class="form-control input-sm"
-                      type="number"
-                      min="1"
-                      max="100"
+                    :value="pagingMax"
+                    :disabled="loading"
+                    class="form-control input-sm"
+                    type="number"
+                    min="1"
+                    max="100"
+                    @input="changePaginationMax"
                   />
                 </label>
               </div>
@@ -348,10 +346,10 @@
     </div>
   </div>
   <NodeRemoteEdit
-      v-if="remoteEditStarted"
-      :nodename="remoteEditNodename"
-      :remote-url="remoteUrl"
-      @remoteEditStop="stopNodeRemoteEdit"
+    v-if="remoteEditStarted"
+    :nodename="remoteEditNodename"
+    :remote-url="remoteUrl"
+    @remote-edit-stop="stopNodeRemoteEdit"
   />
 </template>
 
@@ -378,7 +376,6 @@ import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
 export default defineComponent({
   name: "NodeTable",
   components: { NodeFilterLink, NodeRemoteEdit, NodeDetailsSimple },
-  emits: ["filter", "changePage", "changePagingMax"],
   props: {
     nodeSet: {
       type: Object,
@@ -417,6 +414,7 @@ export default defineComponent({
       required: false,
     },
   },
+  emits: ["filter", "changePage", "changePagingMax"],
   data() {
     return {
       shouldRefresh: false,
@@ -425,7 +423,7 @@ export default defineComponent({
     };
   },
   computed: {
-    filterColumnsLength():number {
+    filterColumnsLength(): number {
       return Object.keys(this.filterColumns || {}).length;
     },
     useDefaultColumns(): boolean {
@@ -439,15 +437,15 @@ export default defineComponent({
       return this.remoteUrl && this.remoteEditNodename;
     },
     pageNumbersSkipped(): string[] {
-      var arr = [];
-      var cur = this.page;
-      var maxPages = this.maxPages;
-      var buffer = 3;
-      for (var i = 0; i < maxPages; i++) {
+      const arr = [];
+      const cur = this.page;
+      const maxPages = this.maxPages;
+      const buffer = 3;
+      for (let i = 0; i < maxPages; i++) {
         if (
-            (i >= cur - buffer && i <= cur + buffer) ||
-            i < buffer ||
-            i >= maxPages - buffer
+          (i >= cur - buffer && i <= cur + buffer) ||
+          i < buffer ||
+          i >= maxPages - buffer
         ) {
           arr.push(i);
         } else if (i == cur - buffer - 1 || i == cur + buffer + 1) {
@@ -473,12 +471,12 @@ export default defineComponent({
     styleForNode,
     expandNodeAttributes,
     nodeCss(attrs) {
-      var classnames = [];
-      var uiColor = nodeFgCss(attrs);
+      const classnames = [];
+      const uiColor = nodeFgCss(attrs);
       if (uiColor) {
         classnames.push(uiColor);
       }
-      var uiBgcolor = nodeBgCss(attrs);
+      const uiBgcolor = nodeBgCss(attrs);
       if (uiBgcolor) {
         classnames.push(uiBgcolor);
       }
@@ -509,8 +507,8 @@ export default defineComponent({
         this.$emit("changePage", newPage);
       }
     },
-    browseNodesPageUrl(page: number|string):string {
-      var pageParams = {
+    browseNodesPageUrl(page: number | string): string {
+      const pageParams = {
         filter: this.filter || "",
         filterAll: this.filterAll,
         page: page,

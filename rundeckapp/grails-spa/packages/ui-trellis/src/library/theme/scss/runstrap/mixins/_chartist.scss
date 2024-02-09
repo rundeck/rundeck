@@ -1,8 +1,44 @@
 @use "sass:math";
 
 // Scales for responsive SVG containers
-$ct-scales: ((1), math.div(15, 16), math.div(8, 9), math.div(5, 6), math.div(4, 5), math.div(3, 4), math.div(2, 3), math.div(5, 8), math.div(1, 1.618), math.div(3, 5), math.div(9, 16), math.div(8, 15), math.div(1, 2), math.div(2, 5), math.div(3, 8), math.div(1, 3), math.div(1, 4)) !default;
-$ct-scales-names: (ct-square, ct-minor-second, ct-major-second, ct-minor-third, ct-major-third, ct-perfect-fourth, ct-perfect-fifth, ct-minor-sixth, ct-golden-section, ct-major-sixth, ct-minor-seventh, ct-major-seventh, ct-octave, ct-major-tenth, ct-major-eleventh, ct-major-twelfth, ct-double-octave) !default;
+$ct-scales: (
+  (1),
+  math.div(15, 16),
+  math.div(8, 9),
+  math.div(5, 6),
+  math.div(4, 5),
+  math.div(3, 4),
+  math.div(2, 3),
+  math.div(5, 8),
+  math.div(1, 1.618),
+  math.div(3, 5),
+  math.div(9, 16),
+  math.div(8, 15),
+  math.div(1, 2),
+  math.div(2, 5),
+  math.div(3, 8),
+  math.div(1, 3),
+  math.div(1, 4)
+) !default;
+$ct-scales-names: (
+  ct-square,
+  ct-minor-second,
+  ct-major-second,
+  ct-minor-third,
+  ct-major-third,
+  ct-perfect-fourth,
+  ct-perfect-fifth,
+  ct-minor-sixth,
+  ct-golden-section,
+  ct-major-sixth,
+  ct-minor-seventh,
+  ct-major-seventh,
+  ct-octave,
+  ct-major-tenth,
+  ct-major-eleventh,
+  ct-major-twelfth,
+  ct-double-octave
+) !default;
 
 // Class names to be used when generating CSS
 $ct-class-chart: ct-chart !default;
@@ -74,33 +110,32 @@ $ct-series-colors: (
   var(--danger-color),
   var(--success-color),
   var(--primary-color),
-  rgba(var(--info-color),.8),
-  rgba(var(--success-color),.8),
-  rgba(var(--warning-color),.8),
-  rgba(var(--danger-color),.8),
-  rgba(var(--primary-color),.8),
-  rgba(var(--info-color),.6),
-  rgba(var(--success-color),.6),
-  rgba(var(--warning-color),.6),
-  rgba(var(--danger-color),.6),
-  rgba(var(--primary-color),.6)
-  
+  rgba(var(--info-color), 0.8),
+  rgba(var(--success-color), 0.8),
+  rgba(var(--warning-color), 0.8),
+  rgba(var(--danger-color), 0.8),
+  rgba(var(--primary-color), 0.8),
+  rgba(var(--info-color), 0.6),
+  rgba(var(--success-color), 0.6),
+  rgba(var(--warning-color), 0.6),
+  rgba(var(--danger-color), 0.6),
+  rgba(var(--primary-color), 0.6)
 ) !default;
 
 // Paper Kit Colors
 
-.ct-blue{
-    stroke: var(--primary-color) !important;
+.ct-blue {
+  stroke: var(--primary-color) !important;
 }
-.ct-azure{
-    stroke: var(--info-color) !important;
+.ct-azure {
+  stroke: var(--info-color) !important;
 }
-.ct-green{
-    stroke: var(--success-color) !important;
+.ct-green {
+  stroke: var(--success-color) !important;
 }
-.ct-orange{
-    stroke: var(--warning-color) !important;
+.ct-orange {
+  stroke: var(--warning-color) !important;
 }
-.ct-red{
-    stroke: var(--danger-color) !important;
+.ct-red {
+  stroke: var(--danger-color) !important;
 }

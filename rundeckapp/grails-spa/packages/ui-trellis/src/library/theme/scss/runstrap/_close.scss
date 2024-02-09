@@ -2,7 +2,6 @@
 // Close icons
 // --------------------------------------------------
 
-
 .close {
   float: right;
   font-size: ($font-size-base * 1.5);
@@ -17,7 +16,7 @@
     color: (--font-color);
     text-decoration: none;
     cursor: pointer;
-    @include opacity(.2);
+    @include opacity(0.2);
   }
 
   // [converter] extracted button& to button.close

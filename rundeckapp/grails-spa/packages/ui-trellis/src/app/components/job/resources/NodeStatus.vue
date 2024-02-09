@@ -1,25 +1,37 @@
 <template>
   <span
-      :title="node.attributes['ui:status:text']"
-      :class="statusIconCss(node.attributes)"
-      :style="statusIconStyle(node.attributes)"
+    :title="node.attributes['ui:status:text']"
+    :class="statusIconCss(node.attributes)"
+    :style="statusIconStyle(node.attributes)"
   >
-      <i :class="glyphiconForName(node.attributes['ui:status:icon'])" class="node-status-icon" v-if="node.attributes['ui:status:icon']"></i>
-      <slot>
-        <span v-if="showText && node.attributes['ui:status:text']" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span>
-      </slot>
+    <i
+      v-if="node.attributes['ui:status:icon']"
+      :class="glyphiconForName(node.attributes['ui:status:icon'])"
+      class="node-status-icon"
+    ></i>
+    <slot>
+      <span
+        v-if="showText && node.attributes['ui:status:text']"
+        class="node-status-text"
+        >{{ node.attributes["ui:status:text"] }}</span
+      >
+    </slot>
   </span>
 </template>
 <script lang="ts">
-import {glyphiconForName, statusIconStyle, statusIconCss} from '../../../utilities/nodeUi'
-import { defineComponent } from "vue"
+import {
+  glyphiconForName,
+  statusIconStyle,
+  statusIconCss,
+} from "../../../utilities/nodeUi";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'node-status',
+  name: "NodeStatus",
   props: {
     node: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
     showText: {
       type: Boolean,
@@ -30,12 +42,12 @@ export default defineComponent({
   methods: {
     statusIconCss,
     statusIconStyle,
-    glyphiconForName
-  }
-})
+    glyphiconForName,
+  },
+});
 </script>
 <style lang="scss" scoped>
-.node-status-icon + .node-status-text{
-    margin-left: 0.5em;
+.node-status-icon + .node-status-text {
+  margin-left: 0.5em;
 }
 </style>

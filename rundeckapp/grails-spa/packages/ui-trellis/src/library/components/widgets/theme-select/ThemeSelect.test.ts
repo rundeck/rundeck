@@ -6,6 +6,7 @@ import { EventBus } from "../../../utilities/vueEventBus";
 import { RootStore } from "../../../stores/RootStore";
 import { RundeckToken } from "../../../interfaces/rundeckWindow";
 
+
 describe("ThemeSelect", () => {
   it("calls a method when an option is selected", async () => {
     const mockMethod = jest.fn(); // Create a mock function to track method calls
@@ -39,6 +40,7 @@ describe("ThemeSelect", () => {
         },
       } as unknown as RootStore,
     };
+    
     const wrapper = shallowMount(ThemeSelect);
 
     // Simulate selecting an option
