@@ -237,6 +237,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
         expect:
             jobCreatePage.waitForOptionsToBe 1, 0
@@ -284,6 +285,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton
             jobCreatePage.optionRevertAllButton.click()
             jobCreatePage.optionConfirmRevertAllButton.click()
@@ -316,8 +318,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
             !(jobCreatePage.optionLis 0 isEmpty())
@@ -367,9 +371,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.fillBasicJob 'a job with workflow undo-redo test'
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
-            jobCreatePage.wfUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButton
-            jobCreatePage.wfRedoButton.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfUndoButtonLink
+            jobCreatePage.wfUndoButtonLink.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButtonLink
+            jobCreatePage.wfRedoButtonLink.click()
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 2
         expect:
             jobCreatePage.workFlowList.size() == 2

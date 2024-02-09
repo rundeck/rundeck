@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -28,6 +27,7 @@ import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
@@ -114,7 +114,7 @@ class WebhookService {
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
         EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
-                queryType: EventQueryType.DELETE,
+                queryType: StoredEventQueryType.DELETE,
                 projectName: webhook.project,
                 subsystem: "webhooks",
                 topic: "${eventTopic}:${webhook.uuid}"
