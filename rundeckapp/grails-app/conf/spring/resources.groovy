@@ -114,6 +114,7 @@ import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
 import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
 import org.rundeck.app.data.project.ProjectConfigMetadataComponent
+import org.rundeck.app.data.project.ProjectMessageMetadataComponent
 import org.rundeck.app.data.project.ProjectScmMetadataComponent
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
@@ -947,12 +948,12 @@ beans={
     logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
     storedEventProvider(GormStoredEventProvider)
 
-    //job metadtata components
+    //job metadata components
     jobScheduleMetadataComponent(JobScheduleMetadataComponent)
     jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
     jobScmMetadataComponent(JobScmMetadataComponent)
     projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
-
+    projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
 }

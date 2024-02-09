@@ -1909,6 +1909,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             stats=cachedSummaryProjectStats(fprojects)
             statsLoaded=true
         }
+
+        if (params.nextUi == 'true') {
+            params.nextUi = true
+            return render(view: 'home.next', model: [
+                    isFirstRun:isFirstRun,
+                    projectNames: fprojects,
+                    statsLoaded: statsLoaded,
+                    execCount:stats.execCount,
+                    totalFailedCount:stats.totalFailedCount,
+                    recentUsers:stats.recentUsers,
+                    recentProjects:stats.recentProjects
+            ])
+        }
+
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,

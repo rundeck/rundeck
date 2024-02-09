@@ -540,10 +540,13 @@ const messages = {
     "you.can.see.this.message.again.by.clicking.the": "You can see this message again by clicking the",
     "version.number": "version number",
     "in.the.page.footer": "in the page footer.",
-    "no.authorized.access.to.projects": "",
-    "no.authorized.access.to.projects.contact.your.administrator.user.roles.0": "",
+    "no.authorized.access.to.projects": "You have no authorized access to projects.",
+    "no.authorized.access.to.projects.contact.your.administrator.user.roles.0": "Contact your administrator. (User roles: {0})",
     "page.home.loading.projects": "Loading Projects",
-    "app.firstRun.md": "",
+    "app.firstRun.md": "Thank you for being a {0} subscriber.\n\n" +
+        "  \n\n\n" +
+        "* [{0} Support Portal &raquo;](http://support.rundeck.com)\n\n" +
+        "* [{0} Documentation &raquo;]({1})",
     "page.home.section.project.title": "{0} Project",
     "page.home.section.project.title.plural": "{0} Projects",
     "page.home.duration.in.the.last.day": "In the last day",
@@ -551,16 +554,18 @@ const messages = {
     "user": "User",
     "user.plural": "Users",
     "page.home.project.executions.0.failed.parenthetical": "({0} Failed)",
-    "page.home.search.projects.input.placeholder": "",
-    "page.home.search.project.title": "{0} Project found",
-    "page.home.search.project.title.plural": "{0} Projects found",
+    "page.home.search.projects.input.placeholder":"Project search: name, label or /regex/",
+    "page.home.search.project.title": "{n} Project found | {n} Projects found",
     "button.Action": "Action",
     "edit.configuration": "Edit Configuration",
     "page.home.new.project.button.label": "New Project",
-    "Execution": "Execution",
-    "Execution.plural": "Executions",
+    "Execution": "{n} Executions | {n} Execution | {n} Executions",
     "in": "in",
     "Project.plural": "Projects",
+    "home.user": "{n} Users | {n} User | {n} Users",
+    "home.table.projects": "Projects",
+    "home.table.activity": "Activity",
+    "home.table.actions": "Actions",
 }
 
 export default messages;

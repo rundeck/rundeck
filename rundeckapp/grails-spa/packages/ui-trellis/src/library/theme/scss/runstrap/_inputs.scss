@@ -157,6 +157,7 @@
     .form-control:focus + &,
     .form-control:focus ~ &{
         background-color: var(--white-color);
+        color: var(--input-outline-color);
     }
 
     .has-error &{

@@ -176,4 +176,8 @@ abstract class BasePage {
     List<WebElement> els(By by) {
         context.driver.findElements(by)
     }
+
+    WebElement getLink(String text){
+        el By.partialLinkText(text)
+    }
 }

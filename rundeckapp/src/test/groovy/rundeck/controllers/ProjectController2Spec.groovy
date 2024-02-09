@@ -18,6 +18,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -1796,5 +1797,66 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         assert response.json[1].description==''
         assert response.json[1].url==base+'/project/testproject2'
         assert response.json[1].created != null
+    }
+
+    void apiProjectList_json_date_v47_meta(){
+        given:
+        def mockAuth = Mock(UserAndRolesAuthContext)
+        when:
+        def dbProjA = new Project(name: 'testproject')
+        dbProjA.save()
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        prja.demand.getConfigCreatedTime(){->new Date()}
+        def dbProjB = new Project(name: 'testproject2')
+        dbProjB.save()
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
+        prjb.demand.getConfigCreatedTime(){->new Date()}
+        controller.frameworkService = mockWith(FrameworkService) {
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(_ as Subject, _ as String) >> mockAuth
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        controller.projectService=Mock(ProjectService){
+            loadProjectMetaItems('testproject',_,_)>>[
+                    new ItemMeta(name: 'meta1', data: Collections.singletonMap('key1', 'value1')),
+                    new ItemMeta(name: 'meta2', data: Collections.singletonMap('key2', 'value2'))
+            ]
+            loadProjectMetaItems('testproject2',_,_)>>[
+                    new ItemMeta(name: 'meta3', data: Collections.singletonMap('key1', 'value1')),
+            ]
+        }
+        request.setAttribute('api_version', 47)
+        params.meta='*'
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        then:
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[0].created != null
+        assert response.json[0].meta[0].name=='meta1'
+        assert response.json[0].meta[0].data.key1=='value1'
+
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].url==base+'/project/testproject2'
+        assert response.json[1].created != null
+        assert response.json[1].meta[0].name=='meta3'
     }
 }

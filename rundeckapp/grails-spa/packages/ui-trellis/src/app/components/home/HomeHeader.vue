@@ -61,8 +61,8 @@
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {getAppLinks} from "@/library";
-import {getSummary} from "@/app/components/home/services/homeServices";
+import {getAppLinks, getRundeckContext} from "@/library";
+import {getSummary} from "./services/homeServices";
 
 export default defineComponent({
   name: "HomeHeader",
@@ -75,6 +75,14 @@ export default defineComponent({
       type: Number,
       default: 0
     },
+    summaryRefresh: {
+      type: Boolean,
+      default: false,
+    },
+    refreshDelay: {
+      type: Number,
+      default: 30000
+    }
   },
   data() {
     return {
@@ -86,22 +94,22 @@ export default defineComponent({
     }
   },
   computed: {
-    createProjectLink() {
+    createProjectLink(): string {
       return getAppLinks().frameworkCreateProject
     },
-    recentProjectsCount() {
+    recentProjectsCount(): number {
       return this.recentProjects?.length || 0
     },
-    recentUsersCount() {
+    recentUsersCount(): number {
       return this.recentUsers?.length || 0
     },
-    loadedProjectNames() {
+    loadedProjectNames(): boolean {
       return !!this.projectCount
     }
   },
   methods: {
     projectLink(project: string): string {
-      return `/project/${project}/`
+      return `${getRundeckContext().rdBase}/project/${project}/`
     },
     async fetchSummary() {
       try {
@@ -111,6 +119,12 @@ export default defineComponent({
           this.totalFailedCount = response.totalFailedCount;
           this.recentProjects = response.recentProjects;
           this.recentUsers = response.recentUsers;
+
+          if(this.summaryRefresh){
+            setTimeout(() => {
+              this.fetchSummary();
+            }, this.refreshDelay);
+          }
         }
       } catch (e) {
         console.error(e);
