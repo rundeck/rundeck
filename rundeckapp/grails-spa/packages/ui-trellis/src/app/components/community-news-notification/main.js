@@ -2,41 +2,43 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 
 // Dependencies
-import {defineComponent, markRaw} from 'vue'
-import { getRundeckContext, getAppLinks } from '../../../library'
+import { defineComponent, markRaw } from "vue";
+import { getRundeckContext, getAppLinks } from "../../../library";
 
-import News from '../../../library/components/widgets/news/News.vue'
+import News from "../../../library/components/widgets/news/News.vue";
 
-import moment from 'moment'
+import moment from "moment";
 // Component Files
 
-let locale = window._rundeck.locale || 'en_US'
-moment.locale(locale)
+let locale = window._rundeck.locale || "en_US";
+moment.locale(locale);
 
-const rootStore = getRundeckContext().rootStore
-const links = getAppLinks()
+const rootStore = getRundeckContext().rootStore;
+const links = getAppLinks();
 
 rootStore.utilityBar.addItems([
   {
-    type: 'widget',
-    id: 'utility-news',
-    container: 'root',
+    type: "widget",
+    id: "utility-news",
+    container: "root",
     class: "fas fa-newspaper",
-    group: 'left',
-    label: 'News',
-    widget: markRaw(defineComponent({
-      app:"NewsApp",
-      components: {News},
-      provide: {rootStore},
-      template: `<News @news:select-all="moreNews"/>`,
-      methods: {
-        moreNews() {
-          window.open(links.communityNews, '_blank')
-        }
-      }
-    }))
-  }
-])
+    group: "left",
+    label: "News",
+    widget: markRaw(
+      defineComponent({
+        app: "NewsApp",
+        components: { News },
+        provide: { rootStore },
+        template: `<News @news:select-all="moreNews"/>`,
+        methods: {
+          moreNews() {
+            window.open(links.communityNews, "_blank");
+          },
+        },
+      }),
+    ),
+  },
+]);
 
 // // include any i18n injected in the page by the app
 // messages =

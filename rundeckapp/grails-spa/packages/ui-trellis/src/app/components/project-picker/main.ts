@@ -1,26 +1,24 @@
-import {createApp} from 'vue'
+import { createApp } from "vue";
 
-import { getRundeckContext, url } from '../../../library'
+import { getRundeckContext, url } from "../../../library";
 
-import ProjectPicker from '../../../library/components/widgets/project-select/ProjectSelectButton.vue'
-import { Project } from '../../../library/stores/Projects'
+import ProjectPicker from "../../../library/components/widgets/project-select/ProjectSelectButton.vue";
+import { Project } from "../../../library/stores/Projects";
 
-const rootStore = getRundeckContext().rootStore
+const rootStore = getRundeckContext().rootStore;
 
-window.addEventListener('DOMContentLoaded', init)
+window.addEventListener("DOMContentLoaded", init);
 
 function init() {
-    const el = document.getElementById('projectPicker') as HTMLElement
+  const el = document.getElementById("projectPicker") as HTMLElement;
 
-    if (!el)
-        return
+  if (!el) return;
 
-    const component = createApp({
-        name:"ProjectPickerApp",
-        components: {ProjectPicker},
-        provide: {rootStore},
-        template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}"/>`
-
-    })
-    component.mount(el)
+  const component = createApp({
+    name: "ProjectPickerApp",
+    components: { ProjectPicker },
+    provide: { rootStore },
+    template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}"/>`,
+  });
+  component.mount(el);
 }

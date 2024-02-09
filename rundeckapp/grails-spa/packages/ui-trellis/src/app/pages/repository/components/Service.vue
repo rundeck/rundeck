@@ -1,8 +1,8 @@
 <template>
   <div class="service">
     <div class="service-header">
-      <a style="display:block;" @click="toggleVisiblity">
-        <h3 class="service-title">{{service.service}}</h3>
+      <a style="display: block" @click="toggleVisiblity">
+        <h3 class="service-title">{{ service.service }}</h3>
         <div class="visibility-toggle pull-right">
           <i v-show="visible" class="fas fa-sort-up fa-2x" title="Hide"></i>
           <i v-show="!visible" class="fas fa-sort-down fa-2x" title="Show"></i>
@@ -10,10 +10,14 @@
       </a>
     </div>
     <div v-show="visible">
-      <div class="service-meta">{{service.desc}}</div>
+      <div class="service-meta">{{ service.desc }}</div>
       <div class="row row-flex row-flex-wrap">
         <div v-for="(provider, index) in service.providers" :key="index">
-          <ProviderCard :provider="provider" :service-name="service.service" class/>
+          <ProviderCard
+            :provider="provider"
+            :service-name="service.service"
+            class
+          />
         </div>
       </div>
     </div>
@@ -28,18 +32,18 @@ export default {
   name: "ServiceRow",
   props: ["service"],
   components: {
-    ProviderCard
+    ProviderCard,
   },
   data() {
     return {
-      visible: true
+      visible: true,
     };
   },
   methods: {
     toggleVisiblity() {
       this.visible = !this.visible;
-    }
-  }
+    },
+  },
 };
 </script>
 

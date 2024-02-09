@@ -3,7 +3,7 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-content">
-            <span class="text-strong">{{project.description}}</span>
+          <span class="text-strong">{{ project.description }}</span>
         </div>
       </div>
     </div>
@@ -12,12 +12,10 @@
 
 <script>
 export default {
-  name: 'Description',
-  props: [
-    'project'
-  ],
-  data () {
-    return {}
-  }
-}
+  name: "Description",
+  props: ["project"],
+  data() {
+    return {};
+  },
+};
 </script>

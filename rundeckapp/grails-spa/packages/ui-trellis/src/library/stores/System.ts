@@ -1,95 +1,98 @@
-import {RundeckClient} from '@rundeck/client'
+import { RundeckClient } from "@rundeck/client";
 
-import { RundeckVersion } from '../utilities/RundeckVersion'
-import { Serial } from '../utilities/Async'
+import { RundeckVersion } from "../utilities/RundeckVersion";
+import { Serial } from "../utilities/Async";
 
-import {RootStore} from './RootStore'
-import {ref} from "vue";
+import { RootStore } from "./RootStore";
+import { ref } from "vue";
 
 export class SystemStore {
-    versionInfo: VersionInfo
-    serverInfo?: ServerInfo
-    appInfo: AppInfo
+  versionInfo: VersionInfo;
+  serverInfo?: ServerInfo;
+  appInfo: AppInfo;
 
-    loaded = false
+  loaded = false;
 
-    constructor(readonly root: RootStore, readonly client: RundeckClient) {
-        this.versionInfo = new VersionInfo()
-        this.appInfo = new AppInfo()
+  constructor(
+    readonly root: RootStore,
+    readonly client: RundeckClient,
+  ) {
+    this.versionInfo = new VersionInfo();
+    this.appInfo = new AppInfo();
+  }
+
+  loadMeta(meta: any) {
+    if (meta.title) {
+      this.appInfo.title = meta.title;
     }
-
-    loadMeta(meta: any) {
-        if (meta.title) {
-            this.appInfo.title = meta.title
-        }
-        if (meta.logocss) {
-            this.appInfo.logocss = meta.logocss
-        }
+    if (meta.logocss) {
+      this.appInfo.logocss = meta.logocss;
     }
+  }
 
-    @Serial
-    async load() {
-        if (this.loaded)
-            return
+  @Serial
+  async load() {
+    if (this.loaded) return;
 
-        const resp = await this.client.systemInfoGet()
+    const resp = await this.client.systemInfoGet();
 
-        const verString = resp.system!.rundeckProperty!.version
-        const ver = new RundeckVersion({versionString: verString})
+    const verString = resp.system!.rundeckProperty!.version;
+    const ver = new RundeckVersion({ versionString: verString });
 
-        this.versionInfo.fromRundeckVersion(ver)
-        this.serverInfo = new ServerInfo(
-            resp.system!.rundeckProperty!.node!,
-            resp.system!.rundeckProperty!.serverUUID!)
+    this.versionInfo.fromRundeckVersion(ver);
+    this.serverInfo = new ServerInfo(
+      resp.system!.rundeckProperty!.node!,
+      resp.system!.rundeckProperty!.serverUUID!,
+    );
 
-        this.loaded = true
-    }
+    this.loaded = true;
+  }
 }
 
 export class AppInfo {
-    title = 'Rundeck'
-    logocss = 'rdicon'
+  title = "Rundeck";
+  logocss = "rdicon";
 }
 
 export class VersionInfo {
-    full!: string
-    number!: string
-    tag!: string
-    name!: string
-    color!: string
-    date!: Date
-    icon!: string
-    edition = 'Community'
+  full!: string;
+  number!: string;
+  tag!: string;
+  name!: string;
+  color!: string;
+  date!: Date;
+  icon!: string;
+  edition = "Community";
 
-    constructor() {}
+  constructor() {}
 
-    static FromRundeckVersion(ver: RundeckVersion): VersionInfo {
-        const versionInfo = new VersionInfo
-        return versionInfo.fromRundeckVersion(ver)
-    }
+  static FromRundeckVersion(ver: RundeckVersion): VersionInfo {
+    const versionInfo = new VersionInfo();
+    return versionInfo.fromRundeckVersion(ver);
+  }
 
-    fromRundeckVersion(ver: RundeckVersion): VersionInfo {
-        this.number = ver.versionSemantic()
-        this.name = ver.versionName()
-        this.icon = ver.versionIcon()
-        this.color = ver.versionColor()
-        this.tag = ver.data().tag
+  fromRundeckVersion(ver: RundeckVersion): VersionInfo {
+    this.number = ver.versionSemantic();
+    this.name = ver.versionName();
+    this.icon = ver.versionIcon();
+    this.color = ver.versionColor();
+    this.tag = ver.data().tag;
 
-        return this
-    }
+    return this;
+  }
 }
 
 export class ServerInfo {
-    name!: string
-    color!: string
-    uuid!: string
-    icon!: string
+  name!: string;
+  color!: string;
+  uuid!: string;
+  icon!: string;
 
-    constructor(name: string, uuid: string) {
-        const ver = new RundeckVersion({})
-        this.name = name
-        this.uuid = uuid
-        this.icon = ver.iconForVersion2(ver.splitUUID(uuid)['uuid0'])
-        this.color = ver.splitUUID(uuid)['sixes'][0]
-    }
+  constructor(name: string, uuid: string) {
+    const ver = new RundeckVersion({});
+    this.name = name;
+    this.uuid = uuid;
+    this.icon = ver.iconForVersion2(ver.splitUUID(uuid)["uuid0"]);
+    this.color = ver.splitUUID(uuid)["sixes"][0];
+  }
 }

@@ -1,133 +1,131 @@
-
-html,body{
-    background-color: var(--background-color);
+html,
+body {
+  background-color: var(--background-color);
 }
-body.view{
+body.view {
+  position: relative;
+}
+body.ui-type-current,
+body.ui-type-legacy {
+  &.view > section,
+  .view > section {
+    overflow: hidden;
+  }
+  #section-main {
+    margin-top: 45px;
+    height: calc(100vh - 69px);
+    display: flex;
+    z-index: 1;
+    overflow: hidden;
+    // position: relative;
+  }
+  #section-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  #section-utility {
+    bottom: 0;
+    left: 0;
+    width: 100%;
     position: relative;
+    z-index: 2;
+    box-shadow: var(--utility-bar-box-shadow) !important;
+  }
+
+  #section-header {
+    //position: relative;
+    z-index: 3;
+    overflow: visible;
+  }
+
+  #section-navbar {
+    display: flex;
+    flex: none;
+    width: 65px;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--sidebar-background-color);
+  }
+  #section-content-wrap {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  #section-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow: auto;
+    padding: 2rem;
+  }
 }
-body.ui-type-current, body.ui-type-legacy{
+body.ui-type-next {
+  #section-main {
+    padding-top: 45px;
 
-    &.view > section, .view > section {
-        overflow: hidden;
+    display: flex;
+    z-index: 1;
+    &.with-project {
+      margin-left: 65px;
     }
-    #section-main{
-        margin-top: 45px;
-        height: calc(100vh - 69px);
-        display: flex;
-        z-index: 1;
-        overflow: hidden;
-        // position: relative;
-    }
-    #section-header{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-    }
-    #section-utility{
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        position: relative;
-        z-index: 2;
-        box-shadow: var(--utility-bar-box-shadow) !important;
-    }
+  }
+  #section-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 4;
+    overflow: visible;
+  }
+  #section-utility {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
 
-    #section-header {
-        //position: relative;
-        z-index: 3;
-        overflow: visible;
-    }
+    z-index: 3;
+    box-shadow: var(--utility-bar-box-shadow) !important;
+  }
 
-    #section-navbar {
-        display: flex;
-        flex: none;
-        width: 65px;
-        align-items: center;
-        overflow: hidden;
-        background-color: var(--sidebar-background-color);
+  #section-navbar {
+    display: flex;
+    flex: none;
+    width: auto;
+    z-index: 2;
+    align-items: center;
+    background-color: var(--sidebar-background-color);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: calc(100vh - 45px);
+    > nav {
+      width: 65px;
     }
-    #section-content-wrap{
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-    }
+  }
+  #section-content-wrap {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
 
-    #section-content {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        overflow: auto;
-        padding: 2rem;
-    }
+  #section-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 2rem;
+  }
 }
-body.ui-type-next{
-    #section-main{
-        padding-top:45px;
-
-        display: flex;
-        z-index: 1;
-        &.with-project{
-            margin-left: 65px;
-        }
-    }
-    #section-header{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 4;
-        overflow: visible;
-    }
-    #section-utility{
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-
-        z-index: 3;
-        box-shadow: var(--utility-bar-box-shadow) !important;
-    }
-
-
-    #section-navbar {
-        display: flex;
-        flex: none;
-        width: auto;
-        z-index: 2;
-        align-items: center;
-        background-color: var(--sidebar-background-color);
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        height: calc(100vh - 45px);
-        > nav{
-            width: 65px;
-        }
-    }
-    #section-content-wrap{
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-    }
-
-    #section-content {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        padding: 2rem;
-    }
-
-
-}
-
 
 .view > section {
 }
 
-
-th.table-header, td.table-header, .text-table-header {
-    color: var(--card-default-color) !important;
+th.table-header,
+td.table-header,
+.text-table-header {
+  color: var(--card-default-color) !important;
 }
 
 .list-group-item {
@@ -135,6 +133,11 @@ th.table-header, td.table-header, .text-table-header {
   border: 1px solid var(--list-item-border-color);
 }
 
-.table thead tr.success th, .table thead tr.success td, .table tbody tr.success th, .table tbody tr.success td, .table tfoot tr.success th, .table tfoot tr.success td {
-    background-color: var(--success-bg-color) !important;
+.table thead tr.success th,
+.table thead tr.success td,
+.table tbody tr.success th,
+.table tbody tr.success td,
+.table tfoot tr.success th,
+.table tfoot tr.success td {
+  background-color: var(--success-bg-color) !important;
 }

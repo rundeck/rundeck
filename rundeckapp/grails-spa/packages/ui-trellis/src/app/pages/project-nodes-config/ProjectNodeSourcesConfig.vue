@@ -11,21 +11,31 @@
     :mode-toggle="modeToggle"
     :event-bus="eventBus"
   >
-    <template v-slot:item-extra="{plugin,mode}">
+    <template v-slot:item-extra="{ plugin, mode }">
       <div>
         <div
-          v-if="isWriteable(plugin.origIndex) && (showWriteableLinkMode==='any' || showWriteableLinkMode===mode)"
+          v-if="
+            isWriteable(plugin.origIndex) &&
+            (showWriteableLinkMode === 'any' || showWriteableLinkMode === mode)
+          "
         >
-          <a :href="editPermalink(plugin.origIndex)" class="btn btn-sm btn-default">
+          <a
+            :href="editPermalink(plugin.origIndex)"
+            class="btn btn-sm btn-default"
+          >
             <i class="glyphicon glyphicon-pencil"></i>
-            {{$t('Edit Nodes')}}
+            {{ $t("Edit Nodes") }}
           </a>
         </div>
         <div class="row row-space" v-if="sourceErrors(plugin.origIndex)">
           <div class="col-sm-12">
             <div class="well well-sm">
-              <div class="text-info">{{$t('The Node Source had an error')}}:</div>
-              <span class="text-danger">{{sourceErrors(plugin.origIndex)}}</span>
+              <div class="text-info">
+                {{ $t("The Node Source had an error") }}:
+              </div>
+              <span class="text-danger">{{
+                sourceErrors(plugin.origIndex)
+              }}</span>
             </div>
           </div>
         </div>
@@ -44,35 +54,35 @@ export default defineComponent({
   props: {
     help: {
       type: String,
-      required: false
+      required: false,
     },
     editMode: {
       type: Boolean,
-      default: false
+      default: false,
     },
     modeToggle: {
       type: Boolean,
-      default: true
+      default: true,
     },
     showWriteableLinkMode: {
       type: String,
-      default: "show"
+      default: "show",
     },
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
-    }
+    },
   },
-  emits: ['saved','reset','modified'],
+  emits: ["saved", "reset", "modified"],
   components: {
-    ProjectPluginConfig
+    ProjectPluginConfig,
   },
 
   data() {
     return {
       project: "",
       rundeckContext: {} as RundeckContext,
-      sourcesData: [] as NodeSource[]
+      sourcesData: [] as NodeSource[],
     };
   },
   methods: {
@@ -112,24 +122,28 @@ export default defineComponent({
         return console.warn("Error getting node sources list", e);
       }
     },
-    checkUnauthorized(){
-      let globalErrors = []
-      this.sourcesData.forEach( (source:NodeSource)=>{
-        if(source.errors!==undefined &&  (source.errors.indexOf("Unauthorized access") > 0 ||source.errors.indexOf("storage") > 0) ){
-          globalErrors.push(source.errors)
-          this.eventBus.emit('nodes-unauthorized',this.sourcesData.length)
-        }else{
-          if(globalErrors.length==0){
-            this.eventBus.emit('nodes-unauthorized',0)
+    checkUnauthorized() {
+      let globalErrors = [];
+      this.sourcesData.forEach((source: NodeSource) => {
+        if (
+          source.errors !== undefined &&
+          (source.errors.indexOf("Unauthorized access") > 0 ||
+            source.errors.indexOf("storage") > 0)
+        ) {
+          globalErrors.push(source.errors);
+          this.eventBus.emit("nodes-unauthorized", this.sourcesData.length);
+        } else {
+          if (globalErrors.length == 0) {
+            this.eventBus.emit("nodes-unauthorized", 0);
           }
         }
-      })
+      });
     },
   },
   watch: {
-    sourcesData: function(val, oldVal) {
-         this.checkUnauthorized();
-    }
+    sourcesData: function (val, oldVal) {
+      this.checkUnauthorized();
+    },
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
@@ -140,6 +154,6 @@ export default defineComponent({
     ) {
       this.loadNodeSourcesData();
     }
-  }
+  },
 });
 </script>

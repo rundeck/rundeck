@@ -1,23 +1,20 @@
 <template>
   <div id="app">
-
- 
-    <copybox/>
+    <copybox />
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue';
-import HelloWorld from './components/HelloWorld.vue';
-import copybox from './components/containers/copybox/CopyBox.vue';
-
+import { defineComponent } from "vue";
+import HelloWorld from "./components/HelloWorld.vue";
+import copybox from "./components/containers/copybox/CopyBox.vue";
 
 export default defineComponent({
-  name: 'App',
+  name: "App",
   components: {
     HelloWorld,
     copybox,
-  }
+  },
 });
 </script>
 

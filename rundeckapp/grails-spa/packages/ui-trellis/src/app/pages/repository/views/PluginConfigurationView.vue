@@ -1,14 +1,14 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12" style="margin-bottom:1em;">
-        <h3 style="margin: 0px;">Installed Plugins</h3>
+      <div class="col-xs-12" style="margin-bottom: 1em">
+        <h3 style="margin: 0px">Installed Plugins</h3>
       </div>
       <div class="col-xs-12 col-sm-4">
         <select
           class="form-control"
           @change="changeServiceFacet"
-          style="height:30px"
+          style="height: 30px"
           :disabled="view === 'detail'"
         >
           <option value>View All</option>
@@ -16,7 +16,9 @@
             v-for="(service, index) in services"
             :key="index"
             :value="service.name"
-          >{{service.value}}</option>
+          >
+            {{ service.value }}
+          </option>
         </select>
       </div>
       <div class="col-xs-12 col-sm-4">
@@ -28,9 +30,13 @@
               placeholder="Search for..."
               :disabled="view === 'detail'"
               v-model="searchString"
-            >
+            />
             <span class="input-group-btn" v-if="searchResultPlugins.length > 0">
-              <button @click="clearSearch" class="btn btn-default btn-fill" type="button">
+              <button
+                @click="clearSearch"
+                class="btn btn-default btn-fill"
+                type="button"
+              >
                 <i class="fas fa-times"></i>
               </button>
             </span>
@@ -48,25 +54,31 @@
         </form>
       </div>
       <div class="col-xs-12 col-sm-4 text-right">
-        <div class="btn-group btn-group-sm btn-group-justified squareish-buttons" role="group">
+        <div
+          class="btn-group btn-group-sm btn-group-justified squareish-buttons"
+          role="group"
+        >
           <a
             type="button"
             @click="view = 'grid'"
             class="btn btn-default"
-            :class="{'active': view === 'grid'}"
-          >Grid</a>
+            :class="{ active: view === 'grid' }"
+            >Grid</a
+          >
           <a
             type="button"
             @click="view = 'list'"
             class="btn btn-default"
-            :class="{'active': view === 'list'}"
-          >List</a>
+            :class="{ active: view === 'list' }"
+            >List</a
+          >
           <a
             type="button"
             @click="view = 'detail'"
             class="btn btn-default"
-            :class="{'active': view === 'detail'}"
-          >Detail</a>
+            :class="{ active: view === 'detail' }"
+            >Detail</a
+          >
         </div>
       </div>
     </div>
@@ -84,8 +96,8 @@
             :key="index"
           />
           <div class="col-xs-12" v-show="view === 'list'">
-            <div class="card col-xs-12" style="padding:0;">
-              <div class="card-content" style="padding:0;">
+            <div class="card col-xs-12" style="padding: 0">
+              <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
                   <thead>
                     <tr>
@@ -115,8 +127,8 @@
           class="artifact-grid row row-flex row-flex-wrap"
         >
           <div class="col-xs-12" v-show="view === 'list'">
-            <div class="card col-xs-12" style="padding:0;">
-              <div class="card-content" style="padding:0;">
+            <div class="card col-xs-12" style="padding: 0">
+              <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
                   <thead>
                     <tr>
@@ -147,24 +159,41 @@
             v-for="(plugin, index) in plugins"
             :key="`card_${index}`"
           />
-          <div v-show="view === 'detail'" class="col-sm-4 details-checkbox-column">
+          <div
+            v-show="view === 'detail'"
+            class="col-sm-4 details-checkbox-column"
+          >
             <div
-              style="max-height: 80vh;overflow-y: scroll; display:inline-block;"
+              style="
+                max-height: 80vh;
+                overflow-y: scroll;
+                display: inline-block;
+              "
               class="flex-col card"
             >
               <div class="card-content">
                 <div v-for="(service, index) in pluginsByService" :key="index">
                   <div v-if="service.providers.length">
-                    <h5 class="checkbox-group-title">{{StringFormatters.splitAtCapitalLetter(service.service) }}</h5>
+                    <h5 class="checkbox-group-title">
+                      {{
+                        StringFormatters.splitAtCapitalLetter(service.service)
+                      }}
+                    </h5>
                     <ul>
-                      <li v-for="(plugin, index) in service.providers" :key="index">
+                      <li
+                        v-for="(plugin, index) in service.providers"
+                        :key="index"
+                      >
                         <label>
                           <input
                             type="checkbox"
                             v-model="checkedServiceProviders"
-                            :value="{serviceName: service.service, providerName: plugin.name}"
-                          >
-                          {{plugin.title}}
+                            :value="{
+                              serviceName: service.service,
+                              providerName: plugin.name,
+                            }"
+                          />
+                          {{ plugin.title }}
                         </label>
                       </li>
                     </ul>
@@ -175,41 +204,71 @@
           </div>
           <div v-show="view === 'detail'" class="col-sm-8 details-output">
             <div
-              style="display: inline-block;max-height: 80vh;overflow-y: scroll;"
+              style="
+                display: inline-block;
+                max-height: 80vh;
+                overflow-y: scroll;
+              "
               class="flex-col"
             >
               <div v-if="!providersDetails || providersDetails.length === 0">
                 <div class="card">
-                  <div class="card-content" style="text-align:center">
-                    <h5 style="margin:0;">Select a Provider for more information.</h5>
+                  <div class="card-content" style="text-align: center">
+                    <h5 style="margin: 0">
+                      Select a Provider for more information.
+                    </h5>
                   </div>
                 </div>
               </div>
               <div v-for="(details, index) in providersDetails" :key="index">
                 <div class="card">
                   <div class="card-header">
-                    <h3 style="margin:0;" class="card-title">{{details.response.title}}</h3>
-                    <h5 style="margin:0;">{{StringFormatters.splitAtCapitalLetter(details.provider.serviceName) }}</h5>
+                    <h3 style="margin: 0" class="card-title">
+                      {{ details.response.title }}
+                    </h3>
+                    <h5 style="margin: 0">
+                      {{
+                        StringFormatters.splitAtCapitalLetter(
+                          details.provider.serviceName,
+                        )
+                      }}
+                    </h5>
                   </div>
-                  <hr>
+                  <hr />
                   <div class="card-content">
                     <p>
                       Provider Name:
-                      <code>{{details.response.name}}</code>
+                      <code>{{ details.response.name }}</code>
                     </p>
-                    <p>{{details.response.desc}}</p>
+                    <p>{{ details.response.desc }}</p>
                     <ul class="provider-props">
-                      <li v-for="(prop, index) in details.response.props" :key="index">
+                      <li
+                        v-for="(prop, index) in details.response.props"
+                        :key="index"
+                      >
                         <div class="row">
                           <div class="col-xs-12 col-sm-3">
-                            <strong>{{prop.title}}</strong>
+                            <strong>{{ prop.title }}</strong>
                           </div>
                           <div class="col-xs-12 col-sm-9 provider-prop-divs">
-                            <div>{{prop.desc}}</div>
+                            <div>{{ prop.desc }}</div>
                             <div>
                               <strong>Configure Project:</strong>
-                              <code v-if="details.response.projectMapping[prop.name]">{{details.response.projectMapping[prop.name]}}={{prop.defaultValue || 'value'}}</code>
-                              <code v-else>project.plugin.{{details.provider.serviceName}}.{{details.response.name}}.{{prop.name}}={{prop.defaultValue || 'value'}}</code>
+                              <code
+                                v-if="
+                                  details.response.projectMapping[prop.name]
+                                "
+                                >{{
+                                  details.response.projectMapping[prop.name]
+                                }}={{ prop.defaultValue || "value" }}</code
+                              >
+                              <code v-else
+                                >project.plugin.{{
+                                  details.provider.serviceName
+                                }}.{{ details.response.name }}.{{
+                                  prop.name
+                                }}={{ prop.defaultValue || "value" }}</code
+                              >
                             </div>
                             <div>
                               <strong>Configure Framework:</strong>
@@ -220,9 +279,12 @@
                               />
                             </div>
                             <div class="row">
-                              <div class="col-xs-12 col-sm-3" v-if="prop.defaultValue">
+                              <div
+                                class="col-xs-12 col-sm-3"
+                                v-if="prop.defaultValue"
+                              >
                                 <strong>Default value:</strong>
-                                <code>{{prop.defaultValue}}</code>
+                                <code>{{ prop.defaultValue }}</code>
                               </div>
                               <div
                                 class="col-xs-12 col-sm-9"
@@ -230,8 +292,11 @@
                               >
                                 <strong>Allowed values:</strong>
                                 <ul class="values">
-                                  <li v-for="(allowedItem, index) in prop.allowed" :key="index">
-                                    <code>{{allowedItem}}</code>
+                                  <li
+                                    v-for="(allowedItem, index) in prop.allowed"
+                                    :key="index"
+                                  >
+                                    <code>{{ allowedItem }}</code>
                                   </li>
                                 </ul>
                               </div>
@@ -260,21 +325,29 @@
     >
       <p>
         Provider Name:
-        <code>{{provider.name}}</code>
+        <code>{{ provider.name }}</code>
       </p>
-      <p>{{provider.desc}}</p>
+      <p>{{ provider.desc }}</p>
       <ul class="provider-props">
         <li v-for="(prop, index) in provider.props" :key="index">
           <div class="row">
             <div class="col-xs-12 col-sm-3">
-              <strong>{{prop.title}}</strong>
+              <strong>{{ prop.title }}</strong>
             </div>
             <div class="col-xs-12 col-sm-9 provider-prop-divs">
-              <div>{{prop.desc}}</div>
+              <div>{{ prop.desc }}</div>
               <div>
                 <strong>Configure Project:</strong>
-                <code v-if="provider.projectMapping[prop.name]">{{provider.projectMapping[prop.name]}}={{prop.defaultValue || 'value'}}</code>
-                <code v-else>project.plugin.{{serviceName}}.{{provider.name}}.{{prop.name}}={{prop.defaultValue || 'value'}}</code>
+                <code v-if="provider.projectMapping[prop.name]"
+                  >{{ provider.projectMapping[prop.name] }}={{
+                    prop.defaultValue || "value"
+                  }}</code
+                >
+                <code v-else
+                  >project.plugin.{{ serviceName }}.{{ provider.name }}.{{
+                    prop.name
+                  }}={{ prop.defaultValue || "value" }}</code
+                >
               </div>
               <div>
                 <strong>Configure Framework:</strong>
@@ -287,13 +360,19 @@
               <div class="row">
                 <div class="col-xs-12 col-sm-3" v-if="prop.defaultValue">
                   <strong>Default value:</strong>
-                  <code>{{prop.defaultValue}}</code>
+                  <code>{{ prop.defaultValue }}</code>
                 </div>
-                <div class="col-xs-12 col-sm-9" v-if="prop.allowed && prop.allowed.length">
+                <div
+                  class="col-xs-12 col-sm-9"
+                  v-if="prop.allowed && prop.allowed.length"
+                >
                   <strong>Allowed values:</strong>
                   <ul class="values">
-                    <li v-for="(allowedItem, index) in prop.allowed" :key="index">
-                      <code>{{allowedItem}}</code>
+                    <li
+                      v-for="(allowedItem, index) in prop.allowed"
+                      :key="index"
+                    >
+                      <code>{{ allowedItem }}</code>
                     </li>
                   </ul>
                 </div>
@@ -303,17 +382,17 @@
         </li>
       </ul>
       <template v-slot:footer>
-      <div>
-        <btn @click="handleModalClose">Close</btn>
-      </div>
+        <div>
+          <btn @click="handleModalClose">Close</btn>
+        </div>
       </template>
     </modal>
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
-import Fuse from 'fuse.js'
+import { defineComponent } from "vue";
+import Fuse from "fuse.js";
 import { mapState, mapActions } from "vuex";
 
 import * as StringFormatters from "../../../utilities/StringFormatters";
@@ -328,12 +407,12 @@ const FuseSearchOptions = {
   // distance: 100,
   // maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: ["display", "name", "title"]
+  keys: ["display", "name", "title"],
 };
 
 export default defineComponent({
   name: "PluginConfigurationView",
-  components: {ProviderCard, ProviderCardRow, ConfigureFrameworkString},
+  components: { ProviderCard, ProviderCardRow, ConfigureFrameworkString },
   methods: {
     ...mapActions("plugins", [
       "initData",
@@ -341,7 +420,7 @@ export default defineComponent({
       "getServices",
       "getProvidersListByService",
       "getProvidersInfo",
-      "setSearchResultPlugins"
+      "setSearchResultPlugins",
     ]),
     ...mapActions("modal", ["closeModal"]),
     handleModalClose() {
@@ -362,13 +441,15 @@ export default defineComponent({
       }
       let theRepo = this.plugins;
       const fuse = new Fuse(theRepo, FuseSearchOptions);
-      const results = fuse.search(this.searchString).map((result) => result.item)
+      const results = fuse
+        .search(this.searchString)
+        .map((result) => result.item);
       this.setSearchResultPlugins(results);
-    }
+    },
   },
   computed: {
     StringFormatters() {
-      return StringFormatters
+      return StringFormatters;
     },
     ...mapState("modal", ["modalOpen"]),
     ...mapState("plugins", [
@@ -378,7 +459,7 @@ export default defineComponent({
       "serviceName",
       "services",
       "pluginsByService",
-      "providersDetails"
+      "providersDetails",
     ]),
     isModalOpen: {
       get: function () {
@@ -388,13 +469,13 @@ export default defineComponent({
         this.closeModal().then(() => {
           return this.modalOpen;
         });
-      }
+      },
     },
     searchResultsCollection: {
       get() {
         return this.searchResultPlugins || [];
-      }
-    }
+      },
+    },
   },
   created() {
     this.initData();
@@ -408,15 +489,15 @@ export default defineComponent({
       searchIndex: [],
       selectedService: null,
       view: "grid",
-      checkedServiceProviders: []
+      checkedServiceProviders: [],
     };
   },
   watch: {
     checkedServiceProviders(newVal) {
       this.getProvidersInfo(newVal);
-    }
-  }
-})
+    },
+  },
+});
 </script>
 
 <style lang="scss" scoped>

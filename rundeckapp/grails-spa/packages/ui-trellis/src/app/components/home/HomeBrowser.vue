@@ -1,25 +1,34 @@
 <template>
-      <DynamicScroller
-        ref="scroller"
-        :items="projects"
-        :min-item-size="43"
-        key-field="name"
-        item-tag="div"
+  <DynamicScroller
+    ref="scroller"
+    :items="projects"
+    :min-item-size="43"
+    key-field="name"
+    item-tag="div"
+  >
+    <template #default="{ item, index, active }">
+      <DynamicScrollerItem
+        :item="item"
+        :index="index"
+        :active="active"
+        :size-dependecies="[item.description, item.meta]"
       >
-        <template #default="{ item, index, active }">
-          <DynamicScrollerItem :item="item" :index="index" :active="active" :size-dependecies="[item.description, item.meta]">
-            <HomeBrowserItem :project="item" :index="getProjectIndex(item)" :loaded="loaded" />
-          </DynamicScrollerItem>
-        </template>
-      </DynamicScroller>
+        <HomeBrowserItem
+          :project="item"
+          :index="getProjectIndex(item)"
+          :loaded="loaded"
+        />
+      </DynamicScrollerItem>
+    </template>
+  </DynamicScroller>
 </template>
 
 <script lang="ts">
-import {defineComponent, PropType} from "vue";
+import { defineComponent, PropType } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import HomeBrowserItem from "./HomeBrowserItem.vue";
-import {Project} from "./types/projectTypes";
+import { Project } from "./types/projectTypes";
 
 export default defineComponent({
   name: "HomeBrowser",
@@ -36,7 +45,7 @@ export default defineComponent({
     loaded: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   methods: {
     getProjectIndex(project: Project) {
@@ -47,7 +56,7 @@ export default defineComponent({
       // so we need to find the index of the project in the allProjects array,
       // as this array won't be mutated by any action in the view.
       return this.allProjects.findIndex((p) => p.name === project.name);
-    }
-  }
+    },
+  },
 });
 </script>

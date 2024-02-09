@@ -1,6 +1,12 @@
 <template>
   <div>
-    <DynamicFormPluginProp :fields="fields" :options="options" :hasOptions="hasOptions" :element="element" :name="name"></DynamicFormPluginProp>
+    <DynamicFormPluginProp
+      :fields="fields"
+      :options="options"
+      :hasOptions="hasOptions"
+      :element="element"
+      :name="name"
+    ></DynamicFormPluginProp>
   </div>
 </template>
 
@@ -8,13 +14,12 @@
 import DynamicFormPluginProp from "../../../library/components/plugins/DynamicFormPluginProp.vue";
 
 export default {
-  name: 'App',
-  props: ["fields", "options","element","hasOptions","name"],
+  name: "App",
+  props: ["fields", "options", "element", "hasOptions", "name"],
   components: {
-    DynamicFormPluginProp
-  }
-}
+    DynamicFormPluginProp,
+  },
+};
 </script>
 
-<style>
-</style>
+<style></style>

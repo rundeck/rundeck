@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12 col-sm-12" style="padding-bottom: 10px;">
-        <h3 style="margin: 0px;">Plugin Repositories</h3>
+      <div class="col-xs-12 col-sm-12" style="padding-bottom: 10px">
+        <h3 style="margin: 0px">Plugin Repositories</h3>
       </div>
       <div class="col-xs-12 col-sm-6">
         <form @submit.prevent="search">
@@ -12,14 +12,22 @@
               class="form-control"
               placeholder="Search for..."
               v-model="searchString"
-            >
+            />
             <span class="input-group-btn" v-if="searchResults.length > 0">
-              <button @click="clearSearch" class="btn btn-default btn-fill" type="button">
+              <button
+                @click="clearSearch"
+                class="btn btn-default btn-fill"
+                type="button"
+              >
                 <i class="fas fa-times"></i>
               </button>
             </span>
             <span class="input-group-btn" v-else>
-              <button @click="search" class="btn btn-default btn-fill" type="button">
+              <button
+                @click="search"
+                class="btn btn-default btn-fill"
+                type="button"
+              >
                 <i class="fas fa-search"></i>
               </button>
             </span>
@@ -35,43 +43,56 @@
           <a
             @click="showWhichPlugins = true"
             class="btn btn-default"
-            :class="{'active': showWhichPlugins === true}"
+            :class="{ active: showWhichPlugins === true }"
             :disabled="searchResults.length > 0"
-          >Installed</a>
+            >Installed</a
+          >
           <a
             @click="showWhichPlugins = null"
             class="btn btn-default"
-            :class="{'active': showWhichPlugins === null}"
+            :class="{ active: showWhichPlugins === null }"
             :disabled="searchResults.length > 0"
-          >All</a>
+            >All</a
+          >
           <a
             @click="showWhichPlugins = false"
             class="btn btn-default"
-            :class="{'active': showWhichPlugins === false}"
+            :class="{ active: showWhichPlugins === false }"
             :disabled="searchResults.length > 0"
-          >Not Installed</a>
+            >Not Installed</a
+          >
         </div>
       </div>
     </div>
     <div class="row" v-show="searchResults.length > 0">
       <h3
         class="col-xs-12"
-        style="margin: 1em 0 0; font-weight: bold; text-transform:uppercase;"
-      >Search Results</h3>
-      <div v-for="repo in searchResults" :key="repo.repositoryName" class="col-xs-12">
-        <RepositoryRow :repo="repo" type="search"/>
+        style="margin: 1em 0 0; font-weight: bold; text-transform: uppercase"
+      >
+        Search Results
+      </h3>
+      <div
+        v-for="repo in searchResults"
+        :key="repo.repositoryName"
+        class="col-xs-12"
+      >
+        <RepositoryRow :repo="repo" type="search" />
       </div>
     </div>
     <div class="row" v-if="searchResults.length === 0">
-      <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
-        <RepositoryRow :repo="repo"/>
+      <div
+        v-for="repo in repositories"
+        :key="repo.repositoryName"
+        class="col-xs-12"
+      >
+        <RepositoryRow :repo="repo" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import _ from "lodash";
 import axios from "axios";
 import Fuse from "fuse.js";
@@ -85,16 +106,16 @@ const FuseSearchOptions = {
   // distance: 100,
   // maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: ["display", "name", "title"]
+  keys: ["display", "name", "title"],
 };
 
 export default defineComponent({
   name: "PluginRepositoryView",
   components: {
-    RepositoryRow
+    RepositoryRow,
   },
   computed: {
-    ...mapState("repositories", ["repositories"])
+    ...mapState("repositories", ["repositories"]),
   },
   data() {
     return {
@@ -102,20 +123,20 @@ export default defineComponent({
       searchString: "",
       searchIndex: [],
       searchResults: [],
-      loggingPermissionCheck: false
+      loggingPermissionCheck: false,
     };
   },
   watch: {
-    showWhichPlugins: function(newVal, oldVal) {
+    showWhichPlugins: function (newVal, oldVal) {
       this.setInstallStatusOfPluginsVisibility(newVal);
-    }
+    },
   },
   methods: {
     ...mapActions("repositories", [
       "initData",
-      "setInstallStatusOfPluginsVisibility"
+      "setInstallStatusOfPluginsVisibility",
     ]),
-    ...mapActions('overlay', ['openOverlay']),
+    ...mapActions("overlay", ["openOverlay"]),
     clearSearch() {
       this.searchResults = [];
     },
@@ -128,60 +149,62 @@ export default defineComponent({
       }
       for (let index = 0; index < this.repositories.length; index++) {
         let theRepo = this.repositories[index].results;
-        const fuse = new Fuse(theRepo, FuseSearchOptions)
-        const results = fuse.search(this.searchString).map((result) => result.item)
+        const fuse = new Fuse(theRepo, FuseSearchOptions);
+        const results = fuse
+          .search(this.searchString)
+          .map((result) => result.item);
         if (
-            !window.repositoryLocalSearchOnly &&
-            this.repositories[index].repositoryName === "official"
+          !window.repositoryLocalSearchOnly &&
+          this.repositories[index].repositoryName === "official"
         ) {
           let versionNumber = null;
           let mappedResults = _.map(results, "id");
           let rundeckVersionNumberContainer = document.getElementsByClassName(
-              "rundeck-version-identity"
+            "rundeck-version-identity",
           );
           if (
-              rundeckVersionNumberContainer[0] &&
-              rundeckVersionNumberContainer[0].dataset &&
-              rundeckVersionNumberContainer[0].dataset.versionString
+            rundeckVersionNumberContainer[0] &&
+            rundeckVersionNumberContainer[0].dataset &&
+            rundeckVersionNumberContainer[0].dataset.versionString
           ) {
             versionNumber =
-                rundeckVersionNumberContainer[0].dataset.versionString;
+              rundeckVersionNumberContainer[0].dataset.versionString;
           }
           let payload = {
             searchString: this.searchString,
             results: mappedResults,
-            rundeckVer: versionNumber
+            rundeckVer: versionNumber,
           };
           axios({
             method: "post",
             url: `https://api.rundeck.com/repo/v1/oss/search/save`,
-            data: payload
+            data: payload,
           });
         }
 
         this.searchResults.push({
           repositoryName: this.repositories[index].repositoryName,
-          results: results
+          results: results,
         });
       }
-    }
+    },
   },
   mounted() {
     this.initData().then(
       () => {
         // don't do anything. everything is good!
       },
-      error => {
+      (error) => {
         this.$alert({
           title: "Error Accessing Plugins",
           content:
-            "Plugins may not be an active feature in your Rundeck install."
+            "Plugins may not be an active feature in your Rundeck install.",
         });
         this.openOverlay(false);
-      }
+      },
     );
-  }
-})
+  },
+});
 </script>
 <style lang="scss" scoped>
 // Search Input

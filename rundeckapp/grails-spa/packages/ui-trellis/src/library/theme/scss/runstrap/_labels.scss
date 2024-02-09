@@ -3,7 +3,7 @@
 // --------------------------------------------------
 
 .label {
-   @include label-style();
+  @include label-style();
 
   // [converter] extracted a& to a.label
 
@@ -31,12 +31,12 @@ a.label {
 
 // Colors
 // Contextual variations (linked labels get darker on :hover)
-.label-icon{
-    padding: 0.4em 0.55em;
-    i{
-       font-size: 0.8em;
-       line-height: 1;
-    }
+.label-icon {
+  padding: 0.4em 0.55em;
+  i {
+    font-size: 0.8em;
+    line-height: 1;
+  }
 }
 
 .label-default {
@@ -46,7 +46,7 @@ a.label {
 
 .label-primary {
   @include label-variant($label-primary-bg);
-   background-color: var(--primary-color);
+  background-color: var(--primary-color);
 }
 
 .label-success {
@@ -69,18 +69,17 @@ a.label {
   background-color: var(--danger-color);
 }
 
-
 .label.label-muted {
-    background-color: var(--grey-300)  !important;
-    color: var(--grey-900)  !important;
-    font-weight: 600;
+  background-color: var(--grey-300) !important;
+  color: var(--grey-900) !important;
+  font-weight: 600;
 }
 .label.label-muted.active {
-    background-color: var(--yellow-300)  !important;
+  background-color: var(--yellow-300) !important;
 }
-#nodes_tags{
+#nodes_tags {
   padding-bottom: var(--spacing-6);
 }
-.summary.nodetags{
+.summary.nodetags {
   margin-left: var(--spacing-3);
 }
