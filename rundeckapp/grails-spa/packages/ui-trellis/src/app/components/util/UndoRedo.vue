@@ -2,10 +2,10 @@
   <span>
     <btn :class="{ disabled: !hasUndo }" @click="doUndo" size="xs">
       <i class="glyphicon glyphicon-step-backward"></i>
-      Undo
+      {{ $t("util.undoredo.undo")}}
     </btn>
     <btn :class="{ disabled: !hasRedo }" @click="doRedo" size="xs">
-      Redo
+      {{ $t("util.undoredo.redo")}}
       <i class="glyphicon glyphicon-step-forward"></i>
     </btn>
   </span>
