@@ -1,27 +1,27 @@
 <template>
   <nav>
-    <ul class="nav-bar__list" ref="list" v-if="navBar">
+    <ul v-if="navBar" ref="list" class="nav-bar__list">
       <li>
-        <ul class="nav-bar__list-group" ref="group-main">
+        <ul ref="group-main" class="nav-bar__list-group">
           <template v-for="item in getItems('root', 'main')">
             <NavBarItem
               v-if="item.type === 'link'"
-              :item="item"
               :key="item.id"
-              itemStyle="icon"
+              :item="item"
+              item-style="icon"
             />
             <NavBarContainer
               v-if="item.type === 'container'"
-              :item="item as NavContainer"
               :key="item.id"
+              :item="item as NavContainer"
             />
           </template>
         </ul>
       </li>
       <li style="margin-top: auto; width: 100%">
         <ul
-          class="nav-bar__list-group nav-bar__list-group--bottom"
           ref="group-bottom"
+          class="nav-bar__list-group nav-bar__list-group--bottom"
         >
           <NavBarContainer
             v-if="navBar.isOverflowing"
@@ -30,14 +30,14 @@
           <template v-for="item in getItems('root', 'bottom')">
             <NavBarItem
               v-if="item.type === 'link'"
-              :item="item"
               :key="item.id"
-              itemStyle="icon"
+              :item="item"
+              item-style="icon"
             />
             <NavBarContainer
               v-if="item.type === 'container'"
-              :item="item as NavContainer"
               :key="item.id"
+              :item="item as NavContainer"
             />
           </template>
         </ul>
@@ -60,15 +60,15 @@ export default defineComponent({
     NavBarItem,
     NavBarContainer,
   },
-  mounted() {
-    window.addEventListener("resize", this.overflow);
-    /** After layout and before render handle overflow */
-    window.requestAnimationFrame(this.overflow);
-  },
   data() {
     return {
       navBar: window._rundeck.rootStore.navBar,
     };
+  },
+  mounted() {
+    window.addEventListener("resize", this.overflow);
+    /** After layout and before render handle overflow */
+    window.requestAnimationFrame(this.overflow);
   },
   methods: {
     getItems(ctr: string, grp: string): NavItem[] {

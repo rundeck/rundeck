@@ -30,10 +30,10 @@ import { mapState } from "vuex";
 
 export default {
   name: "ServiceRow",
-  props: ["service"],
   components: {
     ProviderCard,
   },
+  props: ["service"],
   data() {
     return {
       visible: true,

@@ -18,12 +18,12 @@
 
       <a :href="activityHref" class="link-quiet">
         <span
+          v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
-          v-if="pagination.total >= 0"
         >
           {{ pagination.total }}
         </span>
@@ -34,15 +34,15 @@
       </a>
 
       <activity-filter
+        v-if="showFilters"
         v-model="query"
         :event-bus="eventBus"
         :opts="filterOpts"
-        v-if="showFilters"
       ></activity-filter>
 
       <div class="pull-right">
         <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
-          <input type="checkbox" id="auto-refresh" v-model="autorefresh" />
+          <input id="auto-refresh" v-model="autorefresh" type="checkbox" />
           <label for="auto-refresh" class="pr-2">{{
             $t("Auto refresh")
           }}</label>
@@ -83,11 +83,11 @@
           </span>
 
           <btn
+            v-if="auth.deleteExec && !bulkEditMode"
             size="xs"
             type="default"
-            v-if="auth.deleteExec && !bulkEditMode"
-            @click="bulkEditMode = true"
             data-test-id="activity-list-bulk-delete"
+            @click="bulkEditMode = true"
           >
             {{ $t("bulk.delete") }}
           </btn>
@@ -97,8 +97,8 @@
 
     <!-- Bulk edit modals -->
     <modal
-      v-model="showBulkEditCleanSelections"
       id="cleanselections"
+      v-model="showBulkEditCleanSelections"
       :title="$t('Clear bulk selection')"
       append-to-body
     >
@@ -106,7 +106,7 @@
         <strong>{{ bulkSelectedIds.length }}</strong>
       </i18n-t>
 
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn
             data-dismiss="modal"
@@ -133,8 +133,8 @@
     </modal>
 
     <modal
-      v-model="showBulkEditConfirm"
       id="bulkexecdelete"
+      v-model="showBulkEditConfirm"
       :title="$t('Bulk Delete Executions')"
       append-to-body
     >
@@ -143,12 +143,12 @@
         <span>{{ $tc("execution", bulkSelectedIds.length) }}</span>
       </i18n-t>
 
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="showBulkEditConfirm = false">
             {{ $t("cancel") }}
           </btn>
-          <btn type="danger" @click="performBulkDelete" data-dismiss="modal">
+          <btn type="danger" data-dismiss="modal" @click="performBulkDelete">
             {{ $t("Delete Selected") }}
           </btn>
         </div>
@@ -156,8 +156,8 @@
     </modal>
 
     <modal
-      v-model="showBulkEditResults"
       id="bulkexecdeleteresult"
+      v-model="showBulkEditResults"
       :title="$t('Bulk Delete Executions: Results')"
       append-to-body
     >
@@ -208,7 +208,7 @@
           <p class="text-danger">{{ bulkEditError }}</p>
         </div>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="showBulkEditResults = false">{{ $t("close") }}</btn>
         </div>
@@ -230,12 +230,12 @@
           >
             <!-- #{{exec.id}} -->
 
-            <td class="eventicon" v-if="bulkEditMode">
+            <td v-if="bulkEditMode" class="eventicon">
               <input
+                v-model="bulkSelectedIds"
                 type="checkbox"
                 name="bulk_edit"
                 :value="exec.id"
-                v-model="bulkSelectedIds"
                 :disabled="
                   exec.status === 'running' ||
                   exec.status === 'scheduled' ||
@@ -246,46 +246,46 @@
             </td>
             <td class="eventicon" :title="executionState(exec.status)">
               <b
-                class="fas fa-circle-notch fa-spin text-info"
                 v-if="exec.status === 'running'"
+                class="fas fa-circle-notch fa-spin text-info"
               ></b>
               <b
-                class="fas fa-clock text-muted"
                 v-else-if="exec.status === 'scheduled'"
+                class="fas fa-clock text-muted"
               ></b>
               <b
-                class="fas fa-layer-group text-muted"
                 v-else-if="exec.status === 'queued'"
+                class="fas fa-layer-group text-muted"
               ></b>
               <b
+                v-else
                 class="exec-status icon"
                 :data-execstate="executionStateCss(exec.status)"
                 :data-statusstring="exec.status"
-                v-else
               ></b>
             </td>
             <td
-              class="right date"
               v-tooltip.bottom="runningStatusTooltip(exec)"
+              class="right date"
             >
               <span v-if="exec.dateStarted.date">
                 <i class=" ">
                   {{ momentJobFormatDate(exec.dateStarted.date) }}
                 </i>
                 <i
-                  class="timerel text-muted"
                   v-if="isRecentCalendarDate(exec.dateStarted.date)"
+                  class="timerel text-muted"
                 >
                   {{ momentCalendarFormat(exec.dateStarted.date) }}
                 </i>
-                <i class="timerel text-muted" v-else>
+                <i v-else class="timerel text-muted">
                   {{ momentFromNow(exec.dateStarted.date) }}
                 </i>
               </span>
             </td>
             <td
-              class="dateStarted date"
               v-tooltip="runningStatusTooltip(exec)"
+              class="dateStarted date"
               colspan="2"
             >
               <progress-bar
@@ -334,18 +334,18 @@
             </td>
 
             <td
-              class="eventtitle job"
               v-if="exec.job"
               v-tooltip="
                 purify(
                   exec.job.group ? exec.job.group + '/' + exec.job.name : '',
                 )
               "
+              class="eventtitle job"
             >
               {{ exec.job.name }}
             </td>
 
-            <td class="activity-list__eventargs" v-if="exec.job">
+            <td v-if="exec.job" class="activity-list__eventargs">
               <span
                 v-if="exec.job.options"
                 class="activity-list__eventargs-string"
@@ -357,7 +357,7 @@
               </span>
             </td>
 
-            <td class="eventtitle adhoc" v-if="!exec.job" colspan="2">
+            <td v-if="!exec.job" class="eventtitle adhoc" colspan="2">
               {{ exec.description }}
             </td>
 
@@ -372,9 +372,9 @@
           </tr>
         </tbody>
         <tbody
+          v-if="sincecount > 0"
           class="since-count-data autoclickable"
           @click="reload"
-          v-if="sincecount > 0"
         >
           <tr>
             <td colspan="8" class="text-center">
@@ -382,11 +382,11 @@
             </td>
           </tr>
         </tbody>
-        <tbody class="history-executions" v-if="reports.length > 0">
+        <tbody v-if="reports.length > 0" class="history-executions">
           <tr
+            v-for="rpt in reports"
+            :key="rpt.execution.id"
             class="link activity_row autoclickable"
-            @click="autoBulkEdit(rpt)"
-            @click.middle="middleClickRow(rpt)"
             :class="[
               `ali-${rpt.execution.id}`,
               {
@@ -398,15 +398,15 @@
                 adhoc: !rpt.jobId,
               },
             ]"
-            v-for="rpt in reports"
-            :key="rpt.execution.id"
+            @click="autoBulkEdit(rpt)"
+            @click.middle="middleClickRow(rpt)"
           >
-            <td class="eventicon" v-if="bulkEditMode">
+            <td v-if="bulkEditMode" class="eventicon">
               <input
+                v-model="bulkSelectedIds"
                 type="checkbox"
                 name="bulk_edit"
                 :value="rpt.executionId"
-                v-model="bulkSelectedIds"
                 class="_defaultInput"
               />
             </td>
@@ -418,7 +418,6 @@
               ></b>
             </td>
             <td
-              class="date"
               v-tooltip.bottom="{
                 text: $t(
                   rpt.status === 'missed'
@@ -431,18 +430,19 @@
                 ),
                 viewport: `.ali-${rpt.execution.id}`,
               }"
+              class="date"
             >
               <span v-if="rpt.dateCompleted" class="spacing-x-2">
                 <span class="timeabs">
                   {{ momentJobFormatDate(rpt.dateCompleted) }}
                 </span>
                 <span
-                  class="timerel text-muted"
                   v-if="isRecentCalendarDate(rpt.dateCompleted)"
+                  class="timerel text-muted"
                 >
                   {{ momentCalendarFormat(rpt.dateCompleted) }}
                 </span>
-                <span class="timerel text-muted" v-else>
+                <span v-else class="timerel text-muted">
                   {{ momentFromNow(rpt.dateCompleted) }}
                 </span>
               </span>
@@ -457,10 +457,10 @@
               >
             </td>
             <td class="duration text-secondary">
-              <span class="duration" v-if="rpt.status === 'missed'"
+              <span v-if="rpt.status === 'missed'" class="duration"
                 >missed</span
               >
-              <span class="duration" v-else>{{
+              <span v-else class="duration">{{
                 formatDurationMomentHumanize(rpt.duration)
               }}</span>
             </td>
@@ -542,14 +542,14 @@
     </div>
 
     <div v-if="reports.length < 1" class="loading-area">
-      <span class="loading-text" v-if="!loading && !loadError">
+      <span v-if="!loading && !loadError" class="loading-text">
         {{ $t("results.empty.text") }}
       </span>
-      <div class="loading-text" v-if="loading && lastDate < 0">
+      <div v-if="loading && lastDate < 0" class="loading-text">
         <i class="fas fa-spinner fa-pulse"></i>
         {{ $t("Loading...") }}
       </div>
-      <div class="text-warning" v-if="loadError">
+      <div v-if="loadError" class="text-warning">
         <i class="fas fa-error"></i>
         {{ $t("error.message.0", [loadError]) }}
       </div>
@@ -557,9 +557,9 @@
 
     <offset-pagination
       :pagination="pagination"
-      @change="changePageOffset($event)"
       :disabled="loading"
-      :showPrefix="false"
+      :show-prefix="false"
+      @change="changePageOffset($event)"
     >
     </offset-pagination>
   </div>
@@ -588,11 +588,11 @@ import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
  * @private
  */
 function _genUrl(url: string, params: any) {
-  var urlparams = [];
+  let urlparams = [];
   if (typeof params == "string") {
     urlparams = [params];
   } else if (typeof params == "object") {
-    for (var e in params) {
+    for (const e in params) {
       urlparams.push(
         encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
       );
@@ -623,12 +623,12 @@ const knownStatusList = [
 ];
 
 function nodeStats(node: string) {
-  let info = {
+  const info = {
     total: 1,
     succeeded: 1,
     failed: 0,
   } as { [key: string]: number };
-  let match = node.match(/(\d+)\/(\d+)\/(\d+)/);
+  const match = node.match(/(\d+)\/(\d+)\/(\d+)/);
   if (match) {
     info.succeeded = parseInt(match[1]);
     info.failed = parseInt(match[2]);
@@ -702,6 +702,79 @@ export default defineComponent({
       currentFilter: "",
       disableRefresh: false,
     };
+  },
+  computed: {
+    activityHref(): string {
+      return _genUrl(this.activityPageHref, this.fullQueryParams());
+    },
+  },
+  watch: {
+    query: {
+      handler(newValue, oldValue) {
+        this.reload();
+      },
+      deep: true,
+    },
+    autorefresh: {
+      handler(newValue, oldValue) {
+        if (newValue) {
+          //turn on
+          this.startAutorefresh();
+        } else {
+          //turn off
+          this.stopAutorefresh();
+        }
+      },
+    },
+  },
+  mounted() {
+    if (window._rundeck.data.jobslistDateFormatMoment) {
+      this.momentJobFormat = window._rundeck.data.jobslistDateFormatMoment;
+    }
+
+    this.projectName = window._rundeck.projectName;
+    if (window._rundeck && window._rundeck.data) {
+      this.auth.projectAdmin = window._rundeck.data["projectAdminAuth"];
+      this.auth.deleteExec = window._rundeck.data["deleteExecAuth"];
+      this.activityUrl = window._rundeck.data["activityUrl"];
+      this.nowrunningUrl = window._rundeck.data["nowrunningUrl"];
+      this.bulkDeleteUrl = window._rundeck.data["bulkDeleteUrl"];
+      this.activityPageHref = window._rundeck.data["activityPageHref"];
+      this.sinceUpdatedUrl = window._rundeck.data["sinceUpdatedUrl"];
+      this.autorefreshms = window._rundeck.data["autorefreshms"] || 5000;
+
+      if (
+        window._rundeck.data["pagination"] &&
+        window._rundeck.data["pagination"].max
+      ) {
+        this.pagination.max = window._rundeck.data["pagination"].max;
+      }
+      if (window._rundeck.data["filterOpts"]) {
+        this.filterOpts = window._rundeck.data.filterOpts;
+      }
+      this.showFilters = true;
+      if (window._rundeck.data["query"]) {
+        this.query = Object.assign(
+          {},
+          this.query,
+          window._rundeck.data["query"],
+        );
+      } else {
+        this.loadActivity(0);
+      }
+      if (window._rundeck.data["runningOpts"]) {
+        this.runningOpts = window._rundeck.data.runningOpts;
+      }
+
+      if (window._rundeck.data["viewOpts"]) {
+        this.showBulkDelete = window._rundeck.data.viewOpts.showBulkDelete;
+      }
+      if (this.runningOpts["autorefresh"]) {
+        this.autorefresh = true;
+      } else if (this.runningOpts["loadRunning"]) {
+        this.loadRunning();
+      }
+    }
   },
   methods: {
     momentFromNow(val: MomentInput) {
@@ -862,7 +935,7 @@ export default defineComponent({
       if (ms < 0) {
         return "";
       }
-      var duration = moment.duration(ms);
+      const duration = moment.duration(ms);
       return duration.humanize();
     },
     executionState(status: string) {
@@ -962,7 +1035,7 @@ export default defineComponent({
     async loadRunning() {
       // const rundeckContext = getRundeckContext()
       this.loadingRunning = true;
-      let qparams: { [key: string]: string } = {};
+      const qparams: { [key: string]: string } = {};
 
       // include scheduled and queued on running list.
       qparams.includePostponed = "true";
@@ -978,9 +1051,11 @@ export default defineComponent({
           withCredentials: true,
         });
 
-        let executions = response.data.executions.map((e: any) => {
-          let { "date-started": dateStarted, "date-completed": dateCompleted } =
-            e;
+        const executions = response.data.executions.map((e: any) => {
+          const {
+            "date-started": dateStarted,
+            "date-completed": dateCompleted,
+          } = e;
           return Object.assign({ dateStarted, dateCompleted }, e) as Execution;
         });
         this.running = { executions, paging: response.data.paging };
@@ -996,7 +1071,7 @@ export default defineComponent({
     async loadActivity(offset: number) {
       this.loading = true;
       this.pagination.offset = offset;
-      let xquery: { [key: string]: string } = {};
+      const xquery: { [key: string]: string } = {};
       if (this.query.jobIdFilter) {
         xquery["includeJobRef"] = "true";
       }
@@ -1038,11 +1113,11 @@ export default defineComponent({
     },
     checkrefresh(time: number = 0) {
       if (!this.loadingRunning && this.autorefresh && !this.disableRefresh) {
-        let delay: number = time ? new Date().getTime() - time : 0;
+        const delay: number = time ? new Date().getTime() - time : 0;
         let ms = this.loadError ? this.autorefreshms * 10 : this.autorefreshms;
         ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0;
         this.autorefreshtimeout = setTimeout(() => {
-          let cur = new Date();
+          const cur = new Date();
           Promise.all([this.loadRunning(), this.loadSince()]).then(() =>
             this.checkrefresh(cur.getTime()),
           );
@@ -1059,87 +1134,14 @@ export default defineComponent({
       }
     },
     fullQueryParams(): any {
-      let params = {} as { [key: string]: string };
-      for (let v in this.query) {
+      const params = {} as { [key: string]: string };
+      for (const v in this.query) {
         if (this.query[v]) {
           params[v] = this.query[v];
         }
       }
       return params;
     },
-  },
-  watch: {
-    query: {
-      handler(newValue, oldValue) {
-        this.reload();
-      },
-      deep: true,
-    },
-    autorefresh: {
-      handler(newValue, oldValue) {
-        if (newValue) {
-          //turn on
-          this.startAutorefresh();
-        } else {
-          //turn off
-          this.stopAutorefresh();
-        }
-      },
-    },
-  },
-  computed: {
-    activityHref(): string {
-      return _genUrl(this.activityPageHref, this.fullQueryParams());
-    },
-  },
-  mounted() {
-    if (window._rundeck.data.jobslistDateFormatMoment) {
-      this.momentJobFormat = window._rundeck.data.jobslistDateFormatMoment;
-    }
-
-    this.projectName = window._rundeck.projectName;
-    if (window._rundeck && window._rundeck.data) {
-      this.auth.projectAdmin = window._rundeck.data["projectAdminAuth"];
-      this.auth.deleteExec = window._rundeck.data["deleteExecAuth"];
-      this.activityUrl = window._rundeck.data["activityUrl"];
-      this.nowrunningUrl = window._rundeck.data["nowrunningUrl"];
-      this.bulkDeleteUrl = window._rundeck.data["bulkDeleteUrl"];
-      this.activityPageHref = window._rundeck.data["activityPageHref"];
-      this.sinceUpdatedUrl = window._rundeck.data["sinceUpdatedUrl"];
-      this.autorefreshms = window._rundeck.data["autorefreshms"] || 5000;
-
-      if (
-        window._rundeck.data["pagination"] &&
-        window._rundeck.data["pagination"].max
-      ) {
-        this.pagination.max = window._rundeck.data["pagination"].max;
-      }
-      if (window._rundeck.data["filterOpts"]) {
-        this.filterOpts = window._rundeck.data.filterOpts;
-      }
-      this.showFilters = true;
-      if (window._rundeck.data["query"]) {
-        this.query = Object.assign(
-          {},
-          this.query,
-          window._rundeck.data["query"],
-        );
-      } else {
-        this.loadActivity(0);
-      }
-      if (window._rundeck.data["runningOpts"]) {
-        this.runningOpts = window._rundeck.data.runningOpts;
-      }
-
-      if (window._rundeck.data["viewOpts"]) {
-        this.showBulkDelete = window._rundeck.data.viewOpts.showBulkDelete;
-      }
-      if (this.runningOpts["autorefresh"]) {
-        this.autorefresh = true;
-      } else if (this.runningOpts["loadRunning"]) {
-        this.loadRunning();
-      }
-    }
   },
 });
 </script>

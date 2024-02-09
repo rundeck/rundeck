@@ -4,14 +4,14 @@
     <template v-if="i.text">{{ i.text }}</template>
     <span v-else-if="i.html" v-html="i.html"></span>
     <component
-      v-else-if="i.widget && eventBus"
       :is="i.widget"
+      v-else-if="i.widget && eventBus"
       :event-bus="eventBus"
       :item-data="itemData"
     >
       <slot></slot>
     </component>
-    <component v-else-if="i.widget" :is="i.widget" :item-data="itemData">
+    <component :is="i.widget" v-else-if="i.widget" :item-data="itemData">
       <slot></slot>
     </component>
   </template>
@@ -66,15 +66,6 @@ export default defineComponent({
       return this.socketData;
     },
   },
-  methods: {
-    loadItems() {
-      if (this.rootStore) {
-        this.items = this.rootStore.ui
-          .itemsForLocation(this.section, this.location)
-          .filter((a) => a.visible);
-      }
-    },
-  },
   mounted() {
     this.loadItems();
     if (this.rootStore) {
@@ -92,6 +83,15 @@ export default defineComponent({
     if (this.uiwatcher) {
       this.rootStore.ui.removeWatcher(this.uiwatcher);
     }
+  },
+  methods: {
+    loadItems() {
+      if (this.rootStore) {
+        this.items = this.rootStore.ui
+          .itemsForLocation(this.section, this.location)
+          .filter((a) => a.visible);
+      }
+    },
   },
 });
 </script>

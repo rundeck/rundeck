@@ -6,9 +6,9 @@
       :event-bus="eventBus"
     />
     <resources-editor
+      v-if="updatedData"
       v-model="updatedData"
       :event-bus="eventBus"
-      v-if="updatedData"
     />
     <json-embed :output-data="updatedData" field-name="resourcesJsonData" />
   </div>
@@ -26,12 +26,12 @@ import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
   name: "ResourcesEditorSection",
-  props: ["eventBus"],
   components: {
     ResourcesEditor,
     JsonEmbed,
     UiSocket,
   },
+  props: ["eventBus"],
   data() {
     return {
       resourcesData: {},

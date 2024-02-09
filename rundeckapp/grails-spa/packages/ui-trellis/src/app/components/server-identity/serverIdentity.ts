@@ -10,16 +10,16 @@ const ServerIdentityComp = defineComponent({
   components: {
     ServerDisplay,
   },
-  data() {
-    return {
-      serverInfo: null,
-    };
-  },
   props: {
     showId: { type: Boolean, default: true },
     nameClass: { type: String, default: "" },
     serverName: { type: String, default: "" },
     serverUuid: { type: String, default: "" },
+  },
+  data() {
+    return {
+      serverInfo: null,
+    };
   },
   mounted() {
     this.serverInfo = new ServerInfo(this.serverName, this.serverUuid);

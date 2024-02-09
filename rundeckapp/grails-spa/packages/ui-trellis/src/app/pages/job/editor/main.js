@@ -13,7 +13,7 @@ import { EventBus } from "../../../../library/utilities/vueEventBus";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();
@@ -25,10 +25,10 @@ for (let i = 0; i < els.length; i++) {
   const e = els[i];
   const app = createApp({
     name: "JobEditNotificationsApp",
+    components: { NotificationsEditorSection },
     data() {
       return { EventBus };
     },
-    components: { NotificationsEditorSection },
   });
   app.use(uiv);
   app.use(i18n);
@@ -41,10 +41,10 @@ for (let i = 0; i < resels.length; i++) {
   const e = resels[i];
   const rapp = createApp({
     name: "JobEditResourcesApp",
+    components: { ResourcesEditorSection },
     data() {
       return { EventBus };
     },
-    components: { ResourcesEditorSection },
   });
   rapp.use(uiv);
   rapp.use(i18n);
@@ -65,10 +65,10 @@ for (let i = 0; i < scsels.length; i++) {
   const e = scsels[i];
   const sapp = createApp({
     name: "JobEditSchedulesApp",
+    components: { SchedulesEditorSection },
     data() {
       return { EventBus };
     },
-    components: { SchedulesEditorSection },
   });
   sapp.use(uiv);
   sapp.use(i18n);
@@ -89,10 +89,10 @@ for (let i = 0; i < scsels.length; i++) {
     const e = othels[i];
     const oapp = createApp({
       name: "JobEditOtherApp",
+      components: { OtherEditorSection },
       data() {
         return { EventBus };
       },
-      components: { OtherEditorSection },
     });
     oapp.use(uiv);
     oapp.use(i18n);
@@ -104,7 +104,7 @@ for (let i = 0; i < scsels.length; i++) {
 window.addEventListener("DOMContentLoaded", (event) => {
   // Job Editing page - Workflow Tab
 
-  let elem = document.querySelector("#workflowContent .pflowlist.edit");
+  const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });
   }

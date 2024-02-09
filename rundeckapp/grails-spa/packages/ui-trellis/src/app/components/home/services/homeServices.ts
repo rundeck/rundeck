@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAppLinks, getRundeckContext } from "../../../../library";
 
 export async function getSummary(): Promise<any> {
-  let ctx = getRundeckContext();
+  const ctx = getRundeckContext();
   try {
     const response = await axios.get(
       `${ctx.rdBase}api/${ctx.apiVersion}/home/summary`,
@@ -30,7 +30,7 @@ export async function getSummary(): Promise<any> {
 }
 
 export async function getProjectNames(): Promise<any> {
-  let appLinks = getAppLinks();
+  const appLinks = getAppLinks();
   try {
     const response = await axios.get(appLinks.menuProjectNamesAjax, {
       method: "GET",
@@ -58,7 +58,7 @@ export async function getProjectNames(): Promise<any> {
 }
 
 export async function getProjects(): Promise<any> {
-  let ctx = getRundeckContext();
+  const ctx = getRundeckContext();
   try {
     const response = await axios.get(
       `${ctx.rdBase}api/${ctx.apiVersion}/projects?meta=authz,config,message`,

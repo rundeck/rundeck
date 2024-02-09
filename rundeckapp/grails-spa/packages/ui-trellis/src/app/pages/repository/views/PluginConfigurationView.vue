@@ -7,9 +7,9 @@
       <div class="col-xs-12 col-sm-4">
         <select
           class="form-control"
-          @change="changeServiceFacet"
           style="height: 30px"
           :disabled="view === 'detail'"
+          @change="changeServiceFacet"
         >
           <option value>View All</option>
           <option
@@ -25,27 +25,27 @@
         <form @submit.prevent="search">
           <div class="input-group input-group-sm">
             <input
+              v-model="searchString"
               type="text"
               class="form-control"
               placeholder="Search for..."
               :disabled="view === 'detail'"
-              v-model="searchString"
             />
-            <span class="input-group-btn" v-if="searchResultPlugins.length > 0">
+            <span v-if="searchResultPlugins.length > 0" class="input-group-btn">
               <button
-                @click="clearSearch"
                 class="btn btn-default btn-fill"
                 type="button"
+                @click="clearSearch"
               >
                 <i class="fas fa-times"></i>
               </button>
             </span>
-            <span class="input-group-btn" v-else>
+            <span v-else class="input-group-btn">
               <button
                 :disabled="view === 'detail'"
-                @click="search"
                 class="btn btn-default btn-fill"
                 type="button"
+                @click="search"
               >
                 <i class="fas fa-search"></i>
               </button>
@@ -60,23 +60,23 @@
         >
           <a
             type="button"
-            @click="view = 'grid'"
             class="btn btn-default"
             :class="{ active: view === 'grid' }"
+            @click="view = 'grid'"
             >Grid</a
           >
           <a
             type="button"
-            @click="view = 'list'"
             class="btn btn-default"
             :class="{ active: view === 'list' }"
+            @click="view = 'list'"
             >List</a
           >
           <a
             type="button"
-            @click="view = 'detail'"
             class="btn btn-default"
             :class="{ active: view === 'detail' }"
+            @click="view = 'detail'"
             >Detail</a
           >
         </div>
@@ -89,13 +89,13 @@
           class="artifact-grid row row-flex row-flex-wrap"
         >
           <ProviderCard
+            v-for="(plugin, index) in searchResultsCollection"
             v-show="view === 'grid'"
+            :key="index"
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
-            v-for="(plugin, index) in searchResultsCollection"
-            :key="index"
           />
-          <div class="col-xs-12" v-show="view === 'list'">
+          <div v-show="view === 'list'" class="col-xs-12">
             <div class="card col-xs-12" style="padding: 0">
               <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
@@ -111,10 +111,10 @@
                   </thead>
                   <tbody>
                     <ProviderCardRow
-                      :provider="plugin"
-                      class
                       v-for="(plugin, index) in searchResultsCollection"
                       :key="`card_row_${index}`"
+                      :provider="plugin"
+                      class
                     />
                   </tbody>
                 </table>
@@ -126,7 +126,7 @@
           v-show="!searchResultsCollection.length"
           class="artifact-grid row row-flex row-flex-wrap"
         >
-          <div class="col-xs-12" v-show="view === 'list'">
+          <div v-show="view === 'list'" class="col-xs-12">
             <div class="card col-xs-12" style="padding: 0">
               <div class="card-content" style="padding: 0">
                 <table class="table table-hover table-condensed">
@@ -142,9 +142,9 @@
                   </thead>
                   <tbody>
                     <ProviderCardRow
-                      :provider="plugin"
                       v-for="(plugin, index) in plugins"
                       :key="`card_row_${index}`"
+                      :provider="plugin"
                     />
                   </tbody>
                 </table>
@@ -153,11 +153,11 @@
           </div>
 
           <ProviderCard
+            v-for="(plugin, index) in plugins"
             v-show="view === 'grid'"
+            :key="`card_${index}`"
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
-            v-for="(plugin, index) in plugins"
-            :key="`card_${index}`"
           />
           <div
             v-show="view === 'detail'"
@@ -186,8 +186,8 @@
                       >
                         <label>
                           <input
-                            type="checkbox"
                             v-model="checkedServiceProviders"
+                            type="checkbox"
                             :value="{
                               serviceName: service.service,
                               providerName: plugin.name,
@@ -273,22 +273,22 @@
                             <div>
                               <strong>Configure Framework:</strong>
                               <ConfigureFrameworkString
-                                :serviceName="details.provider.serviceName"
+                                :service-name="details.provider.serviceName"
                                 :provider="details.response"
                                 :prop="prop"
                               />
                             </div>
                             <div class="row">
                               <div
-                                class="col-xs-12 col-sm-3"
                                 v-if="prop.defaultValue"
+                                class="col-xs-12 col-sm-3"
                               >
                                 <strong>Default value:</strong>
                                 <code>{{ prop.defaultValue }}</code>
                               </div>
                               <div
-                                class="col-xs-12 col-sm-9"
                                 v-if="prop.allowed && prop.allowed.length"
+                                class="col-xs-12 col-sm-9"
                               >
                                 <strong>Allowed values:</strong>
                                 <ul class="values">
@@ -315,13 +315,13 @@
     </div>
     <modal
       v-if="provider"
+      id="provider-modal"
+      ref="modal"
       v-model="isModalOpen"
       :title="provider.title"
-      @hide="handleModalClose"
-      ref="modal"
-      id="provider-modal"
       size="lg"
       append-to-body
+      @hide="handleModalClose"
     >
       <p>
         Provider Name:
@@ -352,19 +352,19 @@
               <div>
                 <strong>Configure Framework:</strong>
                 <ConfigureFrameworkString
-                  :serviceName="serviceName"
+                  :service-name="serviceName"
                   :provider="provider"
                   :prop="prop"
                 />
               </div>
               <div class="row">
-                <div class="col-xs-12 col-sm-3" v-if="prop.defaultValue">
+                <div v-if="prop.defaultValue" class="col-xs-12 col-sm-3">
                   <strong>Default value:</strong>
                   <code>{{ prop.defaultValue }}</code>
                 </div>
                 <div
-                  class="col-xs-12 col-sm-9"
                   v-if="prop.allowed && prop.allowed.length"
+                  class="col-xs-12 col-sm-9"
                 >
                   <strong>Allowed values:</strong>
                   <ul class="values">
@@ -381,7 +381,7 @@
           </div>
         </li>
       </ul>
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="handleModalClose">Close</btn>
         </div>
@@ -439,7 +439,7 @@ export default defineComponent({
         this.setSearchResultPlugins([]);
         return;
       }
-      let theRepo = this.plugins;
+      const theRepo = this.plugins;
       const fuse = new Fuse(theRepo, FuseSearchOptions);
       const results = fuse
         .search(this.searchString)
@@ -477,6 +477,11 @@ export default defineComponent({
       },
     },
   },
+  watch: {
+    checkedServiceProviders(newVal) {
+      this.getProvidersInfo(newVal);
+    },
+  },
   created() {
     this.initData();
     this.getServices();
@@ -491,11 +496,6 @@ export default defineComponent({
       view: "grid",
       checkedServiceProviders: [],
     };
-  },
-  watch: {
-    checkedServiceProviders(newVal) {
-      this.getProvidersInfo(newVal);
-    },
   },
 });
 </script>

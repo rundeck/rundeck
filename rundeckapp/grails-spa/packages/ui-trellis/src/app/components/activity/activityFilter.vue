@@ -8,7 +8,7 @@
         {{ $t(`period.label.${period.name}`) }}
         <span class="caret"></span>
       </span>
-      <template v-slot:dropdown>
+      <template #dropdown>
         <li v-for="perobj in periods" :key="perobj.name">
           <a role="button" @click="changePeriod(perobj)">
             {{ $t(`period.label.${perobj.name}`) }}
@@ -19,11 +19,11 @@
     </dropdown>
 
     <btn
-      @click="filterOpen = true"
+      v-if="displayOpts.showFilter"
+      v-tooltip="hasQuery ? $t('Click to edit Search Query') : ''"
       size="xs"
       :class="hasQuery ? 'btn-queried btn-info' : 'btn-default'"
-      v-tooltip="hasQuery ? $t('Click to edit Search Query') : ''"
-      v-if="displayOpts.showFilter"
+      @click="filterOpen = true"
     >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
@@ -37,11 +37,11 @@
     </btn>
 
     <saved-filters
+      v-if="modelValue && displayOpts.showSavedFilters"
       :query="modelValue"
       :has-query="hasQuery"
-      @select_filter="selectFilter($event)"
-      v-if="modelValue && displayOpts.showSavedFilters"
       :event-bus="eventBus"
+      @select_filter="selectFilter($event)"
     ></saved-filters>
 
     <modal
@@ -49,8 +49,8 @@
       v-model="filterOpen"
       :title="$t('Search Activity')"
       size="lg"
-      @hide="closing"
       append-to-body
+      @hide="closing"
     >
       <div>
         <div class="base-filters">
@@ -61,23 +61,23 @@
                   {{ $t("jobquery.title.jobFilter") }}
                 </label>
                 <input
+                  v-model="query.jobFilter"
                   type="text"
                   name="jobFilter"
-                  v-model="query.jobFilter"
                   autofocus="true"
                   class="form-control"
                   :placeholder="$t('jobquery.title.jobFilter')"
                 />
               </div>
 
-              <div class="form-group" v-if="query.jobIdFilter">
+              <div v-if="query.jobIdFilter" class="form-group">
                 <label for="jobIdFilter" class="sr-only">
                   {{ $t("jobquery.title.jobIdFilter") }}
                 </label>
                 <input
+                  v-model="query.jobIdFilter"
                   type="text"
                   name="jobIdFilter"
-                  v-model="query.jobIdFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.jobIdFilter')"
                 />
@@ -89,9 +89,9 @@
                   {{ $t("jobquery.title.userFilter") }}
                 </label>
                 <input
+                  v-model="query.userFilter"
                   type="text"
                   name="userFilter"
-                  v-model="query.userFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.userFilter')"
                 />
@@ -103,9 +103,9 @@
                   {{ $t("jobquery.title.filter") }}
                 </label>
                 <input
+                  v-model="query.execnodeFilter"
                   type="text"
                   name="execnodeFilter"
-                  v-model="query.execnodeFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.filter')"
                 />
@@ -119,9 +119,9 @@
                   {{ $t("jobquery.title.titleFilter") }}
                 </label>
                 <input
+                  v-model="query.titleFilter"
                   type="text"
                   name="titleFilter"
-                  v-model="query.titleFilter"
                   class="form-control"
                   :placeholder="$t('jobquery.title.titleFilter')"
                 />
@@ -133,8 +133,8 @@
                   {{ $t("jobquery.title.statFilter") }}
                 </label>
                 <select
-                  name="statFilter"
                   v-model="query.statFilter"
+                  name="statFilter"
                   noSelection="['': 'Any']"
                   valueMessagePrefix="status.label"
                   class="form-control"
@@ -154,15 +154,15 @@
                 </label>
                 <span class="radiolist">
                   <select
-                    name="recentFilter"
                     v-model="query.recentFilter"
+                    name="recentFilter"
                     class="form-control"
                   >
                     <option value>Any Time</option>
                     <option
-                      :value="val"
                       v-for="(key, val) in recentDateFilters"
                       :key="key"
+                      :value="val"
                     >
                       {{ key }}
                     </option>
@@ -174,8 +174,8 @@
           </div>
         </div>
         <div
-          class="date-filters panel panel-default"
           v-if="query.recentFilter === '-'"
+          class="date-filters panel panel-default"
         >
           <div class="panel-body form-horizontal">
             <div
@@ -190,12 +190,12 @@
           </div>
         </div>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <btn @click="filterOpen = false">{{ $t("cancel") }}</btn>
-        <btn @click="search" type="primary" class="btn btn-primary">{{
+        <btn type="primary" class="btn btn-primary" @click="search">{{
           $t("search")
         }}</btn>
-        <btn @click="saveFilter" type="default" class="btn-default pull-right">
+        <btn type="default" class="btn-default pull-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
           {{ $t("Save as a Filter...") }}
         </btn>
@@ -308,9 +308,45 @@ export default defineComponent({
       ],
     };
   },
+  computed: {
+    queryParamsList() {
+      return this.QueryNames.filter((s) => !!this.query[s]);
+    },
+  },
+  watch: {
+    query: {
+      handler(newValue, oldValue) {
+        this.updateSelectedPeriod();
+      },
+    },
+    modelValue: {
+      handler(newValue, oldValue) {
+        this.reset();
+      },
+      deep: true,
+    },
+    DateFilters: {
+      handler(newValue, oldVale) {
+        newValue.forEach((element) => {
+          if (element.filter.enabled) {
+            this.query["do" + element.name] = "true";
+            this.query[element.name] = element.filter.datetime;
+          } else {
+            this.query["do" + element.name] = "false";
+            this.query[element.name] = "";
+          }
+        });
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    Object.assign(this.displayOpts, this.opts);
+    this.reset();
+  },
   methods: {
     checkQueryIsPresent() {
-      let isquery = this.QueryNames.findIndex((q) => this.query[q]) >= 0;
+      const isquery = this.QueryNames.findIndex((q) => this.query[q]) >= 0;
 
       this.hasQuery = isquery;
     },
@@ -391,42 +427,6 @@ export default defineComponent({
         }
       }
     },
-  },
-  watch: {
-    query: {
-      handler(newValue, oldValue) {
-        this.updateSelectedPeriod();
-      },
-    },
-    modelValue: {
-      handler(newValue, oldValue) {
-        this.reset();
-      },
-      deep: true,
-    },
-    DateFilters: {
-      handler(newValue, oldVale) {
-        newValue.forEach((element) => {
-          if (element.filter.enabled) {
-            this.query["do" + element.name] = "true";
-            this.query[element.name] = element.filter.datetime;
-          } else {
-            this.query["do" + element.name] = "false";
-            this.query[element.name] = "";
-          }
-        });
-      },
-      deep: true,
-    },
-  },
-  computed: {
-    queryParamsList() {
-      return this.QueryNames.filter((s) => !!this.query[s]);
-    },
-  },
-  mounted() {
-    Object.assign(this.displayOpts, this.opts);
-    this.reset();
   },
 });
 </script>

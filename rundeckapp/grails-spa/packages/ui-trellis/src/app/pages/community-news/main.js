@@ -10,7 +10,7 @@ import * as uiv from "uiv";
 import App from "./App.vue";
 import { initI18n } from "../../utilities/i18n";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();

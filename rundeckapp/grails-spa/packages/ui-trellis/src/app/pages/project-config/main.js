@@ -18,15 +18,15 @@ for (let i = 0; i < els.length; i++) {
 
   const i18n = initI18n();
   const app = createApp({
-    data() {
-      return {
-        EventBus: context.eventBus,
-      };
-    },
     components: {
       PageConfirm,
       PluginSetConfig,
       ProjectPluginGroups,
+    },
+    data() {
+      return {
+        EventBus: context.eventBus,
+      };
     },
   });
   app.use(VueCookies);

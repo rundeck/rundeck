@@ -198,11 +198,11 @@ export class RundeckVersion {
   ];
 
   splitVersion(versionString: string): { [p: string]: any } {
-    let partsa = String(versionString).split(" ");
-    let version = partsa.length > 1 ? partsa[0] : versionString;
-    let parts = String(version).split("-");
-    let vparts = parts[0].split(".");
-    let data: { [key: string]: any } = { version: version };
+    const partsa = String(versionString).split(" ");
+    const version = partsa.length > 1 ? partsa[0] : versionString;
+    const parts = String(version).split("-");
+    const vparts = parts[0].split(".");
+    const data: { [key: string]: any } = { version: version };
     if (vparts.length > 0) {
       data["major"] = parseInt(vparts[0]);
     } else {
@@ -239,15 +239,15 @@ export class RundeckVersion {
   }
 
   splitUUID(versionString: string) {
-    let partsa = String(versionString).split("-");
-    let apart = partsa.length > 0 ? partsa[0].substring(0, 2) : versionString;
-    let data: { [key: string]: any } = { uuid: versionString };
+    const partsa = String(versionString).split("-");
+    const apart = partsa.length > 0 ? partsa[0].substring(0, 2) : versionString;
+    const data: { [key: string]: any } = { uuid: versionString };
     for (let i = 0; i < partsa.length; i++) {
       data["uuid" + i] = parseInt(partsa[i].substring(0, 2), 16);
       data["hexuuid" + i] = partsa[i];
     }
-    let partsb = partsa.join("");
-    let sixes = [];
+    const partsb = partsa.join("");
+    const sixes = [];
     for (let j = 0; (j + 1) * 6 < partsb.length; j++) {
       data["6let" + j] = partsb.substring(j * 6, (j + 1) * 6);
       sixes.push(partsb.substring(j * 6, (j + 1) * 6));
@@ -328,7 +328,7 @@ export class RundeckVersion {
   }
 
   text() {
-    let sep = " ";
+    const sep = " ";
     return [this.versionName(), this.versionColor(), this.versionIcon()]
       .join(sep)
       .toLowerCase(); /*.replace(/[^a-z]/g, sep)*/

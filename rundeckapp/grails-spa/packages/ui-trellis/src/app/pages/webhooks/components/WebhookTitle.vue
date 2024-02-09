@@ -4,8 +4,8 @@
       v-if="webhook.eventPlugin"
       style="margin-right: 10px"
       :detail="webhook.eventPlugin"
-      :showTitle="false"
-      :showDescription="false"
+      :show-title="false"
+      :show-description="false"
     />
     <h3>{{ webhook.name }}</h3>
   </span>

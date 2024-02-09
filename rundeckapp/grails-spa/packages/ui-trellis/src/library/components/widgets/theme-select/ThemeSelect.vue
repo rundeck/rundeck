@@ -2,7 +2,7 @@
   <div style="padding: 20px">
     <div class="form-group">
       <label>Theme</label>
-      <select class="form-control select" v-model="theme">
+      <select v-model="theme" class="form-control select">
         <option v-for="themeOpt in themes" :key="themeOpt">
           {{ themeOpt }}
         </option>
@@ -26,13 +26,13 @@ export default defineComponent({
       themeStore: window._rundeck.rootStore.theme,
     };
   },
-  beforeMount() {
-    this.theme = this.themeStore.userPreferences.theme!;
-  },
   watch: {
     theme(newVal: any) {
       this.themeStore.setUserTheme(newVal);
     },
+  },
+  beforeMount() {
+    this.theme = this.themeStore.userPreferences.theme!;
   },
 });
 </script>

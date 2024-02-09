@@ -3,11 +3,9 @@ import HomeCardList from "../HomeCardList.vue";
 import HomeSearchBar from "../HomeSearchBar.vue";
 
 jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest
-    .fn()
-    .mockImplementation(() => ({
-      eventBus: { on: jest.fn(), emit: jest.fn() },
-    })),
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+  })),
 }));
 
 const createWrapper = (props = {}) => {

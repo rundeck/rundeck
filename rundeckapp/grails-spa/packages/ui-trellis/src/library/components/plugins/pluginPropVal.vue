@@ -23,16 +23,16 @@
         v-if="prop.options && prop.options['valueDisplayType'] === 'icon'"
       >
         <i
-          :class="'glyphicon ' + value"
           v-if="typeof value === 'string' && value.startsWith('glyphicon-')"
+          :class="'glyphicon ' + value"
         ></i>
         <i
-          :class="'fas ' + value"
           v-else-if="typeof value === 'string' && value.startsWith('fa-')"
+          :class="'fas ' + value"
         ></i>
         <i
-          :class="'fab fa-' + value.substring(4)"
           v-else-if="typeof value === 'string' && value.startsWith('fab-')"
+          :class="'fab fa-' + value.substring(4)"
         ></i>
       </template>
       {{ (prop.selectLabels && prop.selectLabels[`${value}`]) || value }}

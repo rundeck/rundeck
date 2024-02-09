@@ -2,9 +2,9 @@
   <span>
     <btn
       v-if="hasQuery && (!query || !query.ftilerName)"
-      @click="saveFilterPrompt"
       size="xs"
       type="default"
+      @click="saveFilterPrompt"
     >
       {{ $t("filter.save.button") }}
     </btn>
@@ -18,7 +18,7 @@
         {{ $t("Filters") }}
         <span class="caret"></span>
       </span>
-      <template v-slot:dropdown>
+      <template #dropdown>
         <li v-if="query && query.filterName">
           <a role="button" @click="deleteFilter">
             <i class="glyphicon glyphicon-trash"></i>
@@ -26,9 +26,9 @@
           </a>
         </li>
         <li
+          v-if="query && query.filterName"
           role="separator"
           class="divider"
-          v-if="query && query.filterName"
         ></li>
         <li class="dropdown-header">
           <i class="glyphicon glyphicon-filter"></i>
@@ -54,6 +54,7 @@ import { MessageBox, Notification } from "uiv";
 
 export default defineComponent({
   props: ["query", "hasQuery", "eventBus"],
+  emits: ["select_filter"],
   data() {
     return {
       projectName: "",
@@ -65,7 +66,15 @@ export default defineComponent({
       filterStore: new ActivityFilterStore(),
     };
   },
-  emits: ["select_filter"],
+  mounted() {
+    this.projectName = getRundeckContext().projectName;
+    this.loadFilters();
+    this.eventBus &&
+      this.eventBus.on("invoke-save-filter", this.saveFilterPrompt);
+  },
+  beforeUnmount() {
+    this.eventBus && this.eventBus.off("invoke-save-filter");
+  },
   methods: {
     notifyError(msg) {
       Notification.notify({
@@ -129,15 +138,6 @@ export default defineComponent({
           //this.$notify("Save canceled.");
         });
     },
-  },
-  mounted() {
-    this.projectName = getRundeckContext().projectName;
-    this.loadFilters();
-    this.eventBus &&
-      this.eventBus.on("invoke-save-filter", this.saveFilterPrompt);
-  },
-  beforeUnmount() {
-    this.eventBus && this.eventBus.off("invoke-save-filter");
   },
 });
 </script>

@@ -1,35 +1,35 @@
 <template>
   <div id="layoutBody">
     <div
-      class="container-fluid"
       v-if="(dataLoaded && projectCount > 0) || !loadedProjectNames"
+      class="container-fluid"
     >
-      <div class="row" v-if="isFirstRun">
+      <div v-if="isFirstRun" class="row">
         <HomeWelcome
-          :appTitle="appTitle"
-          :buildIdent="buildIdent"
-          :logoImage="logoImage"
-          :helpLinkUrl="helpLinkUrl"
+          :app-title="appTitle"
+          :build-ident="buildIdent"
+          :logo-image="logoImage"
+          :help-link-url="helpLinkUrl"
         />
       </div>
       <HomeHeader
-        :createProjectAllowed="createProjectAllowed"
-        :projectCount="projectCount"
-        :summaryRefresh="summaryRefresh"
-        :refreshDelay="refreshDelay"
+        :create-project-allowed="createProjectAllowed"
+        :project-count="projectCount"
+        :summary-refresh="summaryRefresh"
+        :refresh-delay="refreshDelay"
       />
     </div>
-    <div class="container-fluid" v-if="dataLoaded && projectCount === 0">
+    <div v-if="dataLoaded && projectCount === 0" class="container-fluid">
       <FirstRun v-if="createProjectAllowed" />
     </div>
     <div class="container-fluid">
       <div class="row">
         <div class="col-xs-12">
           <div
-            class="card"
             v-if="
               projectCount < 1 && loadedProjectNames && !createProjectAllowed
             "
+            class="card"
           >
             <div class="card-content">
               <div class="well">
@@ -128,6 +128,10 @@ export default defineComponent({
       test: null,
     };
   },
+  mounted() {
+    this.getPartialData();
+    this.getProjects();
+  },
   methods: {
     async getPartialData() {
       try {
@@ -156,10 +160,6 @@ export default defineComponent({
         this.dataLoaded = true;
       }
     },
-  },
-  mounted() {
-    this.getPartialData();
-    this.getProjects();
   },
 });
 </script>

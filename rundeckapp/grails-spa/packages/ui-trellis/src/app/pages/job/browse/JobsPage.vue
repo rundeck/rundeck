@@ -4,7 +4,7 @@
       <div class="col-xs-12">
         <div class="card">
           <div class="card-content">
-            <div class="runbox primary jobs" id="indexMain">
+            <div id="indexMain" class="runbox primary jobs">
               <job-list-page />
             </div>
           </div>
@@ -20,7 +20,7 @@
             </h3>
           </div>
         </div>
-        <div class="card" id="activity_section">
+        <div id="activity_section" class="card">
           <div class="card-content">
             <div class="_history_content">
               <activity-list :event-bus="EventBus"></activity-list>
@@ -41,11 +41,6 @@ import ActivityList from "../../../components/activity/activityList.vue";
 const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "JobsPage",
-  setup() {
-    return {
-      EventBus: eventBus,
-    };
-  },
   components: {
     JobListPage,
     ActivityList,
@@ -57,6 +52,11 @@ export default defineComponent({
         return {};
       },
     },
+  },
+  setup() {
+    return {
+      EventBus: eventBus,
+    };
   },
 });
 </script>

@@ -1,23 +1,23 @@
 <template>
   <div>
-    <slot name="empty" v-if="writeableSources.length < 1"></slot>
+    <slot v-if="writeableSources.length < 1" name="empty"></slot>
     <div
-      :class="itemCss"
       v-for="source in writeableSources"
       :key="source.index"
+      :class="itemCss"
     >
       <div :class="itemContentCss">
         <plugin-config
-          :mode="'title'"
-          :serviceName="'ResourceModelSource'"
-          :provider="source.type"
           :key="source.type + 'title/' + source.index"
+          :mode="'title'"
+          :service-name="'ResourceModelSource'"
+          :provider="source.type"
           :show-description="!source.resources.description"
         >
-          <template v-slot:titlePrefix>
+          <template #titlePrefix>
             <span :title="'Source #' + source.index">{{ source.index }}.</span>
           </template>
-          <template v-if="source.resources.description" v-slot:titleSuffix>
+          <template v-if="source.resources.description" #titleSuffix>
             <span>
               <code>{{ source.resources.description }}</code>
             </span>
@@ -38,7 +38,7 @@
             {{ $t("Modify") }}
           </a>
         </div>
-        <div class="item-section" v-if="source.errors">
+        <div v-if="source.errors" class="item-section">
           <div class="well well-sm">
             <div class="text-info">
               {{ $t("The Node Source had an error") }}:
@@ -61,25 +61,6 @@ export default defineComponent({
   components: {
     PluginConfig,
   },
-  data() {
-    return {
-      sourcesData: [] as NodeSource[],
-    };
-  },
-  methods: {
-    async loadNodeSourcesData(): Promise<void> {
-      try {
-        this.sourcesData = await getProjectNodeSources();
-      } catch (e) {
-        return console.warn("Error getting node sources list", e);
-      }
-    },
-  },
-  computed: {
-    writeableSources: function (): NodeSource[] {
-      return this.sourcesData.filter((e) => e.resources.writeable);
-    },
-  },
   props: {
     itemCss: {
       type: String,
@@ -92,6 +73,16 @@ export default defineComponent({
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
+    },
+  },
+  data() {
+    return {
+      sourcesData: [] as NodeSource[],
+    };
+  },
+  computed: {
+    writeableSources: function (): NodeSource[] {
+      return this.sourcesData.filter((e) => e.resources.writeable);
     },
   },
 
@@ -107,6 +98,15 @@ export default defineComponent({
     ) {
       this.loadNodeSourcesData();
     }
+  },
+  methods: {
+    async loadNodeSourcesData(): Promise<void> {
+      try {
+        this.sourcesData = await getProjectNodeSources();
+      } catch (e) {
+        return console.warn("Error getting node sources list", e);
+      }
+    },
   },
 });
 </script>

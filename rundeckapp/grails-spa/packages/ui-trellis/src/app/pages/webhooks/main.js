@@ -18,7 +18,7 @@ const app = createApp({
   provide: { rootStore },
   template: "<App/>",
 });
-app.component("rd-ace-editor", AceEditor);
+app.component("RdAceEditor", AceEditor);
 app.provide("registerComponent", (name, comp) => {
   app.component(name, comp);
 });

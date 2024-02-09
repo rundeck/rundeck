@@ -1,10 +1,10 @@
 <template>
-  <div id="app" v-if="project">
+  <div v-if="project" id="app">
     <slot :project="project"></slot>
     <activity-summary
       v-if="eventsAuth && project && showSummary !== 'false'"
       :project="project"
-      :rdBase="rdBase"
+      :rd-base="rdBase"
     ></activity-summary>
     <project-readme
       v-if="project && showReadme !== 'false'"
@@ -24,13 +24,6 @@ import { getRundeckContext } from "../../../library";
 
 export default {
   name: "App",
-  props: [
-    "eventBus",
-    "showDescription",
-    "showReadme",
-    "showSummary",
-    "showActivity",
-  ],
   components: {
     // motd,
     projectDescription,
@@ -38,6 +31,13 @@ export default {
     activitySummary,
     activityList,
   },
+  props: [
+    "eventBus",
+    "showDescription",
+    "showReadme",
+    "showSummary",
+    "showActivity",
+  ],
   data() {
     return {
       project: null,

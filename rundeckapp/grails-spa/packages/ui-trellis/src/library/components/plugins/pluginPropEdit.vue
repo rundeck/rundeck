@@ -2,57 +2,57 @@
   <div>
     <template v-if="prop.type === 'Boolean'">
       <div
-        class="col-xs-10 col-xs-offset-2"
         v-if="prop.defaultValue !== 'true'"
+        class="col-xs-10 col-xs-offset-2"
       >
         <div class="checkbox">
           <input
+            v-if="!renderReadOnly"
+            :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
             type="checkbox"
             :name="`${rkey}prop_` + pindex"
-            :id="`${rkey}prop_` + pindex"
             value="true"
-            v-model="currentValue"
-            v-if="!renderReadOnly"
           />
           <label :for="`${rkey}prop_` + pindex">{{ prop.title }}</label>
         </div>
       </div>
       <label
+        v-if="prop.defaultValue === 'true'"
         :class="
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        v-if="prop.defaultValue === 'true'"
         >{{ prop.title }}</label
       >
-      <div class="col-xs-10" v-if="prop.defaultValue === 'true'">
+      <div v-if="prop.defaultValue === 'true'" class="col-xs-10">
         <label :for="`${rkey}prop_true_` + pindex" class="radio-inline">
           <input
+            v-if="!renderReadOnly"
+            :id="`${rkey}prop_true_` + pindex"
+            v-model="currentValue"
             type="radio"
             :name="`${rkey}prop_` + pindex"
-            :id="`${rkey}prop_true_` + pindex"
             value="true"
-            v-model="currentValue"
-            v-if="!renderReadOnly"
           />
           <input
+            v-else
+            :id="`${rkey}prop_true_` + pindex"
+            v-model="currentValue"
             type="radio"
             :name="`${rkey}prop_` + pindex"
-            :id="`${rkey}prop_true_` + pindex"
             value="true"
             :disabled="true"
-            v-model="currentValue"
-            v-else
           />
           <plugin-prop-val :prop="prop" :value="'true'" />
         </label>
         <label :for="`${rkey}prop_false_` + pindex" class="radio-inline">
           <input
+            :id="`${rkey}prop_false_` + pindex"
+            v-model="currentValue"
             type="radio"
             :name="`${rkey}prop_` + pindex"
-            :id="`${rkey}prop_false_` + pindex"
             value="false"
-            v-model="currentValue"
           />
           <plugin-prop-val :prop="prop" :value="'false'" />
         </label>
@@ -61,13 +61,13 @@
     <template
       v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
     >
-      <input type="hidden" :id="rkey" :name="prop.name" />
+      <input :id="rkey" type="hidden" :name="prop.name" />
 
       <dynamic-form-plugin-prop
         :id="rkey"
-        :fields="modelValue"
         v-model="currentValue"
-        :hasOptions="hasAllowedValues()"
+        :fields="modelValue"
+        :has-options="hasAllowedValues()"
         :options="parseAllowedValues()"
         :element="rkey"
         :name="prop.name"
@@ -81,37 +81,29 @@
         :for="`${rkey}prop_` + pindex"
         >{{ prop.title }}</label
       >
-      <div class="col-sm-10" v-if="prop.type === 'Select'">
+      <div v-if="prop.type === 'Select'" class="col-sm-10">
         <select
-          :name="`${rkey}prop_` + pindex"
-          v-model="currentValue"
-          :id="`${rkey}prop_` + pindex"
-          class="form-control input-sm"
           v-if="!renderReadOnly"
+          :id="`${rkey}prop_` + pindex"
+          v-model="currentValue"
+          :name="`${rkey}prop_` + pindex"
+          class="form-control input-sm"
         >
           <option v-if="!prop.required" value>--None Selected--</option>
-          <option
-            v-for="opt in prop.allowed"
-            v-bind:value="opt"
-            v-bind:key="opt"
-          >
+          <option v-for="opt in prop.allowed" :key="opt" :value="opt">
             <plugin-prop-val :prop="prop" :value="opt" />
           </option>
         </select>
         <select
-          :name="`${rkey}prop_` + pindex"
-          v-model="currentValue"
+          v-else
           :id="`${rkey}prop_` + pindex"
+          v-model="currentValue"
+          :name="`${rkey}prop_` + pindex"
           class="form-control input-sm"
           :disabled="true"
-          v-else
         >
           <option v-if="!prop.required" value>--None Selected--</option>
-          <option
-            v-for="opt in prop.allowed"
-            v-bind:value="opt"
-            v-bind:key="opt"
-          >
+          <option v-for="opt in prop.allowed" :key="opt" :value="opt">
             <plugin-prop-val :prop="prop" :value="opt" />
           </option>
         </select>
@@ -119,50 +111,42 @@
       <template v-else-if="prop.type === 'FreeSelect'">
         <div class="col-sm-5">
           <input
-            :name="`${rkey}prop_` + pindex"
-            v-model="currentValue"
+            v-if="!renderReadOnly"
             :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
             size="100"
             type="text"
             class="form-control input-sm"
-            v-if="!renderReadOnly"
           />
           <input
-            :name="`${rkey}prop_` + pindex"
-            v-model="currentValue"
+            v-else
             :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
             size="100"
             type="text"
             class="form-control input-sm"
             :disabled="true"
-            v-else
           />
         </div>
         <div class="col-sm-5">
           <select
-            class="form-control input-sm"
-            v-model="currentValue"
             v-if="!renderReadOnly"
+            v-model="currentValue"
+            class="form-control input-sm"
           >
-            <option
-              v-for="opt in prop.allowed"
-              v-bind:value="opt"
-              v-bind:key="opt"
-            >
+            <option v-for="opt in prop.allowed" :key="opt" :value="opt">
               <plugin-prop-val :prop="prop" :value="opt" />
             </option>
           </select>
           <select
-            class="form-control input-sm"
-            v-model="currentValue"
-            :disabled="true"
             v-else
+            v-model="currentValue"
+            class="form-control input-sm"
+            :disabled="true"
           >
-            <option
-              v-for="opt in prop.allowed"
-              v-bind:value="opt"
-              v-bind:key="opt"
-            >
+            <option v-for="opt in prop.allowed" :key="opt" :value="opt">
               <plugin-prop-val :prop="prop" :value="opt" />
             </option>
           </select>
@@ -172,24 +156,24 @@
         <div class="col-sm-10">
           <div :class="{ longlist: prop.allowed && prop.allowed.length > 20 }">
             <div
-              class="checkbox"
               v-for="(opt, oindex) in prop.allowed"
-              v-bind:key="opt"
+              :key="opt"
+              class="checkbox"
             >
               <input
-                type="checkbox"
-                v-model="currentValue"
-                :value="opt"
-                :id="`${rkey}opt_` + pindex + '_' + oindex"
                 v-if="!renderReadOnly"
+                :id="`${rkey}opt_` + pindex + '_' + oindex"
+                v-model="currentValue"
+                type="checkbox"
+                :value="opt"
               />
               <input
-                type="checkbox"
-                v-model="currentValue"
-                :value="opt"
-                :id="`${rkey}opt_` + pindex + '_' + oindex"
-                :disabled="true"
                 v-else
+                :id="`${rkey}opt_` + pindex + '_' + oindex"
+                v-model="currentValue"
+                type="checkbox"
+                :value="opt"
+                :disabled="true"
               />
               <label :for="`${rkey}opt_` + pindex + '_' + oindex"
                 ><plugin-prop-val :prop="prop" :value="opt"
@@ -198,15 +182,15 @@
           </div>
         </div>
       </template>
-      <div :class="inputColSize(prop)" v-else>
+      <div v-else :class="inputColSize(prop)">
         <input
-          :name="`${rkey}prop_` + pindex"
-          v-model.number="currentValue"
+          v-if="['Integer', 'Long'].indexOf(prop.type) >= 0 && !renderReadOnly"
           :id="`${rkey}prop_` + pindex"
+          v-model.number="currentValue"
+          :name="`${rkey}prop_` + pindex"
           size="100"
           type="number"
           class="form-control input-sm"
-          v-if="['Integer', 'Long'].indexOf(prop.type) >= 0 && !renderReadOnly"
         />
         <template
           v-else-if="
@@ -214,37 +198,37 @@
           "
         >
           <textarea
-            :name="`${rkey}prop_` + pindex"
-            v-model="currentValue"
+            v-if="!renderReadOnly"
             :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
             rows="10"
             cols="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-            v-if="!renderReadOnly"
+            :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           ></textarea>
           <textarea
-            :name="`${rkey}prop_` + pindex"
-            v-model="currentValue"
+            v-else
             :id="`${rkey}prop_` + pindex"
+            v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
             rows="10"
             cols="100"
             class="form-control input-sm"
             :disabled="true"
-            v-else
           ></textarea>
         </template>
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'CODE'"
         >
           <ace-editor
-            :name="`${rkey}prop_` + pindex"
+            :id="`${rkey}prop_` + pindex"
             v-model="currentValue"
+            :name="`${rkey}prop_` + pindex"
             :lang="prop.options['codeSyntaxMode']"
-            :codeSyntaxSelectable="
+            :code-syntax-selectable="
               prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
             "
-            :id="`${rkey}prop_` + pindex"
             height="200"
             width="100%"
             :read-only="renderReadOnly"
@@ -255,9 +239,9 @@
         >
           <div v-if="!renderReadOnly">
             <input
-              :name="`${rkey}prop_` + pindex"
-              v-model="currentValue"
               :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
               size="100"
               type="password"
               autocomplete="new-password"
@@ -266,9 +250,9 @@
           </div>
           <div v-else>
             <input
-              :name="`${rkey}prop_` + pindex"
-              v-model="currentValue"
               :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
               size="100"
               type="password"
               autocomplete="new-password"
@@ -297,43 +281,43 @@
           "
         >
           <input
-            :name="`${rkey}prop_` + pindex"
             :id="`${rkey}prop_` + pindex"
+            :name="`${rkey}prop_` + pindex"
             readonly
             size="100"
             class="form-control input-sm"
-            v-bind:title="currentValue"
-            v-bind:value="jobName"
+            :title="currentValue"
+            :value="jobName"
           />
         </template>
         <input
-          :name="`${rkey}prop_` + pindex"
-          v-model="currentValue"
+          v-else-if="renderReadOnly"
           :id="`${rkey}prop_` + pindex"
+          v-model="currentValue"
+          :name="`${rkey}prop_` + pindex"
           size="100"
           type="text"
           class="form-control input-sm"
           :disabled="true"
-          v-else-if="renderReadOnly"
         />
         <input
-          :name="`${rkey}prop_` + pindex"
-          v-model="currentValue"
+          v-else
           :id="`${rkey}prop_` + pindex"
+          v-model="currentValue"
+          :name="`${rkey}prop_` + pindex"
           size="100"
           type="text"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-          v-else
+          :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
         />
 
         <TextAutocomplete
           v-if="contextAutocomplete && !aceEditorEnabled"
+          v-model="currentValue"
           :target="'#' + rkey + 'prop_' + pindex"
           :data="jobContext"
           item-key="name"
-          v-model="currentValue"
-          autocompleteKey="$"
+          autocomplete-key="$"
         >
           <template #item="{ items, select, highlight }">
             <li v-for="(item, index) in items" :key="item.name">
@@ -354,8 +338,8 @@
           <option disabled value>-- Select Plugin Type --</option>
           <option
             v-for="opt in selectorDataForName"
-            v-bind:value="opt.value"
-            v-bind:key="opt.key"
+            :key="opt.key"
+            :value="opt.value"
           >
             {{ opt.key }}
           </option>
@@ -369,7 +353,7 @@
       >
         <job-config-picker
           v-model="currentValue"
-          :btnClass="`btn-primary`"
+          :btn-class="`btn-primary`"
         ></job-config-picker>
       </div>
       <div
@@ -388,7 +372,7 @@
               allowUpload: true,
               readOnly: renderReadOnly,
               value: currentValue,
-              handleUpdate: (val) => (this.currentValue = val),
+              handleUpdate: (val) => (currentValue = val),
             }"
           >
             <key-storage-selector
@@ -414,13 +398,13 @@
         v-else-if="prop.options && prop.options['selectionAccessor']"
         name="accessors"
         :prop="prop"
-        :inputValues="inputValues"
+        :input-values="inputValues"
         :accessor="prop.options['selectionAccessor']"
       ></slot>
     </template>
 
-    <div class="col-sm-10 col-sm-offset-2 help-block" v-if="prop.desc">
-      <details class="more-info" :class="extendedCss" v-if="extraDescription">
+    <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
+      <details v-if="extraDescription" class="more-info" :class="extendedCss">
         <summary>
           <span :class="descriptionCss">{{ shortDescription }}</span>
           <span class="more-indicator-verbiage btn-link btn-xs"
@@ -435,11 +419,11 @@
           mode=""
         />
       </details>
-      <div class="help-block" v-else>{{ prop.desc }}</div>
+      <div v-else class="help-block">{{ prop.desc }}</div>
     </div>
     <div
-      class="col-sm-10 col-sm-offset-2 text-warning"
       v-if="validation && !validation.valid && validation.errors[prop.name]"
+      class="col-sm-10 col-sm-offset-2 text-warning"
     >
       {{ validation.errors[prop.name] }}
     </div>
@@ -550,6 +534,85 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
+  data() {
+    return {
+      jobName: "",
+      keyPath: "",
+      jobContext: [] as any,
+      aceEditorEnabled: false,
+      renderReadOnly: false,
+    };
+  },
+  computed: {
+    shortDescription(): string {
+      const desc = this.prop.desc;
+      if (desc && desc.indexOf("\n") > 0) {
+        return desc.substring(0, desc.indexOf("\n"));
+      }
+      return desc;
+    },
+    extraDescription(): string | null {
+      const desc = this.prop.desc;
+      if (desc && desc.indexOf("\n") > 0) {
+        return desc.substring(desc.indexOf("\n") + 1);
+      }
+      return null;
+    },
+    selectorDataForName(): any[] {
+      return this.selectorData[this.prop.name];
+    },
+    currentValue: {
+      get() {
+        return this.modelValue;
+      },
+      set(val: any) {
+        this.$emit("update:modelValue", val);
+        this.setJobName(val);
+      },
+    },
+  },
+  watch: {
+    currentValue: function (newval) {
+      this.$emit("update:modelValue", newval);
+      this.setJobName(newval);
+    },
+    value: function (newval) {
+      this.currentValue = newval;
+    },
+    readOnly: function (newval) {
+      this.renderReadOnly =
+        newval ||
+        (this.prop.options && this.prop.options["displayType"] === "READONLY");
+    },
+  },
+  mounted() {
+    this.$emit("pluginPropsMounted");
+    this.setJobName(this.modelValue);
+    if (getRundeckContext() && getRundeckContext().projectName) {
+      this.keyPath = "keys/project/" + getRundeckContext().projectName + "/";
+    }
+
+    if (this.autocompleteCallback && this.contextAutocomplete) {
+      const vars = this.autocompleteCallback(this.rkey + "prop_" + this.pindex);
+      const jobContext = [] as any;
+      vars.forEach((context: any) => {
+        jobContext.push({
+          name: context["value"],
+          description: context["data"]["title"],
+          category: context["data"]["category"],
+        });
+      });
+      this.jobContext = jobContext;
+    }
+
+    if (this.prop.options && this.prop.options["displayType"] === "CODE") {
+      this.aceEditorEnabled = true;
+    }
+
+    this.renderReadOnly =
+      this.readOnly ||
+      (this.prop.options && this.prop.options["displayType"] === "READONLY");
+  },
   methods: {
     inputColSize(prop: any) {
       if (prop.options && prop.options["selectionAccessor"]) {
@@ -586,85 +649,6 @@ export default defineComponent({
       }
       return "false";
     },
-  },
-  data() {
-    return {
-      jobName: "",
-      keyPath: "",
-      jobContext: [] as any,
-      aceEditorEnabled: false,
-      renderReadOnly: false,
-    };
-  },
-  watch: {
-    currentValue: function (newval) {
-      this.$emit("update:modelValue", newval);
-      this.setJobName(newval);
-    },
-    value: function (newval) {
-      this.currentValue = newval;
-    },
-    readOnly: function (newval) {
-      this.renderReadOnly =
-        newval ||
-        (this.prop.options && this.prop.options["displayType"] === "READONLY");
-    },
-  },
-  computed: {
-    shortDescription(): string {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(0, desc.indexOf("\n"));
-      }
-      return desc;
-    },
-    extraDescription(): string | null {
-      const desc = this.prop.desc;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(desc.indexOf("\n") + 1);
-      }
-      return null;
-    },
-    selectorDataForName(): any[] {
-      return this.selectorData[this.prop.name];
-    },
-    currentValue: {
-      get() {
-        return this.modelValue;
-      },
-      set(val: any) {
-        this.$emit("update:modelValue", val);
-        this.setJobName(val);
-      },
-    },
-  },
-  mounted() {
-    this.$emit("pluginPropsMounted");
-    this.setJobName(this.modelValue);
-    if (getRundeckContext() && getRundeckContext().projectName) {
-      this.keyPath = "keys/project/" + getRundeckContext().projectName + "/";
-    }
-
-    if (this.autocompleteCallback && this.contextAutocomplete) {
-      let vars = this.autocompleteCallback(this.rkey + "prop_" + this.pindex);
-      let jobContext = [] as any;
-      vars.forEach((context: any) => {
-        jobContext.push({
-          name: context["value"],
-          description: context["data"]["title"],
-          category: context["data"]["category"],
-        });
-      });
-      this.jobContext = jobContext;
-    }
-
-    if (this.prop.options && this.prop.options["displayType"] === "CODE") {
-      this.aceEditorEnabled = true;
-    }
-
-    this.renderReadOnly =
-      this.readOnly ||
-      (this.prop.options && this.prop.options["displayType"] === "READONLY");
   },
 });
 </script>

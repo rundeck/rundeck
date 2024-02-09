@@ -10,6 +10,7 @@ import { webhookui } from "../../../stores/Webhooks";
 
 export default defineComponent({
   name: "Tab",
+  inject: ["selectedIndex"],
   props: {
     index: {
       type: Number,
@@ -21,7 +22,6 @@ export default defineComponent({
     },
     keep: { type: Boolean, default: true },
   },
-  inject: ["selectedIndex"],
   computed: {
     isActive() {
       return this.index === this.selectedIndex;

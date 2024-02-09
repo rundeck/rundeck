@@ -8,7 +8,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "rd-tab-pane",
+  name: "RdTabPane",
   created() {
     console.log("content created");
   },

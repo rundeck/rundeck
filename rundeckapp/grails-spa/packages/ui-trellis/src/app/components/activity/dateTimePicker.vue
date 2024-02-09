@@ -22,21 +22,9 @@ export default defineComponent({
       time: new Date(),
     };
   },
-  methods: {
-    recalcDate() {
-      let mo = moment(this.time);
-      let date = moment(this.dateString);
-      mo.year(date.year());
-      mo.month(date.month());
-      mo.date(date.date());
-      this.time = mo.toDate();
-    },
-    setFromValue() {
-      if (this.modelValue) {
-        let dt = moment(this.modelValue);
-        this.time = dt.toDate();
-        this.dateString = dt.format("YYYY-MM-DD");
-      }
+  computed: {
+    datetime() {
+      return moment(this.time).format();
     },
   },
   watch: {
@@ -56,13 +44,25 @@ export default defineComponent({
       },
     },
   },
-  computed: {
-    datetime() {
-      return moment(this.time).format();
-    },
-  },
   mounted() {
     this.setFromValue();
+  },
+  methods: {
+    recalcDate() {
+      const mo = moment(this.time);
+      const date = moment(this.dateString);
+      mo.year(date.year());
+      mo.month(date.month());
+      mo.date(date.date());
+      this.time = mo.toDate();
+    },
+    setFromValue() {
+      if (this.modelValue) {
+        const dt = moment(this.modelValue);
+        this.time = dt.toDate();
+        this.dateString = dt.format("YYYY-MM-DD");
+      }
+    },
   },
 });
 </script>

@@ -21,7 +21,7 @@ const els = document.body.getElementsByClassName(VIEWER_CLASS);
  * Watches the parent element for style change and mounts
  * the Vue component if it becomes visible
  */
-let observer = new MutationObserver(function (mutations) {
+const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutationRecord) {
     const parent = mutationRecord.target;
     if (parent.offsetParent !== null && !MOUNTED) {
@@ -32,7 +32,7 @@ let observer = new MutationObserver(function (mutations) {
 });
 
 setTimeout(() => {
-  for (let e of els) {
+  for (const e of els) {
     if (window.getComputedStyle(e.parentElement).display !== "none") {
       mount(e);
     } else {
@@ -85,10 +85,10 @@ function mount(e) {
   const vue = createApp({
     name: "LogViewerApp",
     components: { LogViewer },
-    template: template,
     provide: {
       rootStore,
     },
+    template: template,
   });
   vue.use(VueCookies);
   vue.use(uiv);

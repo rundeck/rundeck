@@ -90,7 +90,7 @@ export class NodeSourceFile {
     index: number,
     mimeType: string,
   ): Promise<string> {
-    let ctx = getRundeckContext();
+    const ctx = getRundeckContext();
     try {
       const response = await axios.get(
         `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
@@ -122,8 +122,8 @@ export class NodeSourceFile {
     mimeType: string,
     content: string,
   ): Promise<string> {
-    let ctx = getRundeckContext();
-    let token = await Tokens.getUIAjaxTokens();
+    const ctx = getRundeckContext();
+    const token = await Tokens.getUIAjaxTokens();
     const response = (await axios
       .post(
         `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,

@@ -44,7 +44,7 @@ const initI18n = (options = {}) => {
 
 const updateLocaleMessages = async (i18n, locale, lang, messages) => {
   //include previously loaded messages
-  let merged = mergeDeep(i18n.global.messages[locale] || {}, messages);
+  const merged = mergeDeep(i18n.global.messages[locale] || {}, messages);
   i18n.global.setLocaleMessage(locale, merged);
   return nextTick();
 };

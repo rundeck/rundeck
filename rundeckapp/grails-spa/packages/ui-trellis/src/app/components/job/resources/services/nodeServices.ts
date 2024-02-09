@@ -3,7 +3,7 @@ import { _genUrl } from "../../../../utilities/genUrl";
 import { getAppLinks, getRundeckContext } from "../../../../../library";
 
 export async function getExecutionMode(): Promise<any> {
-  let ctx = getRundeckContext();
+  const ctx = getRundeckContext();
   const response = await axios.request({
     method: "GET",
     headers: {

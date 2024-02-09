@@ -6,7 +6,7 @@ import moment from "moment";
 import App from "./App.vue";
 import { getRundeckContext } from "../../../library";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const rootStore = getRundeckContext().rootStore;

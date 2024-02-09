@@ -26,11 +26,11 @@
         :class="repo.repositoryName"
       >
         <PluginCard
+          v-for="result in repo.results"
+          :key="result.id"
           :result="result"
           :repo="repo"
           class="artifact col-xs-12 col-sm-4"
-          v-for="result in repo.results"
-          :key="result.id"
         />
       </div>
     </div>
@@ -43,10 +43,10 @@ import PluginCard from "./PluginCard.vue";
 
 export default defineComponent({
   name: "RepositoryRow",
-  props: ["repo", "type"],
   components: {
     PluginCard,
   },
+  props: ["repo", "type"],
   data() {
     return {
       visible: true,

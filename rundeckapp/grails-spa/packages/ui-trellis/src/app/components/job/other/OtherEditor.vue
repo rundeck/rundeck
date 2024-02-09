@@ -5,11 +5,11 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
+            id="logLevelNormalTrue"
+            v-model="modelData.loglevel"
             type="radio"
             name="loglevel"
             :value="'INFO'"
-            v-model="modelData.loglevel"
-            id="logLevelNormalTrue"
           />
           <label for="logLevelNormalTrue">
             {{ $t("loglevel.normal") }}
@@ -18,10 +18,10 @@
         <div class="radio radio-inline">
           <input
             id="logLevelNormalFalse"
+            v-model="modelData.loglevel"
             type="radio"
             name="loglevel"
             :value="'DEBUG'"
-            v-model="modelData.loglevel"
           />
           <label for="logLevelNormalFalse">
             {{ $t("loglevel.debug") }}
@@ -37,21 +37,21 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
+            id="multipleFalse"
+            v-model="modelData.multipleExecutions"
             type="radio"
             name="multipleExecutions"
             :value="false"
-            v-model="modelData.multipleExecutions"
-            id="multipleFalse"
           />
           <label for="multipleFalse"> No </label>
         </div>
         <div class="radio radio-inline">
           <input
             id="multipleTrue"
+            v-model="modelData.multipleExecutions"
             type="radio"
             name="multipleExecutions"
             :value="true"
-            v-model="modelData.multipleExecutions"
           />
           <label for="multipleTrue"> Yes </label>
         </div>
@@ -67,10 +67,10 @@
 
       <div :class="fieldColHalfSize">
         <input
+          id="maxMultipleExecutions"
+          v-model="modelData.maxMultipleExecutions"
           type="text"
           name="maxMultipleExecutions"
-          v-model="modelData.maxMultipleExecutions"
-          id="maxMultipleExecutions"
           class="form-control"
         />
         <span class="help-block">
@@ -85,10 +85,10 @@
 
       <div :class="fieldColHalfSize">
         <input
+          id="schedJobTimeout"
+          v-model="modelData.timeout"
           type="text"
           name="timeout"
-          v-model="modelData.timeout"
-          id="schedJobTimeout"
           class="form-control"
         />
         <span class="help-block">
@@ -103,10 +103,10 @@
 
       <div :class="fieldColShortSize">
         <input
+          id="schedJobRetry"
+          v-model="modelData.retry"
           type="text"
           name="retry"
-          v-model="modelData.retry"
-          id="schedJobRetry"
           class="form-control"
         />
 
@@ -121,10 +121,10 @@
 
       <div :class="fieldColShortSize">
         <input
+          id="schedJobRetryDelay"
+          v-model="modelData.retryDelay"
           type="text"
           name="retryDelay"
-          v-model="modelData.retryDelay"
-          id="schedJobRetryDelay"
           class="form-control"
         />
         <span class="help-block">
@@ -142,10 +142,10 @@
 
       <div :class="fieldColShortSize">
         <input
+          id="schedJobLogOutputThreshold"
+          v-model="modelData.logOutputThreshold"
           type="text"
           name="logOutputThreshold"
-          v-model="modelData.logOutputThreshold"
-          id="schedJobLogOutputThreshold"
           class="form-control"
           :placeholder="
             $t('scheduledExecution.property.logOutputThreshold.placeholder')
@@ -165,11 +165,11 @@
       <div :class="fieldColShortSize">
         <div class="radio">
           <input
+            id="logOutputThresholdAction"
+            v-model="modelData.logOutputThresholdAction"
             type="radio"
             name="logOutputThresholdAction"
             :value="'halt'"
-            v-model="modelData.logOutputThresholdAction"
-            id="logOutputThresholdAction"
           />
           <label for="logOutputThresholdAction">
             {{
@@ -182,28 +182,28 @@
 
         <div class="input-group">
           <input
+            id="schedJobLogOutputThresholdStatus"
+            v-model="modelData.logOutputThresholdStatus"
+            v-tooltip.left.hover="
+              'Enter a status, such as \'failed\', \'aborted\' or any custom status.'
+            "
             type="text"
             name="logOutputThresholdStatus"
-            v-model="modelData.logOutputThresholdStatus"
-            id="schedJobLogOutputThresholdStatus"
             class="form-control"
             :placeholder="
               $t(
                 'scheduledExecution.property.logOutputThresholdStatus.placeholder',
               )
             "
-            v-tooltip.left.hover="
-              'Enter a status, such as \'failed\', \'aborted\' or any custom status.'
-            "
           />
         </div>
         <div class="radio">
           <input
+            id="logOutputThresholdActionTruncateAndContinue"
+            v-model="modelData.logOutputThresholdAction"
             type="radio"
             name="logOutputThresholdAction"
             :value="'truncate'"
-            v-model="modelData.logOutputThresholdAction"
-            id="logOutputThresholdActionTruncateAndContinue"
           />
           <label for="logOutputThresholdActionTruncateAndContinue">
             {{
@@ -230,11 +230,11 @@
       <div :class="fieldColSize">
         <div class="radio radio-inline">
           <input
+            id="tabSummary"
+            v-model="modelData.defaultTab"
             type="radio"
             name="defaultTab"
             :value="'nodes'"
-            v-model="modelData.defaultTab"
-            id="tabSummary"
           />
           <label for="tabSummary">
             {{ $t("execution.page.show.tab.Nodes.title") }}
@@ -243,11 +243,11 @@
 
         <div class="radio radio-inline">
           <input
+            id="tabOutput"
+            v-model="modelData.defaultTab"
             type="radio"
             name="defaultTab"
             :value="'output'"
-            v-model="modelData.defaultTab"
-            id="tabOutput"
           />
           <label for="tabOutput">
             {{ $t("execution.show.mode.Log.title") }}
@@ -255,11 +255,11 @@
         </div>
         <div class="radio radio-inline">
           <input
+            id="tabHTML"
+            v-model="modelData.defaultTab"
             type="radio"
             name="defaultTab"
             :value="'html'"
-            v-model="modelData.defaultTab"
-            id="tabHTML"
           />
           <label for="tabHTML"> HTML </label>
         </div>
@@ -270,22 +270,22 @@
       </div>
     </div>
 
-    <div class="form-group" id="schedJobUuidLabel">
+    <div id="schedJobUuidLabel" class="form-group">
       <label for="schedJobUuid" class="col-sm-2 control-label text-primary">
         UUID
       </label>
 
-      <div :class="fieldColSize" v-if="modelData.uuid">
+      <div v-if="modelData.uuid" :class="fieldColSize">
         <p class="form-control-static text-primary">
           {{ modelData.uuid }}
         </p>
       </div>
-      <div :class="fieldColSize" v-if="!modelData.uuid">
+      <div v-if="!modelData.uuid" :class="fieldColSize">
         <input
+          id="schedJobUuid"
+          v-model="modelData.uuid"
           type="text"
           name="uuid"
-          v-model="modelData.uuid"
-          id="schedJobUuid"
           size="36"
           class="form-control"
         />
@@ -305,7 +305,6 @@ export default defineComponent({
   components: {
     InlineValidationErrors,
   },
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       type: Object as PropType<any>,
@@ -315,6 +314,12 @@ export default defineComponent({
       type: Object as PropType<typeof EventBus>,
       required: true,
     },
+  },
+  emits: ["update:modelValue"],
+  data() {
+    return {
+      modelData: {} as { [key: string]: any },
+    };
   },
   computed: {
     labelColClass() {
@@ -330,6 +335,17 @@ export default defineComponent({
       return "col-sm-4";
     },
   },
+  watch: {
+    modelData: {
+      handler() {
+        this.$emit("update:modelValue", this.modelData);
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    this.onMounted();
+  },
   methods: {
     async onMounted() {
       this.modelData = Object.assign({}, this.modelValue);
@@ -343,22 +359,6 @@ export default defineComponent({
       if (!this.modelData.logOutputThresholdAction) {
         this.modelData.logOutputThresholdAction = "halt";
       }
-    },
-  },
-  data() {
-    return {
-      modelData: {} as { [key: string]: any },
-    };
-  },
-  mounted() {
-    this.onMounted();
-  },
-  watch: {
-    modelData: {
-      handler() {
-        this.$emit("update:modelValue", this.modelData);
-      },
-      deep: true,
     },
   },
 });

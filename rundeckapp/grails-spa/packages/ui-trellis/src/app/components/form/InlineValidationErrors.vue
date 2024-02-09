@@ -1,5 +1,5 @@
 <template>
-  <div class="text-warning" v-if="errors && errors.length > 0">
+  <div v-if="errors && errors.length > 0" class="text-warning">
     <ul>
       <li v-for="err in errors">{{ err }}</li>
     </ul>

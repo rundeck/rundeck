@@ -6,22 +6,22 @@
         <div class="nav-tabs-wrapper">
           <ul class="nav nav-tabs">
             <li
-              :class="{ active: !nodeFilterStore.filter }"
               id="tab_link_summary"
-              @click="fetchNodeSummary"
               :key="`${nodeFilterStore.filter}tab-result`"
+              :class="{ active: !nodeFilterStore.filter }"
+              @click="fetchNodeSummary"
             >
               <a href="#summary1" data-toggle="tab">
                 {{ $t("browse") }}
               </a>
             </li>
             <li
-              :class="{ active: nodeFilterStore.filter }"
+              v-if="allCount !== null"
               id="tab_link_result"
               :key="`${nodeFilterStore.filter}tab-summary`"
-              v-if="allCount !== null"
+              :class="{ active: nodeFilterStore.filter }"
             >
-              <a href="#result1" data-toggle="tab" v-if="filterIsSet">
+              <a v-if="filterIsSet" href="#result1" data-toggle="tab">
                 {{ $t("result") }}
                 <template v-if="allCount >= 0">
                   <span class="text-info" style="margin-right: 4px">
@@ -55,10 +55,10 @@
                 >
                   <a
                     href="#"
-                    @click="runCommand"
                     :title="notAuthorized()"
                     :class="{ has_tooltip: !runAuthorized }"
                     data-placement="left"
+                    @click="runCommand"
                   >
                     <i class="glyphicon glyphicon-play"></i>
                     <span>
@@ -92,10 +92,10 @@
                 <li :class="{ disabled: !jobCreateAuthorized }">
                   <a
                     href="#"
-                    @click="saveJob"
                     :title="notAuthorized(jobCreateAuthorized)"
                     :class="{ has_tooltip: !jobCreateAuthorized }"
                     data-placement="left"
+                    @click="saveJob"
                   >
                     <i class="glyphicon glyphicon-plus"></i>
                     <span>
@@ -126,10 +126,10 @@
         </div>
 
         <div
-          class="tab-pane"
-          :class="{ active: !nodeFilterStore.filter }"
           id="summary1"
           :key="`${nodeFilterStore.filter}summary`"
+          class="tab-pane"
+          :class="{ active: !nodeFilterStore.filter }"
         >
           <div class="row">
             <div class="col-xs-6">
@@ -139,13 +139,13 @@
               <ul class="list-unstyled">
                 <li
                   v-for="(tag, index) in nodeSummary.tags"
-                  style="margin: 0 2px; display: inline-block"
                   :key="index"
+                  style="margin: 0 2px; display: inline-block"
                 >
                   <node-filter-link
                     class="label label-muted"
-                    filterKey="tags"
-                    :filterVal="tag.tag"
+                    filter-key="tags"
+                    :filter-val="tag.tag"
                     @nodefilterclick="saveFilter"
                   >
                     <template #suffix> ({{ tag.count }}) </template>
@@ -176,25 +176,25 @@
         </div>
 
         <div
-          class="tab-pane"
-          :class="{ active: nodeFilterStore.filter }"
           id="result1"
           :key="`${nodeFilterStore.filter}result`"
+          class="tab-pane"
+          :class="{ active: nodeFilterStore.filter }"
         >
-          <div class="clear matchednodes" id="nodeview">
+          <div id="nodeview" class="clear matchednodes">
             <NodeTable
               :node-set="nodeSet"
               :filter-columns="filterColumns"
               :loading="loading"
               :has-paging="hasPaging"
               :paging-max="pagingMax"
-              :maxPages="maxPages"
+              :max-pages="maxPages"
               :page="page"
-              :filterAll="filterAll"
-              @filter="saveFilter"
-              @changePage="updatePage"
-              @changePagingMax="updatePagingMax"
+              :filter-all="filterAll"
               :filter="nodeFilterStore.filter"
+              @filter="saveFilter"
+              @change-page="updatePage"
+              @change-paging-max="updatePagingMax"
             />
           </div>
         </div>
@@ -242,6 +242,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ["filter"],
   data() {
     return {
       nodeSet: {},
@@ -287,7 +288,36 @@ export default defineComponent({
       return Math.ceil(this.total / this.pagingMax);
     },
   },
-  emits: ["filter"],
+  watch: {
+    nodeFilterStore: {
+      async handler(newValue) {
+        if (newValue.selectedFilter === "" && this.hideAll) {
+          this.filterAll = true;
+        } else if (newValue.selectedFilter === ".*") {
+          this.filterAll = true;
+        }
+
+        await this.fetchNodes();
+      },
+      deep: true,
+    },
+  },
+  async mounted() {
+    await this.fetchNodeSummary();
+    await this.fetchExecutionMode();
+    await this.fetchNodes();
+
+    if (this.nodeSummary.defaultFilter) {
+      let filterToEmit = this.nodeSummary.defaultFilter;
+      if (filterToEmit !== ".*") {
+        filterToEmit = this.nodeSummary.filters.filter(
+          (f) => f.filterName === this.nodeSummary.defaultFilter,
+        )[0];
+      }
+      this.saveFilter(filterToEmit);
+    }
+    this.eventBus.on("nodefilter:savedFilters:changed", this.fetchNodeSummary);
+  },
   methods: {
     notAuthorized(authorized = this.runAuthorized): string {
       return !authorized ? this.$t("not.authorized") : "";
@@ -332,7 +362,7 @@ export default defineComponent({
         basedata.view = "tableContent";
       }
 
-      let params = Object.assign({}, basedata, filterdata);
+      const params = Object.assign({}, basedata, filterdata);
       if (!this.nodeFilterStore.filter) {
         params.localNodeOnly = "true";
       }
@@ -385,36 +415,6 @@ export default defineComponent({
     async updatePagingMax(pagingMax: number) {
       this.pagingMax = pagingMax;
       await this.fetchNodes();
-    },
-  },
-  async mounted() {
-    await this.fetchNodeSummary();
-    await this.fetchExecutionMode();
-    await this.fetchNodes();
-
-    if (this.nodeSummary.defaultFilter) {
-      let filterToEmit = this.nodeSummary.defaultFilter;
-      if (filterToEmit !== ".*") {
-        filterToEmit = this.nodeSummary.filters.filter(
-          (f) => f.filterName === this.nodeSummary.defaultFilter,
-        )[0];
-      }
-      this.saveFilter(filterToEmit);
-    }
-    this.eventBus.on("nodefilter:savedFilters:changed", this.fetchNodeSummary);
-  },
-  watch: {
-    nodeFilterStore: {
-      async handler(newValue) {
-        if (newValue.selectedFilter === "" && this.hideAll) {
-          this.filterAll = true;
-        } else if (newValue.selectedFilter === ".*") {
-          this.filterAll = true;
-        }
-
-        await this.fetchNodes();
-      },
-      deep: true,
     },
   },
 });

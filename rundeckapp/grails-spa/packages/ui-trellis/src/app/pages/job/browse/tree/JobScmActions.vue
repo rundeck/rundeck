@@ -13,7 +13,7 @@
         <job-scm-status-badge
           :notext="true"
           icon="glyphicon-eye-open"
-          :exportStatus="exportSynchState"
+          :export-status="exportSynchState"
         />
         <template v-if="exportSynchState === 'CLEAN'">
           {{ $t("scm.action.diff.clean.button.label") }}
@@ -61,17 +61,6 @@ export default defineComponent({
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
     };
   },
-  methods: {
-    scmHrefBase(integration: string): string {
-      return `${context.rdBase}/project/${context.projectName}/job/${this.job.id}/scm/${integration}`;
-    },
-    scmActionHref(id: string, integration: string): string {
-      return `${this.scmHrefBase(integration)}/performAction?actionId=${id}`;
-    },
-    scmDiffHref(integration: string): string {
-      return `${this.scmHrefBase(integration)}/diff`;
-    },
-  },
   computed: {
     exportAuthz(): boolean {
       return (
@@ -91,10 +80,10 @@ export default defineComponent({
     importActions(): any[] | undefined {
       return this.scmImport?.jobState?.actions;
     },
-    exportSynchState(): String | undefined {
+    exportSynchState(): string | undefined {
       return this.scmExport?.jobState?.synchState;
     },
-    importSynchState(): String | undefined {
+    importSynchState(): string | undefined {
       return this.scmImport?.jobState?.synchState;
     },
     scmExport(): JobBrowseMeta | undefined {
@@ -106,6 +95,17 @@ export default defineComponent({
       return this.job.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "scmImport",
       )?.data;
+    },
+  },
+  methods: {
+    scmHrefBase(integration: string): string {
+      return `${context.rdBase}/project/${context.projectName}/job/${this.job.id}/scm/${integration}`;
+    },
+    scmActionHref(id: string, integration: string): string {
+      return `${this.scmHrefBase(integration)}/performAction?actionId=${id}`;
+    },
+    scmDiffHref(integration: string): string {
+      return `${this.scmHrefBase(integration)}/diff`;
     },
   },
 });

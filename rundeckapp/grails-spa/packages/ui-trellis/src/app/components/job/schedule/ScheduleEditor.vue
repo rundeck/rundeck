@@ -8,10 +8,10 @@
         <div class="radio radio-inline">
           <input
             id="scheduledFalse"
+            v-model="modelData.scheduled"
             type="radio"
             name="scheduled"
             :value="false"
-            v-model="modelData.scheduled"
           />
           <label for="scheduledFalse">
             {{ $t("no") }}
@@ -19,11 +19,11 @@
         </div>
         <div class="radio radio-inline">
           <input
+            id="scheduledTrue"
+            v-model="modelData.scheduled"
             type="radio"
             name="scheduled"
             :value="true"
-            v-model="modelData.scheduled"
-            id="scheduledTrue"
           />
           <label for="scheduledTrue">
             {{ $t("yes") }}
@@ -31,7 +31,7 @@
         </div>
       </div>
     </div>
-    <div class="form-group" id="scheduledExecutionEditTZ">
+    <div id="scheduledExecutionEditTZ" class="form-group">
       <template v-if="modelData.scheduled">
         <div class="form-group">
           <div class="col-sm-10 col-sm-offset-2">
@@ -45,7 +45,7 @@
                           <ul class="nav nav-tabs">
                             <li
                               id="simpleLi"
-                              v-bind:class="{
+                              :class="{
                                 active: !modelData.useCrontabString,
                               }"
                             >
@@ -58,7 +58,7 @@
                             </li>
                             <li
                               id="cronLi"
-                              v-bind:class="{
+                              :class="{
                                 active: !!modelData.useCrontabString,
                               }"
                             >
@@ -75,10 +75,10 @@
                     </div>
                     <div class="col-xs-10">
                       <div class="form-group">
-                        <div id="cronsimple" v-if="!modelData.useCrontabString">
+                        <div v-if="!modelData.useCrontabString" id="cronsimple">
                           <div class="crontab tabtarget">
                             <div class="panel-body">
-                              <div class="col-sm-4 form-inline" id="hourTab">
+                              <div id="hourTab" class="col-sm-4 form-inline">
                                 <label
                                   for="hourNumber"
                                   aria-hidden="false"
@@ -87,15 +87,15 @@
                                 >
                                 <select
                                   id="hourNumber"
-                                  name="hour"
                                   v-model="modelData.hourSelected"
+                                  name="hour"
                                   class="form-control"
                                   style="width: auto"
                                 >
                                   <option
                                     v-for="hour in hours"
                                     :key="hour"
-                                    v-bind:value="hour"
+                                    :value="hour"
                                   >
                                     {{ hour }}
                                   </option>
@@ -109,15 +109,15 @@
                                 >
                                 <select
                                   id="minuteNumber"
-                                  name="minute"
                                   v-model="modelData.minuteSelected"
+                                  name="minute"
                                   class="form-control"
                                   style="width: auto"
                                 >
                                   <option
                                     v-for="minute in minutes"
                                     :key="minute"
-                                    v-bind:value="minute"
+                                    :value="minute"
                                   >
                                     {{ minute }}
                                   </option>
@@ -125,27 +125,27 @@
                               </div>
                               <div class="col-sm-4">
                                 <div
-                                  class="checklist checkbox"
                                   id="DayOfWeekDialog"
+                                  class="checklist checkbox"
                                 >
                                   <input
                                     id="everyDay"
+                                    v-model="modelData.everyDayOfWeek"
                                     name="everyDay"
                                     type="checkbox"
                                     value="all"
-                                    v-model="modelData.everyDayOfWeek"
                                   />
                                   <label for="everyDay">Every Day</label>
                                   <template v-if="!modelData.everyDayOfWeek">
                                     <div
-                                      class="_defaultInput checkbox"
                                       v-for="(day, n) in days"
+                                      class="_defaultInput checkbox"
                                     >
                                       <input
                                         :id="'dayCheckbox_' + n"
+                                        v-model="modelData.selectedDays"
                                         type="checkbox"
                                         :value="day.shortName"
-                                        v-model="modelData.selectedDays"
                                       />
                                       <label :for="'dayCheckbox_' + n">{{
                                         day.name
@@ -161,27 +161,27 @@
                               </div>
                               <div class="col-sm-4">
                                 <div
-                                  class="checklist checkbox"
                                   id="MonthDialog"
+                                  class="checklist checkbox"
                                 >
                                   <input
                                     id="everyMonth"
+                                    v-model="modelData.allMonths"
                                     name="everyMonth"
                                     type="checkbox"
                                     value="all"
-                                    v-model="modelData.allMonths"
                                   />
                                   <label for="everyMonth">Every Month</label>
                                   <template v-if="!modelData.allMonths">
                                     <div
-                                      class="_defaultInput checkbox"
                                       v-for="(month, n) in months"
+                                      class="_defaultInput checkbox"
                                     >
                                       <input
                                         :id="'monthCheckbox_' + n"
+                                        v-model="modelData.selectedMonths"
                                         type="checkbox"
                                         :value="month.shortName"
-                                        v-model="modelData.selectedMonths"
                                       />
                                       <label :for="'monthCheckbox_' + n">{{
                                         month.name
@@ -199,7 +199,7 @@
                           </div>
                         </div>
 
-                        <div id="cronstrtab" v-if="modelData.useCrontabString">
+                        <div v-if="modelData.useCrontabString" id="cronstrtab">
                           <div>
                             <div class="panel-body">
                               <div class="container">
@@ -208,6 +208,7 @@
                                     <div class="form-group">
                                       <input
                                         ref="crontabInput"
+                                        v-model="modelData.crontabString"
                                         type="text"
                                         name="crontabString"
                                         autofocus="true"
@@ -217,18 +218,17 @@
                                         @keyup="updateCrontabPosition"
                                         @change="validateCronExpression"
                                         @blur="crontabBlur"
-                                        v-model="modelData.crontabString"
                                       />
                                       <input
+                                        v-model="modelData.useCrontabString"
                                         type="hidden"
                                         name="useCrontabString"
-                                        v-model="modelData.useCrontabString"
                                       />
                                     </div>
                                     <span
+                                      v-if="crontabHint"
                                       class="text-muted"
                                       style="font-style: italic"
-                                      v-if="crontabHint"
                                       >{{ crontabHint }}</span
                                     >
                                   </div>
@@ -284,13 +284,13 @@
           </div>
           <div class="col-sm-5">
             <input
+              id="timeZone"
+              v-model="modelData.timeZone"
               type="text"
               name="timeZone"
-              id="timeZone"
               autofocus="true"
               class="form-control input-sm"
               size="50"
-              v-model="modelData.timeZone"
             />
             <typeahead
               v-model="modelData.timeZone"
@@ -317,11 +317,11 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
+            id="scheduleEnabledTrue"
+            v-model="modelData.scheduleEnabled"
             type="radio"
             name="scheduleEnabled"
             :value="true"
-            v-model="modelData.scheduleEnabled"
-            id="scheduleEnabledTrue"
           />
           <label for="scheduleEnabledTrue">
             {{ $t("yes") }}
@@ -329,11 +329,11 @@
         </div>
         <div class="radio radio-inline">
           <input
+            id="scheduleEnabledFalse"
+            v-model="modelData.scheduleEnabled"
             type="radio"
             :value="false"
             name="scheduleEnabled"
-            v-model="modelData.scheduleEnabled"
-            id="scheduleEnabledFalse"
           />
           <label for="scheduleEnabledFalse">
             {{ $t("no") }}
@@ -354,11 +354,11 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
+            id="executionEnabledTrue"
+            v-model="modelData.executionEnabled"
             type="radio"
             name="executionEnabled"
             :value="true"
-            v-model="modelData.executionEnabled"
-            id="executionEnabledTrue"
           />
           <label for="executionEnabledTrue">
             {{ $t("yes") }}
@@ -367,11 +367,11 @@
 
         <div class="radio radio-inline">
           <input
+            id="executionEnabledFalse"
+            v-model="modelData.executionEnabled"
             type="radio"
             :value="false"
             name="executionEnabled"
-            v-model="modelData.executionEnabled"
-            id="executionEnabledFalse"
           />
           <label for="executionEnabledFalse">
             {{ $t("no") }}
@@ -442,6 +442,44 @@ export default defineComponent({
         : "";
     },
   },
+  watch: {
+    modelData: {
+      handler() {
+        this.$emit("update:modelValue", this.modelData);
+      },
+      deep: true,
+    },
+  },
+  beforeMount() {
+    const _hours: string[] = [];
+    const _minutes: string[] = [];
+    for (let x = 0; x < 24; x++) {
+      _hours.push(x < 10 ? "0" + x.toString() : x.toString());
+    }
+    for (let x = 0; x < 60; x++) {
+      _minutes.push(x < 10 ? "0" + x.toString() : x.toString());
+    }
+    this.hours = _hours;
+    this.minutes = _minutes;
+    this.days = getDays();
+    this.months = getMonths();
+  },
+  mounted() {
+    this.modelData = Object.assign(
+      {
+        selectedDays: [],
+        selectedMonths: [],
+        useCrontabString: this.useCrontabString,
+      },
+      this.modelValue,
+    );
+
+    if (this.modelData.useCrontabString) {
+      this.showCronExpression();
+      return;
+    }
+    this.showSimpleCron();
+  },
   methods: {
     loadScheduleIntoSimpleTab(decomposedSchedule: any) {
       this.modelData.hourSelected = decomposedSchedule.hour;
@@ -455,9 +493,9 @@ export default defineComponent({
     },
     showSimpleCron() {
       if (this.modelData.crontabString) {
-        let cronComponents = this.modelData.crontabString.split(" ");
+        const cronComponents = this.modelData.crontabString.split(" ");
 
-        let decomposedSchedule = getSimpleDecomposition(
+        const decomposedSchedule = getSimpleDecomposition(
           cronComponents[2],
           cronComponents[1],
           cronComponents[5],
@@ -496,44 +534,6 @@ export default defineComponent({
       this.crontabpos = getCaretPos();
     },
   },
-  beforeMount() {
-    const _hours: string[] = [];
-    const _minutes: string[] = [];
-    for (let x = 0; x < 24; x++) {
-      _hours.push(x < 10 ? "0" + x.toString() : x.toString());
-    }
-    for (let x = 0; x < 60; x++) {
-      _minutes.push(x < 10 ? "0" + x.toString() : x.toString());
-    }
-    this.hours = _hours;
-    this.minutes = _minutes;
-    this.days = getDays();
-    this.months = getMonths();
-  },
-  mounted() {
-    this.modelData = Object.assign(
-      {
-        selectedDays: [],
-        selectedMonths: [],
-        useCrontabString: this.useCrontabString,
-      },
-      this.modelValue,
-    );
-
-    if (this.modelData.useCrontabString) {
-      this.showCronExpression();
-      return;
-    }
-    this.showSimpleCron();
-  },
-  watch: {
-    modelData: {
-      handler() {
-        this.$emit("update:modelValue", this.modelData);
-      },
-      deep: true,
-    },
-  },
 });
 
 /**
@@ -542,7 +542,7 @@ export default defineComponent({
  * @param text string
  */
 function getHintText(pos: number, text: string) {
-  let c = getCrontabSection(pos, text);
+  const c = getCrontabSection(pos, text);
   if (c >= 0 && c <= 6) {
     return `cron.section.${c}`;
   }
@@ -559,8 +559,8 @@ function getCrontabSection(pos: number, text: string): number {
     return -1;
   }
   //find # of space chars prior to pos
-  let sub = text.substring(0, pos);
-  let c = sub.split(" ").length;
+  const sub = text.substring(0, pos);
+  const c = sub.split(" ").length;
   if (c >= 1 && c <= 7) {
     return c - 1;
   }
@@ -573,7 +573,7 @@ function getCrontabSection(pos: number, text: string): number {
  * @param el input element
  */
 function getCaretPos() {
-  let el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
+  const el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
   let rng,
     ii = -1;
   if (typeof el.selectionStart == "number") {

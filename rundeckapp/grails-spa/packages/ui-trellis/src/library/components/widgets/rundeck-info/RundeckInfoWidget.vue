@@ -18,7 +18,7 @@ export default defineComponent({
     InfoDisplay,
   },
   setup() {
-    let { system, releases } = inject("rootStore") as RootStore;
+    const { system, releases } = inject("rootStore") as RootStore;
     return { system, releases };
   },
   async mounted() {

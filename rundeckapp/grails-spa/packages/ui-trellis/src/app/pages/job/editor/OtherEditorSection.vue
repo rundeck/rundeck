@@ -1,9 +1,9 @@
 <template>
   <div>
     <other-editor
+      v-if="updatedData"
       v-model="updatedData"
       :event-bus="eventBus"
-      v-if="updatedData"
     />
     <json-embed :output-data="updatedData" field-name="otherJsonData" />
   </div>
@@ -19,11 +19,11 @@ import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
   name: "App",
-  props: ["eventBus"],
   components: {
     OtherEditor,
     JsonEmbed,
   },
+  props: ["eventBus"],
   data() {
     return {
       otherData: {},

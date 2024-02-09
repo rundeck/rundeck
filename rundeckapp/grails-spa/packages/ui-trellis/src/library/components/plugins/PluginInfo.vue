@@ -2,21 +2,21 @@
   <span>
     <slot></slot>
     <span v-if="showIcon">
-      <img class="plugin-icon" :src="iconUrl" v-if="iconUrl" />
-      <i :class="'glyphicon glyphicon-' + glyphicon" v-else-if="glyphicon"></i>
-      <i :class="'fas fa-' + faicon" v-else-if="faicon"></i>
-      <i :class="'fab fa-' + fabicon" v-else-if="fabicon"></i>
-      <i class="rdicon icon-small plugin" v-else></i>
+      <img v-if="iconUrl" class="plugin-icon" :src="iconUrl" />
+      <i v-else-if="glyphicon" :class="'glyphicon glyphicon-' + glyphicon"></i>
+      <i v-else-if="faicon" :class="'fas fa-' + faicon"></i>
+      <i v-else-if="fabicon" :class="'fab fa-' + fabicon"></i>
+      <i v-else class="rdicon icon-small plugin"></i>
     </span>
-    <span :class="titleCss" v-if="showTitle" style="margin-left: 5px">
+    <span v-if="showTitle" :class="titleCss" style="margin-left: 5px">
       {{ title }}
     </span>
     <PluginDetails
-      :showDescription="showDescription"
-      :showExtended="showExtended"
+      :show-description="showDescription"
+      :show-extended="showExtended"
       :description="description"
-      :descriptionCss="descriptionCss"
-      :extendedCss="extendedCss"
+      :description-css="descriptionCss"
+      :extended-css="extendedCss"
     />
 
     <slot name="suffix"></slot>

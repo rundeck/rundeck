@@ -26,8 +26,8 @@
             </template>
             <li>
               <a
-                @click="jobPageStore.bulkEditMode = !jobPageStore.bulkEditMode"
                 role="button"
+                @click="jobPageStore.bulkEditMode = !jobPageStore.bulkEditMode"
               >
                 {{
                   $t(
@@ -55,8 +55,8 @@
         <div class="panel-heading">
           <btn
             class="close"
-            @click="jobPageStore.bulkEditMode = false"
             aria-hidden="true"
+            @click="jobPageStore.bulkEditMode = false"
             >&times;
           </btn>
           <h3 class="panel-title">
@@ -92,14 +92,14 @@
             </btn>
             <template #dropdown>
               <li v-if="projAuthz('delete')">
-                <a @click="bulkAction('delete')" role="button">
+                <a role="button" @click="bulkAction('delete')">
                   <b class="glyphicon glyphicon-remove-circle"></b>
                   {{ $t("delete.selected.jobs") }}
                 </a>
               </li>
               <li class="divider"></li>
               <li v-for="action in ['enable', 'disable']">
-                <a @click="bulkAction(`${action}_schedule`)" role="button">
+                <a role="button" @click="bulkAction(`${action}_schedule`)">
                   <b
                     class="glyphicon"
                     :class="
@@ -113,7 +113,7 @@
               </li>
               <li class="divider"></li>
               <li v-for="action in ['enable', 'disable']">
-                <a @click="bulkAction(`${action}_execution`)" role="button">
+                <a role="button" @click="bulkAction(`${action}_execution`)">
                   <b
                     class="glyphicon"
                     :class="
@@ -146,8 +146,8 @@
         <btn @click="bulkConfirm = false">{{ $t("no") }}</btn>
         <btn
           type="danger"
-          @click="performBulkAction"
           :disabled="jobPageStore.selectedJobs.length < 1"
+          @click="performBulkAction"
         >
           {{ $t(`job.bulk.${bulkConfirmAction}.button`) }}
         </btn>
@@ -198,6 +198,10 @@ export default defineComponent({
       bulkConfirm: ref(false),
       bulkConfirmAction: ref(""),
     };
+  },
+  mounted() {
+    eventBus.on("job-action", this.confirmAction);
+    eventBus.on("job-action-single", this.confirmActionSingle);
   },
   methods: {
     bulkAction(name: string) {
@@ -257,10 +261,6 @@ export default defineComponent({
     selectNone() {
       eventBus.emit("job-bulk-edit-select-none");
     },
-  },
-  mounted() {
-    eventBus.on("job-action", this.confirmAction);
-    eventBus.on("job-action-single", this.confirmActionSingle);
   },
 });
 </script>

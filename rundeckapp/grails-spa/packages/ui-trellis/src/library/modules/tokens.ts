@@ -4,11 +4,12 @@ export async function getUIAjaxTokens(): Promise<RundeckToken> {
   if (window._rundeck.token) {
     return window._rundeck.token;
   } else {
-    let uiTokenElement = document.getElementById("ui_token");
+    const uiTokenElement = document.getElementById("ui_token");
 
     if (uiTokenElement) {
-      let jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
-      let response = jsonText && jsonText !== "" ? JSON.parse(jsonText) : null;
+      const jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
+      const response =
+        jsonText && jsonText !== "" ? JSON.parse(jsonText) : null;
       window._rundeck.token = response;
       return response;
     } else {
@@ -28,11 +29,12 @@ export async function getToken(token_name: string) {
   if (window._rundeck.tokens[token_name]) {
     return window._rundeck.tokens[token_name];
   } else {
-    let uiTokenElement = document.getElementById(token_name);
+    const uiTokenElement = document.getElementById(token_name);
 
     if (uiTokenElement) {
-      let jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
-      let response = jsonText && jsonText !== "" ? JSON.parse(jsonText) : null;
+      const jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
+      const response =
+        jsonText && jsonText !== "" ? JSON.parse(jsonText) : null;
       window._rundeck.tokens[token_name] = response;
       return response;
     } else {

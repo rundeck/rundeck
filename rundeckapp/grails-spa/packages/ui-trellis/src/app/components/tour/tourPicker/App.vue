@@ -5,22 +5,22 @@
     </a> -->
     <section>
       <modal
+        ref="modal"
         v-model="tourSelectionModal"
         title="Available Tours"
-        ref="modal"
-        appendToBody
+        append-to-body
       >
-        <div v-for="(tourLoader, tIndex) in tours" v-bind:key="tIndex">
+        <div v-for="(tourLoader, tIndex) in tours" :key="tIndex">
           <div class="panel panel-default" style="padding-bottom: 1px">
             <div class="panel-heading">
               <strong>{{ tourLoader.loader }}</strong>
             </div>
             <div class="list-group">
               <a
+                v-for="(tour, index) in tourLoader.tours"
+                :key="index"
                 class="list-group-item"
                 href="#"
-                v-for="(tour, index) in tourLoader.tours"
-                v-bind:key="index"
                 @click="
                   startTour(
                     tour.provider ? tour.provider : tourLoader.provider,
@@ -34,7 +34,7 @@
             </div>
           </div>
         </div>
-        <template v-slot:footer>
+        <template #footer>
           <div>
             <btn @click="tourSelectionModal = false">Close</btn>
           </div>
@@ -64,8 +64,8 @@ interface TourLoader {
 }
 
 export default defineComponent({
-  inject: ["rootStore"],
   name: "TourPicker",
+  inject: ["rootStore"],
   props: ["eventBus"],
   data() {
     return {
@@ -88,6 +88,16 @@ export default defineComponent({
         action: this.openTourSelectorModal,
       },
     ]);
+  },
+  beforeMount() {
+    if (window._rundeck) {
+      window._rundeck.eventBus.on("refresh-tours", () => {
+        this.loadTours();
+      });
+    }
+  },
+  beforeUnmount() {
+    window._rundeck.eventBus.off("refresh-tours");
   },
   methods: {
     startTour: function (tourLoader: string, tourEntry: any) {
@@ -121,16 +131,6 @@ export default defineComponent({
         this.tours = tours;
       });
     },
-  },
-  beforeMount() {
-    if (window._rundeck) {
-      window._rundeck.eventBus.on("refresh-tours", () => {
-        this.loadTours();
-      });
-    }
-  },
-  beforeUnmount() {
-    window._rundeck.eventBus.off("refresh-tours");
   },
 });
 </script>

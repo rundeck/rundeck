@@ -1,8 +1,8 @@
 <template>
   <div>
     <!-- -->
-    <modal v-model="openModal" ref="modal" append-to-body>
-      <template v-slot:title><span>Search</span></template>
+    <modal ref="modal" v-model="openModal" append-to-body>
+      <template #title><span>Search</span></template>
       <div class="row">
         <div class="col-xs-12">
           <div class="form-group" style="padding-top: 10px">
@@ -22,20 +22,20 @@
             >
               <div class="form-group">
                 <input
+                  v-model="loginFilter"
                   type="text"
                   class="form-control"
                   :placeholder="$t('message_pageFilterLogin')"
-                  v-model="loginFilter"
                 />
               </div>
             </div>
-            <div class="col-xs-12 col-sm-4" v-if="sessionIdEnabled">
+            <div v-if="sessionIdEnabled" class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <input
+                  v-model="sessionIdFilter"
                   type="text"
                   class="form-control"
                   :placeholder="$t('message_pageFilterSessionID')"
-                  v-model="sessionIdFilter"
                 />
               </div>
             </div>
@@ -48,10 +48,10 @@
             >
               <div class="form-group">
                 <input
+                  v-model="hostNameFilter"
                   type="text"
                   class="form-control"
                   :placeholder="$t('message_pageFilterHostName')"
-                  v-model="hostNameFilter"
                 />
               </div>
             </div>
@@ -59,7 +59,7 @@
           <button style="display: none" type="submit">Submit</button>
         </form>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="openModal = false">Cancel</btn>
           <btn type="cta" @click="loadUsersList(0)">{{
@@ -88,8 +88,8 @@
                 >{{ pagination.total }}</span
               >
               <b
-                class="fas fa-circle-notch fa-spin text-info"
                 v-if="loading"
+                class="fas fa-circle-notch fa-spin text-info"
               ></b>
             </span>
             <span style="margin-left: 10px">
@@ -109,13 +109,13 @@
             </span>
           </section>
         </div>
-        <div class="col-sm-2" v-if="showLoginStatus">
+        <div v-if="showLoginStatus" class="col-sm-2">
           <span class="checkbox">
             <input
-              type="checkbox"
-              name="loggedOnly"
               id="loggedOnly"
               v-model="loggedOnly"
+              type="checkbox"
+              name="loggedOnly"
               @change="loadUsersList(0)"
             />
             <label for="loggedOnly">{{
@@ -126,10 +126,10 @@
         <div class="col-sm-2">
           <span class="checkbox">
             <input
-              type="checkbox"
-              name="includeExec"
               id="includeExec"
               v-model="includeExec"
+              type="checkbox"
+              name="includeExec"
               @change="loadUsersList(0)"
             />
             <label for="includeExec">{{
@@ -175,7 +175,7 @@
                     <i class="glyphicon glyphicon-question-sign"></i>
                   </span>
                 </th>
-                <th class="table-header" v-if="sessionIdEnabled">
+                <th v-if="sessionIdEnabled" class="table-header">
                   {{ $t("message_pageUsersSessionIDLabel") }}
                 </th>
                 <th class="table-header">
@@ -184,7 +184,7 @@
                 <th class="table-header">
                   {{ $t("message_pageUsersLastLoginInTimeLabel") }}
                 </th>
-                <th class="table-header" v-if="showLoginStatus">
+                <th v-if="showLoginStatus" class="table-header">
                   {{ $t("message_pageUsersLoggedStatus") }}
                 </th>
               </tr>
@@ -194,7 +194,7 @@
                   <login-status
                     :status="user.loggedStatus"
                     :label="false"
-                    :showLoginStatus="showLoginStatus"
+                    :show-login-status="showLoginStatus"
                   />
                   {{ user.login }}
                 </td>
@@ -274,7 +274,7 @@
                   <login-status
                     :status="user.loggedStatus"
                     :label="true"
-                    :showLoginStatus="showLoginStatus"
+                    :show-login-status="showLoginStatus"
                   />
                 </td>
               </tr>
@@ -286,9 +286,9 @@
 
     <offset-pagination
       :pagination="pagination"
-      @change="changePageOffset($event)"
       :disabled="loading"
-      :showPrefix="false"
+      :show-prefix="false"
+      @change="changePageOffset($event)"
     ></offset-pagination>
   </div>
 </template>
@@ -329,6 +329,18 @@ export default {
         total: -1,
       },
     };
+  },
+  beforeMount() {
+    if (window._rundeck && window._rundeck.rdBase) {
+      this.rdBase = window._rundeck.rdBase;
+      this.setSummaryPageConfig();
+      window._rundeck.eventBus.on("refresh-user-summary", () => {
+        this.loadUsersList(0);
+      });
+    }
+  },
+  beforeUnmount() {
+    window._rundeck.eventBus.off("refresh-user-summary");
   },
   methods: {
     formatDateFull(date) {
@@ -401,18 +413,6 @@ export default {
         this.loading = false;
       });
     },
-  },
-  beforeMount() {
-    if (window._rundeck && window._rundeck.rdBase) {
-      this.rdBase = window._rundeck.rdBase;
-      this.setSummaryPageConfig();
-      window._rundeck.eventBus.on("refresh-user-summary", () => {
-        this.loadUsersList(0);
-      });
-    }
-  },
-  beforeUnmount() {
-    window._rundeck.eventBus.off("refresh-user-summary");
   },
 };
 </script>

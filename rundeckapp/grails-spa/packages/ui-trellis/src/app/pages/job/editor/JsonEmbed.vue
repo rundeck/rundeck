@@ -1,6 +1,6 @@
 <template>
   <div>
-    <input type="hidden" v-model="json" :name="fieldName" />
+    <input v-model="json" type="hidden" :name="fieldName" />
   </div>
 </template>
 <script>

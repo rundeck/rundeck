@@ -24,13 +24,13 @@ export default {
   },
   mounted() {
     this.RundeckContext = getRundeckContext();
-    let cookie = this.$cookies.get("communityNews");
-    let mostRecentPost = this.$cookies.get("communityNewsMostRecentPost");
+    const cookie = this.$cookies.get("communityNews");
+    const mostRecentPost = this.$cookies.get("communityNewsMostRecentPost");
     if (cookie === null) {
       this.pollCommunityNews().then((result) => {
         // set the cookie
         if (mostRecentPost && result.blogs.length) {
-          let lastBlogPublished = parseInt(mostRecentPost);
+          const lastBlogPublished = parseInt(mostRecentPost);
 
           if (result.blogs[0].publish_date > lastBlogPublished) {
             this.setCookie(result.count);

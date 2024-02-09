@@ -1,7 +1,7 @@
 <template>
-  <div class="form-group" v-if="!loading">
+  <div v-if="!loading" class="form-group">
     <div class="checkbox-inline" :title="'Toggle a new UI for this page'">
-      <input type="checkbox" v-model="nextUi" id="nextUi" name="nextUi" />
+      <input id="nextUi" v-model="nextUi" type="checkbox" name="nextUi" />
       <label for="nextUi">{{ $t("widget.nextUi.title") }}</label>
     </div>
   </div>

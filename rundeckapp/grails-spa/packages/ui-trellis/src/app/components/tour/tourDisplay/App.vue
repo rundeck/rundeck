@@ -1,9 +1,9 @@
 <template>
   <div
+    v-if="tour"
     id="tour-display"
     class="card"
     :class="{ 'tour-display--pad': pad }"
-    v-if="tour"
   >
     <div class="card-header">
       <div
@@ -16,7 +16,7 @@
       <span v-if="tour && tour.name" class="h4 card-title">{{
         tour.name
       }}</span>
-      <span @click="stopTour" class="btn btn-simple card-close-button">
+      <span class="btn btn-simple card-close-button" @click="stopTour">
         <i class="fas fa-times-circle fa-2x"></i>
       </span>
     </div>
@@ -27,26 +27,26 @@
           <span
             class="btn btn-default btn-sm"
             :disabled="stepIndex <= 0"
-            @click="previousStep"
             style="width: auto !important"
+            @click="previousStep"
             >Previous</span
           >
           <span
             class="btn btn-default btn-sm"
-            @click="resume"
             style="width: auto !important"
+            @click="resume"
             >Resume</span
           >
           <span
             class="btn btn-default btn-sm"
             :disabled="stepIndex === tour.steps.length - 1"
-            @click="nextStep"
             style="width: auto !important"
+            @click="nextStep"
             >Next</span
           >
         </div>
         <div class="step-content" v-html="tour.steps[stepIndex].content"></div>
-        <progress-bar v-model="progress" label :labelText="progressText" />
+        <progress-bar v-model="progress" label :label-text="progressText" />
       </div>
       <section>
         <modal
@@ -96,19 +96,43 @@ export default defineComponent({
       currentUrl: "",
     };
   },
+  mounted() {
+    const regEx = new RegExp(context.rdBase, "ig");
+    this.currentUrl = window.location.href.replace(regEx, "");
+
+    this.eventBus.on("tourSelected", (tour: Tour) => {
+      this.initTour(tour, 0);
+      this.initNextUrl();
+    });
+    if (window._rundeck.activeTour && window._rundeck.activeTour !== "") {
+      const tourParts = window._rundeck.activeTour.split(":");
+      if (tourParts[2] != null) {
+        this.initUrl = tourParts[2];
+      }
+      TourServices.getTour(tourParts[0], tourParts[1]).then((tour: any) => {
+        let tourStep = 0;
+        if (window._rundeck.activeTourStep) {
+          if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
+            tourStep = parseInt(window._rundeck.activeTourStep);
+          }
+        }
+        this.initTour(tour, tourStep);
+      });
+    }
+  },
   methods: {
     showIndicator() {
       const indicator = this.tour.steps[this.stepIndex].stepIndicator;
       if (indicator != null) {
-        let indicatorTarget = document.getElementById(indicator);
+        const indicatorTarget = document.getElementById(indicator);
         if (indicatorTarget == null) {
           return;
         }
-        let indicatorTargetViewportOffset =
+        const indicatorTargetViewportOffset =
           indicatorTarget.getBoundingClientRect();
 
         if (indicatorTargetViewportOffset) {
-          let indicatorElement = document.createElement("span");
+          const indicatorElement = document.createElement("span");
           indicatorElement.setAttribute("id", "tour-vue-indicator");
           indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height / 2 - 25)}px `;
           indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`;
@@ -155,7 +179,7 @@ export default defineComponent({
       }
     },
     removeIndicator() {
-      let element = document.getElementById("tour-vue-indicator");
+      const element = document.getElementById("tour-vue-indicator");
       if (element) {
         element?.parentNode?.removeChild(element);
       }
@@ -192,7 +216,7 @@ export default defineComponent({
       }
     },
     nextStep() {
-      let step = this.tour.steps[this.stepIndex];
+      const step = this.tour.steps[this.stepIndex];
       if (this.stepIndex !== this.tour.steps.length - 1) {
         this.stepIndex++;
         Trellis.FilterPrefs.setFilterPref(
@@ -231,7 +255,7 @@ export default defineComponent({
     },
     setProgress() {
       // Updating the Progress Bar and Label
-      let progressStep = 100 / this.tour.steps.length;
+      const progressStep = 100 / this.tour.steps.length;
       this.progress = Math.ceil(progressStep * (this.stepIndex + 1));
       if (this.stepIndex === 0) {
         this.progressText = " ";
@@ -247,7 +271,7 @@ export default defineComponent({
         this.removeIndicator();
       }
       setTimeout(() => {
-        let images = document
+        const images = document
           .getElementById("tour-display")
           ?.querySelectorAll("img");
         _.map(images, (element) => {
@@ -270,30 +294,6 @@ export default defineComponent({
         }
       }
     },
-  },
-  mounted() {
-    const regEx = new RegExp(context.rdBase, "ig");
-    this.currentUrl = window.location.href.replace(regEx, "");
-
-    this.eventBus.on("tourSelected", (tour: Tour) => {
-      this.initTour(tour, 0);
-      this.initNextUrl();
-    });
-    if (window._rundeck.activeTour && window._rundeck.activeTour !== "") {
-      let tourParts = window._rundeck.activeTour.split(":");
-      if (tourParts[2] != null) {
-        this.initUrl = tourParts[2];
-      }
-      TourServices.getTour(tourParts[0], tourParts[1]).then((tour: any) => {
-        let tourStep = 0;
-        if (window._rundeck.activeTourStep) {
-          if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
-            tourStep = parseInt(window._rundeck.activeTourStep);
-          }
-        }
-        this.initTour(tour, tourStep);
-      });
-    }
   },
 });
 </script>

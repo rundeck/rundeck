@@ -14,10 +14,10 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-xs-12">
-            <div class="card" id="createform">
+            <div id="createform" class="card">
               <div class="card-header">
                 <h3 class="card-title">
-                  {{ $t("edit.file.project", [this.filename, this.project]) }}
+                  {{ $t("edit.file.project", [filename, project]) }}
                 </h3>
               </div>
               <div class="card-content">
@@ -41,7 +41,7 @@
                   height="250"
                   width="100%"
                   lang="markdown"
-                  :readOnly="false"
+                  :read-only="false"
                 />
               </div>
               <div class="card-footer">
@@ -97,13 +97,6 @@ const rundeckClient = getRundeckContext().rundeckClient;
 export default defineComponent({
   name: "EditProjectFile",
   components: { AceEditor, AceEditorVue },
-  data() {
-    return {
-      fileText: "",
-      markdownSectionOpen: false,
-      errorMsg: "",
-    };
-  },
   props: {
     filename: {
       type: String,
@@ -121,6 +114,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+  },
+  data() {
+    return {
+      fileText: "",
+      markdownSectionOpen: false,
+      errorMsg: "",
+    };
   },
   computed: {
     createProjectConfigureLink() {

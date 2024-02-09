@@ -20,7 +20,7 @@ export class JobWorkflow {
     } else {
       lookupCtx = ctx;
     }
-    let step =
+    const step =
       this.workflow[
         JobWorkflow.workflowIndexForContextId(lookupCtx[0] as string) as number
       ];
@@ -31,7 +31,7 @@ export class JobWorkflow {
     if (typeof ctx == "string") {
       ctx = JobWorkflow.parseContextId(ctx) as string[];
     }
-    var string = "";
+    let string = "";
     string += JobWorkflow.stepNumberForContextId(ctx[0]);
     if (ctx.length > 1) {
       //                string += "/" + ctx.slice(1).join("/")
@@ -49,7 +49,7 @@ export class JobWorkflow {
       lookupCtx = ctx;
     }
 
-    let step =
+    const step =
       this.workflow[
         JobWorkflow.workflowIndexForContextId(lookupCtx[0]) as number
       ];
@@ -62,7 +62,7 @@ export class JobWorkflow {
       ctx: string[],
     ): RenderedStepList {
       if (ctx === undefined || ctx.length == 0) return [];
-      let step =
+      const step =
         workflow.workflow[
           JobWorkflow.workflowIndexForContextId(ctx[0]) as number
         ];
@@ -84,7 +84,7 @@ export class JobWorkflow {
       ];
     }
 
-    var lookupCtx: string[];
+    let lookupCtx: string[];
 
     if (typeof ctx == "string") {
       const cleaned = JobWorkflow.cleanContextId(ctx) as string;
@@ -97,7 +97,7 @@ export class JobWorkflow {
   }
 
   static isErrorhandlerForContextId(ctxid: string) {
-    let m = ctxid.match(/^(\d+)(e)?(@.+)?$/);
+    const m = ctxid.match(/^(\d+)(e)?(@.+)?$/);
     if (m != null && m[2] == "e") {
       return true;
     }
@@ -105,7 +105,7 @@ export class JobWorkflow {
   }
 
   static stepNumberForContextId(ctxid: string) {
-    let m = ctxid.match(/^(\d+)(e)?(@.+)?$/);
+    const m = ctxid.match(/^(\d+)(e)?(@.+)?$/);
     if (m != null && m[1]) {
       return parseInt(m[1]);
     }
@@ -113,7 +113,7 @@ export class JobWorkflow {
   }
 
   static workflowIndexForContextId(ctxid: string) {
-    let m = this.stepNumberForContextId(ctxid);
+    const m = this.stepNumberForContextId(ctxid);
     if (m != null) {
       return m - 1;
     }
@@ -121,7 +121,7 @@ export class JobWorkflow {
   }
 
   static paramsForContextId(ctxid: string) {
-    let m = ctxid.match(/^(\d+)(e)?(@(.+))?$/);
+    const m = ctxid.match(/^(\d+)(e)?(@(.+))?$/);
     if (m != null && m[4]) {
       return m[4].replace(/\\([/@,=])/g, "$1");
     }
@@ -169,7 +169,7 @@ export class JobWorkflow {
 
     const newParts = [];
 
-    for (let part of parts) {
+    for (const part of parts) {
       newParts.push(JobWorkflow.stepNumberForContextId(part));
     }
 
@@ -177,11 +177,11 @@ export class JobWorkflow {
   }
 
   static splitEscaped(input: string, sep: string) {
-    let parts = [] as string[];
+    const parts = [] as string[];
 
     let rest: string | null = input;
     while (rest) {
-      let result = this.unescape(rest, "\\", ["\\", "/"], [sep]);
+      const result = this.unescape(rest, "\\", ["\\", "/"], [sep]);
       parts.push(result.text);
       rest = result.rest;
     }
@@ -193,8 +193,8 @@ export class JobWorkflow {
    * internal chars with backslash
    */
   static joinEscaped = function (arr: string[], sep: string) {
-    var res = [];
-    for (var i = 0; i < arr.length; i++) {
+    const res = [];
+    for (let i = 0; i < arr.length; i++) {
       if (i > 0) {
         res.push(sep);
       }
@@ -207,9 +207,9 @@ export class JobWorkflow {
    * Escape listed chars in the string with the escape char
    */
   static escapeStr = function (str: string, echar: string, chars: string[]) {
-    var arr = [];
-    for (var i = 0; i < str.length; i++) {
-      var c = str.charAt(i);
+    const arr = [];
+    for (let i = 0; i < str.length; i++) {
+      const c = str.charAt(i);
       if (chars.indexOf(c) >= 0) {
         arr.push(echar);
       }
@@ -224,13 +224,13 @@ export class JobWorkflow {
     chars: string[],
     breakchars: string[],
   ) {
-    let arr = [];
+    const arr = [];
     let e = false;
     let bchar = null;
 
     let i = 0;
     for (; i < input.length; i++) {
-      let c = input.charAt(i);
+      const c = input.charAt(i);
       if (c == echar) {
         if (e) {
           arr.push(echar);
@@ -291,7 +291,7 @@ function _wfTypeForStep(step: WorkflowStep) {
 }
 
 function _wfStringForStep(step: WorkflowStep) {
-  var string = "";
+  let string = "";
   if (typeof step != "undefined") {
     if (step["description"]) {
       string = step["description"];
@@ -310,7 +310,7 @@ function _wfStringForStep(step: WorkflowStep) {
       string = "URL";
     } else if (step["type"]) {
       //plugin
-      var title = "Plugin " + step["type"];
+      const title = "Plugin " + step["type"];
       // TODO: Figure out how to get this data without relying on it being in the window
       // if (step['nodeStep'] && RDWorkflow.nodeSteppluginDescriptions && RDWorkflow.nodeSteppluginDescriptions[step['type']]) {
       //     title = RDWorkflow.nodeSteppluginDescriptions[step['type']].title || title;

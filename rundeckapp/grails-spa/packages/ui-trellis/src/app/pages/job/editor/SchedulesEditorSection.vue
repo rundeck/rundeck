@@ -1,9 +1,9 @@
 <template>
   <div>
     <schedule-editor
+      v-if="updatedData"
       v-model="updatedData"
       :event-bus="eventBus"
-      v-if="updatedData"
       :use-crontab-string="useCrontabString"
     />
     <json-embed :output-data="updatedData" field-name="schedulesJsonData" />
@@ -18,11 +18,11 @@ import { getRundeckContext } from "../../../../library";
 
 export default {
   name: "App",
-  props: ["eventBus", "useCrontabString"],
   components: {
     ScheduleEditor,
     JsonEmbed,
   },
+  props: ["eventBus", "useCrontabString"],
   data() {
     return {
       project: null,

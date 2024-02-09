@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div id="nodes_tags" v-if="nodeSet.tagsummary">
+    <div v-if="nodeSet.tagsummary" id="nodes_tags">
       <span v-for="tag in Object.entries(nodeSet.tagsummary)">
         <span class="summary nodetags">
           <node-filter-link
             class="label label-muted link-quiet"
-            filterKey="tags"
-            :filterVal="tag[0]"
+            filter-key="tags"
+            :filter-val="tag[0]"
             @nodefilterclick="filterClick"
           >
             <template #suffix> ({{ tag[1] }}) </template>
@@ -98,10 +98,10 @@
                     <span class="nodedesc"></span>
                     <span class="text-strong">
                       <i
-                        v-if="node.attributes['ui:badges']"
                         v-for="badge in glyphiconBadges(node.attributes)"
-                        :class="glyphiconForName(badge)"
+                        v-if="node.attributes['ui:badges']"
                         :key="badge"
+                        :class="glyphiconForName(badge)"
                       ></i>
                       <span>
                         {{ node.attributes.description }}
@@ -124,7 +124,7 @@
                   </td>
 
                   <td v-for="filter in filterColumns">
-                    <span class="value" v-if="node.attributes[filter]">
+                    <span v-if="node.attributes[filter]" class="value">
                       <span v-if="filter === 'tags'">
                         <span class="nodetags">
                           <span v-for="tag in node.tags" :key="tag">
@@ -232,16 +232,16 @@
                 </tr>
 
                 <tr
+                  :id="`detail_${index}1`"
                   class="detail_content nodedetail collapse collapse-expandable"
                   :class="{ server: node.isLocal }"
-                  :id="`detail_${index}1`"
                 >
                   <td :colspan="totalColumnsCount">
                     <node-details-simple
                       :key="node.nodename"
                       :attributes="node.attributes"
                       :authrun="node.authrun"
-                      :useNamespace="true"
+                      :use-namespace="true"
                       :tags="node.tags || []"
                       :node-columns="true"
                       :filter-columns="filterColumns"
@@ -256,7 +256,7 @@
       </div>
       <div v-if="hasPaging && !loading">
         <div class="row row-space">
-          <div class="col-sm-12" id="nodesPaging">
+          <div id="nodesPaging" class="col-sm-12">
             <span class="paginate">
               <ul class="pagination pagination-sm pagination-embed">
                 <li :class="{ disabled: page === 0 || loading }">
@@ -264,8 +264,8 @@
                     :href="browseNodesPagePrevUrl"
                     class="btn btn-xs btn-default"
                     :class="{ visible: maxPages > 1 }"
-                    @click.prevent="browseNodesPagePrev"
                     :title="$t('Previous')"
+                    @click.prevent="browseNodesPagePrev"
                   >
                     {{ $t("default.paginate.prev") }}
                   </a>
@@ -292,8 +292,8 @@
                     class="btn btn-xs btn-default"
                     :class="{ visible: maxPages > 1 }"
                     :href="browseNodesPageNextUrl"
-                    @click.prevent="browseNodesPageNext"
                     :title="$t('Next')"
+                    @click.prevent="browseNodesPageNext"
                   >
                     {{ $t("default.paginate.next") }}
                   </a>
@@ -305,15 +305,15 @@
                 <label>
                   {{ $t("jump.to") }}
                   <input
-                    @input="
-                      (event) => browseNodesPage(Number(event.target.value) - 1)
-                    "
                     :value="page + 1"
                     :disabled="loading"
                     class="form-control input-sm"
                     type="number"
                     min="1"
                     :max="maxPages"
+                    @input="
+                      (event) => browseNodesPage(Number(event.target.value) - 1)
+                    "
                   />
                 </label>
               </div>
@@ -321,13 +321,13 @@
                 <label>
                   {{ $t("per.page") }}
                   <input
-                    @input="changePaginationMax"
                     :value="pagingMax"
                     :disabled="loading"
                     class="form-control input-sm"
                     type="number"
                     min="1"
                     max="100"
+                    @input="changePaginationMax"
                   />
                 </label>
               </div>
@@ -349,7 +349,7 @@
     v-if="remoteEditStarted"
     :nodename="remoteEditNodename"
     :remote-url="remoteUrl"
-    @remoteEditStop="stopNodeRemoteEdit"
+    @remote-edit-stop="stopNodeRemoteEdit"
   />
 </template>
 
@@ -376,7 +376,6 @@ import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
 export default defineComponent({
   name: "NodeTable",
   components: { NodeFilterLink, NodeRemoteEdit, NodeDetailsSimple },
-  emits: ["filter", "changePage", "changePagingMax"],
   props: {
     nodeSet: {
       type: Object,
@@ -415,6 +414,7 @@ export default defineComponent({
       required: false,
     },
   },
+  emits: ["filter", "changePage", "changePagingMax"],
   data() {
     return {
       shouldRefresh: false,
@@ -437,11 +437,11 @@ export default defineComponent({
       return this.remoteUrl && this.remoteEditNodename;
     },
     pageNumbersSkipped(): string[] {
-      var arr = [];
-      var cur = this.page;
-      var maxPages = this.maxPages;
-      var buffer = 3;
-      for (var i = 0; i < maxPages; i++) {
+      const arr = [];
+      const cur = this.page;
+      const maxPages = this.maxPages;
+      const buffer = 3;
+      for (let i = 0; i < maxPages; i++) {
         if (
           (i >= cur - buffer && i <= cur + buffer) ||
           i < buffer ||
@@ -471,12 +471,12 @@ export default defineComponent({
     styleForNode,
     expandNodeAttributes,
     nodeCss(attrs) {
-      var classnames = [];
-      var uiColor = nodeFgCss(attrs);
+      const classnames = [];
+      const uiColor = nodeFgCss(attrs);
       if (uiColor) {
         classnames.push(uiColor);
       }
-      var uiBgcolor = nodeBgCss(attrs);
+      const uiBgcolor = nodeBgCss(attrs);
       if (uiBgcolor) {
         classnames.push(uiBgcolor);
       }
@@ -508,7 +508,7 @@ export default defineComponent({
       }
     },
     browseNodesPageUrl(page: number | string): string {
-      var pageParams = {
+      const pageParams = {
         filter: this.filter || "",
         filterAll: this.filterAll,
         page: page,

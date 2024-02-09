@@ -3,8 +3,8 @@
     <div class="row">
       <div class="col-sm-6">
         <span
-          class="text-info node_filter_results__matched_nodes_count"
           v-if="loaded && !loading"
+          class="text-info node_filter_results__matched_nodes_count"
         >
           {{ $t("count.nodes.matched", [total, $tc("Node.count.vue", total)]) }}
         </span>
@@ -29,9 +29,9 @@
         <btn
           type="default btn-sm refresh_nodes pull-right"
           data-loading-text="${g.message(code: 'loading')}"
-          @click="update"
           :disabled="loading"
           :title="$t('click.to.refresh')"
+          @click="update"
         >
           {{ $t("refresh") }}
           <i class="glyphicon glyphicon-refresh"></i>
@@ -115,6 +115,22 @@ export default defineComponent({
       nodeSet,
     };
   },
+  watch: {
+    nodeFilter() {
+      this.update();
+    },
+    nodeExcludeFilter() {
+      this.update();
+    },
+    excludeFilterUncheck() {
+      this.update();
+    },
+  },
+  mounted() {
+    if (this.nodeFilter) {
+      this.update();
+    }
+  },
   methods: {
     clear() {
       this.page = 0;
@@ -132,14 +148,14 @@ export default defineComponent({
       if (this.nodeFilter && this.emptyMode == "blank") {
         return;
       }
-      var filterdata = this.nodeFilter ? { filter: this.nodeFilter } : {};
-      var filterExcludedata = this.nodeExcludeFilter
+      const filterdata = this.nodeFilter ? { filter: this.nodeFilter } : {};
+      const filterExcludedata = this.nodeExcludeFilter
         ? { filterExclude: this.nodeExcludeFilter }
         : {};
-      var excludeFilterUncheck = this.excludeFilterUncheck;
-      var page = this.page;
-      var view = this.view ? this.view : "table";
-      var basedata: any = {
+      const excludeFilterUncheck = this.excludeFilterUncheck;
+      const page = this.page;
+      const view = this.view ? this.view : "table";
+      const basedata: any = {
         view: view,
         declarenone: true,
         fullresults: true,
@@ -159,7 +175,7 @@ export default defineComponent({
       if (this.maxShown) {
         basedata.maxShown = this.maxShown;
       }
-      let params = Object.assign({}, basedata, filterdata, filterExcludedata);
+      const params = Object.assign({}, basedata, filterdata, filterExcludedata);
       if (this.emptyMode == "localnode" && !this.nodeFilter) {
         params.localNodeOnly = "true";
       } else if (this.emptyMode == "blank" && !this.nodeFilter) {
@@ -189,7 +205,7 @@ export default defineComponent({
             }
           } else {
             this.loaded = true;
-            let data = result.data;
+            const data = result.data;
             this.nodeSet = {
               nodes: data.allnodes,
               tagsummary: data.tagsummary,
@@ -207,22 +223,6 @@ export default defineComponent({
           this.error = "Nodes Query: request failed: " + err;
         });
     },
-  },
-  watch: {
-    nodeFilter() {
-      this.update();
-    },
-    nodeExcludeFilter() {
-      this.update();
-    },
-    excludeFilterUncheck() {
-      this.update();
-    },
-  },
-  mounted() {
-    if (this.nodeFilter) {
-      this.update();
-    }
   },
 });
 </script>

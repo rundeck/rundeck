@@ -7,7 +7,7 @@ export async function CopyToClipboard(text: string) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     await navigator.clipboard.writeText(text);
   } else {
-    let textArea = document.createElement("textarea");
+    const textArea = document.createElement("textarea");
     textArea.value = text;
     // make the textarea out of viewport
     textArea.style.position = "fixed";

@@ -7,15 +7,15 @@
         </label>
         <div class="col-sm-10">
           <input
-            type="text"
-            name="jobFilter"
             id="jobFilter"
             v-model="filterName"
+            type="text"
+            name="jobFilter"
             class="form-control"
           />
         </div>
       </div>
-      <div class="errors" v-if="error">
+      <div v-if="error" class="errors">
         {{ error }}
       </div>
     </div>
@@ -23,7 +23,7 @@
       <btn @click="doClose">
         {{ $t("cancel") }}
       </btn>
-      <btn type="primary" @click="doSave" :disabled="!filterName">
+      <btn type="primary" :disabled="!filterName" @click="doSave">
         {{ $t("job.list.filter.save.button") }}
       </btn>
     </template>

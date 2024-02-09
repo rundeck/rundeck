@@ -19,29 +19,29 @@
     <div v-if="codeSyntaxSelectable" class="ace_text_controls form-inline">
       <label>
         Syntax Mode:
-        <select class="form-control" v-model="modeInternal">
+        <select v-model="modeInternal" class="form-control">
           <option value="-">-None-</option>
-          <option v-for="mode in aceModes" :value="mode" :key="mode">
+          <option v-for="mode in aceModes" :key="mode" :value="mode">
             {{ mode }}
           </option>
         </select>
       </label>
     </div>
     <div v-if="softWrapControl" class="checkbox ace_text_controls">
-      <input type="checkbox" v-model="wrapInternal" id="ace_wrap" /><label
+      <input id="ace_wrap" v-model="wrapInternal" type="checkbox" /><label
         for="ace_wrap"
         >Soft Wrap</label
       >
     </div>
     <ace
       v-model="valueInternal"
-      @init="aceEditorInit"
       :identifier="identifier"
       :lang="modeInternal"
       :soft-wrap="wrapInternal"
       :theme="theme"
       :height="height"
       :width="width"
+      @init="aceEditorInit"
     ></ace>
   </div>
 </template>
@@ -76,7 +76,7 @@ import "ace-builds/src-noconflict/theme-tomorrow_night";
 import "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 
 export default defineComponent({
-  name: "ace-editor",
+  name: "AceEditor",
   components: { Ace },
   props: {
     identifier: String,

@@ -85,7 +85,7 @@ export class JobBrowserStore extends JobBrowserStoreItem {
   }
 
   async loadItems(path: string): Promise<JobBrowseItem[]> {
-    let item = this.findPath(path, true);
+    const item = this.findPath(path, true);
     if (item) {
       return item.load(this.jobPageStore);
     } else {
@@ -102,7 +102,7 @@ export class JobBrowserStore extends JobBrowserStoreItem {
   }
 
   async refresh(path: string): Promise<JobBrowseItem[]> {
-    let item = this.findPath(path, true);
+    const item = this.findPath(path, true);
     if (item) {
       item.loaded = false;
       return item.load(this.jobPageStore);

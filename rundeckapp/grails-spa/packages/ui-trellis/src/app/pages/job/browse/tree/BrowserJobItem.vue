@@ -1,40 +1,40 @@
 <template>
   <div
+    ref="itemDiv"
     class="job-list-row-item hover-reveal-hidden"
     @click="handleClick"
-    ref="itemDiv"
   >
     <ui-socket
+      :key="'before/' + job.id"
       section="job-browse-item"
       location="before-job-name"
       :socket-data="{ job }"
-      :key="'before/' + job.id"
     />
     <ui-socket
       v-for="meta in job.meta"
+      :key="'before/' + job.id + '/' + meta.name"
       :location="`before-job-name:meta:${meta.name}`"
       section="job-browse-item"
       :socket-data="{ job, meta: meta.data }"
-      :key="'before/' + job.id + '/' + meta.name"
     />
     <a :href="jobLinkHref(job)" :data-job-id="job.uuid" class="link-quiet">
       {{ job.jobName }}
     </a>
-    <span class="text-secondary job-description" v-if="job.description">
+    <span v-if="job.description" class="text-secondary job-description">
       {{ shortDescription }}
     </span>
     <ui-socket
       v-for="meta in job.meta"
+      :key="'after/' + job.id + '/' + meta.name"
       :location="`after-job-name:meta:${meta.name}`"
       section="job-browse-item"
       :socket-data="{ job, meta: meta.data }"
-      :key="'after/' + job.id + '/' + meta.name"
     />
     <ui-socket
+      :key="'after/' + job.id"
       location="after-job-name"
       section="job-browse-item"
       :socket-data="{ job }"
-      :key="'after/' + job.id"
     />
   </div>
 </template>
@@ -69,6 +69,17 @@ export default defineComponent({
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
     };
   },
+  computed: {
+    shortDescription() {
+      if (!this.job.description) {
+        return "";
+      }
+      if (this.job.description.indexOf("\n") > -1) {
+        return this.job.description.split("\n")[0];
+      }
+      return this.job.description;
+    },
+  },
   methods: {
     jobLinkHref(job: JobBrowseItem) {
       return `${context.rdBase}project/${context.projectName}/job/show/${job.id}`;
@@ -102,17 +113,6 @@ export default defineComponent({
           await this.jobPageStore.getJobBrowser().loadJobMeta(this.job);
         }
       }
-    },
-  },
-  computed: {
-    shortDescription() {
-      if (!this.job.description) {
-        return "";
-      }
-      if (this.job.description.indexOf("\n") > -1) {
-        return this.job.description.split("\n")[0];
-      }
-      return this.job.description;
     },
   },
 });

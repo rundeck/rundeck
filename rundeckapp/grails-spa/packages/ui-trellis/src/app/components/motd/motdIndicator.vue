@@ -1,15 +1,15 @@
 <template>
   <span
+    v-if="hasMessage && display"
+    v-tooltip.bottom="!hasNewMessage && showTitle ? motdTitle : ''"
     :class="clsStyle"
     class="btn btn-simple btn-xs"
     @click="activate"
-    v-if="hasMessage && display"
-    v-tooltip.bottom="!hasNewMessage && showTitle ? motdTitle : ''"
   >
     <i class="fas" :class="iconStyle"></i>
     <span
-      class="motd__title"
       v-if="hasNewMessage && showTitle"
+      class="motd__title"
       v-html="motdTitle"
     ></span>
   </span>
@@ -19,7 +19,7 @@
  * This indicator gets configured from the motd component via the event bus
  */
 export default {
-  name: "Motd-Indicator",
+  name: "MotdIndicator",
   props: ["eventBus"],
   data() {
     return {
@@ -49,12 +49,6 @@ export default {
       return true;
     },
   },
-  methods: {
-    activate() {
-      this.eventBus.emit("motd-indicator-activated");
-      this.hasNewMessage = false;
-    },
-  },
   mounted() {
     this.eventBus.on("motd-message-available", (val) => {
       this.hasMessage = val.hasMessage;
@@ -63,6 +57,12 @@ export default {
       this.motdTitle = val.title;
       this.display = val.display && val.display.indexOf("navbar") >= 0;
     });
+  },
+  methods: {
+    activate() {
+      this.eventBus.emit("motd-indicator-activated");
+      this.hasNewMessage = false;
+    },
   },
 };
 </script>

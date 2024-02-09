@@ -1,29 +1,29 @@
 <template>
   <modal
+    v-if="jobPageStore"
+    v-model="visible"
     :title="$t('filter.jobs')"
     size="lg"
-    v-model="visible"
-    v-if="jobPageStore"
   >
     <div class="form-horizontal">
       <input
+        v-model="jobPageStore.query['project']"
         type="hidden"
         name="project"
-        v-model="jobPageStore.query['project']"
       />
       <input type="hidden" name="max" value="-1" />
       <input type="hidden" name="offset" value="0" />
 
-      <div class="form-group" v-if="jobPageStore.query['idlist']">
+      <div v-if="jobPageStore.query['idlist']" class="form-group">
         <label class="col-sm-2 control-label" for="_idlist">{{
           $t("jobquery.title.idlist")
         }}</label>
         <div class="col-sm-10">
           <input
-            type="text"
-            name="idlist"
             id="_idlist"
             v-model="jobPageStore.query['idlist']"
+            type="text"
+            name="idlist"
             class="form-control"
           />
         </div>
@@ -35,10 +35,10 @@
         }}</label>
         <div class="col-sm-10">
           <input
-            type="text"
-            name="jobFilter"
             id="_jobFilter"
             v-model="jobPageStore.query['jobFilter']"
+            type="text"
+            name="jobFilter"
             class="form-control"
           />
         </div>
@@ -53,10 +53,10 @@
               ><i class="glyphicon glyphicon-folder-open"></i
             ></span>
             <input
-              type="text"
-              name="groupPath"
               id="_groupPath"
               v-model="jobPageStore.query['groupPath']"
+              type="text"
+              name="groupPath"
               class="form-control"
             />
           </div>
@@ -68,10 +68,10 @@
         }}</label>
         <div class="col-sm-10">
           <input
-            type="text"
-            name="descFilter"
             id="_descFilter"
             v-model="jobPageStore.query['descFilter']"
+            type="text"
+            name="descFilter"
             class="form-control"
           />
         </div>
@@ -83,28 +83,28 @@
         <div class="col-sm-10">
           <label class="radio-inline">
             <input
+              v-model="scheduledFilter"
               type="radio"
               name="scheduledFilter"
               value="true"
-              v-model="scheduledFilter"
             />
             {{ $t("yes") }}
           </label>
           <label class="radio-inline">
             <input
+              v-model="scheduledFilter"
               type="radio"
               name="scheduledFilter"
               value="false"
-              v-model="scheduledFilter"
             />
             {{ $t("no") }}
           </label>
           <label class="radio-inline">
             <input
+              v-model="scheduledFilter"
               type="radio"
               name="scheduledFilter"
               value=""
-              v-model="scheduledFilter"
             />
             {{ $t("all") }}
           </label>
@@ -117,10 +117,10 @@
         }}</label>
         <div class="col-sm-10">
           <input
-            type="text"
-            name="serverNodeUUIDFilter"
             id="_serverUuid"
             v-model="jobPageStore.query['serverNodeUUIDFilter']"
+            type="text"
+            name="serverNodeUUIDFilter"
             class="form-control"
           />
         </div>
@@ -181,13 +181,13 @@ import { defineComponent, inject, ref } from "vue";
 export default defineComponent({
   name: "JobSearchModal",
   components: { UiSocket },
-  emits: ["close", "search", "clear", "save", "update:modelValue"],
   props: {
     modelValue: {
       type: Boolean,
       default: false,
     },
   },
+  emits: ["close", "search", "clear", "save", "update:modelValue"],
   setup(props) {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,

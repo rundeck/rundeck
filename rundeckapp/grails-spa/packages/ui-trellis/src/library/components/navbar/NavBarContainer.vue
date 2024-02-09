@@ -6,13 +6,13 @@
   >
     <div class="navbar__item-spacer"></div>
     <NavBarDrawer>
-      <template v-slot:default>
+      <template #default>
         <a :href="item.link">
           <i style="" :class="item.class"></i>
           <div>{{ label }}</div>
         </a>
       </template>
-      <template v-slot:content>
+      <template #content>
         <ul
           :class="{
             'navbar__container--icons': item.style === 'icon',
@@ -21,9 +21,9 @@
         >
           <NavBarItem
             v-for="entry in getNavBarContainerItems(item.id)"
-            :item="entry"
             :key="entry.id"
-            :itemStyle="item.style"
+            :item="entry"
+            :item-style="item.style"
           />
         </ul>
       </template>

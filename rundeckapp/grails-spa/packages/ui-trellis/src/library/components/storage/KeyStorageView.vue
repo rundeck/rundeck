@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="alert alert-warning" v-if="errorMsg !== ''">
+    <div v-if="errorMsg !== ''" class="alert alert-warning">
       <span>{{ errorMsg }}</span>
     </div>
 
@@ -12,16 +12,16 @@
             :class="[invalid === true ? 'has-error' : '']"
           >
             <div class="input-group">
-              <div class="input-group-addon bg-3" v-if="staticRoot">
+              <div v-if="staticRoot" class="input-group-addon bg-3">
                 <span>{{ rootPath }}</span>
               </div>
               <input
+                v-model="inputPath"
                 type="text"
                 class="form-control bg-2"
                 style="padding-left: 18px"
-                v-model="inputPath"
-                @keyup.enter="loadDirInputPath()"
                 placeholder="Enter a path"
+                @keyup.enter="loadDirInputPath()"
               />
               <div
                 v-if="!isProject && !readOnly"
@@ -33,15 +33,15 @@
                 <button
                   type="button"
                   class="btn btn-default dropdown-toggle"
-                  @click="toggleDropdown"
                   :aria-expanded="isDropdownOpen"
+                  @click="toggleDropdown"
                 >
                   <span>{{ linksTitle }}</span>
                   <span class="caret"></span>
                 </button>
                 <ul
-                  class="dropdown-menu dropdown-menu-right"
                   v-if="isDropdownOpen"
+                  class="dropdown-menu dropdown-menu-right"
                 >
                   <li v-for="link in jumpLinks" :key="link.path">
                     <a href="#" @click="loadDir(link.path)">{{ link.name }}</a>
@@ -66,8 +66,8 @@
               <button
                 type="button"
                 class="btn btn-sm btn-default"
-                @click="loadDir(upPath)"
                 :disabled="upPath === ''"
+                @click="loadDir(upPath)"
               >
                 <i class="glyphicon glyphicon-folder-open"></i>
                 <i class="glyphicon glyphicon-arrow-up"></i>
@@ -75,29 +75,29 @@
               </button>
               <button
                 v-if="!readOnly || allowUpload === true"
-                @click="actionUpload"
                 class="btn btn-sm btn-cta"
+                @click="actionUpload"
               >
                 <i class="glyphicon glyphicon-plus"></i>
                 Add or Upload a Key
               </button>
 
               <button
-                @click="actionUploadModify"
-                class="btn btn-sm btn-warning"
                 v-if="
                   allowUpload === true && isSelectedKey === true && !readOnly
                 "
+                class="btn btn-sm btn-warning"
+                @click="actionUploadModify"
               >
                 <i class="glyphicon glyphicon-pencil"></i>
                 Overwrite Key
               </button>
               <button
-                class="btn btn-sm btn-danger"
-                @click="deleteKey"
                 v-if="
                   selectedKey && selectedKey.path && isSelectedKey && !readOnly
                 "
+                class="btn btn-sm btn-danger"
+                @click="deleteKey"
               >
                 <i class="glyphicon glyphicon-trash"></i>
                 {{ "Delete" }}
@@ -105,8 +105,8 @@
             </div>
 
             <div
-              class="loading-area text-info"
               v-if="loading"
+              class="loading-area text-info"
               style="
                 width: 100%;
                 height: 200px;
@@ -122,7 +122,7 @@
                 <span v-if="countDownLimit === 0"> Reload </span>
               </div>
             </div>
-            <table class="table table-hover table-condensed" v-if="!loading">
+            <table v-if="!loading" class="table table-hover table-condensed">
               <tbody>
                 <tr>
                   <td colspan="2" class="text-strong">
@@ -137,13 +137,13 @@
               <tbody>
                 <tr
                   v-for="key in files"
+                  :key="key.name"
                   :class="[
                     selectedKey && key.path === selectedKey.path
                       ? selectedClass
                       : '',
                     'action',
                   ]"
-                  :key="key.name"
                   @click="selectKey(key)"
                 >
                   <td>
@@ -206,8 +206,8 @@
                 <tr v-for="directory in directories" :key="directory.name">
                   <td
                     class="action"
-                    @click="loadDir(directory.path)"
                     colspan="2"
+                    @click="loadDir(directory.path)"
                   >
                     <i class="glyphicon glyphicon-arrow-down"></i>
                     <i class="glyphicon glyphicon-folder-close"></i>
@@ -220,10 +220,10 @@
         </div>
         <modal
           v-if="isConfirmingDeletion === true"
-          v-model="isConfirmingDeletion"
-          title="Delete Selected Key"
           id="storagedeletekey"
           ref="modalDelete"
+          v-model="isConfirmingDeletion"
+          title="Delete Selected Key"
           auto-focus
           append-to-body
           :footer="false"
@@ -238,21 +238,21 @@
           <div class="modal-footer">
             <button
               type="button"
-              @click="confirmDeleteKey"
               class="btn btn-sm btn-danger obs-storagedelete-select"
+              @click="confirmDeleteKey"
             >
               {{ "Delete" }}
             </button>
             <button
               type="button"
-              @click="cancelDeleteKey"
               class="pull-right btn btn-sm btn-default"
+              @click="cancelDeleteKey"
             >
               {{ "Cancel" }}
             </button>
           </div>
         </modal>
-        <div class="row" v-if="isSelectedKey && selectedKey.type === 'file'">
+        <div v-if="isSelectedKey && selectedKey.type === 'file'" class="row">
           <div class="col-sm-12">
             <div class="well">
               <div>
@@ -380,30 +380,6 @@ export default defineComponent({
       countDownInterval: 0,
     };
   },
-  mounted() {
-    this.loadKeys();
-    this.loadProjectNames();
-  },
-  unmounted() {
-    if (this.countDownInterval > 0) {
-      clearInterval(this.countDownInterval);
-      this.countDownInterval = 0;
-    }
-  },
-  watch: {
-    createdKey: function (newValue) {
-      if (newValue !== null) {
-        this.selectKey(newValue);
-      }
-    },
-    rootPath: function (newValue: string) {
-      // Reset current path when rootPath changed.
-      this.path = "";
-      this.inputPath = "";
-      this.selectedKey = {};
-      this.loadKeys();
-    },
-  },
   computed: {
     formatKeyStorageCreatedTime() {
       return formatKeyStorageDate(this.createdTime);
@@ -440,6 +416,30 @@ export default defineComponent({
     isRunner(): boolean {
       return this.rootPath.startsWith("runner:");
     },
+  },
+  watch: {
+    createdKey: function (newValue) {
+      if (newValue !== null) {
+        this.selectKey(newValue);
+      }
+    },
+    rootPath: function (newValue: string) {
+      // Reset current path when rootPath changed.
+      this.path = "";
+      this.inputPath = "";
+      this.selectedKey = {};
+      this.loadKeys();
+    },
+  },
+  mounted() {
+    this.loadKeys();
+    this.loadProjectNames();
+  },
+  unmounted() {
+    if (this.countDownInterval > 0) {
+      clearInterval(this.countDownInterval);
+      this.countDownInterval = 0;
+    }
   },
   methods: {
     downloadUrl(): string {
@@ -640,7 +640,7 @@ export default defineComponent({
       return moment().diff(moment(start));
     },
     modifiedUsername() {
-      let value = "";
+      const value = "";
       if (
         this.selectedKey != null &&
         this.selectedKey.meta != null &&
@@ -665,7 +665,7 @@ export default defineComponent({
       return false;
     },
     createdUsername() {
-      let value = "";
+      const value = "";
       if (
         this.selectedKey != null &&
         this.selectedKey.meta != null &&
@@ -739,7 +739,7 @@ export default defineComponent({
         this.parentDirString(this.selectedKey.path),
       );
 
-      let inputType = InputType.Text;
+      const inputType = InputType.Text;
 
       const upload = {
         modifyMode: true,

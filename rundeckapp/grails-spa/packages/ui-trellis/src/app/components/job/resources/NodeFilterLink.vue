@@ -49,6 +49,27 @@ export default defineComponent({
     },
   },
   emits: ["nodefilterclick"],
+  computed: {
+    filterParam() {
+      return this.exclude ? "filterExclude" : "filter";
+    },
+    filterParamValues() {
+      const params = { [this.filterParam]: this.getFilter() };
+      if (this.nodeFilterName) {
+        params[this.exclude ? "filterNameExclude" : "filterName"] =
+          this.nodeFilterName;
+      }
+      return params;
+    },
+    href() {
+      return url(
+        _genUrl(
+          "/project/" + project + "/nodes",
+          Object.assign({}, this.filterParamValues),
+        ),
+      ).href;
+    },
+  },
   methods: {
     handleClick() {
       this.$emit("nodefilterclick", this.filterParamValues);
@@ -68,7 +89,7 @@ export default defineComponent({
     getFilter() {
       if (this.nodeFilter) {
         let nodeFilterCpy = this.nodeFilter.trim();
-        let idxKey = nodeFilterCpy.indexOf(": ") + 2;
+        const idxKey = nodeFilterCpy.indexOf(": ") + 2;
         if (nodeFilterCpy.slice(idxKey).includes(" ")) {
           nodeFilterCpy += '"';
           nodeFilterCpy =
@@ -80,27 +101,6 @@ export default defineComponent({
       } else if (this.filterKey && this.filterVal) {
         return `${this.filterKey}: \"${this.filterVal}\"`;
       }
-    },
-  },
-  computed: {
-    filterParam() {
-      return this.exclude ? "filterExclude" : "filter";
-    },
-    filterParamValues() {
-      let params = { [this.filterParam]: this.getFilter() };
-      if (this.nodeFilterName) {
-        params[this.exclude ? "filterNameExclude" : "filterName"] =
-          this.nodeFilterName;
-      }
-      return params;
-    },
-    href() {
-      return url(
-        _genUrl(
-          "/project/" + project + "/nodes",
-          Object.assign({}, this.filterParamValues),
-        ),
-      ).href;
     },
   },
 });

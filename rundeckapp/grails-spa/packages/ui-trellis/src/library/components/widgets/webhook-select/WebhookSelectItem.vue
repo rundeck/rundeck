@@ -5,8 +5,8 @@
   >
     <PluginInfo
       :detail="webhook.eventPlugin"
-      :showTitle="false"
-      :showDescription="false"
+      :show-title="false"
+      :show-description="false"
     />
     <span style="margin-left: 10px; font-weight: 600">{{ webhook.name }}</span>
   </div>

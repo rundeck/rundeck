@@ -29,16 +29,16 @@ export function formatTimeSimple(val: MomentInput) {
 }
 
 export function formatTimeAtDate(text: MomentInput) {
-  var time = moment.isMoment(text) ? text : moment(text);
+  const time = moment.isMoment(text) ? text : moment(text);
   if (!text || !time.isValid()) {
     return "";
   }
-  var now = moment();
-  var ms = now.diff(time);
+  const now = moment();
+  let ms = now.diff(time);
   if (ms < 0) {
     ms = -ms;
   }
-  var since = moment.duration(ms);
+  const since = moment.duration(ms);
   if (since.asDays() < 1 && now.month() == time.month()) {
     //same date
     return time.format("h:mm a");
@@ -61,19 +61,19 @@ export function formatDurationSimple(ms: number) {
   if (ms < 0) {
     return "";
   }
-  var duration = moment.duration(ms);
-  var y = 0;
+  let duration = moment.duration(ms);
+  let y = 0;
   if (duration.asYears() >= 1) {
     y = Math.floor(duration.asYears());
     duration = duration.subtract(y, "years");
   }
-  var d = 0;
+  let d = 0;
   if (duration.asDays() >= 1.0) {
     d = Math.floor(duration.asDays());
     duration = duration.subtract(d, "days");
   }
-  var m = duration.minutes();
-  var s = duration.seconds();
+  const m = duration.minutes();
+  const s = duration.seconds();
   return (
     (y > 0 ? y + "y " : "") +
     (d > 0 ? d + "d " : "") +
@@ -91,8 +91,8 @@ export function formatDurationHumanize(ms: number) {
   if (ms < 0) {
     return "";
   }
-  var duration = moment.duration(ms);
-  var valarr = [];
+  const duration = moment.duration(ms);
+  const valarr = [];
   if (duration.years() > 0) {
     valarr.push(duration.years() + "y");
   }
@@ -109,7 +109,7 @@ export function formatDurationHumanize(ms: number) {
     valarr.push(duration.minutes() + "m");
   }
   if (duration.seconds() > 0) {
-    var s = duration.seconds();
+    let s = duration.seconds();
     if (duration.milliseconds() > 0) {
       s++;
     }

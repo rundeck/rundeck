@@ -13,12 +13,12 @@
       <div class="col-sm-10">
         <div class="radio radio-inline">
           <input
+            id="doNodedispatchTrue"
+            v-model="modelData.doNodedispatch"
             type="radio"
             name="doNodedispatch"
             :value="true"
             class="xnode_dispatch_radio"
-            v-model="modelData.doNodedispatch"
-            id="doNodedispatchTrue"
           />
           <label for="doNodedispatchTrue">
             <ui-socket
@@ -32,10 +32,10 @@
         <div class="radio radio-inline">
           <input
             id="doNodedispatchFalse"
+            v-model="modelData.doNodedispatch"
             type="radio"
             name="doNodedispatch"
             :value="false"
-            v-model="modelData.doNodedispatch"
             class="xnode_dispatch_radio"
           />
           <label for="doNodedispatchFalse">
@@ -82,13 +82,13 @@
         </div>
       </div>
       <div
+        v-if="modelData.doNodedispatch"
         class="form-group"
         :class="{
           'has-error':
             modelData.filterExcludeErrors &&
             modelData.filterExcludeErrors.length > 0,
         }"
-        v-if="modelData.doNodedispatch"
       >
         <div class="subfields nodeFilterFields">
           <label class="col-sm-2 control-label">
@@ -124,11 +124,11 @@
         <div class="col-sm-10">
           <div class="radio radio-inline">
             <input
+              id="excludeFilterTrue"
+              v-model="modelData.excludeFilterUncheck"
               type="radio"
               name="excludeFilterUncheck"
               :value="true"
-              v-model="modelData.excludeFilterUncheck"
-              id="excludeFilterTrue"
             />
             <label for="excludeFilterTrue">
               {{ $t("yes") }}
@@ -137,11 +137,11 @@
 
           <div class="radio radio-inline">
             <input
+              id="excludeFilterFalse"
+              v-model="modelData.excludeFilterUncheck"
               type="radio"
               :value="false"
               name="excludeFilterUncheck"
-              v-model="modelData.excludeFilterUncheck"
-              id="excludeFilterFalse"
             />
             <label for="excludeFilterFalse">
               {{ $t("no") }}
@@ -181,11 +181,11 @@
         <div class="col-sm-10">
           <div class="radio radio-inline">
             <input
+              id="editableFalse"
+              v-model="modelData.nodeFilterEditable"
               type="radio"
               :value="false"
               name="nodeFilterEditable"
-              v-model="modelData.nodeFilterEditable"
-              id="editableFalse"
             />
             <label for="editableFalse">
               {{ $t("no") }}
@@ -193,11 +193,11 @@
           </div>
           <div class="radio radio-inline">
             <input
+              id="editableTrue"
+              v-model="modelData.nodeFilterEditable"
               type="radio"
               name="nodeFilterEditable"
               :value="true"
-              v-model="modelData.nodeFilterEditable"
-              id="editableTrue"
             />
             <label for="editableTrue">
               {{ $t("yes") }}
@@ -222,10 +222,10 @@
           <div class="row">
             <div class="col-sm-4">
               <input
+                id="schedJobnodeThreadcount"
+                v-model="modelData.nodeThreadcountDynamic"
                 type="text"
                 name="nodeThreadcountDynamic"
-                v-model="modelData.nodeThreadcountDynamic"
-                id="schedJobnodeThreadcount"
                 size="3"
                 class="form-control input-sm"
               />
@@ -256,10 +256,10 @@
           <div class="row">
             <div class="col-sm-4">
               <input
+                id="schedJobnodeRankAttribute"
+                v-model="modelData.nodeRankAttribute"
                 type="text"
                 name="nodeRankAttribute"
-                v-model="modelData.nodeRankAttribute"
-                id="schedJobnodeRankAttribute"
                 class="form-control input-sm"
               />
             </div>
@@ -283,11 +283,11 @@
         <div :class="fieldColSize">
           <div class="radio radio-inline">
             <input
+              id="nodeRankOrderAscending"
+              v-model="modelData.nodeRankOrderAscending"
               type="radio"
               name="nodeRankOrderAscending"
               :value="true"
-              v-model="modelData.nodeRankOrderAscending"
-              id="nodeRankOrderAscending"
             />
             <label for="nodeRankOrderAscending">
               {{
@@ -297,11 +297,11 @@
           </div>
           <div class="radio radio-inline">
             <input
+              id="nodeRankOrderDescending"
+              v-model="modelData.nodeRankOrderAscending"
               type="radio"
               name="nodeRankOrderAscending"
               :value="false"
-              v-model="modelData.nodeRankOrderAscending"
-              id="nodeRankOrderDescending"
             />
             <label for="nodeRankOrderDescending">
               {{
@@ -320,11 +320,11 @@
         <div :class="fieldColSize">
           <div class="radio">
             <input
+              id="nodeKeepgoingFalse"
+              v-model="modelData.nodeKeepgoing"
               type="radio"
               name="nodeKeepgoing"
               :value="false"
-              v-model="modelData.nodeKeepgoing"
-              id="nodeKeepgoingFalse"
             />
             <label for="nodeKeepgoingFalse">
               {{
@@ -337,11 +337,11 @@
 
           <div class="radio">
             <input
+              id="nodeKeepgoingTrue"
+              v-model="modelData.nodeKeepgoing"
               type="radio"
               name="nodeKeepgoing"
               :value="true"
-              v-model="modelData.nodeKeepgoing"
-              id="nodeKeepgoingTrue"
             />
             <label for="nodeKeepgoingTrue">
               {{
@@ -359,11 +359,11 @@
         <div :class="fieldColSize">
           <div class="radio">
             <input
+              id="successOnEmptyNodeFilterFalse"
+              v-model="modelData.successOnEmptyNodeFilter"
               type="radio"
               name="successOnEmptyNodeFilter"
               :value="false"
-              v-model="modelData.successOnEmptyNodeFilter"
-              id="successOnEmptyNodeFilterFalse"
             />
             <label for="successOnEmptyNodeFilterFalse">
               {{
@@ -375,11 +375,11 @@
           </div>
           <div class="radio">
             <input
+              id="successOnEmptyNodeFilterTrue"
+              v-model="modelData.successOnEmptyNodeFilter"
               type="radio"
               name="successOnEmptyNodeFilter"
               :value="true"
-              v-model="modelData.successOnEmptyNodeFilter"
-              id="successOnEmptyNodeFilterTrue"
             />
             <label for="successOnEmptyNodeFilterTrue">
               {{
@@ -399,11 +399,11 @@
         <div :class="fieldColSize">
           <div class="radio">
             <input
+              id="nodesSelectedByDefaultTrue"
+              v-model="modelData.nodesSelectedByDefault"
               type="radio"
               name="nodesSelectedByDefault"
               :value="true"
-              v-model="modelData.nodesSelectedByDefault"
-              id="nodesSelectedByDefaultTrue"
             />
             <label for="nodesSelectedByDefaultTrue">
               {{
@@ -415,11 +415,11 @@
           </div>
           <div class="radio">
             <input
+              id="nodesSelectedByDefaultFalse"
+              v-model="modelData.nodesSelectedByDefault"
               type="radio"
               name="nodesSelectedByDefault"
               :value="false"
-              v-model="modelData.nodesSelectedByDefault"
-              id="nodesSelectedByDefaultFalse"
             />
             <label for="nodesSelectedByDefaultFalse">
               {{
@@ -432,9 +432,9 @@
         </div>
       </div>
       <orchestrator-editor
+        v-model="modelData.orchestrator"
         :label-col-class="labelColClass"
         :field-col-size="fieldColSize"
-        v-model="modelData.orchestrator"
       />
     </template>
   </div>
@@ -472,14 +472,6 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  computed: {
-    labelColClass() {
-      return "col-sm-2 control-label";
-    },
-    fieldColSize() {
-      return "col-sm-10";
-    },
-  },
   setup() {
     const modelData = ref<any>({
       doNodedispatch: false,
@@ -491,9 +483,28 @@ export default defineComponent({
       nodeSummary,
     };
   },
+  computed: {
+    labelColClass() {
+      return "col-sm-2 control-label";
+    },
+    fieldColSize() {
+      return "col-sm-10";
+    },
+  },
+  watch: {
+    modelData: {
+      handler() {
+        this.$emit("update:modelValue", this.modelData);
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    this.onMount();
+  },
   methods: {
     async loadNodeSummary() {
-      let result = await axios.get(
+      const result = await axios.get(
         _genUrl(getAppLinks().frameworkNodeSummaryAjax, {}),
       );
       if (result.status >= 200 && result.status < 300) {
@@ -527,17 +538,6 @@ export default defineComponent({
         filterExclude: this.modelValue.filterExclude || "",
       };
       await this.loadNodeSummary();
-    },
-  },
-  mounted() {
-    this.onMount();
-  },
-  watch: {
-    modelData: {
-      handler() {
-        this.$emit("update:modelValue", this.modelData);
-      },
-      deep: true,
     },
   },
 });

@@ -9,24 +9,24 @@
       <div class="col-md-10">
         <label>
           Community
-          <input type="checkbox" value="Community" v-model="supportType" />
+          <input v-model="supportType" type="checkbox" value="Community" />
         </label>
 
         <label>
           Rundeck Supported
           <input
+            v-model="supportType"
             type="checkbox"
             value="Rundeck Supported"
-            v-model="supportType"
           />
         </label>
 
         <label>
           Enterprise Exclusive
           <input
+            v-model="supportType"
             type="checkbox"
             value="Enterprise Exclusive"
-            v-model="supportType"
           />
         </label>
       </div>

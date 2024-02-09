@@ -5,7 +5,7 @@
     tag="section"
     :position-element="inputEl"
   >
-    <template v-slot:dropdown>
+    <template #dropdown>
       <slot
         name="item"
         :items="items"
@@ -18,7 +18,7 @@
           </a>
         </li>
       </slot>
-      <slot name="empty" v-if="!items || items.length === 0" />
+      <slot v-if="!items || items.length === 0" name="empty" />
     </template>
   </Dropdown>
 </template>
@@ -31,7 +31,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "TextAutocomplete",
   extends: Dropdown,
-  emits: ["update:modelValue"],
   props: {
     modelValue: {
       required: true,
@@ -49,6 +48,7 @@ export default defineComponent({
       type: String,
     },
   },
+  emits: ["update:modelValue"],
   data() {
     return {
       inputEl: {} as any,
@@ -69,12 +69,16 @@ export default defineComponent({
       },
     },
   },
+  mounted() {
+    this.initInputElByTarget(this.target);
+    this.initListeners();
+  },
   methods: {
     selectItem(item: any) {
-      let value = this.inputEl.value.toString();
-      let preItem = value.substr(0, this.selectionStart);
-      let postItem = value.substr(this.currentSelection + 1, value.length);
-      let finalValue = preItem + item + postItem;
+      const value = this.inputEl.value.toString();
+      const preItem = value.substr(0, this.selectionStart);
+      const postItem = value.substr(this.currentSelection + 1, value.length);
+      const finalValue = preItem + item + postItem;
       this.value = finalValue;
       this.cleanItem();
     },
@@ -85,18 +89,18 @@ export default defineComponent({
       this.selectedValue = "";
     },
     highlight(item: any) {
-      let _value = this.itemKey ? item[this.itemKey] : item;
-      let inputValue =
+      const _value = this.itemKey ? item[this.itemKey] : item;
+      const inputValue =
         "\\" +
         this.autocompleteKey +
         this.selectedValue.substr(1, this.selectedValue.length);
-      let regex = new RegExp(`${inputValue}`);
+      const regex = new RegExp(`${inputValue}`);
       return _value.replace(regex, "<b>$&</b>");
     },
     getItems(data: any) {
       this.items = [];
       for (let i = 0, l = data.length; i < l; i++) {
-        let item = data[i];
+        const item = data[i];
         let key = this.itemKey ? item[this.itemKey] : item;
         key = key.toString();
         if (key.startsWith(this.selectedValue)) {
@@ -113,8 +117,8 @@ export default defineComponent({
     },
     inputPaste(event: any) {
       this.cleanItem();
-      let clipboardData = event.clipboardData;
-      let pastedData = clipboardData.getData("Text");
+      const clipboardData = event.clipboardData;
+      const pastedData = clipboardData.getData("Text");
       this.selectedValue = pastedData;
 
       this.selectionStart = event.target.selectionStart;
@@ -131,8 +135,8 @@ export default defineComponent({
     },
     inputKeyPressed(event: any) {
       event.stopPropagation();
-      let key = event.key;
-      let keyCode = event.keyCode;
+      const key = event.key;
+      const keyCode = event.keyCode;
 
       if (keyCode >= 8 && keyCode <= 46) {
         return;
@@ -147,8 +151,8 @@ export default defineComponent({
       this.currentSelection = event.target.selectionStart;
 
       if (this.open) {
-        let originalInputEl = this.inputEl.value.toString();
-        let newInputEl =
+        const originalInputEl = this.inputEl.value.toString();
+        const newInputEl =
           originalInputEl.substr(0, this.currentSelection) +
           key +
           originalInputEl.substr(
@@ -184,10 +188,6 @@ export default defineComponent({
     isElement(el: any) {
       return el && el.nodeType === Node.ELEMENT_NODE;
     },
-  },
-  mounted() {
-    this.initInputElByTarget(this.target);
-    this.initListeners();
   },
 });
 </script>

@@ -29,8 +29,8 @@
           @click.prevent="selectFilter(item.name)"
         >
           <i
-            class="glyphicon glyphicon-check"
             v-if="jobPageStore.selectedFilter === item.name"
+            class="glyphicon glyphicon-check"
           >
           </i>
           {{ item.name }}
@@ -68,6 +68,11 @@ export default defineComponent({
       filters: ref<JobListFilter[]>([]),
     };
   },
+  computed: {},
+  async mounted() {
+    await this.jobListFilterStore.load();
+    this.filters = this.jobListFilterStore.getFilters();
+  },
   methods: {
     selectFilter(name: string) {
       this.$emit("select", name);
@@ -76,11 +81,6 @@ export default defineComponent({
       this.$emit("delete", this.jobPageStore.selectedFilter);
       this.filters = this.jobListFilterStore.getFilters();
     },
-  },
-  computed: {},
-  async mounted() {
-    await this.jobListFilterStore.load();
-    this.filters = this.jobListFilterStore.getFilters();
   },
 });
 </script>

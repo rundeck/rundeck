@@ -18,15 +18,15 @@
   <div v-if="totalPages > 1" class="paging_links">
     <nav aria-label="Paging">
       <ul class="pagination pagination-sm">
-        <li class="pagination-text" v-if="$slots['prefix']">
+        <li v-if="$slots['prefix']" class="pagination-text">
           <slot name="prefix"></slot>
         </li>
         <li :class="{ disabled: !hasPreviousButton || disabled }">
           <a
             href="#"
-            @click.prevent="changePage(modelValue - 1)"
             title="Previous Page"
             :class="navigationClass"
+            @click.prevent="changePage(modelValue - 1)"
           >
             <slot name="prevPage"
               ><i class="glyphicon glyphicon-arrow-left"></i
@@ -46,9 +46,9 @@
           <a
             v-else-if="page.page !== modelValue"
             href="#"
-            @click.prevent="changePage(page.page)"
             :class="navigationClass"
             :title="'Page ' + page.page"
+            @click.prevent="changePage(page.page)"
             >{{ page.page }}</a
           >
           <span v-else :class="navigationClass" :title="'Page ' + page.page">{{
@@ -58,9 +58,9 @@
         <li :class="{ disabled: !hasNextButton || disabled }">
           <a
             href="#"
-            @click.prevent="changePage(modelValue + 1)"
             :class="navigationClass"
             title="Next Page"
+            @click.prevent="changePage(modelValue + 1)"
           >
             <slot name="nextPage"
               ><i class="glyphicon glyphicon-arrow-right"></i

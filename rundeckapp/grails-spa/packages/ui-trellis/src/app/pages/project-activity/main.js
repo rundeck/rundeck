@@ -10,7 +10,7 @@ import ActivityRunningIndicator from "../../components/activity/activityRunningI
 import { EventBus } from "../../../library/utilities/vueEventBus";
 import { initI18n } from "../../utilities/i18n";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const els = document.body.getElementsByClassName("vue-project-activity");
@@ -21,14 +21,14 @@ for (let i = 0; i < els.length; i++) {
   // Create VueI18n instance with options
   const i18n = initI18n();
 
-  let app = createApp({
+  const app = createApp({
     name: "ProjectActivityApp",
+    components: { ActivityList, ActivityRunningIndicator },
     data() {
       return {
         EventBus: EventBus,
       };
     },
-    components: { ActivityList, ActivityRunningIndicator },
   });
   app.use(uiv);
   app.use(i18n);

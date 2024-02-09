@@ -4,7 +4,7 @@ export const generateUrl = (url: string, params: any) => {
     if (typeof params === "string") {
       urlparams = [params];
     } else if (typeof params === "object") {
-      for (var e in params) {
+      for (const e in params) {
         urlparams.push(
           `${encodeURIComponent(e)}=${encodeURIComponent(params[e])}`,
         );

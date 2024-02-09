@@ -32,13 +32,13 @@
       </span>
 
       <version-icon-name-display
+        v-if="showName"
         :icon="versionIcon"
         :text="versionText"
         :color="versionColor"
-        v-if="showName"
       />
     </span>
-    <template v-slot:popover>
+    <template #popover>
       {{ version }}
       <version-date-display :date="date || ''" />
       <version-icon-name-display
@@ -154,8 +154,8 @@ export default defineComponent({
       return `${this.appName} ${this.version} (${this.versionText}) ${this.date}`;
     },
     badgeStyle(): any {
-      let rdversion = this.rdversion;
-      let color = this.versionColor;
+      const rdversion = this.rdversion;
+      const color = this.versionColor;
       return rdversion !== null
         ? {
             background: rdversion.stripeBg(color, 15, "#5c5c5c", 20),
@@ -169,6 +169,9 @@ export default defineComponent({
       this.loadversion();
     },
   },
+  mounted() {
+    this.loadversion();
+  },
   methods: {
     loadversion() {
       this.rdversion = new RundeckVersion({
@@ -180,9 +183,6 @@ export default defineComponent({
     formatFromNow(date) {
       return formatFromNow(date);
     },
-  },
-  mounted() {
-    this.loadversion();
   },
 });
 </script>

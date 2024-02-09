@@ -4,10 +4,10 @@
     :items="webhooksForProject"
     id-field="uuid"
     :selected="selected"
-    searchText="Filter Webhooks"
-    :itemSize="40"
+    search-text="Filter Webhooks"
+    :item-size="40"
   >
-    <template v-slot:item="{ item }">
+    <template #item="{ item }">
       <WebhookSelectItem :webhook="item" />
     </template>
   </FilterList>
@@ -27,11 +27,11 @@ import { getRundeckContext } from "../../../rundeckService";
 
 export default defineComponent({
   name: "WebhookSelect",
-  inject: ["rootStore"],
   components: {
     FilterList,
     WebhookSelectItem,
   },
+  inject: ["rootStore"],
   props: {
     project: {
       type: String,
@@ -42,6 +42,11 @@ export default defineComponent({
       default: "",
     },
   },
+  data() {
+    return {
+      webhookStore: window._rundeck.rootStore.webhooks,
+    };
+  },
   computed: {
     webhooksForProject() {
       return (
@@ -49,11 +54,6 @@ export default defineComponent({
         []
       );
     },
-  },
-  data() {
-    return {
-      webhookStore: window._rundeck.rootStore.webhooks,
-    };
   },
   beforeMount() {
     this.webhookStore.load(this.project);

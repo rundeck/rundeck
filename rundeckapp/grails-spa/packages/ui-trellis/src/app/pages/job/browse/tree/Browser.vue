@@ -3,7 +3,7 @@
     <template v-if="!loading && breakpointHit">
       <p class="breakpoint-info">
         {{ $t("job.tree.breakpoint.hit.info") }}
-        <btn @click="loadMeta(this.browsePath)" size="xs">
+        <btn size="xs" @click="loadMeta(browsePath)">
           {{ $t("job.tree.breakpoint.load.button.title") }}
         </btn>
       </p>
@@ -15,12 +15,12 @@
         :key="item.groupPath"
       >
         <browse-group-item
+          :key="item.groupPath"
           :item="item"
           :expanded="isExpanded(item.groupPath)"
-          @toggleExpanded="toggle(item.groupPath)"
-          @rootBrowse="rootBrowse(item.groupPath)"
-          :href="this.jobPageStore.jobPagePathHref(item.groupPath)"
-          :key="item.groupPath"
+          :href="jobPageStore.jobPagePathHref(item.groupPath)"
+          @toggle-expanded="toggle(item.groupPath)"
+          @root-browse="rootBrowse(item.groupPath)"
         >
           <template
             v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)"
@@ -47,28 +47,28 @@
           </template>
         </browse-group-item>
         <Browser
-          :path="item.groupPath"
           v-if="isExpanded(item.groupPath)"
-          @rootBrowse="rootBrowse"
-          @empty="childGroupEmpty(item)"
           :key="item.groupPath"
+          :path="item.groupPath"
           :expand-level="expandLevel - 1"
           :query-refresh="queryRefresh"
+          @root-browse="rootBrowse"
+          @empty="childGroupEmpty(item)"
         />
       </li>
       <RecycleScroller
         ref="scroller"
+        v-slot="{ item, active }"
+        :key="browsePath"
         :items="sortedItems"
         :item-size="27"
-        v-slot:default="{ item, active }"
         key-field="id"
-        itemTag="li"
+        item-tag="li"
         page-mode
-        :key="browsePath"
       >
         <browser-job-item
-          :job="item"
           v-if="item.job"
+          :job="item"
           :load-meta="breakpointHit"
         />
       </RecycleScroller>
@@ -158,7 +158,7 @@ export default defineComponent({
       if (!this.items || this.items.length < 1) {
         return [];
       }
-      let filters: JobPageFilter[] = this.jobPageStore.filters || [];
+      const filters: JobPageFilter[] = this.jobPageStore.filters || [];
       return this.items
         .filter((a: JobBrowserStoreItem) => a.job)
         .filter((a: JobBrowserStoreItem) => filters.every((f) => f.filter(a)))
@@ -166,6 +166,34 @@ export default defineComponent({
           return a.jobName.localeCompare(b.jobName);
         });
     },
+  },
+  watch: {
+    path() {
+      if (this.browsePath === this.path) {
+        return;
+      }
+      this.browsePath = this.path;
+      this.refresh();
+    },
+    queryRefresh() {
+      this.refresh(true);
+    },
+  },
+  async mounted() {
+    this.subs["job-bulk-modified-paths"] = (paths: string[]) => {
+      this.modifiedPaths(paths);
+    };
+    eventBus.on(
+      `job-bulk-modified-paths`,
+      this.subs["job-bulk-modified-paths"],
+    );
+    await this.refresh(true);
+  },
+  beforeUnmount() {
+    eventBus.off(
+      `job-bulk-modified-paths`,
+      this.subs["job-bulk-modified-paths"],
+    );
   },
   methods: {
     isExpanded(path: string) {
@@ -188,7 +216,7 @@ export default defineComponent({
       }
     },
     async loadMeta(path: string) {
-      let item = this.jobBrowserStore.findPath(this.browsePath);
+      const item = this.jobBrowserStore.findPath(this.browsePath);
       item.breakpoint = 0;
       item.loaded = false;
       await this.refresh();
@@ -219,7 +247,7 @@ export default defineComponent({
       if (this.items.length < 1) {
         this.$emit("empty");
       } else {
-        let found = this.jobBrowserStore.findPath(this.browsePath);
+        const found = this.jobBrowserStore.findPath(this.browsePath);
         if (found) {
           this.breakpointHit = found.bpHit;
         }
@@ -230,34 +258,6 @@ export default defineComponent({
         this.refresh();
       }
     },
-  },
-  watch: {
-    path() {
-      if (this.browsePath === this.path) {
-        return;
-      }
-      this.browsePath = this.path;
-      this.refresh();
-    },
-    queryRefresh() {
-      this.refresh(true);
-    },
-  },
-  async mounted() {
-    this.subs["job-bulk-modified-paths"] = (paths: string[]) => {
-      this.modifiedPaths(paths);
-    };
-    eventBus.on(
-      `job-bulk-modified-paths`,
-      this.subs["job-bulk-modified-paths"],
-    );
-    await this.refresh(true);
-  },
-  beforeUnmount() {
-    eventBus.off(
-      `job-bulk-modified-paths`,
-      this.subs["job-bulk-modified-paths"],
-    );
   },
 });
 </script>

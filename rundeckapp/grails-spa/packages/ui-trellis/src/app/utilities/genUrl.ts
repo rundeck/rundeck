@@ -3,7 +3,7 @@ export function _genUrlQuery(params: any) {
   if (typeof params === "string") {
     urlparams = [params];
   } else if (typeof params === "object") {
-    for (var e in params) {
+    for (const e in params) {
       urlparams.push(
         encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
       );
@@ -20,7 +20,7 @@ export function _genUrlQuery(params: any) {
  * @private
  */
 export function _genUrl(url: string, params: any) {
-  let paramString = _genUrlQuery(params);
+  const paramString = _genUrlQuery(params);
   return (
     url +
     (paramString.length ? (url.indexOf("?") > 0 ? "&" : "?") + paramString : "")

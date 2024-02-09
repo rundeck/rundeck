@@ -1,11 +1,11 @@
 <template>
-  <span :class="descriptionCss" v-if="showDescription" style="margin-left: 5px">
+  <span v-if="showDescription" :class="descriptionCss" style="margin-left: 5px">
     {{ shortDescription }}
   </span>
   <details
+    v-if="showDescription && showExtended && extraDescription"
     class="more-info details-reset"
     :class="extendedCss"
-    v-if="showDescription && showExtended && extraDescription"
   >
     <summary>
       {{ $t("more") }}

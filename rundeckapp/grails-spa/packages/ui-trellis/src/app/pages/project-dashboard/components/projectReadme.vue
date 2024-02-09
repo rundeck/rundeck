@@ -1,5 +1,5 @@
 <template>
-  <div class="row row-space" v-if="project.readme.readmeHTML && showReadme">
+  <div v-if="project.readme.readmeHTML && showReadme" class="row row-space">
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header">
@@ -22,6 +22,9 @@ export default {
       showReadme: false,
     };
   },
+  mounted() {
+    this.showReadme = this.shouldShowReadme();
+  },
   methods: {
     shouldShowReadme() {
       const display = this.project.readmeDisplay;
@@ -30,9 +33,6 @@ export default {
       }
       return false;
     },
-  },
-  mounted() {
-    this.showReadme = this.shouldShowReadme();
   },
 };
 </script>

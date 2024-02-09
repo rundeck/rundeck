@@ -1,12 +1,12 @@
 <template>
   <div class>
-    <div class v-if="title">
+    <div v-if="title" class>
       <h3 class>
         {{ title }}
         <a
+          v-if="mode !== 'edit'"
           class="btn btn-primary btn-sm"
           @click="mode = 'edit'"
-          v-if="mode !== 'edit'"
         >
           <i class="glyphicon glyphicon-pencil"></i>
           {{ editButtonText || $t("Edit") }}
@@ -24,38 +24,45 @@
       </div>
       <div>
         <a
+          v-if="mode !== 'edit'"
           class="btn btn-primary btn-sm"
           @click="mode = 'edit'"
-          v-if="mode !== 'edit'"
         >
           <i class="glyphicon glyphicon-pencil"></i>
           {{ editButtonText || $t("Edit") }}
         </a>
-        <div class="help-block" v-if="help">{{ help }}</div>
+        <div v-if="help" class="help-block">{{ help }}</div>
 
         <div class="list-group">
           <div
-            class="list-group-item"
             v-for="(plugin, index) in pluginConfigs"
             :key="'pluginStorageAccessplugin_' + index"
+            class="list-group-item"
           >
             <plugin-config
-              :mode="'title'"
-              :serviceName="serviceName"
-              :provider="plugin.entry.type"
               :key="plugin.entry.type + 'title/' + index"
+              :mode="'title'"
+              :service-name="serviceName"
+              :provider="plugin.entry.type"
               :show-description="true"
-              @hasKeyStorageAccess="hasKeyStorageAccess"
               :use-runner-selector="true"
               :event-bus="eventBus"
+              @has-key-storage-access="hasKeyStorageAccess"
             >
-              <template v-slot:titlePrefix
+              <template #titlePrefix
                 ><span>{{ index + 1 }}.</span></template
               >
             </plugin-config>
 
             <div v-if="additionalProps && additionalProps.props.length > 0">
               <plugin-config
+                :key="
+                  'additional_config_' +
+                  index +
+                  '/' +
+                  (editFocus === index ? 'true' : 'false')
+                "
+                v-model="plugin.extra"
                 :mode="
                   editFocus === index
                     ? plugin.create
@@ -63,14 +70,7 @@
                       : 'edit'
                     : 'show'
                 "
-                v-model="plugin.extra"
                 :config="plugin.extra.config"
-                :key="
-                  'additional_config_' +
-                  index +
-                  '/' +
-                  (editFocus === index ? 'true' : 'false')
-                "
                 :show-title="false"
                 :show-description="false"
                 :plugin-config="additionalProps"
@@ -79,6 +79,8 @@
               ></plugin-config>
             </div>
             <plugin-config
+              :key="plugin.entry.type + '_config/' + index"
+              v-model="plugin.entry"
               :mode="
                 editFocus === index
                   ? plugin.create
@@ -86,20 +88,18 @@
                     : 'edit'
                   : 'show'
               "
-              :serviceName="serviceName"
-              v-model="plugin.entry"
+              :service-name="serviceName"
               :provider="plugin.entry.type"
               :config="plugin.entry.config"
-              :key="plugin.entry.type + '_config/' + index"
               :show-title="false"
               :show-description="false"
               :validation="plugin.validation"
               :validation-warning-text="$t('Validation errors')"
               :use-runner-selector="true"
               :event-bus="eventBus"
-              @update:modelValue="configUpdated"
+              @update:model-value="configUpdated"
             >
-              <template v-slot:extraProperties>
+              <template #extraProperties>
                 <div class="row">
                   <ui-socket
                     section="resources-extra-attributes"
@@ -120,22 +120,22 @@
                 </div>
               </template>
 
-              <template v-slot:extra v-if="mode === 'edit'">
+              <template v-if="mode === 'edit'" #extra>
                 <div class="row">
                   <div class="col-xs-12 col-sm-12">
                     <span v-if="editFocus === -1">
                       <a
+                        :key="'edit'"
                         class="btn btn-default btn-xs"
                         @click="editFocus = index"
-                        :key="'edit'"
                         >{{ $t("Edit") }}</a
                       >
                     </span>
                     <span v-if="editFocus === index">
                       <a
+                        :key="'save'"
                         class="btn btn-cta btn-xs"
                         @click="savePlugin(plugin, index)"
-                        :key="'save'"
                         >{{ $t("Save") }}</a
                       >
                       <a
@@ -144,35 +144,35 @@
                         >{{ $t("Cancel") }}</a
                       >
                     </span>
-                    <span class="small text-info" v-if="plugin.modified">
+                    <span v-if="plugin.modified" class="small text-info">
                       <i class="fas fa-pen-square"></i>
                       Modified
                     </span>
                     <div
-                      class="btn-group pull-right"
                       v-if="editFocus === -1 || editFocus === index"
+                      class="btn-group pull-right"
                     >
                       <btn
                         class="btn-xs btn-danger"
-                        @click="removePlugin(plugin, index)"
                         :disabled="editFocus !== -1 && editFocus !== index"
+                        @click="removePlugin(plugin, index)"
                       >
                         {{ $t("Delete") }}
                         <i class="fas fa-minus"></i>
                       </btn>
                       <btn
                         class="btn-xs"
-                        @click="movePlugin(index, plugin, -1)"
                         :disabled="editFocus !== -1 || index == 0"
+                        @click="movePlugin(index, plugin, -1)"
                       >
                         <i class="fas fa-arrow-up"></i>
                       </btn>
                       <btn
                         class="btn-xs"
-                        @click="movePlugin(index, plugin, 1)"
                         :disabled="
                           editFocus !== -1 || index >= pluginConfigs.length - 1
                         "
+                        @click="movePlugin(index, plugin, 1)"
                       >
                         <i class="fas fa-arrow-down"></i>
                       </btn>
@@ -184,13 +184,13 @@
             <slot
               name="item-extra"
               :plugin="plugin"
-              :editFocus="editFocus === index"
+              :edit-focus="editFocus === index"
               :mode="mode"
             ></slot>
           </div>
           <div
-            class="list-group-item"
             v-if="pluginConfigs.length < 1 && showEmpty"
+            class="list-group-item"
           >
             <slot name="empty-message">
               <span class="text-muted">
@@ -204,31 +204,31 @@
           </div>
         </div>
 
-        <div class="card-footer" v-if="mode === 'edit' && editFocus === -1">
+        <div v-if="mode === 'edit' && editFocus === -1" class="card-footer">
           <btn
             type="primary"
-            @click="modalAddOpen = true"
             data-test-id="project-plugin-config-add-modal-open-button"
+            @click="modalAddOpen = true"
           >
             {{ (pluginLabels && pluginLabels.addButton) || serviceName }}
             <i class="fas fa-plus"></i>
           </btn>
 
           <modal
+            id="add-new-modal"
+            ref="modal"
             v-model="modalAddOpen"
             :title="(pluginLabels && pluginLabels.addButton) || serviceName"
-            ref="modal"
             size="lg"
-            id="add-new-modal"
             append-to-body
           >
             <div class="list-group">
               <a
                 v-for="plugin in pluginProviders"
-                v-bind:key="plugin.name"
+                :key="plugin.name"
                 href="#"
-                @click="addPlugin(plugin.name)"
                 class="list-group-item"
+                @click="addPlugin(plugin.name)"
               >
                 <plugin-info
                   :detail="plugin"
@@ -240,28 +240,28 @@
                 </plugin-info>
               </a>
             </div>
-            <template v-slot:footer>
+            <template #footer>
               <div>
                 <btn @click="modalAddOpen = false">{{ $t("Cancel") }}</btn>
               </div>
             </template>
           </modal>
         </div>
-        <div class="card-footer" v-if="mode === 'edit' && editFocus === -1">
-          <btn type="default" @click="cancelAction" v-if="modeToggle">{{
+        <div v-if="mode === 'edit' && editFocus === -1" class="card-footer">
+          <btn v-if="modeToggle" type="default" @click="cancelAction">{{
             $t("Cancel")
           }}</btn>
-          <btn type="default" @click="cancelAction" v-else-if="modified">{{
+          <btn v-else-if="modified" type="default" @click="cancelAction">{{
             $t("Revert")
           }}</btn>
           <a
-            class="btn btn-cta"
-            @click="savePlugins"
             v-if="modified"
+            class="btn btn-cta"
             href="#"
+            @click="savePlugins"
             >{{ $t("Save") }}</a
           >
-          <span class="text-warning" v-if="modified"
+          <span v-if="modified" class="text-warning"
             >Changes have not been saved.</span
           >
         </div>
@@ -311,6 +311,30 @@ export default defineComponent({
     Expandable,
     UiSocket,
   },
+  props: {
+    editMode: {
+      type: Boolean,
+      default: false,
+    },
+    modeToggle: {
+      type: Boolean,
+      default: true,
+    },
+    showEmpty: {
+      type: Boolean,
+      default: true,
+    },
+    serviceName: String,
+    title: {
+      required: false,
+      type: String,
+    },
+    configPrefix: String,
+    additionalProps: { required: false, type: Object },
+    help: { required: false, type: String },
+    editButtonText: { required: false, type: String },
+    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
+  },
   emits: [
     "saved",
     "reset",
@@ -338,29 +362,45 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
-  props: {
-    editMode: {
-      type: Boolean,
-      default: false,
-    },
-    modeToggle: {
-      type: Boolean,
-      default: true,
-    },
-    showEmpty: {
-      type: Boolean,
-      default: true,
-    },
-    serviceName: String,
-    title: {
-      required: false,
-      type: String,
-    },
-    configPrefix: String,
-    additionalProps: { required: false, type: Object },
-    help: { required: false, type: String },
-    editButtonText: { required: false, type: String },
-    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    this.notifyPluginConfigs();
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.rdBase = window._rundeck.rdBase;
+      this.project = window._rundeck.projectName;
+
+      this.loadProjectPluginConfig(
+        window._rundeck.projectName,
+        this.configPrefix,
+        this.serviceName,
+      )
+        .then((pluginConfigs) => {
+          this.configOrig = pluginConfigs;
+          //copy
+          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
+            this.createConfigEntry(val, index),
+          );
+          this.loaded = true;
+          this.notifyPluginConfigs();
+        })
+        .catch((error) => console.error(error));
+
+      pluginService
+        .getPluginProvidersForService(this.serviceName)
+        .then((data) => {
+          if (data.service) {
+            this.pluginProviders = data.descriptions;
+            this.pluginLabels = data.labels;
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -606,46 +646,6 @@ export default defineComponent({
         };
       }
     },
-  },
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    this.notifyPluginConfigs();
-    if (
-      window._rundeck &&
-      window._rundeck.rdBase &&
-      window._rundeck.projectName
-    ) {
-      this.rdBase = window._rundeck.rdBase;
-      this.project = window._rundeck.projectName;
-
-      this.loadProjectPluginConfig(
-        window._rundeck.projectName,
-        this.configPrefix,
-        this.serviceName,
-      )
-        .then((pluginConfigs) => {
-          this.configOrig = pluginConfigs;
-          //copy
-          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
-            this.createConfigEntry(val, index),
-          );
-          this.loaded = true;
-          this.notifyPluginConfigs();
-        })
-        .catch((error) => console.error(error));
-
-      pluginService
-        .getPluginProvidersForService(this.serviceName)
-        .then((data) => {
-          if (data.service) {
-            this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
 });
 </script>

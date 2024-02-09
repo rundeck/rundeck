@@ -36,7 +36,7 @@ export class ActivityFilterStore {
   }
 
   loadForProject(project: string): ProjectActivityFilters {
-    let storedNodeFilters = this.loadStoredFilters();
+    const storedNodeFilters = this.loadStoredFilters();
     return storedNodeFilters[project] || {};
   }
 
@@ -45,7 +45,7 @@ export class ActivityFilterStore {
   }
 
   setStoredDefaultFilter(project: string, name: string) {
-    let storedNodeFilters = this.loadStoredFilters();
+    const storedNodeFilters = this.loadStoredFilters();
     if (!storedNodeFilters[project]) {
       storedNodeFilters[project] = { filters: [], defaultFilter: name };
     } else {
@@ -56,7 +56,7 @@ export class ActivityFilterStore {
   }
 
   removeStoredDefaultFilter(project: string) {
-    let storedNodeFilters = this.loadStoredFilters();
+    const storedNodeFilters = this.loadStoredFilters();
     if (!storedNodeFilters[project]) {
       storedNodeFilters[project] = { filters: [] };
     } else {
@@ -66,7 +66,7 @@ export class ActivityFilterStore {
   }
 
   saveFilter(project: string, filter: ActivityFilter) {
-    let storedNodeFilters = this.loadStoredFilters();
+    const storedNodeFilters = this.loadStoredFilters();
     if (!storedNodeFilters[project]) {
       storedNodeFilters[project] = { filters: [filter] };
     } else if (!storedNodeFilters[project].filters) {
@@ -79,7 +79,7 @@ export class ActivityFilterStore {
   }
 
   removeFilter(project: string, filterName: string) {
-    let storedNodeFilters = this.loadStoredFilters();
+    const storedNodeFilters = this.loadStoredFilters();
     if (!storedNodeFilters[project]?.filters) {
       return;
     }

@@ -4,11 +4,11 @@
     :style="styleForIcon(node.attributes)"
   >
     <i
-      :class="glyphiconForName(node.attributes['ui:icon:name'])"
       v-if="node.attributes['ui:icon:name']"
+      :class="glyphiconForName(node.attributes['ui:icon:name'])"
     ></i>
 
-    <i :class="iconCss" v-if="!node.attributes['ui:icon:name']"></i>
+    <i v-if="!node.attributes['ui:icon:name']" :class="iconCss"></i>
   </span>
 </template>
 <script lang="ts">

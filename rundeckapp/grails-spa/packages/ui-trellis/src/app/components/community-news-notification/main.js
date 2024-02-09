@@ -10,7 +10,7 @@ import News from "../../../library/components/widgets/news/News.vue";
 import moment from "moment";
 // Component Files
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const rootStore = getRundeckContext().rootStore;
@@ -29,12 +29,12 @@ rootStore.utilityBar.addItems([
         app: "NewsApp",
         components: { News },
         provide: { rootStore },
-        template: `<News @news:select-all="moreNews"/>`,
         methods: {
           moreNews() {
             window.open(links.communityNews, "_blank");
           },
         },
+        template: `<News @news:select-all="moreNews"/>`,
       }),
     ),
   },

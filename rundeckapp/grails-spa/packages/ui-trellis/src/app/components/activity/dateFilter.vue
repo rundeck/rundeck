@@ -1,7 +1,7 @@
 <template>
   <div class="form-group">
     <span class="checkbox col-sm-2">
-      <input type="checkbox" :id="uid" v-model="enabled" class="checkbox" />
+      <input :id="uid" v-model="enabled" type="checkbox" class="checkbox" />
       <label :for="uid"><slot>Enabled</slot></label>
     </span>
     <div class="col-sm-10">
@@ -13,15 +13,15 @@
             /></btn>
           </div>
 
-          <input type="text" v-model="datetime" class="form-control" />
+          <input v-model="datetime" type="text" class="form-control" />
         </div>
 
-        <template v-slot:dropdown>
+        <template #dropdown>
           <li style="padding: 10px">
             <date-time-picker
               v-model="datetime"
-              dateClass="flex-item-1"
-              timeClass="flex-item-auto"
+              date-class="flex-item-1"
+              time-class="flex-item-auto"
               class="flex-container"
             />
           </li>
@@ -36,10 +36,10 @@ import _ from "lodash";
 import DateTimePicker from "./dateTimePicker.vue";
 
 export default defineComponent({
-  props: ["modelValue"],
   components: {
     DateTimePicker,
   },
+  props: ["modelValue"],
   emits: ["update:modelValue"],
   data() {
     return {
