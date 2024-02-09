@@ -1,11 +1,11 @@
 export interface JobOption {
   configMap?: any;
   configRemoteUrl?: any;
-  defaultValue: string;
+  defaultValue?: string;
   delimiter?: string;
-  description: string;
+  description?: string;
   enforced?: boolean;
-  hidden: boolean;
+  hidden?: boolean;
   label?: string;
   multivalueAllSelected?: boolean;
   multivalued?: boolean;
@@ -17,7 +17,8 @@ export interface JobOption {
   remoteUrlAuthenticationType?: string;
   secureExposed?: boolean;
   secureInput?: boolean;
-  sortValues: boolean;
+  valuesList?: string;
+  sortValues?: boolean;
 }
 
 export interface JobOptionEdit extends JobOption {
