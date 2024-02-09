@@ -745,7 +745,12 @@ const messages = {
     "option.click.to.edit.title": "Click to edit",
     "form.option.name.validation.error":"Invalid Option Name: It must match the pattern: {0}",
     "form.field.required.message":"This field is required",
-    "form.option.validation.errors.message":"Correct validation errors before saving changes"
+    "form.option.validation.errors.message":"Correct validation errors before saving changes",
+    "option.list.header.name.title":"Name",
+    "option.list.header.values.title":"Values",
+    "option.list.header.restrictions.title":"Restrictions",
+    "util.undoredo.undo":"Undo",
+    "util.undoredo.redo":"Redo",
 };
 
 export default messages;
