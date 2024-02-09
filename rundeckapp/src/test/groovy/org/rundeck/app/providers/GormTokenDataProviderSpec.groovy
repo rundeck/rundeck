@@ -6,12 +6,12 @@ import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.data.util.AuthenticationTokenUtils
-import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -29,8 +29,8 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
     @Unroll
     def "Create and Retrieve"() {
         when:
-        provider.userService = Mock(UserService){
-            findOrCreateUser(_) >>  { new User(login: ownerName).save() }
+        provider.userDataProvider = Mock(GormUserDataProvider){
+            findOrCreateUser(ownerName) >>  { new User(login: ownerName).save() }
         }
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                 .setToken(token)
@@ -59,7 +59,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
 
     def "should throw an error when create fails"() {
         when:
-        provider.userService = Mock(UserService){
+        provider.userDataProvider = Mock(GormUserDataProvider){
             findOrCreateUser(_) >>  new User(login: "auser")
         }
         provider.messageSource = Mock(MessageSource) {
@@ -81,7 +81,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         when:
         User bob = new User(login: 'bob')
         bob.save()
-        provider.userService = Mock(UserService){
+        provider.userDataProvider = Mock(GormUserDataProvider){
             findOrCreateUser(_) >>  bob
         }
         String uuid = '123uuid'
@@ -117,7 +117,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
         when:
         User bob = new User(login: 'bob')
         bob.save()
-        provider.userService = Mock(UserService){
+        provider.userDataProvider = Mock(GormUserDataProvider){
             findOrCreateUser(_) >>  bob
         }
         String uuid = '123uuid'
