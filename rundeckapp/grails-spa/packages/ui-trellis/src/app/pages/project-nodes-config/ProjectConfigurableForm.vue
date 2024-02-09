@@ -65,11 +65,9 @@ export default defineComponent({
     async loadConfig() {
       try {
         const config = await getProjectConfigurable(window._rundeck.projectName, this.category);
-        console.log(config)
         this.extraConfigSet =  config.response["projectConfigurable"] as [ConfigurableItem];
         let properties = []
         this.extraConfigSet.forEach((item: ConfigurableItem) => {
-          console.log("item", item)
           const itemName = item.name
           this.projectConfigurableNames.push(itemName)
           item.properties.forEach((prop: any) => {
@@ -99,19 +97,15 @@ export default defineComponent({
     },
     async saveConfig(){
 
-      console.log("Saving config", this.finalExtraConfig.config)
       const configMap = this.transformConfigToMap(this.finalExtraConfig.config);
       this.finalExtraConfig.config = {
         ...this.finalExtraConfig.config,
         ...configMap
       };
       this.finalExtraConfig.config = this.convertMapNumbersToStrings(this.finalExtraConfig.config);
-      console.log("Saving config 2", this.finalExtraConfig.config)
       try {
         const resp = await setProjectConfigurable(window._rundeck.projectName, this.category, this.finalExtraConfig.config);
-        console.log(resp)
         if(resp.response === true){
-          console.log("Config saved successfully")
           this.notifySuccess("Success!", "Config saved successfully" )
           await this.loadConfig()
         }
