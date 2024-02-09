@@ -13,7 +13,6 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
-import java.time.Duration
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -37,17 +36,6 @@ class RdClient {
                         connectionPool(new ConnectionPool(2, 10, TimeUnit.SECONDS)).
                         build()
         )
-    }
-
-
-    Response doGetCustomApiVersion(final String path, final String customApiVersion) {
-        httpClient.newCall(
-                new Request.Builder().
-                        url(apiUrlCustomApiVersion(path, customApiVersion)).
-                        header('Accept', '*/*').
-                        get().
-                        build()
-        ).execute()
     }
 
     Response doGet(final String path) {
@@ -108,10 +96,6 @@ class RdClient {
 
     private String apiUrl(String path) {
         baseUrl + "/api/${apiVersion}" + path
-    }
-
-    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
-        baseUrl + "/api/${customApiVersion}" + path
     }
 
     <T> T get(final String path, Class<T> clazz) {
