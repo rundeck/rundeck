@@ -203,23 +203,30 @@
             </slot>
           </div>
         </div>
-
         <div v-if="mode === 'edit' && editFocus === -1" class="card-footer">
           <btn
             type="primary"
-            data-test-id="project-plugin-config-add-modal-open-button"
             @click="modalAddOpen = true"
+            data-test-id="project-plugin-config-add-modal-open-button"
           >
-            {{ (pluginLabels && pluginLabels.addButton) || serviceName }}
+            {{
+              (pluginLabels && pluginLabels.addButton) ||
+              addButtonText ||
+              serviceName
+            }}
             <i class="fas fa-plus"></i>
           </btn>
 
           <modal
-            id="add-new-modal"
-            ref="modal"
             v-model="modalAddOpen"
-            :title="(pluginLabels && pluginLabels.addButton) || serviceName"
+            :title="
+              (pluginLabels && pluginLabels.addButton) ||
+              addButtonText ||
+              serviceName
+            "
+            ref="modal"
             size="lg"
+            id="add-new-modal"
             append-to-body
           >
             <div class="list-group">
@@ -362,6 +369,7 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
+<<<<<<< HEAD
   mounted() {
     this.rundeckContext = getRundeckContext();
     this.notifyPluginConfigs();
@@ -401,6 +409,32 @@ export default defineComponent({
     }
 
     this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
+=======
+  props: {
+    editMode: {
+      type: Boolean,
+      default: false
+    },
+    modeToggle: {
+      type: Boolean,
+      default: true
+    },
+    showEmpty: {
+      type: Boolean,
+      default: true
+    },
+    serviceName: String,
+    addButtonText: String,
+    title: {
+      required: false,
+      type: String
+    },
+    configPrefix: String,
+    additionalProps: { required: false, type: Object },
+    help: { required: false, type: String },
+    editButtonText: { required: false, type: String },
+    eventBus: { type: Object as PropType<typeof EventBus>, "required": false }
+>>>>>>> d97bd772ca (add fixes and localization)
   },
   methods: {
     notifyError(msg: string, args: any[]) {

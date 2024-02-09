@@ -17,7 +17,7 @@
               <div class="col-xs-12 col-sm-12">
                     <span>
                         <a
-                            class="btn btn-cta btn-xs"
+                            class="btn btn-cta reset_page_confirm"
                             @click="saveConfig"
                             :key="'save'"
                         >{{"Save"}}</a>
