@@ -16,14 +16,13 @@ import java.util.function.Consumer
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
-    public static boolean CLUSTER_ENVIRONMENT = false
 
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
     private static final String DEFAULT_DOCKERFILE_LOCATION = System.getenv("DEFAULT_DOCKERFILE_LOCATION") ?: System.getProperty("DEFAULT_DOCKERFILE_LOCATION")
 
-    ClientProvider getClientProvider() {
+    ClientProvider getClientProvider(boolean noSkip = false) {
         if (System.getenv("TEST_RUNDECK_URL") != null) {
             if (CLIENT_PROVIDER == null) {
                 CLIENT_PROVIDER = new ClientProvider() {
@@ -44,7 +43,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
             }
-        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null && CLUSTER_ENVIRONMENT) {
+        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null && noSkip) {
             synchronized (LOCK) {
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")
@@ -108,7 +107,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     }
 
     void startEnvironment() {
-        getClientProvider()
+        getClientProvider(true)
     }
 
     //client helpers
