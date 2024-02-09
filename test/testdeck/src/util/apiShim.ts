@@ -18,15 +18,7 @@ const skipTests = [
     /** Misc */
     'test-history.sh',
     'test-metrics.sh', // .meters length 7 instead of 8 ?
-    'test-require-version.sh',
-    'test-resource.sh',
-    'test-resources.sh',
-    'test-run-script-interpreter.sh',
-    'test-run-script.sh',
-    'test-v23-project-source-resources.sh',
-    'test-v23-project-sources-json.sh',
     'test-v23-project-sources-xml.sh',
-    'test-workflow-errorhandler.sh',
 ]
 
 export function ShimApiTests(pattern: RegExp) {
