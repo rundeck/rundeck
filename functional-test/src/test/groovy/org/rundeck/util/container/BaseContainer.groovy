@@ -16,6 +16,8 @@ import java.util.function.Consumer
 @Slf4j
 abstract class BaseContainer extends Specification implements ClientProvider {
     public static final String PROJECT_NAME = 'test'
+    public static boolean CLUSTER_ENVIRONMENT = false
+
     private static RdContainer RUNDECK
     private static final Object LOCK = new Object()
     private static ClientProvider CLIENT_PROVIDER
@@ -42,7 +44,7 @@ abstract class BaseContainer extends Specification implements ClientProvider {
                 rdDockerContainer.start()
                 CLIENT_PROVIDER = rdDockerContainer
             }
-        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null) {
+        } else if (RUNDECK == null && DEFAULT_DOCKERFILE_LOCATION == null && CLUSTER_ENVIRONMENT) {
             synchronized (LOCK) {
                 log.info("Starting testcontainer: ${getClass().getClassLoader().getResource(System.getProperty("COMPOSE_PATH")).toURI()}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdContainer.RUNDECK_IMAGE}")

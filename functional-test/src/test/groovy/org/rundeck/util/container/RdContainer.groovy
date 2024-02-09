@@ -15,7 +15,7 @@ import java.time.Duration
 class RdContainer extends DockerComposeContainer<RdContainer> implements ClientProvider {
 
     public static final String DEFAULT_SERVICE_TO_EXPOSE = System.getenv("TEST_RUNDECK_CONTAINER_SERVICE") ?: 'rundeck'
-    private static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
+    public static final Integer DEFAULT_PORT = System.getenv("TEST_RUNDECK_CONTAINER_PORT")?.toInteger() ?: 4440
     private static final String CONTEXT_PATH = System.getenv("TEST_RUNDECK_CONTAINER_CONTEXT") ?: ''
     //matches tokens.properties in src/main/resources
     public static final String STATIC_TOKEN = System.getenv("TEST_RUNDECK_CONTAINER_TOKEN") ?: 'admintoken'
@@ -25,7 +25,6 @@ class RdContainer extends DockerComposeContainer<RdContainer> implements ClientP
 
 
     RdContainer(URI composeFilePath) {
-
         super(new File(composeFilePath))
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
