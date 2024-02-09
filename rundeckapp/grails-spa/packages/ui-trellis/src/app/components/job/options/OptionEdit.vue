@@ -1321,8 +1321,6 @@ export default defineComponent({
       if (this.hasFormErrors) {
         return;
       }
-      //TODO: emit when saved
-      eventBus.emit("job-edit:edited", true);
       this.$emit("update:modelValue", this.option);
     },
     hasError(field: string) {

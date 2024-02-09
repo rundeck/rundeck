@@ -6,13 +6,19 @@
       <div v-if="intOptions.length > 0">
         <div class="optheader optctrlholder">
           <span class="optdetail">
-            <span class="header">Name</span>
+            <span class="header">
+              {{ $t("option.list.header.name.title") }}
+            </span>
           </span>
           <span class="valuesSet">
-            <span class="header">Values</span>
+            <span class="header">
+              {{ $t("option.list.header.values.title") }}
+            </span>
           </span>
           <span class="enforceSet">
-            <span class="header">Restriction</span>
+            <span class="header">
+              {{ $t("option.list.header.restrictions.title") }}
+            </span>
           </span>
         </div>
       </div>
@@ -46,7 +52,7 @@
             @moveUp="doMoveUp(i)"
             @moveDown="doMoveDown(i)"
             @edit="doEdit(i)"
-            @delete="intOptions.splice(i, 1)"
+            @delete="doRemove(i)"
             @duplicate="doDuplicate(i)"
           />
         </li>
@@ -71,7 +77,6 @@
         data-is-final="true"
         style="display: none"
       ></div>
-      <!--      <g:embedJSON id="optDataList" data="${options.collect{[name:it.name,type:it.optionType,multivalued:it.multivalued, delimiter: it.delimiter]}}"/>-->
 
       <div class="empty note" v-if="intOptions.length < 1 && !createMode">
         {{ $t("no.options.message") }}
@@ -93,17 +98,34 @@
   </div>
 </template>
 <script lang="ts">
+import { getRundeckContext } from "@/library";
 import { cloneDeep } from "lodash";
-import {JobOption, JobOptionEdit, JobOptionsData} from '../../../../library/types/jobs/JobEdit'
+import {JobOption, JobOptionsData,} from "../../../../library/types/jobs/JobEdit";
 import OptionItem from "./list/OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
-import {defineComponent, PropType} from 'vue'
+import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
 import mitt, { Emitter, EventType } from "mitt";
 
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
+const eventBus = getRundeckContext().eventBus;
+
+enum Operation {
+  Insert,
+  Remove,
+  Modify,
+  Move,
+}
+interface ChangeEvent {
+  index: number;
+  value?: JobOption;
+  orig?: JobOption;
+  dest?: number;
+  operation: Operation;
+  undo: Operation;
+}
 
 export default defineComponent({
   name: "OptionsEditor",
@@ -169,34 +191,114 @@ export default defineComponent({
       this.createOption.name = this.createOption.name + "_copy";
       this.createMode = true;
     },
+    doRemove(i: number) {
+      let orig = this.operationRemove(i);
+      this.changeEvent({
+        index: i,
+        dest:-1,
+        orig: orig,
+        operation: Operation.Remove,
+        undo: Operation.Insert,
+      });
+    },
     doMoveUp(i: number) {
       if (i > 0) {
-        const temp = this.intOptions[i - 1];
-        this.intOptions[i - 1] = this.intOptions[i];
-        this.intOptions[i] = temp;
+        this.operationMove(i, i - 1);
+        this.changeEvent({
+          index: i,
+          dest: i - 1,
+          operation: Operation.Move,
+          undo: Operation.Move,
+        });
       }
     },
     doMoveDown(i: number) {
       if (i < this.intOptions.length - 1) {
-        const temp = this.intOptions[i + 1];
-        this.intOptions[i + 1] = this.intOptions[i];
-        this.intOptions[i] = temp;
+        this.operationMove(i, i + 1);
+        this.changeEvent({
+          index: i,
+          dest: i + 1,
+          operation: Operation.Move,
+          undo: Operation.Move,
+        });
       }
     },
     updateOption(i: number, data: any) {
-      this.intOptions[i] = cloneDeep(data);
+      let value = cloneDeep(data);
+      let orig = this.operationModify(i, value);
+      this.changeEvent({
+        index: i,
+        dest:-1,
+        orig,
+        value,
+        operation: Operation.Modify,
+        undo: Operation.Modify,
+      });
       this.editIndex = -1;
       this.createOption = null;
     },
     saveNewOption(data: any) {
       this.createMode = false;
-      this.intOptions.push(cloneDeep(data));
+      let index = this.intOptions.length;
+      let value = cloneDeep(data);
+      this.operationInsert(index, value);
+
+      this.changeEvent({
+        index,
+        dest:-1,
+        value,
+        operation: Operation.Insert,
+        undo: Operation.Remove,
+      });
       this.createOption = null;
+    },
+    operationRemove(index: number) {
+      let oldval = this.intOptions[index];
+      this.intOptions.splice(index, 1);
+      return oldval;
+    },
+    operationModify(index: number, data: any) {
+      let orig = this.intOptions[index];
+      this.intOptions[index] = cloneDeep(data);
+      return orig;
+    },
+    operationMove(index: number, dest: number) {
+      const temp = this.intOptions[dest];
+      this.intOptions[dest] = this.intOptions[index];
+      this.intOptions[index] = temp;
+    },
+    async operationInsert(index, value) {
+      this.intOptions.splice(index, 0, cloneDeep(value));
+    },
+    operation(op: Operation, data: any) {
+      if (op === Operation.Insert) {
+        this.operationInsert(data.index, data.value);
+      } else if (op === Operation.Remove) {
+        this.operationRemove(data.index);
+      } else if (op === Operation.Modify) {
+        this.operationModify(data.index, data.value);
+      } else if (op === Operation.Move) {
+        this.operationMove(data.index, data.dest);
+      }
     },
     doCancel() {
       this.createMode = false;
       this.editIndex = -1;
       this.createOption = null;
+    },
+    doUndo(change: ChangeEvent) {
+      this.operation(change.undo, {
+        index: change.dest>=0?change.dest: change.index,
+        dest: change.index>=0?change.index: change.dest,
+        value: change.orig || change.value,
+      });
+    },
+    doRedo(change: ChangeEvent) {
+      this.operation(change.operation, change);
+    },
+    changeEvent(event: ChangeEvent) {
+      this.localEB.emit("change", event);
+      eventBus.emit("job-edit:edited", true);
     },
   },
   async mounted() {
@@ -209,6 +311,12 @@ export default defineComponent({
         this.providerLabels = data.labels;
       }
     });
+    this.localEB.on("undo", this.doUndo);
+    this.localEB.on("redo", this.doRedo);
+  },
+  beforeUnmount() {
+    this.localEB.off("undo");
+    this.localEB.off("redo");
   },
 });
 </script>
