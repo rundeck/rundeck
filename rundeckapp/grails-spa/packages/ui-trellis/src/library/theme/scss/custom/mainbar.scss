@@ -21,7 +21,6 @@
     width: 38px;
   }
 
-
   // Cog
   .fa-cog,
   .fa-user {
@@ -32,7 +31,7 @@
     display: flex;
     align-items: center;
     align-content: center;
-    
+
     span {
       display: flex;
     }
@@ -73,7 +72,7 @@
   align-items: center;
   height: 100%;
 
-  >li {
+  > li {
     margin: 0 5px;
   }
 }
@@ -96,7 +95,7 @@
 .subtitlebar.standard {
   height: 100%;
 }
-#subtitlebar.has-content{
+#subtitlebar.has-content {
   margin-bottom: 20px;
 }
 .subtitlebar.has-content {
@@ -106,11 +105,11 @@
 }
 
 #navbar-menu {
-  >li.user-button>a {
+  > li.user-button > a {
     // padding: 10px 15px;
   }
 
-  >li.user-button>a.btn {
+  > li.user-button > a.btn {
     margin: 8px 3px;
   }
 }
@@ -125,10 +124,10 @@
     display: flex;
     font-size: 18px;
 
-    >a {
+    > a {
       display: inline-block;
     }
-    .primarylink-chevron{
+    .primarylink-chevron {
       margin: 0 8px;
     }
   }
@@ -154,13 +153,11 @@
           //   text-overflow: ellipsis;
           //   width: calc(100% - 65px);
           // }
-
-
         }
       }
     }
 
-    li.primarylink+li.primarylink {
+    li.primarylink + li.primarylink {
       border-left: 1px solid darken($bg-subheader, 10%);
       margin-left: 10px;
 
@@ -202,7 +199,6 @@
       display: block;
     }
   }
-
 }
 
 .subtitlebar {
@@ -218,7 +214,6 @@
 }
 
 .subtitlebar {
-
   .subtitle-head {
     .subtitle-head-item {
       padding: 15px;
@@ -227,11 +222,9 @@
 }
 
 .searchbar {
-
   .subtitle-head {
     .subtitle-head-item {
       padding-bottom: 15px;
     }
   }
 }
-

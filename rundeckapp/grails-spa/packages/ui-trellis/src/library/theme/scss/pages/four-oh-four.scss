@@ -31,7 +31,8 @@
     left: 0;
   }
 
-  .space-cat-container {}
+  .space-cat-container {
+  }
 
   .four-oh-four-messaging {
     text-align: right;
@@ -81,8 +82,8 @@
     color: #fff;
     border-radius: 4px;
     padding-bottom: calc(0.375em - 1px);
-    padding-left: .75em;
-    padding-right: .75em;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
     padding-top: calc(0.375em - 1px);
     font-size: 3rem;
   }

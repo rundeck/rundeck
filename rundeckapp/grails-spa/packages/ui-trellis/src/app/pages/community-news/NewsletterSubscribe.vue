@@ -1,10 +1,15 @@
 <template>
   <section>
-    <button
-      @click="isSubscribeModalActive = true"
-      class="btn red-button"
-    >{{$t("message_subscribe")}}</button>
-    <modal v-model="isSubscribeModalActive" ref="modal" :header="false" :footer="false" append-to-body>
+    <button class="btn red-button" @click="isSubscribeModalActive = true">
+      {{ $t("message_subscribe") }}
+    </button>
+    <modal
+      ref="modal"
+      v-model="isSubscribeModalActive"
+      :header="false"
+      :footer="false"
+      append-to-body
+    >
       <div class="modal-body">
         <div v-if="!showConfirmation">
           <h4>Receive updates in your Inbox.</h4>
@@ -13,23 +18,27 @@
               <label class="label">Email*</label>
               <div class="control">
                 <input
-                  type="email"
                   v-model="email"
+                  type="email"
                   class="form-control"
                   placeholder="Type Your Email..."
-                >
+                />
               </div>
             </div>
-            <div class="field" style="margin-top:2em;">
+            <div class="field" style="margin-top: 2em">
               <div class="control">
-                <button type="submit" class="btn btn-block btn-lg red-button">Subscribe</button>
+                <button type="submit" class="btn btn-block btn-lg red-button">
+                  Subscribe
+                </button>
               </div>
             </div>
           </form>
         </div>
         <div v-else>
-          <p>{{confirmationMessage}}</p>
-          <p class="is-size-6">This modal will close in {{counter}} seconds.</p>
+          <p>{{ confirmationMessage }}</p>
+          <p class="is-size-6">
+            This modal will close in {{ counter }} seconds.
+          </p>
         </div>
       </div>
     </modal>
@@ -48,23 +57,24 @@ export default defineComponent({
       isSubscribeModalActive: false,
       confirmationMessage: "Thank you for your submission.",
       showConfirmation: false,
-      counter: 5
+      counter: 5,
     };
   },
+  mounted() {},
   methods: {
     handleSubmit() {
       axios
         .post("https://api.rundeck.com/user/v1/newsletter/subscribe", {
-          email: this.email
+          email: this.email,
         })
-        .then(response => {
+        .then((response) => {
           if (response.status === 200) {
             if (response.data.inlineMessage) {
               this.confirmationMessage = response.data.inlineMessage;
             }
             this.showConfirmation = true;
 
-            let countdown = setInterval(() => {
+            const countdown = setInterval(() => {
               this.counter--;
               if (this.counter === 0) {
                 clearInterval(countdown);
@@ -73,17 +83,16 @@ export default defineComponent({
             }, 1000);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           // eslint-disable-next-line
           console.log(
             "Error connecting to Rundeck Newsletter Subscribe API",
-            error
+            error,
           );
         });
-    }
+    },
   },
-  mounted() {}
-})
+});
 </script>
 
 <style lang="scss" scoped>

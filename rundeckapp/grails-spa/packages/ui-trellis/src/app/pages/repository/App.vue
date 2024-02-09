@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="container-fluid">
-    <Overlay/>
+    <Overlay />
     <router-view></router-view>
   </div>
 </template>
@@ -10,11 +10,10 @@ import Overlay from "./components/Overlay.vue";
 export default {
   name: "PluginApplication",
   components: {
-    Overlay
+    Overlay,
   },
   computed: {},
-  methods: {}
+  methods: {},
 };
 </script>
-<style lang="scss">
-</style>
+<style lang="scss"></style>

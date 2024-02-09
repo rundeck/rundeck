@@ -38,13 +38,14 @@
   border-width: 1px;
   border-color: #f1f1f1;
 
-  &.execution-log__content--level-warn{
+  &.execution-log__content--level-warn {
     color: #aa8800;
   }
-  &.execution-log__content--level-error{
+  &.execution-log__content--level-error {
     color: #ff3300;
   }
-  &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
+  &.execution-log__content--level-debug,
+  &.execution-log__content--level-verbose {
     color: darkgray;
   }
 }
@@ -61,4 +62,3 @@
   padding-left: 4px;
   border-bottom-left-radius: 5px;
 }
-

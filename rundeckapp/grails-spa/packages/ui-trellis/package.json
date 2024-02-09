@@ -18,7 +18,7 @@
     "build:library:win32": "VUE_CLI_SERVICE_CONFIG_PATH=$PWD/vue.config.library.js vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json && npm run clean",
     "storybook": "start-storybook -p 6006",
     "clean": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0",
-    "lint": "eslint src"
+    "lint": "eslint src --fix"
   },
   "repository": {
     "type": "git",

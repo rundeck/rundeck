@@ -4,7 +4,6 @@
 // Carousel
 // --------------------------------------------------
 
-
 // Wrapper for the slide container and indicators
 .carousel {
   position: relative;
@@ -18,7 +17,7 @@
   > .item {
     position: relative;
     display: none;
-    @include transition(.6s ease-in-out left);
+    @include transition(0.6s ease-in-out left);
 
     // Account for jankitude on images
     > img,
@@ -86,7 +85,6 @@
   > .active.right {
     left: 100%;
   }
-
 }
 
 // Left/right controls for nav
@@ -109,12 +107,18 @@
 
   // Set gradients for backgrounds
   &.left {
-    @include gradient-horizontal($start-color: rgba(0, 0, 0, .5), $end-color: rgba(0, 0, 0, .0001));
+    @include gradient-horizontal(
+      $start-color: rgba(0, 0, 0, 0.5),
+      $end-color: rgba(0, 0, 0, 0.0001)
+    );
   }
   &.right {
     right: 0;
     left: auto;
-    @include gradient-horizontal($start-color: rgba(0, 0, 0, .0001), $end-color: rgba(0, 0, 0, .5));
+    @include gradient-horizontal(
+      $start-color: rgba(0, 0, 0, 0.0001),
+      $end-color: rgba(0, 0, 0, 0.5)
+    );
   }
 
   // Hover/focus state
@@ -123,7 +127,7 @@
     color: $carousel-control-color;
     text-decoration: none;
     outline: 0;
-    @include opacity(.9);
+    @include opacity(0.9);
   }
 
   // Toggles
@@ -157,12 +161,12 @@
 
   .icon-prev {
     &:before {
-      content: "\2039";// SINGLE LEFT-POINTING ANGLE QUOTATION MARK (U+2039)
+      content: "\2039"; // SINGLE LEFT-POINTING ANGLE QUOTATION MARK (U+2039)
     }
   }
   .icon-next {
     &:before {
-      content: "\203a";// SINGLE RIGHT-POINTING ANGLE QUOTATION MARK (U+203A)
+      content: "\203a"; // SINGLE RIGHT-POINTING ANGLE QUOTATION MARK (U+203A)
     }
   }
 }
@@ -234,10 +238,8 @@
   }
 }
 
-
 // Scale up controls for tablets and up
 @media screen and (min-width: $screen-sm-min) {
-
   // Scale up the controls a smidge
   .carousel-control {
     .glyphicon-chevron-left,
@@ -272,15 +274,19 @@
   }
 }
 
-.carousel-control .icon-prev, .carousel-control .icon-next, .carousel-control .fa, .carousel-control .fa {
-    display: inline-block;
-    position: absolute;
-    top: 50%;
-    z-index: 5;
+.carousel-control .icon-prev,
+.carousel-control .icon-next,
+.carousel-control .fa,
+.carousel-control .fa {
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  z-index: 5;
 }
-.carousel-control .fa{
-    font-size: 35px;
+.carousel-control .fa {
+  font-size: 35px;
 }
-.carousel-control.left, .carousel-control.right {
-    background-image: none;
+.carousel-control.left,
+.carousel-control.right {
+  background-image: none;
 }

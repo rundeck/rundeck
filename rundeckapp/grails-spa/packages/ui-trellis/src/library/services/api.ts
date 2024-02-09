@@ -4,7 +4,7 @@ import axios from "axios";
 const rundeckContext = getRundeckContext();
 let token = { URI: "", TOKEN: "" };
 if (document && document.getElementById("web_ui_token")) {
-  let elementById = document.getElementById("web_ui_token");
+  const elementById = document.getElementById("web_ui_token");
   token = JSON.parse(elementById!.textContent!);
 }
 

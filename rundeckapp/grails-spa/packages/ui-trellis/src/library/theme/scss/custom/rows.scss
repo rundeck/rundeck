@@ -1,17 +1,16 @@
-$padding-base-vertical:          6px;
-$padding-base-horizontal:        9px;
+$padding-base-vertical: 6px;
+$padding-base-horizontal: 9px;
 
-$padding-large-vertical:         10px;
-$padding-large-horizontal:       15px;
+$padding-large-vertical: 10px;
+$padding-large-horizontal: 15px;
 
-$padding-small-vertical:         4px;
-$padding-small-horizontal:       6px;
+$padding-small-vertical: 4px;
+$padding-small-horizontal: 6px;
 
-$padding-xs-vertical:            1px;
-$padding-xs-horizontal:          3px;
+$padding-xs-vertical: 1px;
+$padding-xs-horizontal: 3px;
 
-$legend-border-color:            #e5e5e5;
-
+$legend-border-color: #e5e5e5;
 
 .spacing {
   margin-top: $padding-base-vertical;
@@ -43,10 +42,10 @@ $legend-border-color:            #e5e5e5;
     margin-top: $padding-large-vertical;
     margin-bottom: $padding-large-vertical;
   }
-  &.row-space-top{
+  &.row-space-top {
     margin-top: $padding-base-vertical;
   }
-  &.row-space-bottom{
+  &.row-space-bottom {
     margin-bottom: $padding-base-vertical;
   }
 }
@@ -73,13 +72,13 @@ section {
     border-bottom: 1px solid $legend-border-color;
   }
 
-  &.section-space-bottom{
+  &.section-space-bottom {
     margin-bottom: $padding-base-vertical;
   }
-  &.section-space-bottom-sm{
+  &.section-space-bottom-sm {
     margin-bottom: $padding-small-vertical;
   }
-  &.section-space-bottom-lg{
+  &.section-space-bottom-lg {
     margin-bottom: $padding-large-vertical;
   }
 

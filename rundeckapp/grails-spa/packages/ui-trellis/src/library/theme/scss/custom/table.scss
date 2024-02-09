@@ -1,8 +1,8 @@
 @import "../runstrap/variables";
 
-.no-border-on-first-tr{
-  tr:first-of-type{
-    td{
+.no-border-on-first-tr {
+  tr:first-of-type {
+    td {
       // border-top:none;
     }
   }
@@ -11,15 +11,17 @@
 // TABS
 .vue-tabs {
   .nav-tabs-navigation,
-  .tab-content{
+  .tab-content {
     text-align: left;
   }
 }
 
-th.table-header, td.table-header, .text-table-header {
+th.table-header,
+td.table-header,
+.text-table-header {
   text-transform: uppercase;
   color: var(--dark-gray);
-  padding: .5em;
+  padding: 0.5em;
 }
 
 @import "table-events";

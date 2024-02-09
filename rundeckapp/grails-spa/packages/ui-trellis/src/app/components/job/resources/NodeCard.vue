@@ -5,13 +5,23 @@
       <div class="nav-tabs-navigation">
         <div class="nav-tabs-wrapper">
           <ul class="nav nav-tabs">
-            <li :class="{'active': !nodeFilterStore.filter}" id="tab_link_summary" @click="fetchNodeSummary" :key="`${nodeFilterStore.filter}tab-result`">
+            <li
+              id="tab_link_summary"
+              :key="`${nodeFilterStore.filter}tab-result`"
+              :class="{ active: !nodeFilterStore.filter }"
+              @click="fetchNodeSummary"
+            >
               <a href="#summary1" data-toggle="tab">
                 {{ $t("browse") }}
               </a>
             </li>
-            <li :class="{'active': nodeFilterStore.filter}" id="tab_link_result" :key="`${nodeFilterStore.filter}tab-summary`" v-if="allCount !== null">
-              <a href="#result1" data-toggle="tab" v-if="filterIsSet">
+            <li
+              v-if="allCount !== null"
+              id="tab_link_result"
+              :key="`${nodeFilterStore.filter}tab-summary`"
+              :class="{ active: nodeFilterStore.filter }"
+            >
+              <a v-if="filterIsSet" href="#result1" data-toggle="tab">
                 {{ $t("result") }}
                 <template v-if="allCount >= 0">
                   <span class="text-info" style="margin-right: 4px">
@@ -33,22 +43,22 @@
           <span class="tabs-sibling tabs-sibling-compact">
             <div class="btn-group pull-right">
               <button
-                  class="btn btn-default btn-sm dropdown-toggle"
-                  data-toggle="dropdown"
+                class="btn btn-default btn-sm dropdown-toggle"
+                data-toggle="dropdown"
               >
                 {{ $t("actions") }} <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" role="menu">
                 <li
-                    v-if="executionMode === 'active' && hasNodes"
-                    :class="{ disabled: !runAuthorized }"
+                  v-if="executionMode === 'active' && hasNodes"
+                  :class="{ disabled: !runAuthorized }"
                 >
                   <a
-                      href="#"
-                      @click="runCommand"
-                      :title="notAuthorized()"
-                      :class="{ has_tooltip: !runAuthorized }"
-                      data-placement="left"
+                    href="#"
+                    :title="notAuthorized()"
+                    :class="{ has_tooltip: !runAuthorized }"
+                    data-placement="left"
+                    @click="runCommand"
                   >
                     <i class="glyphicon glyphicon-play"></i>
                     <span>
@@ -63,10 +73,10 @@
                 </li>
                 <li v-else-if="hasNodes" class="disabled">
                   <a
-                      href="#"
-                      :title="$t('disabled.execution.run')"
-                      class="has_tooltip"
-                      data-placement="left"
+                    href="#"
+                    :title="$t('disabled.execution.run')"
+                    class="has_tooltip"
+                    data-placement="left"
                   >
                     <i class="glyphicon glyphicon-play"></i>
                     <span>
@@ -81,11 +91,11 @@
                 </li>
                 <li :class="{ disabled: !jobCreateAuthorized }">
                   <a
-                      href="#"
-                      @click="saveJob"
-                      :title="notAuthorized(jobCreateAuthorized)"
-                      :class="{ has_tooltip: !jobCreateAuthorized }"
-                      data-placement="left"
+                    href="#"
+                    :title="notAuthorized(jobCreateAuthorized)"
+                    :class="{ has_tooltip: !jobCreateAuthorized }"
+                    data-placement="left"
+                    @click="saveJob"
                   >
                     <i class="glyphicon glyphicon-plus"></i>
                     <span>
@@ -108,37 +118,45 @@
       <div class="tab-content">
         <div v-if="error" class="row row-space">
           <div class="col-sm-12">
-              <span class="text-danger">
-                <i class="glyphicon glyphicon-warning-sign"></i>
-                <span>{{ error }}</span>
-              </span>
+            <span class="text-danger">
+              <i class="glyphicon glyphicon-warning-sign"></i>
+              <span>{{ error }}</span>
+            </span>
           </div>
         </div>
 
-        <div class="tab-pane" :class="{'active': !nodeFilterStore.filter}" id="summary1" :key="`${nodeFilterStore.filter}summary`">
+        <div
+          id="summary1"
+          :key="`${nodeFilterStore.filter}summary`"
+          class="tab-pane"
+          :class="{ active: !nodeFilterStore.filter }"
+        >
           <div class="row">
             <div class="col-xs-6">
               <h5 class="column-title text-uppercase text-strong">
                 {{ $t("resource.metadata.entity.tags") }}
               </h5>
-              <ul
-                  class="list-unstyled"
-              >
-                <li v-for="(tag, index) in nodeSummary.tags" style="margin: 0 2px; display: inline-block;" :key="index">
+              <ul class="list-unstyled">
+                <li
+                  v-for="(tag, index) in nodeSummary.tags"
+                  :key="index"
+                  style="margin: 0 2px; display: inline-block"
+                >
                   <node-filter-link
-                      class="label label-muted"
-                      filterKey="tags"
-                      :filterVal="tag.tag"
-                      @nodefilterclick="saveFilter"
+                    class="label label-muted"
+                    filter-key="tags"
+                    :filter-val="tag.tag"
+                    @nodefilterclick="saveFilter"
                   >
-                    <template #suffix>
-                      ({{ tag.count }})
-                    </template>
+                    <template #suffix> ({{ tag.count }}) </template>
                   </node-filter-link>
                 </li>
               </ul>
               <div
-                  v-if="nodeSummary && !nodeSummary.hasOwnProperty('tags') || nodeSummary.tags && nodeSummary.tags!.length === 0"
+                v-if="
+                  (nodeSummary && !nodeSummary.hasOwnProperty('tags')) ||
+                  (nodeSummary.tags && nodeSummary.tags!.length === 0)
+                "
               >
                 {{ $t("none") }}
               </div>
@@ -157,21 +175,26 @@
           </div>
         </div>
 
-        <div class="tab-pane" :class="{'active': nodeFilterStore.filter}" id="result1" :key="`${nodeFilterStore.filter}result`">
-          <div class="clear matchednodes" id="nodeview">
+        <div
+          id="result1"
+          :key="`${nodeFilterStore.filter}result`"
+          class="tab-pane"
+          :class="{ active: nodeFilterStore.filter }"
+        >
+          <div id="nodeview" class="clear matchednodes">
             <NodeTable
-                :node-set="nodeSet"
-                :filter-columns="filterColumns"
-                :loading="loading"
-                :has-paging="hasPaging"
-                :paging-max="pagingMax"
-                :maxPages="maxPages"
-                :page="page"
-                :filterAll="filterAll"
-                @filter="saveFilter"
-                @changePage="updatePage"
-                @changePagingMax="updatePagingMax"
-                :filter="nodeFilterStore.filter"
+              :node-set="nodeSet"
+              :filter-columns="filterColumns"
+              :loading="loading"
+              :has-paging="hasPaging"
+              :paging-max="pagingMax"
+              :max-pages="maxPages"
+              :page="page"
+              :filter-all="filterAll"
+              :filter="nodeFilterStore.filter"
+              @filter="saveFilter"
+              @change-page="updatePage"
+              @change-paging-max="updatePagingMax"
             />
           </div>
         </div>
@@ -181,13 +204,17 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, PropType} from "vue";
+import { defineComponent, PropType } from "vue";
 import { _genUrl } from "@/app/utilities/genUrl";
-import {getAppLinks, getRundeckContext} from "@/library";
+import { getAppLinks, getRundeckContext } from "@/library";
 import NodeFilterLink from "@/app/components/job/resources/NodeFilterLink.vue";
 import NodeTable from "@/app/components/job/resources/NodeTable.vue";
-import {getExecutionMode, getNodes, getNodeSummary} from "@/app/components/job/resources/services/nodeServices";
-import {NodeSummary} from "@/app/components/job/resources/types/nodeTypes";
+import {
+  getExecutionMode,
+  getNodes,
+  getNodeSummary,
+} from "@/app/components/job/resources/services/nodeServices";
+import { NodeSummary } from "@/app/components/job/resources/types/nodeTypes";
 import NodeDefaultFilterDropdown from "@/app/components/job/resources/NodeDefaultFilterDropdown.vue";
 
 export default defineComponent({
@@ -215,6 +242,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ["filter"],
   data() {
     return {
       nodeSet: {},
@@ -245,7 +273,7 @@ export default defineComponent({
       return this.total >= 1 ? this.$t("nodes") : this.$t("node");
     },
     filterColumns(): string[] {
-      if(!this.colKeys) {
+      if (!this.colKeys) {
         return [];
       }
       return this.colKeys.filter((colKey: string) => !colKey.startsWith("ui:"));
@@ -257,10 +285,39 @@ export default defineComponent({
       return this.total > this.pagingMax;
     },
     maxPages(): number {
-      return Math.ceil(this.total/this.pagingMax);
-    }
+      return Math.ceil(this.total / this.pagingMax);
+    },
   },
-  emits: ['filter'],
+  watch: {
+    nodeFilterStore: {
+      async handler(newValue) {
+        if (newValue.selectedFilter === "" && this.hideAll) {
+          this.filterAll = true;
+        } else if (newValue.selectedFilter === ".*") {
+          this.filterAll = true;
+        }
+
+        await this.fetchNodes();
+      },
+      deep: true,
+    },
+  },
+  async mounted() {
+    await this.fetchNodeSummary();
+    await this.fetchExecutionMode();
+    await this.fetchNodes();
+
+    if (this.nodeSummary.defaultFilter) {
+      let filterToEmit = this.nodeSummary.defaultFilter;
+      if (filterToEmit !== ".*") {
+        filterToEmit = this.nodeSummary.filters.filter(
+          (f) => f.filterName === this.nodeSummary.defaultFilter,
+        )[0];
+      }
+      this.saveFilter(filterToEmit);
+    }
+    this.eventBus.on("nodefilter:savedFilters:changed", this.fetchNodeSummary);
+  },
   methods: {
     notAuthorized(authorized = this.runAuthorized): string {
       return !authorized ? this.$t("not.authorized") : "";
@@ -279,40 +336,44 @@ export default defineComponent({
         this.nodeSummary = {
           ...this.nodeSummary,
           ...this.nodeFilterStore.loadStoredProjectNodeFilters(this.project),
-        }
-      } catch(e) {
+        };
+      } catch (e) {
         this.error = "Node Summary: request failed: " + e.message;
       }
     },
     async fetchNodes() {
       // filter parameters
-      const filterdata =  this.nodeFilterStore.filter ? {filter: this.nodeFilterStore.filter} : {};
+      const filterdata = this.nodeFilterStore.filter
+        ? { filter: this.nodeFilterStore.filter }
+        : {};
 
       const page = this.page;
       const basedata: any = {
-        view: 'table',
+        view: "table",
         declarenone: true,
         fullresults: true,
         expanddetail: true,
         page: this.page,
         max: this.pagingMax,
         inlinepaging: true,
-      }
+      };
 
       if (this.hasPaging && page !== 0) {
-        basedata.view = 'tableContent';
+        basedata.view = "tableContent";
       }
 
-      let params = Object.assign({}, basedata, filterdata);
+      const params = Object.assign({}, basedata, filterdata);
       if (!this.nodeFilterStore.filter) {
-        params.localNodeOnly = 'true';
+        params.localNodeOnly = "true";
       }
-      params.nodeExcludePrecedence = 'true';
-
+      params.nodeExcludePrecedence = "true";
 
       try {
         this.loading = true;
-        const data = await getNodes(params, getAppLinks().frameworkNodesQueryAjax);
+        const data = await getNodes(
+          params,
+          getAppLinks().frameworkNodesQueryAjax,
+        );
 
         this.nodeSet = {
           nodes: data.allnodes,
@@ -323,8 +384,7 @@ export default defineComponent({
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
         this.maxShown = data.max;
-
-      } catch(e) {
+      } catch (e) {
         this.error = e.message;
       } finally {
         this.loading = false;
@@ -346,7 +406,7 @@ export default defineComponent({
     },
 
     saveFilter(selectedFilter: object) {
-      this.$emit('filter',selectedFilter);
+      this.$emit("filter", selectedFilter);
     },
     async updatePage(page: number) {
       this.page = page;
@@ -355,36 +415,7 @@ export default defineComponent({
     async updatePagingMax(pagingMax: number) {
       this.pagingMax = pagingMax;
       await this.fetchNodes();
-    }
-  },
-  async mounted() {
-    await this.fetchNodeSummary();
-    await this.fetchExecutionMode();
-    await this.fetchNodes();
-
-    if(this.nodeSummary.defaultFilter){
-      let filterToEmit = this.nodeSummary.defaultFilter;
-      if(filterToEmit !== ".*"){
-        filterToEmit = this.nodeSummary.filters.filter(f => f.filterName === this.nodeSummary.defaultFilter)[0]
-      }
-      this.saveFilter(filterToEmit);
-    }
-    this.eventBus.on('nodefilter:savedFilters:changed',this.fetchNodeSummary)
-  },
-  watch: {
-    nodeFilterStore: {
-      async handler(newValue) {
-        if (newValue.selectedFilter === '' && this.hideAll) {
-          this.filterAll = true;
-        }else if(newValue.selectedFilter ===".*"){
-          this.filterAll = true;
-        }
-
-        await this.fetchNodes();
-
-      },
-      deep: true,
     },
-  }
+  },
 });
 </script>

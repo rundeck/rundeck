@@ -39,46 +39,43 @@
 //   1. Grid Utilities
 // -------------------------------------
 
-.grid-1{
+.grid-1 {
   display: grid;
   gap: 1.5em;
-  grid-template-columns: repeat(1,minmax(0,1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
 }
-.grid-2{
+.grid-2 {
   display: grid;
   gap: 1.5em;
-  grid-template-columns: repeat(1,minmax(0,1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   @media (min-width: $screen-sm) {
-    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-.grid-3{
+.grid-3 {
   display: grid;
   gap: 1.5em;
-  grid-template-columns: repeat(1,minmax(0,1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   @media (min-width: $screen-sm) {
-    grid-template-columns: repeat(3,minmax(0,1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-.grid-4{
+.grid-4 {
   display: grid;
   gap: 1.5em;
-  grid-template-columns: repeat(1,minmax(0,1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   @media (min-width: $screen-sm) {
-    grid-template-columns: repeat(4,minmax(0,1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 // potential move to utilities
-.col-span-3{
-    grid-column: span 3 / span 3;
+.col-span-3 {
+  grid-column: span 3 / span 3;
 }
-.col-span-2{
-    grid-column: span 2 / span 2;
+.col-span-2 {
+  grid-column: span 2 / span 2;
 }
-
-
-
 
 //
 // Grid System (-Legacy Bootstrap 3)
@@ -101,7 +98,6 @@
   }
 }
 
-
 // Fluid container
 //
 // Utilizes the mixin meant for fixed width containers, but without any defined
@@ -111,7 +107,6 @@
   @include container-fixed;
   padding: 0px;
 }
-
 
 // Row
 //
@@ -131,13 +126,11 @@
   }
 }
 
-
 // Columns
 //
 // Common styles for small and large grid columns
 
 @include make-grid-columns;
-
 
 // Extra small grid
 //
@@ -145,7 +138,6 @@
 // smartphones.
 
 @include make-grid(xs);
-
 
 // Small grid
 //
@@ -156,7 +148,6 @@
   @include make-grid(sm);
 }
 
-
 // Medium grid
 //
 // Columns, offsets, pushes, and pulls for the desktop device range.
@@ -164,7 +155,6 @@
 @media (min-width: $screen-md-min) {
   @include make-grid(md);
 }
-
 
 // Large grid
 //

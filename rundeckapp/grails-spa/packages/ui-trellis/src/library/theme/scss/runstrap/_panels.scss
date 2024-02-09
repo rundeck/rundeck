@@ -2,14 +2,13 @@
 // Panels
 // --------------------------------------------------
 
-
 // Base class
 .panel {
   margin-bottom: $line-height-computed;
   background-color: var(--panel-background-color);
   border: 1px solid transparent;
   border-radius: $panel-border-radius;
-  @include box-shadow(0 1px 1px rgba(0, 0, 0, .05));
+  @include box-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
 }
 
 // Panel contents
@@ -52,7 +51,6 @@
   border-top: 1px solid $panel-inner-border;
   @include border-bottom-radius(($panel-border-radius - 1));
 }
-
 
 // List groups in panels
 //
@@ -213,7 +211,6 @@
   }
 }
 
-
 // Collapsible panels (aka, accordion)
 //
 // Wrap a series of panels in `.panel-group` to turn them into an accordion with
@@ -249,23 +246,52 @@
   }
 }
 
-
 // Contextual variations
 .panel-default {
-  @include panel-variant($panel-default-border, $panel-default-text, --background-color-accent-lvl2, $panel-default-border);
+  @include panel-variant(
+    $panel-default-border,
+    $panel-default-text,
+    --background-color-accent-lvl2,
+    $panel-default-border
+  );
 }
 .panel-primary {
-  @include panel-variant($panel-primary-border, --font-color, --primary-bg-color, $panel-primary-border);
+  @include panel-variant(
+    $panel-primary-border,
+    --font-color,
+    --primary-bg-color,
+    $panel-primary-border
+  );
 }
 .panel-success {
-  @include panel-variant($panel-success-border, --font-color, --success-bg-color, $panel-success-border);
+  @include panel-variant(
+    $panel-success-border,
+    --font-color,
+    --success-bg-color,
+    $panel-success-border
+  );
 }
 .panel-info {
-  @include panel-variant($panel-info-border, --font-color, --info-bg-color, $panel-info-border);
+  @include panel-variant(
+    $panel-info-border,
+    --font-color,
+    --info-bg-color,
+    $panel-info-border
+  );
 }
 .panel-warning {
-  @include panel-variant($panel-warning-border, --font-color, --warning-bg-color, $panel-warning-border);
+  @include panel-variant(
+    $panel-warning-border,
+    --font-color,
+    --warning-bg-color,
+    $panel-warning-border
+  );
 }
 .panel-danger {
-  @include panel-variant($panel-danger-border, --font-color, --danger-bg-color, $panel-danger-border);
+  @include panel-variant(
+    $panel-danger-border,
+    --font-color,
+    --danger-bg-color,
+    $panel-danger-border
+  );
 }

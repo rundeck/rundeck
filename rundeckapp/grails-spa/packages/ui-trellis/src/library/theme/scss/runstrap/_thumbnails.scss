@@ -2,7 +2,6 @@
 // Thumbnails
 // --------------------------------------------------
 
-
 // Mixin and adjust the regular image class
 .thumbnail {
   display: block;
@@ -12,7 +11,7 @@
   background-color: $thumbnail-bg;
   border: 1px solid $thumbnail-border;
   border-radius: $thumbnail-border-radius;
-  @include transition(border .2s ease-in-out);
+  @include transition(border 0.2s ease-in-out);
 
   > img,
   a > img {

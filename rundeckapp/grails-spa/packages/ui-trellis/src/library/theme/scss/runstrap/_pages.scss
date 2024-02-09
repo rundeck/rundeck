@@ -10,7 +10,6 @@
 }
 
 .full-page {
-
   &:after,
   &:before {
     display: block;
@@ -29,13 +28,13 @@
     opacity: 1;
   }
 
-  >.content,
-  >.footer {
+  > .content,
+  > .footer {
     position: relative;
     z-index: 4;
   }
 
-  >.content {
+  > .content {
     // min-height: calc(100vh - 70px);
     min-height: calc(100vh - 93px);
   }
@@ -50,12 +49,11 @@
     left: 0;
     background-size: cover;
     background-position: center center;
-
   }
 
   &[data-image]:after,
   &.has-image:after {
-    opacity: .7;
+    opacity: 0.7;
   }
 
   &[data-color="blue"]:after {
@@ -78,12 +76,11 @@
     background-color: rgba($filter-red, 0.7);
   }
 
-  .footer nav>ul a:not(.btn),
+  .footer nav > ul a:not(.btn),
   .footer .copyright,
   .footer .copyright a {
     font-size: $font-size-base;
   }
-
 }
 
 .login-page,
@@ -92,7 +89,7 @@
   flex-direction: column;
   height: 100%;
   // .four-oh-four{
-  >.content {
+  > .content {
     padding-top: 10vh;
   }
 }
@@ -111,17 +108,17 @@
 }
 
 .register-page {
-
   .header-text {
     text-align: center;
-    padding: ($padding-default-horizontal * 3) 0 ($padding-default-horizontal * 2);
+    padding: ($padding-default-horizontal * 3) 0
+      ($padding-default-horizontal * 2);
 
     h4 {
       margin-top: 10px;
     }
 
     hr {
-      opacity: .3;
+      opacity: 0.3;
       margin-top: ($margin-base * 2);
     }
   }

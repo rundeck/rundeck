@@ -4,14 +4,14 @@
   vertical-align: middle;
   background-repeat: no-repeat;
 
-  &.app-logo{
+  &.app-logo {
     background-image: url("../images/logos/rundecklogo.svg");
     // background-image: url("/static/images/rundeck2-icon-32.png");
     background-size: 20px 20px;
     height: 20px;
     width: 20px;
     vertical-align: baseline;
-    .sidebar &{
+    .sidebar & {
       height: 24px;
       width: 24px;
       background-size: 24px;
@@ -130,14 +130,16 @@
   }
 }
 
-.nodedetail.server .nodedesc, .node_entry.server .nodedesc{
-    width: 16px;
-    height: 16px;
-    vertical-align: baseline;
+.nodedetail.server .nodedesc,
+.node_entry.server .nodedesc {
+  width: 16px;
+  height: 16px;
+  vertical-align: baseline;
 }
 
-.nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-    background-size: 16px;
-    background-image: url("../images/logos/rundeck2-icon-32.png");
-    background-repeat: no-repeat;
+.nodedetail.server .nodedesc,
+.node_entry.server .nodedesc {
+  background-size: 16px;
+  background-image: url("../images/logos/rundeck2-icon-32.png");
+  background-repeat: no-repeat;
 }

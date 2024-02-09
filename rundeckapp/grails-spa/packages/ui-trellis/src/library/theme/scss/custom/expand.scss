@@ -1,19 +1,19 @@
-@import '../runstrap/_variables';
+@import "../runstrap/_variables";
 
-.expandComponentHolder{
-  .expandComponentControl{
-    > .more-indicator-verbiage{
+.expandComponentHolder {
+  .expandComponentControl {
+    > .more-indicator-verbiage {
       display: inline-block;
     }
-    > .less-indicator-verbiage{
+    > .less-indicator-verbiage {
       display: none;
     }
   }
-  &.expanded{
-    > .more-indicator-verbiage{
+  &.expanded {
+    > .more-indicator-verbiage {
       display: none;
     }
-    > .less-indicator-verbiage{
+    > .less-indicator-verbiage {
       display: inline-block;
     }
   }
@@ -37,7 +37,6 @@ details {
   }
 
   &.details-reset {
-
     > summary {
       list-style: none;
     }
@@ -54,7 +53,7 @@ details {
   &.more-info {
     > summary {
       .less-indicator-verbiage {
-        display: none
+        display: none;
       }
       .more-info-icon {
         color: var(--medium-gray);
@@ -62,8 +61,8 @@ details {
     }
 
     &[open] > summary {
-       .more-indicator-verbiage {
-        display: none
+      .more-indicator-verbiage {
+        display: none;
       }
 
       .less-indicator-verbiage {

@@ -8,7 +8,6 @@
 
   .container & {
     border-radius: 4px;
-
   }
   .navbar & {
     border-radius: 0;
@@ -45,7 +44,7 @@
   &.alert-with-icon {
     padding-left: 65px;
   }
-    // Headings for larger alerts
+  // Headings for larger alerts
   h4 {
     margin-top: 0;
     color: inherit; // Specified for the h4 to prevent conflicts of changing $headings-color
@@ -81,7 +80,7 @@
   background-color: var(--cyan-500);
   color: var(--white);
   margin-bottom: var(--spacing-6);
-  .close{
+  .close {
     color: var(--white);
   }
 }
@@ -91,7 +90,7 @@
   background-color: var(--green-500);
   color: var(--white);
   margin-bottom: var(--spacing-6);
-  .close{
+  .close {
     color: var(--white);
   }
 }
@@ -101,7 +100,7 @@
   background-color: var(--orange-500);
   color: var(--black);
   margin-bottom: var(--spacing-6);
-  .close{
+  .close {
     color: var(--black);
   }
 }
@@ -111,7 +110,7 @@
   background-color: var(--red-500);
   color: var(--white);
   margin-bottom: var(--spacing-6);
-  .close{
+  .close {
     color: var(--white);
   }
 }

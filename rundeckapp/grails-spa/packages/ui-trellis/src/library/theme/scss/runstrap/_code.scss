@@ -4,7 +4,6 @@
 // Code (inline and block)
 // --------------------------------------------------
 
-
 // Inline and block code styles
 code,
 kbd,
@@ -29,7 +28,7 @@ kbd {
   color: $kbd-color;
   background-color: $kbd-bg;
   border-radius: $border-radius-small;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 
   kbd {
     padding: 0;
@@ -70,31 +69,31 @@ pre {
   overflow-y: scroll;
 }
 
-.markdown-body img{
+.markdown-body img {
   background-color: transparent !important;
 }
 
 // Ace Editor
-.ace_layer.ace_gutter-layer{
+.ace_layer.ace_gutter-layer {
   background-color: var(--background-color-lvl3);
   color: var(--font-color);
 }
-.ace_gutter-cell.ace_gutter-active-line{
+.ace_gutter-cell.ace_gutter-active-line {
   background-color: var(--background-color);
   color: var(--font-color);
-} 
-.ace-chrome .ace_cursor {
-    color: var(--font-color);
 }
-.ace_text.ace_xml{
+.ace-chrome .ace_cursor {
   color: var(--font-color);
 }
-.ace_text.ace_editor{
+.ace_text.ace_xml {
+  color: var(--font-color);
+}
+.ace_text.ace_editor {
   background-color: var(--background-color);
 }
 .ace-chrome .ace_print-margin {
   background: var(--background-color-accent-lvl2);
 }
-.ace_scroller{
+.ace_scroller {
   background-color: var(--background-color);
 }
