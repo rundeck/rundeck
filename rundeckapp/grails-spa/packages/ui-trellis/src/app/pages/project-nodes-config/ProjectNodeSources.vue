@@ -21,7 +21,7 @@
                       {{$t("page.unsaved.changes")}}
                     </span>
                         <span v-if="confirm.indexOf('Node Sources')>=0">
-                      <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
+                      <a href="#node_sources" @click.prevent="navigateTabs(1)">
                         <i class="fas fa-hdd fa-edit"></i>
                         {{$t("project.node.sources.title.short")}}
                       </a>
@@ -35,13 +35,13 @@
                       </div>
                     </template>
                   </page-confirm>
-                <tabs custom-nav-class="nav-tabs-navigation">
+                <tabs v-model="activeTabKey" custom-nav-class="nav-tabs-navigation">
                   <tab>
                     <template #title>
                       <div><i class="fas fa-pencil-alt "></i> Edit</div>
                     </template>
                     <div class="help-block">
-                      <span>Sources will appear here</span>
+                      {{$t("modifiable.node.sources.will.appear.here")}}
                     </div>
                     <div class="project-plugin-config-vue">
                       <writeable-project-node-sources :event-bus="rundeckContext.eventBus" class="list-group" item-css="list-group-item">
@@ -55,7 +55,7 @@
 
                     <div class="well well-sm">
                       <span>{{$t("use.the.node.sources.tab.1")}}</span>
-                      <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
+                      <a href="#" @click.prevent="navigateTabs(1)">
                         <i class="fas fa-hdd fa-edit"></i>
                         <span>{{$t("project.node.sources.title.short")}}</span>
                       </a>
@@ -68,12 +68,13 @@
                     </template>
                     <project-node-sources-config
                         :help="this.sourceConfigHelpMessage"
-                    :edit-mode="true"
-                    :mode-toggle="false"
-                    @saved="rundeckContext.eventBus.emit('project-node-sources-saved')"
-                    @modified="rundeckContext.eventBus.emit('page-modified','Node Sources')"
-                    @reset="rundeckContext.eventBus.emit('page-reset','Node Sources')"
-                    :event-bus="rundeckContext.eventBus">
+                        :edit-mode="true"
+                        :add-button-text="$t('add.node.source')"
+                        :mode-toggle="false"
+                        @saved="rundeckContext.eventBus.emit('project-node-sources-saved')"
+                        @modified="rundeckContext.eventBus.emit('page-modified','Node Sources')"
+                        @reset="rundeckContext.eventBus.emit('page-reset','Node Sources')"
+                        :event-bus="rundeckContext.eventBus">
                     </project-node-sources-config>
 
                     <project-node-sources-help :event-bus="rundeckContext.eventBus">
@@ -87,14 +88,14 @@
                     <project-plugin-config
                         config-prefix="nodes.plugin"
                         service-name="NodeEnhancer"
-                        help="$t('framework.service.NodeEnhancer.explanation')"
-                        edit-button-text="${enc(attr: g.message(code: 'edit.node.enhancers'))}"
+                        :help="$t('framework.service.NodeEnhancer.explanation')"
+                        :add-button-text="$t('add.node.enhancer')"
+                        :edit-button-text="$t('edit.node.enhancers')"
                         :mode-toggle="false"
                         @modified="rundeckContext.eventBus.emit('page-modified','Node Enhancers')"
                         @reset="rundeckContext.eventBus.emit('page-reset','Node Enhancers')"
                         :event-bus="rundeckContext.eventBus"
                         :edit-mode="true">
-
                     </project-plugin-config>
                   </tab>
                   <tab>
@@ -150,9 +151,14 @@ export default {
   data() {
     return {
       rundeckContext: getRundeckContext() as RundeckContext,
+      activeTabKey: 0,
     };
   },
   methods: {
+     navigateTabs(tabKey: number) {
+      console.log('navigateToTab', tabKey)
+      this.activeTabKey = tabKey;
+    },
   },
 };
 </script>

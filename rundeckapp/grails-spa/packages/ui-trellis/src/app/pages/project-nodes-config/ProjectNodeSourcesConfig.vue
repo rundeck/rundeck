@@ -3,13 +3,14 @@
     config-prefix="resources.source"
     service-name="ResourceModelSource"
     :help="help"
+    :add-button-text="addButtonText"
+    @saved="pluginsConfigWasSaved"
+    @modified="pluginsConfigWasModified"
+    @reset="pluginsConfigWasReset"
     :edit-button-text="$t('Edit Node Sources')"
     :edit-mode="editMode"
     :mode-toggle="modeToggle"
     :event-bus="eventBus"
-    @saved="pluginsConfigWasSaved"
-    @modified="pluginsConfigWasModified"
-    @reset="pluginsConfigWasReset"
   >
     <template #item-extra="{ plugin, mode }">
       <div>
@@ -56,6 +57,10 @@ export default defineComponent({
   },
   props: {
     help: {
+      type: String,
+      required: false,
+    },
+    addButtonText: {
       type: String,
       required: false,
     },
