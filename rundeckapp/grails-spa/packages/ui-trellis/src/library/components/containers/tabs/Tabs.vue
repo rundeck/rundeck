@@ -59,9 +59,9 @@ import { defineComponent, computed } from "vue";
 
 export default defineComponent({
   name: "Tabs",
-  data() {
+  provide() {
     return {
-      activeTab: this.modelValue || 0,
+      selectedIndex: computed(() => this.activeTab),
     };
   },
   props: {
@@ -76,9 +76,9 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  provide() {
+  data() {
     return {
-      selectedIndex: computed(() => this.activeTab),
+      activeTab: this.modelValue || 0,
     };
   },
   computed: {
@@ -86,6 +86,9 @@ export default defineComponent({
       // this.$slots.default() isn't handling correctly its content when there's a slot with v-if
       return this.$slots.default().filter((tab) => tab.props?.title);
     },
+  },
+  mounted() {
+    this.selectTab(this.activeTab);
   },
   methods: {
     selectTab(i) {
@@ -95,9 +98,6 @@ export default defineComponent({
     handleKeypress(ev, tab) {
       if (ev.code === "Space") this.selectTab(tab.index);
     },
-  },
-  mounted() {
-    this.selectTab(this.activeTab);
   },
 });
 </script>

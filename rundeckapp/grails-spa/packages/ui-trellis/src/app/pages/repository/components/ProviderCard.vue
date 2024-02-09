@@ -33,16 +33,16 @@
       </div>
       <div class="card-footer">
         <span
-          class="provider-builtin-icon"
           v-if="provider.builtin"
           v-tooltip.hover="`Built-In`"
+          class="provider-builtin-icon"
         >
           <i class="fa fa-briefcase" aria-hidden="true"></i>
         </span>
         <span
-          class="provider-builtin-icon"
           v-else
           v-tooltip.hover="`Installed File`"
+          class="provider-builtin-icon"
         >
           <i class="fa fa-file" aria-hidden="true"></i>
         </span>

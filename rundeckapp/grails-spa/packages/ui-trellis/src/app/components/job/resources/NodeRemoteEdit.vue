@@ -8,14 +8,14 @@
     </span>
     <div
       v-if="!finished"
-      class="toolbar"
       id="remoteEditToolbar"
+      class="toolbar"
       style="display: inline-block; margin-left: 4px"
     >
       <span
         class="action"
-        @click="remoteEditCompleted"
         title="Close the remote edit box and discard any changes"
+        @click="remoteEditCompleted"
       >
         <img
           src="/static/images/icon-tiny-removex-gray.png"
@@ -33,8 +33,8 @@
       </span>
     </div>
     <div v-if="error" id="remoteEditError" class="error note"></div>
-    <div id="remoteEditTarget" v-if="remoteUrl">
-      <iframe width="640" height="480" :src="remoteUrl" :key="remoteUrl" />
+    <div v-if="remoteUrl" id="remoteEditTarget">
+      <iframe :key="remoteUrl" width="640" height="480" :src="remoteUrl" />
     </div>
   </div>
 </template>
@@ -43,7 +43,7 @@
 import { defineComponent } from "vue";
 import { getRundeckContext } from "@/library";
 import { getAppLinks } from "@/library";
-let rundeckContext = getRundeckContext();
+const rundeckContext = getRundeckContext();
 
 const PROTOCOL = "rundeck:node:edit";
 
@@ -70,6 +70,10 @@ export default defineComponent({
       remoteSite: null,
       project: rundeckContext.projectName,
     };
+  },
+  mounted() {
+    this.remoteEditClear();
+    this.fnRemoteEditExpect();
   },
   methods: {
     remoteEditContinue() {
@@ -112,14 +116,14 @@ export default defineComponent({
       ) {
         return;
       }
-      var data = msg.data;
+      const data = msg.data;
       if (!this.remoteEditStarted && PROTOCOL + ":started" == data) {
         this.remoteEditStarted = true;
       } else if (
         PROTOCOL + ":error" == data ||
         data.startsWith(PROTOCOL + ":error:")
       ) {
-        var err = data.substring((PROTOCOL + ":error").length);
+        let err = data.substring((PROTOCOL + ":error").length);
         if (err.startsWith(":")) {
           err = err.substring(1);
         }
@@ -143,10 +147,6 @@ export default defineComponent({
     _rdeckNodeEditFinished(changed) {
       this.success = changed;
     },
-  },
-  mounted() {
-    this.remoteEditClear();
-    this.fnRemoteEditExpect();
   },
 });
 </script>

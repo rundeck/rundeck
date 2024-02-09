@@ -20,11 +20,11 @@ export interface Month {
 }
 
 export function getMonths() {
-  let monthIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const monthIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-  let ans = [] as Month[];
-  let chosenLocale = moment.localeData("en");
-  for (let idx of monthIndexes) {
+  const ans = [] as Month[];
+  const chosenLocale = moment.localeData("en");
+  for (const idx of monthIndexes) {
     ans.push({
       name: chosenLocale.months()[idx],
       shortName: chosenLocale.monthsShort()[idx].toUpperCase(),
@@ -35,11 +35,11 @@ export function getMonths() {
 }
 
 export function getDays() {
-  let daysIndexes = [0, 1, 2, 3, 4, 5, 6];
+  const daysIndexes = [0, 1, 2, 3, 4, 5, 6];
 
-  let ans = [] as Day[];
-  let chosenLocale = moment.localeData("en");
-  for (let idx of daysIndexes) {
+  const ans = [] as Day[];
+  const chosenLocale = moment.localeData("en");
+  for (const idx of daysIndexes) {
     ans.push({
       name: chosenLocale.weekdays()[idx],
       shortName: chosenLocale.weekdaysShort()[idx].toUpperCase(),
@@ -87,8 +87,8 @@ export function getSimpleDecomposition(
   dayOfWeek: string,
   month: string,
 ) {
-  var daysofweeklist = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-  var monthsofyearlist = [
+  const daysofweeklist = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const monthsofyearlist = [
     "JAN",
     "FEB",
     "MAR",
@@ -103,13 +103,13 @@ export function getSimpleDecomposition(
     "DEC",
   ];
 
-  var decomposedDayOfWeek = decomposeUsingValues(
+  const decomposedDayOfWeek = decomposeUsingValues(
     dayOfWeek ? dayOfWeek : "*",
     daysofweeklist,
     false,
   );
 
-  var decomposedMonthsOfYear = decomposeUsingValues(
+  const decomposedMonthsOfYear = decomposeUsingValues(
     month ? month : "*",
     monthsofyearlist,
     false,
@@ -140,21 +140,21 @@ export function decomposeUsingValues(
   if (value == "*") return listOfLongValues;
   if (value == "?") return listOfLongValues;
 
-  var splitItems = value.split(",");
+  const splitItems = value.split(",");
 
   if (splitItems.length == 1) {
-    var item = value;
-    var isRange = item.indexOf("-") > -1;
+    const item = value;
+    const isRange = item.indexOf("-") > -1;
 
     if (isRange) {
-      var rangeComponents = item.split("-");
+      const rangeComponents = item.split("-");
 
-      var startIndex = valueToIndex(
+      const startIndex = valueToIndex(
         rangeComponents[0],
         listOfLongValues,
         indexStartAtZero,
       );
-      var endIndex = valueToIndex(
+      const endIndex = valueToIndex(
         rangeComponents[1],
         listOfLongValues,
         indexStartAtZero,
@@ -165,7 +165,7 @@ export function decomposeUsingValues(
       return [valueToName(item, listOfLongValues, indexStartAtZero)];
     }
   } else {
-    let smallResults = splitItems.map((item) =>
+    const smallResults = splitItems.map((item) =>
       valueToName(item, listOfLongValues, indexStartAtZero),
     ) as any;
     return flatten(smallResults);

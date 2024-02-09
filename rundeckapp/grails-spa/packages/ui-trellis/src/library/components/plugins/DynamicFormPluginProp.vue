@@ -23,13 +23,13 @@
         <div class="col-sm-1">
           <span
             class="btn btn-xs btn-default"
-            @click="removeField(field)"
             :title="$t('message_delete')"
+            @click="removeField(field)"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
         </div>
-        <div class="col-sm-10 col-sm-offset-2 help-block" v-if="field.desc">
+        <div v-if="field.desc" class="col-sm-10 col-sm-offset-2 help-block">
           <div class="help-block">{{ field.desc }}</div>
         </div>
       </div>
@@ -40,10 +40,10 @@
     }}</btn>
 
     <modal
+      id="modal-demo"
+      ref="modal"
       v-model="modalAddField"
       title="Add Field"
-      ref="modal"
-      id="modal-demo"
       ok-text="Save"
       :backdrop="true"
       :dismiss-btn="true"
@@ -52,12 +52,12 @@
       append-to-body
     >
       <div class="row" style="padding-left: 30px !important">
-        <alert type="warning" v-if="duplicate"
+        <alert v-if="duplicate" type="warning"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
 
         <div class="col-md-10">
-          <div class="form" v-if="useOptions">
+          <div v-if="useOptions" class="form">
             <div :class="['form-data']">
               <label class="col-md-4">{{ $t("message_select") }}</label>
               <div class="col-md-8">
@@ -76,8 +76,8 @@
               <label class="col-md-4">{{ $t("message_description") }}</label>
               <div class="col-md-8">
                 <input
-                  type="text"
                   v-model="newFieldDescription"
+                  type="text"
                   :class="['form-control']"
                 />
                 <div class="help-block">{{ $t("message_empty") }}</div>
@@ -85,13 +85,13 @@
             </div>
           </div>
 
-          <div class="form" v-if="!useOptions">
+          <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
               <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
               <div class="col-md-8">
                 <input
-                  type="text"
                   v-model="newLabelField"
+                  type="text"
                   :class="['form-control']"
                 />
               </div>
@@ -100,8 +100,8 @@
               <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
               <div class="col-md-8">
                 <input
-                  type="text"
                   v-model="newField"
+                  type="text"
                   :class="['form-control']"
                 />
               </div>
@@ -111,8 +111,8 @@
               <label class="col-md-4">{{ $t("message_description") }}</label>
               <div class="col-md-8">
                 <input
-                  type="text"
                   v-model="newFieldDescription"
+                  type="text"
                   :class="['form-control']"
                 />
                 <div class="help-block">{{ $t("message_empty") }}</div>
@@ -122,7 +122,7 @@
         </div>
       </div>
 
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <button
             type="button"
@@ -200,6 +200,36 @@ export default defineComponent({
       newFieldDescription: "",
       selectedField: { value: "", label: "" },
     };
+  },
+  mounted() {
+    if (this.hasOptions === "true") {
+      this.useOptions = true;
+    }
+    if (this.fields != null && this.fields !== "") {
+      const customFieldsObject = JSON.parse(this.fields);
+      if (customFieldsObject != null) {
+        const fields = Object.keys(customFieldsObject).map((key: any) => {
+          const value = customFieldsObject[key];
+          if (value.desc == null) {
+            value.desc = "Field key: " + value.key;
+          }
+          return value;
+        });
+        this.customFields = fields;
+      }
+    }
+
+    if (this.useOptions && this.options !== null && this.options !== "") {
+      const optionsObject = JSON.parse(this.options);
+      const options = Object.keys(optionsObject).map((key: any) => {
+        const data = optionsObject[key];
+        return { value: key, label: data };
+      });
+      this.customOptions = options;
+    }
+  },
+  beforeUnmount() {
+    this.customFields = null as any;
   },
   methods: {
     openNewField() {
@@ -279,36 +309,6 @@ export default defineComponent({
       cFields.value = fieldsJson;
       this.$emit("update:modelValue", fieldsJson);
     },
-  },
-  mounted() {
-    if (this.hasOptions === "true") {
-      this.useOptions = true;
-    }
-    if (this.fields != null && this.fields !== "") {
-      const customFieldsObject = JSON.parse(this.fields);
-      if (customFieldsObject != null) {
-        const fields = Object.keys(customFieldsObject).map((key: any) => {
-          const value = customFieldsObject[key];
-          if (value.desc == null) {
-            value.desc = "Field key: " + value.key;
-          }
-          return value;
-        });
-        this.customFields = fields;
-      }
-    }
-
-    if (this.useOptions && this.options !== null && this.options !== "") {
-      const optionsObject = JSON.parse(this.options);
-      const options = Object.keys(optionsObject).map((key: any) => {
-        const data = optionsObject[key];
-        return { value: key, label: data };
-      });
-      this.customOptions = options;
-    }
-  },
-  beforeUnmount() {
-    this.customFields = null as any;
   },
 });
 </script>

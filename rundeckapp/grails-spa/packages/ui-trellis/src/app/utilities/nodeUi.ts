@@ -4,12 +4,12 @@ const CSSColors =
   );
 
 export function cssForIcon(attrs: any) {
-  let classnames = [];
-  let fgColor = iconFgCss(attrs, "ui:icon:color");
+  const classnames = [];
+  const fgColor = iconFgCss(attrs, "ui:icon:color");
   if (fgColor) {
     classnames.push(fgColor);
   }
-  let bgColor = iconBgCss(attrs, "ui:icon:bgcolor");
+  const bgColor = iconBgCss(attrs, "ui:icon:bgcolor");
   if (bgColor) {
     classnames.push(bgColor);
   }
@@ -26,12 +26,12 @@ export function cssForNode(node: any, nodes: Array<any>) {
 }
 
 export function styleForNode(attrs: any) {
-  let styles: any = {};
-  let uiColor = attrs["ui:color"];
+  const styles: any = {};
+  const uiColor = attrs["ui:color"];
   if (!nodeFgCss(attrs) && isStyleFg(uiColor)) {
     styles["color"] = uiColor;
   }
-  let uiBgcolor = attrs["ui:bgcolor"];
+  const uiBgcolor = attrs["ui:bgcolor"];
   if (!nodeBgCss(attrs) && isStyleBg(uiBgcolor)) {
     styles["background-color"] = uiBgcolor;
   }
@@ -39,10 +39,10 @@ export function styleForNode(attrs: any) {
 }
 
 export function statusIconStyle(attrs: any) {
-  var styles: any = {};
+  const styles: any = {};
   if (!iconFgCss(attrs, "ui:status:color")) {
-    var uiIconColor = attrs["ui:status:color"];
-    var uiColor = attrs["ui:color"];
+    const uiIconColor = attrs["ui:status:color"];
+    const uiColor = attrs["ui:color"];
     if (isStyleFg(uiIconColor)) {
       styles["color"] = uiIconColor;
     } else if (isStyleFg(uiColor)) {
@@ -50,8 +50,8 @@ export function statusIconStyle(attrs: any) {
     }
   }
   if (!iconBgCss(attrs, "ui:status:bgcolor")) {
-    var uiIconBgcolor = attrs["ui:status:bgcolor"];
-    var uiBgcolor = attrs["ui:bgcolor"];
+    const uiIconBgcolor = attrs["ui:status:bgcolor"];
+    const uiBgcolor = attrs["ui:bgcolor"];
     if (isStyleBg(uiIconBgcolor)) {
       styles["background-color"] = uiIconBgcolor;
     } else if (isStyleBg(uiBgcolor)) {
@@ -62,12 +62,12 @@ export function statusIconStyle(attrs: any) {
 }
 
 export function statusIconCss(attrs: any) {
-  let classnames = [];
-  let fgColor = iconFgCss(attrs, "ui:status:color");
+  const classnames = [];
+  const fgColor = iconFgCss(attrs, "ui:status:color");
   if (fgColor) {
     classnames.push(fgColor);
   }
-  let bgColor = iconBgCss(attrs, "ui:status:bgcolor");
+  const bgColor = iconBgCss(attrs, "ui:status:bgcolor");
   if (bgColor) {
     classnames.push(bgColor);
   }
@@ -107,7 +107,7 @@ export function isStyleBg(str: string) {
 }
 
 export function nodeFgCss(attrs: any) {
-  let uiColor = attrs["ui:color"];
+  const uiColor = attrs["ui:color"];
   if (isAnsiFg(uiColor)) {
     return uiColor;
   }
@@ -115,7 +115,7 @@ export function nodeFgCss(attrs: any) {
 }
 
 export function nodeBgCss(attrs: any) {
-  let uiBgcolor = attrs["ui:bgcolor"];
+  const uiBgcolor = attrs["ui:bgcolor"];
   if (isAnsiBg(uiBgcolor)) {
     return uiBgcolor;
   }
@@ -123,8 +123,8 @@ export function nodeBgCss(attrs: any) {
 }
 
 export function iconFgCss(attrs: any, attrName: string) {
-  let uiIconColor = attrs[attrName];
-  let uiColor = attrs["ui:color"];
+  const uiIconColor = attrs[attrName];
+  const uiColor = attrs["ui:color"];
   if (isAnsiFg(uiIconColor)) {
     return uiIconColor;
   } else if (isAnsiFg(uiColor)) {
@@ -134,8 +134,8 @@ export function iconFgCss(attrs: any, attrName: string) {
 }
 
 export function iconBgCss(attrs: any, attrName: string) {
-  let uiIconBgcolor = attrs["ui:icon:bgcolor"];
-  let uiBgcolor = attrs["ui:bgcolor"];
+  const uiIconBgcolor = attrs["ui:icon:bgcolor"];
+  const uiBgcolor = attrs["ui:bgcolor"];
   if (isAnsiBg(uiIconBgcolor)) {
     return uiIconBgcolor;
   } else if (isAnsiBg(uiBgcolor)) {
@@ -145,10 +145,10 @@ export function iconBgCss(attrs: any, attrName: string) {
 }
 
 export function styleForIcon(attrs: any) {
-  let styles: any = {};
+  const styles: any = {};
   if (!iconFgCss(attrs, "ui:icon:color")) {
-    let uiIconColor = attrs["ui:icon:color"];
-    let uiColor = attrs["ui:color"];
+    const uiIconColor = attrs["ui:icon:color"];
+    const uiColor = attrs["ui:color"];
     if (isStyleFg(uiIconColor)) {
       styles["color"] = uiIconColor;
     } else if (isStyleFg(uiColor)) {
@@ -156,8 +156,8 @@ export function styleForIcon(attrs: any) {
     }
   }
   if (!iconBgCss(attrs, "ui:icon:bgcolor")) {
-    let uiIconBgcolor = attrs["ui:icon:bgcolor"];
-    let uiBgcolor = attrs["ui:bgcolor"];
+    const uiIconBgcolor = attrs["ui:icon:bgcolor"];
+    const uiBgcolor = attrs["ui:bgcolor"];
     if (isStyleBg(uiIconBgcolor)) {
       styles["background-color"] = uiIconBgcolor;
     } else if (isStyleBg(uiBgcolor)) {
@@ -179,10 +179,10 @@ export function glyphiconForName(name: string) {
 }
 
 export function glyphiconBadges(attributes: any): Array<string> {
-  var badges = [];
+  const badges = [];
   if (attributes["ui:badges"]) {
-    var found = attributes["ui:badges"]().split(/,\s*/g);
-    for (var i = 0; i < found.length; i++) {
+    const found = attributes["ui:badges"]().split(/,\s*/g);
+    for (let i = 0; i < found.length; i++) {
       if (found[i].match(/^glyphicon-[a-z-]+$/)) {
         badges.push(found[i]);
       } else if (found[i].match(/^fa-[a-z-]+$/)) {

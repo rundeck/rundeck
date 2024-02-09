@@ -37,7 +37,7 @@ export class UIStore {
   }
 
   removeWatcher(watch: UIWatcher) {
-    let ndx = this.watchers.indexOf(watch);
+    const ndx = this.watchers.indexOf(watch);
     if (ndx >= 0) {
       this.watchers.splice(ndx, 1);
     }

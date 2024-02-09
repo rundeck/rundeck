@@ -1,9 +1,9 @@
 <template>
   <dropdown
+    v-if="createPermissions || isAdmin"
+    ref="dropdown"
     menu-right
     append-to-body
-    ref="dropdown"
-    v-if="createPermissions || isAdmin"
   >
     <btn type="link" class="dropdown-toggle" data-toggle="dropdown">
       {{ $t("button.Action") }}
@@ -18,12 +18,12 @@
           </a>
         </li>
         <li
-          class="divider"
           v-if="
             option.show &&
             index !== availableOptions.length - 1 &&
             visibleOptions > 1
           "
+          class="divider"
         ></li>
       </template>
     </template>

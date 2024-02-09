@@ -3,7 +3,7 @@
     <DynamicFormPluginProp
       :fields="fields"
       :options="options"
-      :hasOptions="hasOptions"
+      :has-options="hasOptions"
       :element="element"
       :name="name"
     ></DynamicFormPluginProp>
@@ -15,10 +15,10 @@ import DynamicFormPluginProp from "../../../library/components/plugins/DynamicFo
 
 export default {
   name: "App",
-  props: ["fields", "options", "element", "hasOptions", "name"],
   components: {
     DynamicFormPluginProp,
   },
+  props: ["fields", "options", "element", "hasOptions", "name"],
 };
 </script>
 

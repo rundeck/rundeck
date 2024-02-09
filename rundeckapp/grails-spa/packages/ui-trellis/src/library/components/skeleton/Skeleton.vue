@@ -7,13 +7,6 @@ export default defineComponent({
     type: { default: "list" },
   },
 
-  render(): VNode {
-    if (this.loading) return this.skeleton(h);
-    else {
-      return this.slot(h);
-    }
-  },
-
   methods: {
     /**
      * Use a render function so we can avoid an unecessary wrapper element
@@ -43,6 +36,13 @@ export default defineComponent({
         class: ["skeleton", `skeleton--${this.type}`],
       });
     },
+  },
+
+  render(): VNode {
+    if (this.loading) return this.skeleton(h);
+    else {
+      return this.slot(h);
+    }
   },
 });
 </script>

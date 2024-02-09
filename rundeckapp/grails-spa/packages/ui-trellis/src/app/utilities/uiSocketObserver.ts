@@ -12,7 +12,7 @@ export const observer = new MutationObserver(function (mutations_list) {
       if (added_node.nodeType !== Node.ELEMENT_NODE) {
         return;
       }
-      let added_elem = added_node as Element;
+      const added_elem = added_node as Element;
       if (
         added_elem.className &&
         added_elem.getElementsByClassName("vue-ui-socket")?.length > 0
@@ -21,7 +21,7 @@ export const observer = new MutationObserver(function (mutations_list) {
         const rootStore = getRundeckContext().rootStore;
         const eventBus = getRundeckContext().eventBus;
 
-        for (let socketElem of added_elem.getElementsByClassName(
+        for (const socketElem of added_elem.getElementsByClassName(
           "vue-ui-socket",
         )) {
           const vue = createApp(

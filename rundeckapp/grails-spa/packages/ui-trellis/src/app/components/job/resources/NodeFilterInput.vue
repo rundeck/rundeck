@@ -3,7 +3,7 @@
     class="input-group nodefilters multiple-control-input-group"
     v-bind="$attrs"
   >
-    <span class="input-group-addon input-group-addon-title" v-if="showTitle">{{
+    <span v-if="showTitle" class="input-group-addon input-group-addon-title">{{
       $t("nodes")
     }}</span>
     <div class="input-group-btn input-btn-toggle">
@@ -36,7 +36,7 @@
 
         <li class="divider"></li>
 
-        <li class="dropdown-header" v-if="selectedFilterName">
+        <li v-if="selectedFilterName" class="dropdown-header">
           {{ $t("filter") }} <span>{{ filterNameDisplay }}</span>
         </li>
         <li v-if="canSaveFilter">
@@ -77,10 +77,7 @@
               :node-filter="filter.filter"
               @nodefilterclick="handleNodefilter"
             >
-              <template
-                v-slot:suffix
-                v-if="selectedFilterName === filter.filterName"
-              >
+              <template v-if="selectedFilterName === filter.filterName" #suffix>
                 <span>
                   <i class="fa fa-check"></i>
                 </span>
@@ -92,18 +89,18 @@
     </div>
 
     <input
+      :id="filterFieldId"
+      v-model="outputValue"
       type="search"
       :name="filterFieldName"
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
-      v-model="outputValue"
-      v-on:keydown.enter.prevent="doSearch"
-      v-on:blur="doSearch"
-      :id="filterFieldId"
+      @keydown.enter.prevent="doSearch"
+      @blur="doSearch"
     />
 
-    <div class="input-group-btn input-btn-toggle" v-if="helpButton">
+    <div v-if="helpButton" class="input-group-btn input-btn-toggle">
       <btn id="filterSearchHelpBtn" tabindex="0" class="dropdown-toggle">
         <i class="glyphicon glyphicon-question-sign"></i>
       </btn>
@@ -111,9 +108,9 @@
     <div class="input-group-btn">
       <btn
         :type="`${searchBtnType} btn-fill`"
-        @click="doSearch"
         :disabled="!outputValue"
         class="node_filter__dosearch"
+        @click="doSearch"
       >
         {{ $t("Search") }}
       </btn>
@@ -121,12 +118,12 @@
   </div>
 
   <popover
+    v-if="helpButton"
     target="#filterSearchHelpBtn"
     trigger="focus"
     placement="bottom"
-    v-if="helpButton"
   >
-    <template v-slot:popover>
+    <template #popover>
       <div class="help-block">
         <strong>{{ $t("select.nodes.by.name") }}:</strong>
         <p>
@@ -169,10 +166,10 @@
         }}</label>
         <div class="col-sm-10">
           <input
-            type="text"
             id="newFilterName"
-            class="form-control input-sm"
             v-model="newFilterName"
+            type="text"
+            class="form-control input-sm"
           />
         </div>
       </div>
@@ -190,7 +187,7 @@
         {{ saveFilterModalError }}
       </div>
     </div>
-    <template v-slot:footer>
+    <template #footer>
       <div>
         <btn @click="saveFilterModal = false">{{
           $t("button.action.Cancel")
@@ -212,7 +209,7 @@
             }}</span>
           </div>
         </div>
-        <div class="form-group" v-if="selectedSavedFilter">
+        <div v-if="selectedSavedFilter" class="form-group">
           <label class="control-label col-sm-2">
             {{ $t("filter") }}
           </label>
@@ -228,7 +225,7 @@
         <span class="text-danger">{{ $t("delete.this.filter.confirm") }}</span>
       </div>
     </div>
-    <template v-slot:footer>
+    <template #footer>
       <div>
         <btn @click="deleteFilterModal = false">{{ $t("no") }}</btn>
         <btn type="danger" @click="deleteFilter">{{ $t("yes") }}</btn>
@@ -247,13 +244,13 @@ import NodeFilterLink from "./NodeFilterLink.vue";
 
 export default defineComponent({
   name: "NodeFilterInput",
-  inheritAttrs: false,
   components: {
     NodeFilterLink,
   },
+  inheritAttrs: false,
   props: {
     modelValue: {
-      type: [String, null] as PropType<String | null>,
+      type: [String, null] as PropType<string | null>,
       required: true,
     },
     showTitle: {
@@ -364,7 +361,7 @@ export default defineComponent({
     },
     matchedFilter() {
       if (this.outputValue && this.nodeSummary.filters) {
-        let found = this.nodeSummary.filters.find(
+        const found = this.nodeSummary.filters.find(
           (a: any) => a.filter === this.outputValue,
         );
         if (found) {
@@ -378,7 +375,7 @@ export default defineComponent({
     },
     selectedSavedFilter() {
       if (this.selectedFilterName && this.nodeSummary.filters) {
-        let found = this.nodeSummary.filters.find(
+        const found = this.nodeSummary.filters.find(
           (a: any) => a.filterName === this.selectedFilterName,
         );
         if (found) {
@@ -387,6 +384,25 @@ export default defineComponent({
       }
       return null;
     },
+  },
+  watch: {
+    modelValue() {
+      this.outputValue = this.modelValue;
+      if (
+        this.selectedFilterName &&
+        this.selectedFilterName !== this.matchedFilter
+      ) {
+        this.selectedFilterName = "";
+      } else if (this.matchedFilter) {
+        this.selectedFilterName = this.matchedFilter;
+      }
+    },
+    filterName() {
+      this.selectedFilterName = this.filterName;
+    },
+  },
+  mounted() {
+    this.onMount();
   },
   methods: {
     filterWithoutAll() {
@@ -491,25 +507,6 @@ export default defineComponent({
         this.removeDefaultFilter,
       );
     },
-  },
-  watch: {
-    modelValue() {
-      this.outputValue = this.modelValue;
-      if (
-        this.selectedFilterName &&
-        this.selectedFilterName !== this.matchedFilter
-      ) {
-        this.selectedFilterName = "";
-      } else if (this.matchedFilter) {
-        this.selectedFilterName = this.matchedFilter;
-      }
-    },
-    filterName() {
-      this.selectedFilterName = this.filterName;
-    },
-  },
-  mounted() {
-    this.onMount();
   },
 });
 </script>

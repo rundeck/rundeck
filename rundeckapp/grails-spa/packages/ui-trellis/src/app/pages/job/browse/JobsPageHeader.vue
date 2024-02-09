@@ -4,7 +4,7 @@
       <div class="flex-item-auto text-h3 jobs-page-header">
         <span v-if="jobPageStore.browsePath">
           <job-groups-breadcrumbs
-            :groupPath="jobPageStore.browsePath"
+            :group-path="jobPageStore.browsePath"
             @browse-to="doRootBrowse"
           >
             <template #root>
@@ -14,8 +14,8 @@
         </span>
         <span class="query-section">
           <i
-            class="fas fa-tasks query-item"
             v-if="!jobPageStore.browsePath"
+            class="fas fa-tasks query-item"
           ></i>
           <a
             class="link-quiet"
@@ -61,8 +61,8 @@
         <span class="search">
           <span><b class="glyphicon glyphicon-search" /></span>
           <input
-            type="search"
             v-model="jobPageStore.query['jobFilter']"
+            type="search"
             :placeholder="$t('job.filter.quick.placeholder')"
             class="form-control input-md"
             @keyup.enter="doSearchQuick"
@@ -137,6 +137,11 @@ export default defineComponent({
       saveFilterError: ref(""),
     };
   },
+  mounted() {
+    eventBus.on("job-list-page:search", (name: string) => {
+      this.updateFilters(name);
+    });
+  },
   methods: {
     doSearch() {
       this.advancedSearchModalVisible = false;
@@ -167,7 +172,7 @@ export default defineComponent({
       this.selectedFilter(name);
     },
     selectedFilter(name: string) {
-      let filter = this.jobListFilterStore.getFilter(name);
+      const filter = this.jobListFilterStore.getFilter(name);
       if (!filter) {
         return;
       }
@@ -175,7 +180,7 @@ export default defineComponent({
       eventBus.emit("job-list-page:search", name);
     },
     deleteSelectedFilter(name: string) {
-      let filter = this.jobListFilterStore.getFilter(name);
+      const filter = this.jobListFilterStore.getFilter(name);
       if (!filter) {
         return;
       }
@@ -189,7 +194,7 @@ export default defineComponent({
       eventBus.emit("job-list-page:rootBrowse", { path, href });
     },
     updateFilters(name: string) {
-      let keys = Object.keys(this.jobPageStore.query).filter(
+      const keys = Object.keys(this.jobPageStore.query).filter(
         (key) => key !== "groupPath" && this.jobPageStore.query[key],
       );
       this.wasFiltered = keys;
@@ -199,11 +204,6 @@ export default defineComponent({
         this.jobPageStore.selectedFilter = "";
       }
     },
-  },
-  mounted() {
-    eventBus.on("job-list-page:search", (name: string) => {
-      this.updateFilters(name);
-    });
   },
 });
 </script>

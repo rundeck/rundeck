@@ -1,6 +1,6 @@
 <template>
   <div ref="wrapper" style="display: none">
-    <div class="popper" ref="popper" @click.stop>
+    <div ref="popper" class="popper" @click.stop>
       <slot />
     </div>
   </div>

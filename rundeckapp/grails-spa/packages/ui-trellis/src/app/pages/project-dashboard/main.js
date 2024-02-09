@@ -9,7 +9,7 @@ import App from "./App.vue";
 import { EventBus } from "../../../library/utilities/vueEventBus";
 import { initI18n } from "../../utilities/i18n";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const els = document.body.getElementsByClassName("project-dashboard-vue");
@@ -21,12 +21,12 @@ for (let i = 0; i < els.length; i++) {
   const i18n = initI18n();
 
   const vue = createApp({
+    components: { App },
     data() {
       return {
         EventBus: EventBus,
       };
     },
-    components: { App },
   });
   vue.use(uiv);
   vue.use(i18n);

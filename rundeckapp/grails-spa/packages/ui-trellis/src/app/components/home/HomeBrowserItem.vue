@@ -1,7 +1,7 @@
 <template>
   <div
-    class="project_list_item"
     :key="`project${index}`"
+    class="project_list_item"
     :data-project="project.name"
   >
     <div class="row row-hover row-border-top">
@@ -12,9 +12,9 @@
           :socket-data="{ projectName: project.name }"
         />
         <a
+          :id="`project${index}`"
           :href="createLink(`/?project=${project.name}`)"
           class="link-hover text-inverse project_list_item_link link-quiet"
-          :id="`project${index}`"
         >
           <span class="h5" :class="{ 'display-block': project.label }">
             {{ project.label ? project.label : project.name }}
@@ -22,10 +22,10 @@
 
           <template v-if="loaded">
             <tooltip
+              v-if="!executionsEnabled"
               :text="$t('project.execution.disabled')"
               placement="right"
               class="h5 ml-1"
-              v-if="!executionsEnabled"
             >
               <span
                 class="text-base text-warning"
@@ -36,10 +36,10 @@
             </tooltip>
 
             <tooltip
+              v-if="!scheduleEnabled"
               :text="$t('project.schedule.disabled')"
               placement="right"
               class="h5 ml-1"
-              v-if="!scheduleEnabled"
             >
               <span
                 class="text-base text-warning"
@@ -79,7 +79,7 @@
             class="summary-count"
             :class="{ 'text-info': project.execCount > 0 }"
           >
-            <span data-test="activity-loading" v-if="!project.loaded">...</span>
+            <span v-if="!project.loaded" data-test="activity-loading">...</span>
             <span v-else>
               <span v-if="project.execCount > 0">
                 <span class="text-h3">
@@ -128,27 +128,27 @@
       </div>
 
       <div class="col-sm-12 col-md-2 col-last">
-        <p data-test="actions-loading" v-if="!loaded">...</p>
+        <p v-if="!loaded" data-test="actions-loading">...</p>
         <HomeActionsMenu v-else :index="index" :project="project" />
       </div>
     </div>
   </div>
 
   <div v-if="loaded">
-    <div class="row" v-if="showMessage">
+    <div v-if="showMessage" class="row">
       <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
         <div v-if="showMotd">
           <span
-            data-test="motd"
             v-if="messageMeta.data.readme.motdHTML"
+            data-test="motd"
             v-html="messageMeta.data.readme.motdHTML"
           ></span>
         </div>
         <div v-if="showReadme">
           <div>
             <span
-              data-test="readme"
               v-if="messageMeta.data.readme.readmeHTML"
+              data-test="readme"
               v-html="messageMeta.data.readme.readmeHTML"
             ></span>
           </div>

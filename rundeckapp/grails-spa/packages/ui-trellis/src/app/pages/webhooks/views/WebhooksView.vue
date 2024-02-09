@@ -31,24 +31,24 @@
     </aside>
     <main id="mainconfig">
       <div>
-        <div id="wh-edit" v-if="curHook">
+        <div v-if="curHook" id="wh-edit">
           <div id="wh-header">
             <WebhookTitle :webhook="curHook" />
             <div style="margin-left: auto; display: flex; align-items: center">
               <div>
                 <a
-                  style="font-weight: 800"
                   v-if="curHook.id"
-                  @click="handleDelete"
+                  style="font-weight: 800"
                   class="btn btn-danger"
+                  @click="handleDelete"
                   >{{ $t("message_webhookDeleteBtn") }}</a
                 >
               </div>
               <div>
                 <a
                   v-if="!curHook.id"
-                  @click="handleCancel"
                   class="btn btn-md btn-default"
+                  @click="handleCancel"
                   >{{ $t("message_cancel") }}</a
                 >
                 <btn
@@ -64,9 +64,9 @@
           </div>
 
           <Tabs
+            :key="curHook.new ? curHook.uuid : ''"
             data-tabkey="webhook-header"
             style="height: 200px"
-            :key="curHook.new ? curHook.uuid : ''"
           >
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
@@ -78,14 +78,14 @@
                         {{ $t("message_webhookPostUrlHelp") }}
                       </div>
                       <CopyBox
-                        style="max-width: 800px"
                         v-if="!curHook.new"
+                        style="max-width: 800px"
                         :content="postUrl()"
                       />
                       <span
+                        v-if="curHook.new"
                         class="form-control fc-span-adj font-italic"
                         style="height: auto"
-                        v-if="curHook.new"
                         >{{ $t("message_webhookPostUrlPlaceholder") }}</span
                       >
                     </div>
@@ -96,11 +96,11 @@
                       </div>
                       <div class="checkbox">
                         <input
-                          type="checkbox"
-                          v-model="curHook.useAuth"
-                          @click="confirmAuthToggle"
-                          class="form-control"
                           id="wh-authtoggle"
+                          v-model="curHook.useAuth"
+                          type="checkbox"
+                          class="form-control"
+                          @click="confirmAuthToggle"
                         /><label for="wh-authtoggle">{{
                           $t("message_webhookGenerateSecurityLabel")
                         }}</label>
@@ -142,11 +142,11 @@
                     <div class="form-group">
                       <label>{{ $t("message_webhookUserLabel") }}</label>
                       <input
+                        v-if="curHook.new"
                         v-model="curHook.user"
                         class="form-control"
-                        v-if="curHook.new"
                       />
-                      <span class="form-control readonly fc-span-adj" v-else>{{
+                      <span v-else class="form-control readonly fc-span-adj">{{
                         curHook.user
                       }}</span>
                       <div class="help-block">
@@ -167,10 +167,10 @@
                     <div class="form-group">
                       <div class="checkbox">
                         <input
-                          type="checkbox"
-                          v-model="curHook.enabled"
-                          class="form-control"
                           id="wh-enabled"
+                          v-model="curHook.enabled"
+                          type="checkbox"
+                          class="form-control"
                           @change="input"
                         /><label for="wh-enabled">{{
                           $t("message_webhookEnabledLabel")
@@ -197,9 +197,9 @@
                         aria-expanded="false"
                       >
                         <plugin-info
+                          v-if="curHook.eventPlugin"
                           :detail="curHook.eventPlugin"
                           :show-description="false"
-                          v-if="curHook.eventPlugin"
                         />
                         <span v-else>
                           {{ $t("message_webhookPluginLabel") }}
@@ -207,10 +207,7 @@
                         <span class="caret"></span>
                       </button>
                       <ul class="dropdown-menu">
-                        <li
-                          v-for="plugin in webhookPlugins"
-                          v-bind:key="plugin.id"
-                        >
+                        <li v-for="plugin in webhookPlugins" :key="plugin.id">
                           <a href="#" @click="setSelectedPlugin(false, plugin)">
                             <plugin-info :detail="plugin" />
                           </a>
@@ -227,29 +224,29 @@
                   class="new-section"
                 >
                   <div
+                    v-if="!customConfigComponent"
                     class="card"
                     style="padding: 20px"
-                    v-if="!customConfigComponent"
                   >
                     <plugin-config
-                      @change="input"
-                      :mode="'edit'"
-                      :serviceName="'WebhookEvent'"
-                      v-model="selectedPlugin"
-                      :provider="curHook.eventPlugin.name"
                       :key="curHook.name"
+                      v-model="selectedPlugin"
+                      :mode="'edit'"
+                      :service-name="'WebhookEvent'"
+                      :provider="curHook.eventPlugin.name"
                       :show-title="false"
                       :show-description="false"
                       :validation="validation"
+                      @change="input"
                     />
                   </div>
                   <component
-                    v-else
                     :is="customConfigComponent"
+                    v-else
                     :webhook="curHook"
-                    :pluginConfig="curHook.config"
+                    :plugin-config="curHook.config"
                     :errors="errors"
-                    @update:pluginConfig="onUpdatePluginConfig"
+                    @update:plugin-config="onUpdatePluginConfig"
                     @change="input"
                   ></component>
                 </div>
@@ -346,6 +343,12 @@ export default defineComponent({
         this.webhookStore.webhooksForProject(this.projectName).length === 0
       );
     },
+  },
+  async mounted() {
+    this.loadProPlugins();
+    await this.rootStore.plugins.load("WebhookEvent");
+    this.webhookPlugins =
+      this.rootStore.plugins.getServicePlugins("WebhookEvent");
   },
   methods: {
     confirmAuthToggle() {
@@ -590,16 +593,10 @@ export default defineComponent({
     loadProPlugins() {
       if (window.ProWebhookComponents === undefined) return;
 
-      for (let [k, comp] of Object.entries(window.ProWebhookComponents)) {
+      for (const [k, comp] of Object.entries(window.ProWebhookComponents)) {
         this.registerComponent(k, comp);
       }
     },
-  },
-  async mounted() {
-    this.loadProPlugins();
-    await this.rootStore.plugins.load("WebhookEvent");
-    this.webhookPlugins =
-      this.rootStore.plugins.getServicePlugins("WebhookEvent");
   },
 });
 </script>

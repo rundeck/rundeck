@@ -29,16 +29,15 @@ export default defineComponent({
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
     };
   },
-  methods: {},
   computed: {
-    jobSynchState(): String | undefined {
+    jobSynchState(): string | undefined {
       return this.exportSynchState || this.importSynchState;
     },
-    exportSynchState(): String | undefined {
+    exportSynchState(): string | undefined {
       const state = this.scmExport?.jobState?.synchState;
       return state && state !== "CLEAN" ? state : undefined;
     },
-    importSynchState(): String | undefined {
+    importSynchState(): string | undefined {
       const state = this.scmImport?.jobState?.synchState;
 
       return state && state !== "CLEAN" ? state : undefined;
@@ -150,6 +149,7 @@ export default defineComponent({
       return text;
     },
   },
+  methods: {},
 });
 </script>
 

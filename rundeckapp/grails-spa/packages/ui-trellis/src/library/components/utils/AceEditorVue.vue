@@ -1,5 +1,5 @@
 <template>
-  <div ref="root" :id="identifier" :style="styleCss"></div>
+  <div :id="identifier" ref="root" :style="styleCss"></div>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
@@ -32,6 +32,14 @@ export default defineComponent({
       observer: undefined as undefined | MutationObserver,
       jsonSpaces: 2 as number,
     };
+  },
+  computed: {
+    styleCss() {
+      const style = { height: "100%", width: "100%" };
+      if (this.height) style.height = this.px(this.height);
+      if (this.width) style.width = this.px(this.width);
+      return style;
+    },
   },
   watch: {
     modelValue: function (val): void {
@@ -92,14 +100,6 @@ export default defineComponent({
     this.editor!.container.remove();
     this.observer?.disconnect();
   },
-  computed: {
-    styleCss() {
-      let style = { height: "100%", width: "100%" };
-      if (this.height) style.height = this.px(this.height);
-      if (this.width) style.width = this.px(this.width);
-      return style;
-    },
-  },
   methods: {
     /**
      * Observe the dark mode and update the theme for the editor
@@ -152,7 +152,7 @@ export default defineComponent({
      * @param val
      */
     resolveValue(val: string) {
-      const LANG_JSON: String = "json";
+      const LANG_JSON: string = "json";
       if (this.lang == LANG_JSON) {
         return JSON.stringify(JSON.parse(val), null, this.jsonSpaces);
       }

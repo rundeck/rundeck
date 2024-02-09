@@ -3,15 +3,15 @@
     config-prefix="resources.source"
     service-name="ResourceModelSource"
     :help="help"
-    @saved="pluginsConfigWasSaved"
-    @modified="pluginsConfigWasModified"
-    @reset="pluginsConfigWasReset"
     :edit-button-text="$t('Edit Node Sources')"
     :edit-mode="editMode"
     :mode-toggle="modeToggle"
     :event-bus="eventBus"
+    @saved="pluginsConfigWasSaved"
+    @modified="pluginsConfigWasModified"
+    @reset="pluginsConfigWasReset"
   >
-    <template v-slot:item-extra="{ plugin, mode }">
+    <template #item-extra="{ plugin, mode }">
       <div>
         <div
           v-if="
@@ -27,7 +27,7 @@
             {{ $t("Edit Nodes") }}
           </a>
         </div>
-        <div class="row row-space" v-if="sourceErrors(plugin.origIndex)">
+        <div v-if="sourceErrors(plugin.origIndex)" class="row row-space">
           <div class="col-sm-12">
             <div class="well well-sm">
               <div class="text-info">
@@ -51,6 +51,9 @@ import ProjectPluginConfig from "./ProjectPluginConfig.vue";
 import { getProjectNodeSources, NodeSource } from "./nodeSourcesUtil";
 
 export default defineComponent({
+  components: {
+    ProjectPluginConfig,
+  },
   props: {
     help: {
       type: String,
@@ -74,9 +77,6 @@ export default defineComponent({
     },
   },
   emits: ["saved", "reset", "modified"],
-  components: {
-    ProjectPluginConfig,
-  },
 
   data() {
     return {
@@ -84,6 +84,21 @@ export default defineComponent({
       rundeckContext: {} as RundeckContext,
       sourcesData: [] as NodeSource[],
     };
+  },
+  watch: {
+    sourcesData: function (val, oldVal) {
+      this.checkUnauthorized();
+    },
+  },
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.loadNodeSourcesData();
+    }
   },
   methods: {
     isWriteable(index: number): boolean {
@@ -123,7 +138,7 @@ export default defineComponent({
       }
     },
     checkUnauthorized() {
-      let globalErrors = [];
+      const globalErrors = [];
       this.sourcesData.forEach((source: NodeSource) => {
         if (
           source.errors !== undefined &&
@@ -139,21 +154,6 @@ export default defineComponent({
         }
       });
     },
-  },
-  watch: {
-    sourcesData: function (val, oldVal) {
-      this.checkUnauthorized();
-    },
-  },
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    if (
-      window._rundeck &&
-      window._rundeck.rdBase &&
-      window._rundeck.projectName
-    ) {
-      this.loadNodeSourcesData();
-    }
   },
 });
 </script>

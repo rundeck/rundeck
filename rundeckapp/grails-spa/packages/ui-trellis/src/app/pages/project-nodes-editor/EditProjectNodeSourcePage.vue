@@ -1,17 +1,17 @@
 <template>
   <edit-project-node-source-file
+    v-if="nodeSource"
     class="form-horizontal"
     :index="index"
     :provider="nodeSource.type"
     :source-desc="nodeSource.resources.description"
     :file-format="modelFormat"
     :value="nodesText"
-    :eventBus="eventBus"
+    :event-bus="eventBus"
     :error-message="errorMessage"
+    :saving="saving"
     @cancel="handleCancel"
     @save="handleSave"
-    :saving="saving"
-    v-if="nodeSource"
   >
   </edit-project-node-source-file>
 </template>
@@ -23,8 +23,8 @@ import EditProjectNodeSourceFile from "./EditProjectNodeSourceFile.vue";
 
 export default defineComponent({
   name: "EditProjectNodeSourcePage",
-  inject: ["nodeSourceFile"],
   components: { EditProjectNodeSourceFile },
+  inject: ["nodeSourceFile"],
   props: {
     index: {
       type: Number,
@@ -60,6 +60,26 @@ export default defineComponent({
       return this.nodeSourceFile.modelFormat;
     },
   },
+  async mounted() {
+    const context = getRundeckContext();
+    if (this.index >= 0) {
+      this.nodeSourceFile.index = this.index;
+      await this.nodeSourceFile.load();
+      this.eventBus.emit("node-source-file-loaded", this.nodeSourceFile);
+      this.nodeSource = this.nodeSourceFile.nodeSource;
+    }
+    this.eventBus.on("node-source-file-set-content", this.acceptContent);
+    if (
+      this.nodeSource &&
+      this.nodeSource.resources.writeable &&
+      this.modelFormat
+    ) {
+      await this.nodeSourceFile.retrieveSourceContent();
+      this.acceptContent({ content: this.nodeSourceFile.content });
+      this.eventBus.emit("node-source-file-content-inited", this.nodesText);
+      this.inited = true;
+    }
+  },
   methods: {
     handleCancel() {
       this.eventBus.emit("page-reset", "nodes");
@@ -73,7 +93,9 @@ export default defineComponent({
       this.nodesText = newVal;
       this.saving = true;
       try {
-        let resp = await this.nodeSourceFile.storeSourceContent(this.nodesText);
+        const resp = await this.nodeSourceFile.storeSourceContent(
+          this.nodesText,
+        );
         this.eventBus.emit("page-reset", "nodes");
         this.$notify("Content Saved");
         window.location = this.nextPageUrl;
@@ -110,26 +132,6 @@ export default defineComponent({
         }
       }
     },
-  },
-  async mounted() {
-    const context = getRundeckContext();
-    if (this.index >= 0) {
-      this.nodeSourceFile.index = this.index;
-      await this.nodeSourceFile.load();
-      this.eventBus.emit("node-source-file-loaded", this.nodeSourceFile);
-      this.nodeSource = this.nodeSourceFile.nodeSource;
-    }
-    this.eventBus.on("node-source-file-set-content", this.acceptContent);
-    if (
-      this.nodeSource &&
-      this.nodeSource.resources.writeable &&
-      this.modelFormat
-    ) {
-      await this.nodeSourceFile.retrieveSourceContent();
-      this.acceptContent({ content: this.nodeSourceFile.content });
-      this.eventBus.emit("node-source-file-content-inited", this.nodesText);
-      this.inited = true;
-    }
   },
 });
 </script>

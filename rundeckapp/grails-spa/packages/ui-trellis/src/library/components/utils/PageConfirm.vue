@@ -40,6 +40,21 @@ export default defineComponent({
       return this.confirmData.length > 0;
     },
   },
+  mounted() {
+    this.eventBus.on("page-modified", this.setConfirm);
+    this.eventBus.on("page-reset", this.resetConfirm);
+
+    const orighandler = window.onbeforeunload;
+    window.onbeforeunload = (ev: BeforeUnloadEvent) => {
+      if (this.needsConfirm) {
+        return this.message || "confirm";
+      }
+      if (typeof orighandler === "function") {
+        //@ts-ignore
+        return orighandler(ev);
+      }
+    };
+  },
   methods: {
     setConfirm(name: string) {
       const loc = this.confirmData.indexOf(name);
@@ -55,21 +70,6 @@ export default defineComponent({
         this.confirmData.splice(0, this.confirmData.length);
       }
     },
-  },
-  mounted() {
-    this.eventBus.on("page-modified", this.setConfirm);
-    this.eventBus.on("page-reset", this.resetConfirm);
-
-    const orighandler = window.onbeforeunload;
-    window.onbeforeunload = (ev: BeforeUnloadEvent) => {
-      if (this.needsConfirm) {
-        return this.message || "confirm";
-      }
-      if (typeof orighandler === "function") {
-        //@ts-ignore
-        return orighandler(ev);
-      }
-    };
   },
 });
 </script>

@@ -1,11 +1,11 @@
 <template>
   <section>
-    <button @click="isSubscribeModalActive = true" class="btn red-button">
+    <button class="btn red-button" @click="isSubscribeModalActive = true">
       {{ $t("message_subscribe") }}
     </button>
     <modal
-      v-model="isSubscribeModalActive"
       ref="modal"
+      v-model="isSubscribeModalActive"
       :header="false"
       :footer="false"
       append-to-body
@@ -18,8 +18,8 @@
               <label class="label">Email*</label>
               <div class="control">
                 <input
-                  type="email"
                   v-model="email"
+                  type="email"
                   class="form-control"
                   placeholder="Type Your Email..."
                 />
@@ -60,6 +60,7 @@ export default defineComponent({
       counter: 5,
     };
   },
+  mounted() {},
   methods: {
     handleSubmit() {
       axios
@@ -73,7 +74,7 @@ export default defineComponent({
             }
             this.showConfirmation = true;
 
-            let countdown = setInterval(() => {
+            const countdown = setInterval(() => {
               this.counter--;
               if (this.counter === 0) {
                 clearInterval(countdown);
@@ -91,7 +92,6 @@ export default defineComponent({
         });
     },
   },
-  mounted() {},
 });
 </script>
 

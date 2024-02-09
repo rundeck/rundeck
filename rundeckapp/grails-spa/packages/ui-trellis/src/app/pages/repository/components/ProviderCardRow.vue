@@ -4,19 +4,19 @@
       <div style="width: 60px">
         <span v-if="provider.builtin">
           <i
+            v-tooltip.hover="`Built-In`"
             class="fa fa-briefcase"
             aria-hidden="true"
-            v-tooltip.hover="`Built-In`"
           ></i>
         </span>
         <span v-else>
           <i
+            v-tooltip.hover="`Installed File`"
             class="fa fa-file"
             aria-hidden="true"
-            v-tooltip.hover="`Installed File`"
           ></i>
         </span>
-        <span class="info-icon" @click="openInfo" style="margin-left: 1em">
+        <span class="info-icon" style="margin-left: 1em" @click="openInfo">
           <i class="fas fa-info-circle"></i>
         </span>
       </div>

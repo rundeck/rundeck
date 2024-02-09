@@ -1,11 +1,11 @@
 <template>
-  <div class="row homeHeader" id="homeHeader">
+  <div id="homeHeader" class="row homeHeader">
     <div class="flex justify-between">
       <div class="col-sm-12 col-md-5 card">
         <div
           class="card-content flex flex--justify-between flex--items-center h-full"
         >
-          <h3 id="projectCount" class="text-h3" v-if="loadedProjectNames">
+          <h3 v-if="loadedProjectNames" id="projectCount" class="text-h3">
             <span id="projectCountNumber">{{ projectCount }}</span>
             {{
               projectCount === 1
@@ -13,14 +13,14 @@
                 : $t("page.home.section.project.title.plural")
             }}
           </h3>
-          <span class="text-h3 text-muted loading" v-if="!loadedProjectNames">
+          <span v-if="!loadedProjectNames" class="text-h3 text-muted loading">
             <b class="fas fa-spinner fa-spin loading-spinner"></b>
             {{ $t("page.home.loading.projects") }}
           </span>
           <a
             v-if="createProjectAllowed"
-            :href="createProjectLink"
             id="createProject"
+            :href="createProjectLink"
             class="btn btn-primary pull-right"
           >
             {{ $t("page.home.new.project.button.label") }}
@@ -56,21 +56,21 @@
               </span>
             </h4>
 
-            <p class="margin-0" v-if="recentProjectsCount > 1">
+            <p v-if="recentProjectsCount > 1" class="margin-0">
               {{ $t("in") }}
               <span class="text-info">
                 {{ recentProjectsCount }}
               </span>
               {{ $t("projects") }}:
               <a
-                class="project-link"
                 v-for="project in recentProjects"
+                class="project-link"
                 :href="projectLink(project)"
               >
                 {{ project }}
               </a>
             </p>
-            <p class="margin-0" v-if="recentUsersCount">
+            <p v-if="recentUsersCount" class="margin-0">
               {{ $t("by") }}
               <span class="text-info">
                 {{ recentUsersCount }}
@@ -133,6 +133,9 @@ export default defineComponent({
       return !!this.projectCount;
     },
   },
+  mounted() {
+    this.fetchSummary();
+  },
   methods: {
     projectLink(project: string): string {
       return `${getRundeckContext().rdBase}/project/${project}/`;
@@ -158,9 +161,6 @@ export default defineComponent({
         this.loaded = true;
       }
     },
-  },
-  mounted() {
-    this.fetchSummary();
   },
 });
 </script>

@@ -123,7 +123,7 @@ export class ExecutionOutput {
             { exec: status.description, type: "exec", nodeStep: "true" },
           ]);
         }
-        let resp = await this.client.jobWorkflowGet(status.job!.id!);
+        const resp = await this.client.jobWorkflowGet(status.job!.id!);
         return new JobWorkflow(resp.workflow);
       })();
     }

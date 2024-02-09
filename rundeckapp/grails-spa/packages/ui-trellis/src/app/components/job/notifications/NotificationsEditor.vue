@@ -15,7 +15,7 @@
       </div>
       <div class="main-section">
         <div v-for="trigger in notifyTypes">
-          <div class="list-group" :id="'job-notifications-' + trigger">
+          <div :id="'job-notifications-' + trigger" class="list-group">
             <div
               class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between"
             >
@@ -39,8 +39,8 @@
               </btn>
             </div>
             <div
-              class="list-group-item form-inline"
               v-if="trigger === 'onavgduration'"
+              class="list-group-item form-inline"
             >
               <div class="form-group">
                 <div class="col-sm-12">
@@ -56,17 +56,17 @@
                       }}
                     </label>
                     <input
+                      id="schedJobNotifyAvgDurationThreshold"
+                      v-model="notifyAvgDurationThreshold"
                       type="text"
                       name="notifyAvgDurationThreshold"
-                      v-model="notifyAvgDurationThreshold"
-                      id="schedJobNotifyAvgDurationThreshold"
                       class="form-control"
                       :placeholder="$t('jobAverageDurationPlaceholder')"
                       size="40"
                     />
                     <span
-                      class="input-group-addon btn btn-info btn-md"
                       id="jobAvgInfoBtn"
+                      class="input-group-addon btn btn-info btn-md"
                     >
                       <i class="glyphicon glyphicon-question-sign"></i>
                     </span>
@@ -80,7 +80,7 @@
                     "
                     target="#jobAvgInfoBtn"
                   >
-                    <template v-slot:popover>
+                    <template #popover>
                       <VMarkdownView
                         class="markdown-body"
                         :content="
@@ -108,7 +108,7 @@
                     >
                       <span class="caret"></span>
                     </btn>
-                    <template v-slot:dropdown>
+                    <template #dropdown>
                       <li @click="doCopyNotification(notif)">
                         <a role="button"> {{ $t("duplicate") }}... </a>
                       </li>
@@ -123,13 +123,13 @@
                 </div>
                 <div class="flex-item flex-grow-1">
                   <plugin-config
-                    serviceName="Notification"
+                    :key="'g_' + i + '/' + notif.type + ':config'"
+                    service-name="Notification"
                     :provider="notif.type"
                     :config="notif.config"
                     mode="show"
                     :show-title="true"
                     :show-description="true"
-                    :key="'g_' + i + '/' + notif.type + ':config'"
                     scope="Instance"
                     default-scope="Instance"
                   />
@@ -146,17 +146,17 @@
     </div>
 
     <modal
+      id="job-notifications-edit-modal"
       v-model="editModal"
       :title="$t(editIndex < 0 ? 'Create Notification' : 'Edit Notification')"
       size="lg"
-      id="job-notifications-edit-modal"
       append-to-body
     >
       <div>
         <div class="form-group">
           <label class="col-sm-2 control-label"> Trigger </label>
           <div class="col-sm-10 form-control-static">
-            <dropdown ref="dropdown" id="notification-edit-trigger-dropdown">
+            <dropdown id="notification-edit-trigger-dropdown" ref="dropdown">
               <btn
                 type="simple"
                 class="btn-hover btn-secondary dropdown-toggle"
@@ -172,11 +172,11 @@
                 </span>
                 <span v-else> Select a Trigger </span>
               </btn>
-              <template v-slot:dropdown>
+              <template #dropdown>
                 <li
                   v-for="trigger in notifyTypes"
-                  @click="setEditNotificationTrigger(trigger)"
                   :data-trigger="trigger"
+                  @click="setEditNotificationTrigger(trigger)"
                 >
                   <a role="button">
                     <i class="fas" :class="triggerIcons[trigger]"></i>
@@ -192,7 +192,7 @@
           <div class="form-group">
             <label class="col-sm-2 control-label"> Notification Type </label>
             <div class="col-sm-10 form-control-static">
-              <dropdown ref="dropdown" id="notification-edit-type-dropdown">
+              <dropdown id="notification-edit-type-dropdown" ref="dropdown">
                 <btn
                   type="simple"
                   class="btn-simple btn-hover btn-secondary dropdown-toggle"
@@ -215,12 +215,12 @@
                   </span>
                   <span v-else> Select a Notification </span>
                 </btn>
-                <template v-slot:dropdown>
+                <template #dropdown>
                   <li v-for="plugin in sortedProviders" :key="plugin.name">
                     <a
                       role="button"
-                      @click="setEditNotificationType(plugin.name)"
                       :data-plugin-type="plugin.name"
+                      @click="setEditNotificationType(plugin.name)"
                     >
                       <plugin-info
                         :detail="plugin"
@@ -254,33 +254,33 @@
 
         <plugin-config
           id="notification-edit-config"
-          :mode="editIndex === -1 ? 'create' : 'edit'"
-          :serviceName="'Notification'"
-          v-model="editNotification"
           :key="'edit_config' + editIndex + '/' + editNotification.type"
+          v-model="editNotification"
+          :mode="editIndex === -1 ? 'create' : 'edit'"
+          :service-name="'Notification'"
           :show-title="false"
           :show-description="false"
           :context-autocomplete="true"
           :validation="editValidation"
           scope="Instance"
           default-scope="Instance"
-          :autocompleteCallback="autocompleteCallback"
+          :autocomplete-callback="autocompleteCallback"
         ></plugin-config>
       </div>
 
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn
-            @click="cancelEditNotification"
             id="job-notifications-edit-modal-btn-cancel"
+            @click="cancelEditNotification"
             >{{ $t("Cancel") }}</btn
           >
           &nbsp;
           <btn
-            @click="saveNotification"
+            id="job-notifications-edit-modal-btn-save"
             type="primary"
             :disabled="!editNotificationTrigger || !editNotification.type"
-            id="job-notifications-edit-modal-btn-save"
+            @click="saveNotification"
             >{{ $t("Save") }}</btn
           >
           <span
@@ -310,7 +310,6 @@ import { VMarkdownView } from "vue3-markdown";
 
 export default defineComponent({
   name: "NotificationsEditor",
-  props: ["notificationData"],
   components: {
     PluginInfo,
     PluginConfig,
@@ -318,6 +317,7 @@ export default defineComponent({
     UndoRedo,
     VMarkdownView,
   },
+  props: ["notificationData"],
   emits: ["changed"],
   data() {
     return {
@@ -353,22 +353,49 @@ export default defineComponent({
   },
   computed: {
     sortedProviders() {
-      let prov = [this.getProviderFor("email"), this.getProviderFor("url")];
-      let other = this.pluginProviders.filter(
+      const prov = [this.getProviderFor("email"), this.getProviderFor("url")];
+      const other = this.pluginProviders.filter(
         (x) => x.name !== "email" && x.name !== "url",
       );
       return prov.concat(other);
     },
     groupedNotifications() {
-      let grouped = {};
+      const grouped = {};
       this.notifyTypes.forEach((trigger) => {
-        let found = this.notifications.filter((s) => s.trigger === trigger);
+        const found = this.notifications.filter((s) => s.trigger === trigger);
         if (found && found.length > 0) {
           grouped[trigger] = found;
         }
       });
       return grouped;
     },
+  },
+  watch: {
+    notifications: {
+      handler() {
+        this.$emit("changed", this.notifications);
+      },
+      deep: true,
+    },
+  },
+  async mounted() {
+    this.autocompleteCallback = window.notificationAutocomplete;
+
+    this.notifications = [].concat(this.notificationData.notifications || []);
+    this.notifyAvgDurationThreshold =
+      this.notificationData.notifyAvgDurationThreshold;
+    this.eventBus.on("undo", this.doUndo);
+    this.eventBus.on("redo", this.doRedo);
+    pluginService.getPluginProvidersForService("Notification").then((data) => {
+      if (data.service) {
+        this.pluginProviders = data.descriptions;
+        this.pluginLabels = data.labels;
+      }
+    });
+  },
+  beforeUnmount() {
+    this.eventBus.off("undo");
+    this.eventBus.off("redo");
   },
   methods: {
     async addNotification(trigger) {
@@ -403,7 +430,7 @@ export default defineComponent({
       this.notifications.splice(index, 1, value);
     },
     async doDelete(index) {
-      let oldval = this.doClone(this.notifications[index]);
+      const oldval = this.doClone(this.notifications[index]);
       await this.operationDelete(index);
       this.eventBus.emit("change", {
         index: index,
@@ -414,8 +441,8 @@ export default defineComponent({
     },
     async doCreate(value) {
       await this.operationCreate(value);
-      let value1 = this.doClone(value);
-      let index = this.notifications.length - 1;
+      const value1 = this.doClone(value);
+      const index = this.notifications.length - 1;
       this.eventBus.emit("change", {
         index: index,
         value: value1,
@@ -424,9 +451,9 @@ export default defineComponent({
       });
     },
     async doModify(index, value) {
-      let oldval = this.doClone(this.notifications[index]);
+      const oldval = this.doClone(this.notifications[index]);
       await this.operationModify(index, value);
-      let clone = this.doClone(value);
+      const clone = this.doClone(value);
       this.eventBus.emit("change", {
         index: index,
         value: clone,
@@ -436,7 +463,7 @@ export default defineComponent({
       });
     },
     async doDeleteNotification(notif) {
-      let ndx = this.notifications.findIndex((n) => n === notif);
+      const ndx = this.notifications.findIndex((n) => n === notif);
       if (ndx >= 0) {
         return this.doDelete(ndx);
       }
@@ -487,7 +514,7 @@ export default defineComponent({
       }
 
       if (this.editNotification.config.recipients != null) {
-        let recipientsStr = this.editNotification.config.recipients;
+        const recipientsStr = this.editNotification.config.recipients;
         this.editNotification.config.recipients = recipientsStr
           .split(",")
           .map((mail) => mail.trim())
@@ -546,33 +573,6 @@ export default defineComponent({
         return this.operationDelete(change.index);
       }
     },
-  },
-  watch: {
-    notifications: {
-      handler() {
-        this.$emit("changed", this.notifications);
-      },
-      deep: true,
-    },
-  },
-  async mounted() {
-    this.autocompleteCallback = window.notificationAutocomplete;
-
-    this.notifications = [].concat(this.notificationData.notifications || []);
-    this.notifyAvgDurationThreshold =
-      this.notificationData.notifyAvgDurationThreshold;
-    this.eventBus.on("undo", this.doUndo);
-    this.eventBus.on("redo", this.doRedo);
-    pluginService.getPluginProvidersForService("Notification").then((data) => {
-      if (data.service) {
-        this.pluginProviders = data.descriptions;
-        this.pluginLabels = data.labels;
-      }
-    });
-  },
-  beforeUnmount() {
-    this.eventBus.off("undo");
-    this.eventBus.off("redo");
   },
 });
 </script>

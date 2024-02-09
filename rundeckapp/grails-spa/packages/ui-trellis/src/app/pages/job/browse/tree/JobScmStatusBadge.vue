@@ -1,13 +1,13 @@
 <template>
   <span
+    v-if="shouldShow"
     :title="tooltip"
     class="has_tooltip"
     data-viewport="#section-content"
     data-placement="right"
-    v-if="shouldShow"
   >
     <span :class="iconStatus.color">
-      <i class="glyphicon" :class="icon || iconStatus.icon" v-if="notext"></i>
+      <i v-if="notext" class="glyphicon" :class="icon || iconStatus.icon"></i>
       <span v-if="!notext">{{ textOutput }}</span>
     </span>
   </span>
@@ -82,7 +82,7 @@ export default defineComponent({
           color: "text-warning",
         };
       } else {
-        let showStatus =
+        const showStatus =
           this.exportStatus && (this.showClean || this.exportStatus !== "CLEAN")
             ? this.exportStatus
             : this.importStatus;

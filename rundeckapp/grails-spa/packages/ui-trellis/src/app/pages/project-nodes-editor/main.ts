@@ -17,6 +17,10 @@ context.rootStore.ui.addItems([
     widget: markRaw(
       defineComponent({
         name: "ProjectNodesEditorWidget",
+        components: {
+          EditProjectNodeSourcePage,
+        },
+        provide: { nodeSourceFile: context.rootStore.nodeSourceFile },
         data: function () {
           return {
             eventBus: context.eventBus,
@@ -24,11 +28,6 @@ context.rootStore.ui.addItems([
             nextPageUrl: "",
           };
         },
-        provide: { nodeSourceFile: context.rootStore.nodeSourceFile },
-        components: {
-          EditProjectNodeSourcePage,
-        },
-        template: `<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :eventBus="eventBus" v-if="index>=0"/>`,
         mounted() {
           const context = getRundeckContext();
 
@@ -42,6 +41,7 @@ context.rootStore.ui.addItems([
             this.nextPageUrl = data.nextPageUrl;
           }
         },
+        template: `<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :eventBus="eventBus" v-if="index>=0"/>`,
       }),
     ),
   },

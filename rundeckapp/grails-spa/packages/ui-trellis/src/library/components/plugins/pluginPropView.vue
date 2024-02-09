@@ -1,6 +1,6 @@
 <template>
   <span>
-    <span class="configpair" v-if="prop.type === 'Boolean'">
+    <span v-if="prop.type === 'Boolean'" class="configpair">
       <template
         v-if="
           value === 'true' ||
@@ -11,32 +11,32 @@
       >
         <span :title="prop.desc">{{ prop.title }}: </span>
         <span
+          v-if="value === 'true' || value === true"
           :class="
             (prop.options && prop.options['booleanTrueDisplayValueClass']) ||
             'text-success'
           "
-          v-if="value === 'true' || value === true"
         >
           <plugin-prop-val :prop="prop" :value="value" />
         </span>
         <span
+          v-if="value === 'false' || value === false"
           :class="
             (prop.options && prop.options['booleanFalseDisplayValueClass']) ||
             'text-success'
           "
-          v-if="value === 'false' || value === false"
         >
           <plugin-prop-val :prop="prop" :value="value" />
         </span>
       </template>
     </span>
-    <span class="configpair" v-else-if="prop.type === 'Integer'">
+    <span v-else-if="prop.type === 'Integer'" class="configpair">
       <span :title="prop.desc">{{ prop.title }}:</span>
       <span style="font-family: Courier, monospace">{{ value }}</span>
     </span>
     <span
-      class="configpair"
       v-else-if="['Options', 'Select', 'FreeSelect'].indexOf(prop.type) >= 0"
+      class="configpair"
     >
       <span :title="prop.desc">{{ prop.title }}:</span>
       <template v-if="prop.type !== 'Options'">
@@ -52,8 +52,8 @@
             class="text-success"
           >
             <i
-              class="glyphicon glyphicon-ok-circle"
               v-if="!(prop.options && prop.options['valueDisplayType'])"
+              class="glyphicon glyphicon-ok-circle"
             ></i>
             <plugin-prop-val :prop="prop" :value="optval" />
           </span>
@@ -61,8 +61,8 @@
         <span v-else-if="typeof value === 'string' && `${value}`.length > 0">
           <span v-for="optval in `${value}`" :key="optval" class="text-success">
             <i
-              class="glyphicon glyphicon-ok-circle"
               v-if="!(prop.options && prop.options['valueDisplayType'])"
+              class="glyphicon glyphicon-ok-circle"
             ></i>
             <plugin-prop-val :prop="prop" :value="optval" />
           </span>
@@ -72,7 +72,7 @@
     <span v-else class="configpair">
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
         <expandable>
-          <template v-slot:label
+          <template #label
             ><span :title="prop.desc">{{ prop.title }}:</span>
             <span class="text-info"
               >{{ `${value}`.split(/\r?\n/).length }} lines</span
@@ -83,7 +83,7 @@
             :lang="prop.options['codeSyntaxMode']"
             height="200"
             width="100%"
-            :readOnly="true"
+            :read-only="true"
           />
         </expandable>
       </template>
@@ -91,7 +91,7 @@
         v-else-if="prop.options && prop.options['displayType'] === 'MULTI_LINE'"
       >
         <expandable>
-          <template v-slot:label
+          <template #label
             ><span :title="prop.desc">{{ prop.title }}:</span>
             <span class="text-info"
               >{{ `${value}`.split(/\r?\n/).length }} lines</span
@@ -101,7 +101,7 @@
             v-model="value as string"
             height="200"
             width="100%"
-            :readOnly="true"
+            :read-only="true"
           />
         </expandable>
       </template>
@@ -120,11 +120,11 @@
       <span v-else>
         <span :title="prop.desc">{{ prop.title }}:</span>
         <span
-          class="text-success"
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
+          class="text-success"
           >&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span
         >
-        <span class="text-success" v-else>{{ value }}</span>
+        <span v-else class="text-success">{{ value }}</span>
       </span>
     </span>
   </span>

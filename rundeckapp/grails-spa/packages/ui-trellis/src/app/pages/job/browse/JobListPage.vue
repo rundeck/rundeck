@@ -1,13 +1,13 @@
 <template>
   <JobBulkEditControls />
   <Browser
+    v-if="loaded"
     :path="jobPageStore.browsePath"
     :root="true"
-    @rootBrowse="rootBrowse"
     class="job_list_browser"
     :expand-level="jobPageStore.groupExpandLevel"
     :query-refresh="queryRefresh"
-    v-if="loaded"
+    @root-browse="rootBrowse"
   >
     <ui-socket section="job-list-page" location="empty-splash">
       <div class="empty-splash">
@@ -66,18 +66,6 @@ export default defineComponent({
       queryRefresh: ref(false),
     };
   },
-  methods: {
-    async rootBrowse(path: string, href: string) {
-      //deselect any jobs
-      this.jobPageStore.selectedJobs = [];
-      this.jobPageStore.browsePath = path;
-      this.jobPageStore.query["groupPath"] = path;
-      eventBus.emit("job-list-page:browsed", path);
-      if (href) {
-        window.history.pushState({ browsePath: path }, document.title, href);
-      }
-    },
-  },
   async mounted() {
     eventBus.on("job-list-page:search", async () => {
       if (
@@ -93,13 +81,13 @@ export default defineComponent({
       }
     });
     eventBus.on("job-list-page:rootBrowse", async (evt) => {
-      let { path, href } = evt;
+      const { path, href } = evt;
       this.rootBrowse(path, href);
     });
     if (typeof history.replaceState == "function") {
       if (!history.state) {
         //set first page load state
-        let state = this.jobPageStore.browsePath
+        const state = this.jobPageStore.browsePath
           ? { start: true, browsePath: this.jobPageStore.browsePath }
           : { start: true };
         history.replaceState(state, null, document.location.toString());
@@ -112,6 +100,18 @@ export default defineComponent({
     };
     await this.jobPageStore.load();
     this.loaded = true;
+  },
+  methods: {
+    async rootBrowse(path: string, href: string) {
+      //deselect any jobs
+      this.jobPageStore.selectedJobs = [];
+      this.jobPageStore.browsePath = path;
+      this.jobPageStore.query["groupPath"] = path;
+      eventBus.emit("job-list-page:browsed", path);
+      if (href) {
+        window.history.pushState({ browsePath: path }, document.title, href);
+      }
+    },
   },
 });
 </script>

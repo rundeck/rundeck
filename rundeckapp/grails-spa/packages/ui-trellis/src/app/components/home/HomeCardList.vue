@@ -3,17 +3,17 @@
     <div id="project-list" class="card-content">
       <div>
         <HomeSearchBar
-          :placeholder="$t('page.home.search.projects.input.placeholder')"
           v-model="search"
+          :placeholder="$t('page.home.search.projects.input.placeholder')"
           @on-focus="hideResults"
           @on-enter="handleSearch()"
           @on-blur="handleSearch()"
         />
         <ui-socket location="table-header" section="home" />
         <p
+          v-if="showSearchResults && loadedProjectNames"
           data-test="searchResults"
           class="alert alert-info"
-          v-if="showSearchResults && loadedProjectNames"
         >
           <span
             :class="{
@@ -26,8 +26,8 @@
         </p>
         <offset-pagination
           :pagination="pagination"
+          :show-prefix="true"
           @change="changePageOffset"
-          :showPrefix="true"
         ></offset-pagination>
       </div>
 
@@ -54,7 +54,7 @@
         v-if="searchResultsCount > 0"
         :key="searchResultsCount"
         :projects="resultsPage"
-        :allProjects="projects"
+        :all-projects="projects"
         :loaded="loadedProjectNames"
       />
     </div>
@@ -122,6 +122,31 @@ export default defineComponent({
       );
     },
   },
+  watch: {
+    projects: {
+      immediate: true,
+      deep: true,
+      handler(newVal: Project[]) {
+        if (newVal && newVal.length) {
+          this.handleSearch();
+          this.pagination.total = newVal.length;
+        }
+      },
+    },
+  },
+  mounted() {
+    this.eventBus.on(
+      "project-favorites-toggle:status",
+      ({ favsOnly, favoriteProjects }) => {
+        this.filterFavoritesOnly = favsOnly;
+        this.favoriteProjectNames = favoriteProjects;
+        // eventBus might emit before projects are loaded
+        if (this.projects) {
+          this.handleSearch();
+        }
+      },
+    );
+  },
   methods: {
     // filters the projects based on the search input and if the user has selected to only show favorites
     // search input can either be a string or a regex, and the search is case-insensitive
@@ -149,7 +174,7 @@ export default defineComponent({
         );
       }
 
-      let searchSet = this.filterFavoritesOnly
+      const searchSet = this.filterFavoritesOnly
         ? this.favoriteProjects
         : this.projects;
       this.filteredProjects = searchSet.filter((project: Project) => {
@@ -177,31 +202,6 @@ export default defineComponent({
       const offset = this.pagination.offset;
       const max = this.pagination.max;
       return results.slice(offset, offset + max);
-    },
-  },
-  mounted() {
-    this.eventBus.on(
-      "project-favorites-toggle:status",
-      ({ favsOnly, favoriteProjects }) => {
-        this.filterFavoritesOnly = favsOnly;
-        this.favoriteProjectNames = favoriteProjects;
-        // eventBus might emit before projects are loaded
-        if (this.projects) {
-          this.handleSearch();
-        }
-      },
-    );
-  },
-  watch: {
-    projects: {
-      immediate: true,
-      deep: true,
-      handler(newVal: Project[]) {
-        if (newVal && newVal.length) {
-          this.handleSearch();
-          this.pagination.total = newVal.length;
-        }
-      },
     },
   },
 });

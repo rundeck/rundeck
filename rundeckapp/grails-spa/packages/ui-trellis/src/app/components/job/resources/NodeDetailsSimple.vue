@@ -26,14 +26,14 @@
         </tr>
         <tr>
           <!-- OS details -->
-          <td class="key" v-if="hasOsData()">
+          <td v-if="hasOsData()" class="key">
             {{ $t("node.metadata.os") }}
           </td>
-          <td class="value" v-if="hasOsData()">
+          <td v-if="hasOsData()" class="value">
             <node-filter-link
-              style="margin-right: 0.5em"
               v-for="attr in filteredAttrs"
               :key="attr"
+              style="margin-right: 0.5em"
               :filter-key="attr"
               :filter-val="attributes[attr]"
               :class="{
@@ -49,17 +49,17 @@
             </td>
             <td>
               <node-filter-link
+                v-if="attributes.username"
                 filter-key="username"
                 :filter-val="attributes.username"
                 @nodefilterclick="filterClick"
-                v-if="attributes.username"
               ></node-filter-link>
               <span class="atsign">@</span>
               <node-filter-link
+                v-if="attributes.hostname"
                 filter-key="hostname"
                 :filter-val="attributes.hostname"
                 @nodefilterclick="filterClick"
-                v-if="attributes.hostname"
               ></node-filter-link>
             </td>
           </template>
@@ -72,25 +72,25 @@
           <td class="" colspan="3">
             <span v-if="tags">
               <span class="nodetags">
-                <span class="label label-muted" v-for="tag in tags">
+                <span v-for="tag in tags" class="label label-muted">
                   {{ tag }}
 
                   <node-filter-link
                     filter-key="tags"
                     :filter-val="tag"
-                    @nodefilterclick="filterClick"
                     class="textbtn textbtn-info textbtn-saturated hover-action"
+                    @nodefilterclick="filterClick"
                   >
                     <i class="glyphicon glyphicon-plus text-success" />
                   </node-filter-link>
 
                   <node-filter-link
-                    @nodefilterclick="filterClick"
                     v-if="showExcludeFilterLinks"
                     :exclude="true"
                     filter-key="tags"
                     :filter-val="tag"
                     class="text-danger textbtn textbtn-info textbtn-saturated hover-action"
+                    @nodefilterclick="filterClick"
                   >
                     <i class="glyphicon glyphicon-minus text-danger" />
                   </node-filter-link>
@@ -103,8 +103,8 @@
       <!--  node attributes with no namespaces -->
       <tbody>
         <tr
-          class="hover-action-holder"
           v-for="(value, attr, index) in attributesWithNoNamespaces"
+          class="hover-action-holder"
         >
           <td class="key setting">
             <node-filter-link
@@ -154,9 +154,9 @@
               <a
                 href="#"
                 role="button"
-                @click="toggleNs(namespace.ns)"
                 :class="{ active: uiNs[namespace.ns] }"
                 class="textbtn textbtn-muted textbtn-saturated"
+                @click="toggleNs(namespace.ns)"
               >
                 {{ namespace.ns }}
                 <i class="auto-caret"></i>
@@ -230,7 +230,6 @@ export default defineComponent({
     NodeStatus,
     NodeFilterLink,
   },
-  emits: ["filter"],
   props: {
     attributes: {
       type: Object as PropType<{ [key: string]: string }>,
@@ -267,6 +266,13 @@ export default defineComponent({
       default: false,
     },
   },
+  emits: ["filter"],
+  setup() {
+    const uiNs = ref({} as { [name: string]: boolean });
+    return {
+      uiNs,
+    };
+  },
   computed: {
     useDefaultColumns() {
       return this.filterColumns.length < 1 && this.nodeColumns;
@@ -277,8 +283,8 @@ export default defineComponent({
      * @param attrs
      */
     displayAttributes() {
-      let result: { [key: string]: string } = {};
-      for (let e in this.attributes) {
+      const result: { [key: string]: string } = {};
+      for (const e in this.attributes) {
         if (e.indexOf(":") < 0 && OsAttributeNames.indexOf(e) < 0) {
           result[e] = this.attributes[e];
         }
@@ -286,10 +292,10 @@ export default defineComponent({
       return result;
     },
     attributeNamespaces() {
-      let index: any = {};
-      let names: string[] = [];
-      for (let e in this.attributes) {
-        let found = e.match(this.attributeNamespaceRegex);
+      const index: any = {};
+      const names: string[] = [];
+      for (const e in this.attributes) {
+        const found = e.match(this.attributeNamespaceRegex);
         if (found && found.length > 1) {
           if (!index[found[1]]) {
             index[found[1]] = [];
@@ -304,9 +310,9 @@ export default defineComponent({
       }
       names.sort();
 
-      let results: { ns: string; values: any[] }[] = [];
+      const results: { ns: string; values: any[] }[] = [];
       for (let i = 0; i < names.length; i++) {
-        let values = index[names[i]];
+        const values = index[names[i]];
         values.sort(function (a: any, b: any) {
           return a.shortname.localeCompare(b.shortname);
         });
@@ -328,15 +334,9 @@ export default defineComponent({
       return attr.filter((val) => this.attributes[val]);
     },
   },
-  setup() {
-    const uiNs = ref({} as { [name: string]: boolean });
-    return {
-      uiNs,
-    };
-  },
   methods: {
     toggleNs(ns: string) {
-      let val = this.uiNs[ns];
+      const val = this.uiNs[ns];
       console.log(`toggle ${ns} ${val} = ${!val}`);
       this.uiNs[ns] = !val;
     },
@@ -352,8 +352,8 @@ export default defineComponent({
       return a.length >= b.length && a.substring(0, b.length) == b;
     },
     attributesInNamespace(attrs: any, ns: string) {
-      let result: { name: string; value: string; shortname: string }[] = [];
-      for (let e in attrs) {
+      const result: { name: string; value: string; shortname: string }[] = [];
+      for (const e in attrs) {
         if (this.startsWith(e, ns + ":") && attrs[e]) {
           result.push({
             name: e,
@@ -368,9 +368,9 @@ export default defineComponent({
       return result;
     },
     attributeNamespaceNames(attrs: any) {
-      let namespaces: string[] = [];
-      for (let e in attrs) {
-        let found = e.match(this.attributeNamespaceRegex);
+      const namespaces: string[] = [];
+      for (const e in attrs) {
+        const found = e.match(this.attributeNamespaceRegex);
         if (found && found.length > 1) {
           if (namespaces.indexOf(found[1]) < 0) {
             namespaces.push(found[1]);

@@ -1,20 +1,20 @@
 <template>
   <div>
     <project-plugin-groups
-      :configPrefix="configPrefix"
+      :config-prefix="configPrefix"
       service-name="PluginGroup"
       :edit-mode="true"
       :help="help"
       project=""
-      @input="inputReceived"
       :edit-button-text="$t('Edit Plugin Groups')"
       :mode-toggle="modeToggle"
+      @input="inputReceived"
     >
     </project-plugin-groups>
-    <template v-if="this.pluginConfigs">
+    <template v-if="pluginConfigs">
       <input
         type="hidden"
-        :value="JSON.stringify(this.pluginConfigs)"
+        :value="JSON.stringify(pluginConfigs)"
         :name="configPrefix + 'json'"
       />
     </template>

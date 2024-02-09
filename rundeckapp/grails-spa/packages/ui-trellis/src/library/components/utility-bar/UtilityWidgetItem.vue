@@ -22,11 +22,6 @@ import Popper from "./Popper.vue";
 
 export default defineComponent({
   name: "UtilityWidgetItem",
-  data() {
-    return {
-      open: false,
-    };
-  },
   components: {
     Popper,
   },
@@ -35,6 +30,11 @@ export default defineComponent({
       type: Object as PropType<UtilityWidgetItem>,
       required: true,
     },
+  },
+  data() {
+    return {
+      open: false,
+    };
   },
   methods: {
     handleClick() {

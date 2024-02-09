@@ -17,18 +17,18 @@
 <template>
   <div>
     <btn
-      @click="modalOpen = true"
       :class="btnClass"
       :size="btnSize"
       :type="btnType"
+      @click="modalOpen = true"
     >
       <slot>Choose A Job &hellip;</slot>
     </btn>
 
     <modal
+      ref="modal"
       v-model="modalOpen"
       :title="'Choose A Job'"
-      ref="modal"
       append-to-body
       :size="size"
     >
@@ -39,8 +39,8 @@
 
       <div v-if="showScheduledToggle" class="form-group">
         <select
-          v-model="filterType"
           id="_job_config_picker_scheduled_filter"
+          v-model="filterType"
           class="form-control"
         >
           <option value="">All Jobs</option>
@@ -49,11 +49,11 @@
         </select>
       </div>
       <div
-        class="list-group"
         v-for="(item, name) in jobTree.groups"
         :key="'group' + name"
+        class="list-group"
       >
-        <div class="list-group-item" v-if="name && item.jobs.length > 0">
+        <div v-if="name && item.jobs.length > 0" class="list-group-item">
           <h4 class="list-group-item-heading">{{ item.label }}</h4>
         </div>
         <div
@@ -75,12 +75,12 @@
           <span class="text-secondary">
             {{ job.description }}
           </span>
-          <span class="text-muted" v-if="job.scheduled">
+          <span v-if="job.scheduled" class="text-muted">
             <i class="glyphicon glyphicon-time"></i>
           </span>
         </div>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="modalOpen = false">Cancel</btn>
         </div>
@@ -149,10 +149,24 @@ export default defineComponent({
       filterType: this.showScheduledDefault ? "scheduled" : "",
     };
   },
+  watch: {
+    project() {
+      this.onProjectOrFilterTypeChange();
+    },
+    filterType() {
+      this.onProjectOrFilterTypeChange();
+    },
+  },
+  mounted() {
+    if (window._rundeck.projectName) {
+      this.showProjectSelector = false;
+      this.project = window._rundeck.projectName;
+    }
+  },
   methods: {
     onProjectOrFilterTypeChange() {
       if (this.project !== "") {
-        let params: { [name: string]: any } = {};
+        const params: { [name: string]: any } = {};
 
         if (this.filterType != "") {
           params["scheduledFilter"] = this.filterType === "scheduled";
@@ -169,20 +183,6 @@ export default defineComponent({
       this.selectedJob = job;
       this.$emit("update:modelValue", this.selectedJob.id);
       this.modalOpen = false;
-    },
-  },
-  mounted() {
-    if (window._rundeck.projectName) {
-      this.showProjectSelector = false;
-      this.project = window._rundeck.projectName;
-    }
-  },
-  watch: {
-    project() {
-      this.onProjectOrFilterTypeChange();
-    },
-    filterType() {
-      this.onProjectOrFilterTypeChange();
     },
   },
 });

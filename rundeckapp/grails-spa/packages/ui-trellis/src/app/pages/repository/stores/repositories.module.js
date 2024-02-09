@@ -103,10 +103,10 @@ const actions = {
       withCredentials: true,
     })
       .then((response) => {
-        let repo = this.state.repositories.repositories.find(
+        const repo = this.state.repositories.repositories.find(
           (r) => r.repositoryName === properties.repo.repositoryName,
         );
-        let plugin = repo.results.find(
+        const plugin = repo.results.find(
           (r) => r.installId === properties.plugin.installId,
         );
         plugin.installed = true;
@@ -152,10 +152,10 @@ const actions = {
       withCredentials: true,
     })
       .then((response) => {
-        let repo = this.state.repositories.repositories.find(
+        const repo = this.state.repositories.repositories.find(
           (r) => r.repositoryName === properties.repo.repositoryName,
         );
-        let plugin = repo.results.find(
+        const plugin = repo.results.find(
           (r) => r.installId === properties.plugin.installId,
         );
         plugin.installed = false;

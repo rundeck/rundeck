@@ -2,13 +2,13 @@
   <template v-if="!jobPageStore.bulkEditMode">
     <template v-if="jobEnabled && runAuthorized">
       <btn
+        v-if="projEnabled"
         type="success"
         size="xs"
         class="btn-simple btn-hover act_execute_job"
         :title="$t('action.prepareAndRun.tooltip')"
         :data-job-id="job.id"
         @click="$emit('run-job', job.id)"
-        v-if="projEnabled"
       >
         <b class="glyphicon glyphicon-play"></b>
       </btn>

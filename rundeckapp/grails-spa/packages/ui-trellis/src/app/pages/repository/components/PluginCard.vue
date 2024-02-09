@@ -1,7 +1,7 @@
 <template>
   <div v-show="displayCard" class="px-3">
     <div class="card w-full p-6">
-      <div class="col-md-3" v-if="result.record != null">
+      <div v-if="result.record != null" class="col-md-3">
         <div
           v-if="
             result.record != null &&
@@ -30,21 +30,21 @@
           <div class="flexible">
             <div style="margin-bottom: 1em; margin-top: 1em">
               <a
-                class="btn btn-sm btn-cta square-button"
                 v-if="!result.installed && canInstall && result.installId"
+                class="btn btn-sm btn-cta square-button"
                 @click="handleInstall"
                 >Install</a
               >
               <a
                 v-if="result.installed"
-                @click="handleUninstall"
                 class="btn btn-sm btn-danger square-button"
+                @click="handleUninstall"
                 >Uninstall</a
               >
             </div>
             <div
-              class="requires-rundeck-version"
               v-if="result.rundeckCompatibility"
+              class="requires-rundeck-version"
             >
               Requires Rundeck {{ result.rundeckCompatibility }}
             </div>
@@ -67,7 +67,7 @@
           </div>
         </div>
         <div class="card-footer">
-          <div class v-if="result.support !== 'Enterprise Exclusive'">
+          <div v-if="result.support !== 'Enterprise Exclusive'" class>
             <div class="row">
               <div class="col-xs-12 col-sm-12">
                 <div class="links fa-2x">
@@ -96,7 +96,7 @@
               </div>
             </div>
           </div>
-          <div class="col-xs-12" v-else>
+          <div v-else class="col-xs-12">
             <a
               href="https://www.rundeck.com/test-drive"
               target="_blank"
@@ -164,7 +164,7 @@ export default {
     ...mapActions("repositories", ["installPlugin", "uninstallPlugin"]),
     unqSortedSvcs: function (serviceList) {
       if (!serviceList) return [];
-      var unq = [];
+      const unq = [];
       serviceList.forEach((svc) => {
         if (unq.indexOf(svc) === -1) unq.push(svc);
       });

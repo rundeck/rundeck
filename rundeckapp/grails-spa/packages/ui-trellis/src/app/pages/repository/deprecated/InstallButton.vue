@@ -2,16 +2,16 @@
   <div class="row">
     <div class="col-xs-12 col-sm-8">
       <span v-if="isInstalled || installed">
-        <span @click="uninstall" class="btn btn-sm btn-danger">Uninstall</span>
+        <span class="btn btn-sm btn-danger" @click="uninstall">Uninstall</span>
         <span
-          @click="install"
-          class="btn btn-sm btn-warning"
           v-if="updateAvailable"
+          class="btn btn-sm btn-warning"
+          @click="install"
           >Update Available</span
         >
       </span>
       <span v-else>
-        <span @click="install" class="btn btn-sm btn-info">Install</span>
+        <span class="btn btn-sm btn-info" @click="install">Install</span>
       </span>
     </div>
     <div class="col-xs-12 col-sm-4">
@@ -41,14 +41,14 @@ export default {
     },
     updateAvailable() {
       if (this.isInstalled) {
-        let plugin = _.find(this.installedPlugins, {
+        const plugin = _.find(this.installedPlugins, {
           artifactId: this.plugin.object_id,
         });
 
-        let installedPluginVersion = parseInt(
+        const installedPluginVersion = parseInt(
           plugin.version.replace(/\D/g, ""),
         );
-        let remotePluginVersion = parseInt(
+        const remotePluginVersion = parseInt(
           this.plugin.current_version.replace(/\D/g, ""),
         );
 

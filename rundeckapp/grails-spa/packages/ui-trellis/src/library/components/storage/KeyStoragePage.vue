@@ -2,21 +2,21 @@
   <ui-socket section="edit-key-storage-providers" location="viewKeys">
     <div>
       <key-storage-view
-        ref="keyStorageViewRef"
         v-if="ready"
+        ref="keyStorageViewRef"
         :project="project"
-        :createdKey="selectedKey"
+        :created-key="selectedKey"
         :root-path="rootPath"
         :read-only="readOnly"
         :allow-upload="allowUpload"
         :value="path"
-        @openEditor="openEditor"
+        @open-editor="openEditor"
       ></key-storage-view>
       <modal
-        v-model="modalEdit"
-        title="Add or Upload a Key"
         id="storageuploadkey"
         ref="modalEdit"
+        v-model="modalEdit"
+        title="Add or Upload a Key"
         auto-focus
         append-to-body
         :footer="false"
@@ -24,11 +24,11 @@
         <key-storage-edit
           :project="project"
           :root-path="rootPath"
-          :uploadSetting="uploadSetting"
+          :upload-setting="uploadSetting"
           :storage-filter="storageFilter"
-          @keyCreated="updateSelectedKey"
-          @cancelEditing="handleCancelEditing"
-          @finishEditing="handleFinishEditing"
+          @key-created="updateSelectedKey"
+          @cancel-editing="handleCancelEditing"
+          @finish-editing="handleFinishEditing"
         ></key-storage-edit>
       </modal>
     </div>
@@ -66,6 +66,15 @@ export default defineComponent({
       selectedKey: {},
     };
   },
+  computed: {
+    rootPath(): string {
+      return this.project ? "keys/project/" + this.project : "keys";
+    },
+  },
+  async mounted() {
+    this.path = this.value ? this.value : "";
+    this.ready = true;
+  },
   methods: {
     handleFinishEditing(selectedKey: any) {
       // @ts-ignore
@@ -82,15 +91,6 @@ export default defineComponent({
     updateSelectedKey(key: {}) {
       this.selectedKey = key;
     },
-  },
-  computed: {
-    rootPath(): string {
-      return this.project ? "keys/project/" + this.project : "keys";
-    },
-  },
-  async mounted() {
-    this.path = this.value ? this.value : "";
-    this.ready = true;
   },
 });
 </script>

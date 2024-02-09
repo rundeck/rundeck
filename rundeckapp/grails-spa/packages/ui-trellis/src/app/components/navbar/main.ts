@@ -73,10 +73,10 @@ function initNav() {
   const vue = createApp({
     name: "NavigationBarApp",
     components: { NavigationBar },
-    template: `<NavigationBar />`,
     provide: {
       rootStore,
     },
+    template: `<NavigationBar />`,
   });
   vue.mount(elm);
 }
@@ -87,10 +87,10 @@ function initUtil() {
   const vue = createApp({
     name: "UtilityBarApp",
     components: { UtilityBar },
-    template: `<UtilityBar />`,
     provide: {
       rootStore,
     },
+    template: `<UtilityBar />`,
   });
 
   const i18n = initI18n();

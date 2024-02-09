@@ -1,13 +1,13 @@
 <template>
   <div
+    ref="itemDiv"
     class="job_list_group_header hover-reveal-hidden"
     @click="handleClick"
-    ref="itemDiv"
   >
     <btn
-      @click="$emit('toggleExpanded', item.groupPath)"
       type="link"
       class="group-name text-secondary"
+      @click="$emit('toggleExpanded', item.groupPath)"
     >
       <i
         class="glyphicon"
@@ -21,8 +21,8 @@
     <a
       class="groupname text-strong group-name visibility-hidden"
       :title="`Browse job group: ${item.groupPath}`"
-      @click.prevent="$emit('rootBrowse', item.groupPath)"
       :href="href"
+      @click.prevent="$emit('rootBrowse', item.groupPath)"
     >
       <i class="glyphicon glyphicon-folder-open"></i>
     </a>
@@ -36,7 +36,6 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "BrowseGroupItem",
-  emits: ["rootBrowse", "toggleExpanded"],
   props: {
     item: {
       type: JobBrowseItem,
@@ -51,6 +50,7 @@ export default defineComponent({
       default: "",
     },
   },
+  emits: ["rootBrowse", "toggleExpanded"],
   methods: {
     lastPathItem(path: string) {
       const parts = path.split("/");

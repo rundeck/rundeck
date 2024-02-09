@@ -1,12 +1,12 @@
 <template>
   <span class="job-breadcrumbs">
     <span class="job-breadcrumb-item">
-      <a @click.prevent="browsePath('')" :href="browseHref('')">
+      <a :href="browseHref('')" @click.prevent="browsePath('')">
         <slot name="root">&larr;</slot>
       </a>
     </span>
     <template v-for="(part, i) in parts">
-      <span class="breadcrumb-separator job-breadcrumb-item" v-if="i != 0">
+      <span v-if="i != 0" class="breadcrumb-separator job-breadcrumb-item">
         <slot name="separator">/</slot>
       </span>
 
@@ -14,10 +14,10 @@
         :class="linkCss"
         class="job-breadcrumb-item"
         :title="$t('view.jobs.in.this.group')"
-        @click.prevent="browsePath(subgroup(i))"
         :href="browseHref(subgroup(i))"
+        @click.prevent="browsePath(subgroup(i))"
       >
-        <b class="glyphicon glyphicon-folder-close" v-if="i == 0"></b>
+        <b v-if="i == 0" class="glyphicon glyphicon-folder-close"></b>
 
         {{ part }}
       </a>
@@ -48,6 +48,11 @@ export default defineComponent({
       jobPageStore,
     };
   },
+  computed: {
+    parts() {
+      return this.groupPath.split("/");
+    },
+  },
   methods: {
     subgroup(i: number) {
       return this.parts.slice(0, i + 1).join("/");
@@ -57,11 +62,6 @@ export default defineComponent({
     },
     browsePath(path: string) {
       this.$emit("browseTo", path, this.browseHref(path));
-    },
-  },
-  computed: {
-    parts() {
-      return this.groupPath.split("/");
     },
   },
 });

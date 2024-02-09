@@ -23,7 +23,7 @@
                 :use-runner-selector="true"
                 :event-bus="eventBus"
               >
-                <template v-slot:titlePrefix>{{ index }}. </template>
+                <template #titlePrefix>{{ index }}. </template>
               </plugin-config>
             </span>
             <span v-else> {{ index }}. </span>
@@ -56,14 +56,14 @@
       <ui-socket
         section="edit-project-node-source-file"
         location="editor"
-        :eventBus="eventBus"
+        :event-bus="eventBus"
       >
         <ace-editor
+          v-model="valueInternal"
           :soft-wrap-control="true"
           :lang="fileFormat"
           height="500"
           :code-syntax-selectable="!fileFormat"
-          v-model="valueInternal"
         />
       </ui-socket>
       <div v-if="errorMessage">
@@ -83,16 +83,16 @@
       <btn
         name="cancel"
         class="reset_page_confirm"
-        @click="$emit('cancel')"
         :disabled="saving"
+        @click="$emit('cancel')"
       >
         {{ $t("button.action.Cancel") }}
       </btn>
       <btn
         name="save"
         class="btn-cta reset_page_confirm"
-        @click="$emit('save', valueInternal)"
         :disabled="saving"
+        @click="$emit('save', valueInternal)"
       >
         {{ $t("button.action.Save") }}
       </btn>

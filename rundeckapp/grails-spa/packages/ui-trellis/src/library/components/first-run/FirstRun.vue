@@ -1,6 +1,6 @@
 <template>
   <div class="card splash-screen">
-    <div class="row" v-if="loaded">
+    <div v-if="loaded" class="row">
       <div class="col-md-9 mb-6">
         <div v-if="system.loaded" class="splash-screen--title">
           <RundeckVersion

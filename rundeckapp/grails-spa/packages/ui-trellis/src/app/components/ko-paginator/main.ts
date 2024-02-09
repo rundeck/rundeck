@@ -41,7 +41,7 @@ const KoPaginator = {
   },
 };
 
-const mounted = new Map<String, boolean>();
+const mounted = new Map<string, boolean>();
 
 /** Listen to events advertising pagination and mount to elements */
 window._rundeck.eventBus.on("ko-pagination", (event: any) => {

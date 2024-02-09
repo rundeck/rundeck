@@ -9,7 +9,7 @@ import moment from "moment";
 import App from "./App";
 import { initI18n } from "../../../app/utilities/i18n";
 
-let locale = window._rundeck.locale || "en_US";
+const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 // Create VueI18n instance with options

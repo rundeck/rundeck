@@ -17,7 +17,7 @@
 <template>
   <div>
     <select v-model="value" class="form-control">
-      <option v-for="project in projects" :key="project" v-bind:value="project">
+      <option v-for="project in projects" :key="project" :value="project">
         {{ project }}
       </option>
     </select>
@@ -42,6 +42,17 @@ export default defineComponent({
       projects: [] as string[],
     };
   },
+  watch: {
+    value() {
+      this.$emit("update:modelValue", this.value);
+    },
+    modelValue() {
+      this.value = this.modelValue;
+    },
+  },
+  mounted() {
+    this.loadProjects();
+  },
   methods: {
     loadProjects() {
       this.projects.push("");
@@ -50,17 +61,6 @@ export default defineComponent({
           if (prj.name) this.projects.push(prj.name);
         });
       });
-    },
-  },
-  mounted() {
-    this.loadProjects();
-  },
-  watch: {
-    value() {
-      this.$emit("update:modelValue", this.value);
-    },
-    modelValue() {
-      this.value = this.modelValue;
     },
   },
 });

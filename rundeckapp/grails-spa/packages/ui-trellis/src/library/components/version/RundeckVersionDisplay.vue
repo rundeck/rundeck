@@ -21,7 +21,7 @@ export default defineComponent({
       return `${this.logocss} app-logo`;
     },
     text(): string {
-      let { title, number, tag } = this;
+      const { title, number, tag } = this;
       let text = "";
       text += `${title ? title + " " : ""}`;
       text += `${number}`;

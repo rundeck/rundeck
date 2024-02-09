@@ -8,25 +8,25 @@
         <form @submit.prevent="search">
           <div class="input-group input-group-sm">
             <input
+              v-model="searchString"
               type="text"
               class="form-control"
               placeholder="Search for..."
-              v-model="searchString"
             />
-            <span class="input-group-btn" v-if="searchResults.length > 0">
+            <span v-if="searchResults.length > 0" class="input-group-btn">
               <button
-                @click="clearSearch"
                 class="btn btn-default btn-fill"
                 type="button"
+                @click="clearSearch"
               >
                 <i class="fas fa-times"></i>
               </button>
             </span>
-            <span class="input-group-btn" v-else>
+            <span v-else class="input-group-btn">
               <button
-                @click="search"
                 class="btn btn-default btn-fill"
                 type="button"
+                @click="search"
               >
                 <i class="fas fa-search"></i>
               </button>
@@ -41,30 +41,30 @@
           aria-label="..."
         >
           <a
-            @click="showWhichPlugins = true"
             class="btn btn-default"
             :class="{ active: showWhichPlugins === true }"
             :disabled="searchResults.length > 0"
+            @click="showWhichPlugins = true"
             >Installed</a
           >
           <a
-            @click="showWhichPlugins = null"
             class="btn btn-default"
             :class="{ active: showWhichPlugins === null }"
             :disabled="searchResults.length > 0"
+            @click="showWhichPlugins = null"
             >All</a
           >
           <a
-            @click="showWhichPlugins = false"
             class="btn btn-default"
             :class="{ active: showWhichPlugins === false }"
             :disabled="searchResults.length > 0"
+            @click="showWhichPlugins = false"
             >Not Installed</a
           >
         </div>
       </div>
     </div>
-    <div class="row" v-show="searchResults.length > 0">
+    <div v-show="searchResults.length > 0" class="row">
       <h3
         class="col-xs-12"
         style="margin: 1em 0 0; font-weight: bold; text-transform: uppercase"
@@ -79,7 +79,7 @@
         <RepositoryRow :repo="repo" type="search" />
       </div>
     </div>
-    <div class="row" v-if="searchResults.length === 0">
+    <div v-if="searchResults.length === 0" class="row">
       <div
         v-for="repo in repositories"
         :key="repo.repositoryName"
@@ -148,7 +148,7 @@ export default defineComponent({
         return;
       }
       for (let index = 0; index < this.repositories.length; index++) {
-        let theRepo = this.repositories[index].results;
+        const theRepo = this.repositories[index].results;
         const fuse = new Fuse(theRepo, FuseSearchOptions);
         const results = fuse
           .search(this.searchString)
@@ -158,8 +158,8 @@ export default defineComponent({
           this.repositories[index].repositoryName === "official"
         ) {
           let versionNumber = null;
-          let mappedResults = _.map(results, "id");
-          let rundeckVersionNumberContainer = document.getElementsByClassName(
+          const mappedResults = _.map(results, "id");
+          const rundeckVersionNumberContainer = document.getElementsByClassName(
             "rundeck-version-identity",
           );
           if (
@@ -170,7 +170,7 @@ export default defineComponent({
             versionNumber =
               rundeckVersionNumberContainer[0].dataset.versionString;
           }
-          let payload = {
+          const payload = {
             searchString: this.searchString,
             results: mappedResults,
             rundeckVer: versionNumber,

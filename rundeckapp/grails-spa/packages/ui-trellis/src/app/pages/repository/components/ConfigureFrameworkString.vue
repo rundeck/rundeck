@@ -7,7 +7,7 @@ export default {
   props: ["serviceName", "provider", "prop"],
   computed: {
     returnedString: function () {
-      let propName =
+      const propName =
         this.provider.fwkMapping[this.prop.name] ||
         `framework.plugin.${this.serviceName}.${this.provider.name}.${this.prop.name}`;
       return `${propName}=${this.prop.defaultValue || "value"}`;

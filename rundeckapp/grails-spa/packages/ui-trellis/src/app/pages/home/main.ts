@@ -6,7 +6,7 @@ import HomeHeader from "../../components/home/HomeHeader.vue";
 // @ts-ignore
 window.SVGInject = require("@iconfu/svg-inject");
 
-let rundeckContext = getRundeckContext();
+const rundeckContext = getRundeckContext();
 function init() {
   rundeckContext.rootStore.ui.addItems([
     {
@@ -15,13 +15,13 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { HomeHeader },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
             };
           },
-          props: ["itemData"],
-          components: { HomeHeader },
           template: `
                       <HomeHeader :createProjectAllowed="itemData.createProjectAllowed" :projectCount="itemData.projectCount" />
                     `,
@@ -35,11 +35,11 @@ function init() {
       widget: markRaw(
         defineComponent({
           name: "HomeProjectView",
+          components: { HomeView },
+          props: ["itemData"],
           data() {
             return {};
           },
-          props: ["itemData"],
-          components: { HomeView },
           template: `
                       <HomeView v-bind="itemData" />
                     `,

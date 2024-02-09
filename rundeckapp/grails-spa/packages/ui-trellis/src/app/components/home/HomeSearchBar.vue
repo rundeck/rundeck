@@ -1,12 +1,12 @@
 <template>
   <div class="input-group">
     <input
+      v-model="search"
       data-test="searchInput"
       type="search"
       name="search"
       :placeholder="placeholder"
       class="form-control input-sm"
-      v-model="search"
       @focus="handleFocus"
       @keyup.enter="handleEnter"
       @blur="handleBlur"
@@ -42,6 +42,16 @@ export default defineComponent({
       search: this.modelValue,
     };
   },
+  watch: {
+    modelValue(newVal) {
+      if (newVal !== this.search) {
+        this.search = newVal;
+      }
+    },
+    search(newVal) {
+      this.$emit("update:modelValue", newVal);
+    },
+  },
   methods: {
     handleEnter() {
       this.$emit("onEnter");
@@ -51,16 +61,6 @@ export default defineComponent({
     },
     handleFocus() {
       this.$emit("onFocus");
-    },
-  },
-  watch: {
-    modelValue(newVal) {
-      if (newVal !== this.search) {
-        this.search = newVal;
-      }
-    },
-    search(newVal) {
-      this.$emit("update:modelValue", newVal);
     },
   },
 });

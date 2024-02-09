@@ -20,10 +20,10 @@
       <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
     </btn>
     <modal
-      v-model="modalOpen"
-      :beforeClose="beforeModalClose"
-      title="Select a Storage File"
       id="storage-file"
+      v-model="modalOpen"
+      :before-close="beforeModalClose"
+      title="Select a Storage File"
       disabled="readOnly"
       auto-focus
       append-to-body
@@ -32,31 +32,31 @@
     >
       <key-storage-view
         ref="keyStorageViewRef"
-        @update:modelValue="onSelectedKeyChange"
         :read-only="readOnly"
         :root-path="rootPath"
         :allow-upload="allowUpload"
         :model-value="modelValue"
-        @closeSelector="closeSelector"
-        @openSelector="openSelector"
-        @openEditor="openEditor"
+        @update:model-value="onSelectedKeyChange"
+        @close-selector="closeSelector"
+        @open-selector="openSelector"
+        @open-editor="openEditor"
       ></key-storage-view>
     </modal>
     <modal
-      v-model="modalEdit"
-      title="Add or Upload a Key"
       id="storageuploadkey"
       ref="modalEdit"
+      v-model="modalEdit"
+      title="Add or Upload a Key"
       :footer="false"
       auto-focus
       append-to-body
     >
       <key-storage-edit
-        :uploadSetting="uploadSetting"
+        :upload-setting="uploadSetting"
         :root-path="rootPath"
         :storage-filter="storageFilter"
-        @cancelEditing="handleCancelEditing"
-        @finishEditing="handleFinishEditing"
+        @cancel-editing="handleCancelEditing"
+        @finish-editing="handleFinishEditing"
       ></key-storage-edit>
     </modal>
   </div>
@@ -78,7 +78,7 @@ export default defineComponent({
     return {
       modalOpen: false,
       modalEdit: false,
-      selectedKey: "" as String,
+      selectedKey: "" as string,
       rootPath: "keys",
       inputPath: "",
       invalid: false,
@@ -147,7 +147,7 @@ export default defineComponent({
       this.uploadSetting = uploadSetting;
       this.modalEdit = true;
     },
-    onSelectedKeyChange(selectedKey: String) {
+    onSelectedKeyChange(selectedKey: string) {
       this.selectedKey = selectedKey;
     },
   },

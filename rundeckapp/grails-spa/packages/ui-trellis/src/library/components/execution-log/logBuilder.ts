@@ -203,7 +203,7 @@ export class LogBuilder {
   private entryPath(newEntry: ExecutionOutputEntry) {
     if (!newEntry.renderedStep) return "";
 
-    let stepString = newEntry.renderedStep.map((s) => {
+    const stepString = newEntry.renderedStep.map((s) => {
       if (!s) return "..";
       return `${s.stepNumber}${s.label}`;
     });

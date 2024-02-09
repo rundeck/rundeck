@@ -5,9 +5,9 @@
     :style="statusIconStyle(node.attributes)"
   >
     <i
+      v-if="node.attributes['ui:status:icon']"
       :class="glyphiconForName(node.attributes['ui:status:icon'])"
       class="node-status-icon"
-      v-if="node.attributes['ui:status:icon']"
     ></i>
     <slot>
       <span
@@ -27,7 +27,7 @@ import {
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "node-status",
+  name: "NodeStatus",
   props: {
     node: {
       type: Object,

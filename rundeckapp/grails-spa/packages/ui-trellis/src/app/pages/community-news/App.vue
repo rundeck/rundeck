@@ -41,8 +41,8 @@ export default defineComponent({
       RundeckContext: null,
     };
   },
-  methods: {},
   mounted() {},
+  methods: {},
 });
 </script>
 

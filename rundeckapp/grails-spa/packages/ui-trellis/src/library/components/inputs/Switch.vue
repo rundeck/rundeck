@@ -16,11 +16,11 @@
     <input
       ref="input"
       v-model="modelValue"
-      v-on:input="
-        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
-      "
       type="checkbox"
       style="height: 0; width: 0; appearance: none"
+      @input="
+        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+      "
     />
     <span
       class="switch__slider"
@@ -32,7 +32,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 export default defineComponent({
-  name: "rd-switch",
+  name: "RdSwitch",
   props: {
     modelValue: {
       type: Boolean,

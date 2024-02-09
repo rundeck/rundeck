@@ -2,16 +2,16 @@
   <div
     class="execution-log__line"
     data-test-id="log-entry-flex-execution-log-line"
-    v-bind:class="{ 'execution-log__line--selected': selected }"
+    :class="{ 'execution-log__line--selected': selected }"
     :title="title"
   >
     <div
       v-if="displayGutter"
       class="execution-log__gutter"
-      @click="onLineSelect"
       :class="{
         'execution-log__gutter--slim': timestamps && !command,
       }"
+      @click="onLineSelect"
     >
       <span class="gutter line-number">
         <span
@@ -22,7 +22,7 @@
         <i
           v-if="command"
           class="rdicon icon-small"
-          v-bind:class="[logEntry.stepType]"
+          :class="[logEntry.stepType]"
         ></i>
         <span
           class="execution-log_gutter-entry"
@@ -33,7 +33,7 @@
     </div>
     <div
       class="execution-log__content"
-      v-bind:class="[
+      :class="[
         `execution-log__content--level-${logEntry.level.toLowerCase()}`,
         {
           'execution-log__content--html': logEntry.logHtml,
@@ -55,14 +55,14 @@
       <span
         v-if="logEntry.logHtml"
         class="execution-log__content-text"
-        v-bind:class="{ 'execution-log__content-text--overflow': !lineWrap }"
-        v-html="logEntry.logHtml"
+        :class="{ 'execution-log__content-text--overflow': !lineWrap }"
         data-test-id="log-entry-content-text"
+        v-html="logEntry.logHtml"
       />
       <span
         v-if="!logEntry.logHtml"
         class="execution-log__content-text"
-        v-bind:class="{ 'execution-log__content-text--overflow': !lineWrap }"
+        :class="{ 'execution-log__content-text--overflow': !lineWrap }"
         data-test-id="log-entry-content-text"
         >{{ logEntry.log }}</span
       >
@@ -145,6 +145,12 @@ export default defineComponent({
       );
     },
   },
+  beforeMount() {
+    this.eventBus.on(
+      "execution-log-settings-changed",
+      this.handleSettingsChanged,
+    );
+  },
   methods: {
     onLineSelect() {
       this.$emit("line-select", this.logEntry.lineNumber);
@@ -152,12 +158,6 @@ export default defineComponent({
     handleSettingsChanged(newSettings: any) {
       Object.assign(this.cfg, newSettings);
     },
-  },
-  beforeMount() {
-    this.eventBus.on(
-      "execution-log-settings-changed",
-      this.handleSettingsChanged,
-    );
   },
 });
 </script>

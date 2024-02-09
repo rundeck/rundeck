@@ -4,7 +4,7 @@ import Trellis from "../../../library";
 import TourConstants from "./constants";
 
 export const getTours = () => {
-  let tours = [] as any[];
+  const tours = [] as any[];
   return new Promise<any[]>((resolve, reject) => {
     axios
       .get(TourConstants.tourManifestUrl, getHeaderObject())

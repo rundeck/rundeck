@@ -44,10 +44,10 @@ export default defineComponent({
     Popper,
     ProjectSelect,
   },
-  emits: ["project:select-all", "project:selected"],
   props: {
     projectLabel: { type: String },
   },
+  emits: ["project:select-all", "project:selected"],
   data: () => ({
     open: false,
   }),

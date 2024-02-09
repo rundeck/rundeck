@@ -53,13 +53,13 @@ function initUiComponents(elmElement: any) {
   const i18n = initI18n();
   const vue = createApp({
     components: { UiSocket },
+    provide: {
+      rootStore,
+    },
     data() {
       return {
         EventBus,
       };
-    },
-    provide: {
-      rootStore,
     },
   });
   vue.use(VueCookies);

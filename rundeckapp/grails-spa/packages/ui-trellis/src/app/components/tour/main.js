@@ -24,9 +24,9 @@ axios
       // Thus, we're kicking off the apps
 
       // creating the dom element that will contain the tour application
-      let pickerAnchor = document.createElement("li");
+      const pickerAnchor = document.createElement("li");
       // selecting the navbar menu
-      let pickerContainer = document.getElementById("navbar-menu");
+      const pickerContainer = document.getElementById("navbar-menu");
       // setting the id attribute that Vue will use as the application element
       pickerAnchor.setAttribute("id", "tour-vue-picker");
       // prepending the 'anchor' element (created above) to the menu (container)
@@ -35,6 +35,9 @@ axios
 
       /* eslint-disable no-new */
       const app = createApp({
+        components: {
+          TourPicker,
+        },
         provide: {
           rootStore,
         },
@@ -42,9 +45,6 @@ axios
           return {
             EventBus: EventBus,
           };
-        },
-        components: {
-          TourPicker,
         },
         template: '<tour-picker :event-bus="EventBus"/>',
       });
@@ -54,9 +54,9 @@ axios
 
       let pad = false;
       // creating the dom element that will contain the tour application
-      let tourDisplayAnchor = document.createElement("span");
+      const tourDisplayAnchor = document.createElement("span");
       // selecting the navbar menu
-      let layoutBody = document.getElementById("layoutBody");
+      const layoutBody = document.getElementById("layoutBody");
 
       if (layoutBody) {
         // setting the id attribute that Vue will use as the application element
@@ -73,21 +73,21 @@ axios
 
       /* eslint-disable no-new */
       const tourdisplay = createApp({
+        components: {
+          TourDisplay,
+        },
         provide: {
           rootStore,
+        },
+        props: {
+          pad: { default: pad },
         },
         data() {
           return {
             EventBus: EventBus,
           };
         },
-        components: {
-          TourDisplay,
-        },
         template: '<tour-display :event-bus="EventBus" :pad="pad"/>',
-        props: {
-          pad: { default: pad },
-        },
       });
       tourdisplay.use(uiv);
       tourdisplay.use(i18n);

@@ -4,13 +4,13 @@
       <div class="input-group input-group-lg">
         <span class="input-group-addon">Plugin URL</span>
         <input
+          v-model="pluginURL"
           type="text"
           class="form-control input-text"
           placeholder="https://someurl.com/some-path/some-plugin.jar"
-          v-model="pluginURL"
         />
         <span class="input-group-btn">
-          <a @click="submitUrl" class="btn btn-cta" type="button">Install</a>
+          <a class="btn btn-cta" type="button" @click="submitUrl">Install</a>
         </span>
       </div>
     </div>

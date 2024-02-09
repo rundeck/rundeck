@@ -24,17 +24,17 @@ for (let i = 0; i < els.length; i++) {
 
   const app = createApp({
     name: "ProjectNodeApp",
-    data() {
-      return {
-        EventBus: context.eventBus,
-      };
-    },
     components: {
       ProjectPluginConfig,
       ProjectNodeSourcesConfig,
       WriteableProjectNodeSources,
       ProjectNodeSourcesHelp,
       PageConfirm,
+    },
+    data() {
+      return {
+        EventBus: context.eventBus,
+      };
     },
   });
   app.use(VueCookies);

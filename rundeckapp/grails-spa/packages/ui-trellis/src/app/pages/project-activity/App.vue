@@ -1,10 +1,10 @@
 <template>
-  <div id="app" v-if="project">
+  <div v-if="project" id="app">
     <activity-list
       v-if="project"
       :project="project"
-      :rdBase="rdBase"
-      :eventBus="eventBus"
+      :rd-base="rdBase"
+      :event-bus="eventBus"
     ></activity-list>
   </div>
 </template>
@@ -16,11 +16,11 @@ import { getRundeckContext, RundeckContext } from "../../../library";
 
 export default {
   name: "App",
-  props: ["eventBus"],
   components: {
     // motd,
     activityList,
   },
+  props: ["eventBus"],
   data() {
     return {
       project: null,

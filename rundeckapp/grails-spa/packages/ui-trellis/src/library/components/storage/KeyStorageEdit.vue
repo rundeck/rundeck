@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="alert alert-danger" v-if="!!uploadSetting.errorMsg">
+    <div v-if="!!uploadSetting.errorMsg" class="alert alert-danger">
       <span>{{ uploadSetting.errorMsg }}</span>
     </div>
 
@@ -15,14 +15,14 @@
           </label>
           <div class="col-sm-9">
             <select
+              v-model="uploadSetting.keyType"
               name="uploadKeyType"
               class="form-control"
-              v-model="uploadSetting.keyType"
             >
               <option
                 v-for="option in keyTypes"
-                v-bind:key="option.value"
-                v-bind:value="option.value"
+                :key="option.value"
+                :value="option.value"
               >
                 {{ option.text }}
               </option>
@@ -39,27 +39,27 @@
           :class="[validInput() === true ? 'has-success' : 'has-warning']"
         >
           <div
-            class="col-sm-3 label-key"
             v-if="uploadSetting.keyType !== 'password'"
+            class="col-sm-3 label-key"
           >
             <select
+              v-model="uploadSetting.inputType"
               class="form-control"
               name="inputType"
-              v-model="uploadSetting.inputType"
             >
               <option
                 v-for="option in inputTypes"
-                v-bind:key="option.value"
-                v-bind:value="option.value"
+                :key="option.value"
+                :value="option.value"
               >
                 {{ option.text }}
               </option>
             </select>
           </div>
           <label
+            v-if="uploadSetting.keyType === 'password'"
             for="uploadpasswordfield"
             class="col-sm-3 control-label label-key"
-            v-if="uploadSetting.keyType === 'password'"
           >
             Enter text
           </label>
@@ -71,19 +71,19 @@
               "
             >
               <textarea
-                class="form-control"
-                rows="5"
                 id="storageuploadtext"
                 v-model="uploadSetting.textArea"
+                class="form-control"
+                rows="5"
                 name="uploadText"
               ></textarea>
             </div>
 
             <div v-if="uploadSetting.inputType === 'file'">
               <input
-                type="file"
                 id="file"
                 ref="file"
+                type="file"
                 @change="handleFileUpload"
               />
             </div>
@@ -95,12 +95,12 @@
               "
             >
               <input
+                id="uploadpasswordfield"
+                v-model="uploadSetting.password"
                 name="uploadPassword"
                 type="password"
                 placeholder="Enter a password"
                 autocomplete="new-password"
-                v-model="uploadSetting.password"
-                id="uploadpasswordfield"
                 class="form-control"
               />
             </div>
@@ -121,17 +121,17 @@
                 <span>{{ rootPath }}</span>
               </div>
               <input
+                id="uploadResourcePath2"
                 v-model="uploadSetting.inputPath"
                 :disabled="uploadSetting.modifyMode === true"
-                id="uploadResourcePath2"
                 name="relativePath"
                 class="form-control"
                 placeholder="Enter the directory name"
               />
               <input
+                id="uploadResourcePath3"
                 v-model="uploadSetting.inputPath"
                 :disabled="uploadSetting.modifyMode === false"
-                id="uploadResourcePath3"
                 type="hidden"
                 name="relativePath"
               />
@@ -167,13 +167,13 @@
               class="form-control"
               placeholder="Specify a name."
             />
-            <div class="help-block" v-if="uploadSetting.inputType === 'file'">
+            <div v-if="uploadSetting.inputType === 'file'" class="help-block">
               If not set, the name of the uploaded file is used.
             </div>
             <input
               id="uploadResourceName3"
-              type="hidden"
               v-model="uploadSetting.fileName"
+              type="hidden"
               :disabled="uploadSetting.modifyMode === false"
               name="fileName"
             />
@@ -183,10 +183,10 @@
           <div class="col-sm-offset-3 col-sm-9">
             <div class="checkbox">
               <input
+                v-model="uploadSetting.dontOverwrite"
                 type="checkbox"
                 value="true"
                 name="dontOverwrite"
-                v-model="uploadSetting.dontOverwrite"
               />
               <label> Do not overwrite a file with the same name. </label>
             </div>
@@ -239,15 +239,15 @@ import KeyType from "../../types/KeyType";
 export interface UploadSetting {
   modifyMode: boolean;
   keyType: KeyType;
-  inputPath: String;
+  inputPath: string;
   inputType: InputType;
-  fileName?: null | String;
-  file?: null | String;
+  fileName?: null | string;
+  file?: null | string;
   fileContent: "";
   textArea: "";
   password: "";
-  status: "new" | String;
-  errorMsg: null | String;
+  status: "new" | string;
+  errorMsg: null | string;
   dontOverwrite: boolean;
 }
 
@@ -286,6 +286,14 @@ export default defineComponent({
       ],
     };
   },
+  computed: {
+    uploadFullPath(): string {
+      return this.rootPath + "/" + this.getKeyPath();
+    },
+    browsePath(): string {
+      return this.calcBrowsePath(this.path);
+    },
+  },
   methods: {
     allowedResource(meta: any) {
       const filterArray = this.storageFilter.split("=");
@@ -321,7 +329,7 @@ export default defineComponent({
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
 
-      let fullPath = this.calcBrowsePath(this.getKeyPath());
+      const fullPath = this.calcBrowsePath(this.getKeyPath());
 
       let contentType = "application/pgp-keys";
 
@@ -365,7 +373,7 @@ export default defineComponent({
         {},
       );
 
-      let exists = checkKey._response.status !== 404;
+      const exists = checkKey._response.status !== 404;
 
       if (exists) {
         if (this.uploadSetting.dontOverwrite) {
@@ -481,15 +489,15 @@ export default defineComponent({
         });
     },
     handleFileUpload(e: any) {
-      var files = e.target.files || e.dataTransfer.files;
+      const files = e.target.files || e.dataTransfer.files;
       if (!files.length) return;
 
       const file = files[0];
       this.uploadSetting.file = file.name;
 
-      let reader = new FileReader();
+      const reader = new FileReader();
       reader.onload = (event: any) => {
-        let text = event.target.result;
+        const text = event.target.result;
         this.uploadSetting.fileContent = text;
         if (this.uploadSetting.errorMsg != null) {
           this.uploadSetting.errorMsg = null;
@@ -517,14 +525,6 @@ export default defineComponent({
       }
 
       return fullPath;
-    },
-  },
-  computed: {
-    uploadFullPath(): string {
-      return this.rootPath + "/" + this.getKeyPath();
-    },
-    browsePath(): string {
-      return this.calcBrowsePath(this.path);
     },
   },
 });

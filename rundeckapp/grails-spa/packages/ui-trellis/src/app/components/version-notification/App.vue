@@ -1,8 +1,8 @@
 <template>
   <div
-    @click="showNotificationModal = true"
-    class="version-notification-container"
     v-show="showVersionNotification"
+    class="version-notification-container"
+    @click="showNotificationModal = true"
   >
     <div class="sidebar-footer-line-item">
       <i class="fas fa-exclamation-circle"></i>
@@ -11,10 +11,10 @@
       }}</span>
     </div>
     <modal
+      ref="modal"
       v-model="showNotificationModal"
       :title="$t('message_updateAvailable')"
       append-to-body
-      ref="modal"
     >
       <div>
         <p>{{ $t("message_updateHasBeenReleased") }}</p>
@@ -54,7 +54,7 @@
           }}</a>
         </p>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <div>
           <btn @click="showNotificationModal = false">{{
             $t("message_close")
@@ -100,18 +100,6 @@ export default {
       },
       showVersionNotification: false,
     };
-  },
-  methods: {
-    formatReleaseDate,
-    hideNotificationForThisVersion() {
-      Trellis.FilterPrefs.setFilterPref(
-        "hideVersionUpdateNotification",
-        this.currentReleaseVersion.stringVersion,
-      ).then(() => {
-        this.showNotificationModal = false;
-        this.showVersionNotification = false;
-      });
-    },
   },
   mounted() {
     this.RundeckContext = getRundeckContext();
@@ -182,12 +170,24 @@ export default {
       },
     );
   },
+  methods: {
+    formatReleaseDate,
+    hideNotificationForThisVersion() {
+      Trellis.FilterPrefs.setFilterPref(
+        "hideVersionUpdateNotification",
+        this.currentReleaseVersion.stringVersion,
+      ).then(() => {
+        this.showNotificationModal = false;
+        this.showVersionNotification = false;
+      });
+    },
+  },
 };
 
 function returnVersionInformation(versionString) {
-  let returnObj = {};
-  let seperatedVersionNumber = versionString.split("-");
-  let splitVersionSchema = seperatedVersionNumber[0].split(".");
+  const returnObj = {};
+  const seperatedVersionNumber = versionString.split("-");
+  const splitVersionSchema = seperatedVersionNumber[0].split(".");
 
   returnObj.stringVersion = seperatedVersionNumber[0];
   returnObj.major = parseInt(splitVersionSchema[0]);

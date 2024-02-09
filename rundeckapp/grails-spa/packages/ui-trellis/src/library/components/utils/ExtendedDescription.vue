@@ -1,6 +1,6 @@
 <template>
   <span>
-    <details class="more-info" :class="extendedCss" v-if="extraDescription">
+    <details v-if="extraDescription" class="more-info" :class="extendedCss">
       <summary>
         <span :class="descriptionCss">{{ shortDescription }}</span>
         <span class="more-indicator-verbiage btn-link btn-xs"
@@ -16,7 +16,7 @@
         />
       </div>
     </details>
-    <span :class="basicCss" v-else>{{ text }}</span>
+    <span v-else :class="basicCss">{{ text }}</span>
   </span>
 </template>
 <script lang="ts">
@@ -26,22 +26,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "ExtendedDescription",
   components: { VMarkdownView },
-  computed: {
-    shortDescription(): string {
-      const desc = this.text;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(0, desc.indexOf("\n"));
-      }
-      return desc;
-    },
-    extraDescription(): string | null {
-      const desc = this.text;
-      if (desc && desc.indexOf("\n") > 0) {
-        return desc.substring(desc.indexOf("\n") + 1);
-      }
-      return null;
-    },
-  },
   props: {
     text: {
       type: String,
@@ -62,6 +46,22 @@ export default defineComponent({
       type: String,
       required: false,
       default: "",
+    },
+  },
+  computed: {
+    shortDescription(): string {
+      const desc = this.text;
+      if (desc && desc.indexOf("\n") > 0) {
+        return desc.substring(0, desc.indexOf("\n"));
+      }
+      return desc;
+    },
+    extraDescription(): string | null {
+      const desc = this.text;
+      if (desc && desc.indexOf("\n") > 0) {
+        return desc.substring(desc.indexOf("\n") + 1);
+      }
+      return null;
     },
   },
 });

@@ -1,8 +1,8 @@
 <template>
   <div>
     <notifications-editor
-      :notification-data="notificationData"
       v-if="notificationData"
+      :notification-data="notificationData"
       @changed="changed"
     />
     <json-embed
@@ -21,11 +21,11 @@ import { getRundeckContext } from "../../../../library";
 
 export default {
   name: "App",
-  props: ["eventBus"],
   components: {
     NotificationsEditor,
     JsonEmbed,
   },
+  props: ["eventBus"],
   data() {
     return {
       notificationData: null,
@@ -35,6 +35,12 @@ export default {
       },
     };
   },
+  async mounted() {
+    if (getRundeckContext() && getRundeckContext().data) {
+      this.notificationData = getRundeckContext().data.notificationData;
+      this.updatedData = this.notificationData;
+    }
+  },
   methods: {
     changed(data) {
       if (!_.isEqual(data, this.updatedData.notifications)) {
@@ -43,12 +49,6 @@ export default {
         window.jobWasEdited();
       }
     },
-  },
-  async mounted() {
-    if (getRundeckContext() && getRundeckContext().data) {
-      this.notificationData = getRundeckContext().data.notificationData;
-      this.updatedData = this.notificationData;
-    }
   },
 };
 </script>

@@ -1,9 +1,9 @@
 <template>
   <dropdown
+    v-if="authz"
     class="btn-group pull-right visibility-hidden"
     menu-right
     append-to-body
-    v-if="authz"
   >
     <btn size="xs" class="dropdown-toggle" :data-job-id="job.id">
       {{ $t("actions") }}
@@ -152,19 +152,6 @@ export default defineComponent({
       default: () => {},
     },
   },
-  methods: {
-    findJobMeta(key: string) {
-      return this.job?.meta?.find((meta: JobBrowseMeta) => meta.name === key)
-        ?.data;
-    },
-
-    downloadFormatHref(format: string) {
-      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${format}`;
-    },
-    action(name: string) {
-      context.eventBus.emit(`job-action-single`, { name, job: this.job });
-    },
-  },
   computed: {
     job(): JobBrowseItem {
       return this.itemData?.job;
@@ -207,6 +194,19 @@ export default defineComponent({
     },
     enableScheduleHref() {
       return `${context.rdBase}project/${context.projectName}/job/flipScheduleEnabled/${this.job.id}?enabled=true`;
+    },
+  },
+  methods: {
+    findJobMeta(key: string) {
+      return this.job?.meta?.find((meta: JobBrowseMeta) => meta.name === key)
+        ?.data;
+    },
+
+    downloadFormatHref(format: string) {
+      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${format}`;
+    },
+    action(name: string) {
+      context.eventBus.emit(`job-action-single`, { name, job: this.job });
     },
   },
 });

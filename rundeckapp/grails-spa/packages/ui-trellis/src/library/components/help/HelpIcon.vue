@@ -1,17 +1,17 @@
 <template>
   <div class="help-icon">
     <i
-      :id="`help-${this._uid}`"
+      :id="`help-${_uid}`"
       class="fas fa-sm fa-question-circle text-muted"
       style="cursor: pointer; margin-left: 5px"
     />
     <popover
       :title="title"
-      :target="`#help-${this._uid}`"
+      :target="`#help-${_uid}`"
       custom-class="popover-wide"
       viewport="#section-main"
     >
-      <template v-slot:popover>
+      <template #popover>
         <slot></slot>
       </template>
     </popover>

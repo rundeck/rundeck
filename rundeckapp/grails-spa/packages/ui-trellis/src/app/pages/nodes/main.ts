@@ -4,9 +4,12 @@ import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import NodeFilterInput from "../../components/job/resources/NodeFilterInput.vue";
 import NodeCard from "../../components/job/resources/NodeCard.vue";
 
-let rundeckContext = getRundeckContext();
+const rundeckContext = getRundeckContext();
 const FilterInputComp = defineComponent({
   name: "NodeFilter",
+  components: { NodeFilterInput },
+  inject: ["addUiMessages"],
+  props: ["itemData", "extraAttrs"],
   data() {
     return {
       project: rundeckContext.projectName,
@@ -21,27 +24,21 @@ const FilterInputComp = defineComponent({
       subs: [],
     };
   },
-  props: ["itemData", "extraAttrs"],
-  inject: ["addUiMessages"],
-  components: { NodeFilterInput },
-  template: `
-          <node-filter-input :project="project"
-                             v-model="filterValue"
-                             :show-title="showInputTitle"
-                             :autofocus="autofocus"
-                             :filterFieldName="filterFieldName"
-                             :filter-field-id="filterFieldId"
-                             :query-field-placeholder-text="queryFieldPlaceholderText"
-                             search-btn-type="cta"
-                             @update:model-value="updatedValue"
-                             @filter="filterClicked"
-                             v-bind="extraAttrs"
-          />
-        `,
   computed: {
     isNodeStoreAvailable() {
       return !!this.extraAttrs.nodeFilterStore;
     },
+  },
+  beforeUnmount() {
+    //note: this removes subscriptions from knockout observable
+    //@ts-ignore
+    this.subs.forEach((s) => s.dispose());
+  },
+  mounted() {
+    this.attachKnockout(5);
+    if (this.isNodeStoreAvailable) {
+      this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
+    }
   },
   methods: {
     updatedValue(val: string) {
@@ -93,17 +90,20 @@ const FilterInputComp = defineComponent({
       }
     },
   },
-  beforeDestroy() {
-    //note: this removes subscriptions from knockout observable
-    //@ts-ignore
-    this.subs.forEach((s) => s.dispose());
-  },
-  mounted() {
-    this.attachKnockout(5);
-    if (this.isNodeStoreAvailable) {
-      this.filterValue = this.extraAttrs.nodeFilterStore.selectedFilter;
-    }
-  },
+  template: `
+          <node-filter-input :project="project"
+                             v-model="filterValue"
+                             :show-title="showInputTitle"
+                             :autofocus="autofocus"
+                             :filterFieldName="filterFieldName"
+                             :filter-field-id="filterFieldId"
+                             :query-field-placeholder-text="queryFieldPlaceholderText"
+                             search-btn-type="cta"
+                             @update:model-value="updatedValue"
+                             @filter="filterClicked"
+                             v-bind="extraAttrs"
+          />
+        `,
 });
 function init() {
   rundeckContext.rootStore.ui.addItems([
@@ -113,13 +113,13 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { FilterInputComp },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
             };
           },
-          props: ["itemData"],
-          components: { FilterInputComp },
           template: `
                       <filter-input-comp :project="project"
                                          :item-data="itemData"
@@ -135,14 +135,14 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { FilterInputComp, NodeCard },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
               nodeFilterStore: new NodeFilterStore(),
             };
           },
-          props: ["itemData"],
-          components: { FilterInputComp, NodeCard },
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
@@ -187,13 +187,13 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { FilterInputComp },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
             };
           },
-          props: ["itemData"],
-          components: { FilterInputComp },
           template: `
                       <filter-input-comp :project="project"
                                          :item-data="itemData"
@@ -209,13 +209,13 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { FilterInputComp },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
             };
           },
-          props: ["itemData"],
-          components: { FilterInputComp },
           template: `
                       <filter-input-comp :project="project" :item-data="itemData"/>
                     `,
@@ -228,13 +228,13 @@ function init() {
       visible: true,
       widget: markRaw(
         defineComponent({
+          components: { FilterInputComp },
+          props: ["itemData"],
           data() {
             return {
               project: rundeckContext.projectName,
             };
           },
-          props: ["itemData"],
-          components: { FilterInputComp },
           template: `
                       <filter-input-comp :project="project" :item-data="itemData"/>
                     `,

@@ -13,7 +13,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
   const stepCtx = nodeStep.stepctx;
   const node = nodeStep.node.name;
 
-  let query = [
+  const query = [
     `.wfnodeoutput[data-node="${nodeStep.node.name}"]`,
     stepCtx ? `[data-stepctx="${stepCtx}"]` : undefined,
   ]
@@ -39,7 +39,6 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
   const vue = createApp({
     name: "NodeLogViewerApp",
     components: { LogViewer },
-    template: template,
     provide: {
       rootStore,
     },
@@ -54,6 +53,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
         }),
       },
     },
+    template: template,
   });
   vue.use(uiv);
   vue.mount(elm);

@@ -16,7 +16,7 @@
 
 <template>
   <span v-if="count > 0" @click="clickAction">
-    <slot v-bind:count="count">{{ count }}</slot>
+    <slot :count="count">{{ count }}</slot>
   </span>
 </template>
 
@@ -32,6 +32,9 @@ export default defineComponent({
       count: 0,
     };
   },
+  mounted(): void {
+    this.eventBus.on("activity-nowrunning-count", this.updateNowrunning);
+  },
   methods: {
     updateNowrunning(count: number) {
       this.count = count;
@@ -39,9 +42,6 @@ export default defineComponent({
     clickAction() {
       this.eventBus.emit("activity-nowrunning-click-action");
     },
-  },
-  mounted(): void {
-    this.eventBus.on("activity-nowrunning-count", this.updateNowrunning);
   },
 });
 </script>

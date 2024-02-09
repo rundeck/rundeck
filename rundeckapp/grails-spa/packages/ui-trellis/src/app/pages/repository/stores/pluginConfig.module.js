@@ -70,7 +70,7 @@ const actions = {
         root: true,
       },
     );
-    let providersDetails = [];
+    const providersDetails = [];
 
     await Promise.all(
       providers.map(async (provider) => {
@@ -231,13 +231,13 @@ const actions = {
         withCredentials: true,
       })
       .then((response) => {
-        let pluginCollectionWithoutTheRemovedPlugin = _.reject(
+        const pluginCollectionWithoutTheRemovedPlugin = _.reject(
           this.state.plugins.plugins,
           {
             id: properties.id,
           },
         );
-        let searchResultsCollectionWithoutTheRemovedPlugin = _.reject(
+        const searchResultsCollectionWithoutTheRemovedPlugin = _.reject(
           this.state.plugins.searchResultPlugins,
           {
             id: properties.id,

@@ -1,17 +1,17 @@
 <template>
   <div
-    class="execution-log__node-chunk"
     v-if="entryOutputs && entryOutputs.length > 0"
+    class="execution-log__node-chunk"
   >
     <DynamicScroller
+      :key="nodeChunkKey"
+      ref="scroller"
       :items="entryOutputs"
       :min-item-size="2"
-      :key="nodeChunkKey"
       class="scroller execution-log__chunk"
       key-field="lineNumber"
-      ref="scroller"
     >
-      <template v-slot="{ item, index, active }">
+      <template #default="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"
           :data-index="index"
@@ -21,13 +21,13 @@
           @resize="scrollToLine()"
         >
           <LogEntryFlex
-            :eventBus="eventBus"
             :key="index"
+            :event-bus="eventBus"
             :title="entryTitle(item)"
             :selected="selectedLine === index + 1"
             :config="opts"
-            :prevEntry="index > 0 ? entryOutputs[index - 1] : null"
-            :logEntry="item"
+            :prev-entry="index > 0 ? entryOutputs[index - 1] : null"
+            :log-entry="item"
             @line-select="onSelectLine"
           />
         </DynamicScrollerItem>
@@ -111,6 +111,11 @@ export default defineComponent({
     },
   },
   emits: ["line-select", "jumped"],
+  data() {
+    return {
+      emitResize: true as boolean,
+    };
+  },
   computed: {
     opts() {
       return {
@@ -142,10 +147,11 @@ export default defineComponent({
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`;
     },
   },
-  data() {
-    return {
-      emitResize: true as boolean,
-    };
+  mounted() {
+    if (this.jumpToLine && !this.jumped) {
+      this.$emit("line-select", this.jumpToLine);
+      this.$emit("jumped");
+    }
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
@@ -207,12 +213,6 @@ export default defineComponent({
         this.$refs.scroller.scrollToBottom();
       }
     },
-  },
-  mounted() {
-    if (this.jumpToLine && !this.jumped) {
-      this.$emit("line-select", this.jumpToLine);
-      this.$emit("jumped");
-    }
   },
 });
 </script>

@@ -37,7 +37,7 @@
                       >
                         <ais-refinement-list
                           attribute="taxonomies.plugin_support_type"
-                          :transformItems="
+                          :transform-items="
                             (items) =>
                               items.sort((a, b) =>
                                 a.value.localeCompare(b.value),
@@ -51,7 +51,7 @@
                       <div class="column body-results results-types">
                         <ais-refinement-list
                           attribute="taxonomies.plugin_type"
-                          :transformItems="
+                          :transform-items="
                             (items) =>
                               items.sort((a, b) =>
                                 a.value.localeCompare(b.value),
@@ -71,7 +71,7 @@
         </div>
         <div class="omnisearch-results row">
           <ais-hits>
-            <template v-slot:item="item">
+            <template #item="item">
               <div class="ais-Hits-item-inner col-sm-4">
                 <div class="card result">
                   <div class="card-header">
@@ -83,9 +83,9 @@
                   <div class="card-footer">
                     <ul class="plugin-types">
                       <li
-                        class="label label-default"
                         v-for="(type, index) in item.taxonomies.plugin_type"
                         :key="index"
+                        class="label label-default"
                       >
                         {{ type }}
                       </li>
@@ -127,10 +127,10 @@
         </div>
         <div class="omnisearch-pagination">
           <ais-pagination
-            @page-change="scrollTop"
             :class-names="{
               'ais-Pagination-list': 'pagination',
             }"
+            @page-change="scrollTop"
           ></ais-pagination>
         </div>
       </ais-instant-search>
@@ -161,6 +161,27 @@ export default {
       installedPluginIds: [],
     };
   },
+  created() {
+    if (window._rundeck && window._rundeck.rdBase) {
+      const apiVersion = window._rundeck.apiVersion;
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true,
+        },
+        url: `/api/${apiVersion}/plugins/listInstalledArtifacts`,
+        withCredentials: true,
+      }).then((response) => {
+        if (response.data) {
+          this.installedPlugins = response.data;
+          this.installedPluginIds = _.map(response.data, (plugin) => {
+            return plugin.artifactId;
+          });
+          this.pluginsLoaded = true;
+        }
+      });
+    }
+  },
   methods: {
     toggleFilter: function () {
       this.showFilter = !this.showFilter;
@@ -183,10 +204,10 @@ export default {
         withCredentials: true,
       })
         .then((response) => {
-          let repo = this.repositories.find(
+          const repo = this.repositories.find(
             (r) => r.repositoryName === repoName,
           );
-          let plugin = repo.results.find((r) => r.id === pluginId);
+          const plugin = repo.results.find((r) => r.id === pluginId);
           plugin.installed = true;
         })
         .catch((error) => {
@@ -203,37 +224,16 @@ export default {
         withCredentials: true,
       })
         .then((response) => {
-          let repo = this.repositories.find(
+          const repo = this.repositories.find(
             (r) => r.repositoryName === repoName,
           );
-          let plugin = repo.results.find((r) => r.id === pluginId);
+          const plugin = repo.results.find((r) => r.id === pluginId);
           plugin.installed = true;
         })
         .catch((error) => {
           this.errors = error.response.data;
         });
     },
-  },
-  created() {
-    if (window._rundeck && window._rundeck.rdBase) {
-      const apiVersion = window._rundeck.apiVersion;
-      axios({
-        method: "get",
-        headers: {
-          "x-rundeck-ajax": true,
-        },
-        url: `/api/${apiVersion}/plugins/listInstalledArtifacts`,
-        withCredentials: true,
-      }).then((response) => {
-        if (response.data) {
-          this.installedPlugins = response.data;
-          this.installedPluginIds = _.map(response.data, (plugin) => {
-            return plugin.artifactId;
-          });
-          this.pluginsLoaded = true;
-        }
-      });
-    }
   },
 };
 </script>

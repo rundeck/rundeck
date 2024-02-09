@@ -74,7 +74,7 @@ export const getServiceProviderDescription = async (
     });
   }
   const params = await getParameters();
-  let qparams: any = {};
+  const qparams: any = {};
   if (params.project) {
     qparams.project = params.project;
   }

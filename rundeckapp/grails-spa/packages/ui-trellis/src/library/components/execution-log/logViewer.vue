@@ -1,7 +1,7 @@
 <template>
   <div
-    class="execution-log"
     ref="root"
+    class="execution-log"
     :class="[`execution-log--${colorTheme}`]"
   >
     <RdDrawer
@@ -17,7 +17,7 @@
       <form style="padding: 10px">
         <div class="form-group">
           <label>Theme</label>
-          <select class="form-control select" v-model="settings.theme">
+          <select v-model="settings.theme" class="form-control select">
             <option
               v-for="themeOpt in themes"
               :key="themeOpt.value"
@@ -29,54 +29,54 @@
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.gutter"
             id="logview_gutter"
+            v-model="settings.gutter"
+            type="checkbox"
           />
           <label for="logview_gutter">Display Gutter</label>
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.timestamps"
             id="logview_timestamps"
+            v-model="settings.timestamps"
+            type="checkbox"
           />
           <label for="logview_timestamps">Display Timestamps</label>
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.command"
             id="logview_command"
+            v-model="settings.command"
+            type="checkbox"
           />
           <label for="logview_command">Display Command</label>
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.nodeBadge"
             id="logview_nodeBadge"
+            v-model="settings.nodeBadge"
+            type="checkbox"
           />
           <label for="logview_nodeBadge">Display Node Badge</label>
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.ansiColor"
             id="logview_ansiColor"
+            v-model="settings.ansiColor"
+            type="checkbox"
           />
           <label for="logview_ansiColor">Render ANSI Colors</label>
         </div>
         <div class="checkbox">
           <input
-            type="checkbox"
-            v-model="settings.lineWrap"
             id="logview_lineWrap"
+            v-model="settings.lineWrap"
+            type="checkbox"
           />
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.stats" id="logview_stats" />
+          <input id="logview_stats" v-model="settings.stats" type="checkbox" />
           <label for="logview_stats">Display Stats</label>
         </div>
         <ui-socket
@@ -109,7 +109,7 @@
             </btn>
           </btn-group>
           <transition name="fade">
-            <div class="execution-log__progress-bar" v-if="showProgress">
+            <div v-if="showProgress" class="execution-log__progress-bar">
               <progress-bar
                 v-model="barProgress"
                 :type="progressType"
@@ -123,17 +123,17 @@
             </div>
           </transition>
         </div>
-        <div class="execution-log__warning" v-if="overSize">
+        <div v-if="overSize" class="execution-log__warning">
           <h3>
             🐋 {{ +(logSize / 1048576).toFixed(2) }}MiB is a whale of a log! 🐋
           </h3>
           <h4>Select a download option above to avoid sinking the ship.</h4>
           <h5>Log content may be truncated</h5>
         </div>
-        <div class="execution-log__warning" v-if="errorMessage">
+        <div v-if="errorMessage" class="execution-log__warning">
           <h4>{{ errorMessage }}</h4>
         </div>
-        <div class="execution-log__warning" v-if="completed && logLines === 0">
+        <div v-if="completed && logLines === 0" class="execution-log__warning">
           <h5>No output</h5>
         </div>
         <LogNodeChunk
@@ -158,7 +158,7 @@
         />
       </div>
     </div>
-    <div class="stats" v-if="settings.stats">
+    <div v-if="settings.stats" class="stats">
       <span
         >Following:{{ mfollow }} Lines:{{
           logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")

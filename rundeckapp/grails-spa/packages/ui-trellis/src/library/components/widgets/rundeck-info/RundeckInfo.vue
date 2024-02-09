@@ -7,7 +7,7 @@
           <PagerdutyLogo v-else />
         </a>
       </div>
-      <div class="rundeck-info-widget__header" v-if="version && appInfo">
+      <div v-if="version && appInfo" class="rundeck-info-widget__header">
         <RundeckVersion
           :logo="false"
           :title="appInfo.title"

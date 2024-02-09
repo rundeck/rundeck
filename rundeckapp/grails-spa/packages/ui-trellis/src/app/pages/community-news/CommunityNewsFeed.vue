@@ -60,11 +60,6 @@ import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 
 export default defineComponent({
   name: "CommunityNewsFeed",
-  computed: {
-    DateTimeFormatters() {
-      return DateTimeFormatters;
-    },
-  },
   data() {
     return {
       showLoading: true,
@@ -72,10 +67,9 @@ export default defineComponent({
       error: false,
     };
   },
-  methods: {
-    openBlog(url) {
-      let win = window.open(url, "_blank");
-      win.focus();
+  computed: {
+    DateTimeFormatters() {
+      return DateTimeFormatters;
     },
   },
   mounted() {
@@ -101,6 +95,12 @@ export default defineComponent({
           console.log("Error connecting to Rundeck Community News API", error);
         },
       );
+  },
+  methods: {
+    openBlog(url) {
+      const win = window.open(url, "_blank");
+      win.focus();
+    },
   },
 });
 </script>

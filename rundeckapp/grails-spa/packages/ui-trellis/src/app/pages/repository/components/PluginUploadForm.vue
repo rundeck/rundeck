@@ -2,24 +2,22 @@
   <div>
     <div class="col-xs-12">
       <div class="input-group input-group-lg">
-        <span class="input-group-addon" id="sizing-addon1">Choose a file</span>
+        <span id="sizing-addon1" class="input-group-addon">Choose a file</span>
 
         <span class="control-fileupload">
           <span class="label">{{ fileName }}</span>
           <input
-            class="form-control"
-            type="file"
             id="files"
             ref="files"
+            class="form-control"
+            type="file"
             multiple
-            v-on:change="handleFilesUploads()"
+            @change="handleFilesUploads()"
           />
         </span>
 
         <span class="input-group-btn">
-          <button class="btn btn-cta" v-on:click="submitFiles()">
-            Install
-          </button>
+          <button class="btn btn-cta" @click="submitFiles()">Install</button>
         </span>
       </div>
       <!-- /input-group -->
@@ -47,9 +45,9 @@ export default defineComponent({
     submitFiles() {
       // Initialize the form data and iteate over any
       // file sent over appending the files to the form data.
-      let formData = new FormData();
+      const formData = new FormData();
       for (let i = 0; i < this.files.length; i++) {
-        let file = this.files[i];
+        const file = this.files[i];
 
         formData.append("pluginFile", file);
       }

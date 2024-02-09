@@ -42,8 +42,8 @@
     </li>
     <Teleport to="body">
       <modal
-        :title="$t('job.toggle.scm.confirm.panel.title')"
         v-model="toggleModal"
+        :title="$t('job.toggle.scm.confirm.panel.title')"
       >
         <p>
           {{ $t(`job.toggle.scm.confirm.${enabledStatus ? "off" : "on"}`) }}
@@ -100,18 +100,6 @@ export default defineComponent({
       toggleModal: ref(false),
     };
   },
-  methods: {
-    projectScmAction(id: string) {
-      return `${this.jobPageStore.projectScmHref}/performAction?actionId=${id}`;
-    },
-    async actionToggleScm(enabled: boolean) {
-      this.toggleModal = false;
-      let result = await scmProjectToggle(
-        getRundeckContext().projectName,
-        enabled,
-      );
-    },
-  },
   computed: {
     enabledStatus(): boolean {
       return this.scmImport?.enabled || this.scmExport?.enabled;
@@ -136,6 +124,18 @@ export default defineComponent({
     },
     scmImport(): ScmIntegrationMeta | undefined {
       return this.jobPageStore.findMeta("scmImport");
+    },
+  },
+  methods: {
+    projectScmAction(id: string) {
+      return `${this.jobPageStore.projectScmHref}/performAction?actionId=${id}`;
+    },
+    async actionToggleScm(enabled: boolean) {
+      this.toggleModal = false;
+      const result = await scmProjectToggle(
+        getRundeckContext().projectName,
+        enabled,
+      );
     },
   },
 });

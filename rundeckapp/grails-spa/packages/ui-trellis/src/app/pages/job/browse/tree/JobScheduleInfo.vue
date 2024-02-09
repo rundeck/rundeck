@@ -49,12 +49,12 @@
       <i class="glyphicon glyphicon-time"></i>
       <span class="schedule-detail">{{ $t("never") }}</span>
     </span>
-    <span class="scheduletime" :title="title" v-else>
+    <span v-else class="scheduletime" :title="title">
       <i class="glyphicon glyphicon-time text-success"></i>
 
       <span
-        class="schedule-detail"
         v-if="scheduleData && scheduleData.nextExecutionTime"
+        class="schedule-detail"
       >
         <i18n-t
           keypath="schedule.time.in.future"
@@ -89,10 +89,6 @@ import { defineComponent, inject } from "vue";
 
 export default defineComponent({
   name: "JobScheduleInfo",
-  methods: {
-    formatDurationFromNowMomentHumanize,
-    formatFromNow,
-  },
   props: {
     itemData: {
       type: Object,
@@ -123,6 +119,10 @@ export default defineComponent({
     job(): JobBrowseItem | undefined {
       return this.itemData?.job;
     },
+  },
+  methods: {
+    formatDurationFromNowMomentHumanize,
+    formatFromNow,
   },
 });
 </script>

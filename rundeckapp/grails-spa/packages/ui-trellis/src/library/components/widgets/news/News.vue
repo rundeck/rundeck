@@ -2,9 +2,9 @@
   <div class="news-widget">
     <Skeleton :loading="!newsStore.loaded" type="community-news">
       <div
-        class="news-article"
         v-for="article in newsStore.articles.slice(0, 4)"
         :key="article.title"
+        class="news-article"
       >
         <div
           style="

@@ -1,6 +1,6 @@
 <template>
   <span v-if="jobPageStore.bulkEditMode">
-    <input type="checkbox" v-model="selected" class="checkbox-inline" />
+    <input v-model="selected" type="checkbox" class="checkbox-inline" />
   </span>
 </template>
 
@@ -13,7 +13,7 @@ import {
 import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 
-let eventBus = getRundeckContext().eventBus;
+const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "BulkSelectCheckbox",
   props: {
@@ -29,15 +29,6 @@ export default defineComponent({
       subs: {},
     };
   },
-  watch: {
-    selected(val: boolean) {
-      if (val) {
-        this.jobPageStore.addBulkJob(this.job);
-      } else {
-        this.jobPageStore.removeBulkJob(this.job);
-      }
-    },
-  },
   computed: {
     job(): JobBrowseItem {
       return this.itemData?.job;
@@ -49,26 +40,12 @@ export default defineComponent({
       return data || {};
     },
   },
-  methods: {
-    selectIfPath(path: string) {
-      if (
-        this.job.groupPath === path ||
-        (this.job.groupPath && this.job.groupPath.startsWith(`${path}/`))
-      ) {
-        this.selected = true;
-      }
-    },
-    unselectIfPath(path: string) {
-      if (
-        this.job.groupPath === path ||
-        (this.job.groupPath && this.job.groupPath.startsWith(`${path}/`))
-      ) {
-        this.selected = false;
-      }
-    },
-    toggleSelected() {
-      if (this.jobPageStore.bulkEditMode) {
-        this.selected = !this.selected;
+  watch: {
+    selected(val: boolean) {
+      if (val) {
+        this.jobPageStore.addBulkJob(this.job);
+      } else {
+        this.jobPageStore.removeBulkJob(this.job);
       }
     },
   },
@@ -101,6 +78,29 @@ export default defineComponent({
       //unregister each listener
       eventBus.off(key, this.subs[key]);
     });
+  },
+  methods: {
+    selectIfPath(path: string) {
+      if (
+        this.job.groupPath === path ||
+        (this.job.groupPath && this.job.groupPath.startsWith(`${path}/`))
+      ) {
+        this.selected = true;
+      }
+    },
+    unselectIfPath(path: string) {
+      if (
+        this.job.groupPath === path ||
+        (this.job.groupPath && this.job.groupPath.startsWith(`${path}/`))
+      ) {
+        this.selected = false;
+      }
+    },
+    toggleSelected() {
+      if (this.jobPageStore.bulkEditMode) {
+        this.selected = !this.selected;
+      }
+    },
   },
 });
 </script>

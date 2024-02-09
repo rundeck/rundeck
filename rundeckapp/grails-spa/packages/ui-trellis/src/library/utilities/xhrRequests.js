@@ -6,11 +6,11 @@ export const getUIAjaxTokens = () => {
     if (window._rundeck.token) {
       resolve(window._rundeck.token);
     } else {
-      let uiTokenElement = document.getElementById("ui_token");
+      const uiTokenElement = document.getElementById("ui_token");
 
       if (uiTokenElement) {
-        let jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
-        let response =
+        const jsonText = uiTokenElement.textContent || uiTokenElement.innerText;
+        const response =
           jsonText && jsonText !== "" ? JSON.parse(jsonText) : null;
         window._rundeck.token = response;
         resolve(response);
@@ -124,7 +124,7 @@ export const generateUrl = (url, params) => {
     if (typeof params === "string") {
       urlparams = [params];
     } else if (typeof params === "object") {
-      for (var e in params) {
+      for (const e in params) {
         urlparams.push(
           `${encodeURIComponent(e)}=${encodeURIComponent(params[e])}`,
         );

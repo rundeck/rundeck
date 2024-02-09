@@ -7,11 +7,6 @@ import { formatDate } from "../../utilities/DateTimeFormatters";
 
 export default defineComponent({
   name: "VersionDateDisplay",
-  computed: {
-    formattedDate() {
-      return formatDate(this.date, this.format);
-    },
-  },
   props: {
     format: {
       type: String,
@@ -26,6 +21,11 @@ export default defineComponent({
     date: {
       type: String,
       required: true,
+    },
+  },
+  computed: {
+    formattedDate() {
+      return formatDate(this.date, this.format);
     },
   },
 });

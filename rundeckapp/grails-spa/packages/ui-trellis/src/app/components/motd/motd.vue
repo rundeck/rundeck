@@ -16,8 +16,8 @@
       >
         Close
       </button>
-      <div class="text-h4" v-if="noTitle">Message of The Day</div>
-      <div class="motd-content" v-bind:class="{ full: showFullMOTD }">
+      <div v-if="noTitle" class="text-h4">Message of The Day</div>
+      <div class="motd-content" :class="{ full: showFullMOTD }">
         <span v-html="message"></span>
       </div>
     </div>
@@ -52,37 +52,6 @@ export default defineComponent({
         projectHome: "projectHome",
       },
     };
-  },
-  methods: {
-    dismissMessage() {
-      let cookieKey = this.hashMessage(this.project.readme.motd);
-      let midnight = new Date();
-      midnight.setHours(23, 59, 59, 0);
-      this.$cookies.set(cookieKey, "true", midnight);
-      this.showMessage = false;
-    },
-    hashMessage(messageToHash) {
-      let hash = 0;
-      let chr;
-      if (!messageToHash || messageToHash.length === 0) return hash;
-      for (let i = 0; i < messageToHash.length; i++) {
-        chr = messageToHash.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0; // Convert to 32bit integer
-      }
-      return hash;
-    },
-    checkMessage() {
-      let messageToCheck = this.hashMessage(this.project.readme.motd);
-      return !this.$cookies.get(messageToCheck);
-    },
-    checkPage() {
-      const display = this.project.motdDisplay;
-      if (display.indexOf(this.pageDisplayConfigVal[this.tabPage]) >= 0) {
-        return true;
-      }
-      return false;
-    },
   },
   computed: {
     /**
@@ -123,7 +92,7 @@ export default defineComponent({
       if (!this.project.readme.motd) {
         return "";
       }
-      let style = ["danger", "warning", "primary", "info", "success"].find(
+      const style = ["danger", "warning", "primary", "info", "success"].find(
         (val) => this.project.readme.motd.indexOf("<!-- style:" + val) >= 0,
       );
       if (style) {
@@ -140,12 +109,12 @@ export default defineComponent({
       return `bg-${this.motdStyle}`;
     },
     styleCss() {
-      let style = {};
+      const style = {};
       if (!this.project.readme.motd) {
         return style;
       }
       const keys = { fgcolor: "color", bgcolor: "backgroundColor" };
-      let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g;
+      const regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g;
       let found = regex.exec(this.project.readme.motd);
       while (found) {
         if (found.length > 2 && keys[found[1]]) {
@@ -193,6 +162,37 @@ export default defineComponent({
         display: this.project.motdDisplay,
       });
     }
+  },
+  methods: {
+    dismissMessage() {
+      const cookieKey = this.hashMessage(this.project.readme.motd);
+      const midnight = new Date();
+      midnight.setHours(23, 59, 59, 0);
+      this.$cookies.set(cookieKey, "true", midnight);
+      this.showMessage = false;
+    },
+    hashMessage(messageToHash) {
+      let hash = 0;
+      let chr;
+      if (!messageToHash || messageToHash.length === 0) return hash;
+      for (let i = 0; i < messageToHash.length; i++) {
+        chr = messageToHash.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return hash;
+    },
+    checkMessage() {
+      const messageToCheck = this.hashMessage(this.project.readme.motd);
+      return !this.$cookies.get(messageToCheck);
+    },
+    checkPage() {
+      const display = this.project.motdDisplay;
+      if (display.indexOf(this.pageDisplayConfigVal[this.tabPage]) >= 0) {
+        return true;
+      }
+      return false;
+    },
   },
 });
 </script>

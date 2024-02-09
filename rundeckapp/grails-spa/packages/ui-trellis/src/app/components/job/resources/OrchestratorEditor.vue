@@ -4,7 +4,7 @@
       {{ $t("scheduledExecution.property.orchestrator.label") }}
     </div>
     <div :class="fieldColSize">
-      <dropdown ref="dropdown" id="orchestrator-edit-type-dropdown">
+      <dropdown id="orchestrator-edit-type-dropdown" ref="dropdown">
         <btn
           type="simple"
           class="btn-simple btn-hover btn-secondary dropdown-toggle"
@@ -22,12 +22,12 @@
           </span>
           <span v-else> Select an Orchestrator </span>
         </btn>
-        <template v-slot:dropdown>
+        <template #dropdown>
           <li v-for="plugin in pluginProviders" :key="plugin.name">
             <a
               role="button"
-              @click="setOrchestratorType(plugin.name)"
               :data-plugin-type="plugin.name"
+              @click="setOrchestratorType(plugin.name)"
             >
               <plugin-info
                 :detail="plugin"
@@ -40,7 +40,7 @@
           </li>
         </template>
       </dropdown>
-      <btn size="xs" type="danger" @click="remove" v-if="updatedValue.type">
+      <btn v-if="updatedValue.type" size="xs" type="danger" @click="remove">
         <i class="fas fa-times"></i>
         Remove Orchestrator
       </btn>
@@ -50,7 +50,7 @@
         {{ $t("scheduledExecution.property.orchestrator.description") }}
       </span>
 
-      <span class="orchestratorPlugin" v-if="getProviderFor(updatedValue.type)">
+      <span v-if="getProviderFor(updatedValue.type)" class="orchestratorPlugin">
         <span class="text-info">
           <plugin-info
             :detail="getProviderFor(updatedValue.type)"
@@ -73,10 +73,10 @@
 
           <plugin-config
             id="orchestrator-edit-config"
-            mode="edit"
-            :serviceName="'Orchestrator'"
-            v-model="updatedValue"
             :key="'edit_config' + updatedValue.type"
+            v-model="updatedValue"
+            mode="edit"
+            :service-name="'Orchestrator'"
             :show-title="false"
             :show-description="false"
             :context-autocomplete="false"
@@ -142,6 +142,17 @@ export default defineComponent({
       updatedValue,
     };
   },
+  watch: {
+    updatedValue: {
+      handler() {
+        this.$emit("update:modelValue", this.updatedValue);
+      },
+      deep: true,
+    },
+  },
+  mounted() {
+    this.onMount();
+  },
   methods: {
     remove() {
       this.updatedValue.type = null;
@@ -158,23 +169,12 @@ export default defineComponent({
         { type: null, config: {} },
         this.modelValue,
       );
-      let data =
+      const data =
         await pluginService.getPluginProvidersForService("Orchestrator");
       if (data.service) {
         this.pluginProviders = data.descriptions;
         this.pluginLabels = data.labels;
       }
-    },
-  },
-  mounted() {
-    this.onMount();
-  },
-  watch: {
-    updatedValue: {
-      handler() {
-        this.$emit("update:modelValue", this.updatedValue);
-      },
-      deep: true,
     },
   },
 });
