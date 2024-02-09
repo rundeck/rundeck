@@ -19,7 +19,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 @APITest
-class ExecExportSpec extends BaseContainer{
+class ExecExportSpec extends BaseContainer {
+
+    def setupSpec() {
+        startEnvironment()
+    }
 
     static final int KILOBYTE=1024
     static final String EXECUTION_EXT = ".xml"

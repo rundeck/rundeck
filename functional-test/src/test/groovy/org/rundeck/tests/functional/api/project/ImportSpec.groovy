@@ -11,6 +11,10 @@ import org.rundeck.util.container.RdClient
 @APITest
 class ImportSpec extends BaseContainer {
 
+    def setupSpec() {
+        startEnvironment()
+    }
+
     def "test-project-import-readme-motd"(){
         given:
         def client = getClient()

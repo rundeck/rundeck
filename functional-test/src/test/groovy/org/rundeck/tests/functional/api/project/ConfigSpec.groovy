@@ -9,7 +9,11 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
 
 @APITest
-class ConfigSpec extends BaseContainer{
+class ConfigSpec extends BaseContainer {
+
+    def setupSpec() {
+        startEnvironment()
+    }
 
     def "test-project-config-key-json"(){
         given:

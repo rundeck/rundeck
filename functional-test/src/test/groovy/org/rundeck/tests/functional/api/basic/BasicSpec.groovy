@@ -8,6 +8,7 @@ import org.rundeck.util.container.RdClient
 class BasicSpec extends BaseContainer {
 
     def setupSpec() {
+        startEnvironment()
         setupProject()
     }
 
