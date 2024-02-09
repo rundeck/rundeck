@@ -333,7 +333,6 @@ export default defineComponent({
 
       if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
         for (const i of this.inputSavedProps) {
-          console.log('prepareInputs saved prop: ',i)
             if (typeof this.inputSaved[i] === 'undefined') {
               this.inputSaved[i] = this.modelValue[i]
             }
