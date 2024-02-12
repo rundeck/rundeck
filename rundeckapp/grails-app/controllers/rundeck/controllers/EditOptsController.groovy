@@ -649,7 +649,8 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, userDataProvider, scheduledExecution, null, input.params,input.params.jobWasScheduled=='true')
+            JobOptionConfigRemoteUrl configRemoteUrl = scheduledExecutionService.getJobOptionConfigRemoteUrl(option, authContext)
+            def vres = _validateOption(option, userDataProvider, scheduledExecution, configRemoteUrl, input.params,input.params.jobWasScheduled=='true')
             vres.configMapValidate = validateFileOpt(option)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
