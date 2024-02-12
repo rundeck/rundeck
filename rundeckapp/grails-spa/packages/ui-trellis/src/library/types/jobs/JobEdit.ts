@@ -25,6 +25,7 @@ export interface JobOptionEdit extends JobOption {
   inputType: string;
   isDate?: boolean;
   newoption?: boolean;
+  valuesType?: string;
 }
 
 export interface OptionValidation {
