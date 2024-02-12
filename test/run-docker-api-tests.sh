@@ -33,7 +33,7 @@ run_tests(){
     local DIR=${FARGS[0]}
 
     cd $DIR
-    bash $DIR/test-api.sh
+    bash -x $DIR/test-api.sh
 }
 
 run_docker_test(){
