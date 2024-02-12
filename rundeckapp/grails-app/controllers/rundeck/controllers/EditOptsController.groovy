@@ -552,11 +552,17 @@ class EditOptsController extends ControllerBase{
         def validator = new OptionInputValidator(validate, messageSource, response.locale)
         optionData.validate()
         validator.receiveErrors(optionData.errors)
-        _validateOption((OptionData)optionData, validator,
-                        optionData.convertConfigRemoteUrlData(), optionData.valuesType, jobWasScheduled)
-        //todo: validate file upload
-//        vres = validateFileOpt(option, vres)
-
+        _validateOption(
+            (OptionData) optionData,
+            validator,
+            optionData.convertConfigRemoteUrlData(),
+            optionData.valuesType,
+            jobWasScheduled
+        )
+        def report = fileUploadService.validateFileOptConfig(optionData, optionData.errors)
+        if(report?.errors){
+            //TODO pass config errors
+        }
         respond(validate,[status:validate.valid?200:400])
     }
     static class OptionInputValidator implements OptionValidator{
