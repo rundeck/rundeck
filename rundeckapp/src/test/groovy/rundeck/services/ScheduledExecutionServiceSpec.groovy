@@ -113,6 +113,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                       WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
     def setup(){
         service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.fileUploadService = Mock(FileUploadService)
     }
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
