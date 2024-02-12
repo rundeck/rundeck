@@ -329,7 +329,7 @@
               <label
                 for="vtrurl_"
                 class="left"
-                :class="{ 'has-error': hasError('valuesUrl') }"
+                :class="{ 'has-error': hasError('realValuesUrl') }"
               >
                 {{ $t("form.option.valuesType.url.label") }}
               </label>
@@ -385,11 +385,14 @@
             <input
               type="url"
               class="form-control"
-              name="valuesUrl"
-              v-model="option.valuesUrl"
+              name="realValuesUrl"
+              v-model="option.realValuesUrl"
               size="60"
               :placeholder="$t('form.option.valuesURL.placeholder')"
             />
+            <div class="help-block" v-if="validationErrors['realValuesUrl']">
+              <ErrorsList :errors="validationErrors['realValuesUrl']" />
+            </div>
             <div class="help-block">
               {{ $t("form.option.valuesUrl.description") }}
               <a
