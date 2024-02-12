@@ -27,6 +27,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
@@ -52,6 +53,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
         controller.featureService = Mock(FeatureService)
+        controller.fileUploadService = Mock(FileUploadService)
         defineBeans {
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
@@ -301,7 +303,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         given:
         //test insert, should have remove undo action
         def optsmap = [:]
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -324,7 +325,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         given:
         //test insert, should have remove undo action
         def optsmap = [:]
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -345,7 +345,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -369,7 +368,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -398,7 +396,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -431,7 +428,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(
                 optsmap,
@@ -452,7 +448,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         params.name='test1'
         params.newoption = 'insert'
         params.num = 'testNum'
-        controller.fileUploadService = Mock(FileUploadService)
         controller.optionValuesService = Mock(OptionValuesService)
 
         when:
@@ -476,7 +471,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(optsmap, [action: 'remove', name: 'test2', params: [:]])
         then:
@@ -489,7 +483,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test1 = new Option(name: 'optname', description: 'original description')
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         when:
         def result = controller._applyOptionAction(optsmap, [action: 'modify', name: 'test2', params: [:]])
         then:
@@ -503,7 +496,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option test2 = new Option(name: 'optname2', description: 'original description')
         def optsmap = [optname: test1, optname2: test2]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
         def result = controller._applyOptionAction(
@@ -521,7 +513,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         //apply insert, apply undo (remove)
         def optsmap = [:]
 
-        controller.fileUploadService = Mock(FileUploadService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'insert', name: 'optname', params: [name                            : 'optname',
@@ -556,7 +547,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         def result = controller._applyOptionAction(
                 optsmap,
                 [action: 'remove', name: 'optname', params: [name: 'optname']]
@@ -601,7 +591,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         def result = controller._applyOptionAction(
                 optsmap,
@@ -647,7 +636,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         )
         def optsmap = [optname: test1]
 
-        controller.fileUploadService = Mock(FileUploadService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         def result = controller._applyOptionAction(
@@ -689,7 +677,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         opt.name = "opt1"
         opt.optionValuesPluginType = "optionValues"
         opt.enforced = true
-        def result = controller._validateOption(opt, provider, null)
+        def result = controller._validateOption(opt, provider, null, null, null, false)
 
         then:
         result.isEmpty()
@@ -757,7 +745,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt3 = new Option(name: 'ghi', sortIndex: 3)
         def opts = [opt1, opt2, opt3]
         def editopts = opts.collectEntries { [it.name, it] }
-        controller.fileUploadService = Mock(FileUploadService)
 
         params.scheduledExecutionId = 1L
         params.name = "abc"
@@ -786,7 +773,6 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt1 = new Option(name: 'abc', secureInput: true, secureExposed: true, defaultStoragePath: 'keys/asdf',required: true)
         def opts = [opt1]
         def editopts = opts.collectEntries { [it.name, it] }
-        controller.fileUploadService = Mock(FileUploadService)
 
         params.scheduledExecutionId = 1L
         params.name = "abc"
