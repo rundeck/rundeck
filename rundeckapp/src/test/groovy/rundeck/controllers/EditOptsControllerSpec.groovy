@@ -861,7 +861,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
     def "validate option "(){
         given:
             def opt = new OptionValidateRequest()
-            def resp = new OptionValidateResponse()
+            def resp = new OptionValidateResponse(valid:true)
             def msgSource = Mock(MessageSource)
             def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
         when:
