@@ -2758,7 +2758,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         scheduledExecution.options?.each { Option origopt ->
             EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
-            fileUploadService.validateFileOptConfig(origopt)
+            fileUploadService.validateFileOptConfig(origopt, origopt.errors)
 
             // If a secure option has a default value AND a storage path set, remove the default value.
             cleanSecureOptionIfHasDefaultValueAndStoragePath(origopt)
@@ -4298,7 +4298,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
             EditOptsController._validateOption(opt, userDataProvider,scheduledExecution, null,null,scheduledExecution.scheduled)
-            fileUploadService.validateFileOptConfig(opt)
+            fileUploadService.validateFileOptConfig(opt, opt.errors)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
             }

@@ -725,8 +725,8 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    protected validateFileOpt(OptionData opt) {
-        return fileUploadService.validateFileOptConfig(opt)
+    protected validateFileOpt(Option opt) {
+        return fileUploadService.validateFileOptConfig(opt, opt.errors)
     }
     /**
      * Validate the Option, return any output parameters in a map
