@@ -8,6 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 @Schema
 class OptionValidateResponse {
     boolean valid
-    String message
+    @Schema(description = "Mapping of input key to list of validation error messages")
     Map<String,List<String>> messages=[:]
 }
