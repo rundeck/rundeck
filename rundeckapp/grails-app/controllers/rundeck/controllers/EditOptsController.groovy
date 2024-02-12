@@ -523,19 +523,29 @@ class EditOptsController extends ControllerBase{
     @Post(uri='/project/{project}/jobs/validateOption')
     @Operation(
         method = "POST",
-        requestBody = @RequestBody(description='Option data',content = @Content(
+        requestBody = @RequestBody(description='Option validation request',content = @Content(
             mediaType = "application/json",
             schema = @Schema(implementation = OptionValidateRequest)
         )),
-        responses=@ApiResponse(
-            responseCode = "200",
-            description = "Option validation result",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = OptionValidateResponse)
+        responses=[
+            @ApiResponse(
+                responseCode = "200",
+                description = "Option validation with no errors",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = OptionValidateResponse)
+                )
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = OptionValidateResponse)
+                )
             )
-        ),
-        description = "Validate an option",
+        ],
+        description = "Validates an option defintion for a job, returns any validation errors",
         summary = "Validate an option"
     )
     def apiValidateOption(
