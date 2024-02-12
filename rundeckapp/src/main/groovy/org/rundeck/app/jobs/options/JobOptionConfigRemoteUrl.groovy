@@ -4,6 +4,9 @@ import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Models the values for configuration of Remote Values URL
+ */
 class JobOptionConfigRemoteUrl implements JobOptionConfigEntry {
     public static final String TYPE = "remote-url";
 
