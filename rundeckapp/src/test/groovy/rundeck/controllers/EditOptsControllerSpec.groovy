@@ -809,7 +809,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         def result = EditOptsController._validateOption(opt, provider, null, configRemoteUrl, params, true)
         then:
         opt.errors.hasErrors()==hasError
-        opt.errors.hasFieldErrors('configRemoteUrl') == hasError
+        opt.errors.hasFieldErrors('configRemoteUrl.jsonFilter') == hasError
 
         where:
         jsonFilter | hasError

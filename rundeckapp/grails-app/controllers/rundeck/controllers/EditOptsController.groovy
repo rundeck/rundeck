@@ -866,7 +866,7 @@ class EditOptsController extends ControllerBase{
             try{
                 JsonPath.compile(configRemoteUrl?.getJsonFilter())
             } catch (Exception e){
-                validator.rejectValue('configRemoteUrl', 'form.option.valuesType.url.filter.error.label')
+                validator.rejectValue('configRemoteUrl.jsonFilter', 'form.option.valuesType.url.filter.error.label')
             }
         }
     }
