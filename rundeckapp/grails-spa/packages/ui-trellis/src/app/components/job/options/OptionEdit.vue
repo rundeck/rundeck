@@ -298,33 +298,10 @@
           $t("form.option.values.label")
         }}</label>
         <div
-          :class="{
-            'col-sm-10': uiFeatures['next'],
-            'col-sm-3': !uiFeatures['next'],
-          }"
+          class="col-sm-3"
         >
-          <select
-            v-model="valuesType"
-            class="form-control"
-            v-if="uiFeatures['next']"
-          >
-            <option value="list">
-              {{ $t("form.label.valuesType.list.label") }}
-            </option>
-            <option value="url">
-              {{ $t("form.option.valuesType.url.label") }}
-            </option>
-            <template v-if="features['optionValuesPlugin']">
-              <option
-                v-for="optionValPlugin in optionValuesPlugins"
-                :value="optionValPlugin.name"
-              >
-                {{ optionValPlugin.title || optionValPlugin.name }}
-              </option>
-            </template>
-          </select>
 
-          <div v-if="!uiFeatures['next']">
+          <div>
             <div class="radio">
               <input
                 type="radio"
@@ -384,12 +361,7 @@
             </template>
           </div>
         </div>
-        <div
-          :class="{
-            'col-sm-10 col-sm-offset-2': uiFeatures['next'],
-            'col-sm-7': !uiFeatures['next'],
-          }"
-        >
+        <div class="col-sm-7">
           <div
             id="vlist_section"
             v-if="option.valuesType === 'list'"
