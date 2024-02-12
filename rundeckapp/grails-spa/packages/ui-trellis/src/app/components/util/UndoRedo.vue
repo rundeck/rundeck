@@ -38,7 +38,6 @@ export default defineComponent({
   },
   methods: {
     addChange(val: any) {
-        console.log("add a change")
       if (this.index > 0) {
         this.stack.splice(0, this.index)
         this.index = 0
