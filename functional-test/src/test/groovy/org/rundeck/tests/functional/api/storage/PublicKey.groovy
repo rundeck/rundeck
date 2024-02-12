@@ -65,19 +65,19 @@ class PublicKey extends BaseContainer {
         }
     }
 
-    def "test GET storage/keys list private keys"() {
+    def "test GET storage/keys list public keys"() {
         given:
-        def privateKeyPath = "functional-test/src/test/resources/test-files"
+        def storagePath = "functional-test/src/test/resources/test-files"
         when:
-        def response = client.doGet("/storage/keys/"+privateKeyPath)
+        def response = client.doGet("/storage/keys/"+storagePath)
 
         then:
         verifyAll {
             response.successful
             response.code() == 200
             def json = jsonValue(response.body(), Map)
-            json.path=="keys/"+publicKeyPath
-            json.url.toString().containsIgnoreCase("/storage/keys/"+publicKeyPath)
+            json.path=="keys/"+storagePath
+            json.url.toString().containsIgnoreCase("/storage/keys/"+storagePath)
             json.type == "directory"
             json.meta.findAll().size()==0
             verifyAll {
