@@ -424,6 +424,9 @@
                     size="30"
                   />
                 </div>
+                <div class="help-block" v-if="validationErrors['configRemoteUrl.jsonFilter']">
+                  <ErrorsList :errors="validationErrors['configRemoteUrl.jsonFilter']" />
+                </div>
               </div>
               <div class="col-md-12">
                 <div class="">
@@ -1292,7 +1295,8 @@ export default defineComponent({
     },
     hasError(field: string) {
       return (
-        this.validationErrors[field] && this.validationErrors[field].length > 0
+        this.validationErrors[field] && this.validationErrors[field].length > 0 ||
+          Object.keys(this.validationErrors).find((k) => k.startsWith(field+"."))
       );
     },
     getProviderFor(name) {
