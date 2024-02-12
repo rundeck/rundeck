@@ -3,6 +3,9 @@ package org.rundeck.app.jobs.options;
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry;
 
+/**
+ * Models the values for configuration of File Upload plugin for the Job Option
+ */
 class JobOptionConfigPluginAttributes implements JobOptionConfigEntry {
     public static final String TYPE = "plugin-attributes";
 
