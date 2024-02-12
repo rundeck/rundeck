@@ -26,8 +26,9 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         def entry = this.getConfigData()?.getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
         if (entry) {
             return entry as JobOptionConfigRemoteUrl
-        } else {
-            return null
+        } else if(configRemoteUrl) {
+            return JobOptionConfigRemoteUrl.fromMap(configRemoteUrl+[authenticationType:remoteUrlAuthenticationType])
         }
+        null
     }
 }
