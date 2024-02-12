@@ -375,6 +375,10 @@
               size="60"
               :placeholder="$t('form.option.valuesList.placeholder')"
             />
+
+            <div class="help-block" v-if="validationErrors['valuesList']">
+              <ErrorsList :errors="validationErrors['valuesList']" />
+            </div>
           </div>
 
           <div
@@ -723,6 +727,9 @@
             size="5"
             class="form-control"
           />
+          <div class="help-block" v-if="validationErrors['valuesListDelimiter']">
+            <ErrorsList :errors="validationErrors['valuesListDelimiter']" />
+          </div>
         </div>
         <span class="help-block">
           {{ $t("form.option.valuesDelimiter.description") }}
@@ -933,6 +940,9 @@
                 class="form-control"
                 id="vdelimiter_"
               />
+              <div class="help-block" v-if="validationErrors['delimiter']">
+                <ErrorsList :errors="validationErrors['delimiter']" />
+              </div>
             </div>
             <span class="help-block">
               {{ $t("form.option.delimiter.description") }}
