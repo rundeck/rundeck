@@ -44,14 +44,14 @@ EC=$?
 
 docker-compose -f $DOCKER_COMPOSE_SPEC logs
 
-if [ "$DEBUG_RD_SERVER" != true ] ; then
+#if [ "$DEBUG_RD_SERVER" != true ] ; then
   # Stop and clean all
-  docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
+#  docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 
-  rm -rf dockers/rundeck/api_test/src dockers/rundeck/api_test/api
-else
-  echo "Skipping Containers removal for debug..."
-fi
+#  rm -rf dockers/rundeck/api_test/src dockers/rundeck/api_test/api
+#else
+#  echo "Skipping Containers removal for debug..."
+#fi
 
 echo "run_tests.sh finished with: $EC"
 exit $EC
