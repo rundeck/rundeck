@@ -826,7 +826,7 @@ class EditOptsController extends ControllerBase{
         }
         if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl && !opt.optionValuesPluginType)) {
             if (valuesType == 'url') {
-                validator.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
+                validator.rejectValue('realValuesUrl', 'option.enforced.emptyvalues.message')
             } else {
                 validator.rejectValue('valuesList', 'option.enforced.emptyvalues.message')
             }
