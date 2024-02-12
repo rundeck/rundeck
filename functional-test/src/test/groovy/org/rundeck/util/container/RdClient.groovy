@@ -171,6 +171,16 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    Response doPostWithContentTypeWithoutBody(final String path,String  contentType) {
+        RequestBody body = RequestBody.create(null, new byte[]{});
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+                .header('Content-Type', contentType)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {
         jsonValue(doPost(path, body).body(), clazz)
     }
