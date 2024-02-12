@@ -330,7 +330,7 @@
                 type="radio"
                 name="valuesType"
                 value="list"
-                v-model="valuesType"
+                v-model="option.valuesType"
                 id="vtrlist_"
               />
               <label
@@ -346,7 +346,7 @@
                 type="radio"
                 name="valuesType"
                 value="url"
-                v-model="valuesType"
+                v-model="option.valuesType"
                 id="vtrurl_"
               />
               <label
@@ -363,7 +363,7 @@
                   <input
                     type="radio"
                     name="valuesType"
-                    v-model="valuesType"
+                    v-model="option.valuesType"
                     :value="optionValPlugin.name"
                     :id="'optvalplugin_' + optionValPlugin.name"
                   />
@@ -392,7 +392,7 @@
         >
           <div
             id="vlist_section"
-            v-if="valuesType === 'list'"
+            v-if="option.valuesType === 'list'"
             :class="{ 'has-error': hasError('valuesList') }"
           >
             <input
@@ -407,8 +407,8 @@
 
           <div
             id="vurl_section"
-            v-else-if="valuesType === 'url'"
-            :class="{ 'has-error': hasError('valuesUrl') }"
+            v-else-if="option.valuesType === 'url'"
+            :class="{ 'has-error': hasError('realValuesUrl') }"
           >
             <input
               type="url"
@@ -684,10 +684,12 @@
             </div>
           </div>
           <div
-            v-else-if="valuesType && optionValuesPlugins && uiFeatures['next']"
+            v-else-if="option.valuesType && optionValuesPlugins "
           >
             <plugin-info
-              :detail="getProviderFor(valuesType)"
+              :detail="getProviderFor(option.valuesType)"
+              :show-icon="false"
+              :show-title="false"
               :show-description="true"
               :show-extended="true"
               description-css="help-block"
@@ -1178,6 +1180,7 @@ export default defineComponent({
           inputType: "plain",
           hidden: false,
           multivalued: false,
+          valuesType: this.modelValue.optionValuesPluginType?this.modelValue.optionValuesPluginType:this.modelValue.realValuesUrl ?"url":"list"
         },
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
@@ -1215,6 +1218,27 @@ export default defineComponent({
       this.option.secureInput = val === "secure" || val === "secureExposed";
       this.option.secureExposed = val === "secureExposed";
     },
+    "option.valuesType"(val:string){
+        if (val === "url") {
+          this.option.optionValuesPluginType = "";
+          this.option.realValuesUrl = "";
+          this.option.remoteUrlAuthenticationType = "";
+          this.option.configRemoteUrl = {};
+          this.urlChoice = true;
+        } else if (val === "list") {
+          this.option.optionValuesPluginType = "";
+          this.option.realValuesUrl = null;
+          this.option.remoteUrlAuthenticationType = "";
+          this.option.configRemoteUrl = {};
+          this.urlChoice = false;
+        } else {
+          this.option.optionValuesPluginType = val;
+          this.option.realValuesUrl = null;
+          this.option.remoteUrlAuthenticationType = "";
+          this.option.configRemoteUrl = {};
+          this.urlChoice = false;
+        }
+      }
   },
   computed: {
     fileUploadPluginEnabled() {
@@ -1272,38 +1296,6 @@ export default defineComponent({
           this.regexChoice = false;
           this.option.enforced = false;
           this.option.regex = null;
-        }
-      },
-    },
-    valuesType: {
-      get() {
-        if (this.option.optionValuesPluginType) {
-          return this.option.optionValuesPluginType;
-        }
-        if (this.option.realValuesUrl || this.urlChoice) {
-          return "url";
-        }
-        return "list";
-      },
-      set(val: string) {
-        if (val === "url") {
-          this.option.optionValuesPluginType = "";
-          this.option.realValuesUrl = "";
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = true;
-        } else if (val === "list") {
-          this.option.optionValuesPluginType = "";
-          this.option.realValuesUrl = null;
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = false;
-        } else {
-          this.option.optionValuesPluginType = val;
-          this.option.realValuesUrl = null;
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = false;
         }
       },
     },
