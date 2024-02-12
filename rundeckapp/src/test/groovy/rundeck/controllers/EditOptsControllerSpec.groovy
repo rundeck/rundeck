@@ -53,6 +53,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
         controller.featureService = Mock(FeatureService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.fileUploadService = Mock(FileUploadService)
         defineBeans {
             configurationService(ConfigurationService) {
