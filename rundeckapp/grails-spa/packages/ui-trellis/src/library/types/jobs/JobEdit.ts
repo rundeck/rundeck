@@ -19,6 +19,7 @@ export interface JobOption {
   secureInput?: boolean;
   valuesList?: string;
   sortValues?: boolean;
+  valuesListDelimiter?: string;
 }
 
 export interface JobOptionEdit extends JobOption {
