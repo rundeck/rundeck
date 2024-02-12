@@ -1205,6 +1205,9 @@ export default defineComponent({
       this.option.isDate = val === "date";
       this.option.secureInput = val === "secure" || val === "secureExposed";
       this.option.secureExposed = val === "secureExposed";
+      if(this.option.secureInput){
+        this.option.multivalued = false
+      }
     },
     "option.valuesType"(val:string){
         if (val === "url") {
