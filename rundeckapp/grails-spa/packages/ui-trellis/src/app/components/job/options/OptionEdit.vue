@@ -1299,6 +1299,8 @@ export default defineComponent({
   },
   methods: {
     async doSave() {
+      this.validationErrors={}
+      this.validationWarnings={}
       this.validateOptionName()
       await this.validateOption();
       if (this.hasFormErrors) {
