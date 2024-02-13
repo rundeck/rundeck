@@ -1,25 +1,27 @@
 
-import { defineComponent, markRaw } from "vue";
-import { getRundeckContext } from "../../../library";
+import {defineComponent, markRaw} from 'vue'
+import {getRundeckContext} from "../../../library";
 import EditProjectFile from "./EditProjectFile.vue";
 
-import messages from "./i18n";
 
-const _i18n = messages as any;
+import messages from './i18n'
+
+const _i18n = messages as any
 
 // Create VueI18n instance with options
-const locale = getRundeckContext().locale || "en_US";
-const lang = getRundeckContext().language || "en";
+let locale = getRundeckContext().locale || 'en_US'
+let lang = getRundeckContext().language || 'en'
 
 // include any i18n injected in the page by the app
-const i18nmessages = {
-  [locale]: Object.assign(
-    {},
-    _i18n[locale] || _i18n[lang] || _i18n["en_US"] || {},
-  ),
-};
+let i18nMessages =
+    {
+        [locale]: Object.assign(
+            {},
+            _i18n[locale] || _i18n[lang] || _i18n['en_US'] || {}
+        )
+    }
 
-const rundeckContext = getRundeckContext();
+let rundeckContext = getRundeckContext()
 
 rundeckContext.rootStore.ui.addItems([
     {
@@ -44,15 +46,18 @@ rundeckContext.rootStore.ui.addItems([
             },
             created() {
                 this.addUiMessages([i18nMessages[locale]]);
-                // Performing transformation on the data
                 this.filename = this.itemData.filename;
-                this.displayConfig = Array.isArray(this.itemData.displayConfig) ? this.itemData.displayConfig.filter((item: any) => typeof item === 'string') : [];
+
+                if (typeof this.itemData.displayConfig === 'string') {
+                    this.displayConfig = this.itemData.displayConfig.replace(/^\[|\]$/g, '').split(', ')
+                }
 
                 this.project = this.itemData.project;
                 this.authAdmin = Boolean(this.itemData.authAdmin);
             },
             template: `
-              <edit-project-file :filename="filename" :display-config="displayConfig" :project="project" :auth-admin="authAdmin"/>`
+              <edit-project-file :filename="filename" :display-config="displayConfig" :project="project"
+                                 :auth-admin="authAdmin"/>\`
             `
         }))
     }
