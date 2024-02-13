@@ -42,11 +42,11 @@
 
       </popover>
     </template>
-    <template v-else-if="option.realValuesUrl">
+    <template v-else-if="option.valuesUrl">
       <span class="valuesSet">
         <span
           class="valuesUrl"
-          :title="`Values loaded from Remote URL: ${option.realValuesUrl}`"
+          :title="`Values loaded from Remote URL: ${option.valuesUrl}`"
           >URL</span
         >
       </span>

@@ -1,7 +1,7 @@
 export interface JobOption {
   configMap?: any;
   configRemoteUrl?: any;
-  defaultValue?: string;
+  value?: string;
   delimiter?: string;
   description?: string;
   enforced?: boolean;
@@ -13,19 +13,20 @@ export interface JobOption {
   name: string;
   optionType: string;
   optionValuesPluginType?: string;
-  realValuesUrl?: string;
+  valuesUrl?: string;
   regex?: string;
   remoteUrlAuthenticationType?: string;
-  secureExposed?: boolean;
-  secureInput?: boolean;
-  valuesList?: string;
+  valueExposed?: boolean;
+  secure?: boolean;
+  values?: string[];
   sortValues?: boolean;
   valuesListDelimiter?: string;
+  isDate?: boolean;
+  dateFormat?: string;
 }
 
 export interface JobOptionEdit extends JobOption {
   inputType: string;
-  isDate?: boolean;
   newoption?: boolean;
   valuesType?: string;
 }
@@ -51,7 +52,7 @@ export const OptionPrototype={
   secureInput: false,
   secureExposed: false,
   inputType: "plain",
-  realValuesUrl: null,
+  valuesUrl: null,
   optionValuesPluginType: "",
   remoteUrlAuthenticationType: "",
   configRemoteUrl: {},
