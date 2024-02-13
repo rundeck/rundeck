@@ -13,7 +13,7 @@ class JobsExportSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def path = updateJobFile([fileName: "job-template-common.xml"])
+        def path = updateJobFileToImport("job-template-common.xml")
         jobId = jobImportFile(path).succeeded[0].id
     }
 
