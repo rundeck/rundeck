@@ -4,51 +4,43 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-class PrivateKey extends BaseContainer {
+class PublicKeySpec extends BaseContainer {
 
     def setupSpec() {
         setupProject()
     }
-    def privateKeyPath = "functional-test/src/test/resources/test-files/privateKey.private"
+    def publicKeyPath = "functional-test/src/test/resources/test-files/publicKey.public"
 
-    def contentType = "application/octet-stream"
+    def contentType = "application/pgp-keys"
 
-    def rundeckKeyType = "private"
+    def rundeckKeyType = "public"
 
     def "test POST storage/keys"() {
 
         when:
-        def response = client.doPostWithContentTypeWithoutBody("/storage/keys/"+privateKeyPath,contentType)
+        def response = client.doPostWithContentTypeWithoutBody("/storage/keys/"+publicKeyPath,contentType)
 
         then:
         verifyAll {
-            response.successful
             response.code() == 201
-            def json = jsonValue(response.body(), Map)
-            json.path == "keys/"+privateKeyPath
-            json.type == "file"
-            json.url.toString().containsIgnoreCase("/storage/keys/"+privateKeyPath)
-            json.name == "privateKey.private"
-            json.meta.getAt("Rundeck-content-type") == contentType
-            json.meta.getAt("Rundeck-key-type") == rundeckKeyType
-            json.meta.findAll().size() == 7
+            response.message() == "Created"
         }
     }
 
     def "test GET storage/keys"() {
 
         when:
-        def response = client.doGet("/storage/keys/"+privateKeyPath)
+        def response = client.doGet("/storage/keys/"+publicKeyPath)
 
         then:
         verifyAll {
             response.successful
             response.code() == 200
             def json = jsonValue(response.body(), Map)
-            json.path == "keys/"+privateKeyPath
+            json.path == "keys/"+publicKeyPath
             json.type == "file"
-            json.url.toString().containsIgnoreCase("/storage/keys/"+privateKeyPath)
-            json.name == "privateKey.private"
+            json.url.toString().containsIgnoreCase("/storage/keys/"+publicKeyPath)
+            json.name == "publicKey.public"
             json.meta.getAt("Rundeck-content-type") == contentType
             json.meta.getAt("Rundeck-key-type") == rundeckKeyType
             json.meta.findAll().size() == 7
@@ -60,7 +52,7 @@ class PrivateKey extends BaseContainer {
         given:
         def client = clientWithToken("wrongToken")
         when:
-        def response = client.doGet("/storage/keys/"+privateKeyPath)
+        def response = client.doGet("/storage/keys/"+publicKeyPath)
 
         then:
         verifyAll {
@@ -73,26 +65,26 @@ class PrivateKey extends BaseContainer {
         }
     }
 
-    def "test GET storage/keys list private keys"() {
+    def "test GET storage/keys list public keys"() {
         given:
-        def privateKeyPath = "functional-test/src/test/resources/test-files"
+        def storagePath = "functional-test/src/test/resources/test-files"
         when:
-        def response = client.doGet("/storage/keys/"+privateKeyPath)
+        def response = client.doGet("/storage/keys/"+storagePath)
 
         then:
         verifyAll {
             response.successful
             response.code() == 200
             def json = jsonValue(response.body(), Map)
-            json.path=="keys/functional-test/src/test/resources/test-files"
-            json.url.toString().containsIgnoreCase("storage/keys/functional-test/src/test/resources/test-files")
+            json.path=="keys/"+storagePath
+            json.url.toString().containsIgnoreCase("/storage/keys/"+storagePath)
             json.type == "directory"
             json.meta.findAll().size()==0
             verifyAll {
-                json.resources[0].path == "keys/functional-test/src/test/resources/test-files/privateKey.private"
+                json.resources[0].path == "keys/"+publicKeyPath
                 json.resources[0].type == "file"
-                json.resources[0].url.toString().containsIgnoreCase("storage/keys/functional-test/src/test/resources/test-files/privateKey.private")
-                json.resources[0].name == "privateKey.private"
+                json.resources[0].url.toString().containsIgnoreCase("/storage/keys/"+publicKeyPath)
+                json.resources[0].name == "publicKey.public"
                 json.resources[0].meta.getAt("Rundeck-content-type") == contentType
                 json.resources[0].meta.getAt("Rundeck-key-type") == rundeckKeyType
                 json.resources[0].meta.findAll().size() == 7
@@ -102,7 +94,7 @@ class PrivateKey extends BaseContainer {
 
     def "test DELETE storage/key"() {
         when:
-        def response = client.doDelete("/storage/keys/"+privateKeyPath)
+        def response = client.doDelete("/storage/keys/"+publicKeyPath)
 
         then:
         verifyAll {
@@ -111,4 +103,3 @@ class PrivateKey extends BaseContainer {
         }
     }
 }
-
