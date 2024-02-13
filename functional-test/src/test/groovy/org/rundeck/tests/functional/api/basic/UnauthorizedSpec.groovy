@@ -20,7 +20,6 @@ class UnauthorizedSpec extends BaseContainer {
                     new OkHttpClient.Builder().
                             build()
             )
-            client.apiVersion = 46
         when:
             def result = client.doGet("/projects")
         then:
@@ -29,14 +28,13 @@ class UnauthorizedSpec extends BaseContainer {
             result.code() == 403
             def json = client.jsonValue(result.body(), Map)
             json.errorCode == 'unauthorized'
-            json.message == '(unauthenticated) is not authorized for: /api/46/projects'
+            json.message == "(unauthenticated) is not authorized for: /api/${client.apiVersion}/projects"
         }
     }
 
     def "unauthorized token request (header) (json)"() {
         given:
             def client = clientProvider.clientWithToken('invalidtoken')
-            client.apiVersion = 46
         when:
             def result = client.doGet("/projects")
         then:
@@ -45,7 +43,7 @@ class UnauthorizedSpec extends BaseContainer {
                 result.code() == 403
                 def json = client.jsonValue(result.body(), Map)
                 json.errorCode == 'unauthorized'
-                json.message == '(Token:inval****) is not authorized for: /api/46/projects'
+                json.message == "(Token:inval****) is not authorized for: /api/${client.apiVersion}/projects"
             }
     }
 
@@ -57,7 +55,6 @@ class UnauthorizedSpec extends BaseContainer {
                     new OkHttpClient.Builder().
                             build()
             )
-            client.apiVersion = 46
         when:
             def result = client.doGet("/projects?authtoken=invalidtoken")
         then:
@@ -66,7 +63,7 @@ class UnauthorizedSpec extends BaseContainer {
                 result.code() == 403
                 def json = client.jsonValue(result.body(), Map)
                 json.errorCode == 'unauthorized'
-                json.message == '(Token:inval****) is not authorized for: /api/46/projects'
+                json.message == "(Token:inval****) is not authorized for: /api/${client.apiVersion}/projects"
             }
     }
 
