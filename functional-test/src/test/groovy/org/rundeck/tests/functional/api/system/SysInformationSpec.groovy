@@ -22,7 +22,7 @@ class SysInformationSpec extends BaseContainer{
             def json = jsonValue(response.body())
             json.system.size() == 11
             json.system.rundeck.size() == 7
-            json.system.rundeck.apiversion == "46"
+            json.system.rundeck.apiversion == client.getApiVersion()
         }
     }
 
