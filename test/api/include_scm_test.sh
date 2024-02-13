@@ -70,6 +70,11 @@ END
 	POSTFILE=$tmp
 	EXPECT_STATUS=200
 
+	echo "SETING UP SCM PLUGIN WITH ENDPOINT: ${ENDPOINT}"
+	echo "content"
+	cat "$tmp"
+	echo "-----------------------------------------------------------"
+
 	
 	api_request $ENDPOINT $DIR/curl.out
 
