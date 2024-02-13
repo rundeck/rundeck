@@ -17,52 +17,52 @@
 <template>
   <div>
     <select v-model="value" class="form-control">
-        <option v-for="project in projects" :key="project" v-bind:value="project">{{project}}</option>
+      <option v-for="project in projects" :key="project" :value="project">
+        {{ project }}
+      </option>
     </select>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { client } from '../../modules/rundeckClient'
+import { defineComponent } from "vue";
+import { client } from "../../modules/rundeckClient";
 
 export default defineComponent({
-  name: 'ProjectPicker',
+  name: "ProjectPicker",
   props: {
     modelValue: {
       required: false,
-      default: ''
-    }
+      default: "",
+    },
   },
-  emits: ['update:modelValue'],
+  emits: ["update:modelValue"],
   data() {
     return {
       value: this.modelValue,
       projects: [] as string[],
-    }
-  },
-  methods: {
-    loadProjects() {
-      this.projects.push('')
-      client.projectList().then(result => {
-        result.forEach(prj => {
-          if (prj.name) this.projects.push(prj.name)
-        })
-      })
-    }
-  },
-  mounted() {
-    this.loadProjects()
+    };
   },
   watch: {
     value() {
-      this.$emit('update:modelValue', this.value)
+      this.$emit("update:modelValue", this.value);
     },
     modelValue() {
-      this.value = this.modelValue
+      this.value = this.modelValue;
     },
   },
-})
-
+  mounted() {
+    this.loadProjects();
+  },
+  methods: {
+    loadProjects() {
+      this.projects.push("");
+      client.projectList().then((result) => {
+        result.forEach((prj) => {
+          if (prj.name) this.projects.push(prj.name);
+        });
+      });
+    },
+  },
+});
 </script>
-<style lang="scss">
-</style>
+<style lang="scss"></style>

@@ -1,7 +1,6 @@
-
 enum InputType {
-    Text = 'text',
-    File = 'file',
+  Text = "text",
+  File = "file",
 }
 
-export default InputType
+export default InputType;

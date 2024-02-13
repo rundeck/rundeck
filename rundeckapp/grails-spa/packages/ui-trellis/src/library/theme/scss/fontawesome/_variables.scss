@@ -3,21 +3,21 @@
 // Variables
 // --------------------------
 
-$fa-font-path:         "../fonts/webfonts" !default;
-$fa-font-size-base:    16px !default;
-$fa-font-display:      block !default;
-$fa-css-prefix:        fa !default;
-$fa-version:           "5.14.0" !default;
-$fa-border-color:      #eee !default;
-$fa-inverse:           #fff !default;
-$fa-li-width:          2em !default;
-$fa-fw-width:          math.div(20em, 16);
-$fa-primary-opacity:   1 !default;
-$fa-secondary-opacity: .4 !default;
+$fa-font-path: "../fonts/webfonts" !default;
+$fa-font-size-base: 16px !default;
+$fa-font-display: block !default;
+$fa-css-prefix: fa !default;
+$fa-version: "5.14.0" !default;
+$fa-border-color: #eee !default;
+$fa-inverse: #fff !default;
+$fa-li-width: 2em !default;
+$fa-fw-width: math.div(20em, 16);
+$fa-primary-opacity: 1 !default;
+$fa-secondary-opacity: 0.4 !default;
 
 // Convenience function used to set content property
 @function fa-content($fa-var) {
-  @return unquote("\"#{ $fa-var }\"");
+  @return unquote('"#{ $fa-var }"');
 }
 
 $fa-var-500px: \f26e;

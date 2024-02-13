@@ -1,9 +1,6 @@
 package org.rundeck.app.providers
 
 import grails.testing.gorm.DataTest
-import org.rundeck.app.data.model.v1.AuthTokenMode
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.providers.GormProjectDataProvider
@@ -18,8 +15,6 @@ import rundeck.services.data.AuthTokenDataService
 import rundeck.services.data.ProjectDataService
 import spock.lang.Specification
 import spock.lang.Unroll
-
-import static org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 
 class GormProjectDataProviderSpec extends Specification implements DataTest{
     GormProjectDataProvider provider = new GormProjectDataProvider()

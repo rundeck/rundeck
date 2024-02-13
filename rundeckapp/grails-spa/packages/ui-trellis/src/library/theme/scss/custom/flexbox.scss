@@ -97,23 +97,19 @@
 
   /* Medium screens */
   @media all and (max-width: $screen-md) {
-
     /* When on medium sized screens, we center it by evenly distributing empty space around items */
     justify-content: space-around;
-
   }
 
   /* Small screens */
   @media all and (max-width: $screen-sm) {
-
     /* On small screens, we are no longer using row direction but column */
     flex-direction: column;
-
   }
 }
 
 .row-flex,
-.row-flex>div[class*='col-'] {
+.row-flex > div[class*="col-"] {
   display: -webkit-box;
   display: -moz-box;
   display: -ms-flexbox;
@@ -129,18 +125,17 @@
   flex: 0;
 }
 
-.row-flex>div[class*='col-'],
-.container-flex>div[class*='col-'] {
-  margin: -.2px;
+.row-flex > div[class*="col-"],
+.container-flex > div[class*="col-"] {
+  margin: -0.2px;
   /* hack adjust for wrapping */
 }
 
-.container-flex>div[class*='col-'] div.flexible,
-.row-flex>div[class*='col-'] div.flexible {
+.container-flex > div[class*="col-"] div.flexible,
+.row-flex > div[class*="col-"] div.flexible {
   width: 100%;
   display: inline-block; // jesse: I had to add this because the width was causing issues but it's needed to give the element full width
 }
-
 
 .flex-col {
   display: flex;
@@ -154,8 +149,6 @@
   -webkit-flex: 2;
   flex: 2;
 }
-
-
 
 ////// EXAMPLE MARKUP FOR FLEX BOX USAGE IN BOOTSTRAP 3
 // <div class="container"><h3>.row-flex (make columns equal heights in each row)</h3></div><div class="container"><div class="row row-flex row-flex-wrap"><div class="col-md-3"><div class="panel panel-default flex-col"><div class="panel-heading">Title flex-col</div><div class="panel-body flex-grow">Content here -- div with .flex-grow</div><div class="panel-footer">Footer</div></div></div><div class="col-md-3"><div class="well">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,

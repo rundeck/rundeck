@@ -1,38 +1,48 @@
 <template>
   <tr v-if="displayCard">
     <td>
-      <div style="width: 60px;">
+      <div style="width: 60px">
         <span v-if="provider.builtin">
-          <i class="fa fa-briefcase" aria-hidden="true" v-tooltip.hover="`Built-In`"></i>
+          <i
+            v-tooltip.hover="`Built-In`"
+            class="fa fa-briefcase"
+            aria-hidden="true"
+          ></i>
         </span>
         <span v-else>
-          <i class="fa fa-file" aria-hidden="true" v-tooltip.hover="`Installed File`"></i>
+          <i
+            v-tooltip.hover="`Installed File`"
+            class="fa fa-file"
+            aria-hidden="true"
+          ></i>
         </span>
-        <span class="info-icon" @click="openInfo" style="margin-left:1em;">
+        <span class="info-icon" style="margin-left: 1em" @click="openInfo">
           <i class="fas fa-info-circle"></i>
         </span>
       </div>
     </td>
     <td>
       <div>
-        <span v-if="provider.title">{{provider.title}}</span>
-        <span v-else>{{provider.name}}</span>
+        <span v-if="provider.title">{{ provider.title }}</span>
+        <span v-else>{{ provider.name }}</span>
       </div>
     </td>
-    <td>{{StringFormatters.splitAtCapitalLetter(provider.service)}}</td>
+    <td>{{ StringFormatters.splitAtCapitalLetter(provider.service) }}</td>
     <td>
-      <div v-if="provider.author">Author: {{provider.author}}</div>
+      <div v-if="provider.author">Author: {{ provider.author }}</div>
     </td>
     <td>
-      <div class="current-version-number">{{provider.pluginVersion}}</div>
+      <div class="current-version-number">{{ provider.pluginVersion }}</div>
     </td>
     <td>
       <button
         v-if="!provider.builtin"
-        style="margin-bottom:1em;"
+        style="margin-bottom: 1em"
         class="btn btn-sm btn-block square-button"
         @click="handleUninstall(provider)"
-      >Uninstall</button>
+      >
+        Uninstall
+      </button>
     </td>
     <!-- <td>
       <div class="plugin-description" v-html="provider.description"></div>
@@ -52,17 +62,17 @@ export default {
     openInfo() {
       this.getProviderInfo({
         serviceName: this.provider.service,
-        providerName: this.provider.name
+        providerName: this.provider.name,
       });
     },
     handleUninstall(provider) {
       this.uninstallPlugin(provider);
-    }
+    },
   },
   computed: {
-      StringFormatters() {
-          return StringFormatters
-      },
+    StringFormatters() {
+      return StringFormatters;
+    },
     ...mapState("plugins", ["selectedServiceFacet"]),
     displayCard() {
       if (
@@ -73,8 +83,8 @@ export default {
       } else {
         return this.selectedServiceFacet === this.provider.service;
       }
-    }
-  }
+    },
+  },
 };
 </script>
 <style lang="scss" scoped>

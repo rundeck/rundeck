@@ -1,7 +1,6 @@
 
 
 export default {
-
     en_US: {
         edit: {
             readme: {
@@ -27,18 +26,7 @@ export default {
 
                 }
             },
-            warning:{
-                not: {
-                    displayed: {
-                        admin: {
-                            message: 'Warning: This file will not be shown anywhere, you can enable it in the:'
-                        },
-                        nonadmin:{
-                            message: 'Warning: This file will not be shown anywhere, you should ask an admin to update your Project Configuration to enable it.'
-                        }
-                    }
-                }
-            }
+          },
         },
         project: {
             configuration: {
@@ -47,6 +35,7 @@ export default {
         }
     }
 };
+
 
 
 

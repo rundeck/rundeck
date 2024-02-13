@@ -79,7 +79,6 @@ class Storage implements RundeckStorage{
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']
 
-    @Override
     public Path getPath() {
         return PathUtil.asPath((dir?(dir+'/'):'')+name)
     }

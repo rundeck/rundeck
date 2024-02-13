@@ -1,11 +1,12 @@
 @import "../runstrap/variables";
 
-.wfnodestate{
+.wfnodestate {
   border-radius: 3px;
   padding: 5px 3px;
   margin-bottom: 5px;
   cursor: pointer;
-  &:hover, &.open{
+  &:hover,
+  &.open {
     background: var(--background-color-lvl3);
   }
 }
@@ -19,8 +20,7 @@
   .closed {
     display: none;
   }
-  .stepident{
-
+  .stepident {
   }
 }
 

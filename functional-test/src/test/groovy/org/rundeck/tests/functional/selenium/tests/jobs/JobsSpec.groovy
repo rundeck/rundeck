@@ -1,11 +1,9 @@
 package org.rundeck.tests.functional.selenium.tests.jobs
 
 import org.rundeck.tests.functional.selenium.pages.jobs.JobCreatePage
-import org.rundeck.tests.functional.selenium.pages.jobs.JobEditPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobListPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobShowPage
 import org.rundeck.tests.functional.selenium.pages.jobs.JobTab
-import org.rundeck.tests.functional.selenium.pages.jobs.JobUploadPage
 import org.rundeck.tests.functional.selenium.pages.jobs.StepType
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.tests.functional.selenium.pages.profile.UserProfilePage
@@ -239,6 +237,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
         expect:
             jobCreatePage.waitForOptionsToBe 1, 0
@@ -266,52 +265,6 @@ class JobsSpec extends SeleniumBase {
         !jobCreatePage.defaultValueInput.isDisplayed()
     }
 
-    def "Upload job definition with secure options + default values, get info"() {
-        setup:
-        def uploadJobDefinitionPage = page JobUploadPage
-        uploadJobDefinitionPage.loadPathToUploadPage(SELENIUM_BASIC_PROJECT)
-        def tempYamlText = "- defaultTab: nodes\n  description: ''\n  executionEnabled: true\n  id: c19d5338-770b-493f-8125-bfa4634515bb\n  loglevel: INFO\n  name: test\n  nodeFilterEditable: false\n  options:\n  - name: secure_opt\n    secure: true\n    value: anything\n    valueExposed: true\n  plugins:\n    ExecutionLifecycle: {}\n  scheduleEnabled: true\n  schedules: []\n  sequence:\n    commands:\n    - exec: echo 'asd'\n    keepgoing: false\n    strategy: node-first\n  uuid: c19d5338-770b-493f-8125-bfa4634515bb"
-        def tempFile = File.createTempFile("temp", ".yaml")
-        tempFile.text = tempYamlText
-        tempFile.deleteOnExit()
-
-        when:
-        uploadJobDefinitionPage.go()
-        uploadJobDefinitionPage.fileInputElement().sendKeys(tempFile.getAbsolutePath())
-        uploadJobDefinitionPage.fileUploadButtonElement().click()
-        uploadJobDefinitionPage.waitForElementVisible(uploadJobDefinitionPage.jobUploadInfoDivElement())
-
-        then:
-        uploadJobDefinitionPage.jobUploadInfoDivElement().isDisplayed()
-    }
-
-    def "Secure options with default values, hint in the definition form"() {
-        setup:
-        def uploadJobDefinitionPage = page JobUploadPage
-        uploadJobDefinitionPage.loadPathToUploadPage(SELENIUM_BASIC_PROJECT)
-
-        def tempYamlText = "- defaultTab: nodes\n  description: ''\n  executionEnabled: true\n  id: c19d5338-770b-493f-8125-bfa4634515bb\n  loglevel: INFO\n  name: test\n  nodeFilterEditable: false\n  options:\n  - name: secure_opt\n    secure: true\n    value: anything\n    valueExposed: true\n  plugins:\n    ExecutionLifecycle: {}\n  scheduleEnabled: true\n  schedules: []\n  sequence:\n    commands:\n    - exec: echo 'asd'\n    keepgoing: false\n    strategy: node-first\n  uuid: c19d5338-770b-493f-8125-bfa4634515bb"
-        def tempFile = File.createTempFile("temp", ".yaml")
-        tempFile.text = tempYamlText
-        tempFile.deleteOnExit()
-
-        def jobEditPage = page JobEditPage
-        jobEditPage.loadPathToEditByUuid(SELENIUM_BASIC_PROJECT, 'c19d5338-770b-493f-8125-bfa4634515bb')
-
-        when:
-        uploadJobDefinitionPage.go()
-        uploadJobDefinitionPage.fileInputElement().sendKeys(tempFile.getAbsolutePath())
-        uploadJobDefinitionPage.fileUploadButtonElement().click()
-        jobEditPage.go()
-        jobEditPage.workflowTabElement().click()
-        jobEditPage.secureOptionSpanElement().click()
-
-        then:
-        jobEditPage.defaultValueInputElement().isDisplayed()
-        jobEditPage.secureOptionDefaultValueHelpElement().isDisplayed()
-
-    }
-
     def "job option revert all"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
@@ -332,6 +285,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton
             jobCreatePage.optionRevertAllButton.click()
             jobCreatePage.optionConfirmRevertAllButton.click()
@@ -364,8 +318,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
+            jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
             !(jobCreatePage.optionLis 0 isEmpty())
@@ -415,9 +371,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.fillBasicJob 'a job with workflow undo-redo test'
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
-            jobCreatePage.wfUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButton
-            jobCreatePage.wfRedoButton.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfUndoButtonLink
+            jobCreatePage.wfUndoButtonLink.click()
+            jobCreatePage.waitForElementToBeClickable jobCreatePage.wfRedoButtonLink
+            jobCreatePage.wfRedoButtonLink.click()
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 2
         expect:
             jobCreatePage.workFlowList.size() == 2

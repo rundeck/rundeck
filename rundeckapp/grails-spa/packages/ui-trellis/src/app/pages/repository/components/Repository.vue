@@ -1,8 +1,8 @@
 <template>
   <div class="repository">
     <div class="repo-header">
-      <a style="display:block;" @click="toggleVisibility">
-        <h3 class="repo-title">{{repo.repositoryName}} Repository</h3>
+      <a style="display: block" @click="toggleVisibility">
+        <h3 class="repo-title">{{ repo.repositoryName }} Repository</h3>
         <div class="visibility-toggle pull-right">
           <i v-show="visible" class="fas fa-sort-up fa-2x" title="Hide"></i>
           <i v-show="!visible" class="fas fa-sort-down fa-2x" title="Show"></i>
@@ -11,18 +11,26 @@
     </div>
     <div v-show="visible">
       <div class="repo-meta">
-        <span
-          v-if="type === 'search'"
-        >{{repo.results.length}} {{ plural('plugin', repo.results.length)}} found in this repo that match the search term</span>
-        <span v-else>{{repo.results.length}} {{ plural('plugin', repo.results.length)}} in repo</span>
+        <span v-if="type === 'search'"
+          >{{ repo.results.length }}
+          {{ plural("plugin", repo.results.length) }} found in this repo that
+          match the search term</span
+        >
+        <span v-else
+          >{{ repo.results.length }}
+          {{ plural("plugin", repo.results.length) }} in repo</span
+        >
       </div>
-      <div class="artifact-grid row row-flex row-flex-wrap " :class="repo.repositoryName">
+      <div
+        class="artifact-grid row row-flex row-flex-wrap"
+        :class="repo.repositoryName"
+      >
         <PluginCard
+          v-for="result in repo.results"
+          :key="result.id"
           :result="result"
           :repo="repo"
           class="artifact col-xs-12 col-sm-4"
-          v-for="result in repo.results"
-          :key="result.id"
         />
       </div>
     </div>
@@ -30,18 +38,18 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import PluginCard from "./PluginCard.vue";
 
 export default defineComponent({
   name: "RepositoryRow",
-  props: ["repo", "type"],
   components: {
-    PluginCard
+    PluginCard,
   },
+  props: ["repo", "type"],
   data() {
     return {
-      visible: true
+      visible: true,
     };
   },
   watch: {},
@@ -50,11 +58,11 @@ export default defineComponent({
       this.visible = !this.visible;
     },
     plural(val, num) {
-        if(num === 1) return val
-        return `${val}s`
-    }
-  }
-})
+      if (num === 1) return val;
+      return `${val}s`;
+    },
+  },
+});
 </script>
 
 <style lang="scss" scoped>

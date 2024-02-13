@@ -1,30 +1,44 @@
 <template>
   <div class="card splash-screen">
-    <div class="row" v-if="loaded">
+    <div v-if="loaded" class="row">
       <div class="col-md-9 mb-6">
-          <div v-if="system.loaded" class="splash-screen--title">
-            <RundeckVersion :title="system.appInfo.title" :number="system.versionInfo.number" :tag="system.versionInfo.tag" :logocss="system.appInfo.logocss"/>
+        <div v-if="system.loaded" class="splash-screen--title">
+          <RundeckVersion
+            :title="system.appInfo.title"
+            :number="system.versionInfo.number"
+            :tag="system.versionInfo.tag"
+            :logocss="system.appInfo.logocss"
+          />
+        </div>
+        <div class="splash-screen--linkitems">
+          <div v-if="system.appInfo.title !== 'Rundeck'">
+            <a href="https://support.rundeck.com/" target="_blank" class="item"
+              ><i class="fas fa-first-aid"></i> Support</a
+            >
           </div>
-          <div class="splash-screen--linkitems">
-            <div v-if="system.appInfo.title !== 'Rundeck'">
-              <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>  
-            </div>
-            <div v-else>
-              <a href="https://github.com/rundeck/rundeck/issues" target="_blank" class="item"><i class="fab fa-github"></i> Issues </a>
-            </div>
-            <a :href="links.help " target="_blank" class="item"><i class="fas fa-book"></i> Docs</a>
+          <div v-else>
+            <a
+              href="https://github.com/rundeck/rundeck/issues"
+              target="_blank"
+              class="item"
+              ><i class="fab fa-github"></i> Issues
+            </a>
           </div>
-          <div class="splash-screen--byline">
-            <p>
-             To get started, create a new project.
-            </p>
-            <p>
-              <a :href="links.frameworkCreateProject" class="btn  btn-primary btn-lg ">
-                  Create New Project <b class="glyphicon glyphicon-plus"></b>
-              </a>
-            </p>
-          </div>
-
+          <a :href="links.help" target="_blank" class="item"
+            ><i class="fas fa-book"></i> Docs</a
+          >
+        </div>
+        <div class="splash-screen--byline">
+          <p>To get started, create a new project.</p>
+          <p>
+            <a
+              :href="links.frameworkCreateProject"
+              class="btn btn-primary btn-lg"
+            >
+              Create New Project <b class="glyphicon glyphicon-plus"></b>
+            </a>
+          </p>
+        </div>
       </div>
       <div class="col-md-3 bg-white rounded p-6 shadow">
         <div class="stickers-section">
@@ -32,8 +46,13 @@
           <div class="l2">to Learn</div>
           <div class="l3">Automation</div>
         </div>
-        <div style="margin-top:12px;text-align:center;">
-          <a href="https://docs.rundeck.com/docs/learning/" target="_blank" class="btn  btn-default btn-lg">Learn Here</a>
+        <div style="margin-top: 12px; text-align: center">
+          <a
+            href="https://docs.rundeck.com/docs/learning/"
+            target="_blank"
+            class="btn btn-default btn-lg"
+            >Learn Here</a
+          >
         </div>
       </div>
     </div>
@@ -41,107 +60,102 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref} from 'vue'
+import { defineComponent, ref } from "vue";
 
-import { SystemStore } from '../../stores/System'
-import {getAppLinks, getRundeckContext} from '../../rundeckService'
-import { AppLinks } from  '../../interfaces/AppLinks'
+import { SystemStore } from "../../stores/System";
+import { getAppLinks, getRundeckContext } from "../../rundeckService";
+import { AppLinks } from "../../interfaces/AppLinks";
 
-import RundeckVersion from  '../version/RundeckVersionDisplay.vue'
+import RundeckVersion from "../version/RundeckVersionDisplay.vue";
 
 export default defineComponent({
-  name: 'FirstRun',
+  name: "FirstRun",
   components: {
     RundeckVersion,
   },
   setup() {
-    const links = ref<AppLinks>()
-    const loaded = ref<boolean>(false)
+    const links = ref<AppLinks>();
+    const loaded = ref<boolean>(false);
 
-    const system = ref<SystemStore>()
+    const system = ref<SystemStore>();
 
     return {
       links,
       loaded,
       system,
-    }
+    };
   },
   async mounted() {
-    const rootStore = getRundeckContext().rootStore
-    this.system = rootStore.system
-    this.links = getAppLinks()
+    const rootStore = getRundeckContext().rootStore;
+    this.system = rootStore.system;
+    this.links = getAppLinks();
 
     try {
-      await Promise.all([
-        this.system.value.load(),
-        rootStore.releases.load()
-      ])
-    } catch(e) {}
-    this.loaded = true
-  }
-})
- 
-
+      await Promise.all([this.system.value.load(), rootStore.releases.load()]);
+    } catch (e) {}
+    this.loaded = true;
+  },
+});
 </script>
 
 <style lang="scss" scoped>
-.bg-white{
+.bg-white {
   background-color: var(--background-color-lvl2);
 }
-.rounded{
+.rounded {
   border-radius: 1rem;
 }
-.p-6{
+.p-6 {
   padding: 1rem;
 }
-.shadow{
+.shadow {
   box-shadow: 0px 0px 34px rgba(0, 0, 0, 0.2);
 }
-.mt-6{
+.mt-6 {
   margin-top: 1rem;
 }
-.mb-6{
+.mb-6 {
   margin-bottom: 1rem;
 }
-.splash-screen{
-    padding:25px; 
-    background-color: var(--background-color-lvl2);
-    &--title{
-        font-weight: 700;
-        font-weight: 700;
-        font-size: 2.2rem;
+.splash-screen {
+  padding: 25px;
+  background-color: var(--background-color-lvl2);
+  &--title {
+    font-weight: 700;
+    font-weight: 700;
+    font-size: 2.2rem;
+  }
+  &--linkitems {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    margin: 20px 0;
+    .item {
+      border: 1px solid var(--border-color);
+      box-shadow: 0px 0px 38px rgba(0, 0, 0, 0.11);
+      border-radius: 4px;
+      padding: 35px;
+      margin-right: 14px;
+      font-weight: 700;
+      font-size: 1.7rem;
     }
-    &--linkitems{
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        width: 100%;
-        margin: 20px 0;
-        .item{
-            border: 1px solid var(--border-color);
-            box-shadow: 0px 0px 38px rgba(0, 0, 0, 0.11);
-            border-radius: 4px;
-            padding: 35px;
-            margin-right: 14px;
-            font-weight: 700;
-            font-size: 1.7rem;
-        }
-    }
+  }
 }
-.stickers-section{
-    padding:12px 24px;
-    text-align: center;
-    .l1{
-        font-size: 20px;
-        font-weight: 600;
-    }
-    .l2{
-        font-size: 41px;
-        font-weight: 800;
-    }
-    .l3{
-        font-size: 32px;
-    }
+.stickers-section {
+  padding: 12px 24px;
+  text-align: center;
+  .l1 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .l2 {
+    font-size: 41px;
+    font-weight: 800;
+  }
+  .l3 {
+    font-size: 32px;
+  }
 }
 
 /*.rd-icon {

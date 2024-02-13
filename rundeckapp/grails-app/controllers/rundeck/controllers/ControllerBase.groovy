@@ -144,7 +144,7 @@ class ControllerBase {
     }
 
     boolean isAllowXml(){
-        return featureService.featurePresent(Features.LEGACY_XML, false)
+        return featureService.featurePresent(Features.LEGACY_XML)
     }
 
     List<String> getResponseFormats(){

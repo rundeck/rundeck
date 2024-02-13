@@ -1,18 +1,20 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
+import grails.compiler.GrailsCompileStatic
 import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.rundeck.app.access.InterceptorHelper
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.SimpleTokenBuilder
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.security.core.context.SecurityContextHolder
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -108,13 +110,13 @@ class SetUserInterceptor {
                 session.subject=null
                 session.user=null
                 if(authtoken){
-                    request.invalidAuthToken = "Token:" + AuthenticationToken.printable(authtoken)
+                    request.invalidAuthToken = "Token:" + AuthenticationTokenUtils.printable(authtoken)
                 }
                 request.authenticatedToken = null
                 request.authenticatedUser = null
                 request.invalidApiAuthentication = true
                 if(authtoken){
-                    log.error("Invalid API token used: ${AuthenticationToken.printable(authtoken)}");
+                    log.error("Invalid API token used: ${AuthenticationTokenUtils.printable(authtoken)}");
                 }else{
                     log.error("Unauthenticated API request");
                 }
@@ -227,7 +229,7 @@ class SetUserInterceptor {
         }
 
         if (tokenobj) {
-            if (AuthenticationToken.tokenIsExpired(tokenobj)) {
+            if (AuthenticationTokenUtils.tokenIsExpired(tokenobj)) {
                 log.debug("loginCheck token is expired ${tokenobj?.getOwnerName()}, ${tokenobj}");
                 return null
             }

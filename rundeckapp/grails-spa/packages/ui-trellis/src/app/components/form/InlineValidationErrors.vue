@@ -1,5 +1,5 @@
 <template>
-  <div class="text-warning" v-if="errors  && errors.length>0">
+  <div v-if="errors && errors.length > 0" class="text-warning">
     <ul>
       <li v-for="err in errors">{{ err }}</li>
     </ul>
@@ -7,17 +7,16 @@
   </div>
 </template>
 <script lang="ts">
-
-import { defineComponent } from 'vue'
-import type { PropType } from 'vue'
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
 
 export default defineComponent({
-  name: 'InlineValidationErrors',
+  name: "InlineValidationErrors",
   props: {
     errors: {
       type: Array as PropType<string[]>,
       required: true,
-    }
-  }
-})
+    },
+  },
+});
 </script>

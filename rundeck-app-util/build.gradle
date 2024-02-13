@@ -1,6 +1,7 @@
 apply plugin: "groovy"
 apply plugin: "java-library"
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -8,7 +9,6 @@ apply from: "../gradle/java-version.gradle"
 
 dependencies {
     api project(':core')
-    api project(':rundeck-data-model')
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'

@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
-import com.dtolabs.rundeck.core.event.EventQueryType
 import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -26,11 +25,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
+import org.rundeck.app.data.model.v1.storedevent.StoredEventQueryType
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
-import org.rundeck.app.data.providers.v1.WebhookDataProvider
+import org.rundeck.app.data.providers.v1.webhook.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
@@ -113,7 +114,7 @@ class WebhookService {
      */
     private def deleteEvents(String eventTopic, RdWebhook webhook) {
         EventQueryResult queryResult = eventStoreService.query(new EvtQuery(
-                queryType: EventQueryType.DELETE,
+                queryType: StoredEventQueryType.DELETE,
                 projectName: webhook.project,
                 subsystem: "webhooks",
                 topic: "${eventTopic}:${webhook.uuid}"
@@ -240,7 +241,7 @@ class WebhookService {
             String checkUser = hookData.user ?: authContext.username
             try {
                 def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
-                                                            AuthenticationToken.AuthTokenType.WEBHOOK)
+                                                            AuthTokenType.WEBHOOK)
                 saveWebhookRequest.setAuthToken(at.token)
             } catch (Exception e) {
                 return [err: "Failed to create associated Auth Token: "+e.message]
@@ -271,7 +272,7 @@ class WebhookService {
         } else {
             if(!saveWebhookResponse.webhook.id && saveWebhookRequest.authToken){
                 //delete the created token
-                rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
+                rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthTokenType.WEBHOOK)
             }
             return [err: saveWebhookResponse.errors]
         }
@@ -283,7 +284,7 @@ class WebhookService {
             && webhookDataProvider.countByAuthToken(hookData.authToken) == 0
             && !rundeckAuthTokenManagerService.getTokenWithType(
             hookData.authToken,
-            AuthenticationToken.AuthTokenType.WEBHOOK
+            AuthTokenType.WEBHOOK
         )) {
             return true
         }
@@ -334,7 +335,7 @@ class WebhookService {
             // Deleting all stored debug data for this particular hook from the DB
             deleteWebhookEventsData(hook)
             webhookDataProvider.deleteByUuid(hook.uuid)
-            rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
+            rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
             log.error("delete webhook failed",ex)
@@ -387,7 +388,7 @@ class WebhookService {
     private Map getWebhookWithAuthAsMap(RdWebhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getTokenWithType(
             hook.authToken,
-            AuthenticationToken.AuthTokenType.WEBHOOK
+                AuthTokenType.WEBHOOK
         )
         return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.getAuthRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }

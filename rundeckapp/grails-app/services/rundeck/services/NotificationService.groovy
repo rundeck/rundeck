@@ -51,7 +51,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
 import org.rundeck.app.data.model.v1.execution.ExecutionData
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider

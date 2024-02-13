@@ -20,20 +20,20 @@
       {{error}}
     </span>
         <pluginInfo
+            v-if="isTitleMode && !error"
             :show-title="inputShowTitle"
             :show-icon="inputShowIcon"
             :show-description="inputShowDescription"
             :detail="detail"
-            v-if="isTitleMode && !error"
 
       >
       <slot name="titlePrefix"></slot>
-      <template v-slot:suffix>
+      <template #suffix>
         <slot name="titleSuffix"></slot>
       </template>
     </pluginInfo>
 
-        <div class="row" v-if="!isTitleMode">
+        <div v-if="!isTitleMode" class="row">
             <div v-if="inputShowIcon||inputShowTitle || inputShowDescription" class="col-xs-12 col-sm-12">
                 <p>
                     <pluginInfo
@@ -46,11 +46,11 @@
                 </p>
             </div>
             <div v-if="isShowMode && config" class="col-xs-12 col-sm-12">
-        <span class="text-warning" v-if="validation && !validation.valid">
+        <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{validationWarningText}}
         </span>
             <span v-for="prop in props" :key="prop.name" class="configprop">
-              <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)"/>
+              <plugin-prop-view v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)" :prop="prop"  :value="config[prop.name]"/>
             </span>
               <p>
                 <div class="col-sm-12" >
@@ -65,36 +65,40 @@
                   </div>
                 </div>
                 <div v-for="(group,gindex) in groupedProperties" :key="group.name">
-                    <div v-if="!group.name"
-                         v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+                    <div
+v-for="(prop,pindex) in group.props"
+                         v-if="!group.name" :key="'g_'+gindex+'/'+prop.name">
 
-                        <input type="hidden"
+                        <input
+v-if="isPropHidden(prop)"
+                               type="hidden"
                                :value="inputValues[prop.name]"
                                :data-hidden-field-identity="prop.options['hidden_identity']"
-                               class="_config_prop_display_hidden"
-                               v-if="isPropHidden(prop)"/>
+                               class="_config_prop_display_hidden"/>
 
-                  <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                  <div
+v-else
+                       :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
                        :data-prop-name="prop.name"
-                       v-else
                   >
-                      <plugin-prop-edit v-model="inputValues[prop.name]"
+                      <plugin-prop-edit
+v-model="inputValues[prop.name]"
                                         :prop="prop"
                                         :event-bus="eventBus"
                                         :input-values="inputValues"
                                         :use-runner-selector="useRunnerSelector"
                                         :context-autocomplete="inputContextAutocomplete"
-                                        @pluginPropsMounted="notifyHandleAutoComplete"
                                         :validation="validation"
                                         :rkey="'g_'+gindex+'_'+rkey"
-                                        :readOnly="readOnly"
+                                        :read-only="readOnly"
                                         :pindex="pindex"
                                         :selector-data="propsComputedSelectorData"
-                                        :autocompleteCallback="autocompleteCallback"/>
+                                        :autocomplete-callback="autocompleteCallback"
+                                        @plugin-props-mounted="notifyHandleAutoComplete"/>
                   </div>
 
                     </div>
-                    <details :open="!group.secondary" v-if="group.name" class="more-info details-reset">
+                    <details v-if="group.name" :open="!group.secondary" class="more-info details-reset">
                         <summary >
                 <span class="row">
                   <span class="col-sm-2 control-label h5 header-reset">
@@ -106,28 +110,31 @@
                         </summary>
                         <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
 
-                  <input type="hidden"
+                  <input
+v-if="isPropHidden(prop)"
+                         type="hidden"
                          :value="inputValues[prop.name]"
                          :data-hidden-field-identity="prop.options['hidden_identity']"
                          class="_config_prop_display_hidden"
-                         v-if="isPropHidden(prop)"
                   />
-                  <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                  <div
+v-else
+                       :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
                        :data-prop-name="prop.name"
-                       v-else
                   >
-                      <plugin-prop-edit v-model="inputValues[prop.name]"
+                      <plugin-prop-edit
+v-model="inputValues[prop.name]"
                                         :prop="prop"
                                         :use-runner-selector="useRunnerSelector"
                                         :input-values="inputValues"
                                         :is-storage-prop="isStorageProperty(prop)"
                                         :validation="validation"
-                                        :readOnly="readOnly"
+                                        :read-only="readOnly"
                                         :event-bus="eventBus"
                                         :rkey="'g_'+gindex+'_'+rkey"
                                         :pindex="pindex"
                                         :selector-data="propsComputedSelectorData"
-                                        :autocompleteCallback="autocompleteCallback"/>
+                                        :autocomplete-callback="autocompleteCallback"/>
                   </div>
               </div>
             </details>
@@ -138,11 +145,6 @@
   </div>
 </template>
 
-<style lang="scss">
-.configprop + .configprop:before {
-    content: ' ';
-}
-</style>
 <script lang="ts">
 import { defineComponent } from 'vue'
 
@@ -215,6 +217,106 @@ export default defineComponent({
       inputLoaded: false,
       inputContextAutocomplete: this.contextAutocomplete !== null ? this.contextAutocomplete : false
     }
+  },
+  computed: {
+    isEditMode(): boolean {
+      return this.mode === 'edit'
+    },
+    isCreateMode(): boolean {
+      return this.mode === 'create'
+    },
+    isShowConfigForm (): boolean {
+      return this.isEditMode || this.isCreateMode
+    },
+    isShowMode(): boolean {
+      return this.mode === 'show'
+    },
+    isTitleMode(): boolean {
+      return this.mode === 'title'
+    },
+    visibility (): { [name: string]: boolean } {
+      const visibility: { [name: string]: boolean } = {}
+      this.props.forEach((prop: any) => {
+        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
+        if (!visibility[prop.name]) {
+          delete visibility[prop.name]
+        }
+      })
+      return visibility
+    },
+    visibleProps(): any[] {
+      const visibility=this.visibility
+      return this.props.filter((prop)=>{
+        return visibility[prop.name]
+      })
+    },
+    hasGroups(): boolean{
+      return this.props.find((prop)=>{
+        return this.isGroupedProp(prop)
+      }) ? true : false
+    },
+    groupedProperties(): PropGroup[]{
+      const unnamed:PropGroup ={props:[],secondary:false}
+      const groups:PropGroup[] =[unnamed]
+      const named : {[name:string]: PropGroup} = {}
+
+            this.props.forEach(prop => {
+                const name=prop.options && prop.options['groupName']
+                const secondary = prop.options && prop.options['grouping']
+                const inScope = this.isPropInScope(prop)
+                if(!inScope) {
+                    return
+                }else if(!name && !secondary){
+                    unnamed.props.push(prop)
+                }else{
+                    const gname=name||'-'
+
+           if(!named[gname]){
+             named[gname]={props:[prop],secondary:secondary,name:gname}
+             groups.push(named[gname])
+           }else{
+            named[gname].props.push(prop)
+            named[gname].secondary=named[gname].secondary||secondary
+           }
+         }
+      })
+      return groups
+    },
+    exportedValues(): any{
+      return convertArrayInput(cleanConfigInput(this.exportInputs()))
+    },
+    computedConfig(): any {
+        if(this.modelValue){
+            return Object.assign({}, this.modelValue.config || {})
+        }else{
+            return null
+        }
+    },
+  },
+  watch: {
+    inputValues: {
+      handler (newValue, oldValue) {
+        if (this.isShowConfigForm) {
+          this.$emit('update:modelValue', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
+        }
+      },
+      deep: true
+    },
+    computedConfig: {
+      handler(newValue, oldValue) {
+        if (Object.keys(diff(newValue, oldValue)).length > 0)
+          this.$emit('change')
+      },
+      deep: true
+    },
+    mode:{
+      handler(newValue,oldValue){
+        this.loadForMode()
+      }
+    }
+  },
+  beforeMount () {
+    this.loadForMode()
   },
   methods: {
     setVal(target: any, prop: any, val: any) {
@@ -320,7 +422,7 @@ export default defineComponent({
             this.detail = data
             this.prepareInputs()
 
-            let storageAccess = this.hasKeyStorageAccess();
+            const storageAccess = this.hasKeyStorageAccess();
             if(storageAccess){
                 this.notifyHasKeyStorageAccess();
             }
@@ -402,109 +504,14 @@ export default defineComponent({
         this.loadPluginData(this.pluginConfig)
       }
     },
-  },
-  watch: {
-    inputValues: {
-      handler (newValue, oldValue) {
-        if (this.isShowConfigForm) {
-          this.$emit('update:modelValue', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
-        }
-      },
-      deep: true
-    },
-    computedConfig: {
-      handler(newValue, oldValue) {
-        if (Object.keys(diff(newValue, oldValue)).length > 0)
-          this.$emit('change')
-      },
-      deep: true
-    },
-    mode:{
-      handler(newValue,oldValue){
-        this.loadForMode()
-      }
-    }
-  },
-  computed: {
-    isEditMode(): boolean {
-      return this.mode === 'edit'
-    },
-    isCreateMode(): boolean {
-      return this.mode === 'create'
-    },
-    isShowConfigForm (): boolean {
-      return this.isEditMode || this.isCreateMode
-    },
-    isShowMode(): boolean {
-      return this.mode === 'show'
-    },
-    isTitleMode(): boolean {
-      return this.mode === 'title'
-    },
-    visibility (): { [name: string]: boolean } {
-      const visibility: { [name: string]: boolean } = {}
-      this.props.forEach((prop: any) => {
-        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
-        if (!visibility[prop.name]) {
-          delete visibility[prop.name]
-        }
-      })
-      return visibility
-    },
-    visibleProps(): any[] {
-      const visibility=this.visibility
-      return this.props.filter((prop)=>{
-        return visibility[prop.name]
-      })
-    },
-    hasGroups(): boolean{
-      return this.props.find((prop)=>{
-        return this.isGroupedProp(prop)
-      }) ? true : false
-    },
-    groupedProperties(): PropGroup[]{
-      const unnamed:PropGroup ={props:[],secondary:false}
-      const groups:PropGroup[] =[unnamed]
-      const named : {[name:string]: PropGroup} = {}
-
-            this.props.forEach(prop => {
-                const name=prop.options && prop.options['groupName']
-                const secondary = prop.options && prop.options['grouping']
-                const inScope = this.isPropInScope(prop)
-                if(!inScope) {
-                    return
-                }else if(!name && !secondary){
-                    unnamed.props.push(prop)
-                }else{
-                    let gname=name||'-'
-
-           if(!named[gname]){
-             named[gname]={props:[prop],secondary:secondary,name:gname}
-             groups.push(named[gname])
-           }else{
-            named[gname].props.push(prop)
-            named[gname].secondary=named[gname].secondary||secondary
-           }
-         }
-      })
-      return groups
-    },
-    exportedValues(): any{
-      return convertArrayInput(cleanConfigInput(this.exportInputs()))
-    },
-    computedConfig(): any {
-        if(this.modelValue){
-            return Object.assign({}, this.modelValue.config || {})
-        }else{
-            return null
-        }
-    },
-  },
-  beforeMount () {
-    this.loadForMode()
   }
 })
 </script>
+<style lang="scss">
+.configprop + .configprop:before {
+    content: ' ';
+}
+</style>
 <style lang="scss" scoped>
 .header-reset{
     margin:0;

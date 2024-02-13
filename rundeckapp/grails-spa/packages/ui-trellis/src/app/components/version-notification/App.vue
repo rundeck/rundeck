@@ -1,54 +1,64 @@
 <template>
   <div
-    @click="showNotificationModal=true"
-    class="version-notification-container"
     v-show="showVersionNotification"
+    class="version-notification-container"
+    @click="showNotificationModal = true"
   >
     <div class="sidebar-footer-line-item">
       <i class="fas fa-exclamation-circle"></i>
-      <span style="margin-left:5px">{{ $t("message_sidebarNotificationText")}}</span>
+      <span style="margin-left: 5px">{{
+        $t("message_sidebarNotificationText")
+      }}</span>
     </div>
     <modal
+      ref="modal"
       v-model="showNotificationModal"
       :title="$t('message_updateAvailable')"
       append-to-body
-      ref="modal"
     >
       <div>
-        <p>{{$t("message_updateHasBeenReleased")}}</p>
+        <p>{{ $t("message_updateHasBeenReleased") }}</p>
         <p>
-          {{$t("message_installedVersion")}}
-          <strong>{{installedVersion.stringVersion}}</strong>.
+          {{ $t("message_installedVersion") }}
+          <strong>{{ installedVersion.stringVersion }}</strong
+          >.
         </p>
         <p>
-          {{$t("message_currentVersion")}}
-          <strong>{{currentReleaseVersion.stringVersion}}</strong>.
+          {{ $t("message_currentVersion") }}
+          <strong>{{ currentReleaseVersion.stringVersion }}</strong
+          >.
         </p>
-        <p>This version was released {{formatReleaseDate(currentReleaseVersion.releaseDate)}}.</p>
+        <p>
+          This version was released
+          {{ formatReleaseDate(currentReleaseVersion.releaseDate) }}.
+        </p>
         <a
           v-if="isOSSVersion"
           href="https://docs.rundeck.com/downloads.html"
           target="_blank"
-          style="margin-bottom:1em;"
+          style="margin-bottom: 1em"
           class="btn btn-default btn-block btn-success btn-fill"
-        >{{$t("message_getUpdate")}}</a>
+          >{{ $t("message_getUpdate") }}</a
+        >
         <a
           v-else
           href="https://download.rundeck.com"
           target="_blank"
-          style="margin-bottom:1em;"
+          style="margin-bottom: 1em"
           class="btn btn-default btn-block btn-success btn-fill"
-        >{{$t("message_getUpdate")}}</a>
+          >{{ $t("message_getUpdate") }}</a
+        >
         <p>
-          <a
-            style="cursor:pointer;"
-            @click="hideNotificationForThisVersion"
-          >{{$t("message_dismissMessage")}}</a>
+          <a style="cursor: pointer" @click="hideNotificationForThisVersion">{{
+            $t("message_dismissMessage")
+          }}</a>
         </p>
       </div>
-      <template v-slot:footer>
+      <template #footer>
         <div>
-          <btn @click="showNotificationModal=false">{{$t("message_close")}}</btn>
+          <btn @click="showNotificationModal = false">{{
+            $t("message_close")
+          }}</btn>
         </div>
       </template>
     </modal>
@@ -60,9 +70,9 @@ import axios from "axios";
 import Trellis, {
   getRundeckContext,
   getSynchronizerToken,
-  RundeckBrowser
+  RundeckBrowser,
 } from "../../../library";
-import {formatReleaseDate} from "@/app/utilities/DateTimeFormatters";
+import { formatReleaseDate } from "@/app/utilities/DateTimeFormatters";
 
 // import motd from '@/components/motd/motd'
 
@@ -80,44 +90,32 @@ export default {
         stringVersion: "",
         major: null,
         minor: null,
-        patch: null
+        patch: null,
       },
       currentReleaseVersion: {
         stringVersion: "",
         major: null,
         minor: null,
-        patch: null
+        patch: null,
       },
-      showVersionNotification: false
+      showVersionNotification: false,
     };
-  },
-  methods: {
-      formatReleaseDate,
-    hideNotificationForThisVersion() {
-      Trellis.FilterPrefs.setFilterPref(
-        "hideVersionUpdateNotification",
-        this.currentReleaseVersion.stringVersion
-      ).then(() => {
-        this.showNotificationModal = false;
-        this.showVersionNotification = false;
-      });
-    }
   },
   mounted() {
     this.RundeckContext = getRundeckContext();
 
     axios({
       method: "get",
-      url: `https://api.rundeck.com/news/v1/release`
+      url: `https://api.rundeck.com/news/v1/release`,
     }).then(
-      response => {
+      (response) => {
         if (response.data && response.data[0])
           this.currentReleaseVersion = {
             stringVersion: response.data[0].name,
             major: response.data[0].version.major,
             minor: response.data[0].version.minor,
             patch: response.data[0].version.patch,
-            releaseDate: response.data[0].version.date
+            releaseDate: response.data[0].version.date,
           };
         if (
           window._rundeck.hideVersionUpdateNotification &&
@@ -126,9 +124,9 @@ export default {
         ) {
           return;
         } else {
-          this.RundeckContext.rundeckClient.systemInfoGet().then(response => {
+          this.RundeckContext.rundeckClient.systemInfoGet().then((response) => {
             this.installedVersion = returnVersionInformation(
-              response.system.rundeckProperty.version
+              response.system.rundeckProperty.version,
             );
             // Big If/Else checks are terrible
             // Exlaining this one
@@ -162,22 +160,34 @@ export default {
                 }
               }
             }
-            this.isOSSVersion = (typeof _RDPRO_EDITION === 'undefined')
+            this.isOSSVersion = typeof _RDPRO_EDITION === "undefined";
           });
         }
       },
-      error => {
+      (error) => {
         // eslint-disable-next-line
         console.log("Error connecting to Rundeck Release API", error);
-      }
+      },
     );
-  }
+  },
+  methods: {
+    formatReleaseDate,
+    hideNotificationForThisVersion() {
+      Trellis.FilterPrefs.setFilterPref(
+        "hideVersionUpdateNotification",
+        this.currentReleaseVersion.stringVersion,
+      ).then(() => {
+        this.showNotificationModal = false;
+        this.showVersionNotification = false;
+      });
+    },
+  },
 };
 
 function returnVersionInformation(versionString) {
-  let returnObj = {};
-  let seperatedVersionNumber = versionString.split("-");
-  let splitVersionSchema = seperatedVersionNumber[0].split(".");
+  const returnObj = {};
+  const seperatedVersionNumber = versionString.split("-");
+  const splitVersionSchema = seperatedVersionNumber[0].split(".");
 
   returnObj.stringVersion = seperatedVersionNumber[0];
   returnObj.major = parseInt(splitVersionSchema[0]);

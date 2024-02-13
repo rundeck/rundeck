@@ -49,12 +49,13 @@ table.execoutput {
     color: #eee;
   }
 
-  tr.node-new>td {
+  tr.node-new > td {
     border-top: 1px solid #dddddd;
     word-break: break-all;
   }
 
-  td.node {}
+  td.node {
+  }
 
   td.repeat {
     //      visibility: hidden;
@@ -101,7 +102,7 @@ table.execoutput {
   }
 
   td.node.empty:before {
-    content: 'console';
+    content: "console";
   }
 
   tr.contextRow.console {
@@ -170,7 +171,7 @@ table.execoutput {
       margin: 0;
     }
 
-    p+p {
+    p + p {
       margin: 1em 0 0;
     }
   }
@@ -206,7 +207,8 @@ table.execoutput {
   }
 
   span.node:after,
-  td.node:after {}
+  td.node:after {
+  }
 
   table.execoutput.collapse_node {
     td.node {

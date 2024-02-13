@@ -16,156 +16,175 @@
 
 <template>
   <div>
-    <btn @click="modalOpen=true" :class="btnClass" :size="btnSize" :type="btnType">
+    <btn
+      :class="btnClass"
+      :size="btnSize"
+      :type="btnType"
+      @click="modalOpen = true"
+    >
       <slot>Choose A Job &hellip;</slot>
     </btn>
 
-    <modal v-model="modalOpen" :title="'Choose A Job'" ref="modal" append-to-body :size="size">
-
-      <div v-if="showProjectSelector"><label>Project:</label><project-picker v-model="project"></project-picker></div>
+    <modal
+      ref="modal"
+      v-model="modalOpen"
+      :title="'Choose A Job'"
+      append-to-body
+      :size="size"
+    >
+      <div v-if="showProjectSelector">
+        <label>Project:</label
+        ><project-picker v-model="project"></project-picker>
+      </div>
 
       <div v-if="showScheduledToggle" class="form-group">
-
-        <select v-model="filterType" id="_job_config_picker_scheduled_filter" class="form-control">
+        <select
+          id="_job_config_picker_scheduled_filter"
+          v-model="filterType"
+          class="form-control"
+        >
           <option value="">All Jobs</option>
           <option value="scheduled">Scheduled Jobs</option>
           <option value="notscheduled">Non-Scheduled Jobs</option>
         </select>
-
       </div>
-      <div class="list-group" v-for="(item,name) in jobTree.groups" :key="'group'+name">
-        <div class="list-group-item" v-if="name && item.jobs.length>0">
-           <h4 class="list-group-item-heading">{{item.label}}</h4>
+      <div
+        v-for="(item, name) in jobTree.groups"
+        :key="'group' + name"
+        class="list-group"
+      >
+        <div v-if="name && item.jobs.length > 0" class="list-group-item">
+          <h4 class="list-group-item-heading">{{ item.label }}</h4>
         </div>
-        <div v-for="job in item.jobs" :key="job.id"
-             class="list-group-item"
-             style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap"
-             >
+        <div
+          v-for="job in item.jobs"
+          :key="job.id"
+          class="list-group-item"
+          style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+        >
+          <a
+            href="#"
+            class=""
+            :title="'Choose this job: ' + job.id"
+            @click="selectJob(job)"
+          >
+            <i class="glyphicon glyphicon-book"></i>
+            {{ job.name }}
+          </a>
 
-             <a href="#" class="" :title="'Choose this job: '+job.id"
-                   @click="selectJob(job)">
-                 <i class="glyphicon glyphicon-book"></i>
-                 {{job.name}}
-             </a>
-
-
-            <span class="text-secondary">
-              {{job.description}}
-            </span>
-            <span class="text-muted" v-if="job.scheduled">
-              <i class="glyphicon glyphicon-time"></i>
-            </span>
-
+          <span class="text-secondary">
+            {{ job.description }}
+          </span>
+          <span v-if="job.scheduled" class="text-muted">
+            <i class="glyphicon glyphicon-time"></i>
+          </span>
         </div>
       </div>
-      <template v-slot:footer>
-      <div>
-        <btn @click="modalOpen=false">Cancel</btn>
-      </div>
+      <template #footer>
+        <div>
+          <btn @click="modalOpen = false">Cancel</btn>
+        </div>
       </template>
-
     </modal>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue'
-import ProjectPicker from './ProjectPicker.vue'
-import { JobTree } from '../../types/JobTree'
-import { Job } from '@rundeck/client/dist/lib/models'
-import { client } from '../../modules/rundeckClient'
+import { defineComponent } from "vue";
+import ProjectPicker from "./ProjectPicker.vue";
+import { JobTree } from "../../types/JobTree";
+import { Job } from "@rundeck/client/dist/lib/models";
+import { client } from "../../modules/rundeckClient";
 
 export default defineComponent({
-  name: 'JobConfigPicker',
+  name: "JobConfigPicker",
   components: {
-    ProjectPicker
+    ProjectPicker,
   },
   props: {
     modelValue: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
     size: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
     btnType: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
     btnSize: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
     btnClass: {
       type: String,
       required: false,
-      default: ''
+      default: "",
     },
     showScheduledToggle: {
       type: Boolean,
       required: false,
-      default: true
+      default: true,
     },
     showScheduledDefault: {
       type: Boolean,
       required: false,
-      default: false
-    }
+      default: false,
+    },
   },
-  emits: ['update:modelValue'],
+  emits: ["update:modelValue"],
   data() {
     return {
       selectedJob: null as Job | null,
       modalOpen: false,
       jobs: [] as Job[],
       jobTree: new JobTree(),
-      project: '',
+      project: "",
       showProjectSelector: true,
-      filterType: this.showScheduledDefault ? 'scheduled' : ''
+      filterType: this.showScheduledDefault ? "scheduled" : "",
+    };
+  },
+  watch: {
+    project() {
+      this.onProjectOrFilterTypeChange();
+    },
+    filterType() {
+      this.onProjectOrFilterTypeChange();
+    },
+  },
+  mounted() {
+    if (window._rundeck.projectName) {
+      this.showProjectSelector = false;
+      this.project = window._rundeck.projectName;
     }
   },
   methods: {
     onProjectOrFilterTypeChange() {
-      if (this.project !== '') {
-        let params: { [name: string]: any } = {}
+      if (this.project !== "") {
+        const params: { [name: string]: any } = {};
 
-        if (this.filterType != '') {
-          params['scheduledFilter'] = (this.filterType === 'scheduled')
+        if (this.filterType != "") {
+          params["scheduledFilter"] = this.filterType === "scheduled";
         }
 
-        client.jobList(this.project, params).then(result => {
-          this.jobTree = new JobTree()
-          this.jobs = result
-          this.jobs.forEach(job => this.jobTree.insert(job))
-        })
+        client.jobList(this.project, params).then((result) => {
+          this.jobTree = new JobTree();
+          this.jobs = result;
+          this.jobs.forEach((job) => this.jobTree.insert(job));
+        });
       }
     },
     selectJob(job: Job) {
-      this.selectedJob = job
-      this.$emit('update:modelValue', this.selectedJob.id)
-      this.modalOpen = false
+      this.selectedJob = job;
+      this.$emit("update:modelValue", this.selectedJob.id);
+      this.modalOpen = false;
     },
   },
-  mounted() {
-    if(window._rundeck.projectName) {
-      this.showProjectSelector = false
-      this.project = window._rundeck.projectName
-    }
-  },
-  watch: {
-    project() {
-      this.onProjectOrFilterTypeChange()
-    },
-    filterType() {
-      this.onProjectOrFilterTypeChange()
-    },
-  },
-})
-
+});
 </script>
-<style lang="scss">
-</style>
+<style lang="scss"></style>
