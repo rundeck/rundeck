@@ -38,7 +38,7 @@ class BasicSpec extends BaseContainer {
             data.code() == 404
             def json = getClient().jsonValue(data.body(), Map)
             json.error
-            json.message == "Invalid API Request: /api/45/dnexist"
+            json.message == "Invalid API Request: /api/${client.apiVersion}/dnexist"
     }
 
 }
