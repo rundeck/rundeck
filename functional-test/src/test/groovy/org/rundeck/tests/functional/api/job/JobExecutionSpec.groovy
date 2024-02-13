@@ -51,7 +51,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/run should succeed"() {
         when:
-            execId = runJob(jobId, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            execId = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId > 0
@@ -87,7 +88,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "run again job/id/run should succeed"() {
         when:
-            execId2 = runJob(jobId, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            execId2 = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId2 > 0
@@ -153,7 +155,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/executions?status=failed with 1 results"() {
         when:
-            execId2 = runJob(jobId2, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
+            execId2 = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId2 > 0
@@ -173,7 +176,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/executions?status=running with 1 results"() {
         when:
-            execId3 = runJob(jobId3, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId3, client, "-opt2 a")
+            execId3 = jsonValue(jobRun.body()).id as Integer
         then:
             def response = doGet("/job/${jobId3}/executions?status=running")
             verifyAll {
