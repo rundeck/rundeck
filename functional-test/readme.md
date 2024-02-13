@@ -50,6 +50,13 @@ Extend the `BaseContainer` class to share the same Rundeck container instance wi
 
 All tests must be annotated so the spock configuration used for the test task knows which tests to run
 
+# Adding tests resources
+
+If a test needs a filesystem-based resource, for example, a script to be executed via "run url command" and you want to upload it to rundeck's container filesystem,
+please drop it in ```rundeck/functional-test/src/test/resources/test-files```, this is a shared volume between oss and pro test suites and all the files in there will be mounted inside this container path:
+``/home/rundeck/test-files``
+
+
 # Current Rundeck Test tasks
 
 * `apiTest`: It runs all tests annotated with @APITest
