@@ -47,7 +47,7 @@ rundeckContext.rootStore.ui.addItems([
             created() {
                 this.addUiMessages([i18nMessages[locale]]);
                 this.filename = this.itemData.filename;
-
+               //changed the code to use the displayConfig
                 if (typeof this.itemData.displayConfig === 'string') {
                     this.displayConfig = this.itemData.displayConfig.replace(/^\[|\]$/g, '').split(', ')
                 }
