@@ -24,6 +24,7 @@ class GitScmApiClient {
         this.project = project
         return this
     }
+
     SetupIntegrationResponse setupIntegration(SetupGitIntegrationRequest requestBody){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
 
@@ -34,5 +35,21 @@ class GitScmApiClient {
         Response resp = client.doGet("/project/${project}/scm/${integration}/status")
 
         return IntegrationStatusResponse.extractFromResponse(resp)
+    }
+
+    ScmPluginsListResponse getPluginsList(){
+        Response resp = client.doGet("/project/${project}/scm/${integration}/plugins")
+
+        return ScmPluginsListResponse.extractFromResponse(resp)
+    }
+
+    SetupIntegrationResponse setEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
+        Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/${enablePlugin? 'enable' : 'disable'}")
+
+        return SetupIntegrationResponse.extractFromResponse(resp)
+    }
+
+    String getPluginName() {
+        return pluginName
     }
 }

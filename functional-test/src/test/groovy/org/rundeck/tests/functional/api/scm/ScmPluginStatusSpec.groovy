@@ -21,16 +21,9 @@ class ScmPluginStatusSpec extends BaseContainer {
         String integration = "export"
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(PROJECT_NAME)
 
-        SetupGitIntegrationRequest requestBody = new SetupGitIntegrationRequest([ config: [
-                dir : "/home/rundeck/projects/${PROJECT_NAME}/ScmExport",
-                url :"${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}",
-                committerName :"Git Test",
-                committerEmail :"A@test.com",
-                pathTemplate :'${job.group}${job.name}-${job.id}.${config.format}',
-                format :"xml",
-                branch :"master",
-                strictHostKeyChecking :"yes"
-        ]])
+        SetupGitIntegrationRequest requestBody = SetupGitIntegrationRequest.defaultRequest()
+        requestBody.config.dir = "/home/rundeck/projects/${PROJECT_NAME}/ScmExport"
+        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
 
         expect:
         scmClient.setupIntegration(requestBody).success
