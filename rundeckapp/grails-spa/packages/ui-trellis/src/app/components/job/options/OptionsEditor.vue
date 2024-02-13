@@ -100,7 +100,7 @@
 <script lang="ts">
 import { getRundeckContext } from "@/library";
 import { cloneDeep } from "lodash";
-import {JobOption, JobOptionsData,} from "../../../../library/types/jobs/JobEdit";
+import {JobOption, JobOptionsData, OptionPrototype,} from '../../../../library/types/jobs/JobEdit'
 import OptionItem from "./list/OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
@@ -161,22 +161,7 @@ export default defineComponent({
   methods: {
     cloneDeep,
     optaddnew() {
-      this.createOption = {
-        optionType: "text",
-        required: false,
-        hidden: false,
-        multivalued: false,
-        multivalueAllSelected: false,
-        secureInput: false,
-        secureExposed: false,
-        inputType: "plain",
-        realValuesUrl: null,
-        optionValuesPluginType: "",
-        remoteUrlAuthenticationType: "",
-        configRemoteUrl: {},
-        sortValues: false,
-        regex: null,
-      };
+      this.createOption = Object.assign({},OptionPrototype);
       this.createMode = true;
     },
     doEdit(i: number) {
