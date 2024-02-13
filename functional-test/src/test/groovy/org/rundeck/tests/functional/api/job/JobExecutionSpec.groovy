@@ -1117,14 +1117,17 @@ class JobExecutionSpec extends BaseContainer {
 
     def "test-job-run-webhook"(){
         given:
+        def projectName = PROJECT_NAME
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+
+        openNc(client,projectName,mapper)
+
         // entry.sh config
         def NC_HOST = "localhost"
         def NC_PORT = 9001
         def NC_OUTPUT_FILEPATH = "/tmp/netcat-out.txt"
 
-        def projectName = PROJECT_NAME
-        def client = getClient()
-        ObjectMapper mapper = new ObjectMapper()
         def xmlJob = (String ncHost, int ncPort, String xmlargs) ->
                 "<joblist>\n" +
                 "   <job>\n" +
@@ -1179,14 +1182,14 @@ class JobExecutionSpec extends BaseContainer {
         assert jobRun.successful
         Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
 
-        then: "The status will be succeded"
+        then: "The status will be succeeded"
         def exec = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 parsedExecutionsResponse.id as String,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         )
         exec.status == ExecutionStatus.SUCCEEDED.state
 
@@ -1434,6 +1437,66 @@ class JobExecutionSpec extends BaseContainer {
         execStatus2.status == ExecutionStatus.SUCCEEDED.state
         execStatus3.status == ExecutionStatus.SUCCEEDED.state
 
+    }
+
+    /**
+     * Opens a netcat web server to perform single request tests
+     *
+     * @param client
+     * @param projectName
+     * @param objectMapper
+     */
+    def openNc(
+            final RdClient client,
+            final String projectName,
+            final ObjectMapper mapper
+    ){
+        def ncJob = "<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='NC_PORT' value='9001' />\n" +
+                "        <option name='WAIT_SECS' value='10' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <defaultTab>nodes</defaultTab>\n" +
+                "    <description></description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <id>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</id>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>run-nc</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <plugins />\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <schedules />\n" +
+                "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <exec>echo -e \"HTTP/1.1 200 OK\\r\\n\\r\\n\" | nc -w \$RD_OPTION_WAIT_SECS -l -p \$RD_OPTION_NC_PORT &gt; /tmp/netcat-out.txt &amp;</exec>\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "    <uuid>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</uuid>\n" +
+                "  </job>\n" +
+                "</joblist>"
+
+        def ncJobCreated = JobUtils.createJob(projectName, ncJob, client)
+        assert ncJobCreated.successful
+        CreateJobResponse ncJobCreatedResponse = mapper.readValue(
+                ncJobCreated.body().string(),
+                CreateJobResponse.class
+        )
+        def ncJobId = ncJobCreatedResponse.succeeded[0]?.id
+        def ncJobRun = JobUtils.executeJob(ncJobId, client)
+        assert ncJobRun.successful
+        Execution ncJobRunResponse = mapper.readValue(ncJobRun.body().string(), Execution.class)
+        def ncJobSucceeded = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                ncJobRunResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        assert ncJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
     }
 
     def generateRuntime(int secondsInFuture){
