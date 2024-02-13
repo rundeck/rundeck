@@ -40,3 +40,23 @@ export interface JobOptionsData {
   fileUploadPluginType?: string;
   options: JobOptionEdit[];
 }
+
+export const OptionPrototype={
+  optionType: "text",
+  required: false,
+  hidden: false,
+  multivalued: false,
+  multivalueAllSelected: false,
+  secureInput: false,
+  secureExposed: false,
+  inputType: "plain",
+  realValuesUrl: null,
+  optionValuesPluginType: "",
+  remoteUrlAuthenticationType: "",
+  configRemoteUrl: {},
+  sortValues: false,
+  regex: null,
+  description: "",
+  name: "",
+  defaultValue: "",
+}

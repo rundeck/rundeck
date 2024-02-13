@@ -1130,8 +1130,8 @@ import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
 import {
   JobOption,
-  JobOptionEdit,
-} from "../../../../library/types/jobs/JobEdit";
+  JobOptionEdit, OptionPrototype,
+} from '../../../../library/types/jobs/JobEdit'
 
 const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
@@ -1158,16 +1158,9 @@ export default defineComponent({
   data() {
     return {
       option: Object.assign(
+        {},
+        OptionPrototype,
         {
-          description: "",
-          name: "",
-          configRemoteUrl: {},
-          defaultValue: "",
-          optionType: "text",
-          sortValues: false,
-          inputType: "plain",
-          hidden: false,
-          multivalued: false,
           valuesType: this.modelValue.optionValuesPluginType?this.modelValue.optionValuesPluginType:this.modelValue.realValuesUrl ?"url":"list"
         },
         cloneDeep(this.modelValue),
