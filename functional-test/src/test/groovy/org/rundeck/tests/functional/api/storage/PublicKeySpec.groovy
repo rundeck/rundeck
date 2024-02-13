@@ -100,10 +100,10 @@ class PublicKeySpec extends BaseContainer {
         def response = client.doDelete("/storage/keys/"+PUBLIC_KEY_PATH)
 
         then:
-        /*verifyAll {
+        verifyAll {
             response.code()== 204
             response.message() == "No Content"
-        }*/
+        }
         def newRequest = client.doGet("/storage/keys/"+PUBLIC_KEYS_DIRECTORY)
         newRequest.code() == 404
         def json = jsonValue(newRequest.body(), Map)
