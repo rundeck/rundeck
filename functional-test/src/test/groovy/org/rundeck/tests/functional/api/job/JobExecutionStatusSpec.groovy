@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.job
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.JobUtils
 import org.rundeck.util.container.BaseContainer
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -21,7 +22,8 @@ class JobExecutionStatusSpec extends BaseContainer {
 
     def "job/id/run should succeed"() {
         when:
-            execId = runJob(jobId, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            execId = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId > 0
