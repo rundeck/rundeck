@@ -573,7 +573,25 @@ class EditOptsController extends ControllerBase{
         if(report?.errors){
             //TODO pass config errors
         }
+        translateApiErrors(validate)
         respond(validate,[status:validate.valid?200:400])
+    }
+    static final Map<String, String> FieldTranslations = [
+        valuesList   : 'values',
+        defaultValue : 'value',
+        realValuesUrl: 'valuesUrl',
+        secureInput  : 'secure',
+        secureExposed: 'valueExposed',
+    ]
+    @CompileStatic
+    protected static void translateApiErrors(OptionValidateResponse validate){
+        if(validate.messages){
+            FieldTranslations.each { from, to ->
+                if (validate.messages.containsKey(from)) {
+                    validate.messages[to] = validate.messages.remove(from)
+                }
+            }
+        }
     }
     static class OptionInputValidator implements OptionValidator{
         OptionValidateResponse validate
@@ -843,7 +861,7 @@ class EditOptsController extends ControllerBase{
                 def inval = []
                 opt.optionValues.each {val ->
                     if (!(val =~ /${opt.regex}/)) {
-                        validator.rejectValue('values', 'option.values.regexmismatch.message', [val.toString(), opt.regex] as Object[], "Value does not match regex: {0}")
+                        validator.rejectValue('valuesList', 'option.values.regexmismatch.message', [val.toString(), opt.regex] as Object[], "Value does not match regex: {0}")
                     }
                 }
             }

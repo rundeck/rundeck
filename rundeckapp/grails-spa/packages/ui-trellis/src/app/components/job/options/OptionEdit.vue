@@ -151,7 +151,7 @@
             name="defaultValue"
             size="40"
             :placeholder="$t('form.option.defaultValue.label')"
-            v-model="option.defaultValue"
+            v-model="option.value"
           />
           <div class="help-block" v-if="validationErrors['defaultValue']">
             <ErrorsList :errors="validationErrors['defaultValue']" />
@@ -371,7 +371,7 @@
               type="text"
               name="valuesList"
               class="form-control"
-              v-model="option.valuesList"
+              v-model="valuesList"
               size="60"
               :placeholder="$t('form.option.valuesList.placeholder')"
             />
@@ -389,13 +389,13 @@
             <input
               type="url"
               class="form-control"
-              name="realValuesUrl"
-              v-model="option.realValuesUrl"
+              name="valuesUrl"
+              v-model="option.valuesUrl"
               size="60"
               :placeholder="$t('form.option.valuesURL.placeholder')"
             />
-            <div class="help-block" v-if="validationErrors['realValuesUrl']">
-              <ErrorsList :errors="validationErrors['realValuesUrl']" />
+            <div class="help-block" v-if="validationErrors['valuesUrl']">
+              <ErrorsList :errors="validationErrors['valuesUrl']" />
             </div>
             <div class="help-block">
               {{ $t("form.option.valuesUrl.description") }}
@@ -892,7 +892,7 @@
         {{ $t("form.option.multivalued.label") }}
       </label>
       <div class="col-sm-10">
-        <div class="opt_sec_disabled" v-if="!option.secureInput">
+        <div class="opt_sec_disabled" v-if="!isSecureInput">
           <div class="radio radio-inline">
             <input
               type="radio"
@@ -968,7 +968,7 @@
             </div>
           </div>
         </div>
-        <div class="presentation" id="mvsecnote" v-if="option.secureInput">
+        <div class="presentation" id="mvsecnote" v-if="isSecureInput">
           <span class="warn note">
             {{ $t("form.option.multivalued.secure-conflict.message") }}
           </span>
@@ -988,7 +988,7 @@
         <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
         <div
           class="col-sm-10 opt_sec_nexp_disabled"
-          v-if="!option.secureInput || option.secureExposed"
+          v-if="!option.secure || option.valueExposed"
         >
           <span class="text-strong">{{
             $t("the.option.values.will.be.available.to.scripts.in.these.forms")
@@ -1161,7 +1161,7 @@ export default defineComponent({
         {},
         OptionPrototype,
         {
-          valuesType: this.modelValue.optionValuesPluginType?this.modelValue.optionValuesPluginType:this.modelValue.realValuesUrl ?"url":"list"
+          valuesType: this.modelValue.optionValuesPluginType?this.modelValue.optionValuesPluginType:this.modelValue.valuesUrl ?"url":"list"
         },
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
@@ -1191,28 +1191,28 @@ export default defineComponent({
   watch: {
     "option.inputType"(val: string) {
       this.option.isDate = val === "date";
-      this.option.secureInput = val === "secure" || val === "secureExposed";
-      this.option.secureExposed = val === "secureExposed";
-      if(this.option.secureInput){
+      this.option.secure = val === "secure" || val === "secureExposed";
+      this.option.valueExposed = val === "secureExposed";
+      if(this.option.secure){
         this.option.multivalued = false
       }
     },
     "option.valuesType"(val:string){
         if (val === "url") {
           this.option.optionValuesPluginType = "";
-          this.option.realValuesUrl = "";
+          this.option.valuesUrl = "";
           this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
           this.urlChoice = true;
         } else if (val === "list") {
           this.option.optionValuesPluginType = "";
-          this.option.realValuesUrl = null;
+          this.option.valuesUrl = null;
           this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
           this.urlChoice = false;
         } else {
           this.option.optionValuesPluginType = val;
-          this.option.realValuesUrl = null;
+          this.option.valuesUrl = null;
           this.option.remoteUrlAuthenticationType = "";
           this.option.configRemoteUrl = {};
           this.urlChoice = false;
@@ -1244,13 +1244,29 @@ export default defineComponent({
       return this.option.isDate;
     },
     isSecureInput() {
-      return this.option.secureInput;
+      return this.option.secure;
     },
     showDefaultValue() {
       return !this.isSecureInput;
     },
     shouldShowDefaultStorage() {
       return !this.showDefaultValue;
+    },
+    valuesList:{
+      get(){
+        if(this.option.values && this.option.values.length>0){
+          return this.option.values.join(this.option.delimiter||",")
+        }else{
+          return ''
+        }
+      },
+      set(val: string){
+        if(val){
+          this.option.values=val.split(this.option.delimiter||",")
+        }else{
+          this.option.values=null
+        }
+      }
     },
     enforcedType: {
       get() {
