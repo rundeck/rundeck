@@ -108,7 +108,5 @@ class PublicKeySpec extends BaseContainer {
         newRequest.code() == 404
         def json = jsonValue(newRequest.body(), Map)
         json.error.containsIgnoreCase("resource not found: /keys/functional-test/src/test/resources/test-files")
-
-
     }
 }
