@@ -4,7 +4,7 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-class ExecutionMode extends BaseContainer{
+class ExecutionModeSpec extends BaseContainer{
 
     def "test_enable_json"() {
         when:
