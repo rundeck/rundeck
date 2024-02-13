@@ -10,7 +10,6 @@ services:
       RUNDECK_SERVER_FORWARDED: 'true'
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
-      RUNDECK_TESTDECK_START_NC: "true"
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"

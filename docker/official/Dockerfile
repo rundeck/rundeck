@@ -9,12 +9,6 @@ RUN java -jar rundeck.war --installonly \
     # Adjust permissions for OpenShift
     && chmod -R 0775 libext server user-assets var
 
-USER root
-
-RUN apt-get update && apt-get install -y netcat
-
-USER rundeck
-
 COPY --chown=rundeck:root remco /etc/remco
 COPY --chown=rundeck:root lib docker-lib
 COPY --chown=rundeck:root etc etc
