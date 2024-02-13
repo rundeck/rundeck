@@ -5,6 +5,7 @@ export interface JobOption {
   delimiter?: string;
   description?: string;
   enforced?: boolean;
+  required?: boolean;
   hidden?: boolean;
   label?: string;
   multivalueAllSelected?: boolean;
