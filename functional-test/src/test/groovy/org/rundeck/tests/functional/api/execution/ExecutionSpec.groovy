@@ -170,7 +170,7 @@ class ExecutionSpec extends BaseContainer {
 
     def "POST job/id/run should succeed"() {
         setup:
-            def pathFile = updateJobFile([fileName: "api-test-execution-state.xml"])
+            def pathFile = updateJobFileToImport("api-test-execution-state.xml", ["project-name": PROJECT_NAME])
             def responseImport = jobImportFile("test-job-id-success", pathFile) as Map
         when:
             def jobId = responseImport.succeeded[2].id
@@ -204,11 +204,11 @@ class ExecutionSpec extends BaseContainer {
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id
         when:"import jobs 1"
-            def pathFile1 = updateJobFile([fileName: "job-template-common.xml", newProject: newProject, jobName: "test exec query", groupName: "api-test/execquery", description: "A job to test the executions query API", uuid: "api-v5-test-exec-query"])
+            def pathFile1 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "test exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API", "uuid": "api-v5-test-exec-query", "args":"echo hello there"])
         then:
             def jobId1 = jobImportFile(newProject, pathFile1).succeeded[0].id
         when:"import jobs 2"
-            def pathFile2 = updateJobFile([fileName: "job-template-common.xml", newProject: newProject, jobName: "second test for exec query", groupName: "api-test/execquery", description: "A job to test the executions query API2", uuid: "api-v5-test-exec-query2"])
+            def pathFile2 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "second test for exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API2", "uuid": "api-v5-test-exec-query2", "args":"echo hello there"])
         then:
             def jobId2 = jobImportFile(newProject, pathFile2).succeeded[0].id
         when:"run job 1 and 2"

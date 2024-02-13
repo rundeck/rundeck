@@ -13,7 +13,7 @@ class JobDeleteSpec extends BaseContainer {
 
     def "DELETE for /api/job/{id}"() {
         given:
-            def pathFile = updateJobFile([fileName: "job-template-common.xml"])
+            def pathFile = updateJobFileToImport("job-template-common.xml")
         when:
             def jobId = jobImportFile(pathFile).succeeded[0].id
         then:

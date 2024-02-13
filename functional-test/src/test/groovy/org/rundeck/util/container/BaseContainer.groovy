@@ -216,19 +216,25 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
-    def updateJobFile(Map args) {
-        def pathXmlFile = getClass().getResource("/test-files/${args.fileName}").getPath()
+    def updateJobFileToImport(String fileName, Map args = [:]) {
+        if (args.isEmpty()) {
+            args = [
+                    "project-name": PROJECT_NAME,
+                    "job-name": "job-test",
+                    "job-group-name": "group-test",
+                    "job-description-name": "description-test",
+                    "args": "echo hello there",
+                    "2-args": "echo hello there 2",
+                    "uuid": UUID.randomUUID().toString()
+            ]
+        }
+        def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
-        def xmlProject = xmlProjectContent
-                .replaceAll('xml-uuid', args.uuid as String?:UUID.randomUUID().toString())
-                .replaceAll('xml-project-name', args.projectName as String?:PROJECT_NAME)
-                .replaceAll('xml-args', args.args as String?:"echo hello there")
-                .replaceAll('xml-2-args', args.args2 as String?:"echo hello there 2")
-                .replaceAll('xml-job-name', args.jobName as String?:'job-test')
-                .replaceAll('xml-job-group-name', args.groupName as String?:'group-test')
-                .replaceAll('xml-job-description-name', args.description as String?:'description-test')
+        args.each { k, v ->
+            xmlProjectContent = xmlProjectContent.replaceAll("xml-${k as String}", v as String)
+        }
         def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlProject
+        tempFile.text = xmlProjectContent
         tempFile.deleteOnExit()
         tempFile.path
     }
