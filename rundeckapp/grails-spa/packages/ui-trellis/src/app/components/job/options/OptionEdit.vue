@@ -1190,11 +1190,6 @@ export default defineComponent({
   },
   watch: {
     "option.inputType"(val: string) {
-      // this.option.defaultValue = "";
-      // this.option.valuesList = "";
-      // this.option.valuesUrl = "";
-      // this.option.remoteUrlAuthenticationType = "";
-      // this.option.enforceType = "none";
       this.option.isDate = val === "date";
       this.option.secureInput = val === "secure" || val === "secureExposed";
       this.option.secureExposed = val === "secureExposed";
