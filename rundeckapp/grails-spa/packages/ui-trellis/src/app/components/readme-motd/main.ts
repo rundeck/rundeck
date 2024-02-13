@@ -1,4 +1,4 @@
-import { defineComponent, markRaw } from 'vue'
+import {defineComponent, markRaw,} from 'vue'
 import {getRundeckContext} from "../../../library";
 import EditProjectFile from "./EditProjectFile.vue";
 
@@ -12,7 +12,7 @@ let locale = getRundeckContext().locale || 'en_US'
 let lang = getRundeckContext().language || 'en'
 
 // include any i18n injected in the page by the app
-let i18nmessages =
+let i18nMessages =
     {
         [locale]: Object.assign(
             {},
@@ -33,11 +33,31 @@ rundeckContext.rootStore.ui.addItems([
             },
             props: ['itemData'],
             inject: ['addUiMessages'],
-            created(){
-                this.addUiMessages([i18nmessages[locale]])
+            //  configuring the code from here
+            data() {
+                return {
+                    // Initializing the data to be used in the component
+                    filename: '',
+                    displayConfig: [],
+                    project: '',
+                    authAdmin: false,
+                };
+            },
+            created() {
+                this.addUiMessages([i18nMessages[locale]]);
+                // Performing transformation on the data
+                this.filename = this.itemData.filename;
+                this.displayConfig = Array.isArray(this.itemData.displayConfig) ? this.itemData.displayConfig.filter((item: any) => typeof item === 'string') : [];
+
+                this.project = this.itemData.project;
+                this.authAdmin = Boolean(this.itemData.authAdmin);
             },
             template: `
-                <edit-project-file :filename="itemData.filename" :display-config="itemData.displayConfig" :project="itemData.project" :auth-admin="itemData.authAdmin"/>`
+              <edit-project-file :filename="filename" :display-config="displayConfig" :project="project"
+                                 :auth-admin="authAdmin"/>\`
+            `
         }))
     }
 ])
+
+

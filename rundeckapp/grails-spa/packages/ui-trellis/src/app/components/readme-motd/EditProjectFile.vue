@@ -1,11 +1,23 @@
 <template>
+  <h1>This is a test .......</h1>
   <div class="content">
     <div id="layoutBody">
       <div class="title">
         <span class="text-h3">
           <template v-if="filename === 'readme.md'">
-            <i class="fas fa-file-alt"></i> {{ $t("edit.readme.label") }}
+            <i class="fas fa-file-alt"></i>
+<!--            {{ $t("edit.readme.label") }}-->
+            <span v-html="$t('edit.readme.label')"></span> &#20;
+
+            <!-- Directly adding the link next to the span -->
+    <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank" rel="noopener noreferrer">
+      {{ $t('file.readme.help.linkText') }}
+    </a>
+
+
           </template>
+
+
           <template v-else>
             <i class="fas fa-comment-alt"></i> {{ $t("edit.motd.label") }}
           </template>
@@ -17,6 +29,7 @@
               <div class="card" id="createform">
                 <div class="card-header">
                   <h3 class="card-title">{{  $t("edit.file.project", [this.filename, this.project]) }}</h3>
+
                 </div>
                 <div class="card-content">
                   <div class="help-block">
