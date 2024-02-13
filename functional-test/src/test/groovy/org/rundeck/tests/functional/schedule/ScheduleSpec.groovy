@@ -17,9 +17,7 @@ class ScheduleSpec extends BaseContainer{
     def "TEST: when schedule is flipped, job remains scheduled"(){
         given:
         def projectName = "test-job-flip-scheduleEnabled-scheduler-bug.sh"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
