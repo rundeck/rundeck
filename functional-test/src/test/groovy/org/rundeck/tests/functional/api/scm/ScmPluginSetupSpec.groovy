@@ -4,6 +4,7 @@ import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.scm.GitLocalServerRepoCreator
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.ScmPluginsListResponse
+import org.rundeck.util.api.scm.ScmProjectConfigResponse
 import org.rundeck.util.api.scm.SetupGitIntegrationRequest
 import org.rundeck.util.api.scm.SetupIntegrationResponse
 import org.rundeck.util.container.BaseContainer
@@ -168,6 +169,37 @@ class ScmPluginSetupSpec extends BaseContainer{
             ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList()
             scmPlugins.integration == integration
             scmPlugins.plugins.find { it.type == scmClient.pluginName && it.enabled }
+        }
+    }
+
+    def "should return the current  project scm configuration"(){
+        given:
+        String integration = "export"
+        String projectName = "${PROJECT_NAME}-P7"
+        setupProject(projectName)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
+
+        SetupGitIntegrationRequest setupScmRequest = SetupGitIntegrationRequest.defaultRequest()
+        setupScmRequest.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
+        setupScmRequest.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+
+        expect:
+        scmClient.callSetupIntegration(setupScmRequest).success
+
+        when:
+        ScmProjectConfigResponse configResponse = scmClient.callGetProjectScmConfig()
+
+        then:
+        verifyAll {
+            configResponse.integration == integration
+            configResponse.type == scmClient.pluginName
+            configResponse.enabled == true
+
+            Map setupScmRequestMap = setupScmRequest.config.toMap()
+            configResponse.config.size() == setupScmRequestMap.size()
+            setupScmRequestMap.each { config ->
+                configResponse.config[config.key] == config.value
+            }
         }
     }
 }

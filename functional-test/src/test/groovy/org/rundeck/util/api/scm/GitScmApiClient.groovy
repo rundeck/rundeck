@@ -55,6 +55,12 @@ class GitScmApiClient {
         return ScmPluginInputFieldsResponse.extractFromResponse(resp)
     }
 
+    ScmProjectConfigResponse callGetProjectScmConfig(){
+        Response resp = client.doGet("/project/${project}/scm/${integration}/config")
+
+        return ScmProjectConfigResponse.extractFromResponse(resp)
+    }
+
     String getPluginName() {
         return pluginName
     }
