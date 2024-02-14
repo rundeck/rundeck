@@ -1,7 +1,6 @@
 package org.rundeck.util.api.scm
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.groovy.util.BeanUtils
 
 class SetupGitIntegrationRequest {
     @JsonProperty
@@ -31,6 +30,19 @@ class SetupGitIntegrationRequest {
 
         @JsonProperty
         String strictHostKeyChecking
+
+        Map toMap(){
+            return [
+                    dir: dir,
+                    url: url,
+                    committerName: committerName,
+                    committerEmail: committerEmail,
+                    pathTemplate: pathTemplate,
+                    format: format,
+                    branch: branch,
+                    strictHostKeyChecking: strictHostKeyChecking
+            ]
+        }
     }
 
     static SetupGitIntegrationRequest defaultRequest(){
