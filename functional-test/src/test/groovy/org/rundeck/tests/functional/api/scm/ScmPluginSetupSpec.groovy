@@ -26,7 +26,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         SetupGitIntegrationRequest requestBody = new SetupGitIntegrationRequest([config: scmSetupProps])
 
         when:
-        SetupIntegrationResponse response = scmClient.setupIntegration(requestBody)
+        SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody)
 
         then:
         !response.success
@@ -56,7 +56,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
 
         when:
-        SetupIntegrationResponse response = scmClient.setupIntegration(requestBody)
+        SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody)
 
         then:
         response.success
@@ -77,19 +77,19 @@ class ScmPluginSetupSpec extends BaseContainer{
 
         expect:
         verifyAll {
-            scmClient.setupIntegration(requestBody).success
-            ScmPluginsListResponse scmPlugins = scmClient.getPluginsList()
+            scmClient.callSetupIntegration(requestBody).success
+            ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList()
             scmPlugins.integration == integration
             scmPlugins.plugins.find { it.type == scmClient.pluginName && it.enabled }
         }
         when:
-        SetupIntegrationResponse disablePluginResult = scmClient.setEnabledStatusForPlugin(false)
+        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false)
 
         then:
         verifyAll {
             disablePluginResult.success
             disablePluginResult.message == "Plugin disabled for SCM export: ${scmClient.pluginName}"
-            ScmPluginsListResponse scmPlugins = scmClient.getPluginsList()
+            ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList()
             scmPlugins.integration == integration
             scmPlugins.plugins.find { it.type == scmClient.pluginName && !it.enabled }
         }
@@ -107,16 +107,16 @@ class ScmPluginSetupSpec extends BaseContainer{
         requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
 
         expect:
-        scmClient.setupIntegration(requestBody).success
+        scmClient.callSetupIntegration(requestBody).success
 
         when:
-        SetupIntegrationResponse disablePluginResult = scmClient.setEnabledStatusForPlugin(false,'wrong-plugin')
+        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false,'wrong-plugin')
 
         then:
         verifyAll {
             disablePluginResult.success == false
             disablePluginResult.message == 'Plugin type wrong-plugin for export is not configured'
-            ScmPluginsListResponse scmPlugins = scmClient.getPluginsList()
+            ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList()
             scmPlugins.integration == integration
             scmPlugins.plugins.find {scmPlugin -> scmPlugin.type == scmClient.pluginName && scmPlugin.enabled }
         }
@@ -134,7 +134,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
 
         when:
-        SetupIntegrationResponse disablePluginResult = scmClient.setEnabledStatusForPlugin(false)
+        SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false)
 
         then:
         !disablePluginResult.success
@@ -154,18 +154,18 @@ class ScmPluginSetupSpec extends BaseContainer{
 
         expect:
         verifyAll {
-            scmClient.setupIntegration(requestBody).success
-            scmClient.setEnabledStatusForPlugin(false).success
+            scmClient.callSetupIntegration(requestBody).success
+            scmClient.callSetEnabledStatusForPlugin(false).success
         }
 
         when:
-        SetupIntegrationResponse enablePluginResult = scmClient.setEnabledStatusForPlugin(true)
+        SetupIntegrationResponse enablePluginResult = scmClient.callSetEnabledStatusForPlugin(true)
 
         then:
         verifyAll {
             enablePluginResult.success
             enablePluginResult.message == "Plugin enabled for SCM export: ${scmClient.pluginName}"
-            ScmPluginsListResponse scmPlugins = scmClient.getPluginsList()
+            ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList()
             scmPlugins.integration == integration
             scmPlugins.plugins.find { it.type == scmClient.pluginName && it.enabled }
         }
