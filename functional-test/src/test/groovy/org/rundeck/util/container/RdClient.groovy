@@ -22,7 +22,8 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 45
+    int apiVersion = 47
+    final finalApiVersion = 47
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
@@ -166,6 +167,16 @@ class RdClient {
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithContentTypeWithoutBody(final String path,String  contentType) {
+        RequestBody body = RequestBody.create(null, new byte[]{});
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+                .header('Content-Type', contentType)
                 .build()
         httpClient.newCall(request).execute()
     }

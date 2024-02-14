@@ -25,6 +25,10 @@ class ExecutionSpec extends BaseContainer {
         setupProject()
     }
 
+    def cleanup(){
+        client.apiVersion = client.finalApiVersion
+    }
+
     def "run command, get execution"() {
         when: "run a command"
             def adhoc = post("/project/${PROJECT_NAME}/run/command?exec=echo+testing+execution+api", Map)

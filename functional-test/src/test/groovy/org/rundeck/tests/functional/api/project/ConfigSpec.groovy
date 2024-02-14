@@ -270,7 +270,6 @@ class ConfigSpec extends BaseContainer{
     def "test-project-delete-v45"(){
         given:
         def client = getClient()
-        client.apiVersion = 45 // as the original test
         def projectName = "testProjectDeleteDeferred"
         def projectDescription = "a description"
         Object testProperties = [
@@ -480,6 +479,9 @@ class ConfigSpec extends BaseContainer{
         parsedUnsupportedApiVersionResponse.errorCode == "api.error.api-version.unsupported"
         parsedUnsupportedApiVersionResponse.error
         parsedUnsupportedApiVersionResponse.message?.contains("Unsupported API Version \"2\"")
+
+        cleanup:
+            client.apiVersion = client.finalApiVersion
     }
 
     boolean isYamlValid(String yamlString) {

@@ -10,6 +10,11 @@ class JobImportSpec extends BaseContainer {
         startEnvironment()
         setupProject()
     }
+
+    def cleanup(){
+        client.apiVersion = client.finalApiVersion
+    }
+
     static final List JOB_JSON_MAP = [
         [
             "executionEnabled"  : false,
