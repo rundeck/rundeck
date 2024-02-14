@@ -7,6 +7,7 @@ import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
@@ -1119,6 +1120,7 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
+    @ExcludePro
     def "test-job-run-webhook"(){
         given:
         def projectName = "test-send-notification-webhook"
@@ -1209,6 +1211,7 @@ class JobExecutionSpec extends BaseContainer {
         Files.deleteIfExists(Paths.get("/tmp/netcat-out.txt"))
     }
 
+    @ExcludePro
     def "test-job-run-without-deadlock"(){
         setup:
         def projectName = PROJECT_NAME
