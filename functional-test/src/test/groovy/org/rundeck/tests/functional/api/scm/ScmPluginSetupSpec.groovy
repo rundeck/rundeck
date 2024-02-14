@@ -200,4 +200,47 @@ class ScmPluginSetupSpec extends BaseContainer{
             }
         }
     }
+
+    def "list plugins on new empty project with no scm plugin setup"(){
+        given:
+        String projectName = "${PROJECT_NAME}-P8"
+        setupProject(projectName)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
+
+        when:
+        ScmPluginsListResponse scmPlugins = scmClient.callGetPluginsList().response
+
+        then:
+        verifyAll {
+            scmPlugins.plugins.size() == 1
+            scmPlugins.plugins.first().configured == false
+            scmPlugins.plugins.first().enabled == false
+            scmPlugins.integration == integration
+            scmPlugins.plugins.first().type == scmClient.pluginName
+            scmPlugins.plugins.first().title == expectedTitle
+            scmPlugins.plugins.first().description == expectedDescription
+        }
+
+        where:
+        integration | expectedTitle | expectedDescription
+        'export'    | 'Git Export'  | 'Export Jobs to a Git Repository'
+        'import'    | 'Git Import'  | 'Import Jobs from a Git Repository'
+    }
+
+    def "list plugins for non existing integration"() {
+        given:
+        String integration = 'invalid'
+        String projectName = "${PROJECT_NAME}-P9"
+        setupProject(projectName)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
+
+        when:
+        RundeckResponse.ApiError scmPlugins = scmClient.callGetPluginsList().error
+
+        then:
+        verifyAll {
+            scmPlugins.errorCode == 'api.error.invalid.request'
+            scmPlugins.message == 'Invalid API Request: the value "invalid" for parameter "integration" was invalid. It must be in the list: [export, import]'
+        }
+    }
 }
