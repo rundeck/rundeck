@@ -19,7 +19,7 @@ class ScmPluginInputsSpec extends BaseContainer {
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
         when:
-        ScmPluginInputFieldsResponse inputsResponse = scmClient.callGetInputFieldsForPlugin()
+        ScmPluginInputFieldsResponse inputsResponse = scmClient.callGetInputFieldsForPlugin().response
 
         then:
         noExceptionThrown()

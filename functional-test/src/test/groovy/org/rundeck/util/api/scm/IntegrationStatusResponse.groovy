@@ -19,11 +19,4 @@ class IntegrationStatusResponse {
 
     @JsonProperty
     String synchState
-
-    static IntegrationStatusResponse extractFromResponse(Response response){
-        new ObjectMapper().readValue(
-                response.body().string(),
-                IntegrationStatusResponse.class
-        )
-    }
 }

@@ -43,11 +43,4 @@ class ScmPluginInputFieldsResponse {
         @JsonProperty
         List<String> values
     }
-
-    static ScmPluginInputFieldsResponse extractFromResponse(Response response){
-        new ObjectMapper().readValue(
-                response.body().string(),
-                ScmPluginInputFieldsResponse.class
-        )
-    }
 }

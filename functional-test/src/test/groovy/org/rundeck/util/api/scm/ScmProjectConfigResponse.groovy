@@ -19,11 +19,4 @@ class ScmProjectConfigResponse {
 
     @JsonProperty
     String type
-
-    static ScmProjectConfigResponse extractFromResponse(Response response){
-        new ObjectMapper().readValue(
-                response.body().string(),
-                ScmProjectConfigResponse.class
-        )
-    }
 }
