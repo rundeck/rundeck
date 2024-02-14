@@ -25,28 +25,34 @@ class GitScmApiClient {
         return this
     }
 
-    SetupIntegrationResponse setupIntegration(SetupGitIntegrationRequest requestBody){
+    SetupIntegrationResponse callSetupIntegration(SetupGitIntegrationRequest requestBody){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
 
         return SetupIntegrationResponse.extractFromResponse(resp)
     }
 
-    IntegrationStatusResponse getIntegrationStatus() {
+    IntegrationStatusResponse callGetIntegrationStatus() {
         Response resp = client.doGet("/project/${project}/scm/${integration}/status")
 
         return IntegrationStatusResponse.extractFromResponse(resp)
     }
 
-    ScmPluginsListResponse getPluginsList(){
+    ScmPluginsListResponse callGetPluginsList(){
         Response resp = client.doGet("/project/${project}/scm/${integration}/plugins")
 
         return ScmPluginsListResponse.extractFromResponse(resp)
     }
 
-    SetupIntegrationResponse setEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
+    SetupIntegrationResponse callSetEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/${enablePlugin? 'enable' : 'disable'}")
 
         return SetupIntegrationResponse.extractFromResponse(resp)
+    }
+
+    ScmPluginInputFieldsResponse callGetInputFieldsForPlugin(){
+        Response resp = client.doGet("/project/${project}/scm/${integration}/plugin/${pluginName}/input")
+
+        return ScmPluginInputFieldsResponse.extractFromResponse(resp)
     }
 
     String getPluginName() {
