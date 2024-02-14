@@ -7,6 +7,7 @@ import org.rundeck.tests.functional.api.ResponseModels.Node
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
 import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml
@@ -570,6 +571,111 @@ class ConfigSpec extends BaseContainer{
         then:
         specificNode != null
         specificNode.nodename == testResourceNode
+
+        cleanup:
+        deleteProject(projectName)
+
+    }
+
+    def "test-resources"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 46
+        def mapper = new ObjectMapper()
+        def projectName = "test-resources" // delete me
+        def projectMapJson = [
+                "name":projectName
+        ]
+        // Create test project with resources
+        def createResponse = createSampleProject(projectMapJson)
+        assert createResponse.successful
+        setupProject(projectName, "/projects-import/resourcesTest.zip")
+
+        //Extract local nodename
+        def systemInfoResponse = doGet("/system/info")
+        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        def localNode = systemInfo.system?.rundeck?.node
+
+        when: "Obtain all the nodes wait a bit"
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
+        def allNodesResponse = client.doGetAcceptAll("/project/$projectName/resources")
+        assert allNodesResponse.successful
+        def allNodesResponseString = allNodesResponse.body().string()
+        def parsedAllNodes = mapper.readValue(allNodesResponseString, Map<String, Map>.class)
+        def allNodes = parsedAllNodes.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+
+        then: "We check tha nodes qty and the format of the repsonse (must be json)"
+        allNodes.size() > 1
+        !isYamlValid(allNodesResponseString) // is not yaml
+        parsedAllNodes != null // is json
+
+        then: "Is we request the yaml format, the api delivers"
+        def allNodesResponseYaml = client.doGetAcceptAll("/project/$projectName/resources?format=yaml")
+        assert allNodesResponseYaml.successful
+        def allNodesResponseYamlString = allNodesResponseYaml.body().string()
+        def parsedAllNodesYaml = new Yaml().load(allNodesResponseString)
+
+        then:
+        isYamlValid(allNodesResponseYamlString)
+        parsedAllNodesYaml != null
+
+        when: "We try to parse yaml into JSON"
+        mapper.readValue(allNodesResponseYamlString, Object.class)
+
+        then: "Exeception thrown"
+        thrown Exception
+
+        when: "We request resources with unsupported format"
+        def allNodesResponseInvalidApi = client.doGetAcceptAll("/project/$projectName/resources?format=sandwich")
+        def parsedAllNodesResponseInvalidApi = mapper.readValue(allNodesResponseInvalidApi.body().string(), Object.class)
+
+        then: "The api will return error code"
+        parsedAllNodesResponseInvalidApi.errorCode == "api.error.resource.format.unsupported"
+        parsedAllNodesResponseInvalidApi.error
+        parsedAllNodesResponseInvalidApi.message?.contains("The format specified is unsupported: sandwich")
+
+        when: "We test node filters to include a tag"
+        def allNodesResponseFilteredByTag = client.doGetAcceptAll("/project/$projectName/resources?tags=testBoth")
+        assert allNodesResponseFilteredByTag.successful
+        def allNodesResponseFilteredByTagString = allNodesResponseFilteredByTag.body().string()
+        def parsedNodesResponseFilteredByTagString = mapper.readValue(allNodesResponseFilteredByTagString, Map<String, Map>.class)
+        def parsedNodesFilteredByTag = parsedNodesResponseFilteredByTagString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+
+        then: "Must be 2 of the 3 in total"
+        parsedNodesFilteredByTag.size() == 2
+
+        when: "We test node filters to include a tag"
+        def allNodesResponseExcludedByTag = client.doGetAcceptAll("/project/$projectName/resources?exclude-tags=testBoth")
+        assert allNodesResponseExcludedByTag.successful
+        def allNodesResponseExcludedByTagString = allNodesResponseExcludedByTag.body().string()
+        def parsedNodesResponseExcludedByTagString = mapper.readValue(allNodesResponseExcludedByTagString, Map<String, Map>.class)
+        def parsedNodesExcludedByTag = parsedNodesResponseExcludedByTagString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+
+        then: "Must be 1 (localhost) of the 3 in total"
+        parsedNodesExcludedByTag.size() == 1
+        parsedNodesExcludedByTag[localNode].nodename == localNode
+
+        when: "We test node filters to include a tag and exclude one node"
+        def mixedFilterResponse = client.doGetAcceptAll("/project/$projectName/resources?tags=testBoth&exclude-name=test-node")
+        assert mixedFilterResponse.successful
+        def mixedFilterResponseString = mixedFilterResponse.body().string()
+        def parsedMixedFilterResponseString = mapper.readValue(mixedFilterResponseString, Map<String, Map>.class)
+        def parsedMixedFilter = parsedMixedFilterResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+
+        then: "Must be 1 (test-node2) of the 3 in total"
+        parsedMixedFilter.size() == 1
+        parsedMixedFilter["test-node2"].nodename == "test-node2"
+
+        when: "We test node filters to include a tag and exclude one node and exclude precedece to false"
+        def mixedFilterWithPrecedenceResponse = client.doGetAcceptAll("/project/$projectName/resources?tags=test1&exclude-tags=testBoth&exclude-precedence=false")
+        assert mixedFilterWithPrecedenceResponse.successful
+        def mixedFilterWithPrecedenceResponseString = mixedFilterWithPrecedenceResponse.body().string()
+        def parsedMixedFilterWithPrecedenceResponseString = mapper.readValue(mixedFilterWithPrecedenceResponseString, Map<String, Map>.class)
+        def parsedMixedFilterWithPrecedence = parsedMixedFilterWithPrecedenceResponseString.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+
+        then: "Must be 1 (test-node2) of the 3 in total"
+        parsedMixedFilterWithPrecedence.size() == 1
+        parsedMixedFilterWithPrecedence[localNode].nodename == localNode
 
         cleanup:
         deleteProject(projectName)
