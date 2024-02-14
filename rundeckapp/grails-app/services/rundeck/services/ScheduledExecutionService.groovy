@@ -2726,7 +2726,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, origopt.getConfigRemoteUrl(), null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt, origopt.errors)
 
             cleanSecureOptionFromDefaultValue(origopt)
