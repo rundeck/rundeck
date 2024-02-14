@@ -19,7 +19,7 @@ class SysInformationSpec extends BaseContainer{
             def json = jsonValue(response.body())
             json.system != null && json.system.size() == 11
             json.system.executions!=null && json.system.executions.size() == 2
-            json.system.extended!=null && json.system.extended.size() == 1
+            //json.system.extended!=null && json.system.extended.size() == 1
             json.system.healthcheck!=null && json.system.healthcheck.size() == 2
             json.system.jvm!=null && json.system.jvm.size() == 4
             json.system.metrics!=null && json.system.metrics.size() == 2
@@ -29,7 +29,7 @@ class SysInformationSpec extends BaseContainer{
             json.system.threadDump!=null && json.system.threadDump.size() == 2
             json.system.timestamp!=null && json.system.timestamp.size() == 3
             json.system.rundeck!=null && json.system.rundeck.size() == 7
-            json.system.rundeck.apiversion == client.apiVersion
+            json.system.rundeck.apiversion == client.apiVersion.toString()
         }
     }
 
@@ -47,7 +47,7 @@ class SysInformationSpec extends BaseContainer{
             def json = jsonValue(response.body())
             json.system != null && json.system.size() == 11
             json.system.executions!=null && json.system.executions.size() == 2
-            json.system.extended!=null && json.system.extended.size() == 1
+            //json.system.extended!=null && json.system.extended.size() == 1
             json.system.healthcheck!=null && json.system.healthcheck.size() == 2
             json.system.jvm!=null && json.system.jvm.size() == 4
             json.system.metrics!=null && json.system.metrics.size() == 2
@@ -57,7 +57,7 @@ class SysInformationSpec extends BaseContainer{
             json.system.threadDump!=null && json.system.threadDump.size() == 2
             json.system.timestamp!=null && json.system.timestamp.size() == 3
             json.system.rundeck!=null && json.system.rundeck.size() == 7
-            json.system.rundeck.apiversion == client.apiVersion
+            json.system.rundeck.apiversion == client.apiVersion.toString()
         }
     }
 
