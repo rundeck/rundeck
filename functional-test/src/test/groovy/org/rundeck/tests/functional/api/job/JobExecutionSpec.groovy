@@ -1135,7 +1135,7 @@ class JobExecutionSpec extends BaseContainer {
                 new File(getClass().getResource("/projects-import/webhook-notification-project.zip").getPath()))
         responseImport.successful
 
-        // We have the jobs id, since there are already imported
+        // We have the jobs id, since they are already imported
         def openNcJobId = "c81aa8af-1e0e-4fce-a7bd-102b87922ef2"
         def notificationJobId = "a20106e4-37e6-489b-a783-2beb04a367c1"
         def readNcOutputJobId = "ccda2e41-277a-4c62-ba01-8f930663561e"
@@ -1145,7 +1145,7 @@ class JobExecutionSpec extends BaseContainer {
         assert openNcJobRun.successful
         Execution openNcJobResponse = mapper.readValue(openNcJobRun.body().string(), Execution.class)
 
-        then: "We wait to succeeded exec"
+        then: "We wait for succeeded exec"
         JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 openNcJobResponse.id as String,
@@ -1155,7 +1155,7 @@ class JobExecutionSpec extends BaseContainer {
                 WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
         ).status == ExecutionStatus.SUCCEEDED.state
 
-        when: "We run the job with the notification"
+        when: "We run the job with notification"
         def jobRun = JobUtils.executeJob(notificationJobId, client)
         assert jobRun.successful
         Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
