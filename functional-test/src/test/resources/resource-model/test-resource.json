@@ -7,6 +7,16 @@
     "customIdx": "01",
     "osFamily": "Linux",
     "username": "rundeck",
-    "tags": "test"
+    "tags": "test,testBoth"
+  },
+  "test-node2": {
+    "nodename": "test-node2",
+    "customEnv": "test2",
+    "hostname": "http://localhost:4444",
+    "editUrl": "http://localhost:4444",
+    "customIdx": "02",
+    "osFamily": "Linux",
+    "username": "rundeck1",
+    "tags": "test2,testBoth"
   }
 }
