@@ -25,40 +25,40 @@ class GitScmApiClient {
         return this
     }
 
-    SetupIntegrationResponse callSetupIntegration(SetupGitIntegrationRequest requestBody){
+    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(SetupGitIntegrationRequest requestBody){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
 
-        return SetupIntegrationResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, SetupIntegrationResponse)
     }
 
-    IntegrationStatusResponse callGetIntegrationStatus() {
+    RundeckResponse<IntegrationStatusResponse> callGetIntegrationStatus() {
         Response resp = client.doGet("/project/${project}/scm/${integration}/status")
 
-        return IntegrationStatusResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, IntegrationStatusResponse)
     }
 
-    ScmPluginsListResponse callGetPluginsList(){
+    RundeckResponse<ScmPluginsListResponse> callGetPluginsList(){
         Response resp = client.doGet("/project/${project}/scm/${integration}/plugins")
 
-        return ScmPluginsListResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, ScmPluginsListResponse)
     }
 
-    SetupIntegrationResponse callSetEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
+    RundeckResponse<SetupIntegrationResponse> callSetEnabledStatusForPlugin(boolean enablePlugin, String pluginName = this.pluginName){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/${enablePlugin? 'enable' : 'disable'}")
 
-        return SetupIntegrationResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, SetupIntegrationResponse)
     }
 
-    ScmPluginInputFieldsResponse callGetInputFieldsForPlugin(){
+    RundeckResponse<ScmPluginInputFieldsResponse> callGetInputFieldsForPlugin(){
         Response resp = client.doGet("/project/${project}/scm/${integration}/plugin/${pluginName}/input")
 
-        return ScmPluginInputFieldsResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, ScmPluginInputFieldsResponse)
     }
 
-    ScmProjectConfigResponse callGetProjectScmConfig(){
+    RundeckResponse<ScmProjectConfigResponse> callGetProjectScmConfig(){
         Response resp = client.doGet("/project/${project}/scm/${integration}/config")
 
-        return ScmProjectConfigResponse.extractFromResponse(resp)
+        return new RundeckResponse(resp, ScmProjectConfigResponse)
     }
 
     String getPluginName() {

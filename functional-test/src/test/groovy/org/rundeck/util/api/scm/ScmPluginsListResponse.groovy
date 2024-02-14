@@ -28,11 +28,4 @@ class ScmPluginsListResponse {
         @JsonProperty
         String type
     }
-
-    static ScmPluginsListResponse extractFromResponse(Response response){
-        new ObjectMapper().readValue(
-                response.body().string(),
-                ScmPluginsListResponse.class
-        )
-    }
 }
