@@ -26,10 +26,10 @@ class ScmPluginStatusSpec extends BaseContainer {
         requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
 
         expect:
-        scmClient.callSetupIntegration(requestBody).success
+        scmClient.callSetupIntegration(requestBody).response.success
 
         when:
-        IntegrationStatusResponse resp = scmClient.callGetIntegrationStatus()
+        IntegrationStatusResponse resp = scmClient.callGetIntegrationStatus().response
 
         then:
         verifyAll {

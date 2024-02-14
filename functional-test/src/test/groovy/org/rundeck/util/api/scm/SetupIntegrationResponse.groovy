@@ -16,11 +16,4 @@ class SetupIntegrationResponse {
 
     @JsonProperty
     Map<String, String> validationErrors
-
-    static SetupIntegrationResponse extractFromResponse(Response response){
-        new ObjectMapper().readValue(
-                response.body().string(),
-                SetupIntegrationResponse.class
-        )
-    }
 }
