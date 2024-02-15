@@ -188,7 +188,7 @@ class ExecutionSpec extends BaseContainer {
                     execId as String,
                     mapper,
                     client,
-                    1,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
                     WaitingTime.LOW.milliSeconds
             )
             def state = client.get("/execution/${response.id}/state", Map)
@@ -239,7 +239,7 @@ class ExecutionSpec extends BaseContainer {
                     execId1 as String,
                     mapper,
                     client,
-                    1,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
                     WaitingTime.LOW.milliSeconds
             )
             responseExecId1.status == 'succeeded'
@@ -248,7 +248,7 @@ class ExecutionSpec extends BaseContainer {
                     execId2 as String,
                     mapper,
                     client,
-                    1,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
                     WaitingTime.LOW.milliSeconds
             )
             responseExecId2.status == 'failed'
@@ -257,7 +257,7 @@ class ExecutionSpec extends BaseContainer {
                     execId3 as String,
                     mapper,
                     client,
-                    1,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
                     WaitingTime.LOW.milliSeconds
             )
             responseExecId3.status == 'succeeded'
@@ -266,7 +266,7 @@ class ExecutionSpec extends BaseContainer {
                     execId4 as String,
                     mapper,
                     client,
-                    1,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
                     WaitingTime.LOW.milliSeconds
             )
             responseExecId4.status == 'succeeded'
