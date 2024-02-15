@@ -329,7 +329,7 @@
               <label
                 for="vtrurl_"
                 class="left"
-                :class="{ 'has-error': hasError('realValuesUrl') }"
+                :class="{ 'has-error': hasError('valuesUrl') }"
               >
                 {{ $t("form.option.valuesType.url.label") }}
               </label>
@@ -384,7 +384,7 @@
           <div
             id="vurl_section"
             v-else-if="option.valuesType === 'url'"
-            :class="{ 'has-error': hasError('realValuesUrl') }"
+            :class="{ 'has-error': hasError('valuesUrl') }"
           >
             <input
               type="url"
