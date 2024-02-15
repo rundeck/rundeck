@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.project
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
 import org.rundeck.tests.functional.api.ResponseModels.RunCommand
 import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
@@ -15,6 +16,7 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.stream.Collectors
 
 @APITest
 class ExecuteScriptSpec extends BaseContainer{
@@ -52,6 +54,7 @@ class ExecuteScriptSpec extends BaseContainer{
         RunCommand runScript1 = mapper.readValue(scriptRunResponse.body().string(), RunCommand.class)
         def runScript1Id = runScript1.execution.id
 
+        then: "Job succeeds"
         JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 runScript1Id as String,
@@ -59,9 +62,56 @@ class ExecuteScriptSpec extends BaseContainer{
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
+        ).status == ExecutionStatus.SUCCEEDED.state
 
-        def outFileContent = FileHelpers.readFile(scriptRunOutPath)
+        when: "the job succeeds, we read the output of the file with a rundeck job"
+        def readJobId = "5e307c0e-9a8a-4a8e-b394-d1ed8b5d15df"
+        def readJobXml = "<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='filepath' value='/tmp/interpreter-test-out.txt' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <defaultTab>nodes</defaultTab>\n" +
+                "    <description></description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <id>5e307c0e-9a8a-4a8e-b394-d1ed8b5d15df</id>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>fileReader</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <plugins />\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <schedules />\n" +
+                "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <exec>cat \$RD_OPTION_FILEPATH</exec>\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "    <uuid>$readJobId</uuid>\n" +
+                "  </job>\n" +
+                "</joblist>"
+
+        def created = JobUtils.createJob(projectName, readJobXml, client)
+        assert created.successful
+
+        // Then run the job that reads the output of request
+        def readJobRun = JobUtils.executeJob(readJobId, client)
+        assert readJobRun.successful
+
+        Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
+        def readJobSucceeded = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readJobRunResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
+        def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
+        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
 
         //Extract local nodename, this name have to be the only line in output file
         def systemInfoResponse = doGet("/system/info")
@@ -71,10 +121,27 @@ class ExecuteScriptSpec extends BaseContainer{
         def nodeLine = List.of(localNode)
 
         then: "The output file in: $scriptRunOutPath will have the local nodename in it"
-        FileHelpers.assertLinesInsideEntries(nodeLine, outFileContent)
+        FileHelpers.assertLinesInsideEntries(nodeLine, entries)
+
+        when: "We have to remove the out file first"
+        def execArgs = "rm -rf $scriptRunOutPath"
+        def runResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
+        def runResponseBody = runResponse.body().string()
+        def parsedResponseBody = mapper.readValue(runResponseBody, RunCommand.class)
+        def newExecId = parsedResponseBody.execution.id
+        def deleteResponse = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                newExecId as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then: "the job will succeed"
+        deleteResponse.status == ExecutionStatus.SUCCEEDED.state
 
         when: "We do the same request without the args quoted"
-        Files.delete(scriptRunOutPath) // Remove the file, start over
         def argsUnquoted = "scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=false"
         def unquotedScriptRunResponse = client.doPostWithFormData(
                 "/project/$projectName/run/script?$argsUnquoted",
@@ -94,17 +161,29 @@ class ExecuteScriptSpec extends BaseContainer{
                 WaitingTime.MODERATE.milliSeconds / 1000 as int
         )
 
-        def linesOfEmptyFile = FileHelpers.readFile(scriptRunOutPath)
+        // Then run the job that reads the output of request
+        def readJobRunEmpty = JobUtils.executeJob(readJobId, client)
+        assert readJobRunEmpty.successful
+
+        Execution readJobRunEmptyResponse = mapper.readValue(readJobRunEmpty.body().string(), Execution.class)
+        def readJobRunEmptySucceeded = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readJobRunEmptyResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        assert readJobRunEmptySucceeded.status == ExecutionStatus.SUCCEEDED.state
+        def execOutputEmptyResponse = client.doGetAcceptAll("/execution/$readJobRunEmptyResponse.id/output")
+        ExecutionOutput execOutputEmpty = mapper.readValue(execOutputEmptyResponse.body().string(), ExecutionOutput.class)
+        def emptyEntries = execOutputEmpty.entries.stream().map {it.log}.collect(Collectors.toList())
 
         then: "The file is empty"
-        linesOfEmptyFile.size() > 0 // Just a line in the file
-        linesOfEmptyFile.each {
+        emptyEntries.size() > 0 // Just a line in the file
+        emptyEntries.each {
             line -> assert line.isEmpty() // But is empty
         }
-
-        cleanup:
-        Files.delete(scriptRunOutPath)
-        Files.delete(Paths.get(scriptFilename))
 
     }
 
