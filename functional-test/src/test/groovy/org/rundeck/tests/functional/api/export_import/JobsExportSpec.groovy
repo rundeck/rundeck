@@ -17,6 +17,10 @@ class JobsExportSpec extends BaseContainer {
         jobId = jobImportFile(path).succeeded[0].id
     }
 
+    def cleanup() {
+        client.apiVersion = client.finalApiVersion
+    }
+
     def "export single job in jobs.json format (format param) and (Accept header)"() {
         when:
         def data = doGet("/job/${jobId}?format=json")

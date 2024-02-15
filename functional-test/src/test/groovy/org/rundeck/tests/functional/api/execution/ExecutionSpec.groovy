@@ -18,7 +18,6 @@ class ExecutionSpec extends BaseContainer {
     def setupSpec(){
         startEnvironment()
         setupProject()
-        setupProject("test-job-id-success")
     }
 
     def cleanup() {
@@ -176,8 +175,10 @@ class ExecutionSpec extends BaseContainer {
 
     def "POST job/id/run should succeed"() {
         setup:
-            def pathFile = updateJobFileToImport("api-test-execution-state.xml")
-            def responseImport = jobImportFile("test-job-id-success", pathFile) as Map
+            def newProject = "test-job-id-success"
+            setupProject(newProject)
+            def pathFile = updateJobFileToImport("api-test-execution-state.xml", ["project-name": newProject])
+            def responseImport = jobImportFile(newProject, pathFile) as Map
         when:
             def jobId = responseImport.succeeded[2].id
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt1 foobar")
@@ -188,7 +189,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     1,
-                    WaitingTime.MODERATE.milliSeconds
+                    WaitingTime.LOW.milliSeconds
             )
             def state = client.get("/execution/${response.id}/state", Map)
         then:
@@ -199,7 +200,7 @@ class ExecutionSpec extends BaseContainer {
                 state.steps[0].nodeStates."${localnode}".executionState == 'SUCCEEDED'
             }
         cleanup:
-            deleteProject("test-job-id-success")
+            deleteProject(newProject)
     }
 
     def "execution query OK"() {
@@ -239,7 +240,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     1,
-                    WaitingTime.MODERATE.milliSeconds
+                    WaitingTime.LOW.milliSeconds
             )
             responseExecId1.status == 'succeeded'
             def responseExecId2 = JobUtils.waitForExecutionToBe(
@@ -248,7 +249,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     1,
-                    WaitingTime.MODERATE.milliSeconds
+                    WaitingTime.LOW.milliSeconds
             )
             responseExecId2.status == 'failed'
             def responseExecId3 = JobUtils.waitForExecutionToBe(
@@ -257,7 +258,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     1,
-                    WaitingTime.MODERATE.milliSeconds
+                    WaitingTime.LOW.milliSeconds
             )
             responseExecId3.status == 'succeeded'
             def responseExecId4 = JobUtils.waitForExecutionToBe(
@@ -266,7 +267,7 @@ class ExecutionSpec extends BaseContainer {
                     mapper,
                     client,
                     1,
-                    WaitingTime.MODERATE.milliSeconds
+                    WaitingTime.LOW.milliSeconds
             )
             responseExecId4.status == 'succeeded'
         when: "executions"
