@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.scm.GitScmApiClient
-import org.rundeck.util.api.scm.ScmPluginInputFieldsResponse
+import org.rundeck.util.api.scm.httpbody.ScmPluginInputFieldsResponse
 import org.rundeck.util.container.BaseContainer
 
 @APITest
