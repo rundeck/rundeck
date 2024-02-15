@@ -1,6 +1,15 @@
 package org.rundeck.util.api.scm
 
 import okhttp3.Response
+import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
+import org.rundeck.util.api.RundeckResponse
+import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
+import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
+import org.rundeck.util.api.scm.httpbody.ScmPluginInputFieldsResponse
+import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
+import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
+import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
+import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.container.ClientProvider
 import org.rundeck.util.container.RdClient
 
@@ -25,7 +34,7 @@ class GitScmApiClient {
         return this
     }
 
-    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(SetupGitIntegrationRequest requestBody){
+    RundeckResponse<SetupIntegrationResponse> callSetupIntegration(GitExportSetupRequest requestBody){
         Response resp = client.doPost("/project/${project}/scm/${integration}/plugin/${pluginName}/setup", requestBody)
 
         return new RundeckResponse(resp, SetupIntegrationResponse)
@@ -35,6 +44,18 @@ class GitScmApiClient {
         Response resp = client.doGet("/project/${project}/scm/${integration}/status")
 
         return new RundeckResponse(resp, IntegrationStatusResponse)
+    }
+
+    RundeckResponse<ScmActionInputFieldsResponse> callGetFieldsForAction(String actionId) {
+        Response resp = client.doGet("/project/${project}/scm/${integration}/action/${actionId}/input")
+
+        return new RundeckResponse(resp, ScmActionInputFieldsResponse)
+    }
+
+    RundeckResponse<SetupIntegrationResponse> callPerformAction(String actionId, ScmActionPerformRequest requestBody ) {
+        Response resp = client.doPost("/project/${project}/scm/${integration}/action/${actionId}", requestBody)
+
+        return new RundeckResponse(resp, SetupIntegrationResponse)
     }
 
     RundeckResponse<ScmPluginsListResponse> callGetPluginsList(){

@@ -1,4 +1,4 @@
-package org.rundeck.util.api.scm
+package org.rundeck.util.api.scm.httpbody
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper

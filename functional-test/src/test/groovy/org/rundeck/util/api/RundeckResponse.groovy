@@ -1,4 +1,4 @@
-package org.rundeck.util.api.scm
+package org.rundeck.util.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
