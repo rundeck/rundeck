@@ -23,8 +23,8 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 47
-    final finalApiVersion = 47
+    int apiVersion = 46
+    final finalApiVersion = 46
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
@@ -222,6 +222,28 @@ class RdClient {
                 .header('Content-Type', contentType)
                 .build()
         httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithFormData(final String path, final Map<String, String> formData){
+        MultipartBody formDataRequestBody = buildFormDataResponseBody(formData)
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", formDataRequestBody)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    static MultipartBody buildFormDataResponseBody(
+            final Map<String, String> formData
+    ){
+        def requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+        formData.forEach {
+            key, value -> {
+                requestBody.addFormDataPart(key, value)
+            }
+        }
+        return requestBody.build()
     }
 
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {

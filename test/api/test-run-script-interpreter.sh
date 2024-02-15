@@ -29,7 +29,7 @@ run_script(){
   local SCRIPTF=${1};shift
   local params=${1};shift
   # make api request
-  docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
+    docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
   if [ 0 != $? ] ; then
       errorMsg "FAIL: failed query request"
       exit 2
