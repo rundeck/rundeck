@@ -257,7 +257,7 @@ class RdClient {
     }
 
     Response doPostWithFormData(final String path, final Map<String, String> formData){
-        MultipartBody formDataRequestBody = buildFormDataResponseBody(formData)
+        def formDataRequestBody = buildFormDataRequestBody(formData)
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", formDataRequestBody)
@@ -265,16 +265,13 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
-    static MultipartBody buildFormDataResponseBody(
+    static FormBody buildFormDataRequestBody(
             final Map<String, String> formData
     ){
-        def requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-        formData.forEach {
-            key, value -> {
-                requestBody.addFormDataPart(key, value)
-            }
-        }
+        def requestBody = new FormBody.Builder()
+        formData.forEach {key, value -> {
+            requestBody.add(key, value)
+        }}
         return requestBody.build()
     }
 
