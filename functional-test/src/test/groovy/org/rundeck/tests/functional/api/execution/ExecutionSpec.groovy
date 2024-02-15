@@ -13,13 +13,15 @@ import java.time.format.DateTimeFormatter
 @APITest
 class ExecutionSpec extends BaseContainer {
 
+    final ObjectMapper mapper = new ObjectMapper()
+
     def setupSpec(){
         startEnvironment()
         setupProject()
         setupProject("test-job-id-success")
     }
 
-    def cleanup(){
+    def cleanup() {
         client.apiVersion = client.finalApiVersion
     }
 
@@ -183,7 +185,7 @@ class ExecutionSpec extends BaseContainer {
             def response = JobUtils.waitForExecutionToBe(
                     ExecutionStatus.SUCCEEDED.state,
                     execId as String,
-                    new ObjectMapper(),
+                    mapper,
                     client,
                     1,
                     WaitingTime.MODERATE.milliSeconds
@@ -202,9 +204,9 @@ class ExecutionSpec extends BaseContainer {
 
     def "execution query OK"() {
         given:
-            client.apiVersion = 46
             def newProject = "test-executions-query"
             setupProject(newProject)
+            def startDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         when: "run a command 1"
             def params1 = "exec=echo+testing+execution+api"
             def adhoc1 = post("/project/${newProject}/run/command?${params1}", Map)
@@ -230,41 +232,44 @@ class ExecutionSpec extends BaseContainer {
             int execId3 = jsonValue(jobRun1.body()).id as Integer
             def jobRun2 = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
             int execId4 = jsonValue(jobRun2.body()).id as Integer
-        then:
-            JobUtils.waitForExecutionToBe(
+        then: "wait for executions to finish"
+            def responseExecId1 = JobUtils.waitForExecutionToBe(
                     ExecutionStatus.SUCCEEDED.state,
                     execId1 as String,
-                    new ObjectMapper(),
+                    mapper,
                     client,
                     1,
                     WaitingTime.MODERATE.milliSeconds
-            ).status == 'succeeded'
-            JobUtils.waitForExecutionToBe(
+            )
+            responseExecId1.status == 'succeeded'
+            def responseExecId2 = JobUtils.waitForExecutionToBe(
                     ExecutionStatus.FAILED.state,
                     execId2 as String,
-                    new ObjectMapper(),
+                    mapper,
                     client,
                     1,
                     WaitingTime.MODERATE.milliSeconds
-            ).status == 'failed'
-            JobUtils.waitForExecutionToBe(
+            )
+            responseExecId2.status == 'failed'
+            def responseExecId3 = JobUtils.waitForExecutionToBe(
                     ExecutionStatus.SUCCEEDED.state,
                     execId3 as String,
-                    new ObjectMapper(),
+                    mapper,
                     client,
                     1,
                     WaitingTime.MODERATE.milliSeconds
-            ).status == 'succeeded'
-            JobUtils.waitForExecutionToBe(
+            )
+            responseExecId3.status == 'succeeded'
+            def responseExecId4 = JobUtils.waitForExecutionToBe(
                     ExecutionStatus.SUCCEEDED.state,
                     execId4 as String,
-                    new ObjectMapper(),
+                    mapper,
                     client,
                     1,
                     WaitingTime.MODERATE.milliSeconds
-            ).status == 'succeeded'
+            )
+            responseExecId4.status == 'succeeded'
         when: "executions"
-            def startDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
             def fakeDate = "2213-05-08T01:05:19Z"
         then: "begin"
             testExecQuery ""
@@ -338,8 +343,8 @@ class ExecutionSpec extends BaseContainer {
             }
     }
 
-    void testExecQuery(String xargs = null, Integer expect = null, String project = "test-executions-query") {
-        def url = "/project/${project}/executions"
+    void testExecQuery(String xargs = null, Integer expect = null) {
+        def url = "/project/test-executions-query/executions"
         def response = doGet(xargs ? "${url}?${xargs}" : url)
         def itemCount = getClient().jsonValue(response.body(), Map).executions.size()
         verifyAll {
