@@ -22,8 +22,8 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 46
-    final finalApiVersion = 46
+    int apiVersion = 47
+    final finalApiVersion = 47
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
