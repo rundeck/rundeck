@@ -724,7 +724,7 @@ class JobExecutionSpec extends BaseContainer {
                 execId as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
         def retryId1 = execDetails.retriedExecution.id
@@ -738,7 +738,7 @@ class JobExecutionSpec extends BaseContainer {
                 retryId1 as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
         def retryId2 = execDetails2.retriedExecution.id
@@ -752,7 +752,7 @@ class JobExecutionSpec extends BaseContainer {
                 retryId2 as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
 
