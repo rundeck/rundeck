@@ -1,7 +1,6 @@
 package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
-import org.rundeck.util.api.scm.GitLocalServerRepoCreator
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
@@ -52,10 +51,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         String projectName = "${PROJECT_NAME}-P2"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
-
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest()
-        requestBody.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
 
         when:
         SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody).response
@@ -73,9 +69,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest()
-        requestBody.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
 
         expect:
         verifyAll {
@@ -101,9 +95,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest()
-        requestBody.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
 
         expect:
         scmClient.callSetupIntegration(requestBody).response.success
@@ -128,9 +120,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest()
-        requestBody.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
 
         when:
         SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false).response
@@ -147,9 +137,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest()
-        requestBody.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        requestBody.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
 
         expect:
         verifyAll {
@@ -177,9 +165,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest setupScmRequest = GitExportSetupRequest.defaultRequest()
-        setupScmRequest.config.dir = "/home/rundeck/projects/${projectName}/ScmExport"
-        setupScmRequest.config.url = "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}"
+        GitExportSetupRequest setupScmRequest = GitExportSetupRequest.defaultRequest(projectName)
 
         expect:
         scmClient.callSetupIntegration(setupScmRequest).response.success
