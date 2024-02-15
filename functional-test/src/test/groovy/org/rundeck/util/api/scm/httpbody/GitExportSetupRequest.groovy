@@ -1,8 +1,9 @@
-package org.rundeck.util.api.scm
+package org.rundeck.util.api.scm.httpbody
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.rundeck.util.api.scm.GitLocalServerRepoCreator
 
-class SetupGitIntegrationRequest {
+class GitExportSetupRequest {
     @JsonProperty
     Config config
 
@@ -45,16 +46,20 @@ class SetupGitIntegrationRequest {
         }
     }
 
-    static SetupGitIntegrationRequest defaultRequest(){
-        return new SetupGitIntegrationRequest([config: [
-                dir : "/home/rundeck/localRepoDirExmpl",
-                url :"/url/to/remoteRepoExmpl",
+    static GitExportSetupRequest defaultRequest(String forProject = 'localRepoDirExmpl', Map<String, String> configs = [:]){
+        def defaultConfig = [
+                dir : "/home/rundeck/${forProject}/ScmExport",
+                url : "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}",
                 committerName :"Git Test",
                 committerEmail :"A@test.com",
                 pathTemplate :'${job.group}${job.name}-${job.id}.${config.format}',
                 format :"xml",
                 branch :"master",
                 strictHostKeyChecking :"yes"
-        ]])
+        ]
+
+        configs.each {defaultConfig[it.key] = it.value }
+
+        return new GitExportSetupRequest([config: defaultConfig])
     }
 }
