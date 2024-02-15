@@ -133,7 +133,7 @@ class ScmPluginActionsSpec extends BaseContainer {
 
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest('projectName')).response?.success
+        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(projectName)).response?.success
 
         when:
         SetupIntegrationResponse performActionResult = scmClient.callPerformAction(actionId, actionRequest).response
