@@ -24,9 +24,6 @@ class ExecuteScriptSpec extends BaseContainer{
         setupProject()
     }
 
-    /**
-     * Runs a filesystem based script as an ad-hoc execution
-     */
     def "test-run-script-interpreter"(){
         given:
         def scriptRunOutPath = Paths.get("/tmp/interpreter-test-out.txt")
