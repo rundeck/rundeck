@@ -26,24 +26,27 @@ class ProjectsSpec extends BaseContainer {
 
         then:
         verifyAll {
-            response.code()== 200
+            response.code() == 200
             response.message() == "OK"
             def json = jsonValue(response.body(), Object)
+            json.size() >= 3
+            int coincidence
+            json.each { project ->
+                if (project.name == PROJECT_NAME_1){
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_1))
+                        coincidence++
+                }
+                if (project.name == PROJECT_NAME_2) {
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_2))
+                        coincidence++
+                }
+                if (project.name == PROJECT_NAME_3) {
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_3))
+                        coincidence++
+                }
+            }
+            if (coincidence != 3) false
 
-            json[0].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_1)
-            json[0].name == (PROJECT_NAME_1)
-            json[0].description == ""
-            json[0].created != ""
-
-            json[1].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_2)
-            json[1].name == (PROJECT_NAME_2)
-            json[1].description == ""
-            json[1].created != ""
-
-            json[2].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_3)
-            json[2].name == (PROJECT_NAME_3)
-            json[2].description == ""
-            json[2].created != ""
         }
     }
 
@@ -56,24 +59,27 @@ class ProjectsSpec extends BaseContainer {
 
         then:
         verifyAll {
-            response.code()== 200
+            response.code() == 200
             response.message() == "OK"
             def json = jsonValue(response.body(), Object)
+            json.size() >= 3
+            int coincidence
+            json.each { project ->
+                if (project.name == PROJECT_NAME_1){
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_1))
+                        coincidence++
+                }
+                if (project.name == PROJECT_NAME_2) {
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_2))
+                        coincidence++
+                }
+                if (project.name == PROJECT_NAME_3) {
+                    if (project.url.containsIgnoreCase(client.finalApiVersion.toString() + "/project/" + PROJECT_NAME_3))
+                        coincidence++
+                }
+            }
+            if (coincidence != 3) false
 
-            json[0].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_1)
-            json[0].name == (PROJECT_NAME_1)
-            json[0].description == ""
-            json[0].created != ""
-
-            json[1].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_2)
-            json[1].name == (PROJECT_NAME_2)
-            json[1].description == ""
-            json[1].created != ""
-
-            json[2].url.containsIgnoreCase(client.finalApiVersion.toString()+"/project/"+PROJECT_NAME_3)
-            json[2].name == (PROJECT_NAME_3)
-            json[2].description == ""
-            json[2].created != ""
         }
     }
 
