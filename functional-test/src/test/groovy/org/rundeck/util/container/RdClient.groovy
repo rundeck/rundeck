@@ -256,23 +256,32 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
-    Response doPostWithFormData(final String path, final Map<String, String> formData){
-        def formDataRequestBody = buildFormDataRequestBody(formData)
+    Response doPostWithFormData(
+            final String path,
+            final String fileParamName,
+            final File file
+    ){
+        def formDataRequestBody = buildFormDataRequestBody(fileParamName, file)
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", formDataRequestBody)
+                .header('Content-Type', 'multipart/form-data')
+                .header('Accept', '*/*')
                 .build()
         httpClient.newCall(request).execute()
     }
 
-    static FormBody buildFormDataRequestBody(
-            final Map<String, String> formData
+    static MultipartBody buildFormDataRequestBody(
+            final String fileParamName,
+            final File file
     ){
-        def requestBody = new FormBody.Builder()
-        formData.forEach {key, value -> {
-            requestBody.add(key, value)
-        }}
-        return requestBody.build()
+        return new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                        fileParamName,
+                        "file",
+                        RequestBody.create(MediaType.parse("application/octet-stream"), file)
+                ).build()
     }
 
     <T> T post(final String path, final Object body = null, Class<T> clazz = Map) {

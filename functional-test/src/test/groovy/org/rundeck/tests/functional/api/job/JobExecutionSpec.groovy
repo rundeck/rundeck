@@ -10,6 +10,7 @@ import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.ExecutionStatus
+import org.rundeck.util.api.FileHelpers
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
@@ -1214,7 +1215,7 @@ class JobExecutionSpec extends BaseContainer {
 
         then: "The output of the job must have basic info about the webhook"
         execOutput != null
-        assertLinesInsideEntries(webhookData, entries)
+        FileHelpers.assertLinesInsideEntries(webhookData, entries)
 
         cleanup:
         deleteProject(projectName)
@@ -1540,22 +1541,6 @@ class JobExecutionSpec extends BaseContainer {
         Arrays.equals(expectedContent.toArray(), outputContent.toArray())
     }
 
-    def readFile(final Path filePath){
-        try{
-            return Files.readAllLines(filePath)
-        }catch(Exception e){
-            e.printStackTrace()
-        }
-    }
-
-    def writeFile(String fileContent, final File file){
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write(fileContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
@@ -1567,16 +1552,6 @@ class JobExecutionSpec extends BaseContainer {
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
         return client.doPost("/projects", projectJsonMap)
-    }
-
-    def assertLinesInsideEntries(List<String> lines, List<String> entries){
-        def assertion = true
-        lines.each { el -> {
-            if( !entries.contains(el) ){
-                assertion = false
-            }
-        }}
-        return assertion
     }
 
 }
