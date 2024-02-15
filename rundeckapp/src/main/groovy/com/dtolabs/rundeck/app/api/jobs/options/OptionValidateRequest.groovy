@@ -115,7 +115,7 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         configRemoteUrl(nullable: true)
         //nb: see RemoteUrlAuthenticationType.groovy
         remoteUrlAuthenticationType(nullable: true, inList: RemoteUrlAuthenticationType.values()*.name())
-        realValuesUrl(nullable: true, blank:true)
+        realValuesUrl(nullable: true)
         valuesUrl(nullable: true, url:true, blank:true)
         value(nullable: true, blank:true)
         values(nullable: true)
