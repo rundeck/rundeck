@@ -1,6 +1,7 @@
 package rundeck.codecs
 
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import grails.testing.web.GrailsWebUnitTest
 import groovy.xml.MarkupBuilder
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -15,7 +16,7 @@ import spock.lang.Unroll
  * Created by greg on 5/17/16.
  */
 
-class JobsXMLCodecSpec extends Specification {
+class JobsXMLCodecSpec extends Specification implements GrailsWebUnitTest {
     @Unroll
     def "encode notification plugins are sorted"() {
         given:
@@ -1464,6 +1465,48 @@ inside]]></aproperty>
         'multivalued=""'         || null   || null
         'multivalued="asdfasdf"' || null   || null
         ''                       || null   || null
+
+    }
+    @Unroll
+    def "decode option multivalued delimiter"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <context>
+        <options>
+            <option name="testopt1" type="atype" multivalued="true" delimiter="$delim">
+            </option>
+        </options>
+    </context>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].options.size() == 1
+        result[0].options[0].name == 'testopt1'
+        result[0].options[0].multivalued == resval
+        result[0].options[0].delimiter == expected
+
+        where:
+        delim  || resval || expected
+        '&gt;' || true   || '>'
+        ' '    || true   || ' '
 
     }
 

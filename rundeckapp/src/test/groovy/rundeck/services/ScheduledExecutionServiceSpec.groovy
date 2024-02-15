@@ -1175,6 +1175,32 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
         NotificationConstants.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
     }
+    @Unroll
+    def "do update job invalid option valuesUrl"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newjob = new ScheduledExecution(createJobParams()).save()
+            newjob.addToOptions(new Option(
+                name:'anopt',
+                valuesUrlLong:'notaurl',
+                enforced:false
+            ))
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
+        service.jobSchedulesService = Mock(SchedulesManager)
+
+        when:
+        def results = service._doupdateJob(se.id,importedJob, mockAuth())
+
+        then:
+        _ * service.rundeckAuthContextProcessor.authorizeProjectJobAny(*_)>>true
+        !results.success
+        results.scheduledExecution.errors.hasErrors()
+        results.scheduledExecution.errors.hasFieldErrors('options')
+        results.scheduledExecution.options[0].errors.hasErrors()
+        results.scheduledExecution.options[0].errors.hasFieldErrors('valuesUrlLong')
+
+    }
     def "validate notifications email json"() {
         given:
 

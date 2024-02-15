@@ -3017,6 +3017,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             input.options?.each {Option theopt ->
                 theopt.convertValuesList()
                 Option newopt = theopt.createClone()
+                //copy errors
+                if(theopt.errors.hasErrors()){
+                    newopt.errors.addAllErrors(theopt.errors)
+                }
                 scheduledExecution.addToOptions(newopt)
                 theopt.scheduledExecution = scheduledExecution
             }
@@ -3039,6 +3043,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         origopt = Option.fromMap(origopt.name, origopt)
                     }
                     Option theopt = origopt.createClone()
+                    copy errors
+                    if(origopt.errors.hasErrors()){
+                        theopt.errors.addAllErrors(origopt.errors)
+                    }
                     scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
 
