@@ -20,7 +20,54 @@ class JobScheduledSpec extends BaseContainer {
 
     def "scheduled job run should succeed (sleep 20 sec)"(){
         setup:
-            def path = generatePath()
+            def nowDate = LocalDateTime.now(ZoneId.of("GMT"))
+            def upDate = nowDate.plusSeconds(10)
+
+            def ny = upDate.year
+            def nmo = upDate.monthValue
+            def nd = upDate.dayOfMonth
+            def nh = upDate.hour
+            def nm = upDate.minute
+            def ns = upDate.second
+
+            def xml = """
+                <joblist>
+                   <job>
+                      <name>scheduled job</name>
+                      <group>api-test/job-run-scheduled</group>
+                      <uuid>api-test-job-run-scheduled</uuid>
+                      <description></description>
+                      <loglevel>INFO</loglevel>
+                      <context>
+                          <project>${PROJECT_NAME}</project>
+                      </context>
+                      <dispatch>
+                        <threadcount>1</threadcount>
+                        <keepgoing>true</keepgoing>
+                      </dispatch>
+                      <schedule>
+                        <time hour='P_NH' seconds='P_NS' minute='P_NM' />
+                        <month month='P_NMO'  day='P_ND' />
+                        <year year='P_NY' />
+                      </schedule>
+                      <timeZone>GMT</timeZone>
+                      <sequence>
+                        <command>
+                        <exec>echo hello there</exec>
+                        </command>
+                      </sequence>
+                   </job>
+                </joblist>
+            """
+            xml = xml
+                .replaceAll('P_NY', ny.toString())
+                .replaceAll('P_NMO', String.format('%02d', nmo))
+                .replaceAll('P_ND', String.format('%02d', nd))
+                .replaceAll('P_NH', String.format('%02d', nh))
+                .replaceAll('P_NM', String.format('%02d', nm))
+                .replaceAll('P_NS', String.format('%02d', ns))
+
+            def path = JobUtils.generateFileToImport(xml, 'xml')
             def jobId = jobImportFile(path).succeeded[0].id
         when:
             def response = doGet("/job/${jobId}/executions?status=succeeded")
@@ -46,7 +93,27 @@ class JobScheduledSpec extends BaseContainer {
 
     def "job/id/run should succeed"() {
         setup:
-            def path = generatePath1()
+            def xml = """
+                <joblist>
+                   <job>
+                      <name>cli job</name>
+                      <group>api-test/job-run-timeout</group>
+                      <description></description>
+                      <loglevel>INFO</loglevel>
+                      <timeout>3s</timeout>
+                      <dispatch>
+                        <threadcount>1</threadcount>
+                        <keepgoing>true</keepgoing>
+                      </dispatch>
+                      <sequence>
+                        <command>
+                        <exec>echo hello there ; sleep 30</exec>
+                        </command>
+                      </sequence>
+                   </job>
+                </joblist>
+            """
+            def path = JobUtils.generateFileToImport(xml, 'xml')
             def jobId = jobImportFile(path).succeeded[0].id
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
@@ -67,7 +134,28 @@ class JobScheduledSpec extends BaseContainer {
 
     def "job/id/run should succeed with retry"() {
         setup:
-            def path = generatePath2()
+            def xml = """
+                    <joblist>
+                       <job>
+                          <name>cli job</name>
+                          <group>api-test/job-run-timeout-retry</group>
+                          <description></description>
+                          <loglevel>INFO</loglevel>
+                          <timeout>3s</timeout>
+                          <retry>1</retry>
+                          <dispatch>
+                            <threadcount>1</threadcount>
+                            <keepgoing>true</keepgoing>
+                          </dispatch>
+                          <sequence>
+                            <command>
+                            <exec>echo hello there ; sleep 30</exec>
+                            </command>
+                          </sequence>
+                       </job>
+                    </joblist>
+                """
+            def path = JobUtils.generateFileToImport(xml, 'xml')
             def jobId = jobImportFile(path).succeeded[0].id
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
@@ -99,116 +187,5 @@ class JobScheduledSpec extends BaseContainer {
                 responseExec1.status == 'timedout'
                 response.retriedExecution != null
             }
-    }
-
-    def generatePath() {
-        def xmlJob = "<joblist>\n" +
-                "   <job>\n" +
-                "      <name>scheduled job</name>\n" +
-                "      <group>api-test/job-run-scheduled</group>\n" +
-                "      <uuid>api-test-job-run-scheduled</uuid>\n" +
-                "      <description></description>\n" +
-                "      <loglevel>INFO</loglevel>\n" +
-                "      <context>\n" +
-                "          <project>xml-project-name</project>\n" +
-                "      </context>\n" +
-                "      <dispatch>\n" +
-                "        <threadcount>1</threadcount>\n" +
-                "        <keepgoing>true</keepgoing>\n" +
-                "      </dispatch>\n" +
-                "      <schedule>\n" +
-                "        <time hour='P_NH' seconds='P_NS' minute='P_NM' />\n" +
-                "        <month month='P_NMO'  day='P_ND' />\n" +
-                "        <year year='P_NY' />\n" +
-                "      </schedule>\n" +
-                "      <timeZone>GMT</timeZone>\n" +
-                "\n" +
-                "      <sequence>\n" +
-                "        <command>\n" +
-                "        <exec>xml-args</exec>\n" +
-                "        </command>\n" +
-                "      </sequence>\n" +
-                "   </job>\n" +
-                "</joblist>"
-
-        def nowDate = LocalDateTime.now(ZoneId.of("GMT"))
-        def upDate = nowDate.plusSeconds(10)
-
-        def ny = upDate.year
-        def nmo = upDate.monthValue
-        def nd = upDate.dayOfMonth
-        def nh = upDate.hour
-        def nm = upDate.minute
-        def ns = upDate.second
-
-        def xmlJobAux = xmlJob.replaceAll('xml-args', 'echo hello there')
-                .replaceAll('xml-project-name', PROJECT_NAME)
-                .replaceAll('P_NY', ny.toString())
-                .replaceAll('P_NMO', String.format('%02d', nmo))
-                .replaceAll('P_ND', String.format('%02d', nd))
-                .replaceAll('P_NH', String.format('%02d', nh))
-                .replaceAll('P_NM', String.format('%02d', nm))
-                .replaceAll('P_NS', String.format('%02d', ns))
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlJobAux
-        tempFile.deleteOnExit()
-        tempFile.path
-    }
-
-    def generatePath1() {
-        def xmlJob = "<joblist>\n" +
-                "   <job>\n" +
-                "      <name>cli job</name>\n" +
-                "      <group>api-test/job-run-timeout</group>\n" +
-                "      <description></description>\n" +
-                "      <loglevel>INFO</loglevel>\n" +
-                "      <timeout>3s</timeout>\n" +
-                "      <dispatch>\n" +
-                "        <threadcount>1</threadcount>\n" +
-                "        <keepgoing>true</keepgoing>\n" +
-                "      </dispatch>\n" +
-                "      <sequence>\n" +
-                "        <command>\n" +
-                "        <exec>xml-args</exec>\n" +
-                "        </command>\n" +
-                "      </sequence>\n" +
-                "   </job>\n" +
-                "</joblist>"
-
-        def xmlJobAux = xmlJob.replaceAll('xml-args', 'echo hello there ; sleep 30')
-
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlJobAux
-        tempFile.deleteOnExit()
-        tempFile.path
-    }
-
-    def generatePath2() {
-        def xmlJob = "<joblist>\n" +
-                "   <job>\n" +
-                "      <name>cli job</name>\n" +
-                "      <group>api-test/job-run-timeout-retry</group>\n" +
-                "      <description></description>\n" +
-                "      <loglevel>INFO</loglevel>\n" +
-                "      <timeout>3s</timeout>\n" +
-                "      <retry>1</retry>\n" +
-                "      <dispatch>\n" +
-                "        <threadcount>1</threadcount>\n" +
-                "        <keepgoing>true</keepgoing>\n" +
-                "      </dispatch>\n" +
-                "      <sequence>\n" +
-                "        <command>\n" +
-                "        <exec>xml-args</exec>\n" +
-                "        </command>\n" +
-                "      </sequence>\n" +
-                "   </job>\n" +
-                "</joblist>"
-
-        def xmlJobAux = xmlJob.replaceAll('xml-args', 'echo hello there ; sleep 30')
-
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlJobAux
-        tempFile.deleteOnExit()
-        tempFile.path
     }
 }
