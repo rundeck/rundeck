@@ -3022,7 +3022,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     newopt.errors.addAllErrors(theopt.errors)
                 }
                 scheduledExecution.addToOptions(newopt)
-                theopt.scheduledExecution = scheduledExecution
+                newopt.scheduledExecution = scheduledExecution
+            }
+        } else if(params.jobOptionsJson){
+            deleteExistingOptions(scheduledExecution)
+            def optsData = JSON.parse(params.jobOptionsJson.toString())
+            if(optsData instanceof JSONArray){
+                for(Object item: optsData){
+                    if(item instanceof JSONObject){
+                        def theopt=Option.fromMap(item.name, item)
+                        theopt.convertValuesList()
+                        scheduledExecution.addToOptions(theopt)
+                        theopt.scheduledExecution = scheduledExecution
+                    }
+                }
             }
         }else if (params['_sessionopts'] && null != params['_sessionEditOPTSObject']) {
             deleteExistingOptions(scheduledExecution)
