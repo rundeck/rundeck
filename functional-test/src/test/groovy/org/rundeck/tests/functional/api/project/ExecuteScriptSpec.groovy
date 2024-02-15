@@ -187,4 +187,64 @@ class ExecuteScriptSpec extends BaseContainer{
 
     }
 
+    def "test-run-script"(){
+        given:
+        def projectName = PROJECT_NAME
+        def mapper = new ObjectMapper()
+        def client = getClient()
+
+        def scriptFilenameEmpty = "/tmp/test-empty.sh"
+        def scriptFilename = "/tmp/test-run-script.sh"
+        def scriptToFile = new File(scriptFilename)
+
+        def testScript = "#!/bin/bash\n echo sandwich"
+
+        when: "We write the scripts in the filesystem and give permissions"
+        FileHelpers.writeFile(testScript, scriptToFile)
+        def emptyFile = new File(scriptFilenameEmpty)
+        emptyFile.createNewFile()
+        scriptToFile.setExecutable(true)
+
+        then: "the script is created"
+        Files.exists(Paths.get(scriptFilename))
+        emptyFile
+
+        when: "We run a script with scriptInterpreter and argsQuoted"
+        def scriptRunResponse = client.doPostWithoutBody("/project/$projectName/run/script")
+        Object noParamsResponse = mapper.readValue(scriptRunResponse.body().string(), Object.class)
+
+        then: "Job fails not having params"
+        !scriptRunResponse.successful
+        noParamsResponse.errorCode == "api.error.parameter.required"
+        noParamsResponse.error
+        noParamsResponse.message == "parameter \"scriptFile\" is required"
+
+        when: "We run a script without content"
+        def emptyScriptRunResponse = client.doPostWithFormData(
+                "/project/$projectName/run/script",
+                "scriptFile",
+                emptyFile
+        )
+        Object emptyScriptRunErrors = mapper.readValue(emptyScriptRunResponse.body().string(), Object.class)
+
+        then: "Api will fail with error"
+        !emptyScriptRunResponse.successful
+        emptyScriptRunErrors.errorCode == "api.error.run-script.upload.is-empty"
+        emptyScriptRunErrors.error
+        emptyScriptRunErrors.message == "Input script file was empty"
+
+        when: "We run a script all ok, execution id returned"
+        def validScriptRunResponse = client.doPostWithFormData(
+                "/project/$projectName/run/script",
+                "scriptFile",
+                scriptToFile
+        )
+        assert validScriptRunResponse.successful
+        RunCommand validRunScript = mapper.readValue(validScriptRunResponse.body().string(), RunCommand.class)
+        def runScriptId = validRunScript.execution.id
+
+        then:
+        runScriptId > 0
+    }
+
 }
