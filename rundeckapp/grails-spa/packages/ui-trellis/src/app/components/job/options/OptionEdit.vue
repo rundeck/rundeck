@@ -197,6 +197,9 @@
               />
             </span>
           </div>
+          <div class="help-block" v-if="validationErrors['defaultStoragePath']">
+            <ErrorsList :errors="validationErrors['defaultStoragePath']" />
+          </div>
         </div>
       </div>
 
