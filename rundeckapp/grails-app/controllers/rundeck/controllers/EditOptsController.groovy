@@ -579,7 +579,7 @@ class EditOptsController extends ControllerBase{
     static final Map<String, String> FieldTranslations = [
         valuesList   : 'values',
         defaultValue : 'value',
-        realValuesUrl: 'valuesUrl',
+        valuesUrlLong: 'valuesUrl',
         secureInput  : 'secure',
         secureExposed: 'valueExposed',
     ]
@@ -844,7 +844,7 @@ class EditOptsController extends ControllerBase{
         }
         if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl && !opt.optionValuesPluginType)) {
             if (valuesType == 'url') {
-                validator.rejectValue('realValuesUrl', 'option.enforced.emptyvalues.message')
+                validator.rejectValue('valuesUrlLong', 'option.enforced.emptyvalues.message')
             } else {
                 validator.rejectValue('valuesList', 'option.enforced.emptyvalues.message')
             }
