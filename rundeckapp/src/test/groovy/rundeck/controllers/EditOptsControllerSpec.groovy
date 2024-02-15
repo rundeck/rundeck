@@ -856,6 +856,26 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             'name'                        | null      | 'null'
             'name'                        | 'a b'     | 'required pattern [[a-zA-Z_0-9.-]+]'
             'remoteUrlAuthenticationType' | 'asdf'    | 'not contained within the list [[BASIC, API_KEY, BEARER_TOKEN]]'
+            'defaultStoragePath'          | 'asdf'    | 'does not match the required pattern'
+    }
+    def "api option validate #propname translated keys"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest([name:'a']+data)
+            request.method = 'POST'
+
+        when:
+            controller.apiValidateOption(project, false, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey(propname)
+            response.json.messages.get(propname).any{it.contains(message)}
+        where:
+            data                                            | propname    | message
+            [value: 'bad', regex: '^good$']                 | 'value'     | 'Default value does not match regex'
+            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'    | 'Value does not match regex: bad'
+            [valuesUrl: 'notaurl']                          | 'valuesUrl' | 'is not a valid URL'
     }
 
     def "validate option "(){
@@ -868,5 +888,43 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             controller._validateOption(opt, validator,  null, 'text', false)
         then:
             resp.valid
+    }
+    def "validate option values default enforced "(){
+        given:
+            def opt = new OptionValidateRequest()
+            opt.values=new TreeSet(['a','b'])
+            opt.enforced=true
+            opt.value='a value'
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages['defaultValue']==['option.defaultValue.notallowed.message']
+    }
+    def "validate option values regex match "(){
+        given:
+            def opt = new OptionValidateRequest()
+            opt.values=new TreeSet(['a','b'])
+            opt.enforced=true
+            opt.regex='^[b-d]$'
+            def resp = new OptionValidateResponse(valid:true)
+            def msgSource = Mock(MessageSource){
+                _*getMessage(*_)>>{
+                    return it[0]
+                }
+            }
+            def validator= new EditOptsController.OptionInputValidator(resp,msgSource,null)
+        when:
+            controller._validateOption(opt, validator,  null, 'text', false)
+        then:
+            !resp.valid
+            resp.messages['valuesList']==['option.values.regexmismatch.message']
     }
 }
