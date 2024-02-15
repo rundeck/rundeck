@@ -30,6 +30,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
+import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
@@ -55,6 +56,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.fileUploadService = Mock(FileUploadService)
+        controller.apiService = Mock(ApiService)
         defineBeans {
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
@@ -850,6 +852,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             response.json.valid==false
             response.json.messages.containsKey(propname)
             response.json.messages.get(propname).any{it.contains(message)}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
         where:
             propname                      | testvalue | message
             'name'                        | ''        | 'blank'
@@ -871,6 +874,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             response.json.valid==false
             response.json.messages.containsKey(propname)
             response.json.messages.get(propname).any{it.contains(message)}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
         where:
             data                                            | propname    | message
             [value: 'bad', regex: '^good$']                 | 'value'     | 'Default value does not match regex'

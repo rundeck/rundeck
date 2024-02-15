@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateRequest
 import com.dtolabs.rundeck.app.api.jobs.options.OptionValidateResponse
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -557,7 +558,9 @@ class EditOptsController extends ControllerBase{
         ) boolean jobWasScheduled,
         OptionValidateRequest optionData
     ) {
-        //TODO authz checks
+        if (!apiService.requireApi(request, response, ApiVersions.V47)) {
+            return
+        }
         def validate = new OptionValidateResponse(valid:true)
         def validator = new OptionInputValidator(validate, messageSource, response.locale)
         optionData.validate()
