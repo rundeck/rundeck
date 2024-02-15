@@ -861,6 +861,24 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             'remoteUrlAuthenticationType' | 'asdf'    | 'not contained within the list [[BASIC, API_KEY, BEARER_TOKEN]]'
             'defaultStoragePath'          | 'asdf'    | 'does not match the required pattern'
     }
+    def "api option validate #propname scheduled required file validation"() {
+        given:
+            String project = 'proj1'
+            def optionData = new OptionValidateRequest()
+            optionData.name='test'
+            optionData.optionType='file'
+            optionData.required = true
+            request.method = 'POST'
+
+        when:
+            controller.apiValidateOption(project, true, optionData)
+        then:
+            response.status == 400
+            response.json.valid==false
+            response.json.messages.containsKey('required')
+            response.json.messages.get('required').any{it.contains('option.file.required.message')}
+            1 * controller.apiService.requireApi(_, _, 47) >> true
+    }
     def "api option validate #propname translated keys"() {
         given:
             String project = 'proj1'
