@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import org.springframework.validation.Errors
 import rundeck.data.validation.shared.SharedJobOptionConstraints
 
 @GrailsCompileStatic
@@ -116,7 +117,17 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         //nb: see RemoteUrlAuthenticationType.groovy
         remoteUrlAuthenticationType(nullable: true, inList: RemoteUrlAuthenticationType.values()*.name())
         realValuesUrl(nullable: true)
-        valuesUrl(nullable: true, url:true, blank:true)
+        valuesUrl(nullable: true, blank:true, validator: { String val, OptionValidateRequest obj, Errors errors ->
+            if(val){
+                try {
+                    def url = new URL(val)
+                } catch (MalformedURLException e) {
+                    errors.rejectValue('valuesUrl', 'option.valuesUrl.invalid.message')
+                    return false
+                }
+            }
+            return true
+        })
         value(nullable: true, blank:true)
         values(nullable: true)
         secure(nullable: true)

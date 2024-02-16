@@ -79,7 +79,7 @@ class JobOptionValidationSpec extends BaseContainer {
             }
         where:
           sched | extra                                        | fieldName                      | message
-          false | [valuesUrl: 'notaurl']                       | 'valuesUrl'                    | 'not a valid URL'
+          false | [valuesUrl: 'notaurl']                       | 'valuesUrl'                    | 'Not a valid URL'
           false | [name: 'in valid']                           | 'name'                         | 'does not match the required pattern'
           false | [remoteUrlAuthenticationType: 'in valid']    | 'remoteUrlAuthenticationType'  | 'must be in the list'
           false | [defaultStoragePath: 'in valid']             | 'defaultStoragePath'           | 'Default key storage path must start with: keys/: in valid'
