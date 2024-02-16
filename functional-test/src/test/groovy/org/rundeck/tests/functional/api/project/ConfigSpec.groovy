@@ -522,7 +522,6 @@ class ConfigSpec extends BaseContainer{
     def "test-resource"(){
         given:
         def client = getClient()
-        client.apiVersion = 46
         def mapper = new ObjectMapper()
         def testResourceNode = "test-node"
         def projectName = "test-resource" // delete me
@@ -587,7 +586,6 @@ class ConfigSpec extends BaseContainer{
     def "test-resources"(){
         given:
         def client = getClient()
-        client.apiVersion = 46
         def mapper = new ObjectMapper()
         def projectName = "test-resources" // delete me
         def projectMapJson = [
@@ -692,7 +690,6 @@ class ConfigSpec extends BaseContainer{
     def "test-v23-project-source-resources"(){
         given:
         def client = getClient()
-        client.apiVersion = 46
         def mapper = new ObjectMapper()
         def projectName = "test-project-resources" // delete me
         def resourceFile1 = "/home/rundeck/test-resources1.xml"
@@ -785,6 +782,32 @@ class ConfigSpec extends BaseContainer{
         parsedNewAttribResponse["mynode1"].attr1 == "testvalue"
         parsedNewAttribResponse["mynode1"].tags == "api, test"
 
+    }
+
+    def "test-v23-project-sources-json"(){
+        given:
+        def projectName = "test-project-sources-json"
+        def client = getClient()
+        def mapper = new ObjectMapper()
+        Object projectJsonMap = [
+                "name": projectName
+        ]
+
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        when: "We request source 1"
+        def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
+        assert allSourcesResponse.successful
+        def allSourcesResponseString = allSourcesResponse.body().string()
+        List<ProjectSource> sources = mapper.readValue(allSourcesResponseString, ArrayList<ProjectSource>.class)
+
+        then: "The source will be in json format and will have properties"
+        !isYamlValid(allSourcesResponseString)
+        sources.size() == 1
+        sources != null
+        sources[0].index > 0
+        sources[0].resources != null
     }
 
     def createSampleProject = (Object projectJsonMap) -> {
