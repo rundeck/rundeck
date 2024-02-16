@@ -8,6 +8,11 @@ import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.Node
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
+<<<<<<< HEAD
+=======
+import org.rundeck.tests.functional.api.ResponseModels.ProjectSource
+import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
+>>>>>>> b915d56465 (test-v23-project-source-resources.sh)
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
@@ -228,7 +233,7 @@ class ConfigSpec extends BaseContainer{
         deleteProject(projectName)
     }
 
-    def "test-project-create.sh"(){
+    def "test-project-create"(){
         given:
         def client = getClient()
         def projectName = "testProjectCreateConflict"
@@ -682,6 +687,108 @@ class ConfigSpec extends BaseContainer{
         cleanup:
         deleteProject(projectName)
 
+    }
+
+    def "test-v23-project-source-resources"(){
+        given:
+        def client = getClient()
+        client.apiVersion = 46
+        def mapper = new ObjectMapper()
+        def projectName = "test-project-resources" // delete me
+        def resourceFile1 = "/home/rundeck/test-resources1.xml"
+        def resourceFile2 = "/home/rundeck/test-resources2.xml"
+        Object projectJsonMap = [
+                "name": projectName,
+                "config": [
+                    "resources.source.1.config.file":resourceFile1,
+                    "resources.source.1.config.format":"resourcexml",
+                    "resources.source.1.config.generateFileAutomatically":"false",
+                    "resources.source.1.config.includeServerNode":"false",
+                    "resources.source.1.config.requireFileExists":"false",
+                    "resources.source.1.config.writeable":"true",
+                    "resources.source.1.type":"file",
+                    "resources.source.2.config.file":resourceFile2,
+                    "resources.source.2.config.format":"resourcexml",
+                    "resources.source.2.config.generateFileAutomatically":"true",
+                    "resources.source.2.config.includeServerNode":"true",
+                    "resources.source.2.config.requireFileExists":"false",
+                    "resources.source.2.config.writeable":"false",
+                    "resources.source.2.type":"file"
+                ]
+        ]
+
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        //Extract local nodename
+        def systemInfoResponse = doGet("/system/info")
+        SystemInfo systemInfo = mapper.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        def localNode = systemInfo.system?.rundeck?.node
+
+        when: "we request all sources"
+        def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
+        assert allSourcesResponse.successful
+        List<ProjectSource> sources = mapper.readValue(allSourcesResponse.body().string(), ArrayList<ProjectSource>.class)
+
+        then: "We can check them"
+        sources.size() == 2
+        sources[0].resources.writeable
+        !sources[0].resources.empty
+        !sources[1].resources.writeable
+
+        // and
+
+        when: "We request the first, only one will return"
+        def firstSourceResponse = client.doGetAcceptAll("/project/$projectName/source/1/resources")
+        assert firstSourceResponse.successful
+        Node source1 = mapper.readValue(firstSourceResponse.body().string(), Node.class)
+
+        then: "We can check it"
+        source1 != null
+        !source1.tags
+        !source1.hostname
+
+        // so
+
+        when: "We request the second, only one will return"
+        def secondSourceResponse = client.doGetAcceptAll("/project/$projectName/source/2/resources")
+        assert secondSourceResponse.successful
+        def secondSourceResponseString = secondSourceResponse.body().string()
+        def parsedNodes = mapper.readValue(secondSourceResponseString, Map<String, Map>.class)
+        def nodes = parsedNodes.collectEntries { nodeId, nodeData -> [nodeId, mapper.convertValue(nodeData, Node)] }
+        def localNodeProps = nodes[localNode]
+
+        then: "We can check the attributes"
+        localNodeProps.nodename != null
+        localNodeProps.hostname != null
+        localNodeProps.osFamily != null
+
+        when: "We update the existing resource"
+        Object newAttributes = [
+                "mynode1":[
+                        "nodename":"mynode1",
+                        "hostname":"mynode1",
+                        "attr1":"testvalue",
+                        "tags":"api, test"
+                ]
+        ]
+        def nodeUpdatedResponse = client.doPost("/project/$projectName/source/1/resources", newAttributes)
+        assert nodeUpdatedResponse.successful
+
+        def nodeUpdatedResponseString = nodeUpdatedResponse.body().string()
+        def parsedNewAttribResponse = mapper.readValue(nodeUpdatedResponseString, LinkedHashMap.class)
+
+        then:
+        parsedNewAttribResponse != null
+        parsedNewAttribResponse["mynode1"].nodename == "mynode1"
+        parsedNewAttribResponse["mynode1"].hostname == "mynode1"
+        parsedNewAttribResponse["mynode1"].attr1 == "testvalue"
+        parsedNewAttribResponse["mynode1"].tags == "api, test"
+
+    }
+
+    def createSampleProject = (Object projectJsonMap) -> {
+        return client.doPost("/projects", projectJsonMap)
     }
 
     boolean isYamlValid(String yamlString) {
