@@ -41,7 +41,6 @@ class RdClient {
         )
     }
 
-
     Response doGet(final String path) {
         httpClient.newCall(
                 new Request.Builder().
@@ -82,10 +81,6 @@ class RdClient {
         ).execute()
     }
 
-    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
-        baseUrl + "/api/${customApiVersion}" + path
-    }
-
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
@@ -114,6 +109,10 @@ class RdClient {
 
     private String apiUrl(String path) {
         baseUrl + "/api/${apiVersion}" + path
+    }
+
+    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
+        baseUrl + "/api/${customApiVersion}" + path
     }
 
     <T> T get(final String path, Class<T> clazz) {
