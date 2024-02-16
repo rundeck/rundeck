@@ -87,5 +87,4 @@ class BasicSpec extends BaseContainer {
         multipleZeroesResponseResponse.errorCode == "api.error.api-version.unsupported"
 
     }
-
 }
