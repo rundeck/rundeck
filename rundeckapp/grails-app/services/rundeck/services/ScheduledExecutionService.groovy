@@ -3056,7 +3056,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         origopt = Option.fromMap(origopt.name, origopt)
                     }
                     Option theopt = origopt.createClone()
-                    copy errors
+                    // copy errors
                     if(origopt.errors.hasErrors()){
                         theopt.errors.addAllErrors(origopt.errors)
                     }
