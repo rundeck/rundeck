@@ -1,0 +1,20 @@
+<joblist>
+    <job>
+        <name>cli job</name>
+        <group>api-test</group>
+        <description></description>
+        <loglevel>INFO</loglevel>
+        <context>
+            <project>test</project>
+        </context>
+        <dispatch>
+            <threadcount>1</threadcount>
+            <keepgoing>true</keepgoing>
+        </dispatch>
+        <sequence>
+            <command>
+                <exec>echo hello there</exec>
+            </command>
+        </sequence>
+    </job>
+</joblist>

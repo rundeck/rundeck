@@ -58,6 +58,10 @@ abstract class BasePage {
 
     }
 
+    void refresh() {
+        driver.navigate().refresh()
+    }
+
     WebElement waitForElementVisible(WebElement locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.visibilityOf(locator))
