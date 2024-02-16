@@ -5,8 +5,6 @@ import {envOpts} from '../test/rundeck'
 import { CreateTestContext } from '../test/api'
 
 const skipTests = [
-    'test-job-run-webhook.sh', // Requires NC running
-
     'test-execution-cleaner-job.sh', // Does not handle `null` for execution server UUID in a cluster
     'test-execution-output-plain-lastlines.sh',
     'test-execution-output-plain.sh',

@@ -1,8 +1,8 @@
 package org.rundeck.tests.functional.api.project
 
 import org.rundeck.tests.functional.api.ResponseModels.ConfigProperty
-import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
+
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper

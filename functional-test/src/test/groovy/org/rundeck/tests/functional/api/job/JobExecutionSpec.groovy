@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
 import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
+import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.ExecutionStatus
@@ -14,6 +15,8 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 
 @APITest
 @Stepwise
@@ -1112,6 +1115,327 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
+    def "test-job-run-webhook"(){
+        given:
+        // entry.sh config
+        def NC_HOST = "localhost"
+        def NC_PORT = 9001
+        def NC_OUTPUT_FILEPATH = "/tmp/netcat-out.txt"
+
+        def projectName = PROJECT_NAME
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+        def xmlJob = (String ncHost, int ncPort, String xmlargs) ->
+                "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>webhook job</name>\n" +
+                "      <group>api-test/job-run-webhook</group>\n" +
+                "      <description></description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <context>\n" +
+                "          <project>$PROJECT_NAME</project>\n" +
+                "          <options>\n" +
+                "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                "          </options>\n" +
+                "      </context>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "\n" +
+                "      <notification>\n" +
+                "        <onsuccess>\n" +
+                "        <webhook urls=\"http://$ncHost:$ncPort/test?id=\${execution.id}&amp;status=\${execution.status}\"/>\n" +
+                "        </onsuccess>\n" +
+                "      </notification>\n" +
+                "\n" +
+                "      <sequence>\n" +
+                "        <command>\n" +
+                "        <exec>$xmlargs</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
+
+        def jobArgs = "echo asd"
+        def testXml = xmlJob(NC_HOST, NC_PORT, jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+
+        when: "We run the job with the notification"
+        def optionA = 'a'
+        Object optionsToMap = [
+                "options": [
+                        opt2: optionA
+                ]
+        ]
+        def jobRun = JobUtils.executeJobWithOptions(jobId, client, optionsToMap)
+        assert jobRun.successful
+        Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
+
+        then: "The status will be succeded"
+        def exec = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                parsedExecutionsResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        exec.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "And if we wait 15 seconds for netcat to deliver response"
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 3) // 15 seconds (as the entry.sh config states)
+
+        // We can run a job to read the notification's request
+        def readJobXml = "<joblist>\n" +
+                "  <job>\n" +
+                "    <context>\n" +
+                "      <options preserveOrder='true'>\n" +
+                "        <option name='nc_output_filepath' value='$NC_OUTPUT_FILEPATH' />\n" +
+                "      </options>\n" +
+                "    </context>\n" +
+                "    <defaultTab>nodes</defaultTab>\n" +
+                "    <description></description>\n" +
+                "    <executionEnabled>true</executionEnabled>\n" +
+                "    <id>ccda2e41-277a-4c62-ba01-8f930663561e</id>\n" +
+                "    <loglevel>INFO</loglevel>\n" +
+                "    <name>read-nc-output</name>\n" +
+                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                "    <plugins />\n" +
+                "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                "    <schedules />\n" +
+                "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                "      <command>\n" +
+                "        <script><![CDATA[cat @option.nc_output_filepath@]]></script>\n" +
+                "        <scriptargs />\n" +
+                "      </command>\n" +
+                "    </sequence>\n" +
+                "    <uuid>ccda2e41-277a-4c62-ba01-8f930663561e</uuid>\n" +
+                "  </job>\n" +
+                "</joblist>"
+
+        def readJobCreated = JobUtils.createJob(projectName, readJobXml, client)
+        assert created.successful
+        CreateJobResponse readJobCreatedResponse = mapper.readValue(
+                readJobCreated.body().string(),
+                CreateJobResponse.class
+        )
+        def readJobId = readJobCreatedResponse.succeeded[0]?.id
+        def readJobRun = JobUtils.executeJob(readJobId, client)
+        assert readJobRun.successful
+        Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
+        def readJobSucceeded = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readJobRunResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+        assert readJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
+        def execOutputResponse = client.doGetAcceptAll("/execution/$readJobRunResponse.id/output")
+        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+
+        def webhookData = [
+            "POST /test?id=$parsedExecutionsResponse.id&status=succeeded HTTP/1.1".toString(),
+            "X-RunDeck-Notification-Execution-Status: succeeded",
+            "X-RunDeck-Notification-Execution-ID: $parsedExecutionsResponse.id".toString(),
+            "X-RunDeck-Notification-Trigger: success",
+            "Content-Type: text/xml; charset=UTF-8",
+            "Host: $NC_HOST:$NC_PORT".toString(),
+            "<notification trigger='success' status='succeeded' executionId='$parsedExecutionsResponse.id'>".toString(),
+        ]
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "The output of the job must have basic info about the webhook"
+        execOutput != null
+        assertLinesInsideEntries(webhookData, entries)
+
+    }
+
+    def "test-job-run-without-deadlock"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "  <job>\n" +
+                    "    <context>\n" +
+                    "      <options preserveOrder='true'>\n" +
+                    "        <option name='maxWaitTimeSecs' value='0' />\n" +
+                    "      </options>\n" +
+                    "    </context>\n" +
+                    "    <defaultTab>summary</defaultTab>\n" +
+                    "    <description></description>\n" +
+                    "    <executionEnabled>true</executionEnabled>\n" +
+                    "    <id>3cce5f70-71aa-4e6c-b99e-9e866732448a</id>\n" +
+                    "    <loglevel>INFO</loglevel>\n" +
+                    "    <multipleExecutions>true</multipleExecutions>\n" +
+                    "    <name>job_c</name>\n" +
+                    "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                    "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                    "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                    "      <command>\n" +
+                    "        <script><![CDATA[sleep @option.maxWaitTimeSecs@]]></script>\n" +
+                    "        <scriptargs />\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <exec>echo \"regular job before parallel\"</exec>\n" +
+                    "      </command>\n" +
+                    "    </sequence>\n" +
+                    "    <uuid>3cce5f70-71aa-4e6c-b99e-9e866732448a</uuid>\n" +
+                    "  </job>\n" +
+                    "  <job>\n" +
+                    "    <defaultTab>summary</defaultTab>\n" +
+                    "    <description></description>\n" +
+                    "    <executionEnabled>true</executionEnabled>\n" +
+                    "    <id>7d6d0958-7987-4a35-9ec3-7720f0985ae4</id>\n" +
+                    "    <loglevel>INFO</loglevel>\n" +
+                    "    <multipleExecutions>true</multipleExecutions>\n" +
+                    "    <name>job_d</name>\n" +
+                    "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                    "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                    "    <sequence keepgoing='false' strategy='parallel'>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='job_c' nodeStep='true'>\n" +
+                    "          <arg line='-maxWaitTimeSecs 20 -oldmaxWaitTimeSecs 2100' />\n" +
+                    "        </jobref>\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='job_c' nodeStep='true'>\n" +
+                    "          <arg line='-maxWaitTimeSecs 60 -oldmaxWaitTimeSecs 2400' />\n" +
+                    "        </jobref>\n" +
+                    "      </command>\n" +
+                    "    </sequence>\n" +
+                    "    <uuid>7d6d0958-7987-4a35-9ec3-7720f0985ae4</uuid>\n" +
+                    "  </job>\n" +
+                    "  <job>\n" +
+                    "    <defaultTab>summary</defaultTab>\n" +
+                    "    <description></description>\n" +
+                    "    <executionEnabled>true</executionEnabled>\n" +
+                    "    <id>165ef9b9-61dc-470c-91aa-3f6dc248249d</id>\n" +
+                    "    <loglevel>INFO</loglevel>\n" +
+                    "    <multipleExecutions>true</multipleExecutions>\n" +
+                    "    <name>job_b</name>\n" +
+                    "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                    "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                    "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='job_c' nodeStep='true' />\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='job_d' nodeStep='true' />\n" +
+                    "      </command>\n" +
+                    "    </sequence>\n" +
+                    "    <uuid>165ef9b9-61dc-470c-91aa-3f6dc248249d</uuid>\n" +
+                    "  </job>\n" +
+                    "  <job>\n" +
+                    "    <defaultTab>summary</defaultTab>\n" +
+                    "    <description></description>\n" +
+                    "    <executionEnabled>true</executionEnabled>\n" +
+                    "    <id>06ba3dce-ba4f-4964-8ac2-349c3a2267bd</id>\n" +
+                    "    <loglevel>INFO</loglevel>\n" +
+                    "    <multipleExecutions>true</multipleExecutions>\n" +
+                    "    <name>job_a</name>\n" +
+                    "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
+                    "    <scheduleEnabled>true</scheduleEnabled>\n" +
+                    "    <sequence keepgoing='false' strategy='node-first'>\n" +
+                    "      <command>\n" +
+                    "        <exec>echo \"start job_a\"</exec>\n" +
+                    "      </command>\n" +
+                    "      <command>\n" +
+                    "        <jobref name='job_b' nodeStep='true' />\n" +
+                    "      </command>\n" +
+                    "    </sequence>\n" +
+                    "    <uuid>06ba3dce-ba4f-4964-8ac2-349c3a2267bd</uuid>\n" +
+                    "  </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse.succeeded[0]?.id
+        def firstJobId = "06ba3dce-ba4f-4964-8ac2-349c3a2267bd"
+
+        when: "TEST: POST job/id/run should succeed"
+        def optionA = 'a'
+        Object optionsToMap = [
+                "options": [
+                        opt2: optionA
+                ]
+        ]
+        def exec1 = JobUtils.executeJobWithOptions(
+                firstJobId,
+                client,
+                optionsToMap
+        )
+        def exec2 = JobUtils.executeJobWithOptions(
+                firstJobId,
+                client,
+                optionsToMap
+        )
+        def exec3 = JobUtils.executeJobWithOptions(
+                firstJobId,
+                client,
+                optionsToMap
+        )
+
+        Execution execRes1 = mapper.readValue(exec1.body().string(), Execution.class)
+        String execId1 = execRes1.id
+        Execution execRes2 = mapper.readValue(exec2.body().string(), Execution.class)
+        String execId2 = execRes2.id
+        Execution execRes3 = mapper.readValue(exec3.body().string(), Execution.class)
+        String execId3 = execRes3.id
+
+        Execution execStatus1 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId1,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+        )
+
+        Execution execStatus2 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId2,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+        )
+
+        Execution execStatus3 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId3,
+                mapper,
+                client,
+                WaitingTime.MODERATE.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 * 2 as int
+        )
+
+        then:
+        execStatus1.status == ExecutionStatus.SUCCEEDED.state
+        execStatus2.status == ExecutionStatus.SUCCEEDED.state
+        execStatus3.status == ExecutionStatus.SUCCEEDED.state
+
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
@@ -1123,6 +1447,16 @@ class JobExecutionSpec extends BaseContainer {
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {
         return client.doPost("/projects", projectJsonMap)
+    }
+
+    def assertLinesInsideEntries(List<String> lines, List<String> entries){
+        def assertion = true
+        lines.each { el -> {
+            if( !entries.contains(el) ){
+                assertion = false
+            }
+        }}
+        return assertion
     }
 
 }
