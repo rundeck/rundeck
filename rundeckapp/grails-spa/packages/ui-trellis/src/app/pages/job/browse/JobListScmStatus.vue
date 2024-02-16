@@ -120,10 +120,14 @@ export default defineComponent({
       }
     },
     importDisplayText() {
-      return this.$t(`scm.import.status.${this.importState}.display.text`);
+      return this.importState
+        ? this.$t(`scm.import.status.${this.importState}.display.text`)
+        : "";
     },
     exportDisplayText() {
-      return this.$t(`scm.export.status.${this.exportState}.display.text`);
+      return this.exportState
+        ? this.$t(`scm.export.status.${this.exportState}.display.text`)
+        : "";
     },
     exportMessage() {
       return this.scmExport?.status?.message;
