@@ -1,18 +1,10 @@
 package org.rundeck.tests.functional.api.project
 
 import org.rundeck.tests.functional.api.ResponseModels.ConfigProperty
-import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
-
 import org.rundeck.tests.functional.api.ResponseModels.Node
 import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.Node
-import org.rundeck.tests.functional.api.ResponseModels.ProjectCreateResponse
-<<<<<<< HEAD
-=======
 import org.rundeck.tests.functional.api.ResponseModels.ProjectSource
 import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
->>>>>>> b915d56465 (test-v23-project-source-resources.sh)
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer

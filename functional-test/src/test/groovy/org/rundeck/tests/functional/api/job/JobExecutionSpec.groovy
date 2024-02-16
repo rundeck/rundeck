@@ -15,25 +15,13 @@ import org.rundeck.util.api.FileHelpers
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
-<<<<<<< HEAD
-import org.rundeck.util.container.RdClient
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils
-=======
->>>>>>> 3beb87cf61 (test-job-run-steps)
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 import java.nio.file.Files
-<<<<<<< HEAD
-import java.nio.file.Paths
-import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
-=======
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
->>>>>>> 3beb87cf61 (test-job-run-steps)
 
 @APITest
 @Stepwise
