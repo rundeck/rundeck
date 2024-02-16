@@ -566,11 +566,13 @@ const messages = {
   "scm.export.status.REFRESH_NEEDED.display.text": "Synch Needed",
   "scm.import.status.LOADING.display.text": "Loading",
   "scm.export.status.ERROR.display.text": "An unknown error occurred.",
-    "scm.import.status.ERROR.display.text": "An unknown error occurred.",
-    "scm.status.ERROR.display.text": "SCM Error",
-    "scm.export.auth.key.noAccess":"User has no access to the specified key or password",
-    "scm.import.auth.key.noAccess":"User has no access to the specified key or password",
-    "scm.action.diff.clean.button.label": "View Commit Info",
+  "scm.import.status.ERROR.display.text": "An unknown error occurred.",
+  "scm.status.ERROR.display.text": "SCM Error",
+  "scm.export.auth.key.noAccess":
+    "User has no access to the specified key or password",
+  "scm.import.auth.key.noAccess":
+    "User has no access to the specified key or password",
+  "scm.action.diff.clean.button.label": "View Commit Info",
   "scm.import.plugin": "SCM Import Plugin",
   "scm.action.diff.button.label": "Diff Changes",
   "scm.export.commit.job.link.title": "Click to commit or add this Job",
