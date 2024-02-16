@@ -17,6 +17,3 @@ services:
       - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
       - "../../../resource-model:/home/rundeck/server/config/resource-model"
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
-      - type: bind
-        source: ./git-bare-init
-        target: /tmp/repoTemplate
