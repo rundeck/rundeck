@@ -884,6 +884,11 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             String project = 'proj1'
             def optionData = new OptionValidateRequest([name:'a']+data)
             request.method = 'POST'
+            controller.messageSource = Mock(MessageSource) {
+                _ * getMessage(*_) >> {
+                    return it[0]
+                }
+            }
 
         when:
             controller.apiValidateOption(project, false, optionData)
@@ -895,9 +900,9 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             1 * controller.apiService.requireApi(_, _, 47) >> true
         where:
             data                                            | propname    | message
-            [value: 'bad', regex: '^good$']                 | 'value'     | 'Default value does not match regex'
-            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'    | 'Value does not match regex: bad'
-            [valuesUrl: 'notaurl']                          | 'valuesUrl' | 'is not a valid URL'
+            [value: 'bad', regex: '^good$']                 | 'value'     | 'option.defaultValue.regexmismatch.message'
+            [values: new TreeSet(['bad']), regex: '^good$'] | 'values'    | 'option.values.regexmismatch.message'
+            [valuesUrl: 'notaurl']                          | 'valuesUrl' | 'option.valuesUrl.invalid.message'
     }
 
     def "validate option "(){
