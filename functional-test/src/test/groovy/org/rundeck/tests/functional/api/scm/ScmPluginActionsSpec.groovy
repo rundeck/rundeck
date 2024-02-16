@@ -3,18 +3,25 @@ package org.rundeck.tests.functional.api.scm
 import org.rundeck.tests.functional.api.ResponseModels.Job
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.scm.GitScmApiClient
+import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
+import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.container.BaseContainer
 
 @APITest
 class ScmPluginActionsSpec extends BaseContainer {
     static final String PROJECT_NAME = 'ScmPluginActionsSpec'
     static final String BASE_EXPORT_PROJECT_LOCATION = '/projects-import/scm/project-scm-export-one-job.rdproject.jar'
+    static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')
+
+    def setupSpec() {
+        remoteRepo.setupRepo()
+    }
 
     def "project scm status must be export needed when having a new job"(){
         given:
@@ -23,7 +30,7 @@ class ScmPluginActionsSpec extends BaseContainer {
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(projectName)).response?.success
+        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
 
         when:
         IntegrationStatusResponse retrievedStatus = scmClient.callGetIntegrationStatus().response
@@ -50,7 +57,7 @@ class ScmPluginActionsSpec extends BaseContainer {
         String jobUuid = getJobUuid(projectName, 'dummy-job')
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(projectName)).response?.success
+        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
 
         when:
         ScmActionInputFieldsResponse actionFields = scmClient.callGetFieldsForAction(actionId).response
@@ -122,31 +129,39 @@ class ScmPluginActionsSpec extends BaseContainer {
 
     def "perform project scm action with success"(){
         given:
-        String projectName = "${PROJECT_NAME}-P3"
+        String projectName = "${PROJECT_NAME}-autopush-${useAutoPush}"
         setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
         String jobUuid = getJobUuid(projectName, 'dummy-job')
+        String keyStoragePath = 'keys/scm.password'
+
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
-                input: [ message : "Commit msg example" ],
+                input: [ message : 'Commit msg example', push: useAutoPush.toString()],
                 jobs: [ jobUuid ]
         ])
 
 
         expect:
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(projectName)).response?.success
+        if(useAutoPush)
+            remoteRepo.storeRepoPassInRundeck(new KeyStorageApiClient(clientProvider), keyStoragePath).successful
+        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
 
         when:
         SetupIntegrationResponse performActionResult = scmClient.callPerformAction(actionId, actionRequest).response
 
         then:
+        IntegrationStatusResponse finalScmStatus = scmClient.callGetIntegrationStatus().response
         verifyAll {
             performActionResult.success
             performActionResult.message == "SCM ${integration} Action was Successful: ${actionId}"
+            finalScmStatus.actions == expectedFinalScmActions
+            finalScmStatus.synchState == expectedFinalSynchState
         }
 
         where:
-        integration = 'export'
-        actionId = 'project-commit'
+        integration | actionId          | useAutoPush | expectedFinalSynchState | expectedFinalScmActions
+        'export'    | 'project-commit'  | false       | 'EXPORT_NEEDED'         | ['project-push']
+        'export'    | 'project-commit'  | true        | 'CLEAN'                 | null
     }
 
 

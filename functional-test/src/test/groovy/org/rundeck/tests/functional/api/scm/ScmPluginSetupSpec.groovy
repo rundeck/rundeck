@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.api.scm
 
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
@@ -10,11 +11,12 @@ import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-class ScmPluginSetupSpec extends BaseContainer{
-
+class ScmPluginSetupSpec extends BaseContainer {
+    static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')
     static final String PROJECT_NAME = "ScmPluginSetupSpec"
+
     def setupSpec() {
-        startEnvironment()
+        remoteRepo.setupRepo()
     }
 
     def "should mark corresponding validation errors with 'required' on missing properties"(){
@@ -51,7 +53,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         String projectName = "${PROJECT_NAME}-P2"
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         when:
         SetupIntegrationResponse response = scmClient.callSetupIntegration(requestBody).response
@@ -69,7 +71,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         expect:
         verifyAll {
@@ -95,7 +97,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         expect:
         scmClient.callSetupIntegration(requestBody).response.success
@@ -120,7 +122,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         when:
         SetupIntegrationResponse disablePluginResult = scmClient.callSetEnabledStatusForPlugin(false).response
@@ -137,7 +139,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest requestBody = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         expect:
         verifyAll {
@@ -165,7 +167,7 @@ class ScmPluginSetupSpec extends BaseContainer{
         setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
 
-        GitExportSetupRequest setupScmRequest = GitExportSetupRequest.defaultRequest(projectName)
+        GitExportSetupRequest setupScmRequest = GitExportSetupRequest.defaultRequest().withRepo(remoteRepo).forProject(projectName)
 
         expect:
         scmClient.callSetupIntegration(setupScmRequest).response.success
