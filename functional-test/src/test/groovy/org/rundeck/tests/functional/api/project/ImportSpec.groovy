@@ -10,6 +10,7 @@ import org.rundeck.util.container.RdClient
 
 @APITest
 class ImportSpec extends BaseContainer {
+    public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "projects-import/archive-test-readme"
 
     def "test-project-import-readme-motd"(){
         given:
@@ -20,9 +21,15 @@ class ImportSpec extends BaseContainer {
         ]
         def responseProject = client.doPost("/projects", projectJsonMap)
         assert responseProject.successful
+        def archiveJar = createArchiveJarFile(
+            projectName,
+            new File(
+                getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
+            )
+        )
         def responseImport = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
-                new File(getClass().getResource("/projects-import/archive-test-readme.zip").getPath()))
+                archiveJar)
         responseImport.successful
 
         when: "We try to read readme content"
