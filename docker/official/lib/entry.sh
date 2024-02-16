@@ -15,6 +15,9 @@ export HOME=$RUNDECK_HOME
 # Store custom exec command if set so it will not be lost when unset later
 EXEC_CMD="${RUNDECK_EXEC_CMD:-}"
 
+# New testdeck scoped vars
+START_NC=${RUNDECK_TESTDECK_START_NC:-false} # Starts a nc basic web server
+
 export REMCO_HOME=${REMCO_HOME:-/etc/remco}
 export REMCO_RESOURCE_DIR=${REMCO_HOME}/resources.d
 export REMCO_TEMPLATE_DIR=${REMCO_HOME}/templates
@@ -62,6 +65,12 @@ if ! whoami &> /dev/null; then
         cat "${TMP_PASSWD}" > /etc/passwd
         rm "${TMP_PASSWD}"
     fi
+fi
+
+# To test webhooks with netcat
+export NC_PORT=9001
+if [ "$START_NC" = true ]; then
+  echo -e "HTTP/1.1 200 OK\r\n\r\n" | nc -w 10 -l -p $NC_PORT > /tmp/netcat-out.txt & disown
 fi
 
 # Exec custom command if provided

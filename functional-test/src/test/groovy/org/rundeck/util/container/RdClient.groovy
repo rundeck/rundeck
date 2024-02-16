@@ -41,6 +41,7 @@ class RdClient {
         )
     }
 
+
     Response doGet(final String path) {
         httpClient.newCall(
                 new Request.Builder().
