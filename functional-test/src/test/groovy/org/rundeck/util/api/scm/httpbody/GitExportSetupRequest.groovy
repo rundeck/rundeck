@@ -1,7 +1,7 @@
 package org.rundeck.util.api.scm.httpbody
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.rundeck.util.api.scm.GitLocalServerRepoCreator
+import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 
 class GitExportSetupRequest {
     @JsonProperty
@@ -32,6 +32,9 @@ class GitExportSetupRequest {
         @JsonProperty
         String strictHostKeyChecking
 
+        @JsonProperty
+        String gitPasswordPath
+
         Map toMap(){
             return [
                     dir: dir,
@@ -46,20 +49,28 @@ class GitExportSetupRequest {
         }
     }
 
-    static GitExportSetupRequest defaultRequest(String forProject = 'localRepoDirExmpl', Map<String, String> configs = [:]){
-        def defaultConfig = [
-                dir : "/home/rundeck/${forProject}/ScmExport",
-                url : "${GitLocalServerRepoCreator.REPO_TEMPLATE_PATH}",
+    static GitExportSetupRequest defaultRequest(){
+        return new GitExportSetupRequest([config: [
+                dir : "/home/rundeck/localRepoDirExample/ScmExport",
+                url : "/url/to/remote/example",
                 committerName :"Git Test",
                 committerEmail :"A@test.com",
                 pathTemplate :'${job.group}${job.name}-${job.id}.${config.format}',
                 format :"xml",
                 branch :"master",
                 strictHostKeyChecking :"yes"
-        ]
+        ]])
+    }
 
-        configs.each {defaultConfig[it.key] = it.value }
+    GitExportSetupRequest forProject(String project){
+        this.config.dir = "/home/rundeck/${project}/ScmExport"
 
-        return new GitExportSetupRequest([config: defaultConfig])
+        return this
+    }
+
+    GitExportSetupRequest withRepo(GiteaApiRemoteRepo remoteRepo){
+        this.config.url = remoteRepo.getRepoUrlForRundeck()
+        this.config.gitPasswordPath = remoteRepo.repoPassStoragePathForRundeck
+        return this
     }
 }
