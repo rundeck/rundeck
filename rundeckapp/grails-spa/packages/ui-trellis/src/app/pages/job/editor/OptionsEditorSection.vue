@@ -36,7 +36,10 @@ export default defineComponent({
         this.updatedData.options = data;
         //nb: hook to indicate job was editted, defined in jobedit.js
         //@ts-ignore
-        if (window.hasOwnProperty("jobWasEdited") && typeof window.jobWasEdited === "function") {
+        if (
+          window.hasOwnProperty("jobWasEdited") &&
+          typeof window.jobWasEdited === "function"
+        ) {
           //@ts-ignore
           window.jobWasEdited();
         }

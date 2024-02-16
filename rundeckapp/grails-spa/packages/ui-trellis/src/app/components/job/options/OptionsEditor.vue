@@ -100,7 +100,11 @@
 <script lang="ts">
 import { getRundeckContext } from "@/library";
 import { cloneDeep } from "lodash";
-import {JobOption, JobOptionsData, OptionPrototype,} from '../../../../library/types/jobs/JobEdit'
+import {
+  JobOption,
+  JobOptionsData,
+  OptionPrototype,
+} from "../../../../library/types/jobs/JobEdit";
 import OptionItem from "./list/OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
@@ -161,7 +165,7 @@ export default defineComponent({
   methods: {
     cloneDeep,
     optaddnew() {
-      this.createOption = Object.assign({},OptionPrototype);
+      this.createOption = Object.assign({}, OptionPrototype);
       this.createMode = true;
     },
     doEdit(i: number) {
@@ -180,7 +184,7 @@ export default defineComponent({
       let orig = this.operationRemove(i);
       this.changeEvent({
         index: i,
-        dest:-1,
+        dest: -1,
         orig: orig,
         operation: Operation.Remove,
         undo: Operation.Insert,
@@ -213,7 +217,7 @@ export default defineComponent({
       let orig = this.operationModify(i, value);
       this.changeEvent({
         index: i,
-        dest:-1,
+        dest: -1,
         orig,
         value,
         operation: Operation.Modify,
@@ -230,7 +234,7 @@ export default defineComponent({
 
       this.changeEvent({
         index,
-        dest:-1,
+        dest: -1,
         value,
         operation: Operation.Insert,
         undo: Operation.Remove,
@@ -273,8 +277,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest>=0?change.dest: change.index,
-        dest: change.index>=0?change.index: change.dest,
+        index: change.dest >= 0 ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : change.dest,
         value: change.orig || change.value,
       });
     },
