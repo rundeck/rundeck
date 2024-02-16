@@ -782,6 +782,9 @@ class ConfigSpec extends BaseContainer{
         parsedNewAttribResponse["mynode1"].attr1 == "testvalue"
         parsedNewAttribResponse["mynode1"].tags == "api, test"
 
+        cleanup:
+        deleteProject(projectName)
+
     }
 
     def "test-v23-project-sources-json"(){
@@ -808,6 +811,9 @@ class ConfigSpec extends BaseContainer{
         sources != null
         sources[0].index > 0
         sources[0].resources != null
+
+        cleanup:
+        deleteProject(projectName)
     }
 
     def createSampleProject = (Object projectJsonMap) -> {
