@@ -82,7 +82,7 @@ class JobOptionValidationSpec extends BaseContainer {
           false | [valuesUrl: 'notaurl']                       | 'valuesUrl'                    | 'not a valid URL'
           false | [name: 'in valid']                           | 'name'                         | 'does not match the required pattern'
           false | [remoteUrlAuthenticationType: 'in valid']    | 'remoteUrlAuthenticationType'  | 'must be in the list'
-          false | [defaultStoragePath: 'in valid']             | 'defaultStoragePath'           | 'does not match the required pattern'
+          false | [defaultStoragePath: 'in valid']             | 'defaultStoragePath'           | 'Default key storage path must start with: keys/: in valid'
           false | [hidden: true]                               | 'hidden'                       | 'Hidden options must have a default value'
           false | [valuesType: 'url', enforced:true]           | 'valuesUrl'                    | 'Allowed values (list or remote URL) must be specified if values are enforced'
           false | [valuesType: 'list', enforced:true]          | 'values'                       | 'Allowed values (list or remote URL) must be specified if values are enforced'
