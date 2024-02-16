@@ -52,11 +52,9 @@
             <span v-for="prop in props" :key="prop.name" class="configprop">
               <plugin-prop-view v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)" :prop="prop"  :value="config[prop.name]"/>
             </span>
-              <p>
-                <div class="col-sm-12" >
-                  <slot name="extraProperties"></slot>
-                </div>
-              </p>
+            <div class="col-sm-12" >
+              <slot name="extraProperties"></slot>
+            </div>
             </div>
             <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
                 <div class="form-group">
