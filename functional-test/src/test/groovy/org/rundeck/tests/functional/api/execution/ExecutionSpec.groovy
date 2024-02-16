@@ -98,13 +98,16 @@ class ExecutionSpec extends BaseContainer {
             ]
             def client = getClient()
             client.apiVersion = version
+
+            File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource("/projects-import/archive-test").getPath()))
         when:
             // create project
             def responseProject = client.doPost("/projects", projectJsonMap)
             // import project
             def responseImport = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=remove",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+                tmpjar
+            )
             // get executions
             def response = client.doGet("/project/${projectName}/executions")
         then:
@@ -137,11 +140,12 @@ class ExecutionSpec extends BaseContainer {
                 json3.executions.size() == 0
             }
             deleteProject(projectName)
+        cleanup:
+            tmpjar.delete()
         where:
             version | projectName
             14      | "APIImportAndCleanHistoryTest"
             45      | "APIImportAndCleanHistoryTest45"
-
     }
 
     def "execution state not found"() {

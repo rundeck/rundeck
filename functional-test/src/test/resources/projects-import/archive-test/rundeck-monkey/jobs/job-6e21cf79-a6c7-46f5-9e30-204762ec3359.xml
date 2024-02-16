@@ -1,0 +1,26 @@
+<joblist>
+  <job>
+    <id>6e21cf79-a6c7-46f5-9e30-204762ec3359</id>
+    <loglevel>INFO</loglevel>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hi this is a test project</exec>
+      </command>
+    </sequence>
+    <description></description>
+    <name>echo test1</name>
+    <context>
+      <project>monkey</project>
+    </context>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>true</keepgoing>
+      <excludePrecedence>true</excludePrecedence>
+      <rankOrder>ascending</rankOrder>
+    </dispatch>
+    <uuid>6e21cf79-a6c7-46f5-9e30-204762ec3359</uuid>
+    <nodefilters>
+      <filter>.*</filter>
+    </nodefilters>
+  </job>
+</joblist>

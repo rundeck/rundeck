@@ -1,0 +1,25 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='opt1' required='true' value='testvalue' />
+        <option name='opt2' required='true' values='a,b,c' valuesListDelimiter=',' />
+      </options>
+    </context>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <group>api-test/job-run-steps</group>
+    <id>a04da560-98c7-4e8a-b6d7-5619e2867624</id>
+    <loglevel>INFO</loglevel>
+    <name>secondary job</name>
+    <nodeFilterEditable>true</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hello there</exec>
+      </command>
+    </sequence>
+    <uuid>a04da560-98c7-4e8a-b6d7-5619e2867624</uuid>
+  </job>
+</joblist>

@@ -1,0 +1,18 @@
+<report>
+  <node>1/0/1</node>
+  <title>echo hi this is a test project</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>monkey</ctxProject>
+  <reportId>echo test1</reportId>
+  <tags />
+  <author>admin</author>
+  <message>Job completed successfully</message>
+  <dateStarted>2014-03-06T18:46:03Z</dateStarted>
+  <dateCompleted>2014-03-06T18:46:04Z</dateCompleted>
+  <jcExecId>1298</jcExecId>
+  <jcJobId>6e21cf79-a6c7-46f5-9e30-204762ec3359</jcJobId>
+  <adhocExecution>false</adhocExecution>
+  <adhocScript />
+  <abortedByUser />
+</report>

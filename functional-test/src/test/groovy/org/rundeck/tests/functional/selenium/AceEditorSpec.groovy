@@ -16,7 +16,7 @@ class AceEditorSpec extends SeleniumBase {
     private static def jsonFileIndex = 2
 
     def setupSpec() {
-        setupProject(projectName, "/projects-import/resourcesTest.zip")
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
     }
 
     def "Edit json file resource model with indented text"(){

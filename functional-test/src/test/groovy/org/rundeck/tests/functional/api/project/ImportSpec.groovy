@@ -10,6 +10,8 @@ import org.rundeck.util.container.RdClient
 
 @APITest
 class ImportSpec extends BaseContainer {
+    public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "/projects-import/archive-test-readme"
+    public static final String RESOURCE_ARCHIVE_TEST_DIR = "/projects-import/archive-test"
 
     def "test-project-import-readme-motd"(){
         given:
@@ -20,9 +22,15 @@ class ImportSpec extends BaseContainer {
         ]
         def responseProject = client.doPost("/projects", projectJsonMap)
         assert responseProject.successful
+        def archiveJar = createArchiveJarFile(
+            projectName,
+            new File(
+                getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
+            )
+        )
         def responseImport = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
-                new File(getClass().getResource("/projects-import/archive-test-readme.zip").getPath()))
+                archiveJar)
         responseImport.successful
 
         when: "We try to read readme content"
@@ -49,6 +57,7 @@ class ImportSpec extends BaseContainer {
 
     def "test-project-import"(){
         given:
+        File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource(RESOURCE_ARCHIVE_TEST_DIR).getPath()))
         def mapper = new ObjectMapper()
         def client = getClient()
 
@@ -73,7 +82,7 @@ class ImportSpec extends BaseContainer {
         when: "we import the test zip to project $projectName"
         def responseImport1 = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=preserve",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+                tmpjar)
         responseImport1.successful
 
         then: "we must have 3 jobs and 6 execs"
@@ -93,7 +102,7 @@ class ImportSpec extends BaseContainer {
         when: "We import the archive to test project 2"
         def responseImport2 = client.doPut(
                 "/project/${projectName1}/import?jobUuidOption=preserve",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+                tmpjar)
 
         then: "Won't succeed because the jobUuidOption, no jobs imported"
         Object parsedResponse = mapper.readValue(responseImport2.body().string(), Object.class)
@@ -114,8 +123,8 @@ class ImportSpec extends BaseContainer {
 
         when: "We import the archive to test project 2 with valid jobUuidOption"
         def responseImport3 = client.doPut(
-                "/project/${projectName1}/import?jobUuidOption=remove",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+            "/project/${projectName1}/import?jobUuidOption=remove",
+            tmpjar)
 
         then: "Jobs imported, executions duplicated"
         Object parsedResponse1 = mapper.readValue(responseImport3.body().string(), Object.class)
@@ -137,7 +146,7 @@ class ImportSpec extends BaseContainer {
         when: "We import the archive to test project 2 without import execs"
         def responseImport4 = client.doPut(
                 "/project/${projectName1}/import?importExecutions=false&jobUuidOption=remove",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+                tmpjar)
 
         then: "Import succeeds"
         Object parsedResponse2 = mapper.readValue(responseImport4.body().string(), Object.class)
