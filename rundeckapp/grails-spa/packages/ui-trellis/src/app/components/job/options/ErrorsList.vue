@@ -1,11 +1,11 @@
 <template>
-  <template v-if="typeof(errors)==='string'">
+  <template v-if="typeof errors === 'string'">
     {{ errors }}
   </template>
-  <template v-else-if="errors.length===1">
+  <template v-else-if="errors.length === 1">
     {{ errors[0] }}
   </template>
-  <template v-else-if="errors.length>1">
+  <template v-else-if="errors.length > 1">
     <ul>
       <li v-for="err in errors">{{ err }}</li>
     </ul>
@@ -13,13 +13,13 @@
 </template>
 <script lang="ts">
 export default {
-  name: 'ErrorsList',
+  name: "ErrorsList",
   props: {
     errors: {
       required: true,
-    }
-  }
-}
+    },
+  },
+};
 </script>
 <style scoped lang="scss">
 .flow > * + * {

@@ -300,10 +300,7 @@
         <label class="col-sm-2 control-label">{{
           $t("form.option.values.label")
         }}</label>
-        <div
-          class="col-sm-3"
-        >
-
+        <div class="col-sm-3">
           <div>
             <div class="radio">
               <input
@@ -431,8 +428,13 @@
                     size="30"
                   />
                 </div>
-                <div class="help-block" v-if="validationErrors['configRemoteUrl.jsonFilter']">
-                  <ErrorsList :errors="validationErrors['configRemoteUrl.jsonFilter']" />
+                <div
+                  class="help-block"
+                  v-if="validationErrors['configRemoteUrl.jsonFilter']"
+                >
+                  <ErrorsList
+                    :errors="validationErrors['configRemoteUrl.jsonFilter']"
+                  />
                 </div>
               </div>
               <div class="col-md-12">
@@ -668,9 +670,7 @@
               </div>
             </div>
           </div>
-          <div
-            v-else-if="option.valuesType && optionValuesPlugins "
-          >
+          <div v-else-if="option.valuesType && optionValuesPlugins">
             <plugin-info
               :detail="getProviderFor(option.valuesType)"
               :show-icon="false"
@@ -730,7 +730,10 @@
             size="5"
             class="form-control"
           />
-          <div class="help-block" v-if="validationErrors['valuesListDelimiter']">
+          <div
+            class="help-block"
+            v-if="validationErrors['valuesListDelimiter']"
+          >
             <ErrorsList :errors="validationErrors['valuesListDelimiter']" />
           </div>
         </div>
@@ -738,9 +741,10 @@
           {{ $t("form.option.valuesDelimiter.description") }}
         </span>
       </div>
-      <div class="form-group opt_keystorage_disabled"
-           :class="{ 'has-error': hasError('regex') }"
-           v-if="!isSecureInput"
+      <div
+        class="form-group opt_keystorage_disabled"
+        :class="{ 'has-error': hasError('regex') }"
+        v-if="!isSecureInput"
       >
         <label class="col-sm-2 control-label">{{
           $t("form.option.enforcedType.label")
@@ -800,7 +804,9 @@
             <ErrorsList :errors="validationErrors['regex']" />
           </div>
           <template v-if="validationErrors['regexError']">
-            <pre class="text-danger">{{ validationErrors["regexError"][0] }}</pre>
+            <pre class="text-danger">{{
+              validationErrors["regexError"][0]
+            }}</pre>
           </template>
         </div>
       </div>
@@ -844,9 +850,10 @@
     </div>
 
     <!-- hidden -->
-    <div class="form-group"
-         v-if="option.optionType !== 'file'"
-          :class="{ 'has-error': hasError('hidden') }"
+    <div
+      class="form-group"
+      v-if="option.optionType !== 'file'"
+      :class="{ 'has-error': hasError('hidden') }"
     >
       <label class="col-sm-2 control-label">{{
         $t("Option.hidden.label")
@@ -1133,8 +1140,9 @@ import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
 import {
   JobOption,
-  JobOptionEdit, OptionPrototype,
-} from '../../../../library/types/jobs/JobEdit'
+  JobOptionEdit,
+  OptionPrototype,
+} from "../../../../library/types/jobs/JobEdit";
 
 const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
@@ -1164,7 +1172,11 @@ export default defineComponent({
         {},
         OptionPrototype,
         {
-          valuesType: this.modelValue.optionValuesPluginType?this.modelValue.optionValuesPluginType:this.modelValue.valuesUrl ?"url":"list"
+          valuesType: this.modelValue.optionValuesPluginType
+            ? this.modelValue.optionValuesPluginType
+            : this.modelValue.valuesUrl
+              ? "url"
+              : "list",
         },
         cloneDeep(this.modelValue),
       ) as JobOptionEdit,
@@ -1196,33 +1208,33 @@ export default defineComponent({
       this.option.isDate = val === "date";
       this.option.secure = val === "secure" || val === "secureExposed";
       this.option.valueExposed = val === "secureExposed";
-      if(this.option.secure){
-        this.option.multivalued = false
-      }else{
-        delete this.option.defaultStoragePath
+      if (this.option.secure) {
+        this.option.multivalued = false;
+      } else {
+        delete this.option.defaultStoragePath;
       }
     },
-    "option.valuesType"(val:string){
-        if (val === "url") {
-          this.option.optionValuesPluginType = "";
-          this.option.valuesUrl = "";
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = true;
-        } else if (val === "list") {
-          this.option.optionValuesPluginType = "";
-          this.option.valuesUrl = null;
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = false;
-        } else {
-          this.option.optionValuesPluginType = val;
-          this.option.valuesUrl = null;
-          this.option.remoteUrlAuthenticationType = "";
-          this.option.configRemoteUrl = {};
-          this.urlChoice = false;
-        }
+    "option.valuesType"(val: string) {
+      if (val === "url") {
+        this.option.optionValuesPluginType = "";
+        this.option.valuesUrl = "";
+        this.option.remoteUrlAuthenticationType = "";
+        this.option.configRemoteUrl = {};
+        this.urlChoice = true;
+      } else if (val === "list") {
+        this.option.optionValuesPluginType = "";
+        this.option.valuesUrl = null;
+        this.option.remoteUrlAuthenticationType = "";
+        this.option.configRemoteUrl = {};
+        this.urlChoice = false;
+      } else {
+        this.option.optionValuesPluginType = val;
+        this.option.valuesUrl = null;
+        this.option.remoteUrlAuthenticationType = "";
+        this.option.configRemoteUrl = {};
+        this.urlChoice = false;
       }
+    },
   },
   computed: {
     fileUploadPluginEnabled() {
@@ -1257,21 +1269,21 @@ export default defineComponent({
     shouldShowDefaultStorage() {
       return !this.showDefaultValue;
     },
-    valuesList:{
-      get(){
-        if(this.option.values && this.option.values.length>0){
-          return this.option.values.join(this.option.delimiter||",")
-        }else{
-          return ''
+    valuesList: {
+      get() {
+        if (this.option.values && this.option.values.length > 0) {
+          return this.option.values.join(this.option.delimiter || ",");
+        } else {
+          return "";
         }
       },
-      set(val: string){
-        if(val){
-          this.option.values=val.split(this.option.delimiter||",")
-        }else{
-          this.option.values=null
+      set(val: string) {
+        if (val) {
+          this.option.values = val.split(this.option.delimiter || ",");
+        } else {
+          this.option.values = null;
         }
-      }
+      },
     },
     enforcedType: {
       get() {
@@ -1308,9 +1320,9 @@ export default defineComponent({
   },
   methods: {
     async doSave() {
-      this.validationErrors={}
-      this.validationWarnings={}
-      this.validateOptionName()
+      this.validationErrors = {};
+      this.validationWarnings = {};
+      this.validateOptionName();
       await this.validateOption();
       if (this.hasFormErrors) {
         return;
@@ -1319,8 +1331,11 @@ export default defineComponent({
     },
     hasError(field: string) {
       return (
-        this.validationErrors[field] && this.validationErrors[field].length > 0 ||
-          Object.keys(this.validationErrors).find((k) => k.startsWith(field+"."))
+        (this.validationErrors[field] &&
+          this.validationErrors[field].length > 0) ||
+        Object.keys(this.validationErrors).find((k) =>
+          k.startsWith(field + "."),
+        )
       );
     },
     getProviderFor(name) {

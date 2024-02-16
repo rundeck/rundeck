@@ -44,7 +44,7 @@ export interface JobOptionsData {
   options: JobOptionEdit[];
 }
 
-export const OptionPrototype={
+export const OptionPrototype = {
   optionType: "text",
   required: false,
   hidden: false,
@@ -62,4 +62,4 @@ export const OptionPrototype={
   description: "",
   name: "",
   defaultValue: "",
-}
+};

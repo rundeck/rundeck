@@ -38,19 +38,25 @@
       @update:model-value="onSelectedKeyChange"
       @close-selector="closeSelector"
       @open-selector="openSelector"
-      @open-editor="openEditor"></key-storage-view>
+      @open-editor="openEditor"
+    ></key-storage-view>
   </modal>
   <modal
     id="storageuploadkey"
     ref="modalEdit"
     v-model="modalEdit"
     title="Add or Upload a Key"
-    :footer="false" auto-focus append-to-body>
-    <key-storage-edit :upload-setting="uploadSetting"
+    :footer="false"
+    auto-focus
+    append-to-body
+  >
+    <key-storage-edit
+      :upload-setting="uploadSetting"
       :root-path="rootPath"
       :storage-filter="storageFilter"
       @cancel-editing="handleCancelEditing"
-      @finish-editing="handleFinishEditing" ></key-storage-edit>
+      @finish-editing="handleFinishEditing"
+    ></key-storage-edit>
   </modal>
 </template>
 

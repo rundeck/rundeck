@@ -32,7 +32,7 @@
       </div>
     </template>
     <span class="option-item-content" @click="$emit('edit', option)">
-      <option-view :option="option" :editable="editable"/>
+      <option-view :option="option" :editable="editable" />
     </span>
     <template v-if="editable">
       <span class="btn-group pull-right">
@@ -65,9 +65,9 @@
   </div>
 </template>
 <script lang="ts">
-import {JobOption} from '@/library/types/jobs/JobEdit'
+import { JobOption } from "@/library/types/jobs/JobEdit";
 import OptionView from "../OptionView.vue";
-import {defineComponent, PropType} from 'vue'
+import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
   name: "OptionItem",
@@ -100,9 +100,9 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .option-item {
-  >  .btn-group,
-  >  .btn ,
-  >  .option-item-content {
+  > .btn-group,
+  > .btn,
+  > .option-item-content {
     margin-right: var(--spacing-2);
   }
 }

@@ -34,7 +34,7 @@ const mountOptionView = async (options: {
 
 describe("OptionView", () => {
   it("text option shows option name", async () => {
-    let option = {name: "optionName", optionType: "text"} as JobOption;
+    let option = { name: "optionName", optionType: "text" } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
     // Wait for the next Vue tick to allow for asynchronous rendering
     await wrapper.vm.$nextTick();
@@ -46,7 +46,7 @@ describe("OptionView", () => {
     expect(wrapper.find(".glyphicon-file")).toBeFalsy();
   });
   it("file option shows file icon", async () => {
-    let option = {name: "optionName", optionType: "file"} as JobOption;
+    let option = { name: "optionName", optionType: "file" } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
     // Wait for the next Vue tick to allow for asynchronous rendering
     await wrapper.vm.$nextTick();
