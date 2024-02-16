@@ -111,10 +111,6 @@ class RdClient {
         baseUrl + "/api/${apiVersion}" + path
     }
 
-    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
-        baseUrl + "/api/${customApiVersion}" + path
-    }
-
     <T> T get(final String path, Class<T> clazz) {
         mapper.readValue(doGet(path).body().byteStream(), clazz)
     }
