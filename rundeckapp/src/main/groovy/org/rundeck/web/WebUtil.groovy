@@ -51,7 +51,7 @@ class WebUtil implements WebUtilService, ResponseRenderer {
     @Override
     void renderErrorFormat(HttpServletResponse response, Map<String, Object> error) {
         def handlers = new HashMap(respHandlers)
-        if(featureService.featurePresent(Features.LEGACY_XML,false)){
+        if(featureService.featurePresent(Features.LEGACY_XML)){
             handlers.put('xml', this.&renderErrorXml as ResponseErrorHandler)
         }
         def eformat = error.format.toString()

@@ -2,7 +2,8 @@
 // Pagination (multiple pages)
 // --------------------------------------------------
 .pagination {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   padding-left: 0;
   margin: $line-height-computed 0;
   border-radius: $border-radius-small;
@@ -77,10 +78,22 @@
 
 // Large
 .pagination-lg {
-  @include pagination-size($padding-large-vertical, $padding-large-horizontal, $font-size-large, $line-height-large, $border-radius-small);
+  @include pagination-size(
+    $padding-large-vertical,
+    $padding-large-horizontal,
+    $font-size-large,
+    $line-height-large,
+    $border-radius-small
+  );
 }
 
 // Small
 .pagination-sm {
-  @include pagination-size($padding-small-vertical, $padding-small-horizontal, $font-size-small, $line-height-small, $border-radius-small);
+  @include pagination-size(
+    $padding-small-vertical,
+    $padding-small-horizontal,
+    $font-size-small,
+    $line-height-small,
+    $border-radius-small
+  );
 }

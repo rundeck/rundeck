@@ -14,22 +14,11 @@
     "allowJs": true,
     "baseUrl": ".",
     "skipLibCheck": true,
-    "types": [
-      "webpack-env",
-      "jest",
-      "node"
-    ],
+    "types": ["webpack-env", "jest", "node"],
     "paths": {
-      "@": [
-        "./src"
-      ]
+      "@": ["./src"]
     },
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
   "include": [
     "src/app/**/*.ts",

@@ -1,101 +1,106 @@
 <template>
   <div class="form-group">
     <div :class="`${labelColClass} text-form-label`">
-      {{ $t('scheduledExecution.property.orchestrator.label') }}
+      {{ $t("scheduledExecution.property.orchestrator.label") }}
     </div>
     <div :class="fieldColSize">
-      <dropdown ref="dropdown" id="orchestrator-edit-type-dropdown">
-        <btn type="simple"  class="btn-simple btn-hover  btn-secondary dropdown-toggle">
+      <dropdown id="orchestrator-edit-type-dropdown" ref="dropdown">
+        <btn
+          type="simple"
+          class="btn-simple btn-hover btn-secondary dropdown-toggle"
+        >
           <span class="caret"></span>
           &nbsp;
           <span v-if="updatedValue.type && getProviderFor(updatedValue.type)">
-                    <plugin-info
-                        :detail="getProviderFor(updatedValue.type)"
-                        :show-description="false"
-                        :show-extended="false"
-                        description-css="help-block"
-                    >
-                      </plugin-info>
-                  </span>
-          <span v-else>
-                  Select an Orchestrator
-                  </span>
+            <plugin-info
+              :detail="getProviderFor(updatedValue.type)"
+              :show-description="false"
+              :show-extended="false"
+              description-css="help-block"
+            >
+            </plugin-info>
+          </span>
+          <span v-else> Select an Orchestrator </span>
         </btn>
-        <template v-slot:dropdown>
+        <template #dropdown>
           <li v-for="plugin in pluginProviders" :key="plugin.name">
-            <a role="button"
-               @click="setOrchestratorType(plugin.name)"
-               :data-plugin-type="plugin.name">
+            <a
+              role="button"
+              :data-plugin-type="plugin.name"
+              @click="setOrchestratorType(plugin.name)"
+            >
               <plugin-info
-                  :detail="plugin"
-                  :show-description="true"
-                  :show-extended="false"
-                  description-css="help-block"
+                :detail="plugin"
+                :show-description="true"
+                :show-extended="false"
+                description-css="help-block"
               >
               </plugin-info>
             </a>
           </li>
         </template>
       </dropdown>
-      <btn size="xs" type="danger" @click="remove" v-if="updatedValue.type">
+      <btn v-if="updatedValue.type" size="xs" type="danger" @click="remove">
         <i class="fas fa-times"></i>
         Remove Orchestrator
       </btn>
-      <input type="hidden" name="orchestratorId" :value="updatedValue.type"/>
+      <input type="hidden" name="orchestratorId" :value="updatedValue.type" />
 
       <span class="help-block">
-          {{ $t('scheduledExecution.property.orchestrator.description') }}
+        {{ $t("scheduledExecution.property.orchestrator.description") }}
       </span>
 
-      <span class="orchestratorPlugin" v-if="getProviderFor(updatedValue.type)">
-                    <span class="text-info">
-                       <plugin-info
-                           :detail="getProviderFor(updatedValue.type)"
-                           :show-title="false"
-                           :show-icon="false"
-                           :show-description="true"
-                           :show-extended="true"
-                           description-css="help-block"
-                       >
-                      </plugin-info>
-                    </span>
-                <div>
-                  <template v-for="(val,key) in updatedValue.config">
-                    <input type="hidden" :name="`orchestratorPlugin.${updatedValue.type}.config.${key}`" :value="val"/>
-                  </template>
+      <span v-if="getProviderFor(updatedValue.type)" class="orchestratorPlugin">
+        <span class="text-info">
+          <plugin-info
+            :detail="getProviderFor(updatedValue.type)"
+            :show-title="false"
+            :show-icon="false"
+            :show-description="true"
+            :show-extended="true"
+            description-css="help-block"
+          >
+          </plugin-info>
+        </span>
+        <div>
+          <template v-for="(val, key) in updatedValue.config">
+            <input
+              type="hidden"
+              :name="`orchestratorPlugin.${updatedValue.type}.config.${key}`"
+              :value="val"
+            />
+          </template>
 
-                  <plugin-config
-                      id="orchestrator-edit-config"
-                      mode="edit"
-                      :serviceName="'Orchestrator'"
-                      v-model="updatedValue"
-                      :key="'edit_config'+updatedValue.type"
-                      :show-title="false"
-                      :show-description="false"
-                      :context-autocomplete="false"
-                      :validation="editValidation"
-                      scope="Instance"
-                      default-scope="Instance"
-                  ></plugin-config>
-
-                </div>
-              </span>
-
+          <plugin-config
+            id="orchestrator-edit-config"
+            :key="'edit_config' + updatedValue.type"
+            v-model="updatedValue"
+            mode="edit"
+            :service-name="'Orchestrator'"
+            :show-title="false"
+            :show-description="false"
+            :context-autocomplete="false"
+            :validation="editValidation"
+            scope="Instance"
+            default-scope="Instance"
+          ></plugin-config>
+        </div>
+      </span>
     </div>
   </div>
 </template>
 <script lang="ts">
-import InlineValidationErrors from '../../../components/form/InlineValidationErrors.vue'
-import {defineComponent, ref} from 'vue'
-import type { PropType } from "vue"
+import InlineValidationErrors from "../../../components/form/InlineValidationErrors.vue";
+import { defineComponent, ref } from "vue";
+import type { PropType } from "vue";
 
-import PluginInfo from '../../../../library/components/plugins/PluginInfo.vue'
-import PluginConfig from '../../../../library/components/plugins/pluginConfig.vue'
-import pluginService from '../../../../library/modules/pluginService'
-import ExtendedDescription from '../../../../library/components/utils/ExtendedDescription.vue'
+import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
+import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import pluginService from "../../../../library/modules/pluginService";
+import ExtendedDescription from "../../../../library/components/utils/ExtendedDescription.vue";
 
 export default defineComponent({
-  name: 'OrchestratorEditor',
+  name: "OrchestratorEditor",
   components: {
     InlineValidationErrors,
     PluginInfo,
@@ -113,61 +118,64 @@ export default defineComponent({
     labelColClass: {
       type: String,
       required: false,
-      default: 'col-sm-2 control-label',
+      default: "col-sm-2 control-label",
     },
     fieldColSize: {
       type: String,
       required: false,
-      default: 'col-sm-10',
+      default: "col-sm-10",
     },
     editValidation: {
       type: Object as PropType<any>,
       required: false,
-      default: () => {
-      },
+      default: () => {},
     },
   },
-  emits: ['update:modelValue'],
+  emits: ["update:modelValue"],
   setup() {
-    const pluginProviders = ref<any[]>([])
-    const pluginLabels = ref<{ [name: string]: string }>({})
-    const updatedValue = ref<{ [name: string]: string }>({})
+    const pluginProviders = ref<any[]>([]);
+    const pluginLabels = ref<{ [name: string]: string }>({});
+    const updatedValue = ref<{ [name: string]: string }>({});
     return {
       pluginProviders,
       pluginLabels,
       updatedValue,
-    }
-  },
-  methods: {
-    remove() {
-      this.updatedValue.type = null
-      this.updatedValue.config = {}
-    },
-    setOrchestratorType(name: string) {
-      this.updatedValue.type = name
-    },
-    getProviderFor(name: string) {
-      return this.pluginProviders.find(p => p.name === name)
-    },
-    async onMount() {
-      this.updatedValue = Object.assign({type: null, config: {}}, this.modelValue)
-      let data = await pluginService.getPluginProvidersForService('Orchestrator')
-      if (data.service) {
-        this.pluginProviders = data.descriptions
-        this.pluginLabels = data.labels
-      }
-    }
-  },
-  mounted() {
-    this.onMount()
+    };
   },
   watch: {
     updatedValue: {
       handler() {
-        this.$emit('update:modelValue', this.updatedValue)
+        this.$emit("update:modelValue", this.updatedValue);
       },
       deep: true,
     },
   },
-})
+  mounted() {
+    this.onMount();
+  },
+  methods: {
+    remove() {
+      this.updatedValue.type = null;
+      this.updatedValue.config = {};
+    },
+    setOrchestratorType(name: string) {
+      this.updatedValue.type = name;
+    },
+    getProviderFor(name: string) {
+      return this.pluginProviders.find((p) => p.name === name);
+    },
+    async onMount() {
+      this.updatedValue = Object.assign(
+        { type: null, config: {} },
+        this.modelValue,
+      );
+      const data =
+        await pluginService.getPluginProvidersForService("Orchestrator");
+      if (data.service) {
+        this.pluginProviders = data.descriptions;
+        this.pluginLabels = data.labels;
+      }
+    },
+  },
+});
 </script>

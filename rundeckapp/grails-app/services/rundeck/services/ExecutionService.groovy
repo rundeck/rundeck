@@ -63,6 +63,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.events.EventPublisher
 import grails.events.annotation.Publisher
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
@@ -77,9 +78,9 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import rundeck.data.report.SaveReportRequestImpl
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
@@ -230,6 +231,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         applicationIsShutdown = true;
     }
 
+    @Subscriber("rdpro.shutdown")
+    void forceInactive(){
+        log.debug("Enterprise Shutdown Received")
+        configurationService.setExecutionModeActive(false)
+    }
+
     /**
      * Render execution document for api response
      */
@@ -294,7 +301,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def renderBulkExecutionDeleteResult(request, response, result) {
         def respFormat = 'json'
 
-        if(featureService.featurePresent(Features.LEGACY_XML, false)) {
+        if(featureService.featurePresent(Features.LEGACY_XML)) {
              respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'json')
         }
         def total = result.successTotal + result.failures.size()
@@ -1181,6 +1188,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParams=[:]
                 }
                 Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
                         args, jobcontext, secureOptionNodeDeferred)
             }
@@ -1277,6 +1285,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             loghandler.close()
             return null
+        }
+    }
+
+    /**
+     * Nullify the secure options with default values in order to prevent
+     * its usage at execution time.
+     *
+     * @param scheduledExecution
+     * @param extraParams
+     * @param extraParamsExposed
+     */
+    static void ignoreDefaultValuesForSecureOptions(
+            ScheduledExecution scheduledExecution,
+            Map extraParams,
+            Map extraParamsExposed
+    ){
+        def secureOptionsWithDefaultValues = scheduledExecution.options?.findAll{
+            it.secureInput && it.defaultValue
+        }?.findAll{
+            extraParamsExposed.containsKey(it.name) || extraParams.containsKey(it.name)
+        }
+        if( secureOptionsWithDefaultValues ){
+            secureOptionsWithDefaultValues.each {option ->
+                if( extraParamsExposed.containsKey(option.name)){
+                    extraParamsExposed.remove(option.name)
+                }
+                if( extraParams.containsKey(option.name)){
+                    extraParams.remove(option.name)
+                }
+            }
         }
     }
 
@@ -2258,10 +2296,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
 
-        if(!getExecutionsAreActive()){
-            return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
-        }
-
         if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
             return [success:false,failed:true,error:'disabled',message:lookupMessage('project.execution.disabled',null)]
         }
@@ -3130,6 +3164,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                                              retryContext.user, input, retryContext.secureOpts,
                                              retryContext.secureOptsExposed, count + 1,execution.id,originalId)
+
+                log.trace("saveExecutionState_currentTransaction: retry execute job (${scheduledExecution.getJobName()} - id: ${execution.id}) result status: ${result}")
                 if (result.success) {
                     execution.retryExecution = result.execution
                 }

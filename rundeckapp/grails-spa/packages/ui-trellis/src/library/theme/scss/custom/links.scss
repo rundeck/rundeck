@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 @import "../runstrap/variables";
-.link-hover:hover, .btn-group.open .dropdown-toggle.link-hover {
+.link-hover:hover,
+.btn-group.open .dropdown-toggle.link-hover {
   background-color: $bg-default;
 
   &.text-inverse {

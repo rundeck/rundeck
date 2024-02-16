@@ -23,8 +23,11 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
+import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
@@ -36,12 +39,14 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.impl.ResourceBase
+import rundeck.data.util.RundeckStorageUtil
 
 import java.util.regex.Pattern
 
 /**
  * Implements StoragePlugin and provides DB storage for rundeck resources if configured to be used.
  */
+@GrailsCompileStatic
 class DbStorageService implements NamespacedStorage{
     static transactional = false
     StorageDataProvider storageDataProvider
@@ -54,7 +59,7 @@ class DbStorageService implements NamespacedStorage{
     @CompileStatic
     protected static Resource<ResourceMeta> loadResource(RundeckStorage storage1) {
 
-        new ResourceBase(storage1.getPath(),
+        new ResourceBase(RundeckStorageUtil.getPath(storage1),
                 StorageUtil.withStream(lazyData(storage1), storage1.getStorageMeta()), false)
 
     }
@@ -87,7 +92,7 @@ class DbStorageService implements NamespacedStorage{
             return true
         }
 
-        storageDataProvider.hasPath(ns, path)
+        storageDataProvider.hasPath(ns, path.path)
     }
 
     boolean hasPath(String ns,String path) {
@@ -110,7 +115,7 @@ class DbStorageService implements NamespacedStorage{
             return true
         }
 
-       storageDataProvider.hasDirectory(ns, path)
+       storageDataProvider.hasDirectory(ns, path.path)
     }
 
     boolean hasDirectory(String ns,String path) {
@@ -146,8 +151,9 @@ class DbStorageService implements NamespacedStorage{
         return loadResource(found)
     }
 
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
     protected RundeckStorage findResource(String ns, Path path) {
-        def dir, name
+        String dir, name
         (dir, name) = splitPath(path)
         storageDataProvider.findResource(ns, dir, name)
     }
@@ -158,7 +164,7 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     Set<Resource<ResourceMeta>> listDirectoryResources(String ns,Path path) {
-        storageDataProvider.findAllByNamespaceAndDir(ns ?: null,path.path).collect{ loadResource(it) }
+        storageDataProvider.findAllByNamespaceAndDir(ns ?: null,path.path).collect{ loadResource(it) } as Set
     }
 
     Set<Resource<ResourceMeta>> listDirectoryResources(String ns,String path) {
@@ -166,12 +172,12 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
     Set<Resource<ResourceMeta>> listDirectory(String ns,Path path) {
         def foundset=new HashSet<String>()
         def pathkey= path.path ? (path.path + '/') : ''
-        storageDataProvider.listDirectory(ns, path).collect {
-            def parent = PathUtil.parentPath(it.path)
-            String dir = parent ? parent.path: ''
+        storageDataProvider.listDirectory(ns, path.path).collect {
+            String dir = it.dir
             def m= dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
             if (dir == path.path) {
                 return loadResource(it)
@@ -188,12 +194,12 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
     Set<Resource<ResourceMeta>> listDirectorySubdirs(String ns,Path path) {
         def foundset = new HashSet<String>()
         def pathkey = path.path ? (path.path + '/') : ''
-        storageDataProvider.listDirectorySubdirs(ns, path).collect {
-            def parent = PathUtil.parentPath(it.path)
-            String dir = parent ? parent.path: ''
+        storageDataProvider.listDirectorySubdirs(ns, path.path).collect {
+            String dir = it.dir
             def m = dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
             if (m.matches() && !foundset.contains(m[0][1])) {
                 foundset << m[0][1]
@@ -213,7 +219,7 @@ class DbStorageService implements NamespacedStorage{
         if (!storage1) {
             throw StorageException.deleteException(path, "Not found")
         }
-        storageDataProvider.delete(storage1.getId())
+        storageDataProvider.delete(storage1)
         return true
     }
 
@@ -238,7 +244,7 @@ class DbStorageService implements NamespacedStorage{
     protected RundeckStorage saveStorage(RundeckStorage storage, ResourceMeta content,String namespace, Path path, String event) {
         def id = storage?.id
         def retry = true
-        RundeckStorage saved=null;
+        RundeckStorage saved=null
         def data = content.getInputStream().bytes
         def saveStorage={
             try {
@@ -249,12 +255,13 @@ class DbStorageService implements NamespacedStorage{
                 }
                 SimpleStorageBuilder storageBuilder = SimpleStorageBuilder.with(storage)
                 storageBuilder.setNamespace( namespace ? namespace : null)
-                storageBuilder.setPath(path)
+                storageBuilder.dir = PathUtil.parentPathString(path.path)
+                storageBuilder.name = path.name
                 storageBuilder.setStorageMeta(content.meta)
                 storageBuilder.setData( data)
                 try {
                     if (id) {
-                        storageDataProvider.update(id, storageBuilder, content.meta)
+                        storageDataProvider.update(storage, storageBuilder, content.meta)
 
                     } else {
                         id = storageDataProvider.create(storageBuilder)
@@ -262,14 +269,14 @@ class DbStorageService implements NamespacedStorage{
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {
                     def causeMessage = ExceptionUtils.getRootCause(e).message
-                    throw new StorageException("Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " +
+                    throw new StorageException("Failed to save content at path ${path.getPath()}: validation error: " +
                             causeMessage,
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)
                 }
 
                 retry = false
-                return true;
+                return true
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 if (!retry) {
                     throw new StorageException("Failed to save content at path ${path}: content was modified", e,
@@ -280,7 +287,7 @@ class DbStorageService implements NamespacedStorage{
                     Thread.sleep(1000)
                 }
             }
-            return false;
+            return false
         }
         try{
             if(!saveStorage()){

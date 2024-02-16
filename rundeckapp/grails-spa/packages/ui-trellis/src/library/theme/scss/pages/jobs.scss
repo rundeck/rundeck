@@ -1,5 +1,4 @@
 #page_jobs {
-
   //   .expandComponentHolder{
   //     // margin-top: 15px;
   //   }
@@ -12,13 +11,11 @@
 }
 
 .job-display-tree {
-
   .sub_group {
-
     padding-left: 15px;
 
-    >.list-group>.jobslist>.list-group-item {
-      padding-left: 35px
+    > .list-group > .jobslist > .list-group-item {
+      padding-left: 35px;
     }
 
     .expandComponentHolder {
@@ -49,7 +46,7 @@
 
 #page_job_edit {
   i {
-    top: 2px
+    top: 2px;
   }
 
   textarea.code {
@@ -87,7 +84,6 @@
     height: 25px;
     background: #ddd;
   }
-
 
   /*** ***/
   div.wfctrlholder {
@@ -149,10 +145,10 @@
   }
 
   .opt-detail-ext {
-    position:relative;
+    position: relative;
     top: 2px;
     display: inline-block;
-    min-height: 17px
+    min-height: 17px;
   }
 
   .enforceSet {
@@ -167,7 +163,7 @@
   }
 
   .opt-desc {
-    overflow:hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 5px;
   }
@@ -204,7 +200,7 @@
     padding: 10px 4px;
   }
 
-  div.inputset>div {
+  div.inputset > div {
     clear: both;
   }
 
@@ -215,7 +211,7 @@
     display: block;
   }
 
-  div.inputset>div>.right {
+  div.inputset > div > .right {
     margin-left: 0.5em;
   }
 
@@ -262,7 +258,7 @@
   /**
   job edit form table
    */
-  table.jobeditform>tbody>tr>td:first-child {
+  table.jobeditform > tbody > tr > td:first-child {
     width: 120px;
   }
 

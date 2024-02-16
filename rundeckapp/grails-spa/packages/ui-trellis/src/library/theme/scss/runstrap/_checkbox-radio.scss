@@ -20,7 +20,7 @@
   left: 0;
   margin-left: -20px;
   border-radius: 3px;
-  opacity: .50;
+  opacity: 0.5;
   background-color: var(--input-checkbox);
   transition: opacity 0.2s linear;
 }
@@ -36,7 +36,6 @@
   margin-left: -20px;
   font-size: 16px;
   color: var(--white-color);
-
 }
 
 .checkbox input[type="checkbox"],
@@ -50,16 +49,15 @@
 }
 
 .checkbox input[type="checkbox"]:checked + label::after,
-.checkbox input[type="checkbox"]:not(:disabled):hover + label::after{
-  font-family: 'Font Awesome 5 Free';
+.checkbox input[type="checkbox"]:not(:disabled):hover + label::after {
+  font-family: "Font Awesome 5 Free";
   content: "\f00c";
   font-weight: 700;
 }
 
-.checkbox input[type="checkbox"]:checked + label::before{
+.checkbox input[type="checkbox"]:checked + label::before {
   opacity: 1;
 }
-
 
 .checkbox input[type="checkbox"]:disabled + label {
   color: #cfcfcf;
@@ -131,7 +129,7 @@
 }
 
 .radio label::before {
-  font-family: 'Font Awesome 5 Free';
+  font-family: "Font Awesome 5 Free";
   // content: "\f10c";
   content: "\f111";
   font-size: 22px;
@@ -142,21 +140,21 @@
   left: 0;
   top: -5px;
   color: var(--font-color);
-  opacity: .50;
+  opacity: 0.5;
   margin-left: -20px;
 }
 
-.radio input[type="radio"]:not(:disabled):hover + label::before{
-  font-family: 'Font Awesome 5 Free';
+.radio input[type="radio"]:not(:disabled):hover + label::before {
+  font-family: "Font Awesome 5 Free";
   content: "\f192";
   color: var(--font-color);
-  opacity: .50;
+  opacity: 0.5;
 }
 
 .radio label::after {
   display: inline-block;
   position: absolute;
-  font-family: 'Font Awesome 5 Free';
+  font-family: "Font Awesome 5 Free";
   content: "\f192";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

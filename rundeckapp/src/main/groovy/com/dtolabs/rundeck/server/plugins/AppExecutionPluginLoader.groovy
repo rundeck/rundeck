@@ -134,12 +134,14 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     }
 
     @Override
-    NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, String project)
+    NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, ExecutionContext context, INodeEntry node)
         throws ExecutionServiceException {
         Map<String, Object> config = new HashMap<>()
         if (item instanceof ConfiguredStepExecutionItem) {
             config = ((ConfiguredStepExecutionItem) item).stepConfiguration
         }
+
+        String project = context.getFrameworkProject()
 
         def hasProvider = pluginService.hasRegisteredProvider(item.nodeStepType, NodeStepExecutor)
         //app-level registered

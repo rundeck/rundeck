@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.selenium
 
 import org.rundeck.tests.functional.selenium.pages.EditNodesFilePage
 import org.rundeck.tests.functional.selenium.pages.EditNodesPage
-import org.rundeck.tests.functional.selenium.pages.ProjectListPage
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -10,13 +10,13 @@ import org.rundeck.util.container.SeleniumBase
 import java.util.stream.Collectors
 
 @SeleniumCoreTest
-class AceEditorSpec extends SeleniumBase{
+class AceEditorSpec extends SeleniumBase {
 
     private static def projectName = 'resourcesTest'
     private static def jsonFileIndex = 2
 
-    def setupSpec(){
-        setupProjectWithNodes(projectName, "/projects-import/resourcesTest.zip")
+    def setupSpec() {
+        setupProject(projectName, "/projects-import/resourcesTest.zip")
     }
 
     def "Edit json file resource model with indented text"(){
@@ -26,17 +26,18 @@ class AceEditorSpec extends SeleniumBase{
         // Asserts the JSON is indented.
 
         setup:
-        LoginPage loginPage = page LoginPage
-        EditNodesPage editNodesPage = page EditNodesPage
-        editNodesPage.setProject(projectName)
-        EditNodesFilePage editNodesFilePage = page EditNodesFilePage
-        editNodesFilePage.setProject(projectName)
-        editNodesFilePage.setIndex(jsonFileIndex)
+            LoginPage loginPage = page LoginPage
+            EditNodesPage editNodesPage = page EditNodesPage
+            editNodesPage.setProject(projectName)
+            EditNodesFilePage editNodesFilePage = page EditNodesFilePage
+            editNodesFilePage.setProject(projectName)
+            editNodesFilePage.setIndex(jsonFileIndex)
 
         when:
+
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        page(ProjectListPage)
+        page(HomePage)
         editNodesPage.go()
         editNodesFilePage.go()
         editNodesFilePage.waitForAceToRender()
@@ -45,8 +46,7 @@ class AceEditorSpec extends SeleniumBase{
                 .collect(Collectors.toList());
 
         then:
-        linesAsList.size() > 1
-
+            linesAsList.size() > 1
     }
 
 }

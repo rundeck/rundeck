@@ -2,22 +2,22 @@
   <div>
     <div class="col-xs-12">
       <div class="input-group input-group-lg">
-        <span class="input-group-addon" id="sizing-addon1">Choose a file</span>
+        <span id="sizing-addon1" class="input-group-addon">Choose a file</span>
 
         <span class="control-fileupload">
-          <span class="label">{{fileName}}</span>
+          <span class="label">{{ fileName }}</span>
           <input
-            class="form-control"
-            type="file"
             id="files"
             ref="files"
+            class="form-control"
+            type="file"
             multiple
-            v-on:change="handleFilesUploads()"
-          >
+            @change="handleFilesUploads()"
+          />
         </span>
 
         <span class="input-group-btn">
-          <button class="btn btn-cta" v-on:click="submitFiles()">Install</button>
+          <button class="btn btn-cta" @click="submitFiles()">Install</button>
         </span>
       </div>
       <!-- /input-group -->
@@ -25,10 +25,10 @@
   </div>
 </template>
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import { mapActions } from "vuex";
 import axios from "axios";
-import {client} from "../../../../library/modules/rundeckClient"
+import { client } from "../../../../library/modules/rundeckClient";
 export default defineComponent({
   name: "UploadPluginForm",
   computed: {
@@ -38,22 +38,22 @@ export default defineComponent({
       } else {
         return "";
       }
-    }
+    },
   },
   methods: {
-    ...mapActions('overlay', ['openOverlay', 'closeOverlay']),
+    ...mapActions("overlay", ["openOverlay", "closeOverlay"]),
     submitFiles() {
       // Initialize the form data and iteate over any
       // file sent over appending the files to the form data.
-      let formData = new FormData();
+      const formData = new FormData();
       for (let i = 0; i < this.files.length; i++) {
-        let file = this.files[i];
+        const file = this.files[i];
 
         formData.append("pluginFile", file);
       }
       this.openOverlay({
         loadingMessage: "Installing",
-        loadingSpinner: true
+        loadingSpinner: true,
       });
       //use axios instead of RundeckClient, to allow multipart form with file upload
       axios({
@@ -62,49 +62,56 @@ export default defineComponent({
           "x-rundeck-ajax": true,
           "Content-Type": "multipart/form-data",
           "X-RUNDECK-TOKEN-KEY": client.token,
-          "X-RUNDECK-TOKEN-URI": client.uri
+          "X-RUNDECK-TOKEN-URI": client.uri,
         },
         data: formData,
         url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
-        withCredentials: true
-      }).then(response => {
-        this.closeOverlay();
-        client.token = response.headers['x-rundeck-token-key'] || client.token
-        client.uri = response.headers['x-rundeck-token-uri'] || client.uri
-        if (response.data.err) {
+        withCredentials: true,
+      })
+        .then((response) => {
+          this.closeOverlay();
+          client.token =
+            response.headers["x-rundeck-token-key"] || client.token;
+          client.uri = response.headers["x-rundeck-token-uri"] || client.uri;
+          if (response.data.err) {
+            this.$alert({
+              title: "Error Uploading",
+              content: response.data.err,
+            });
+          } else {
+            this.$alert({
+              title: "Plugin Installed",
+              content: response.data.msg,
+            });
+          }
+        })
+        .catch((result) => {
+          this.closeOverlay();
+          let message = result.message;
+          if (
+            result.response &&
+            result.response.data &&
+            result.response.data.message
+          ) {
+            message = result.response.data.message;
+          }
           this.$alert({
             title: "Error Uploading",
-            content: response.data.err
+            content: message,
           });
-        } else {
-          this.$alert({
-            title: "Plugin Installed",
-            content: response.data.msg
-          });
-        }
-      }).catch(result=>{
-        this.closeOverlay();
-        let message=result.message
-        if(result.response && result.response.data && result.response.data.message){
-          message=result.response.data.message
-        }
-        this.$alert({
-          title: "Error Uploading",
-          content: message
         });
-      });
     },
     handleFilesUploads() {
       this.files = this.$refs.files.files;
-    }
+    },
   },
   data() {
     return {
-      files: ""
+      files: "",
     };
   },
-  created() {}
-})
+  created() {},
+});
 </script>
 <style lang="scss" scoped>
 /* input [type = file]
@@ -163,7 +170,8 @@ input[type="file"] {
     border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
     border-bottom-color: #b3b3b3;
     border-radius: 4px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
       0 1px 2px rgba(0, 0, 0, 0.05);
     transition: color 0.2s ease;
     content: "Browse";

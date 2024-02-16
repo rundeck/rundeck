@@ -1,7 +1,7 @@
 package org.rundeck.app.data.providers
 
 import org.rundeck.app.data.model.v1.pluginMeta.RdPluginMeta
-import org.rundeck.app.data.providers.v1.PluginMetaDataProvider
+import org.rundeck.app.data.providers.v1.pluginmeta.PluginMetaDataProvider
 import rundeck.PluginMeta
 
 class GormPluginMetaDataProvider implements PluginMetaDataProvider{

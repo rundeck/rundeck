@@ -144,7 +144,6 @@
 //     background-color:  var(--danger-color);
 // }
 
-
 /* ========================================================================
  * bootstrap-switch - v3.3.2
  * http://www.bootstrap-switch.org
@@ -186,8 +185,12 @@
   -ms-user-select: none;
   user-select: none;
   vertical-align: middle;
-  -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  -webkit-transition:
+    border-color ease-in-out 0.15s,
+    box-shadow ease-in-out 0.15s;
+  transition:
+    border-color ease-in-out 0.15s,
+    box-shadow ease-in-out 0.15s;
 }
 .bootstrap-switch .bootstrap-switch-container {
   display: inline-flex;
@@ -214,7 +217,6 @@
   line-height: 15px;
   -webkit-transition: 0.25s ease-out;
   transition: 0.25s ease-out;
-
 }
 .bootstrap-switch .bootstrap-switch-handle-on,
 .bootstrap-switch .bootstrap-switch-handle-off {
@@ -266,8 +268,10 @@
   position: relative;
   float: left;
   padding: 0;
-  background-color: #FFFFFF;
-  box-shadow: 0 1px 1px #FFFFFF inset, 0 1px 1px rgba(0, 0, 0, 0.25);
+  background-color: #ffffff;
+  box-shadow:
+    0 1px 1px #ffffff inset,
+    0 1px 1px rgba(0, 0, 0, 0.25);
 }
 .bootstrap-switch .bootstrap-switch-handle-on {
   border-bottom-left-radius: 3px;
@@ -276,8 +280,8 @@
 .bootstrap-switch .bootstrap-switch-handle-off {
   text-indent: 6px;
 }
-.bootstrap-switch input[type='radio'],
-.bootstrap-switch input[type='checkbox'] {
+.bootstrap-switch input[type="radio"],
+.bootstrap-switch input[type="checkbox"] {
   position: absolute !important;
   top: 0;
   left: 0;
@@ -285,8 +289,8 @@
   filter: alpha(opacity=0);
   z-index: -1;
 }
-.bootstrap-switch input[type='radio'].form-control,
-.bootstrap-switch input[type='checkbox'].form-control {
+.bootstrap-switch input[type="radio"].form-control,
+.bootstrap-switch input[type="checkbox"].form-control {
   height: auto;
 }
 .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-on,
@@ -361,51 +365,59 @@
 //   border-top-left-radius: 3px;
 // }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-container{
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-container {
   margin-left: -2px !important;
 }
 
-.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-container{
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-container {
   margin-left: -37px !important;
 }
 
-.bootstrap-switch.bootstrap-switch-on:hover .bootstrap-switch-label{
+.bootstrap-switch.bootstrap-switch-on:hover .bootstrap-switch-label {
   width: 26px !important;
   margin: 2px -15px;
 }
 
-.bootstrap-switch.bootstrap-switch-off:hover .bootstrap-switch-label{
+.bootstrap-switch.bootstrap-switch-off:hover .bootstrap-switch-label {
   width: 26px !important;
   margin: 2px -15px -13px -11px;
 }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-handle-off{
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-handle-off {
   background-color: var(--default-color);
 }
 
-.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-handle-on{
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-handle-on {
   background-color: var(--medium-gray);
 }
 
-
-
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-danger ~ .bootstrap-switch-default{
+.bootstrap-switch.bootstrap-switch-on
+  .bootstrap-switch-danger
+  ~ .bootstrap-switch-default {
   background-color: var(--color-red);
 }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-warning ~ .bootstrap-switch-default{
+.bootstrap-switch.bootstrap-switch-on
+  .bootstrap-switch-warning
+  ~ .bootstrap-switch-default {
   background-color: var(--color-orange);
 }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-success ~ .bootstrap-switch-default{
+.bootstrap-switch.bootstrap-switch-on
+  .bootstrap-switch-success
+  ~ .bootstrap-switch-default {
   background-color: var(--color-green);
 }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-primary ~ .bootstrap-switch-default{
+.bootstrap-switch.bootstrap-switch-on
+  .bootstrap-switch-primary
+  ~ .bootstrap-switch-default {
   background-color: var(--primary-color);
 }
 
-.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-info ~ .bootstrap-switch-default{
+.bootstrap-switch.bootstrap-switch-on
+  .bootstrap-switch-info
+  ~ .bootstrap-switch-default {
   background-color: var(--color-blue);
 }
 
@@ -413,6 +425,6 @@
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-primary,
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-info,
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-warning,
-.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-success{
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-success {
   background-color: var(--medium-gray);
 }

@@ -4,7 +4,6 @@
 // Forms
 // --------------------------------------------------
 
-
 // Normalize non-controls
 //
 // Restyle and baseline non-control form elements.
@@ -37,7 +36,6 @@ label {
   margin-bottom: 5px;
   font-weight: 700;
 }
-
 
 // Normalize form controls
 //
@@ -109,7 +107,6 @@ output {
   color: $input-color;
 }
 
-
 // Common form controls
 //
 // Shared size and type resets for form controls. Apply `.form-control` to any
@@ -144,8 +141,11 @@ output {
   background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
   border: 1px solid $input-border;
   border-radius: $input-border-radius; // Note: This has no effect on <select>s in some browsers, due to the limited stylability of <select>s in CSS.
-  @include box-shadow(inset 0 1px 1px rgba(0, 0, 0, .075));
-  @include transition(border-color ease-in-out .15s, box-shadow ease-in-out .15s);
+  @include box-shadow(inset 0 1px 1px rgba(0, 0, 0, 0.075));
+  @include transition(
+    border-color ease-in-out 0.15s,
+    box-shadow ease-in-out 0.15s
+  );
 
   // Customize the `:focus` state to imitate native WebKit styles.
   @include form-control-focus;
@@ -184,7 +184,6 @@ textarea.form-control {
   height: auto;
 }
 
-
 // Special styles for iOS temporal inputs
 //
 // In Mobile Safari, setting `display: block` on temporal inputs causes the
@@ -215,7 +214,6 @@ textarea.form-control {
   }
 }
 
-
 // Form groups
 //
 // Designed to help with the organization and spacing of vertical forms. For
@@ -224,7 +222,6 @@ textarea.form-control {
 .form-group {
   margin-bottom: $form-group-margin-bottom;
 }
-
 
 // Checkboxes and radios
 //
@@ -290,7 +287,6 @@ textarea.form-control {
   margin-left: 10px; // space out consecutive inline controls
 }
 
-
 // Static form control text
 //
 // Apply class to a `p` element to make any string of text align with labels in
@@ -311,7 +307,6 @@ textarea.form-control {
   }
 }
 
-
 // Form control sizing
 //
 // Build on `.form-control` with modifier classes to decrease or increase the
@@ -320,7 +315,15 @@ textarea.form-control {
 // The `.form-group-* form-control` variations are sadly duplicated to avoid the
 // issue documented in https://github.com/twbs/bootstrap/issues/15074.
 
-@include input-size('.input-sm', $input-height-small, $padding-small-vertical, $padding-small-horizontal, $font-size-small, $line-height-small, $input-border-radius-small);
+@include input-size(
+  ".input-sm",
+  $input-height-small,
+  $padding-small-vertical,
+  $padding-small-horizontal,
+  $font-size-small,
+  $line-height-small,
+  $input-border-radius-small
+);
 .form-group-sm {
   .form-control {
     height: $input-height-small;
@@ -346,7 +349,15 @@ textarea.form-control {
   }
 }
 
-@include input-size('.input-lg', $input-height-large, $padding-large-vertical, $padding-large-horizontal, $font-size-large, $line-height-large, $input-border-radius-large);
+@include input-size(
+  ".input-lg",
+  $input-height-large,
+  $padding-large-vertical,
+  $padding-large-horizontal,
+  $font-size-large,
+  $line-height-large,
+  $input-border-radius-large
+);
 .form-group-lg {
   .form-control {
     height: $input-height-large;
@@ -371,7 +382,6 @@ textarea.form-control {
     line-height: $line-height-large;
   }
 }
-
 
 // Form control feedback states
 //
@@ -416,18 +426,29 @@ textarea.form-control {
 
 // Feedback states
 .has-success {
-  @include form-control-validation($state-success-text, $state-success-text, $state-success-bg);
+  @include form-control-validation(
+    $state-success-text,
+    $state-success-text,
+    $state-success-bg
+  );
 }
 .has-warning {
-  @include form-control-validation($state-warning-text, $state-warning-text, $state-warning-bg);
+  @include form-control-validation(
+    $state-warning-text,
+    $state-warning-text,
+    $state-warning-bg
+  );
 }
 .has-error {
-  @include form-control-validation($state-danger-text, $state-danger-text, $state-danger-bg);
+  @include form-control-validation(
+    $state-danger-text,
+    $state-danger-text,
+    $state-danger-bg
+  );
 }
 
 // Reposition feedback icon if input has visible label above
 .has-feedback label {
-
   & ~ .form-control-feedback {
     top: ($line-height-computed + 5); // Height of the `label` and its margin
   }
@@ -435,7 +456,6 @@ textarea.form-control {
     top: 0;
   }
 }
-
 
 // Help text
 //
@@ -448,7 +468,6 @@ textarea.form-control {
   margin-bottom: 10px;
   // color: var(--text-muted-color); // lighten the text some for contrast
 }
-
 
 // Inline forms
 //
@@ -463,7 +482,6 @@ textarea.form-control {
 
 // [converter] extracted from `.form-inline` for libsass compatibility
 @mixin form-inline {
-
   // Kick in the inline
   @media (min-width: $screen-sm-min) {
     // Inline-block all the things for "inline"
@@ -536,15 +554,12 @@ textarea.form-control {
   @include form-inline;
 }
 
-
-
 // Horizontal forms
 //
 // Horizontal forms are built on grid classes and allow you to create forms with
 // labels on the left and inputs on the right.
 
 .form-horizontal {
-
   // Consistent vertical alignment of radios and checkboxes
   //
   // Labels also get some reset styles, but that is scoped to a media query below.
@@ -572,7 +587,9 @@ textarea.form-control {
   // labels on narrow viewports stack the same as a default form example.
   @media (min-width: $screen-sm-min) {
     .control-label {
-      padding-top: ($padding-base-vertical + 1); // Default padding plus a border
+      padding-top: (
+        $padding-base-vertical + 1
+      ); // Default padding plus a border
       margin-bottom: 0;
       text-align: right;
     }
@@ -608,46 +625,45 @@ textarea.form-control {
   }
 }
 
-form{
-
-    label{
-        &.radio,
-        &.checkbox{
-            font-size: $font-size-base;
-            text-transform: none;
-            cursor: pointer;
-        }
+form {
+  label {
+    &.radio,
+    &.checkbox {
+      font-size: $font-size-base;
+      text-transform: none;
+      cursor: pointer;
     }
+  }
 }
-.form-group{
-    position: relative;
+.form-group {
+  position: relative;
 }
-.form-horizontal{
-    .checkbox,
-    .radio{
-        padding-top: 0;
+.form-horizontal {
+  .checkbox,
+  .radio {
+    padding-top: 0;
 
-        &:first-child,
-        &.checkbox-inline,
-        &.radio-inline{
-            margin-top: 13px;
-        }
+    &:first-child,
+    &.checkbox-inline,
+    &.radio-inline {
+      margin-top: 13px;
     }
+  }
 }
 
-star{
-    color: var(--danger-color);
-    padding-left: 3px;
+star {
+  color: var(--danger-color);
+  padding-left: 3px;
 }
 
-@media (min-width: $screen-md-min){
-    .form-horizontal{
-        .control-label{
-            padding-top: 12px !important;
-        }
-        code{
-            margin-top: 8px;
-            display: inline-block;
-        }
+@media (min-width: $screen-md-min) {
+  .form-horizontal {
+    .control-label {
+      padding-top: 12px !important;
     }
+    code {
+      margin-top: 8px;
+      display: inline-block;
+    }
+  }
 }

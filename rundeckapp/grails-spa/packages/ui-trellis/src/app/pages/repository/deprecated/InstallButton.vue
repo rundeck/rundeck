@@ -2,19 +2,25 @@
   <div class="row">
     <div class="col-xs-12 col-sm-8">
       <span v-if="isInstalled || installed">
-        <span @click="uninstall" class="btn btn-sm btn-danger">Uninstall</span>
+        <span class="btn btn-sm btn-danger" @click="uninstall">Uninstall</span>
         <span
-          @click="install"
-          class="btn btn-sm btn-warning"
           v-if="updateAvailable"
-        >Update Available</span>
+          class="btn btn-sm btn-warning"
+          @click="install"
+          >Update Available</span
+        >
       </span>
       <span v-else>
-        <span @click="install" class="btn btn-sm btn-info">Install</span>
+        <span class="btn btn-sm btn-info" @click="install">Install</span>
       </span>
     </div>
     <div class="col-xs-12 col-sm-4">
-      <a :href="pluginUrl" target="_blank" class="btn btn-sm btn-default pull-right">Docs</a>
+      <a
+        :href="pluginUrl"
+        target="_blank"
+        class="btn btn-sm btn-default pull-right"
+        >Docs</a
+      >
     </div>
   </div>
 </template>
@@ -26,7 +32,7 @@ export default {
   props: ["plugin", "installedPlugins", "installedPluginIds", "repo"],
   data() {
     return {
-      installed: false
+      installed: false,
     };
   },
   computed: {
@@ -35,15 +41,15 @@ export default {
     },
     updateAvailable() {
       if (this.isInstalled) {
-        let plugin = _.find(this.installedPlugins, {
-          artifactId: this.plugin.object_id
+        const plugin = _.find(this.installedPlugins, {
+          artifactId: this.plugin.object_id,
         });
 
-        let installedPluginVersion = parseInt(
-          plugin.version.replace(/\D/g, "")
+        const installedPluginVersion = parseInt(
+          plugin.version.replace(/\D/g, ""),
         );
-        let remotePluginVersion = parseInt(
-          this.plugin.current_version.replace(/\D/g, "")
+        const remotePluginVersion = parseInt(
+          this.plugin.current_version.replace(/\D/g, ""),
         );
 
         if (remotePluginVersion > installedPluginVersion) {
@@ -62,7 +68,7 @@ export default {
       } else {
         return this.plugin.source_link;
       }
-    }
+    },
   },
   methods: {
     install() {
@@ -71,15 +77,13 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}repository/${this.repo}/install/${
-          this.plugin.object_id
-        }`,
-        withCredentials: true
+        url: `${rdBase}repository/${this.repo}/install/${this.plugin.object_id}`,
+        withCredentials: true,
       })
-        .then(response => {
+        .then((response) => {
           this.installed = true;
         })
-        .catch(error => {
+        .catch((error) => {
           this.errors = error.response.data;
         });
     },
@@ -90,19 +94,17 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}api/${apiVer}/plugins/uninstall/${
-          this.plugin.object_id
-        }`,
-        withCredentials: true
+        url: `${rdBase}api/${apiVer}/plugins/uninstall/${this.plugin.object_id}`,
+        withCredentials: true,
       })
-        .then(response => {
+        .then((response) => {
           this.installed = false;
         })
-        .catch(error => {
+        .catch((error) => {
           this.errors = error.response.data;
         });
-    }
-  }
+    },
+  },
 };
 </script>
 <style lang="scss" scoped>

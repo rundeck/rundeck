@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.net.api.RundeckClient
 import com.dtolabs.rundeck.net.model.ErrorDetail
 import com.dtolabs.rundeck.net.model.ErrorResponse
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -61,11 +62,10 @@ import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import org.rundeck.app.data.model.v1.report.dto.SaveReportRequestImpl
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import rundeck.data.report.SaveReportRequestImpl
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
-import org.rundeck.client.RundeckClient
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -73,11 +73,17 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+
 import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.asyncimport.AsyncImportEvents
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import rundeck.services.logging.ProducedExecutionFile
 import webhooks.component.project.WebhooksProjectComponent
 
@@ -92,9 +98,7 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import org.rundeck.client.util.Client
-import org.rundeck.client.api.RundeckApi
-import org.rundeck.client.api.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import okhttp3.RequestBody
 import retrofit2.Response
 
@@ -105,6 +109,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
+    AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
     FileUploadService fileUploadService
@@ -680,7 +685,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ) throws ProjectServiceException {
         File file = exportProjectToFile(project, framework, listener, archiveParams.toArchiveOptions(), authContext)
 
-        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, RundeckClient.builder().baseUrl(archiveParams.url).tokenAuth(archiveParams.apitoken).apiVersion(39).build())
+        ProjectImportStatus ret = importArchiveToInstance(file, archiveParams, new RundeckClient(archiveParams.url,archiveParams.apitoken))
 
         ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
                 executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
@@ -709,12 +714,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param exportArchiveParams metadata of the archive to export from this server
      * @return an import status object where the import progress of the destiny server is updated
      */
-    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, Client<RundeckApi> rundeckClient) throws RuntimeException {
+    static ProjectImportStatus importArchiveToInstance(File archiveToExport, ProjectArchiveParams exportArchiveParams, RundeckClient rundeckClient) throws RuntimeException {
         ProjectImportStatus response = new ProjectImportStatus()
         response.successful = true
         boolean importWebhookOpt = exportArchiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME]
 
-        Response<ProjectImportStatus> status = rundeckClient.getService().importProjectArchive(exportArchiveParams.getTargetproject(),
+        Response<ProjectImportStatus> status = rundeckClient.importProjectArchive(
+                exportArchiveParams.getTargetproject(),
                 exportArchiveParams.preserveuuid?'preserve':'remove',
                 exportArchiveParams.exportExecutions,
                 exportArchiveParams.exportConfigs,
@@ -724,8 +730,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importWebhookOpt && !Boolean.getBoolean(exportArchiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]['inludeAuthTokens']),
                 exportArchiveParams.exportConfigs,
                 prependStringToKeysInMap('importComponents', exportArchiveParams.exportComponents),
-                RequestBody.create(archiveToExport, Client.MEDIA_TYPE_ZIP)
-        ).execute()
+                RequestBody.create(archiveToExport, RundeckClient.MEDIA_TYPE_ZIP)
+        )
 
         if(status.isSuccessful()){
             if(null != status.body()) {
@@ -1949,6 +1955,145 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             notify('projectDeleteFailed', project.name)
         }
         return result
+    }
+
+    /**
+     * Creates the status file in db storage, the status file is the document that will have all the information
+     * about what is going on in the whole import operation. Will be requested in 'apiProjectAsyncImportStatus'
+     * endpoint.
+     *
+     * @param projectName
+     * @return true/false if its created or not
+     */
+    Boolean createAsyncImportStatusFile(String projectName){
+        try{
+            return asyncImportService.createStatusFile(projectName)
+        }catch(Exception e){
+            projectLogger.error("There was an unexpected error during async project import status file creation", e)
+            throw new AsyncImportException("There was an unexpected error during async project import status file creation", e)
+        }
+    }
+
+    /**
+     * Gets the info of a existing status file in db, if there isn't a status file.
+     *
+     * @param projectName
+     * @return
+     */
+    AsyncImportStatusDTO getAsyncImportStatusFileForProject(String projectName){
+        try{
+            if( !asyncImportService.statusFileExists(projectName) ){
+                throw new AsyncImportException("No status file in DB for project: ${projectName}")
+            }
+            def dto = asyncImportService.getAsyncImportStatusForProject(projectName)
+            return dto
+        }catch(Exception e){
+            projectLogger.error("Unexpected error while getting async project import status file in db", e)
+            throw new AsyncImportException("Unexpected error while getting async project import status file in db", e)
+        }
+    }
+
+    /**
+     * Starts async import milestones 1 and 2.
+     *
+     * @param projectName
+     * @param authContext
+     * @param project
+     * @param milestoneNumber
+     */
+    void beginAsyncImportMilestone(
+            final String projectName,
+            final AuthContext authContext,
+            final IRundeckProject project,
+            final int asyncImportStep
+    ){
+        switch (asyncImportStep){
+            case AsyncImportMilestone.M2_DISTRIBUTION.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_2, projectName, authContext, project)
+                break
+            case AsyncImportMilestone.M3_IMPORTING.milestoneNumber:
+                notify(AsyncImportEvents.ASYNC_IMPORT_EVENT_MILESTONE_3, projectName, authContext, project)
+                break
+            default:
+                throw new AsyncImportException("Invalid milestone number: ${asyncImportStep} please, provide a valid async import milestone number.")
+        }
+    }
+
+    /**
+     * Handles project api import, returns the import result.
+     *
+     * Based on the params, the method will handle async or regular import.
+     *
+     * @param framework - Rundeck framework from Framework service
+     * @param userAndRolesAuthContext - Auth context from controller
+     * @param project - Rundeck project
+     * @param is - Stream made with uploaded project
+     * @param params - Archive params passed in request
+     */
+    def handleApiImport(
+            IFramework framework,
+            UserAndRolesAuthContext userAndRolesAuthContext,
+            IRundeckProject project,
+            InputStream is,
+            ProjectArchiveParams params
+    ) {
+        try{
+            if (params.asyncImport) {
+                // Creates the async import status file
+                if( !createAsyncImportStatusFile(project.name) ){
+                    throw new AsyncImportException("Error creating status file.")
+                }
+                // Start the process synchronously
+                return asyncImportService.startAsyncImport(
+                        project.name,
+                        userAndRolesAuthContext,
+                        project,
+                        is,
+                        params
+                )
+            }else{
+                return importToProject(
+                        project,
+                        framework,
+                        userAndRolesAuthContext,
+                        is,
+                        params
+                )
+            }
+        }catch(AsyncImportException e){
+            def badResult = [success: false, importerErrors: [async_importer_errors: e.message]]
+            return badResult
+        }
+    }
+
+    /**
+     * Checks if an async import status operation is not complete for given project
+     *
+     * @param projectName
+     * @return
+     */
+    boolean isIncompleteAsyncImportForProject(String projectName){
+        def incomplete = true
+        try{
+            def statusFileContent = asyncImportService.getAsyncImportStatusForProject(projectName)
+            if (statusFileContent.milestoneNumber == AsyncImportMilestone.ASYNC_IMPORT_COMPLETED.milestoneNumber) {
+                incomplete = false
+            }
+        }catch (Exception e){
+            throw new AsyncImportException("There was an error while retrieving import status information.", e)
+        }
+        return incomplete
+    }
+
+    /**
+     * Restart a complete async import operation for given project.
+     *
+     * @param projectName
+     * @return
+     */
+    boolean restartAsyncImport(String projectName) {
+        projectLogger.info("Restarting async project import for project: ${projectName}")
+        return asyncImportService.removeAsyncImportStatusFile(projectName)
     }
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {

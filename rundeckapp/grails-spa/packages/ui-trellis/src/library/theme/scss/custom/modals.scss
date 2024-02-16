@@ -13,9 +13,8 @@
   }
 }
 
-@media only screen and (max-width:992px) {
-
-  // An issue exists with how our modals are 
+@media only screen and (max-width: 992px) {
+  // An issue exists with how our modals are
   // created deeply inside content areas.
   // As such, the backdrop can appear on top
   // of the .modal-dialog

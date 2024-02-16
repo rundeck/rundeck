@@ -1,29 +1,34 @@
 <template>
-  <div class="execution-log__node-chunk" v-if="entryOutputs && entryOutputs.length > 0">
-    <DynamicScroller :items="entryOutputs"
-                     :min-item-size="2"
-                     :key="nodeChunkKey"
-                     class="scroller execution-log__chunk"
-                     key-field="lineNumber"
-                     ref="scroller"
-
+  <div
+    v-if="entryOutputs && entryOutputs.length > 0"
+    class="execution-log__node-chunk"
+  >
+    <DynamicScroller
+      :key="nodeChunkKey"
+      ref="scroller"
+      :items="entryOutputs"
+      :min-item-size="2"
+      class="scroller execution-log__chunk"
+      key-field="lineNumber"
     >
-      <template v-slot="{ item, index, active}">
-        <DynamicScrollerItem :item="item"
-                             :data-index="index"
-                             :active="active"
-                             :size-dependencies="[item.log, item.logHtml]"
-                             :emit-resize=emitResize
-                             @resize="scrollToLine()"
+      <template #default="{ item, index, active }">
+        <DynamicScrollerItem
+          :item="item"
+          :data-index="index"
+          :active="active"
+          :size-dependencies="[item.log, item.logHtml]"
+          :emit-resize="emitResize"
+          @resize="scrollToLine()"
         >
-          <LogEntryFlex :eventBus="eventBus"
-                        :key="index"
-                        :title="entryTitle(item)"
-                        :selected="selectedLine === (index + 1)"
-                        :config="opts"
-                        :prevEntry="(index>0) ? entryOutputs[index - 1] : null"
-                        :logEntry="item"
-                        @line-select="onSelectLine"
+          <LogEntryFlex
+            :key="index"
+            :event-bus="eventBus"
+            :title="entryTitle(item)"
+            :selected="selectedLine === index + 1"
+            :config="opts"
+            :prev-entry="index > 0 ? entryOutputs[index - 1] : null"
+            :log-entry="item"
+            @line-select="onSelectLine"
           />
         </DynamicScrollerItem>
       </template>
@@ -32,13 +37,13 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
-import type {PropType} from 'vue'
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
-import {ExecutionOutputEntry} from "../../stores/ExecutionOutput";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
+import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
+import { ExecutionOutputEntry } from "../../stores/ExecutionOutput";
 import LogEntryFlex from "./logEntryFlex.vue";
-import {EventBus} from "../../utilities/vueEventBus";
-import {LogBuilder} from "./logBuilder";
+import { EventBus } from "../../utilities/vueEventBus";
+import { LogBuilder } from "./logBuilder";
 
 export default defineComponent({
   name: "LogNodeChunk",
@@ -58,39 +63,39 @@ export default defineComponent({
     },
     node: {
       type: String,
-      default: ''
+      default: "",
     },
     stepCtx: {
       type: String,
-      required: false
+      required: false,
     },
     nodeIcon: {
       type: Boolean,
-      required: false
+      required: false,
     },
     maxLine: {
       type: Number,
-      default: 2000
+      default: 2000,
     },
     command: {
       type: Boolean,
-      default: false
+      default: false,
     },
     time: {
       type: Boolean,
-      default: false
+      default: false,
     },
     gutter: {
       type: Boolean,
-      default: false
+      default: false,
     },
     lineWrap: {
       type: Boolean,
-      default: false
+      default: false,
     },
     entries: {
       type: Array as PropType<ExecutionOutputEntry[]>,
-      required: false
+      required: false,
     },
     jumpToLine: {
       type: Number,
@@ -105,7 +110,12 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ['line-select', 'jumped'],
+  emits: ["line-select", "jumped"],
+  data() {
+    return {
+      emitResize: true as boolean,
+    };
+  },
   computed: {
     opts() {
       return {
@@ -115,56 +125,67 @@ export default defineComponent({
         nodeIcon: this.nodeIcon,
         maxLines: 20000,
         command: {
-          visible: this.command
+          visible: this.command,
         },
         time: {
-          visible: this.time
+          visible: this.time,
         },
         gutter: {
-          visible: this.gutter
+          visible: this.gutter,
         },
         content: {
-          lineWrap: this.lineWrap
-        }
-      }
+          lineWrap: this.lineWrap,
+        },
+      };
     },
     entryOutputs() {
       return this.entries.map((entry, index) => {
-        return this.buildEntry(entry, index)
-      })
+        return this.buildEntry(entry, index);
+      });
     },
     nodeChunkKey() {
-      return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`
+      return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`;
     },
   },
-  data() {
-    return {
-      emitResize:true as boolean
+  mounted() {
+    if (this.jumpToLine && !this.jumped) {
+      this.$emit("line-select", this.jumpToLine);
+      this.$emit("jumped");
     }
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
-      return `#${newEntry.lineNumber} ${newEntry.absoluteTime || newEntry.time} ${this.entryPath(newEntry)}`
+      return `#${newEntry.lineNumber} ${newEntry.absoluteTime || newEntry.time} ${this.entryPath(newEntry)}`;
     },
     entryPath(newEntry: ExecutionOutputEntry) {
-      if (!newEntry.renderedStep) { return '' }
-      const stepString = newEntry.renderedStep.map( s => {
-        if (!s) { return '..' }
-        return `${s.stepNumber}${s.label}`
-      })
-      return stepString.join(' / ')
+      if (!newEntry.renderedStep) {
+        return "";
+      }
+      const stepString = newEntry.renderedStep.map((s) => {
+        if (!s) {
+          return "..";
+        }
+        return `${s.stepNumber}${s.label}`;
+      });
+      return stepString.join(" / ");
     },
     entryStepLabel(newEntry: ExecutionOutputEntry) {
-      if (!newEntry.renderedStep) { return '' }
+      if (!newEntry.renderedStep) {
+        return "";
+      }
 
-      const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
-      return lastStep ? `${lastStep.stepNumber}${lastStep.label}` : newEntry.stepctx
+      const lastStep = newEntry.renderedStep[newEntry.renderedStep.length - 1];
+      return lastStep
+        ? `${lastStep.stepNumber}${lastStep.label}`
+        : newEntry.stepctx;
     },
     entryStepType(newEntry: ExecutionOutputEntry) {
-      if (!newEntry.renderedStep) { return '' }
+      if (!newEntry.renderedStep) {
+        return "";
+      }
 
-      const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
-      return lastStep ? lastStep.type : ''
+      const lastStep = newEntry.renderedStep[newEntry.renderedStep.length - 1];
+      return lastStep ? lastStep.type : "";
     },
     buildEntry(entry, index) {
       const newEntry: ExecutionOutputEntry = {
@@ -180,20 +201,20 @@ export default defineComponent({
         stepType: this.entryStepType(entry),
         lineNumber: index + 1,
         node: entry.node,
-        selected: this.selectedLine === (index + 1),
+        selected: this.selectedLine === index + 1,
       };
-      return newEntry
+      return newEntry;
     },
     onSelectLine(index: number) {
-      this.$emit('line-select', index)
+      this.$emit("line-select", index);
     },
     scrollToLine() {
       if (this.follow) {
-        this.$refs.scroller.scrollToBottom()
+        this.$refs.scroller.scrollToBottom();
       }
     },
   },
-})
+});
 </script>
 
 <style scoped>

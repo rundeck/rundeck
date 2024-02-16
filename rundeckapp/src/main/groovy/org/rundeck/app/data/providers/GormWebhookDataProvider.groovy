@@ -5,7 +5,7 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
-import org.rundeck.app.data.providers.v1.WebhookDataProvider
+import org.rundeck.app.data.providers.v1.webhook.WebhookDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource

@@ -1,33 +1,31 @@
 {
-    "compilerOptions": {
-        "baseUrl": ".",
-        "strict": true,
-        "moduleResolution": "node",
-        "target": "esnext",
-        "experimentalDecorators": true,
-        "esModuleInterop": true,
-        "declaration": true,
-        "sourceMap": true,
-        "jsx": "preserve",
-        "allowSyntheticDefaultImports": true,
-        "skipLibCheck": true,
-        "types": [
-            "webpack-env"
-        ],
-        "paths": {
-            "react": [".sink.d.ts"]
-        }
-    },
-    "include": [
-        "src/library/**/*.js",
-        "src/library/**/*.ts",
-        "src/library/**/*.tsx",
-        "src/library/**/*.vue",
-    ],
-    "exclude": [
-        "./src/app",
-        "**/*.stories.ts",
-        "**/*.stories.tsx",
-        "node_modules/**/*"
-    ]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "esnext",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "sourceMap": true,
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "types": ["webpack-env"],
+    "paths": {
+      "react": [".sink.d.ts"]
+    }
+  },
+  "include": [
+    "src/library/**/*.js",
+    "src/library/**/*.ts",
+    "src/library/**/*.tsx",
+    "src/library/**/*.vue"
+  ],
+  "exclude": [
+    "./src/app",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "node_modules/**/*"
+  ]
 }

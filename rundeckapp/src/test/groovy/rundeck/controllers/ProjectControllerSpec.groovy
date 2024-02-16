@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.AppACLContext
@@ -51,6 +50,10 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.asyncimport.AsyncImportException
+import rundeck.services.asyncimport.AsyncImportMilestone
+import rundeck.services.asyncimport.AsyncImportService
+import rundeck.services.asyncimport.AsyncImportStatusDTO
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -1720,12 +1723,16 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 0 * _(*_)
             }
             controller.projectService=Mock(ProjectService){
-                1*importToProject(_,_,_,_, {
-                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
-                }
-                ) >> [success: false, importerErrors: ['err1', 'err2']]
-
+//                **Deprecated**
+//                1*importToProject(_,_,_,_, {
+//                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
+//                }
+//                ) >> [success: false, importerErrors: ['err1', 'err2']]
+                handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: ['err1', 'err2']]
                 0 * _(*_)
+            }
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
             }
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
@@ -2250,6 +2257,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             def project = Mock(IRundeckProject)
             setupGetResource(project)
             controller.projectService = Mock(ProjectService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             request.content = 'test'.bytes
             params.importWebhooks='true'
             params.whkRegenAuthTokens='true'
@@ -2261,10 +2271,154 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
             0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'json') >> 'json'
             1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
-            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(project,_,_,_,{ ProjectArchiveImportRequest req->
+            1 * controller.projectService.handleApiImport(_,_,project,_,{ ProjectArchiveImportRequest req->
                 req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
                 req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
             }) >> [success:true]
+    }
+
+    def "import via api with async import flag true"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+            aparams.asyncImport = true
+            aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 34
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService)
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: true]
+    }
+
+    def "import via api with async import flag true return handle API custom errors"(){
+        given:
+
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        def project = Mock(IRundeckProject)
+        setupGetResource(project)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> false
+        }
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+        1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+        1 * controller.projectService.handleApiImport(_,_,_,_,_) >> [success: false, importerErrors: [async_importer_errors: "a message"]]
+        response.json.other_errors == [async_importer_errors: "a message"]
+    }
+
+    def "Call async import with existent operation in progress"(){
+        given:
+        def aparams = new ProjectArchiveParams()
+        aparams.asyncImport = true
+        aparams.importExecutions = true
+        request.method = 'PUT'
+        request.api_version = 40
+        params.project = 'test'
+        controller.asyncImportService = Mock(AsyncImportService){
+            statusFileExists(_) >> true
+        }
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.projectService = Mock(ProjectService){
+            isIncompleteAsyncImportForProject(_) >> true
+        }
+        request.content = 'test'.bytes
+        params.importWebhooks='true'
+        params.whkRegenAuthTokens='true'
+
+        when:
+        controller.apiProjectImport(aparams)
+
+        then:
+        0 * controller.projectService.handleApiImport(_,_,_,_,_)
+    }
+
+    def "async import status endpoint"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        def dto = new AsyncImportStatusDTO(projectName, AsyncImportMilestone.M1_CREATED.milestoneNumber).with {
+            it.lastUpdate = 'This is a test'
+            it.lastUpdated = new Date()
+            it.errors = null
+            return it
+        }
+        controller.projectService = Mock(ProjectService){
+            it.getAsyncImportStatusFileForProject(projectName) >> dto
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        response.status == 200
+        response.json.lastUpdate == dto.lastUpdate
+        response.json.lastUpdated == dto.lastUpdated
+        response.json.errors == 'No errors.'
+    }
+
+    def "async import status requested and no status file is found in db"(){
+        given:
+        def projectName = 'test'
+        request.method = 'GET'
+        request.api_version = 40
+        response.format='json'
+        params.project = projectName
+        controller.apiService = Mock(ApiService)
+        controller.projectService = Mock(ProjectService){
+            1 * it.getAsyncImportStatusFileForProject(projectName) >> { throw new AsyncImportException("Errors") }
+        }
+
+        when:
+        controller.apiProjectAsyncImportStatus()
+
+        then:
+        noExceptionThrown()
+        1 * controller.apiService.renderErrorFormat(_,['status':500, 'code':'api.error.async.import.status.file.retrieval.error', 'args':['Errors']])>>{it[0].status=it[1].status}
     }
 
     def "api import component options"() {
@@ -2274,6 +2428,9 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             params.project = 'test'
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService = Mock(ProjectService)
             def auth = Mock(UserAndRolesAuthContext)
             def project = Mock(IRundeckProject)
@@ -2291,8 +2448,10 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
             0 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework)
-            1 * controller.projectService.importToProject(
-                project, _, auth, _, { ProjectArchiveImportRequest req ->
+//        **Deprecated**
+//            1 * controller.projectService.importToProject(
+            1 * controller.projectService.handleApiImport(
+                _, auth, project, _, { ProjectArchiveImportRequest req ->
                 req.importComponents.mycomponent
                 req.importOpts.mycomponent?.someoption == 'avalue'
             } ) >> [success: true]

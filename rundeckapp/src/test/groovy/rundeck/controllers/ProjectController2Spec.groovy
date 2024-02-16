@@ -18,10 +18,12 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -52,6 +54,8 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
+import rundeck.services.ConfigurationService
+import rundeck.services.asyncimport.AsyncImportService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1108,6 +1112,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
     void "apiProjectConfigKeyGet #format success"() {
         given:
         controller.apiService=Mock(ApiService)
+        controller.featureService = Mock(FeatureService)
         controller.frameworkService =Mock(FrameworkService){
             _*loadProjectProperties(_)>>["prop1": "value1", "prop2": "value2"]
         }
@@ -1144,6 +1149,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.apiService=Mock(ApiService)
+            controller.featureService = Mock(FeatureService)
             controller.frameworkService =Mock(FrameworkService){
                 updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
                 getFrameworkProject('test1')>>Mock(IRundeckProject){
@@ -1216,7 +1222,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                     'svcName': ["provider1": ["prop1": inputValue, "prop2": "value2"]]
                 ]
             }
-
+            controller.featureService = Mock(FeatureService){
+                featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)>>enableValidation
+            }
 
             Description desc = new AbstractBaseDescription() {
                 public String getName() {
@@ -1285,7 +1293,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectConfigKeyPut()
         then:
             with(controller.frameworkService) {
-                1 * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
+                (enableValidation ? 1 : 0) * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
             }
             with(controller.apiService){
                 (valid ? 0 : 1) * renderErrorFormat(_, [
@@ -1296,9 +1304,10 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             }
 
         where:
-        inputValue     | valid | reportError
-        "value1"       | true  | null
-        "invalidValue" | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        inputValue     | enableValidation   | valid | reportError
+        "value1"       | true               | true  | null
+        "invalidValue" | true               | false | Validator.buildReport().error("project.plugin.provider1.prop1", "Invalid value for prop1").build()
+        "invalidValue" | false              | true  | null
 
     }
 
@@ -1442,8 +1451,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         
         given:
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(_,_,_,_,_)>>{
+                1 * handleApiImport(_,_,_,_,_)>>{
                     [success:false,joberrors:['error1','error2']]
                 }
             }
@@ -1486,8 +1498,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         given:
             setupImportApiService(format)
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it.importExecutions
                     it.jobUuidOption == 'preserve'
@@ -1523,8 +1538,11 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         given:
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> false
+            }
             controller.projectService=Mock(ProjectService){
-                1 * importToProject(
+                1 * handleApiImport(
                     _, _, _, _, {
                     it."$param"==val
                 }
@@ -1603,7 +1621,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectImport()
         then:
             with(controller.projectService){
-                0 * importToProject(*_)>>[success:true]
+                0 * handleApiImport(*_)>>[success:true]
             }
             1 * controller.apiService.renderErrorFormat(_,
                 [
@@ -1622,6 +1640,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
             setupGetResource()
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 1 * authResourceForProjectAcl('test')>>[acl:true]
                 0 *authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -1639,7 +1660,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
 
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
@@ -1692,6 +1713,9 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
+            controller.asyncImportService = Mock(AsyncImportService){
+                statusFileExists(_) >> true
+            }
             controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
                 2 * project(_, _) >> Mock(AuthorizingProject) {
                     1 * getResource() >> {
@@ -1718,7 +1742,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
         then:
             with(controller.projectService){
-                1 * importToProject(*_)>>[success:true]
+                1 * handleApiImport(*_)>>[success:true]
             }
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
@@ -1773,5 +1797,66 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         assert response.json[1].description==''
         assert response.json[1].url==base+'/project/testproject2'
         assert response.json[1].created != null
+    }
+
+    void apiProjectList_json_date_v47_meta(){
+        given:
+        def mockAuth = Mock(UserAndRolesAuthContext)
+        when:
+        def dbProjA = new Project(name: 'testproject')
+        dbProjA.save()
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        prja.demand.getConfigCreatedTime(){->new Date()}
+        def dbProjB = new Project(name: 'testproject2')
+        dbProjB.save()
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
+        prjb.demand.getConfigCreatedTime(){->new Date()}
+        controller.frameworkService = mockWith(FrameworkService) {
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(_ as Subject, _ as String) >> mockAuth
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        controller.projectService=Mock(ProjectService){
+            loadProjectMetaItems('testproject',_,_)>>[
+                    new ItemMeta(name: 'meta1', data: Collections.singletonMap('key1', 'value1')),
+                    new ItemMeta(name: 'meta2', data: Collections.singletonMap('key2', 'value2'))
+            ]
+            loadProjectMetaItems('testproject2',_,_)>>[
+                    new ItemMeta(name: 'meta3', data: Collections.singletonMap('key1', 'value1')),
+            ]
+        }
+        request.setAttribute('api_version', 47)
+        params.meta='*'
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        then:
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[0].created != null
+        assert response.json[0].meta[0].name=='meta1'
+        assert response.json[0].meta[0].data.key1=='value1'
+
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].url==base+'/project/testproject2'
+        assert response.json[1].created != null
+        assert response.json[1].meta[0].name=='meta3'
     }
 }

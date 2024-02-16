@@ -36,11 +36,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.rundeck.app.api.model.ApiErrorResponse
-import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
-import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.authtoken.TokenDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
@@ -48,6 +49,7 @@ import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.commandObjects.RdUserCommandObject
 import rundeck.data.paging.RdPageable
+import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -150,8 +152,8 @@ class UserController extends ControllerBase{
         }
 
         RdUser u = userService.findOrCreateUser(params.login)
-        def tokenTotal = tokenAdmin ? tokenDataProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
-                tokenDataProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
+        def tokenTotal = tokenAdmin ? tokenDataProvider.countTokensByType(AuthTokenType.USER) :
+                tokenDataProvider.countTokensByCreatorAndType(u.login, AuthTokenType.USER)
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
                 configurationService.getInteger(
@@ -169,7 +171,7 @@ class UserController extends ControllerBase{
         }
 
         def pageable = new RdPageable(offset: offset, max: max).withOrder("dateCreated","desc")
-        def tokenList = tokenAdmin ? tokenDataProvider.findAllTokensByType(AuthenticationToken.AuthTokenType.USER, pageable) :
+        def tokenList = tokenAdmin ? tokenDataProvider.findAllTokensByType(AuthTokenType.USER, pageable) :
                 tokenDataProvider.findAllUserTokensByCreator(u.login, pageable)
 
         params.max = max
@@ -449,6 +451,7 @@ Since: v21''',
                 ])
             }
         }
+        def controller = this
         withFormat {
             def xmlClosure = {
                 delegate.'user' {
@@ -458,7 +461,7 @@ Since: v21''',
                     email(u.email)
                 }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     delegate.login=u.login
                     delegate.firstName=u.firstName
@@ -466,13 +469,11 @@ Since: v21''',
                     delegate.email=u.email
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
     }
 
@@ -503,6 +504,7 @@ Since: v30''',
             return
         }
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        def controller = this
         withFormat {
             def xmlClosure = {
                 delegate.'roles' {
@@ -511,18 +513,16 @@ Since: v30''',
                     }
                 }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     delegate.roles=authContext.getRoles()
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
     }
 
@@ -615,7 +615,7 @@ For APIv27+, the results will contain additional fields:
             users = userDataProvider.findAll()
         }
 
-
+        def controller = this
         withFormat {
             def xmlClosure = {
                     users.each { u ->
@@ -633,7 +633,7 @@ For APIv27+, the results will contain additional fields:
                         }
                     }
             }
-            def jsonClos = {
+            '*' {
                 return apiService.renderSuccessJson(response) {
                     users.each {
                         def u
@@ -646,13 +646,11 @@ For APIv27+, the results will contain additional fields:
                     }
                 }
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     return apiService.renderSuccessXml(request, response, xmlClosure)
                 }
             }
-            '*' jsonClos
         }
 
     }
@@ -854,9 +852,9 @@ For APIv27+, the results will contain additional fields:
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthenticationToken.parseAuthRoles(tokenRoles),
+                    AuthenticationTokenUtils.parseAuthRoles(tokenRoles),
                     true,
-                    AuthenticationToken.AuthTokenType.USER,
+                    AuthTokenType.USER,
                     tokenName
             )
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]

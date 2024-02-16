@@ -24,6 +24,8 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
     public static final List<String> PROJ_AUTH_CHECK_ACTIONS = Collections.unmodifiableList(
         [
             AuthConstants.ACTION_CONFIGURE,
+            AuthConstants.ACTION_ADMIN,
+            AuthConstants.ACTION_APP_ADMIN,
             AuthConstants.ACTION_EXPORT,
             AuthConstants.ACTION_SCM_EXPORT,
             AuthConstants.ACTION_IMPORT,

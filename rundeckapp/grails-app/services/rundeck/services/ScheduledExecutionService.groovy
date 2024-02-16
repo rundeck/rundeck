@@ -57,7 +57,7 @@ import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
@@ -1849,6 +1849,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         )
     }
+
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution:
@@ -1915,6 +1916,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def projectAuthContext = rundeckAuthContextProcessor.getAuthContextWithProject(authContext, project)
 
             def handleResult={result->
+                def msgs = []
                 def errorStrings=[]
                 def errdata=[:]
                 def success = result.success
@@ -1979,7 +1981,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
                         errmsgs = xresult.errmsgs
-
                     } catch (Exception e) {
                         errmsg = e.getMessage()
                         System.err.println("caught exception: " + errmsg);
@@ -2728,6 +2729,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             EditOptsController._validateOption(origopt, userDataProvider, scheduledExecution, null,null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
+            cleanSecureOptionFromDefaultValue(origopt)
+
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
                 origopt.discard()
@@ -2743,6 +2746,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         return failed
+    }
+
+    /**
+     * Removes the deprecated default value from secure option
+     *
+     * @param option
+     */
+    @CompileStatic
+    void cleanSecureOptionFromDefaultValue(Option option){
+        if( option.secureInput ){
+            if( option.defaultValue != null ){
+                log.info("Overriding old default value of secure input: ${option.name} with storage key.")
+                option.defaultValue = null
+            }
+        }
     }
 
     @CompileStatic
@@ -2786,6 +2804,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
+
     /**
      *
      * @param scheduledExecution

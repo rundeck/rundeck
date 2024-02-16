@@ -208,18 +208,18 @@ form.option.valuesType.url.authType.bearerToken.label
         <!-- ko if: !isFileType() -->
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
              data-bind="visible: shouldShowDefaultValue">
-            <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
-            <div class="col-sm-10">
-                            <input type="text"
-                                   class="form-control"
-                                   name="defaultValue"
-                                   id="opt_defaultValue"
-                                   size="40"
-                                   placeholder="Default value"
-                                   data-bind="value: defaultValue"
-                            />
-            </div>
+        <label class="col-sm-2 control-label"><g:message
+                code="form.option.defaultValue.label" /></label>
 
+            <div class="col-sm-10">
+                <input type="text"
+                       class="form-control"
+                       name="defaultValue"
+                       id="opt_defaultValue"
+                       size="40"
+                       placeholder="Default value"
+                       data-bind="value: defaultValue"/>
+            </div>
         </div>
 
         <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"

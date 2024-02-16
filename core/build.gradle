@@ -57,6 +57,8 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
 
+    api "org.rundeck:rundeck-data-models:1.0.1"
+
     api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
@@ -91,6 +93,7 @@ dependencies {
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         'com.squareup.retrofit2:retrofit:2.9.0',
         'com.squareup.retrofit2:converter-jackson:2.9.0',
+        'com.squareup.retrofit2:converter-jaxb:2.9.0',
         'javax.servlet:javax.servlet-api:4.0.1'
 
 

@@ -2751,6 +2751,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.workflow.commands[3].errorHandler instanceof JobExec
 
     }
+
     def "load jobs cannot load job with same uuid in different project"(){
         given:
         setupDoUpdate()
@@ -3492,6 +3493,34 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.save()
         then:
         job.nodeThreadcount == 30
+    }
+
+    def "Option validation removes the default value from a secure option"(){
+        given:
+        def opt1 = new Option(
+                name: 'opt1',
+                required: false,
+                description: 'monkey1',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+        )
+        def opt2 = new Option(
+                name: 'opt2',
+                required: false,
+                description: 'monkey',
+                enforced: false,
+                secureInput: true,
+                defaultValue: "default",
+                defaultStoragePath: "keys/keypath/key.key"
+        )
+        when:
+        service.cleanSecureOptionFromDefaultValue(opt1)
+        service.cleanSecureOptionFromDefaultValue(opt2)
+
+        then:
+        opt2.defaultValue == null
+        opt1.defaultValue == null
     }
 
     @Unroll

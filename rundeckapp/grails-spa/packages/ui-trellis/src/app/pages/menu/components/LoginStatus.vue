@@ -15,29 +15,27 @@
   -->
 
 <template>
-    <span v-if="showLoginStatus">
-        <b v-if="status === 'LOGGED IN'" class="text-success fas fa-dot-circle"></b>
-        <b v-if="status === 'LOGGED OUT'" class="logged-out fas fa-dot-circle"></b>
-        <b v-if="status === 'NOT LOGGED'" class="text-muted fas fa-minus-circle"></b>
-        <b v-if="status === 'ABANDONED'" class="text-muted fas fa-bed"></b>
-        <span v-if="label">
-            {{$t('message_loginStatus.'+status)}}
-        </span>
+  <span v-if="showLoginStatus">
+    <b v-if="status === 'LOGGED IN'" class="text-success fas fa-dot-circle"></b>
+    <b v-if="status === 'LOGGED OUT'" class="logged-out fas fa-dot-circle"></b>
+    <b
+      v-if="status === 'NOT LOGGED'"
+      class="text-muted fas fa-minus-circle"
+    ></b>
+    <b v-if="status === 'ABANDONED'" class="text-muted fas fa-bed"></b>
+    <span v-if="label">
+      {{ $t("message_loginStatus." + status) }}
     </span>
+  </span>
 </template>
 <script>
-
 export default {
-    name: 'LoginStatus',
-    props: [
-        'status',
-        'label',
-        'showLoginStatus'
-    ]
-}
+  name: "LoginStatus",
+  props: ["status", "label", "showLoginStatus"],
+};
 </script>
 <style scoped lang="scss">
-    .logged-out {
-        color: burlywood;
-    }
+.logged-out {
+  color: burlywood;
+}
 </style>

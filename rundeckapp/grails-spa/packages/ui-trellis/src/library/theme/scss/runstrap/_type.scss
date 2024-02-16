@@ -4,12 +4,21 @@
 // Typography
 // --------------------------------------------------
 
-
 // Headings
 // -------------------------
 
-h1, h2, h3, h4, h5, h6,
-.h1, .h2, .h3, .h4, .h5, .h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
   font-family: $headings-font-family;
   font-weight: $headings-font-weight;
   line-height: $headings-line-height;
@@ -23,9 +32,12 @@ h1, h2, h3, h4, h5, h6,
   }
 }
 
-h1, .h1,
-h2, .h2,
-h3, .h3 {
+h1,
+.h1,
+h2,
+.h2,
+h3,
+.h3 {
   margin-top: $line-height-computed;
   margin-bottom: math.div($line-height-computed, 2);
 
@@ -34,9 +46,12 @@ h3, .h3 {
     font-size: 65%;
   }
 }
-h4, .h4,
-h5, .h5,
-h6, .h6 {
+h4,
+.h4,
+h5,
+.h5,
+h6,
+.h6 {
   margin-top: math.div($line-height-computed, 2);
   margin-bottom: math.div($line-height-computed, 2);
 
@@ -46,13 +61,30 @@ h6, .h6 {
   }
 }
 
-h1, .h1 { font-size: $font-size-h1; }
-h2, .h2 { font-size: $font-size-h2; }
-h3, .h3 { font-size: $font-size-h3; }
-h4, .h4 { font-size: $font-size-h4; }
-h5, .h5 { font-size: $font-size-h5; }
-h6, .h6 { font-size: $font-size-h6; }
-
+h1,
+.h1 {
+  font-size: $font-size-h1;
+}
+h2,
+.h2 {
+  font-size: $font-size-h2;
+}
+h3,
+.h3 {
+  font-size: $font-size-h3;
+}
+h4,
+.h4 {
+  font-size: $font-size-h4;
+}
+h5,
+.h5 {
+  font-size: $font-size-h5;
+}
+h6,
+.h6 {
+  font-size: $font-size-h6;
+}
 
 // Body text
 // -------------------------
@@ -72,48 +104,63 @@ p {
   }
 }
 
-
 // Emphasis & misc
 // -------------------------
 
 // Ex: (12px small font / 14px base font) * 100% = about 85%
 small,
 .small {
-  font-size: floor(math.div(100% * $font-size-small, $font-size-base) );
+  font-size: floor(math.div(100% * $font-size-small, $font-size-base));
 }
 
 mark,
 .mark {
-  padding: .2em;
+  padding: 0.2em;
   background-color: $state-warning-bg;
 }
 
 // Alignment
-.text-left           { text-align: left; }
-.text-right          { text-align: right; }
-.text-center         { text-align: center; }
-.text-justify        { text-align: justify; }
-.text-nowrap         { white-space: nowrap; }
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.text-justify {
+  text-align: justify;
+}
+.text-nowrap {
+  white-space: nowrap;
+}
 
 // Transformation
-.text-lowercase      { text-transform: lowercase; }
-.text-uppercase      { text-transform: uppercase; }
-.text-capitalize     { text-transform: capitalize; }
+.text-lowercase {
+  text-transform: lowercase;
+}
+.text-uppercase {
+  text-transform: uppercase;
+}
+.text-capitalize {
+  text-transform: capitalize;
+}
 
 // Contextual colors
 .text-muted {
   color: $text-muted;
 }
 
-@include text-emphasis-variant('.text-primary', $brand-primary);
+@include text-emphasis-variant(".text-primary", $brand-primary);
 
-@include text-emphasis-variant('.text-success', $state-success-text);
+@include text-emphasis-variant(".text-success", $state-success-text);
 
-@include text-emphasis-variant('.text-info', $state-info-text);
+@include text-emphasis-variant(".text-info", $state-info-text);
 
-@include text-emphasis-variant('.text-warning', $state-warning-text);
+@include text-emphasis-variant(".text-warning", $state-warning-text);
 
-@include text-emphasis-variant('.text-danger', $state-danger-text);
+@include text-emphasis-variant(".text-danger", $state-danger-text);
 
 // Contextual backgrounds
 // For now we'll leave these alongside the text classes until v4 when we can
@@ -123,16 +170,15 @@ mark,
   // automatically.
   color: #fff;
 }
-@include bg-variant('.bg-primary', --primary-color);
+@include bg-variant(".bg-primary", --primary-color);
 
-@include bg-variant('.bg-success', --success-bg-color);
+@include bg-variant(".bg-success", --success-bg-color);
 
-@include bg-variant('.bg-info', --info-bg-color);
+@include bg-variant(".bg-info", --info-bg-color);
 
-@include bg-variant('.bg-warning', --warning-bg-color);
+@include bg-variant(".bg-warning", --warning-bg-color);
 
-@include bg-variant('.bg-danger', --danger-bg-color);
-
+@include bg-variant(".bg-danger", --danger-bg-color);
 
 // Page header
 // -------------------------
@@ -142,7 +188,6 @@ mark,
   margin: ($line-height-computed * 2) 0 $line-height-computed;
   border-bottom: 1px solid $page-header-border-color;
 }
-
 
 // Lists
 // -------------------------
@@ -169,7 +214,6 @@ ol {
 .list-unstyled {
   @include list-unstyled;
 }
-
 
 // Inline turns list items into inline-block
 .list-inline {
@@ -222,7 +266,6 @@ dd {
     }
   }
 }
-
 
 // Misc
 // -------------------------
@@ -285,7 +328,9 @@ blockquote.pull-right {
   footer,
   small,
   .small {
-    &:before { content: ""; }
+    &:before {
+      content: "";
+    }
     &:after {
       content: "\00A0 \2014"; // nbsp, em dash
     }

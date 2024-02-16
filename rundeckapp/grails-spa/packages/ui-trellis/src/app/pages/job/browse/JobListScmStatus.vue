@@ -1,30 +1,31 @@
 <template>
-    <template v-if="displayExport || displayImport || exportError || importError">
-      <popover trigger="hover"
-               placement="left"
-               viewport="#section-content"
-               append-to="#section-content"
-               position-by="#section-main"
-      >
-        <span class="text-info" v-if="displayExportState || displayImportState">
-            <i class="glyphicon glyphicon-exclamation-sign"></i>
-            {{ defaultDisplayText }}
-        </span>
-        <span class="text-danger" v-if="exportError || importError">
+  <template v-if="displayExport || displayImport || exportError || importError">
+    <popover
+      trigger="hover"
+      placement="left"
+      viewport="#section-content"
+      append-to="#section-content"
+      position-by="#section-main"
+    >
+      <span class="text-info" v-if="displayExportState || displayImportState">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+        {{ defaultDisplayText }}
+      </span>
+      <span class="text-danger" v-if="exportError || importError">
             <i class="glyphicon glyphicon-exclamation-sign"></i>
             {{ $t('scm.status.ERROR.display.text') }}
         </span>
         <template #popover>
-            <dl v-if="displayExport">
-              <dt>{{ $t("scm.export.title") }}</dt>
-              <dd>
-                {{ exportMessage }}
-              </dd>
-            </dl>
-            <dl v-if="displayImport">
-              <dt>{{ $t("scm.import.title") }}</dt>
-              <dd>
-                {{ importMessage }}
+        <dl v-if="displayExport">
+          <dt>{{ $t("scm.export.title") }}</dt>
+          <dd>
+            {{ exportMessage }}
+          </dd>
+        </dl>
+        <dl v-if="displayImport">
+          <dt>{{ $t("scm.import.title") }}</dt>
+          <dd>
+            {{ importMessage }}
               </dd>
             </dl>
             <dl v-if="exportError">
@@ -37,22 +38,22 @@
               <dt>{{ $t("scm.import.title") }}</dt>
               <dd>
                 {{ importErrorText }}
-              </dd>
-            </dl>
-        </template>
-      </popover>
-    </template>
+          </dd>
+        </dl>
+      </template>
+    </popover>
+  </template>
 </template>
 
 <script lang="ts">
 import {
-    JobPageStore,
-    JobPageStoreInjectionKey,
+  JobPageStore,
+  JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject } from "vue";
 
 export default defineComponent({
-    name: "JobListScmStatus",
+  name: "JobListScmStatus",
 
     setup(props) {
         const jobPageStore: JobPageStore = inject(

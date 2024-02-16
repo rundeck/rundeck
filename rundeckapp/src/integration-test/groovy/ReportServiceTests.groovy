@@ -18,7 +18,7 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.junit.Test
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.ScheduledExecution

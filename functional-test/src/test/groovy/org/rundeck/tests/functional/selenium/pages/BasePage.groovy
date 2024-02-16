@@ -29,6 +29,7 @@ abstract class BasePage {
     BasePage(final SeleniumContext context) {
         this.context = context
         this.context.driver.manage().window().setSize(new Dimension(1200, 1050))
+        this.context.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10))
     }
 
     abstract String getLoadPath()
@@ -36,9 +37,16 @@ abstract class BasePage {
      * Go to the page and validate
      */
     void go() {
-        if (loadPath) {
+        if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
-            println context.client.baseUrl + loadPath
+            driver.get(context.client.baseUrl + loadPath)
+            validatePage()
+        }
+    }
+
+    void go(String loadPath) {
+        if (loadPath && !loadPath.empty) {
+            implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
             validatePage()
         }
@@ -48,6 +56,10 @@ abstract class BasePage {
      */
     void validatePage() {
 
+    }
+
+    void refresh() {
+        driver.navigate().refresh()
     }
 
     WebElement waitForElementVisible(WebElement locator) {
@@ -66,7 +78,7 @@ abstract class BasePage {
     }
 
     void waitForElementToBeClickable(By locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until {
             WebDriver d ->
                 def elementLocator = d.findElement(locator)
@@ -75,17 +87,17 @@ abstract class BasePage {
     }
 
     void waitForElementToBeClickable(WebElement locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until { ExpectedConditions.elementToBeClickable(locator) }
     }
 
     void waitForTextToBePresentInElement(WebElement locator, String text) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until { ExpectedConditions.textToBePresentInElement(locator, text) }
     }
 
     boolean waitForElementAttributeToChange(WebElement locator, String attribute, String valueCompare) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60))
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until {
             WebDriver d ->
                 def elementLocator = locator.getAttribute(attribute)
@@ -167,5 +179,9 @@ abstract class BasePage {
 
     List<WebElement> els(By by) {
         context.driver.findElements(by)
+    }
+
+    WebElement getLink(String text){
+        el By.partialLinkText(text)
     }
 }

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <i class="far fa-newspaper" style="margin-right:5px;"></i>
-    <span>{{ $t("message_communityNews")}}</span>
+    <i class="far fa-newspaper" style="margin-right: 5px"></i>
+    <span>{{ $t("message_communityNews") }}</span>
     <span v-if="count > 0" class="newNotice">&nbsp;</span>
   </div>
 </template>
@@ -11,7 +11,7 @@ import axios from "axios";
 import Trellis, {
   getRundeckContext,
   getSynchronizerToken,
-  RundeckBrowser
+  RundeckBrowser,
 } from "../../../library";
 
 export default {
@@ -19,18 +19,18 @@ export default {
   data() {
     return {
       RundeckContext: null,
-      count: 0
+      count: 0,
     };
   },
   mounted() {
     this.RundeckContext = getRundeckContext();
-    let cookie = this.$cookies.get("communityNews");
-    let mostRecentPost = this.$cookies.get("communityNewsMostRecentPost");
+    const cookie = this.$cookies.get("communityNews");
+    const mostRecentPost = this.$cookies.get("communityNewsMostRecentPost");
     if (cookie === null) {
-      this.pollCommunityNews().then(result => {
+      this.pollCommunityNews().then((result) => {
         // set the cookie
         if (mostRecentPost && result.blogs.length) {
-          let lastBlogPublished = parseInt(mostRecentPost);
+          const lastBlogPublished = parseInt(mostRecentPost);
 
           if (result.blogs[0].publish_date > lastBlogPublished) {
             this.setCookie(result.count);
@@ -53,23 +53,23 @@ export default {
       this.count = count;
     },
     pollCommunityNews() {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         axios
           .get("https://api.rundeck.com/news/v1/blog/list", {
             params: {
-              groupid: 7039074342
-            }
+              groupid: 7039074342,
+            },
           })
-          .then(response => {
+          .then((response) => {
             resolve({
               blogs: response.data.objects,
               count: response.data.objects.length,
-              lastTimestamp: response.data.objects[0].publish_date
+              lastTimestamp: response.data.objects[0].publish_date,
             });
           });
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -94,4 +94,3 @@ export default {
   }
 }
 </style>
-

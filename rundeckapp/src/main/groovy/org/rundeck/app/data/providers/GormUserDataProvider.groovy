@@ -11,7 +11,7 @@ import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.model.v1.user.dto.SaveUserResponse
 import org.rundeck.app.data.model.v1.user.dto.UserFilteredResponse
 import org.rundeck.app.data.model.v1.user.dto.UserProperties
-import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.OptimisticLockingFailureException
@@ -46,6 +46,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     User findOrCreateUser(String login) throws DataAccessException {
         User user = User.findByLogin(login)
         if (!user) {
@@ -67,6 +68,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     User registerLogin(String login, String sessionId) throws DataAccessException {
         User user = getUserByLoginOrCreate(login)
         user.lastLogin = new Date()
@@ -90,6 +92,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     User registerLogout(String login) throws DataAccessException {
         User user = getUserByLoginOrCreate(login)
         user.lastLogout = new Date()
@@ -100,6 +103,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     SaveUserResponse updateUserProfile(String username, String lastName, String firstName, String email) {
         User u = findOrCreateUser(username)
         u.setFirstName(firstName)
@@ -111,6 +115,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     SaveUserResponse createUserWithProfile(String login, String lastName, String firstName, String email) {
         User u = new User(login: login, firstName: firstName, lastName: lastName, email: email)
         Boolean isUpdated = u.save(flush: true)
@@ -243,6 +248,7 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    @Transactional
     SaveUserResponse updateFilterPref(String login, String filterPref) {
         User user = User.findByLogin(login)
         user.filterPref = filterPref

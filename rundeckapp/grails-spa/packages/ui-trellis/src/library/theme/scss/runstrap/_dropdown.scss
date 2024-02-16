@@ -2,7 +2,6 @@
 // Dropdown menus
 // --------------------------------------------------
 
-
 // Dropdown arrow/caret
 .caret {
   display: inline-block;
@@ -79,12 +78,11 @@
   }
 
   // Links which have <span> that overflow the <li>
-  // caret class (arrows) excluded 
+  // caret class (arrows) excluded
   > li > a > span:not(.caret) {
     display: inline-block;
     padding: 3px 20px 3px 3px;
   }
-
 }
 
 // Active state
@@ -129,7 +127,7 @@
   }
 }
 
-.dropdown-menu > .disabled > a > span{
+.dropdown-menu > .disabled > a > span {
   &,
   &:hover,
   &:focus {
@@ -227,7 +225,6 @@
   }
 }
 
-
 // Component alignment
 //
 // Reiterate per navbar.less and the modified component alignment there.
@@ -235,18 +232,19 @@
 @media (min-width: $grid-float-breakpoint) {
   .navbar-right {
     .dropdown-menu {
-      right: 0; left: auto;
+      right: 0;
+      left: auto;
     }
     // Necessary for overrides of the default right aligned menu.
     // Will remove come v4 in all likelihood.
     .dropdown-menu-left {
-      left: 0; right: auto;
+      left: 0;
+      right: auto;
     }
   }
 }
 
 .dropdown-menu {
-    
   .dropdown &,
   .bootstrap-table .btn-group &,
   .btn-group &,
@@ -285,22 +283,21 @@
   .dropup & {
     margin-bottom: 5px;
 
-    >.active>a,
-    >.active>a:hover,
-    >.active>a:focus {
+    > .active > a,
+    > .active > a:hover,
+    > .active > a:focus {
       background-color: var(--background-color-accent-lvl2);
       color: var(--font-color);
     }
 
-    >li>a:hover,
-    >li>a:focus {
+    > li > a:hover,
+    > li > a:focus {
       background-color: var(--background-color-accent-lvl2);
       color: var(--font-color);
       opacity: 1;
       text-decoration: none;
     }
   }
-
 
   // REMOVED
   // Why: because I hate the triangle that points to the bottom.
@@ -328,7 +325,6 @@
   //   right: 12px;
   //   top: -11px;
   // }
-
 
   .dropup &,
   &.bootstrap-datetimepicker-widget.top {
@@ -379,13 +375,13 @@
   }
 
   .dropdown-header {
-    color: var( --font-color);
+    color: var(--font-color);
     font-size: $font-size-small;
     font-weight: 800;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
   }
 
-  >li>a {
+  > li > a {
     color: var(--font-color);
     font-size: $font-size-small;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
@@ -396,7 +392,7 @@
     }
   }
 
-  >li>a:focus {
+  > li > a:focus {
     outline: 0 !important;
   }
 
@@ -404,95 +400,88 @@
     min-width: 100%;
   }
 
-  >li:first-child>a {
+  > li:first-child > a {
     border-top-left-radius: $border-radius-extreme;
     border-top-right-radius: $border-radius-extreme;
   }
 
-  >li:last-child>a {
+  > li:last-child > a {
     border-bottom-left-radius: $border-radius-extreme;
     border-bottom-right-radius: $border-radius-extreme;
   }
 
-  >li>a:hover,
-  >li>a:focus {
+  > li > a:hover,
+  > li > a:focus {
     background-color: var(--background-color-accent-lvl2);
     color: var(--font-color);
     opacity: 1;
     text-decoration: none;
   }
 
-  &.dropdown-primary>li:not(.disabled) {
-
-    >a:hover,
-    >a:focus {
+  &.dropdown-primary > li:not(.disabled) {
+    > a:hover,
+    > a:focus {
       background-color: var(--primary-color);
     }
   }
 
-  &.dropdown-info>li:not(.disabled) {
-
-    >a:hover,
-    >a:focus {
+  &.dropdown-info > li:not(.disabled) {
+    > a:hover,
+    > a:focus {
       background-color: var(--info-color);
     }
   }
 
-  &.dropdown-success>li:not(.disabled) {
-
-    >a:hover,
-    >a:focus {
+  &.dropdown-success > li:not(.disabled) {
+    > a:hover,
+    > a:focus {
       background-color: var(--success-color);
     }
   }
 
-  &.dropdown-warning>li:not(.disabled) {
-
-    >a:hover,
-    >a:focus {
+  &.dropdown-warning > li:not(.disabled) {
+    > a:hover,
+    > a:focus {
       background-color: var(--warning-color);
     }
   }
 
-  &.dropdown-danger>li:not(.disabled) {
-
-    >a:hover,
-    >a:focus {
+  &.dropdown-danger > li:not(.disabled) {
+    > a:hover,
+    > a:focus {
       background-color: var(--danger-color);
     }
   }
 
   //     Styles for the dropdown footer
-  >li.dropdown-footer {
+  > li.dropdown-footer {
     background-color: $background-light-grey;
     border-radius: 0 0 $border-radius-extreme $border-radius-extreme;
 
-    >ul {
+    > ul {
       list-style: outside none none;
       padding: 0px 5px;
 
-      >li {
+      > li {
         display: inline-block;
         text-align: left;
         padding: 0 10px;
 
-        >a {
+        > a {
           color: $font-background-light-grey;
           font-size: 0.9em;
           line-height: 35px;
         }
       }
 
-      >li:hover a {
+      > li:hover a {
         color: $font-hover-background-light-grey;
       }
     }
   }
-
 }
 
 .select {
-
   .no-style:hover,
   .no-style:active,
   .no-style:focus {
@@ -533,7 +522,6 @@
 }
 
 .dropdown-notification {
-
   .dropdown-header {
     border-bottom: 1px solid var(--medium-pale-bg);
   }
@@ -544,12 +532,10 @@
     padding: 30px 30px;
     text-align: center;
   }
-
 }
 
 .dropdown-notification-list {
-
-  >li {
+  > li {
     border-bottom: 1px solid var(--medium-pale-bg);
     color: var(--font-color);
     font-size: $font-size-base;
@@ -557,7 +543,7 @@
     padding: 10px 5px;
   }
 
-  >li>a {
+  > li > a {
     color: var(--font-color);
     white-space: normal;
 
@@ -594,8 +580,8 @@
     }
   }
 
-  >li:hover,
-  >li:focus {
+  > li:hover,
+  > li:focus {
     background-color: $background-lighter-grey;
     color: var(--font-color);
     opacity: 1;
@@ -605,7 +591,6 @@
       opacity: 1;
     }
   }
-
 }
 
 .scroll-area {
@@ -616,7 +601,6 @@
 }
 
 .dropdown-sharing {
-
   li {
     color: var(--font-color);
     font-size: $font-size-base;
@@ -633,7 +617,6 @@
 
   li:hover,
   li:focus {
-
     .social-line,
     a,
     .action-line {
