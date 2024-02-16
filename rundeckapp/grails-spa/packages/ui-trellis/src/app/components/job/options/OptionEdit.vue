@@ -1198,6 +1198,8 @@ export default defineComponent({
       this.option.valueExposed = val === "secureExposed";
       if(this.option.secure){
         this.option.multivalued = false
+      }else{
+        delete this.option.defaultStoragePath
       }
     },
     "option.valuesType"(val:string){
