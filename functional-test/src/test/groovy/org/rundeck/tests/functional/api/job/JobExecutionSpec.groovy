@@ -1388,6 +1388,7 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
+    @ExcludePro
     def "test-job-run-steps"(){
         setup:
         def projectName = PROJECT_NAME

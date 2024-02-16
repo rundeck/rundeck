@@ -81,6 +81,10 @@ class RdClient {
         ).execute()
     }
 
+    private String apiUrlCustomApiVersion(String path, String customApiVersion) {
+        baseUrl + "/api/${customApiVersion}" + path
+    }
+
     Response request(final String path, Consumer<Request.Builder> builderConsumer) {
         def builder = new Request.Builder()
         builder.
