@@ -23,4 +23,6 @@ class Node {
     String username
     @JsonProperty("tags")
     String tags
+    @JsonProperty("type")
+    String type
 }
