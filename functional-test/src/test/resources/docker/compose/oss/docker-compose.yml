@@ -17,3 +17,21 @@ services:
       - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
       - "../../../resource-model:/home/rundeck/server/config/resource-model"
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
+  gitea:
+    build:
+      context: "gitea"
+      args:
+        IMAGE: gitea/gitea
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA_ADMIN_USER: 'rundeckgitea'
+      GITEA_ADMIN_PASSWORD: 'rundeckgitea'
+    restart: always
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
+    ports:
+      - "3000:3000"
+      - "222:22"
