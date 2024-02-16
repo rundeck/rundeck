@@ -6,6 +6,7 @@ import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.ExecutionOutput
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
+import org.rundeck.tests.functional.api.ResponseModels.RunCommand
 import org.rundeck.tests.functional.api.ResponseModels.SystemInfo
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.annotations.ExcludePro
@@ -241,7 +242,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobName1 = "xmljob"
@@ -315,7 +316,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobName1 = "xmljob"
@@ -430,7 +431,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobName1 = "scheduledJob1"
@@ -509,7 +510,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobName1 = "scheduledJob1"
@@ -564,7 +565,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def longRunXml = (String project, String stepArgs) -> {
@@ -688,7 +689,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobRetry = (String args) -> {
@@ -800,7 +801,7 @@ class JobExecutionSpec extends BaseContainer {
                 ]
         ]
 
-        def responseProject = createSampleProject(projectName, projectJsonMap)
+        def responseProject = createSampleProject(projectJsonMap)
         assert responseProject.successful
 
         def jobXml = (String project, String args) -> "<joblist>\n" +
@@ -1541,6 +1542,364 @@ class JobExecutionSpec extends BaseContainer {
         Arrays.equals(expectedContent.toArray(), outputContent.toArray())
     }
 
+    def "test-workflow-errorhandler"(){
+        def client = getClient()
+        def mapper = new ObjectMapper()
+        def projectName = "test-error-handler" // delete me
+        Object projectJsonMap = [
+                "name": projectName
+        ]
+        def responseProject = createSampleProject(projectJsonMap)
+        assert responseProject.successful
+
+        when: "TEST: execution of job with keepgoing=true, errorhandler step succeeds"
+        def stepOutfile = "/tmp/error-handler-out.txt"
+        def job1Xml = generateErrorHandlerJob(
+                projectName,
+                "test-error-handler1",
+                true,
+                false,
+                "echo handler executed successfully >> $stepOutfile",
+                "echo final workflow step >> $stepOutfile"
+        )
+        def created1 = JobUtils.createJob(projectName, job1Xml, client)
+        assert created1.successful
+
+        CreateJobResponse jobCreatedResponse1 = mapper.readValue(
+                created1.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId = jobCreatedResponse1.succeeded[0]?.id
+
+        def runResponse = JobUtils.executeJob(jobId, client)
+        assert runResponse.successful
+
+        Execution execId = mapper.readValue(runResponse.body().string(), Execution.class)
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        // We read the output file
+        def execArgs = "cat $stepOutfile"
+        def readResponse = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs}")
+        def readResponseBody = readResponse.body().string()
+        def parsedReadBody = mapper.readValue(readResponseBody, RunCommand.class)
+        def readExecId = parsedReadBody.execution.id
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readExecId as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        def execOutputResponse = client.doGetAcceptAll("/execution/$readExecId/output")
+        ExecutionOutput execOutput = mapper.readValue(execOutputResponse.body().string(), ExecutionOutput.class)
+        def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "test that errorhandler output was correct"
+        FileHelpers.assertLinesInsideEntries(
+                List.of(
+                        "handler executed successfully",
+                        "final workflow step"
+                ), entries)
+
+        when: "TEST: execution of job with keepgoing=true, errorhandler step fails"
+        def stepOutfile2 = "/tmp/error-handler-out2.txt"
+        def job2Xml = generateErrorHandlerJob(
+                projectName,
+                "test-error-handler2",
+                true,
+                false,
+                "echo handler executed successfully >> $stepOutfile2 ; false",
+                "echo final workflow step >> $stepOutfile2"
+        )
+        def created2 = JobUtils.createJob(projectName, job2Xml, client)
+        assert created2.successful
+
+        CreateJobResponse jobCreatedResponse2 = mapper.readValue(
+                created2.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId2 = jobCreatedResponse2.succeeded[0]?.id
+
+        def runResponse2 = JobUtils.executeJob(jobId2, client)
+        // The job will execute, so the response will be successful
+        assert runResponse2.successful
+
+        Execution execId2 = mapper.readValue(runResponse2.body().string(), Execution.class)
+
+        // But the execution will fail
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                execId2.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.FAILED.state
+
+        // So we read the output file
+        def execArgs2 = "cat $stepOutfile2"
+        def readResponse2 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs2}")
+        def readResponseBody2 = readResponse2.body().string()
+        def parsedReadBody2 = mapper.readValue(readResponseBody2, RunCommand.class)
+        def readExecId2 = parsedReadBody2.execution.id
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readExecId2 as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        def execOutputResponse2 = client.doGetAcceptAll("/execution/$readExecId2/output")
+        ExecutionOutput execOutput2 = mapper.readValue(execOutputResponse2.body().string(), ExecutionOutput.class)
+        def entries2 = execOutput2.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "test that errorhandler output was correct"
+        FileHelpers.assertLinesInsideEntries(
+                List.of(
+                        "handler executed successfully",
+                        "final workflow step"
+                ), entries2)
+
+        when: "TEST: execution of job with keepgoing=false, errorhandler step fails"
+        def stepOutfile3 = "/tmp/error-handler-out3.txt"
+        def job3Xml = generateErrorHandlerJob(
+                projectName,
+                "recover-handler1",
+                false,
+                false,
+                "echo handler executed successfully >> $stepOutfile3 ; false",
+                "echo final workflow step >> $stepOutfile3"
+        )
+        def created3 = JobUtils.createJob(projectName, job3Xml, client)
+        assert created3.successful
+
+        CreateJobResponse jobCreatedResponse3 = mapper.readValue(
+                created3.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId3 = jobCreatedResponse3.succeeded[0]?.id
+
+        def runResponse3 = JobUtils.executeJob(jobId3, client)
+        // The job will execute, so the response will be successful
+        assert runResponse3.successful
+
+        Execution execId3 = mapper.readValue(runResponse3.body().string(), Execution.class)
+
+        // But the execution will fail
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                execId3.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.FAILED.state
+
+        // So we read the output file
+        def execArgs3 = "cat $stepOutfile3"
+        def readResponse3 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs3}")
+        def readResponseBody3 = readResponse3.body().string()
+        def parsedReadBody3 = mapper.readValue(readResponseBody3, RunCommand.class)
+        def readExecId3 = parsedReadBody3.execution.id
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readExecId3 as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        def execOutputResponse3 = client.doGetAcceptAll("/execution/$readExecId3/output")
+        ExecutionOutput execOutput3 = mapper.readValue(execOutputResponse3.body().string(), ExecutionOutput.class)
+        def entries3 = execOutput3.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "test that errorhandler output was correct"
+        FileHelpers.assertLinesInsideEntries(
+                List.of(
+                        "handler executed successfully"
+                ), entries3)
+
+        when: "TEST: execution of job with keepgoing=false, errorhandler step succeeds (final wf not executed)"
+        def stepOutfile4 = "/tmp/error-handler-out4.txt"
+        def job4Xml = generateErrorHandlerJob(
+                projectName,
+                "recover-handler2",
+                false,
+                false,
+                "echo handler executed successfully >> $stepOutfile4",
+                "echo final workflow step >> $stepOutfile4"
+        )
+        def created4 = JobUtils.createJob(projectName, job4Xml, client)
+        assert created4.successful
+
+        CreateJobResponse jobCreatedResponse4 = mapper.readValue(
+                created4.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId4 = jobCreatedResponse4.succeeded[0]?.id
+
+        def runResponse4 = JobUtils.executeJob(jobId4, client)
+        // The job will execute, so the response will be successful
+        assert runResponse4.successful
+
+        Execution execId4 = mapper.readValue(runResponse4.body().string(), Execution.class)
+
+        // But the execution will fail
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                execId4.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.FAILED.state
+
+        // So we read the output file
+        def execArgs4 = "cat $stepOutfile4"
+        def readResponse4 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs4}")
+        def readResponseBody4 = readResponse4.body().string()
+        def parsedReadBody4 = mapper.readValue(readResponseBody4, RunCommand.class)
+        def readExecId4 = parsedReadBody4.execution.id
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readExecId4 as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        def execOutputResponse4 = client.doGetAcceptAll("/execution/$readExecId4/output")
+        ExecutionOutput execOutput4 = mapper.readValue(execOutputResponse4.body().string(), ExecutionOutput.class)
+        def entries4 = execOutput4.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "test that errorhandler output was correct"
+        FileHelpers.assertLinesInsideEntries(
+                List.of(
+                        "handler executed successfully"
+                ), entries4)
+
+        when: "TEST: execution of job with keepgoing=true, errorhandler step succeeds (final wf executed)"
+        def stepOutfile5 = "/tmp/error-handler-out5.txt"
+        def job5Xml = generateErrorHandlerJob(
+                projectName,
+                "recover-handler3",
+                false,
+                true,
+                "echo handler executed successfully >> $stepOutfile5",
+                "echo final workflow step >> $stepOutfile5"
+        )
+        def created5 = JobUtils.createJob(projectName, job5Xml, client)
+        assert created5.successful
+
+        CreateJobResponse jobCreatedResponse5 = mapper.readValue(
+                created5.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId5 = jobCreatedResponse5.succeeded[0]?.id
+
+        def runResponse5 = JobUtils.executeJob(jobId5, client)
+        // The job will execute, so the response will be successful
+        assert runResponse5.successful
+
+        Execution execId5 = mapper.readValue(runResponse5.body().string(), Execution.class)
+
+        // But the execution will fail
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId5.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        // So we read the output file
+        def execArgs5 = "cat $stepOutfile5"
+        def readResponse5 = client.doPostWithoutBody("/project/$projectName/run/command?exec=${execArgs5}")
+        def readResponseBody5 = readResponse5.body().string()
+        def parsedReadBody5 = mapper.readValue(readResponseBody5, RunCommand.class)
+        def readExecId5 = parsedReadBody5.execution.id
+
+        assert JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                readExecId5 as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
+
+        def execOutputResponse5 = client.doGetAcceptAll("/execution/$readExecId5/output")
+        ExecutionOutput execOutput5 = mapper.readValue(execOutputResponse5.body().string(), ExecutionOutput.class)
+        def entries5 = execOutput5.entries.stream().map {it.log}.collect(Collectors.toList())
+
+        then: "test that errorhandler output was correct"
+        FileHelpers.assertLinesInsideEntries(
+                List.of(
+                        "handler executed successfully",
+                        "final workflow step"
+                ), entries5)
+
+        cleanup:
+        deleteProject(projectName)
+    }
+
+    def generateErrorHandlerJob(
+            String projectName,
+            String jobName,
+            boolean jobKeepGoing,
+            boolean errorHandlerKeepGoing,
+            String errorHandlerStepExec,
+            String finalWorkflowExec
+    ){
+        def xmlargs = "echo step will fail; false"
+
+        return "<joblist>\n" +
+                "   <job>\n" +
+                "      <name>$jobName</name>\n" +
+                "      <group>api-test/workflow-errorhandler</group>\n" +
+                "      <description></description>\n" +
+                "      <loglevel>INFO</loglevel>\n" +
+                "      <context>\n" +
+                "          <project>$projectName</project>\n" +
+                "      </context>\n" +
+                "      <dispatch>\n" +
+                "        <threadcount>1</threadcount>\n" +
+                "        <keepgoing>true</keepgoing>\n" +
+                "      </dispatch>\n" +
+                "      <sequence keepgoing=\"$jobKeepGoing\">\n" +
+                "        <command>\n" +
+                "          <exec>$xmlargs</exec>\n" +
+                "          <errorhandler keepgoingOnSuccess=\"$errorHandlerKeepGoing\">\n" +
+                "            <exec>$errorHandlerStepExec</exec>\n" +
+                "          </errorhandler>\n" +
+                "        </command>\n" +
+                "        <command>\n" +
+                "            <exec>$finalWorkflowExec</exec>\n" +
+                "        </command>\n" +
+                "      </sequence>\n" +
+                "   </job>\n" +
+                "</joblist>"
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
@@ -1550,7 +1909,7 @@ class JobExecutionSpec extends BaseContainer {
         return [string: iso8601Format.format(cal.time), date: cal.time]
     }
 
-    def createSampleProject = (String projectName, Object projectJsonMap) -> {
+    def createSampleProject = (Object projectJsonMap) -> {
         return client.doPost("/projects", projectJsonMap)
     }
 

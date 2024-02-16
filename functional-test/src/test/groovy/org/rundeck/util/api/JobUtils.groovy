@@ -115,7 +115,7 @@ class JobUtils {
         long initTime = System.currentTimeMillis()
         while(executionStatus.status != state){
             if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds).")
+                throw new InterruptedException("Timeout reached (${timeout} seconds), the execution had \"${executionStatus.status}\" state.")
             }
             def transientExecutionResponse = client.doGet("/execution/${executionId}")
             executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
