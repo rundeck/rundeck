@@ -11,9 +11,13 @@ import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.container.RdClient
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils
 import spock.lang.Shared
 import spock.lang.Stepwise
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
@@ -1117,121 +1121,60 @@ class JobExecutionSpec extends BaseContainer {
 
     def "test-job-run-webhook"(){
         given:
-        def projectName = PROJECT_NAME
+        def projectName = "test-send-notification-webhook"
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
 
-        openNc(client,projectName,mapper)
+        Object projectJsonMap = [
+                "name": projectName
+        ]
+        def responseProject = client.doPost("/projects", projectJsonMap)
+        assert responseProject.successful
+        def responseImport = client.doPut(
+                "/project/${projectName}/import?jobUuidOption=preserve",
+                new File(getClass().getResource("/projects-import/webhook-notification-project.zip").getPath()))
+        responseImport.successful
 
-        // entry.sh config
-        def NC_HOST = "localhost"
-        def NC_PORT = 9001
-        def NC_OUTPUT_FILEPATH = "/tmp/netcat-out.txt"
+        // We have the jobs id, since there are already imported
+        def openNcJobId = "c81aa8af-1e0e-4fce-a7bd-102b87922ef2"
+        def notificationJobId = "a20106e4-37e6-489b-a783-2beb04a367c1"
+        def readNcOutputJobId = "ccda2e41-277a-4c62-ba01-8f930663561e"
 
-        def xmlJob = (String ncHost, int ncPort, String xmlargs) ->
-                "<joblist>\n" +
-                "   <job>\n" +
-                "      <name>webhook job</name>\n" +
-                "      <group>api-test/job-run-webhook</group>\n" +
-                "      <description></description>\n" +
-                "      <loglevel>INFO</loglevel>\n" +
-                "      <context>\n" +
-                "          <project>$PROJECT_NAME</project>\n" +
-                "          <options>\n" +
-                "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
-                "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
-                "          </options>\n" +
-                "      </context>\n" +
-                "      <dispatch>\n" +
-                "        <threadcount>1</threadcount>\n" +
-                "        <keepgoing>true</keepgoing>\n" +
-                "      </dispatch>\n" +
-                "\n" +
-                "      <notification>\n" +
-                "        <onsuccess>\n" +
-                "        <webhook urls=\"http://$ncHost:$ncPort/test?id=\${execution.id}&amp;status=\${execution.status}\"/>\n" +
-                "        </onsuccess>\n" +
-                "      </notification>\n" +
-                "\n" +
-                "      <sequence>\n" +
-                "        <command>\n" +
-                "        <exec>$xmlargs</exec>\n" +
-                "        </command>\n" +
-                "      </sequence>\n" +
-                "   </job>\n" +
-                "</joblist>"
+        when: "We first open NC connection"
+        def openNcJobRun = JobUtils.executeJob(openNcJobId, client)
+        assert openNcJobRun.successful
+        Execution openNcJobResponse = mapper.readValue(openNcJobRun.body().string(), Execution.class)
 
-        def jobArgs = "echo asd"
-        def testXml = xmlJob(NC_HOST, NC_PORT, jobArgs)
-        def created = JobUtils.createJob(projectName, testXml, client)
-        assert created.successful
-        CreateJobResponse jobCreatedResponse = mapper.readValue(
-                created.body().string(),
-                CreateJobResponse.class
-        )
-        def jobId = jobCreatedResponse.succeeded[0]?.id
+        then: "We wait to succeeded exec"
+        JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                openNcJobResponse.id as String,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
+        ).status == ExecutionStatus.SUCCEEDED.state
 
         when: "We run the job with the notification"
-        def optionA = 'a'
-        Object optionsToMap = [
-                "options": [
-                        opt2: optionA
-                ]
-        ]
-        def jobRun = JobUtils.executeJobWithOptions(jobId, client, optionsToMap)
+        def jobRun = JobUtils.executeJob(notificationJobId, client)
         assert jobRun.successful
         Execution parsedExecutionsResponse = mapper.readValue(jobRun.body().string(), Execution.class)
 
-        then: "The status will be succeeded"
-        def exec = JobUtils.waitForExecutionToBe(
+        then: "Will succeed"
+        JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 parsedExecutionsResponse.id as String,
                 mapper,
                 client,
                 WaitingTime.LOW.milliSeconds,
                 WaitingTime.EXCESSIVE.milliSeconds / 1000 as int
-        )
-        exec.status == ExecutionStatus.SUCCEEDED.state
+        ).status == ExecutionStatus.SUCCEEDED.state
 
-        when: "And if we wait 15 seconds for netcat to deliver response"
-        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 3) // 15 seconds (as the entry.sh config states)
+        when: "We wait 10 seconds for netcat to deliver response"
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds * 2)
 
-        // We can run a job to read the notification's request
-        def readJobXml = "<joblist>\n" +
-                "  <job>\n" +
-                "    <context>\n" +
-                "      <options preserveOrder='true'>\n" +
-                "        <option name='nc_output_filepath' value='$NC_OUTPUT_FILEPATH' />\n" +
-                "      </options>\n" +
-                "    </context>\n" +
-                "    <defaultTab>nodes</defaultTab>\n" +
-                "    <description></description>\n" +
-                "    <executionEnabled>true</executionEnabled>\n" +
-                "    <id>ccda2e41-277a-4c62-ba01-8f930663561e</id>\n" +
-                "    <loglevel>INFO</loglevel>\n" +
-                "    <name>read-nc-output</name>\n" +
-                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
-                "    <plugins />\n" +
-                "    <scheduleEnabled>true</scheduleEnabled>\n" +
-                "    <schedules />\n" +
-                "    <sequence keepgoing='false' strategy='node-first'>\n" +
-                "      <command>\n" +
-                "        <script><![CDATA[cat @option.nc_output_filepath@]]></script>\n" +
-                "        <scriptargs />\n" +
-                "      </command>\n" +
-                "    </sequence>\n" +
-                "    <uuid>ccda2e41-277a-4c62-ba01-8f930663561e</uuid>\n" +
-                "  </job>\n" +
-                "</joblist>"
-
-        def readJobCreated = JobUtils.createJob(projectName, readJobXml, client)
-        assert created.successful
-        CreateJobResponse readJobCreatedResponse = mapper.readValue(
-                readJobCreated.body().string(),
-                CreateJobResponse.class
-        )
-        def readJobId = readJobCreatedResponse.succeeded[0]?.id
-        def readJobRun = JobUtils.executeJob(readJobId, client)
+        // Then run the job that reads the output of request
+        def readJobRun = JobUtils.executeJob(readNcOutputJobId, client)
         assert readJobRun.successful
         Execution readJobRunResponse = mapper.readValue(readJobRun.body().string(), Execution.class)
         def readJobSucceeded = JobUtils.waitForExecutionToBe(
@@ -1252,7 +1195,7 @@ class JobExecutionSpec extends BaseContainer {
             "X-RunDeck-Notification-Execution-ID: $parsedExecutionsResponse.id".toString(),
             "X-RunDeck-Notification-Trigger: success",
             "Content-Type: text/xml; charset=UTF-8",
-            "Host: $NC_HOST:$NC_PORT".toString(),
+            "Host: localhost:9001".toString(),
             "<notification trigger='success' status='succeeded' executionId='$parsedExecutionsResponse.id'>".toString(),
         ]
         def entries = execOutput.entries.stream().map {it.log}.collect(Collectors.toList())
@@ -1261,6 +1204,9 @@ class JobExecutionSpec extends BaseContainer {
         execOutput != null
         assertLinesInsideEntries(webhookData, entries)
 
+        cleanup:
+        deleteProject(projectName)
+        Files.deleteIfExists(Paths.get("/tmp/netcat-out.txt"))
     }
 
     def "test-job-run-without-deadlock"(){
@@ -1437,66 +1383,6 @@ class JobExecutionSpec extends BaseContainer {
         execStatus2.status == ExecutionStatus.SUCCEEDED.state
         execStatus3.status == ExecutionStatus.SUCCEEDED.state
 
-    }
-
-    /**
-     * Opens a netcat web server to perform single request tests
-     *
-     * @param client
-     * @param projectName
-     * @param objectMapper
-     */
-    def openNc(
-            final RdClient client,
-            final String projectName,
-            final ObjectMapper mapper
-    ){
-        def ncJob = "<joblist>\n" +
-                "  <job>\n" +
-                "    <context>\n" +
-                "      <options preserveOrder='true'>\n" +
-                "        <option name='NC_PORT' value='9001' />\n" +
-                "        <option name='WAIT_SECS' value='10' />\n" +
-                "      </options>\n" +
-                "    </context>\n" +
-                "    <defaultTab>nodes</defaultTab>\n" +
-                "    <description></description>\n" +
-                "    <executionEnabled>true</executionEnabled>\n" +
-                "    <id>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</id>\n" +
-                "    <loglevel>INFO</loglevel>\n" +
-                "    <name>run-nc</name>\n" +
-                "    <nodeFilterEditable>false</nodeFilterEditable>\n" +
-                "    <plugins />\n" +
-                "    <scheduleEnabled>true</scheduleEnabled>\n" +
-                "    <schedules />\n" +
-                "    <sequence keepgoing='false' strategy='node-first'>\n" +
-                "      <command>\n" +
-                "        <exec>echo -e \"HTTP/1.1 200 OK\\r\\n\\r\\n\" | nc -w \$RD_OPTION_WAIT_SECS -l -p \$RD_OPTION_NC_PORT &gt; /tmp/netcat-out.txt &amp;</exec>\n" +
-                "      </command>\n" +
-                "    </sequence>\n" +
-                "    <uuid>c81aa8af-1e0e-4fce-a7bd-102b87922ef2</uuid>\n" +
-                "  </job>\n" +
-                "</joblist>"
-
-        def ncJobCreated = JobUtils.createJob(projectName, ncJob, client)
-        assert ncJobCreated.successful
-        CreateJobResponse ncJobCreatedResponse = mapper.readValue(
-                ncJobCreated.body().string(),
-                CreateJobResponse.class
-        )
-        def ncJobId = ncJobCreatedResponse.succeeded[0]?.id
-        def ncJobRun = JobUtils.executeJob(ncJobId, client)
-        assert ncJobRun.successful
-        Execution ncJobRunResponse = mapper.readValue(ncJobRun.body().string(), Execution.class)
-        def ncJobSucceeded = JobUtils.waitForExecutionToBe(
-                ExecutionStatus.SUCCEEDED.state,
-                ncJobRunResponse.id as String,
-                mapper,
-                client,
-                WaitingTime.LOW.milliSeconds,
-                WaitingTime.MODERATE.milliSeconds / 1000 as int
-        )
-        assert ncJobSucceeded.status == ExecutionStatus.SUCCEEDED.state
     }
 
     def generateRuntime(int secondsInFuture){
