@@ -10,8 +10,8 @@ import org.rundeck.util.container.RdClient
 
 @APITest
 class ImportSpec extends BaseContainer {
-    public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "projects-import/archive-test-readme"
-    public static final String RESOURCE_ARCHIVE_TEST_DIR = "projects-import/archive-test"
+    public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "/projects-import/archive-test-readme"
+    public static final String RESOURCE_ARCHIVE_TEST_DIR = "/projects-import/archive-test"
 
     def "test-project-import-readme-motd"(){
         given:
