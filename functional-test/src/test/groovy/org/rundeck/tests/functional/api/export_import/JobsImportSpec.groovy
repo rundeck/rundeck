@@ -5,6 +5,7 @@ import okhttp3.Headers
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.api.JobUtils
 import org.rundeck.util.container.BaseContainer
 
 @APITest
@@ -152,53 +153,291 @@ class JobsImportSpec extends BaseContainer {
             }
     }
 
-    def generatePathXml() {
-        def xmlJob = "<joblist>\n" +
-                "   <job>\n" +
-                "      <name>cli job</name>\n" +
-                "      <group>api-test</group>\n" +
-                "      <description></description>\n" +
-                "      <loglevel>INFO</loglevel>\n" +
-                "      <context>\n" +
-                "          <project>xml-project-name</project>\n" +
-                "      </context>\n" +
-                "      <dispatch>\n" +
-                "        <threadcount>1</threadcount>\n" +
-                "        <keepgoing>true</keepgoing>\n" +
-                "      </dispatch>\n" +
-                "      <sequence>\n" +
-                "        <command>\n" +
-                "        <exec>xml-args</exec>\n" +
-                "        </command>\n" +
-                "      </sequence>\n" +
-                "   </job>\n" +
-                "</joblist>"
+    def "jobs-import-jobref-renamed"() {
+        setup:
+        def job = """
+                <joblist>
+                  <job>
+                    <context>
+                      <options preserveOrder='true'>
+                        <option name='Time' required='true' />
+                      </options>
+                    </context>
+                    <defaultTab>summary</defaultTab>
+                    <description></description>
+                    <executionEnabled>true</executionEnabled>
+                    <group>Manage</group>
+                    <id>28a1fc62-92a1-4a45-bbc3-02a8b0f46af8</id>
+                    <loglevel>INFO</loglevel>
+                    <name>RefMe</name>
+                    <nodeFilterEditable>false</nodeFilterEditable>
+                    <scheduleEnabled>true</scheduleEnabled>
+                    <sequence keepgoing='false' strategy='node-first'>
+                      <command>
+                        <exec>sleep \${option.Time}</exec>
+                      </command>
+                    </sequence>
+                    <uuid>28a1fc62-92a1-4a45-bbc3-02a8b0f46af8</uuid>
+                  </job>
+                  <job>
+                    <context>
+                      <options preserveOrder='true'>
+                        <option name='Foo' />
+                      </options>
+                    </context>
+                    <defaultTab>summary</defaultTab>
+                    <description></description>
+                    <executionEnabled>true</executionEnabled>
+                    <group>Manage</group>
+                    <id>a6d88d66-920b-492b-b7c4-1a22da67333b</id>
+                    <loglevel>INFO</loglevel>
+                    <name>Wrapper</name>
+                    <nodeFilterEditable>false</nodeFilterEditable>
+                    <scheduleEnabled>true</scheduleEnabled>
+                    <sequence keepgoing='false' strategy='node-first'>
+                      <command>
+                        <jobref name='RefMe'>
+                          <arg line='-Time \${option.Foo}' />
+                          <uuid>28a1fc62-92a1-4a45-bbc3-02a8b0f46af8</uuid>
+                        </jobref>
+                      </command>
+                    </sequence>
+                    <uuid>a6d88d66-920b-492b-b7c4-1a22da67333b</uuid>
+                  </job>
+                </joblist>
+            """
+        def path = JobUtils.generateFileToImport(job, "xml")
+        when:
+        def result = jobImportFile(PROJECT_NAME, path)
+        then:
+        verifyAll {
+            result.succeeded[0].id == "28a1fc62-92a1-4a45-bbc3-02a8b0f46af8"
+            result.succeeded[1].id == "a6d88d66-920b-492b-b7c4-1a22da67333b"
+        }
+    }
 
-        def xmlJobAux = xmlJob.replaceAll('xml-args', 'echo hello there')
-                .replaceAll('xml-project-name', PROJECT_NAME)
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlJobAux
-        tempFile.deleteOnExit()
-        tempFile.path
+    def "jobs-import-job-ref-validated-false"() {
+        setup:
+        def job = """
+                    <joblist>
+                      <job>
+                        <context>
+                          <options preserveOrder='true'>
+                            <option name='Foo' />
+                          </options>
+                        </context>
+                        <defaultTab>summary</defaultTab>
+                        <description></description>
+                        <executionEnabled>true</executionEnabled>
+                        <group>Manage</group>
+                        <id>a6d88d66-920b-492b-b7c4-1a22da67333b</id>
+                        <loglevel>INFO</loglevel>
+                        <name>Wrapper</name>
+                        <nodeFilterEditable>false</nodeFilterEditable>
+                        <scheduleEnabled>true</scheduleEnabled>
+                        <sequence keepgoing='false' strategy='node-first'>
+                          <command>
+                            <jobref name='RefMe'>
+                              <arg line='-Time \${option.Foo}' />
+                              <uuid>28a1fc62-92a1-4a45-bbc3-02a8b0f46af0</uuid>
+                            </jobref>
+                          </command>
+                        </sequence>
+                        <uuid>a6d88d66-920b-492b-b7c4-1a22da67333c</uuid>
+                      </job>
+                    </joblist>
+                """
+        def path = JobUtils.generateFileToImport(job, "xml")
+        when:
+        def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?validateJobref=false", new File(path), "application/xml")
+        def result = client.jsonValue(responseImport.body(), Map)
+        then:
+        verifyAll {
+            responseImport.successful
+            responseImport.code() == 200
+            result.succeeded[0].id == "a6d88d66-920b-492b-b7c4-1a22da67333c"
+        }
+    }
+
+    def "jobs-import-job-ref-validated-true"() {
+        setup:
+        def job = """
+                    <joblist>
+                      <job>
+                        <context>
+                          <options preserveOrder='true'>
+                            <option name='Foo' />
+                          </options>
+                        </context>
+                        <defaultTab>summary</defaultTab>
+                        <description></description>
+                        <executionEnabled>true</executionEnabled>
+                        <group>Manage</group>
+                        <id>a6d88d66-920b-492b-b7c4-1a22da67333b</id>
+                        <loglevel>INFO</loglevel>
+                        <name>Wrapper</name>
+                        <nodeFilterEditable>false</nodeFilterEditable>
+                        <scheduleEnabled>true</scheduleEnabled>
+                        <sequence keepgoing='false' strategy='node-first'>
+                          <command>
+                            <jobref name='RefMe'>
+                              <arg line='-Time \${option.Foo}' />
+                              <uuid>28a1fc62-92a1-4a45-bbc3-02a8b0f46af0</uuid>
+                            </jobref>
+                          </command>
+                        </sequence>
+                        <uuid>a6d88d66-920b-492b-b7c4-1a22da67333c</uuid>
+                      </job>
+                    </joblist>
+                    """
+        def path = JobUtils.generateFileToImport(job, "xml")
+        when:
+        def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?validateJobref=true", new File(path), "application/xml")
+        def result = client.jsonValue(responseImport.body(), Map)
+        then:
+        verifyAll {
+            responseImport.successful
+            responseImport.code() == 200
+            result.failed.size() == 1
+        }
+    }
+
+    def "import RunDeck Jobs in json format (multipart file)"() {
+        setup:
+            def path = generatePathJson()
+        when:
+            def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                .build()
+            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import", multipartBody)
+            def result = client.jsonValue(responseImport.body(), Map)
+        then:
+            verifyAll {
+                responseImport.successful
+                responseImport.code() == 200
+                result.succeeded.size() == 1
+            }
+    }
+
+    def "import RunDeck Jobs in json format (urlencode)"() {
+        setup:
+            def path = generatePathJson()
+            FormBody formBody = new FormBody.Builder()
+                .addEncoded("xmlBatch", new File(path).text)
+                .build()
+            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import", formBody)
+        when:
+            def result = client.jsonValue(responseImport.body(), Map)
+        then:
+            verifyAll {
+                responseImport.successful
+                responseImport.code() == 200
+                result.succeeded.size() == 1
+            }
+    }
+
+    def "import RunDeck Jobs in yaml format (multipart file)"() {
+        when:
+            def path = generatePathYaml()
+            def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                .build()
+            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", multipartBody)
+            def result = client.jsonValue(responseImport.body(), Map)
+        then:
+            verifyAll {
+                responseImport.successful
+                responseImport.code() == 200
+                result.succeeded.size() == 1
+            }
+    }
+
+    def "import RunDeck Jobs in yaml format (urlencode)"() {
+        when:
+            def path = generatePathYaml()
+            FormBody formBody = new FormBody.Builder()
+                .addEncoded("xmlBatch", new File(path).text)
+                .build()
+            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", formBody)
+            def result = client.jsonValue(responseImport.body(), Map)
+        then:
+            verifyAll {
+                responseImport.successful
+                responseImport.code() == 200
+                result.succeeded.size() == 1
+            }
+    }
+
+    def generatePathJson() {
+        def job = """
+                                [
+                                   {
+                                      "name":"cli job3",
+                                      "group":"api-test/job-import",
+                                      "description":"",
+                                      "loglevel":"INFO",
+                                      "context":{
+                                          "project":"${PROJECT_NAME}
+                                      },
+                                      "dispatch":{
+                                        "threadcount":1,
+                                        "keepgoing":true
+                                      },
+                                      "sequence":{
+                                        "commands":[
+                                          {
+                                            "exec":"echo hello there"
+                                          }
+                                        ]
+                                      }
+                                   }
+                                ]
+                                """
+        JobUtils.generateFileToImport(job, "json")
+    }
+
+    def generatePathXml() {
+        def xml = """
+                <joblist>
+                    <job>
+                        <name>cli job</name>
+                        <group>api-test</group>
+                        <description></description>
+                        <loglevel>INFO</loglevel>
+                        <context>
+                            <project>test</project>
+                        </context>
+                        <dispatch>
+                            <threadcount>1</threadcount>
+                            <keepgoing>true</keepgoing>
+                        </dispatch>
+                        <sequence>
+                            <command>
+                                <exec>echo hello there</exec>
+                            </command>
+                        </sequence>
+                    </job>
+                </joblist>
+                """
+        JobUtils.generateFileToImport(xml, "xml")
     }
 
     def generatePathYaml() {
-        def xmlJob = "-\n" +
-                "  project: test\n" +
-                "  loglevel: INFO\n" +
-                "  sequence:\n" +
-                "    keepgoing: false\n" +
-                "    strategy: node-first\n" +
-                "    commands:\n" +
-                "    - exec: echo hello there\n" +
-                "  description: '\$0'\n" +
-                "  group: api-test\n" +
-                "  name: test import yaml"
-
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlJob
-        tempFile.deleteOnExit()
-        tempFile.path
+        def yaml = """
+                -
+                  project: test
+                  loglevel: INFO
+                  sequence:
+                    keepgoing: false
+                    strategy: node-first
+                    commands:
+                    - exec: echo hello there
+                  description: '\$0'
+                  group: api-test
+                  name: test import yaml
+                """
+        JobUtils.generateFileToImport(yaml, "yaml")
     }
-
 }
