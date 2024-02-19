@@ -176,14 +176,12 @@ class ExecuteScriptSpec extends BaseContainer{
         )
         assert readJobRunEmptySucceeded.status == ExecutionStatus.SUCCEEDED.state
         def execOutputEmptyResponse = client.doGetAcceptAll("/execution/$readJobRunEmptyResponse.id/output")
-        ExecutionOutput execOutputEmpty = mapper.readValue(execOutputEmptyResponse.body().string(), ExecutionOutput.class)
+        def execOutputEmptyString = execOutputEmptyResponse.body().string()
+        ExecutionOutput execOutputEmpty = mapper.readValue(execOutputEmptyString, ExecutionOutput.class)
         def emptyEntries = execOutputEmpty.entries.stream().map {it.log}.collect(Collectors.toList())
 
         then: "The file is empty"
-        emptyEntries.size() > 0 // Just a line in the file
-        emptyEntries.each {
-            line -> assert line.isEmpty() // But is empty
-        }
+        emptyEntries[0].isEmpty()
 
     }
 

@@ -1218,8 +1218,7 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
 
-        def xmlJob = (String stepArgs) -> {
-            return "<joblist>\n" +
+        def xmlJob = "<joblist>\n" +
                     "  <job>\n" +
                     "    <context>\n" +
                     "      <options preserveOrder='true'>\n" +
@@ -1311,10 +1310,8 @@ class JobExecutionSpec extends BaseContainer {
                     "    <uuid>06ba3dce-ba4f-4964-8ac2-349c3a2267bd</uuid>\n" +
                     "  </job>\n" +
                     "</joblist>"
-        }
 
-        def jobArgs = "echo asd" // As the original test states
-        def testXml = xmlJob(jobArgs)
+        def testXml = xmlJob
         def created = JobUtils.createJob(projectName, testXml, client)
         assert created.successful
         CreateJobResponse jobCreatedResponse = mapper.readValue(
@@ -1395,8 +1392,7 @@ class JobExecutionSpec extends BaseContainer {
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
 
-        def xmlJob = (String stepArgs) -> {
-            return "<joblist>\n" +
+        def xmlJob = "<joblist>\n" +
                     "   <job>\n" +
                     "      <name>test job</name>\n" +
                     "      <group>api-test/job-run-steps</group>\n" +
@@ -1414,7 +1410,7 @@ class JobExecutionSpec extends BaseContainer {
                     "      </dispatch>\n" +
                     "      <sequence>\n" +
                     "        <command>\n" +
-                    "        <exec>${stepArgs}</exec>\n" +
+                    "        <exec>echo asd</exec>\n" +
                     "        </command>\n" +
                     "         <command>\n" +
                     "        <scriptargs>\${option.opt2}</scriptargs>\n" +
@@ -1459,15 +1455,13 @@ class JobExecutionSpec extends BaseContainer {
                     "      </dispatch>\n" +
                     "      <sequence>\n" +
                     "        <command>\n" +
-                    "        <exec>${stepArgs}</exec>\n" +
+                    "        <exec>echo asd</exec>\n" +
                     "        </command>\n" +
                     "      </sequence>\n" +
                     "   </job>\n" +
                     "</joblist>"
-        }
 
-        def jobArgs = "echo asd" // As the original test states
-        def testXml = xmlJob(jobArgs)
+        def testXml = xmlJob
         def created = JobUtils.createJob(projectName, testXml, client)
         assert created.successful
 
@@ -1851,6 +1845,17 @@ class JobExecutionSpec extends BaseContainer {
         deleteProject(projectName)
     }
 
+    /**
+     * Generates errorhandler-covered jobs
+     *
+     * @param projectName
+     * @param jobName
+     * @param jobKeepGoing
+     * @param errorHandlerKeepGoing
+     * @param errorHandlerStepExec
+     * @param finalWorkflowExec
+     * @return
+     */
     def generateErrorHandlerJob(
             String projectName,
             String jobName,
