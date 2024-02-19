@@ -523,7 +523,7 @@ class ConfigSpec extends BaseContainer{
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
         assert createResponse.successful
-        setupProject(projectName, "/projects-import/resourcesTest.zip")
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
@@ -586,7 +586,7 @@ class ConfigSpec extends BaseContainer{
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
         assert createResponse.successful
-        setupProject(projectName, "/projects-import/resourcesTest.zip")
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
