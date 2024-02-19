@@ -310,7 +310,7 @@ class JobsImportSpec extends BaseContainer {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
                 .build()
-            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import", multipartBody)
+            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?format=json", multipartBody)
             def result = client.jsonValue(responseImport.body(), Map)
         then:
             verifyAll {
@@ -326,7 +326,7 @@ class JobsImportSpec extends BaseContainer {
             FormBody formBody = new FormBody.Builder()
                 .addEncoded("xmlBatch", new File(path).text)
                 .build()
-            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import", formBody)
+            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=json", formBody)
         when:
             def result = client.jsonValue(responseImport.body(), Map)
         then:
@@ -379,7 +379,7 @@ class JobsImportSpec extends BaseContainer {
                                       "description":"",
                                       "loglevel":"INFO",
                                       "context":{
-                                          "project":"${PROJECT_NAME}
+                                          "project":"test"
                                       },
                                       "dispatch":{
                                         "threadcount":1,
