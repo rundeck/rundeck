@@ -41,7 +41,7 @@ class JobsImportSpec extends BaseContainer {
         when:
             def path = generatePathXml()
             FormBody formBody = new FormBody.Builder()
-                    .addEncoded("xmlBatch", new File(path).text)
+                    .add("xmlBatch", new File(path).text)
                     .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import", formBody)
         then:
@@ -95,7 +95,7 @@ class JobsImportSpec extends BaseContainer {
         when:
             def path = generatePathXml()
             FormBody formBody = new FormBody.Builder()
-                    .addEncoded("xmlBatch", new File(path).text)
+                    .add("xmlBatch", new File(path).text)
                     .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=DNEformat", formBody)
         then:
@@ -324,7 +324,7 @@ class JobsImportSpec extends BaseContainer {
         setup:
             def path = generatePathJson()
             FormBody formBody = new FormBody.Builder()
-                .addEncoded("xmlBatch", new File(path).text)
+                .add("xmlBatch", new File(path).text)
                 .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=json", formBody)
         when:
@@ -344,7 +344,7 @@ class JobsImportSpec extends BaseContainer {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
                 .build()
-            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", multipartBody)
+            def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?format=yaml", multipartBody)
             def result = client.jsonValue(responseImport.body(), Map)
         then:
             verifyAll {
@@ -358,9 +358,9 @@ class JobsImportSpec extends BaseContainer {
         when:
             def path = generatePathYaml()
             FormBody formBody = new FormBody.Builder()
-                .addEncoded("xmlBatch", new File(path).text)
+                .add("xmlBatch", new File(path).text)
                 .build()
-            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", formBody)
+            def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=yaml", formBody)
             def result = client.jsonValue(responseImport.body(), Map)
         then:
             verifyAll {
