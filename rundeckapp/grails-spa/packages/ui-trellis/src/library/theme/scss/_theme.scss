@@ -1,120 +1,118 @@
-$grey-100:                   #FAFAFA;
-$grey-200:                   #F4F4F5;
-$grey-300:                   #E4E4E7;
-$grey-400:                   #D4D4D8;
-$grey-500:                   #A1A1AA;
-$grey-600:                   #71717A;
-$grey-700:                   #52525B;
-$grey-800:                   #27272A;
-$grey-900:                   #18181B;
+$grey-100: #fafafa;
+$grey-200: #f4f4f5;
+$grey-300: #e4e4e7;
+$grey-400: #d4d4d8;
+$grey-500: #a1a1aa;
+$grey-600: #71717a;
+$grey-700: #52525b;
+$grey-800: #27272a;
+$grey-900: #18181b;
 
-$blue-100:                   #DCE6FB;
-$blue-200:                   #9DB6ED;
-$blue-300:                   #799BE5;
-$blue-400:                   #4C79DA;
-$blue-500:                   #285ED2;
-$blue-600:                   #1248BD;
-$blue-700:                   #0F3EA3;
-$blue-800:                   #0D3487;
-$blue-900:                   #0A2A6E;
+$blue-100: #dce6fb;
+$blue-200: #9db6ed;
+$blue-300: #799be5;
+$blue-400: #4c79da;
+$blue-500: #285ed2;
+$blue-600: #1248bd;
+$blue-700: #0f3ea3;
+$blue-800: #0d3487;
+$blue-900: #0a2a6e;
 
-$green-100:                  #D6E4DB;
-$green-200:                  #A1D2B3;
-$green-300:                  #78C494;
-$green-400:                  #50B776;
-$green-500:                  #16A34A;
-$green-600:                  #149343;
-$green-700:                  #117A37;
-$green-800:                  #0D5E2B;
-$green-900:                  #083B1B;
+$green-100: #d6e4db;
+$green-200: #a1d2b3;
+$green-300: #78c494;
+$green-400: #50b776;
+$green-500: #16a34a;
+$green-600: #149343;
+$green-700: #117a37;
+$green-800: #0d5e2b;
+$green-900: #083b1b;
 
+$red-100: #fadcdc;
+$red-200: #f1a9a9;
+$red-300: #eb8383;
+$red-400: #e55b5b;
+$red-500: #de3434;
+$red-600: #c12121;
+$red-700: #9d1b1b;
+$red-800: #771414;
+$red-900: #4f0d0d;
 
-$red-100:                    #FADCDC;
-$red-200:                    #F1A9A9;
-$red-300:                    #EB8383;
-$red-400:                    #E55B5B;
-$red-500:                    #DE3434;
-$red-600:                    #C12121;
-$red-700:                    #9D1B1B;
-$red-800:                    #771414;
-$red-900:                    #4F0D0D;
+$orange-100: #fee8d8;
+$orange-200: #fdcaa6;
+$orange-300: #fcb07b;
+$orange-400: #fb9650;
+$orange-500: #fa7d27;
+$orange-600: #e36914;
+$orange-700: #bb550f;
+$orange-800: #8f4009;
+$orange-900: #602903;
 
-$orange-100:                 #FEE8D8;
-$orange-200:                 #FDCAA6;
-$orange-300:                 #FCB07B;
-$orange-400:                 #FB9650;
-$orange-500:                 #FA7D27;
-$orange-600:                 #E36914;
-$orange-700:                 #BB550F;
-$orange-800:                 #8F4009;
-$orange-900:                 #602903;
+$yellow-100: #fffad7;
+$yellow-200: #fff3b2;
+$yellow-300: #feee94;
+$yellow-400: #fee875;
+$yellow-500: #fde251;
+$yellow-600: #dbc23c;
+$yellow-700: #a5922a;
+$yellow-800: #76681b;
+$yellow-900: #463b04;
 
-$yellow-100:                 #FFFAD7;
-$yellow-200:                 #FFF3B2;
-$yellow-300:                 #FEEE94;
-$yellow-400:                 #FEE875;
-$yellow-500:                 #FDE251;
-$yellow-600:                 #DBC23C;
-$yellow-700:                 #A5922A;
-$yellow-800:                 #76681B;
-$yellow-900:                 #463B04;
+$teal-100: #dff4f0;
+$teal-200: #abd7d2;
+$teal-300: #80beb8;
+$teal-400: #4ea29a;
+$teal-500: #258b83;
+$teal-600: #0f746c;
+$teal-700: #0d615a;
+$teal-800: #0a4d48;
+$teal-900: #073633;
 
-$teal-100:                   #DFF4F0;
-$teal-200:                   #ABD7D2;
-$teal-300:                   #80BEB8;
-$teal-400:                   #4EA29A;
-$teal-500:                   #258B83;
-$teal-600:                   #0F746C;
-$teal-700:                   #0D615A;
-$teal-800:                   #0A4D48;
-$teal-900:                   #073633;
+$cyan-100: #d8f3f7;
+$cyan-200: #a9e5f0;
+$cyan-300: #6fd5e6;
+$cyan-400: #47c9df;
+$cyan-500: #1dbdd8;
+$cyan-600: #06a2bd;
+$cyan-700: #057f93;
+$cyan-800: #035b6a;
+$cyan-900: #023942;
 
-$cyan-100:                   #D8F3F7;
-$cyan-200:                   #A9E5F0;
-$cyan-300:                   #6FD5E6;
-$cyan-400:                   #47C9DF;
-$cyan-500:                   #1DBDD8;
-$cyan-600:                   #06A2BD;
-$cyan-700:                   #057F93;
-$cyan-800:                   #035B6A;
-$cyan-900:                   #023942;
+$pink-100: #fcd9eb;
+$pink-200: #fabbdc;
+$pink-300: #f9a9d3;
+$pink-400: #f793c7;
+$pink-500: #f579ba;
+$pink-600: #d8609f;
+$pink-700: #ae457c;
+$pink-800: #832a59;
+$pink-900: #590e35;
 
-$pink-100:                   #FCD9EB;
-$pink-200:                   #FABBDC;
-$pink-300:                   #F9A9D3;
-$pink-400:                   #F793C7;
-$pink-500:                   #F579BA;
-$pink-600:                   #D8609F;
-$pink-700:                   #AE457C;
-$pink-800:                   #832A59;
-$pink-900:                   #590E35;
+$purple-100: #e4cdf9;
+$purple-200: #c699f0;
+$purple-300: #b276ea;
+$purple-400: #9a4de3;
+$purple-500: #8529dc;
+$purple-600: #6e15c2;
+$purple-700: #5c12a3;
+$purple-800: #470e7d;
+$purple-900: #300954;
 
-$purple-100:                 #E4CDF9;
-$purple-200:                 #C699F0;
-$purple-300:                 #B276EA;
-$purple-400:                 #9A4DE3;
-$purple-500:                 #8529DC;
-$purple-600:                 #6E15C2;
-$purple-700:                 #5C12A3;
-$purple-800:                 #470E7D;
-$purple-900:                 #300954;
+$indigo-100: #dddcfa;
+$indigo-200: #b1adf4;
+$indigo-300: #928def;
+$indigo-400: #736dea;
+$indigo-500: #5049e5;
+$indigo-600: #3b34cb;
+$indigo-700: #2f29a8;
+$indigo-800: #211c80;
+$indigo-900: #110e52;
 
-$indigo-100:                 #DDDCFA;
-$indigo-200:                 #B1ADF4;
-$indigo-300:                 #928DEF;
-$indigo-400:                 #736DEA;
-$indigo-500:                 #5049E5;
-$indigo-600:                 #3B34CB;
-$indigo-700:                 #2F29A8;
-$indigo-800:                 #211C80;
-$indigo-900:                 #110E52;
-
-$white:                      #FFFFFF;
-$black:                      $grey-900;
-
+$white: #ffffff;
+$black: $grey-900;
 
 :root {
-  $colors:(
+  $colors: (
     "grey-100": $grey-100,
     "grey-200": $grey-200,
     "grey-300": $grey-300,
@@ -125,15 +123,15 @@ $black:                      $grey-900;
     "grey-800": $grey-800,
     "grey-900": $grey-900,
 
-    "blue-100" : $blue-100,
-    "blue-200" : $blue-200,
-    "blue-300" : $blue-300,
-    "blue-400" : $blue-400,
-    "blue-500" : $blue-500,
-    "blue-600" : $blue-600,
-    "blue-700" : $blue-700,
-    "blue-800" : $blue-800,
-    "blue-900" : $blue-900,   
+    "blue-100": $blue-100,
+    "blue-200": $blue-200,
+    "blue-300": $blue-300,
+    "blue-400": $blue-400,
+    "blue-500": $blue-500,
+    "blue-600": $blue-600,
+    "blue-700": $blue-700,
+    "blue-800": $blue-800,
+    "blue-900": $blue-900,
 
     "green-100": $green-100,
     "green-200": $green-200,
@@ -144,17 +142,17 @@ $black:                      $grey-900;
     "green-700": $green-700,
     "green-800": $green-800,
     "green-900": $green-900,
-    
-    "red-100" :$red-100,
-    "red-200" :$red-200,
-    "red-300" :$red-300,
-    "red-400" :$red-400,
-    "red-500" :$red-500,
-    "red-600" :$red-600,
-    "red-700" :$red-700,
-    "red-800" :$red-800,
-    "red-900" :$red-900,   
-    
+
+    "red-100": $red-100,
+    "red-200": $red-200,
+    "red-300": $red-300,
+    "red-400": $red-400,
+    "red-500": $red-500,
+    "red-600": $red-600,
+    "red-700": $red-700,
+    "red-800": $red-800,
+    "red-900": $red-900,
+
     "orange-100": $orange-100,
     "orange-200": $orange-200,
     "orange-300": $orange-300,
@@ -173,7 +171,7 @@ $black:                      $grey-900;
     "yellow-600": $yellow-600,
     "yellow-700": $yellow-700,
     "yellow-800": $yellow-800,
-    "yellow-900": $yellow-900, 
+    "yellow-900": $yellow-900,
 
     "teal-100": $teal-100,
     "teal-200": $teal-200,
@@ -183,7 +181,7 @@ $black:                      $grey-900;
     "teal-600": $teal-600,
     "teal-700": $teal-700,
     "teal-800": $teal-800,
-    "teal-900": $teal-900, 
+    "teal-900": $teal-900,
 
     "cyan-100": $cyan-100,
     "cyan-200": $cyan-200,
@@ -193,7 +191,7 @@ $black:                      $grey-900;
     "cyan-600": $cyan-600,
     "cyan-700": $cyan-700,
     "cyan-800": $cyan-800,
-    "cyan-900": $cyan-900, 
+    "cyan-900": $cyan-900,
 
     "pink-100": $pink-100,
     "pink-200": $pink-200,
@@ -203,7 +201,7 @@ $black:                      $grey-900;
     "pink-600": $pink-600,
     "pink-700": $pink-700,
     "pink-800": $pink-800,
-    "pink-900": $pink-900, 
+    "pink-900": $pink-900,
 
     "purple-100": $purple-100,
     "purple-200": $purple-200,
@@ -213,7 +211,7 @@ $black:                      $grey-900;
     "purple-600": $purple-600,
     "purple-700": $purple-700,
     "purple-800": $purple-800,
-    "purple-900": $purple-900, 
+    "purple-900": $purple-900,
 
     "indigo-100": $indigo-100,
     "indigo-200": $indigo-200,
@@ -223,11 +221,11 @@ $black:                      $grey-900;
     "indigo-600": $indigo-600,
     "indigo-700": $indigo-700,
     "indigo-800": $indigo-800,
-    "indigo-900": $indigo-900, 
+    "indigo-900": $indigo-900,
 
     "white": #fff,
     "black": $grey-900,
-    "medium-grey": $grey-500, 
+    "medium-grey": $grey-500,
   );
 
   @each $key_name, $value in $colors {
@@ -235,271 +233,263 @@ $black:                      $grey-900;
   }
 }
 
-
 :root {
-    --grey-900: #{$grey-900};
-    --grey-800: #{$grey-800};
-    --grey-700: #{$grey-700};
-    --grey-600: #{$grey-600};
-    --grey-500: #{$grey-500};
-    --grey-400: #{$grey-400};
-    --grey-300: #{$grey-300};
-    --grey-200: #{$grey-200};
-    --grey-100: #{$grey-100};
-    // Transitions and Animations
-    --animation-scale: 1;
+  --grey-900: #{$grey-900};
+  --grey-800: #{$grey-800};
+  --grey-700: #{$grey-700};
+  --grey-600: #{$grey-600};
+  --grey-500: #{$grey-500};
+  --grey-400: #{$grey-400};
+  --grey-300: #{$grey-300};
+  --grey-200: #{$grey-200};
+  --grey-100: #{$grey-100};
+  // Transitions and Animations
+  --animation-scale: 1;
 
+  // Brand
+  --brand-color: var(--red-500);
+  --accent-color: #52c80b;
 
-    // Brand
-    --brand-color: var(--red-500);
-    --accent-color: #52C80B;
+  // --background-color: #F4F5F7;
+  --background-color: var(--grey-200);
+  --background-color-accent: var(--grey-500);
 
-    // --background-color: #F4F5F7;
-    --background-color: var(--grey-200);
-    --background-color-accent: var(--grey-500);
+  --background-color-lvl2: var(--white);
+  --background-color-accent-lvl2: var(--grey-300);
 
-    --background-color-lvl2: var(--white);
-    --background-color-accent-lvl2: var(--grey-300);
+  --background-color-lvl3: var(--grey-400);
+  --background-color-accent-lvl3: var(--grey-600);
 
-    --background-color-lvl3: var(--grey-400);
-    --background-color-accent-lvl3: var(--grey-600);
+  --box-shadow-top-lv1: 0px -1px var(--grey-400);
+  --box-shadow-bottom-lv1: 0px 1px var(--grey-400);
 
-    --box-shadow-top-lv1:  0px -1px var(--grey-400);
-    --box-shadow-bottom-lv1:  0px 1px var(--grey-400);
+  --border-color: var(--grey-500);
 
-    --border-color: var(--grey-500);
+  --default-color: var(--white);
+  --default-states-color: var(--grey-700);
 
-    --default-color:              var(--white);
-    --default-states-color:       var(--grey-700);
+  --primary-color: var(--blue-500);
+  --primary-states-color: var(--blue-700);
+  --primary-highlight-color: var(--blue-300);
+  --primary-bg-color: var(--blue-100);
 
-    --primary-color:              var(--blue-500);
-    --primary-states-color:       var(--blue-700);
-    --primary-highlight-color:    var(--blue-300);
-    --primary-bg-color:           var(--blue-100);
+  --success-color: var(--green-500);
+  --success-states-color: var(--green-700);
+  --success-light-color: var(--green-300);
+  --success-bg-color: var(--green-100);
 
-    --success-color:              var(--green-500);
-    --success-states-color:       var(--green-700);
-    --success-light-color:        var(--green-300);
-    --success-bg-color:           var(--green-100);
+  --cta-color: var(--green-500);
+  --cta-states-color: var(--green-700);
+  --cta-light-color: var(--green-300);
 
-    --cta-color:                  var(--green-500);
-    --cta-states-color:           var(--green-700);
-    --cta-light-color:            var(--green-300);
+  --info-color: var(--cyan-500);
+  --info-states-color: var(--cyan-700);
+  --info-light-color: var(--cyan-300);
+  --info-bg-color: var(--cyan-100);
 
-    --info-color:                 var(--cyan-500);
-    --info-states-color:          var(--cyan-700);
-    --info-light-color:           var(--cyan-300);
-    --info-bg-color:              var(--cyan-100);
+  --warning-color: var(--orange-500);
+  --warning-states-color: var(--orange-700);
+  --warning-light-color: var(--orange-300);
+  --warning-bg-color: var(--orange-100);
 
-    --warning-color:              var(--orange-500);
-    --warning-states-color:       var(--orange-700);
-    --warning-light-color:        var(--orange-300);
-    --warning-bg-color:           var(--orange-100);
+  --danger-color: var(--red-500);
+  --danger-states-color: var(--red-700);
+  --danger-light-color: var(--red-300);
+  --danger-bg-color: var(--red-100);
 
-    --danger-color:               var(--red-500);
-    --danger-states-color:        var(--red-700);
-    --danger-light-color:         var(--red-300);
-    --danger-bg-color:            var(--red-100);
+  // Typography
+  --font-color: var(--grey-700);
+  --font-fill-color: var(--white);
 
-    // Typography
-    --font-color:                 var(--grey-700);
-    --font-fill-color:            var(--white);
+  --text-primary-color: var(--primary-color);
+  --text-muted-color: var(--medium-grey);
+  --text-secondary-color: var(--text-muted-color);
 
-    --text-primary-color: var(--primary-color);
-    --text-muted-color:           var(--medium-grey);
-    --text-secondary-color:       var(--text-muted-color);
+  --link-color: var(--primary-color);
 
-    --link-color: var(--primary-color);
+  // List Items
+  --list-item-background-color: var(--white);
+  --list-item-border-color: var(--grey-400);
 
-    // List Items
-    --list-item-background-color: var(--white);
-    --list-item-border-color: var(--grey-400);
+  // Panels
+  --panel-background-color: var(--background-color-lvl2);
 
-    // Panels
-    --panel-background-color: var(--background-color-lvl2);
+  // Main Bar
+  --mainbar-bg-color: var(--background-color-lvl2);
+  --mainbar-box-shadow: var(--box-shadow-bottom-lv1);
 
-    // Main Bar
-    --mainbar-bg-color: var(--background-color-lvl2);
-    --mainbar-box-shadow:  var(--box-shadow-bottom-lv1);
+  // Side Bar
+  --sidebar-background-color: var(--grey-900);
+  --sidebar-item-color: var(--grey-500);
+  --sidebar-item-state-color: var(--white);
+  --sidebar-drawer-bg-color: var(--grey-800);
 
-    // Side Bar
-    --sidebar-background-color: var(--grey-900);
-    --sidebar-item-color:       var(--grey-500);
-    --sidebar-item-state-color: var(--white);
-    --sidebar-drawer-bg-color:  var(--grey-800);
+  // Subtitle Bar
+  --subtitle-bar-border-bottom: 1px solid var(--grey-200);
 
-    // Subtitle Bar
-    --subtitle-bar-border-bottom: 1px solid var(--grey-200);
+  // Utility Bar
+  --utility-bar-background-color: var(--background-color-lvl2);
+  --utility-bar-box-shadow: var(--box-shadow-top-lv1);
 
-    // Utility Bar
-    --utility-bar-background-color: var(--background-color-lvl2);
-    --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
+  // MOTD Drawer
+  --motd-drawer-background-color: var(--background-color-lvl2);
 
-    // MOTD Drawer
-    --motd-drawer-background-color: var(--background-color-lvl2);
+  // Popover
+  --popover-background-color: var(--background-color-lvl2);
 
-    // Popover
-    --popover-background-color: var(--background-color-lvl2);
+  // Inputs
+  --input-bg-color: var(--grey-200);
+  --input-outline-color: var(--grey-300);
+  --input-group-addon-bg-color: var(--grey-100);
+  --input-focus-color: var(--grey-100);
 
-    // Inputs
-    --input-bg-color:              var(--grey-200);
-    --input-outline-color:         var(--grey-300);
-    --input-group-addon-bg-color:  var(--grey-100);
-    --input-focus-color:           var(--grey-100);
+  --input-checkbox: var(--grey-900);
 
-    --input-checkbox: var(--grey-900);
+  // Tables
+  --table-stripe-color: var(--grey-100);
 
-    // Tables
-    --table-stripe-color: var(--grey-100);
+  // Cards
+  --card-default-background-color: var(--background-color-lvl2);
+  --card-default-border-color: var(--border-color);
+  --card-default-color: var(--font-color);
+  --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
 
-    // Cards
-    --card-default-background-color: var(--background-color-lvl2);
-    --card-default-border-color: var(--border-color);
-    --card-default-color: var(--font-color);
-    --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
+  --card-accent-background-color: var(--teal-100);
+  --card-accent-border-color: var(--teal-200);
 
-    --card-accent-background-color: var(--teal-100);
-    --card-accent-border-color: var(--teal-200);
-
-    // Buttons
-    --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
-    
+  // Buttons
+  --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
 }
 
 *[data-color-theme="dark"] {
-    --grey-900: #23242F;
-    --grey-800: #333645;
-    --grey-700: #3E4153;
-    --grey-600: #494E62;
-    --grey-500: #53596F;
-    --grey-400: #6C7287;
-    --grey-300: #878DA0;
-    --grey-200: #A7ACBD;
-    --grey-100: #C7CBDA;
+  --grey-900: #23242f;
+  --grey-800: #333645;
+  --grey-700: #3e4153;
+  --grey-600: #494e62;
+  --grey-500: #53596f;
+  --grey-400: #6c7287;
+  --grey-300: #878da0;
+  --grey-200: #a7acbd;
+  --grey-100: #c7cbda;
 
+  // Inputs
+  --input-bg-color: var(--grey-800);
+  --input-color: var(--grey-100);
+  --input-outline-color: var(--grey-900);
+  --input-group-addon-bg-color: var(--grey-100);
+  --input-focus-color: var(--grey-900);
 
-    // Inputs
-    --input-bg-color:              var(--grey-800);
-    --input-color:                 var(--grey-100);
-    --input-outline-color:         var(--grey-900);
-    --input-group-addon-bg-color:  var(--grey-100);
-    --input-focus-color:           var(--grey-900);
+  --input-checkbox: var(--grey-900);
 
-    --input-checkbox: var(--grey-900);
-    
-    --input-disabled-bg-color:           var(--grey-400);
-    --input-disabled-color:           var(--grey-100);
+  --input-disabled-bg-color: var(--grey-400);
+  --input-disabled-color: var(--grey-100);
 
-      // Transitions and Animations
-    --animation-scale: 1;
-    // --mishingo-was-here;
+  // Transitions and Animations
+  --animation-scale: 1;
+  // --mishingo-was-here;
 
-    // Brand
-    --brand-color: var(--red-500);
-    --accent-color: #52C80B;
+  // Brand
+  --brand-color: var(--red-500);
+  --accent-color: #52c80b;
 
-    // --background-color: #F4F5F7;
-    --background-color: var(--grey-800);
-    --background-color-accent: var(--grey-400);
+  // --background-color: #F4F5F7;
+  --background-color: var(--grey-800);
+  --background-color-accent: var(--grey-400);
 
-    --background-color-lvl2: var(--grey-700);
-    --background-color-accent-lvl2: var(--grey-500);
+  --background-color-lvl2: var(--grey-700);
+  --background-color-accent-lvl2: var(--grey-500);
 
-    --background-color-lvl3: var(--grey-600);
-    --background-color-accent-lvl3: var(--grey-300);
+  --background-color-lvl3: var(--grey-600);
+  --background-color-accent-lvl3: var(--grey-300);
 
+  --box-shadow-top-lv1: 0px -1px var(--grey-800);
+  --box-shadow-bottom-lv1: 0px 1px var(--grey-800);
 
-    --box-shadow-top-lv1:  0px -1px var(--grey-800);
-    --box-shadow-bottom-lv1:  0px 1px var(--grey-800);
+  --border-color: var(--grey-500);
 
+  --default-color: var(--grey-900);
+  --default-states-color: var(--grey-300);
 
-    --border-color: var(--grey-500);
+  --primary-color: var(--blue-500);
+  --primary-states-color: var(--blue-700);
+  --primary-highlight-color: var(--blue-100);
+  --primary-bg-color: var(--blue-600);
 
-    --default-color:              var(--grey-900);
-    --default-states-color:       var(--grey-300);
+  --success-color: var(--green-600);
+  --success-states-color: var(--green-400);
+  --success-bg-color: var(--green-800);
 
-    --primary-color:              var(--blue-500);
-    --primary-states-color:       var(--blue-700);
-    --primary-highlight-color:    var(--blue-100);
-    --primary-bg-color:           var(--blue-600);
+  --cta-color: var(--green-500);
+  --cta-states-color: var(--green-700);
 
-    --success-color:              var(--green-600);
-    --success-states-color:       var(--green-400);
-    --success-bg-color:           var(--green-800);
+  --info-color: var(--cyan-200);
+  --info-states-color: var(--cyan-500);
+  --info-bg-color: var(--cyan-900);
 
-    --cta-color:                  var(--green-500);
-    --cta-states-color:           var(--green-700);
+  --warning-color: var(--orange-500);
+  --warning-states-color: var(--orange-700);
+  --warning-bg-color: var(--orange-300);
 
-    --info-color:                 var(--cyan-200);
-    --info-states-color:          var(--cyan-500);
-    --info-bg-color:              var(--cyan-900);
+  --danger-color: var(--red-500);
+  --danger-states-color: var(--red-400);
+  --danger-bg-color: var(--red-300);
 
-    --warning-color:              var(--orange-500);
-    --warning-states-color:       var(--orange-700);
-    --warning-bg-color:           var(--orange-300);
+  // Typography
+  --font-color: var(--white);
+  --font-fill-color: var(--white);
 
-    --danger-color:               var(--red-500);
-    --danger-states-color:        var(--red-400);
-    --danger-bg-color:            var(--red-300);
+  --text-primary-color: var(--primary-color);
+  --text-muted-color: var(--grey-100);
+  --text-secondary-color: var(--text-muted-color);
 
-    // Typography
-    --font-color:                 var(--white);
-    --font-fill-color:            var(--white);
+  --link-color: #aec8f4;
 
-    --text-primary-color: var(--primary-color);
-    --text-muted-color:           var(--grey-100);
-    --text-secondary-color:       var(--text-muted-color);
+  --text-code-color: var(--green-500);
 
-    --link-color: #AEC8F4;
+  // Panels
+  --panel-background-color: var(--background-color-lvl2);
 
-    --text-code-color:       var(--green-500);
+  // Main Bar
+  --mainbar-bg-color: var(--grey-900);
+  --mainbar-box-shadow: var(--box-shadow-bottom-lv1);
 
-    // Panels
-    --panel-background-color: var(--background-color-lvl2);
+  // Side Bar
+  --sidebar-background-color: var(--grey-700);
+  --sidebar-item-color: var(--grey-100);
+  --sidebar-item-state-color: var(--white);
+  --sidebar-drawer-bg-color: var(--grey-900);
 
-    // Main Bar
-    --mainbar-bg-color: var(--grey-900);
-    --mainbar-box-shadow:  var(--box-shadow-bottom-lv1);
+  // Subtitle Bar
+  --subtitle-bar-border-bottom: 1px solid var(--grey-200);
 
-    // Side Bar
-    --sidebar-background-color: var(--grey-700);
-    --sidebar-item-color:       var(--grey-100);
-    --sidebar-item-state-color: var(--white);
-    --sidebar-drawer-bg-color:  var(--grey-900);
+  // Utility Bar
+  --utility-bar-background-color: var(--grey-900);
+  --utility-bar-box-shadow: var(--box-shadow-top-lv1);
 
-    // Subtitle Bar
-    --subtitle-bar-border-bottom: 1px solid var(--grey-200);
+  // MOTD Drawer
+  --motd-drawer-background-color: var(--grey-700);
 
-    // Utility Bar
-    --utility-bar-background-color: var(--grey-900);
-    --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
+  // Popover
+  --popover-background-color: var(--grey-900);
 
-    // MOTD Drawer
-    --motd-drawer-background-color: var(--grey-700);
+  // Tables
+  --table-stripe-color: var(--grey-700);
 
-    // Popover
-    --popover-background-color: var(--grey-900);
+  // List Items
+  --list-item-background-color: var(--grey-700);
+  --list-item-border-color: var(--grey-400);
 
+  // Cards
+  --card-default-background-color: var(--background-color-lvl2);
+  --card-default-border-color: var(--background-color-accent-lvl2);
+  --card-default-color: var(--font-color);
+  --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
 
-    // Tables
-    --table-stripe-color: var(--grey-700);
+  --card-accent-background-color: var(--teal-700);
+  --card-accent-border-color: var(--teal-700);
 
-    // List Items
-    --list-item-background-color: var(--grey-700);
-    --list-item-border-color: var(--grey-400);
+  // Buttons
+  --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
 
-    // Cards
-    --card-default-background-color: var(--background-color-lvl2);
-    --card-default-border-color: var(--background-color-accent-lvl2);
-    --card-default-color: var(--font-color);
-    --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
-
-    --card-accent-background-color: var(--teal-700);
-    --card-accent-border-color: var(--teal-700);
-
-    // Buttons
-    --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
-
-
-    // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 70, 255, 0.918);
+  // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 70, 255, 0.918);
 }

@@ -331,7 +331,11 @@ Includes current latest API Version, and base API URL.''',
             String key = e.getKey().toString()
             Object value = e.getValue()
             if(value != null && value.hasProperty("enabled")) {
-                result.add(new FeatureEnabledResult(key, (Boolean)value.getAt("enabled")))
+                def enabled=value.getAt('enabled')
+                if(enabled==null){
+                    enabled = value.hasProperty('defaultEnabled')?value.getAt('defaultEnabled')?:false:false
+                }
+                result.add(new FeatureEnabledResult(key, (Boolean)enabled))
             }
         }
 
@@ -878,14 +882,14 @@ Since: v11
         }
 
         SystemInfoModel systemInfoModel = new SystemInfoModel(systemInfoMap)
-
+        def controller= this
         withFormat{
-            json{
+            '*' {
                 return apiService.renderSuccessJson(response){
                     systemInfoModel
                 }
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml{
                     return apiService.renderSuccessXml(request,response){
                         delegate.'system'{
@@ -956,11 +960,6 @@ Since: v11
                         }
                     }
 
-                }
-            }
-            '*'{
-                return apiService.renderSuccessJson(response){
-                    systemInfoModel
                 }
             }
         }

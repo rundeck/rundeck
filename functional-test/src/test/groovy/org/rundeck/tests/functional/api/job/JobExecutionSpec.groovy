@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.api.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
+import org.rundeck.tests.functional.api.ResponseModels.ErrorResponse
 import org.rundeck.tests.functional.api.ResponseModels.Execution
 import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
@@ -9,12 +10,10 @@ import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.container.RdClient
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 @APITest
 @Stepwise
@@ -30,11 +29,11 @@ class JobExecutionSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateFile("job-template-common.xml", null, "test job", "test/api/executions", "Test the /job/ID/executions API endpoint", "echo testing /job/ID/executions result")
+        def pathFile = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo testing /job/ID/executions result", "uuid": UUID.randomUUID().toString()])
         jobId = jobImportFile(pathFile).succeeded[0].id
-        def pathFile2 = updateFile("job-template-common.xml", null, "test job", "test/api/executions 2", "Test the /job/ID/executions API endpoint", "/bin/false this should fail")
+        def pathFile2 = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions 2", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "/bin/false this should fail", "uuid": UUID.randomUUID().toString()])
         jobId2 = jobImportFile(pathFile2).succeeded[0].id
-        def pathFile3 = updateFile("job-template-common-2.xml", null, "test job", "test/api/executions 3", "Test the /job/ID/executions API endpoint", "echo this job will be killed...", "sleep 240")
+        def pathFile3 = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions 3", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo this job will be killed...", "2-args": "sleep 240", "uuid": UUID.randomUUID().toString()])
         jobId3 = jobImportFile(pathFile3).succeeded[0].id
     }
 
@@ -52,7 +51,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/run should succeed"() {
         when:
-            execId = runJob(jobId, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            execId = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId > 0
@@ -88,7 +88,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "run again job/id/run should succeed"() {
         when:
-            execId2 = runJob(jobId, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
+            execId2 = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId2 > 0
@@ -154,7 +155,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/executions?status=failed with 1 results"() {
         when:
-            execId2 = runJob(jobId2, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
+            execId2 = jsonValue(jobRun.body()).id as Integer
         then:
             verifyAll {
                 execId2 > 0
@@ -174,7 +176,8 @@ class JobExecutionSpec extends BaseContainer {
 
     def "job/id/executions?status=running with 1 results"() {
         when:
-            execId3 = runJob(jobId3, ["options":["opt2": "a"]])
+            def jobRun = JobUtils.executeJobWithArgs(jobId3, client, "-opt2 a")
+            execId3 = jsonValue(jobRun.body()).id as Integer
         then:
             def response = doGet("/job/${jobId3}/executions?status=running")
             verifyAll {
@@ -204,8 +207,6 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-executionEnabled"(){
         given:
         def projectName = "test-job-flip-executionEnabled"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -280,8 +281,6 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-executionEnabled-bulk"(){
         given:
         def projectName = "test-job-flip-executionEnabled-bulk"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -397,9 +396,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-scheduleEnabled-bulk"(){
         given:
         def projectName = "test-job-flip-scheduleEnabled-bulk"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -478,9 +475,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-flip-scheduleEnabled"(){
         given:
         def projectName = "test-job-flip-scheduleEnabled"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -535,9 +530,7 @@ class JobExecutionSpec extends BaseContainer {
     def "test-job-long-run"(){
         given:
         def projectName = "test-job-long-run"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -626,7 +619,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution exec = mapper.readValue(jobRun.body().string(), Execution.class)
 
-        Execution JobExecutionStatus = waitForExecutionToBe(
+        Execution JobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 exec.id as String,
                 mapper,
@@ -644,7 +637,7 @@ class JobExecutionSpec extends BaseContainer {
 
         Execution refExec = mapper.readValue(referencedJobRun.body().string(), Execution.class)
 
-        Execution refJobExecutionStatus = waitForExecutionToBe(
+        Execution refJobExecutionStatus = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 refExec.id as String,
                 mapper,
@@ -658,12 +651,10 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-retry.sh"(){
+    def "test-job-retry"(){
         given:
         def projectName = "test-job-retry"
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
                 "name": projectName.toString(),
@@ -728,12 +719,12 @@ class JobExecutionSpec extends BaseContainer {
         execId > 0
 
         when: "fail and retry 1"
-        def execDetails = waitForExecutionToBe(
+        def execDetails = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
         def retryId1 = execDetails.retriedExecution.id
@@ -742,12 +733,12 @@ class JobExecutionSpec extends BaseContainer {
         retryId1 > 0
 
         when: "fail and retry 2"
-        def execDetails2 = waitForExecutionToBe(
+        def execDetails2 = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 retryId1 as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
         def retryId2 = execDetails2.retriedExecution.id
@@ -756,12 +747,12 @@ class JobExecutionSpec extends BaseContainer {
         retryId2 > 0
 
         when: "final retry"
-        def execDetailsFinal = waitForExecutionToBe(
+        def execDetailsFinal = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.FAILED.state,
                 retryId2 as String,
                 mapper,
                 client,
-                1,
+                WaitingTime.LOW.milliSeconds / 1000 as int,
                 WaitingTime.MODERATE.milliSeconds
         )
 
@@ -772,11 +763,9 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-run-GET-405.sh"(){
+    def "test-job-run-GET-405"(){
         given:
         def projectName = "test-job-run-GET-405"
-        def apiVersion = 40
-        client.apiVersion = apiVersion
         def client = getClient()
         ObjectMapper mapper = new ObjectMapper()
         Object projectJsonMap = [
@@ -838,25 +827,11 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
-    def "test-job-run-later.sh"(){
+    def "test-job-run-later"(){
         setup:
         def projectName = PROJECT_NAME
-        def apiVersion = 40
         def client = getClient()
-        client.apiVersion = apiVersion
         ObjectMapper mapper = new ObjectMapper()
-        Object projectJsonMap = [
-                "name": projectName.toString(),
-                "description": "test-job-run-later",
-                "config": [
-                        "test.property": "test value",
-                        "project.execution.history.cleanup.enabled": "true",
-                        "project.execution.history.cleanup.retention.days": "1",
-                        "project.execution.history.cleanup.batch": "500",
-                        "project.execution.history.cleanup.retention.minimum": "0",
-                        "project.execution.history.cleanup.schedule": "0 0/1 * 1/1 * ? *"
-                ]
-        ]
 
         def xmlJob = (String stepArgs) -> {
             return "<joblist>\n" +
@@ -898,7 +873,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run should succeed with future time"
         def runtime = generateRuntime(25)
-        def runLaterExecResponse = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -914,7 +889,7 @@ class JobExecutionSpec extends BaseContainer {
         dateS.toString() == runtime.date.toString()
 
         when: "Wait until execution succeeds"
-        def execAfterWait = waitForExecutionToBe(
+        def execAfterWait = JobUtils.waitForExecutionToBe(
                 ExecutionStatus.SUCCEEDED.state,
                 execId,
                 mapper,
@@ -941,7 +916,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run with scheduled time in the past should fail"
         def runtime2 = generateRuntime(-1000) // Generates a past runtime string
-        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse2 = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -953,7 +928,7 @@ class JobExecutionSpec extends BaseContainer {
 
         when: "TEST: POST job/id/run with invalid schedule time"
         def invalidRuntime = "1999/01/01 11:10:01.000+0000"
-        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgs(
+        def runLaterExecResponse3 = JobUtils.executeJobLaterWithArgsAndRuntime(
                 jobId,
                 client,
                 "-opt2+a",
@@ -965,6 +940,178 @@ class JobExecutionSpec extends BaseContainer {
 
     }
 
+    def "test-job-run"(){
+        setup:
+        def projectName = PROJECT_NAME
+        def client = getClient()
+        ObjectMapper mapper = new ObjectMapper()
+
+        def xmlJob = (String stepArgs) -> {
+            return "<joblist>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <context>\n" +
+                    "          <project>${PROJECT_NAME}</project>\n" +
+                    "          <options>\n" +
+                    "              <option name=\"opt1\" value=\"testvalue\" required=\"true\"/>\n" +
+                    "              <option name=\"opt2\" values=\"a,b,c\" required=\"true\"/>\n" +
+                    "          </options>\n" +
+                    "      </context>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "   <job>\n" +
+                    "      <name>cli job2</name>\n" +
+                    "      <group>api-test/job-run</group>\n" +
+                    "      <description></description>\n" +
+                    "      <loglevel>INFO</loglevel>\n" +
+                    "      <dispatch>\n" +
+                    "        <threadcount>1</threadcount>\n" +
+                    "        <keepgoing>true</keepgoing>\n" +
+                    "      </dispatch>\n" +
+                    "      <nodefilters>\n" +
+                    "        <filter>.*</filter>\n" +
+                    "      </nodefilters>\n" +
+                    "      <nodesSelectedByDefault>false</nodesSelectedByDefault>\n" +
+                    "      <sequence>\n" +
+                    "        <command>\n" +
+                    "        <exec>${stepArgs}</exec>\n" +
+                    "        </command>\n" +
+                    "      </sequence>\n" +
+                    "   </job>\n" +
+                    "</joblist>"
+        }
+
+        def jobArgs = "echo asd" // As the original test states
+        def testXml = xmlJob(jobArgs)
+        def created = JobUtils.createJob(projectName, testXml, client)
+        assert created.successful
+        CreateJobResponse jobCreatedResponse = mapper.readValue(
+                created.body().string(),
+                CreateJobResponse.class
+        )
+        def jobId1 = jobCreatedResponse.succeeded[0]?.id
+        def jobId2 = jobCreatedResponse.succeeded[1]?.id
+
+        when: "TEST: POST job/id/run should succeed"
+        def optionA = 'a'
+        Object optionsToMap = [
+                "options": [
+                        opt2: optionA
+                ]
+        ]
+        def response = JobUtils.executeJobWithOptions(jobId1, client, optionsToMap)
+        assert response.successful
+
+        Execution execRes = mapper.readValue(response.body().string(), Execution.class)
+        String execId = execRes.id
+
+        def execution = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "TEST: POST job/id/run should fail"
+        def response2 = JobUtils.executeJob(jobId2, client)
+        assert response2.successful
+
+        Execution execRes2 = mapper.readValue(response2.body().string(), Execution.class)
+        String execId2 = execRes2.id
+        def execution2 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.FAILED.state,
+                execId2,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution2.status == ExecutionStatus.FAILED.state // should fail
+
+        when: "TEST: POST job/id/run should succeed w/ filter"
+        Object filter = [
+                "filter": "name: .*"
+        ]
+        def response3 = JobUtils.executeJobWithOptions(jobId2, client, filter)
+        assert response3.successful
+
+        Execution execRes3 = mapper.readValue(response3.body().string(), Execution.class)
+        String execId3 = execRes3.id
+        def execution3 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId3,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution3.status == ExecutionStatus.SUCCEEDED.state
+
+        when: "TEST: POST job/id/run with JSON"
+        Object optionsJson = [
+                "options": [
+                        opt1:"xyz",
+                        opt2:"def"
+                ]
+        ]
+        def response4 = JobUtils.executeJobWithOptions(jobId1, client, optionsJson)
+        assert response4.successful
+
+        Execution execRes4 = mapper.readValue(response4.body().string(), Execution.class)
+        String execId4 = execRes4.id
+        def execution4 = JobUtils.waitForExecutionToBe(
+                ExecutionStatus.SUCCEEDED.state,
+                execId4,
+                mapper,
+                client,
+                WaitingTime.LOW.milliSeconds,
+                WaitingTime.MODERATE.milliSeconds / 1000 as int
+        )
+
+        then:
+        execution4.status == ExecutionStatus.SUCCEEDED.state
+        execution4.argstring == "-opt1 xyz -opt2 def"
+        execution4.job.options?.opt1 == "xyz"
+        execution4.job.options?.opt2 == "def"
+
+        when: "TEST: GET job/id/run should fail 405"
+        def response5 = JobUtils.executeJobWithArgsInvalidMethod(jobId1, client, "-opt+a")
+        assert !response5.successful
+
+        then:
+        response5.code() == 405
+
+        when: "TEST: POST job/id/run without required opt should fail"
+        def response6 = JobUtils.executeJob(jobId1, client)
+        assert !response6.successful
+        ErrorResponse error = ErrorResponse.fromJson(response6.body().string())
+
+        then:
+        response6.code() == 400
+        error.message == "Job options were not valid: Option 'opt2' is required."
+
+    }
+
     def generateRuntime(int secondsInFuture){
         TimeZone timeZone = TimeZone.getDefault()
         Calendar cal = Calendar.getInstance(timeZone)
@@ -972,30 +1119,6 @@ class JobExecutionSpec extends BaseContainer {
         SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
         iso8601Format.setTimeZone(TimeZone.getTimeZone("UTC"))
         return [string: iso8601Format.format(cal.time), date: cal.time]
-    }
-
-    Execution waitForExecutionToBe(
-            String state,
-            String executionId,
-            ObjectMapper mapper,
-            RdClient client,
-            int iterationGap,
-            int timeout
-    ){
-        Execution executionStatus
-        def execDetail = client.doGet("/execution/${executionId}")
-        executionStatus = mapper.readValue(execDetail.body().string(), Execution.class)
-        long initTime = System.currentTimeMillis()
-        while(executionStatus.status != state){
-            if ((System.currentTimeMillis() - initTime) >= TimeUnit.SECONDS.toMillis(timeout)) {
-                throw new InterruptedException("Timeout reached (${timeout} seconds).")
-            }
-            def transientExecutionResponse = doGet("/execution/${executionId}")
-            executionStatus = mapper.readValue(transientExecutionResponse.body().string(), Execution.class)
-            if( executionStatus.status == state ) break
-            Thread.sleep(iterationGap)
-        }
-        return executionStatus
     }
 
     def createSampleProject = (String projectName, Object projectJsonMap) -> {

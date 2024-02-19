@@ -2,9 +2,12 @@ package org.rundeck.util.container
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import okhttp3.ConnectionPool
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -12,6 +15,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.jetbrains.annotations.NotNull
 
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 @CompileStatic
@@ -19,7 +23,8 @@ class RdClient {
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
     OkHttpClient httpClient
-    int apiVersion = 45
+    int apiVersion = 47
+    final finalApiVersion = 47
 
     RdClient(String baseUrl, OkHttpClient httpClient) {
         this.baseUrl = baseUrl
@@ -31,6 +36,7 @@ class RdClient {
                 baseUrl,
                 new OkHttpClient.Builder().
                         addInterceptor(new HeaderInterceptor("X-Rundeck-Auth-token", apiToken)).
+                        connectionPool(new ConnectionPool(2, 10, TimeUnit.SECONDS)).
                         build()
         )
     }
@@ -100,17 +106,19 @@ class RdClient {
     }
 
     Response doPost(final String path, final Object body = null) {
-        def builder = new Request.Builder().
-                url(apiUrl(path)).
-                header('Accept', 'application/json')
+        RequestBody requestBuilder
         if (body) {
-            builder.post(
-                    RequestBody.create(
-                            mapper.writeValueAsBytes(body),
-                            MediaType.parse("application/json")
-                    )
-            )
+            requestBuilder = RequestBody.create(
+                    mapper.writeValueAsBytes(body),
+                    MediaType.parse("application/json"))
+        } else {
+            requestBuilder = RequestBody.create()
         }
+        def builder = new Request.Builder()
+                .url(apiUrl(path))
+                .header('Accept', 'application/json')
+                .method("POST", requestBuilder)
+
         httpClient.newCall(
                 builder.build()
         ).execute()
@@ -125,11 +133,50 @@ class RdClient {
         httpClient.newCall(request).execute()
     }
 
+    Response doPutWithJsonBody(final String path, final Object body) {
+        RequestBody requestBody = RequestBody.create(
+                mapper.writeValueAsBytes(body),
+                MediaType.parse("application/json")
+        )
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("PUT", requestBody)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
     Response doPost(final String path, final File file, final String contentType) {
         RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPost(final String path, final String file, final String contentType, final Headers headers = null) {
+        RequestBody body = RequestBody.create(file, MediaType.parse(contentType))
+        Request.Builder request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+        if (headers) {
+            request.headers(headers)
+        }
+        httpClient.newCall(request.build()).execute()
+    }
+
+    Response doPostWithMultipart(final String path, MultipartBody multipartBody) {
+        def request = new Request.Builder()
+                .url(apiUrl(path))
+                .post(multipartBody)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithFormData(final String path, FormBody formBody) {
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .post(formBody)
                 .build()
         httpClient.newCall(request).execute()
     }
@@ -148,6 +195,16 @@ class RdClient {
         Request request = new Request.Builder()
                 .url(apiUrl(path))
                 .method("POST", body)
+                .build()
+        httpClient.newCall(request).execute()
+    }
+
+    Response doPostWithContentTypeWithoutBody(final String path,String  contentType) {
+        RequestBody body = RequestBody.create(null, new byte[]{});
+        Request request = new Request.Builder()
+                .url(apiUrl(path))
+                .method("POST", body)
+                .header('Content-Type', contentType)
                 .build()
         httpClient.newCall(request).execute()
     }

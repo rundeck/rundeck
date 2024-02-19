@@ -5,17 +5,13 @@ import {envOpts} from '../test/rundeck'
 import { CreateTestContext } from '../test/api'
 
 const skipTests = [
-    'test-job-run-steps.sh', // Requires file on Rundeck server(s)
     'test-job-run-webhook.sh', // Requires NC running
-    'test-job-run-without-deadlock.sh', // Requires inspecting log output
 
     'test-execution-cleaner-job.sh', // Does not handle `null` for execution server UUID in a cluster
     'test-execution-output-plain-lastlines.sh',
     'test-execution-output-plain.sh',
     'test-execution-output-utf8.sh',
     'test-execution-state.sh', // Reads framework.properties
-
-    '^test-scm',
 
     /** Misc */
     'test-history.sh',

@@ -1,17 +1,17 @@
 <template>
-    <div class="log-line">
-        <span class="gutter">{{entry.node}}</span>
-        <span v-if="entry.loghtml" v-html="entry.loghtml"/>
-        <span v-if="!entry.loghtml">{{entry.log}}</span>
-    </div>
+  <div class="log-line">
+    <span class="gutter">{{ entry.node }}</span>
+    <span v-if="entry.loghtml" v-html="entry.loghtml" />
+    <span v-if="!entry.loghtml">{{ entry.log }}</span>
+  </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
-    props: ['entry']
-})
+  props: ["entry"],
+});
 </script>
 
 <style lang="scss" scoped>

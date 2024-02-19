@@ -7,15 +7,15 @@
 .#{$fa-css-prefix}-lg {
   font-size: math.div(4em, 3);
   line-height: math.div(3em, 4);
-  vertical-align: -.0667em;
+  vertical-align: -0.0667em;
 }
 
 .#{$fa-css-prefix}-xs {
-  font-size: .75em;
+  font-size: 0.75em;
 }
 
 .#{$fa-css-prefix}-sm {
-  font-size: .875em;
+  font-size: 0.875em;
 }
 
 @for $i from 1 through 10 {

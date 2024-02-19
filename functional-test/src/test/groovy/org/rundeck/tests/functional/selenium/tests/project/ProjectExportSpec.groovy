@@ -9,7 +9,7 @@ import org.rundeck.util.container.SeleniumBase
 class ProjectExportSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
+        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
     }
 
     def setup() {

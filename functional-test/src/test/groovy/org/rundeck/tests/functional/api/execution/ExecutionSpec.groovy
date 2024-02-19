@@ -1,18 +1,11 @@
 package org.rundeck.tests.functional.api.execution
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.tests.functional.api.ResponseModels.CreateJobResponse
-import org.rundeck.tests.functional.api.ResponseModels.Execution
-import org.rundeck.tests.functional.api.ResponseModels.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.ExecutionStatus
 import org.rundeck.util.api.JobUtils
 import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.BaseContainer
-import org.rundeck.util.container.RdClient
-
-import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -20,9 +13,15 @@ import java.time.format.DateTimeFormatter
 @APITest
 class ExecutionSpec extends BaseContainer {
 
+    final ObjectMapper mapper = new ObjectMapper()
+
     def setupSpec(){
         startEnvironment()
         setupProject()
+    }
+
+    def cleanup() {
+        client.apiVersion = client.finalApiVersion
     }
 
     def "run command, get execution"() {
@@ -99,13 +98,16 @@ class ExecutionSpec extends BaseContainer {
             ]
             def client = getClient()
             client.apiVersion = version
+
+            File tmpjar = createArchiveJarFile(projectName, new File(getClass().getResource("/projects-import/archive-test").getPath()))
         when:
             // create project
             def responseProject = client.doPost("/projects", projectJsonMap)
             // import project
             def responseImport = client.doPut(
                 "/project/${projectName}/import?jobUuidOption=remove",
-                new File(getClass().getResource("/projects-import/archive-test.zip").getPath()))
+                tmpjar
+            )
             // get executions
             def response = client.doGet("/project/${projectName}/executions")
         then:
@@ -138,11 +140,12 @@ class ExecutionSpec extends BaseContainer {
                 json3.executions.size() == 0
             }
             deleteProject(projectName)
+        cleanup:
+            tmpjar.delete()
         where:
             version | projectName
             14      | "APIImportAndCleanHistoryTest"
             45      | "APIImportAndCleanHistoryTest45"
-
     }
 
     def "execution state not found"() {
@@ -175,56 +178,103 @@ class ExecutionSpec extends BaseContainer {
     }
 
     def "POST job/id/run should succeed"() {
-        given:
-            def pathFile = updateFile("api-test-execution-state.xml")
-            def responseImport = jobImportFile(pathFile)
+        setup:
+            def newProject = "test-job-id-success"
+            setupProject(newProject)
+            def pathFile = updateJobFileToImport("api-test-execution-state.xml", ["project-name": newProject])
+            def responseImport = jobImportFile(newProject, pathFile) as Map
         when:
             def jobId = responseImport.succeeded[2].id
-            def output = runJobAndWait(jobId, ["options":["opt1": "foobar"]])
-            def state = client.get("/execution/${output.id}/state", Map)
+            def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt1 foobar")
+            def execId = jsonValue(jobRun.body()).id
+            def response = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.SUCCEEDED.state,
+                    execId as String,
+                    mapper,
+                    client,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
+                    WaitingTime.LOW.milliSeconds
+            )
+            def state = client.get("/execution/${response.id}/state", Map)
         then:
             verifyAll {
                 responseImport.succeeded.size() == 3
-                output.execState == 'succeeded'
+                response.status == 'succeeded'
                 def localnode = state.serverNode
                 state.steps[0].nodeStates."${localnode}".executionState == 'SUCCEEDED'
             }
+        cleanup:
+            deleteProject(newProject)
     }
 
     def "execution query OK"() {
         given:
             def newProject = "test-executions-query"
             setupProject(newProject)
+            def startDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         when: "run a command 1"
             def params1 = "exec=echo+testing+execution+api"
             def adhoc1 = post("/project/${newProject}/run/command?${params1}", Map)
         then:
             adhoc1.execution.id != null
-            def execId1 = adhoc1.execution.id
+            def execId1 = adhoc1.execution.id as Integer
         when: "run a command 2"
             def params2 = "exec=echo+testing+adhoc+execution+query+should+fail;false"
             def adhoc2 = post("/project/${newProject}/run/command?${params2}", Map)
         then:
             adhoc2.execution.id != null
-            def execId2 = adhoc2.execution.id
+            def execId2 = adhoc2.execution.id as Integer
         when:"import jobs 1"
-            def pathFile1 = updateFile("job-template-common.xml", newProject, "test exec query", "api-test/execquery", "A job to test the executions query API", null, "api-v5-test-exec-query")
+            def pathFile1 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "test exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API", "uuid": "api-v5-test-exec-query", "args":"echo hello there"])
         then:
             def jobId1 = jobImportFile(newProject, pathFile1).succeeded[0].id
         when:"import jobs 2"
-            def pathFile2 = updateFile("job-template-common.xml", newProject, "second test for exec query", "api-test/execquery", "A job to test the executions query API2", null, "api-v5-test-exec-query2")
+            def pathFile2 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "second test for exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API2", "uuid": "api-v5-test-exec-query2", "args":"echo hello there"])
         then:
             def jobId2 = jobImportFile(newProject, pathFile2).succeeded[0].id
         when:"run job 1 and 2"
-            def execId3 = runJob(jobId1, ["options":["opt2": "a"]])
-            def execId4 = runJob(jobId2, ["options":["opt2": "a"]])
-        then:
-            obtainExecution(execId1).execState == 'succeeded'
-            obtainExecution(execId2).execState == 'failed'
-            obtainExecution(execId3).execState == 'succeeded'
-            obtainExecution(execId4).execState == 'succeeded'
+            def jobRun1 = JobUtils.executeJobWithArgs(jobId1, client, "-opt2 a")
+            int execId3 = jsonValue(jobRun1.body()).id as Integer
+            def jobRun2 = JobUtils.executeJobWithArgs(jobId2, client, "-opt2 a")
+            int execId4 = jsonValue(jobRun2.body()).id as Integer
+        then: "wait for executions to finish"
+            def responseExecId1 = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.SUCCEEDED.state,
+                    execId1 as String,
+                    mapper,
+                    client,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
+                    WaitingTime.LOW.milliSeconds
+            )
+            responseExecId1.status == 'succeeded'
+            def responseExecId2 = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.FAILED.state,
+                    execId2 as String,
+                    mapper,
+                    client,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
+                    WaitingTime.LOW.milliSeconds
+            )
+            responseExecId2.status == 'failed'
+            def responseExecId3 = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.SUCCEEDED.state,
+                    execId3 as String,
+                    mapper,
+                    client,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
+                    WaitingTime.LOW.milliSeconds
+            )
+            responseExecId3.status == 'succeeded'
+            def responseExecId4 = JobUtils.waitForExecutionToBe(
+                    ExecutionStatus.SUCCEEDED.state,
+                    execId4 as String,
+                    mapper,
+                    client,
+                    WaitingTime.LOW.milliSeconds / 1000 as int,
+                    WaitingTime.LOW.milliSeconds
+            )
+            responseExecId4.status == 'succeeded'
         when: "executions"
-            def startDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
             def fakeDate = "2213-05-08T01:05:19Z"
         then: "begin"
             testExecQuery ""
@@ -298,8 +348,8 @@ class ExecutionSpec extends BaseContainer {
             }
     }
 
-    void testExecQuery(String xargs = null, Integer expect = null, String project = "test-executions-query") {
-        def url = "/project/${project}/executions"
+    void testExecQuery(String xargs = null, Integer expect = null) {
+        def url = "/project/test-executions-query/executions"
         def response = doGet(xargs ? "${url}?${xargs}" : url)
         def itemCount = getClient().jsonValue(response.body(), Map).executions.size()
         verifyAll {

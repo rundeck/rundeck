@@ -18,9 +18,12 @@
     display: none;
   }
 
-  .navbar-nav>li>.dropdown-menu {
+  .navbar-nav > li > .dropdown-menu {
     @include transform-translate-y(-30px);
-    transition: all 0.3s cubic-bezier(0.215, 0.61, 0.355, 1) 0s, opacity 0.3s ease 0s, height 0s linear 0.35s;
+    transition:
+      all 0.3s cubic-bezier(0.215, 0.61, 0.355, 1) 0s,
+      opacity 0.3s ease 0s,
+      height 0s linear 0.35s;
 
     @include opacity(0);
     visibility: hidden;
@@ -47,21 +50,20 @@
       right: 12px;
       top: -11px;
     }
-
   }
 
-  .navbar-nav>li.open>.dropdown-menu {
+  .navbar-nav > li.open > .dropdown-menu {
     @include transform-translate-y(0);
     @include opacity(1);
     visibility: visible;
   }
 
-  .navbar-nav.navbar-left>li>.dropdown-menu:before {
+  .navbar-nav.navbar-left > li > .dropdown-menu:before {
     right: auto;
     left: 12px;
   }
 
-  .navbar-nav.navbar-left>li>.dropdown-menu:after {
+  .navbar-nav.navbar-left > li > .dropdown-menu:after {
     right: auto;
     left: 12px;
   }
@@ -73,7 +75,7 @@
   }
 
   .footer:not(.footer-big) {
-    nav>ul {
+    nav > ul {
       li:first-child {
         margin-left: 0;
       }
@@ -86,7 +88,6 @@
 
   .card {
     form {
-
       /*[class*="col-"]{
           padding: 6px;
       }*/
@@ -100,13 +101,10 @@
     }
   }
 
-
-
   .sidebar {
     .sidebar-wrapper {
-
       li.active {
-        >a:not([data-toggle="collapse"]) {
+        > a:not([data-toggle="collapse"]) {
           &:before {
             border-right: 17px solid var(--medium-gray);
             border-top: 17px solid transparent;
@@ -156,8 +154,6 @@
   //         }
   //     }
   // }
-
-
 }
 
 /*          Changes for small display      */
@@ -175,7 +171,7 @@
 
   .main-panel {
     @include transform-translate-x(0px);
-    @include transition (0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
+    @include transition(0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
     left: 0;
 
     width: 100%;
@@ -199,7 +195,7 @@
 
   .main-panel {
     @include transform-translate-x(0px);
-    @include transition (0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
+    @include transition(0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
     left: 0;
   }
 
@@ -208,7 +204,7 @@
     left: 0;
     width: 100%;
     @include transform-translate-x(0px);
-    @include transition (0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
+    @include transition(0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
     position: relative;
   }
 
@@ -218,7 +214,7 @@
     display: none !important;
   }
 
-  .navbar-nav>li {
+  .navbar-nav > li {
     float: none;
     position: relative;
     display: block;
@@ -243,15 +239,14 @@
     padding-left: 0;
 
     @include transform-translate-x(230px);
-    @include transition (0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
+    @include transition(0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
 
     .sidebar-wrapper {
       width: 230px;
       box-shadow: inset 1px 0px 0px 0px var(--medium-gray);
 
-
       li.active {
-        >a:not([data-toggle="collapse"]) {
+        > a:not([data-toggle="collapse"]) {
           &:before {
             border-left: 12px solid var(--medium-gray);
             border-top: 12px solid transparent;
@@ -261,7 +256,6 @@
             position: absolute;
             left: 0;
             top: 8px;
-
           }
 
           &:after {
@@ -277,9 +271,7 @@
         }
       }
 
-
       .dropdown-menu {
-
         &:before,
         &:after {
           display: none;
@@ -292,10 +284,8 @@
       position: relative;
       z-index: 4;
 
-      >li {
-
-        >a {
-
+      > li {
+        > a {
           &:hover,
           &.active {
             color: var(--default-states-color);
@@ -341,7 +331,7 @@
         -webkit-transform: none;
         transform: none;
 
-        >li {
+        > li {
           a {
             padding-left: 70px;
             margin: 0;
@@ -370,7 +360,7 @@
     .nav {
       margin-top: 15px;
 
-      >li>a {
+      > li > a {
         line-height: 30px;
         font-size: 12px;
         font-weight: 600;
@@ -383,19 +373,18 @@
     }
   }
 
-  .navbar-fixed>div {
-    @include transition (0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
+  .navbar-fixed > div {
+    @include transition(0.33s, cubic-bezier(0.685, 0.0473, 0.346, 1));
   }
 
   .nav-open {
-
     .main-panel,
     .wrapper-full-page {
       left: 0;
       @include transform-translate-x(-230px);
     }
 
-    .navbar-fixed>div {
+    .navbar-fixed > div {
       @include transform-translate-x(-230px);
     }
 
@@ -411,7 +400,6 @@
     .off-canvas-sidebar {
       @include transform-translate-x(0px);
     }
-
   }
 
   .navbar-toggle .icon-bar {
@@ -425,11 +413,9 @@
   }
 
   .navbar-toggle-black {
-
     .icon-bar {
       background: var(--dark-gray);
     }
-
   }
 
   .navbar-header .navbar-toggle {
@@ -536,7 +522,7 @@
     overflow-x: hidden;
   }
 
-  .form-control+.form-control-feedback {
+  .form-control + .form-control-feedback {
     margin-top: -8px;
   }
 
@@ -608,19 +594,17 @@
     box-shadow: none;
   }
 
-  .main-panel>.content {
+  .main-panel > .content {
     padding-left: 0;
     padding-right: 0;
   }
 
-  .nav .open>a {
-
+  .nav .open > a {
     &,
     &:focus,
     &:hover {
       background-color: transparent;
     }
-
   }
 
   .navbar-minimize {
@@ -628,12 +612,10 @@
   }
 
   .column-sizing {
-
     .form-control {
       margin-bottom: 15px;
     }
   }
-
 }
 
 //overwrite table responsive for 768px screens
@@ -647,9 +629,7 @@
   .table-responsive {
     overflow: visible;
   }
-
 }
-
 
 @media (max-width: 991px) {
   .table-responsive {
@@ -663,16 +643,15 @@
   }
 
   .timeline {
-
     &:before {
       left: 5%;
     }
 
-    >li>.timeline-badge {
+    > li > .timeline-badge {
       left: 5%;
     }
 
-    >li {
+    > li {
       .timeline-panel {
         float: right;
         width: 89%;
@@ -689,7 +668,6 @@
           border-right-width: 14px;
           left: -14px;
           right: auto;
-
         }
       }
     }
@@ -698,24 +676,19 @@
       font-size: 0.9em;
     }
 
-    >.timeline-inverted {
-
+    > .timeline-inverted {
       .timeline-panel {
         width: 89%;
-
       }
     }
   }
-
 }
 
 @media (max-width: 550px) {
-
   .footer {
     nav {
       ul {
-
-        >li:first-child {
+        > li:first-child {
           padding-top: 16px;
         }
 

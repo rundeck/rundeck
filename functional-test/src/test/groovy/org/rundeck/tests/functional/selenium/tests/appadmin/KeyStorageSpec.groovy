@@ -30,6 +30,7 @@ class KeyStorageSpec extends SeleniumBase {
             loginPage.login(TEST_USER, TEST_PASS)
             def keyStoragePage = go KeyStoragePage
         when:
+            keyStoragePage.refresh()
             keyStoragePage.clickOverwriteKey 'git', 'git.pass'
             keyStoragePage.waitForModal 1
         then:
@@ -43,6 +44,7 @@ class KeyStorageSpec extends SeleniumBase {
         when:
             def keyStoragePage = go KeyStoragePage
         then:
+            keyStoragePage.refresh()
             keyStoragePage.deleteKey 'git.pass', 'git'
     }
 

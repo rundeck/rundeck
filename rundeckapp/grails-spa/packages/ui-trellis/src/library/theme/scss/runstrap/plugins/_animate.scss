@@ -1,34 +1,4 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // This file was modified by Creative Tim to keep only the animation that we need for Bootstrap Notify
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @charset "UTF-8";
 
@@ -58,45 +28,61 @@ Copyright (c) 2015 Daniel Eden
 
 .animated.bounceIn,
 .animated.bounceOut {
-  -webkit-animation-duration: .75s;
-  animation-duration: .75s;
+  -webkit-animation-duration: 0.75s;
+  animation-duration: 0.75s;
 }
 
 .animated.flipOutX,
 .animated.flipOutY {
-  -webkit-animation-duration: .75s;
-  animation-duration: .75s;
+  -webkit-animation-duration: 0.75s;
+  animation-duration: 0.75s;
 }
 
 @-webkit-keyframes shake {
-  from, to {
+  from,
+  to {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
   }
 
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     -webkit-transform: translate3d(-10px, 0, 0);
     transform: translate3d(-10px, 0, 0);
   }
 
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     -webkit-transform: translate3d(10px, 0, 0);
     transform: translate3d(10px, 0, 0);
   }
 }
 
 @keyframes shake {
-  from, to {
+  from,
+  to {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
   }
 
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     -webkit-transform: translate3d(-10px, 0, 0);
     transform: translate3d(-10px, 0, 0);
   }
 
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     -webkit-transform: translate3d(10px, 0, 0);
     transform: translate3d(10px, 0, 0);
   }
@@ -106,8 +92,6 @@ Copyright (c) 2015 Daniel Eden
   -webkit-animation-name: shake;
   animation-name: shake;
 }
-
-
 
 @-webkit-keyframes fadeInDown {
   from {
@@ -141,7 +125,6 @@ Copyright (c) 2015 Daniel Eden
   -webkit-animation-name: fadeInDown;
   animation-name: fadeInDown;
 }
-
 
 @-webkit-keyframes fadeOut {
   from {
@@ -225,4 +208,3 @@ Copyright (c) 2015 Daniel Eden
   -webkit-animation-name: fadeOutUp;
   animation-name: fadeOutUp;
 }
-

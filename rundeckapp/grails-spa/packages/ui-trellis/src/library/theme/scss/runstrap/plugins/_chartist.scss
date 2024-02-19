@@ -26,7 +26,10 @@
   }
 }
 
-@mixin ct-align-justify($ct-text-align: $ct-text-align, $ct-text-justify: $ct-text-justify) {
+@mixin ct-align-justify(
+  $ct-text-align: $ct-text-align,
+  $ct-text-justify: $ct-text-justify
+) {
   -webkit-box-align: $ct-text-align;
   -webkit-align-items: $ct-text-align;
   -ms-flex-align: $ct-text-align;
@@ -36,9 +39,9 @@
   -ms-flex-pack: $ct-text-justify;
   justify-content: $ct-text-justify;
   // Fallback to text-align for non-flex browsers
-  @if($ct-text-justify == 'flex-start') {
+  @if ($ct-text-justify == "flex-start") {
     text-align: left;
-  } @else if ($ct-text-justify == 'flex-end') {
+  } @else if ($ct-text-justify == "flex-end") {
     text-align: right;
   } @else {
     text-align: center;
@@ -55,14 +58,22 @@
   display: flex;
 }
 
-@mixin ct-chart-label($ct-text-color: $ct-text-color, $ct-text-size: $ct-text-size, $ct-text-line-height: $ct-text-line-height) {
+@mixin ct-chart-label(
+  $ct-text-color: $ct-text-color,
+  $ct-text-size: $ct-text-size,
+  $ct-text-line-height: $ct-text-line-height
+) {
   fill: $ct-text-color;
   color: $ct-text-color;
   font-size: $ct-text-size;
   line-height: $ct-text-line-height;
 }
 
-@mixin ct-chart-grid($ct-grid-color: $ct-grid-color, $ct-grid-width: $ct-grid-width, $ct-grid-dasharray: $ct-grid-dasharray) {
+@mixin ct-chart-grid(
+  $ct-grid-color: $ct-grid-color,
+  $ct-grid-width: $ct-grid-width,
+  $ct-grid-dasharray: $ct-grid-dasharray
+) {
   stroke: $ct-grid-color;
   stroke-width: $ct-grid-width;
 
@@ -71,12 +82,18 @@
   }
 }
 
-@mixin ct-chart-point($ct-point-size: $ct-point-size, $ct-point-shape: $ct-point-shape) {
+@mixin ct-chart-point(
+  $ct-point-size: $ct-point-size,
+  $ct-point-shape: $ct-point-shape
+) {
   stroke-width: $ct-point-size;
   stroke-linecap: $ct-point-shape;
 }
 
-@mixin ct-chart-line($ct-line-width: $ct-line-width, $ct-line-dasharray: $ct-line-dasharray) {
+@mixin ct-chart-line(
+  $ct-line-width: $ct-line-width,
+  $ct-line-dasharray: $ct-line-dasharray
+) {
   fill: none;
   stroke-width: $ct-line-width;
 
@@ -101,17 +118,34 @@
 }
 
 @mixin ct-chart-series-color($color) {
-  .#{$ct-class-point}, .#{$ct-class-line}, .#{$ct-class-bar}, .#{$ct-class-slice-donut} {
+  .#{$ct-class-point},
+  .#{$ct-class-line},
+  .#{$ct-class-bar},
+  .#{$ct-class-slice-donut} {
     stroke: $color;
   }
 
-  .#{$ct-class-slice-pie}, .#{$ct-class-area} {
+  .#{$ct-class-slice-pie},
+  .#{$ct-class-area} {
     fill: $color;
   }
 }
 
-@mixin ct-chart($ct-container-ratio: $ct-container-ratio, $ct-text-color: $ct-text-color, $ct-text-size: $ct-text-size, $ct-grid-color: $ct-grid-color, $ct-grid-width: $ct-grid-width, $ct-grid-dasharray: $ct-grid-dasharray, $ct-point-size: $ct-point-size, $ct-point-shape: $ct-point-shape, $ct-line-width: $ct-line-width, $ct-bar-width: $ct-bar-width, $ct-donut-width: $ct-donut-width, $ct-series-names: $ct-series-names, $ct-series-colors: $ct-series-colors) {
-
+@mixin ct-chart(
+  $ct-container-ratio: $ct-container-ratio,
+  $ct-text-color: $ct-text-color,
+  $ct-text-size: $ct-text-size,
+  $ct-grid-color: $ct-grid-color,
+  $ct-grid-width: $ct-grid-width,
+  $ct-grid-dasharray: $ct-grid-dasharray,
+  $ct-point-size: $ct-point-size,
+  $ct-point-shape: $ct-point-shape,
+  $ct-line-width: $ct-line-width,
+  $ct-bar-width: $ct-bar-width,
+  $ct-donut-width: $ct-donut-width,
+  $ct-series-names: $ct-series-names,
+  $ct-series-colors: $ct-series-colors
+) {
   .#{$ct-class-label} {
     @include ct-chart-label($ct-text-color, $ct-text-size);
   }
@@ -145,38 +179,44 @@
     text-anchor: start;
   }
 
-  .#{$ct-class-chart-bar} .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-start} {
+  .#{$ct-class-chart-bar}
+    .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-start} {
     @include ct-align-justify(flex-end, center);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: start;
   }
 
-  .#{$ct-class-chart-bar} .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-end} {
+  .#{$ct-class-chart-bar}
+    .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-end} {
     @include ct-align-justify(flex-start, center);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: start;
   }
 
-  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars} .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-start} {
+  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars}
+    .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-start} {
     @include ct-align-justify(flex-end, flex-start);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: start;
   }
 
-  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars} .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-end} {
+  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars}
+    .#{$ct-class-label}.#{$ct-class-horizontal}.#{$ct-class-end} {
     @include ct-align-justify(flex-start, flex-start);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: start;
   }
 
-  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars} .#{$ct-class-label}.#{$ct-class-vertical}.#{$ct-class-start} {
+  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars}
+    .#{$ct-class-label}.#{$ct-class-vertical}.#{$ct-class-start} {
     //@include ct-chart-label($ct-text-color, $ct-text-size, center, $ct-vertical-text-justify);
     @include ct-align-justify(center, flex-end);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: end;
   }
 
-  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars} .#{$ct-class-label}.#{$ct-class-vertical}.#{$ct-class-end} {
+  .#{$ct-class-chart-bar}.#{$ct-class-horizontal-bars}
+    .#{$ct-class-label}.#{$ct-class-vertical}.#{$ct-class-end} {
     @include ct-align-justify(center, flex-start);
     // Fallback for browsers that don't support foreignObjects
     text-anchor: end;
@@ -229,18 +269,18 @@
   }
 }
 
-.ct-blue{
-    stroke: var(--primary-color) !important;
+.ct-blue {
+  stroke: var(--primary-color) !important;
 }
-.ct-azure{
-    stroke: var(--info-color) !important;
+.ct-azure {
+  stroke: var(--info-color) !important;
 }
-.ct-green{
-    stroke: var(--success-color) !important;
+.ct-green {
+  stroke: var(--success-color) !important;
 }
-.ct-orange{
-    stroke: var(--warning-color) !important;
+.ct-orange {
+  stroke: var(--warning-color) !important;
 }
-.ct-red{
-    stroke: var(--danger-color) !important;
+.ct-red {
+  stroke: var(--danger-color) !important;
 }

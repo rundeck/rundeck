@@ -1,5 +1,4 @@
-@mixin social-buttons-color ($color){
-
+@mixin social-buttons-color($color) {
   border-color: $color;
   color: $color;
 
@@ -29,17 +28,15 @@
     &:focus,
     &:active,
     &.active,
-    .open > &.dropdown-toggle{
-        background-color: $color;
-        border-color: $color;
-        color: var(--white-color);
-        opacity: 1;
+    .open > &.dropdown-toggle {
+      background-color: $color;
+      border-color: $color;
+      color: var(--white-color);
+      opacity: 1;
     }
-
   }
 
   &.btn-simple {
-
     color: $color;
     opacity: 0.8;
 
@@ -47,22 +44,20 @@
     &:focus,
     &:active,
     &.active,
-    .open > &.dropdown-toggle{
-        background-color: var(--transparent-bg);
+    .open > &.dropdown-toggle {
+      background-color: var(--transparent-bg);
+      color: $color;
+      opacity: 1;
+      i {
         color: $color;
         opacity: 1;
-    i{
-        color: $color;
-        opacity: 1;
-    }
-
+      }
     }
   }
-
 }
-@mixin social-label-color ($color){
-    background-color: $color;
+@mixin social-label-color($color) {
+  background-color: $color;
 }
-@mixin social-icon-color ($color){
-    color: $color;
+@mixin social-icon-color($color) {
+  color: $color;
 }

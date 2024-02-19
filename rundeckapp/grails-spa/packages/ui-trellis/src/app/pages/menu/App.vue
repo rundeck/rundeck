@@ -5,15 +5,14 @@
 </template>
 
 <script>
-import userSummary from './components/userSummary.vue'
+import userSummary from "./components/userSummary.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    userSummary
-  }
-}
+    userSummary,
+  },
+};
 </script>
 
-<style>
-</style>
+<style></style>

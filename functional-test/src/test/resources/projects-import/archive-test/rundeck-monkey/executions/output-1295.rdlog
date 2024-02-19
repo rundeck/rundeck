@@ -1,0 +1,7 @@
+^text/x-rundeck-log-v2.0^
+^2014-03-06T18:45:26Z|stepbegin||{node=dignan|step=1|stepctx=1|user=admin}|^
+^2014-03-06T18:45:26Z|nodebegin||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:45:26Z|||{node=dignan|step=1|stepctx=1|user=greg}|hi this is a test project^
+^2014-03-06T18:45:27Z|nodeend||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:45:27Z|stepend||{node=dignan|step=1|stepctx=1|user=admin}|^
+^END^

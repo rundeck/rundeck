@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
@@ -613,6 +614,19 @@ class ProjectController extends ControllerBase{
                 retMap.created = created?:''
             }
         }
+        if(version>=ApiVersions.V47 && params.meta) {
+            String meta = params.meta
+            def authContext =
+                    rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, name)
+
+
+            retMap.meta = projectService.loadProjectMetaItems(
+                    name as String,
+                    new HashSet<>(meta.split(',').toList()),
+                    authContext
+            )
+        }
+
         retMap
 
     }
@@ -635,13 +649,26 @@ class ProjectController extends ControllerBase{
 Authorization required: `read` for project resource
 ''',
         tags = ['project'],
+        parameters = [
+                @Parameter(
+                        name = 'meta',
+                        in = ParameterIn.QUERY,
+                        description = 'Comma-separated list of metadata items to include, or "*" for all',
+                        allowEmptyValue = false,
+                        required = false,
+                        schema = @Schema(implementation = String.class)
+                ),
+        ],
         responses = @ApiResponse(
             responseCode = '200',
             description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
-`project.properties` file in the file system or in the DB storage.''',
+`project.properties` file in the file system or in the DB storage.
+
+*Since API version 47*: add the project `metadata` to the response. To retrieve this information, use the query param meta
+(Comma-separated list of metadata items to include, or "*" for all (default)).''',
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 array = @ArraySchema(schema = @Schema(type = 'object')),
@@ -658,13 +685,15 @@ Authorization required: `read` for project resource
     /**
      * API: /api/11/projects
      */
+
     def apiProjectList(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def projlist = frameworkService.projects(systemAuthContext)
+        def controller = this
         withFormat{
-            def jsonClos={
+            '*' {
                 List details = []
                 projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                     //don't include config data
@@ -673,8 +702,7 @@ Authorization required: `read` for project resource
 
                 render details as JSON
             }
-            json jsonClos
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
                     apiService.renderSuccessXml(request, response) {
                         delegate.'projects'(count: projlist.size()) {
@@ -686,7 +714,6 @@ Authorization required: `read` for project resource
                     }
                 }
             }
-            '*' jsonClos
         }
 
     }
@@ -732,11 +759,12 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
         def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
         def pject = authorizingProject.resource
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
             }
-            if(isAllowXml()) {
+            if(controller.isAllowXml()) {
                 xml {
 
                     apiService.renderSuccessXml(request, response) {
@@ -793,8 +821,7 @@ Authorization required: `create` for resource type `project`
         }
         //allow Accept: header, but default to the request format
 
-        def allowedFormats = allowXml?['xml', 'json']:['json']
-        def respFormat = apiService.extractResponseFormat(request,response, allowedFormats,'json')
+        def respFormat = apiService.extractResponseFormat(request,response, responseFormats,'json')
 
         def project = null
         def description = null
@@ -1646,13 +1673,13 @@ Since: v14""",
         }else{
             def baos=new ByteArrayOutputStream()
             aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, baos)
-            withFormat{
-                json{
+            def controller = this
+            withFormat {
+                '*' {
                     def content = [contents: baos.toString()]
                     render content as JSON
                 }
-
-                if (isAllowXml()) {
+                if (controller.isAllowXml()) {
                     xml {
                         render(contentType: 'application/xml') {
                             apiService.renderWrappedFileContentsXml(baos.toString(), respFormat, delegate)
@@ -1688,12 +1715,13 @@ Since: v14""",
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, baos)
-                withFormat{
-                    json{
+                def controller = this
+                withFormat {
+                    '*' {
                         def content = [contents: baos.toString()]
                         render content as JSON
                     }
-                    if (isAllowXml()) {
+                    if (controller.isAllowXml()) {
                         xml {
                             render(contentType: 'application/xml') {
                                 apiService.renderWrappedFileContentsXml(baos.toString(), 'xml', delegate)
@@ -1729,8 +1757,9 @@ Since: v14""",
         //list aclpolicy files in the dir
         def projectName = project.name
         def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(projectName))
-        withFormat{
-            json{
+        def controller = this
+        withFormat {
+            '*' {
                 render apiService.jsonRenderDirlist(
                             '',
                             {p->p},
@@ -1738,7 +1767,7 @@ Since: v14""",
                             list
                     ) as JSON
             }
-            if (isAllowXml()) {
+            if (controller.isAllowXml()) {
                 xml {
                     render(contentType: 'application/xml') {
                         apiService.xmlRenderDirList(
@@ -2470,6 +2499,14 @@ Authorization required: `configure` access for `project` resource type or `admin
                             allowEmptyValue = false,
                             required = true,
                             schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(
+                            name = 'enablePluginValidation',
+                            in = ParameterIn.QUERY,
+                            description = 'Enable plugin validation',
+                            allowEmptyValue = false,
+                            required = false,
+                            schema = @Schema(implementation = Boolean.class)
                     )
             ]
     )
@@ -2515,6 +2552,11 @@ Authorization required: `configure` access for `project` resource type or `admin
         }
         def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
+        boolean enablePluginValidation = params.get("enablePluginValidation", false)
+
+        if(featureService.featurePresent(Features.API_PROJECT_CONFIG_VALIDATION)){
+            enablePluginValidation = true
+        }
 
         def allowedFormats = ['json', 'text']
         if(isAllowXml()) {
@@ -2559,32 +2601,35 @@ Authorization required: `configure` access for `project` resource type or `admin
 
         Properties projProp = new Properties(prop)
 
-        //validate plugin property values
-        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
-        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
-            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
-            providers.each { String provider, Map<String, String> providerConfig ->
-                def desc = pluginDescriptions.find { it.name == provider }
-                if (desc) {
-                    def validation = frameworkService.validateDescription(desc, "", providerConfig)
-                    if (!validation.valid) {
-                        Validator.Report report = validation.report
-                        errors << (
-                                report.errors ?
-                                        "${provider} configuration was invalid: " + report.errors :
-                                        "${provider} configuration was invalid"
-                        )
+        if(enablePluginValidation){
+            //validate plugin property values
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(mergedProjProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                providers.each { String provider, Map<String, String> providerConfig ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (desc) {
+                        def validation = frameworkService.validateDescription(desc, "", providerConfig)
+                        if (!validation.valid) {
+                            Validator.Report report = validation.report
+                            errors << (
+                                    report.errors ?
+                                            "${provider} configuration was invalid: " + report.errors :
+                                            "${provider} configuration was invalid"
+                            )
+                        }
                     }
                 }
             }
+            if(errors){
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message:errors,
+                        format:respFormat
+                ])
+            }
         }
-        if(errors){
-            return apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    message:errors,
-                    format:respFormat
-            ])
-        }
+
         def result=frameworkService.updateFrameworkProjectConfig(project.name, projProp,null)
 
         if(!result.success){

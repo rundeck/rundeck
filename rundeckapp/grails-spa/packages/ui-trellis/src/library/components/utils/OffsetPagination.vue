@@ -14,23 +14,31 @@
   - limitations under the License.
   -->
 <template>
-  <Pagination v-model="currentPage" :total-pages="totalPages" @change="changePage" :disabled="disabled" v-if="pagination.total">
-    <template v-if="showPrefix" v-slot:prefix>
-    <span>
-      <span class="text-info">{{pagination.offset + 1}}-{{pagination.offset + pagination.max}}</span>
-      <span class="text-muted">of {{pagination.total}}</span>
-    </span>
+  <Pagination
+    v-if="pagination.total"
+    v-model="currentPage"
+    :total-pages="totalPages"
+    :disabled="disabled"
+    @change="changePage"
+  >
+    <template v-if="showPrefix" #prefix>
+      <span>
+        <span class="text-info"
+          >{{ pagination.offset + 1 }}-{{ pagination.offset + pagination.max }}
+        </span>
+        <span class="text-muted">of {{ pagination.total }}</span>
+      </span>
     </template>
   </Pagination>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue'
-import type { PropType } from 'vue'
-import Pagination from './Pagination.vue'
-import {Pageable} from "../../interfaces/UiTypes";
+import { defineComponent } from "vue";
+import type { PropType } from "vue";
+import Pagination from "./Pagination.vue";
+import { Pageable } from "../../interfaces/UiTypes";
 
 export default defineComponent({
-  name: 'OffsetPagination',
+  name: "OffsetPagination",
   components: {
     Pagination,
   },
@@ -46,32 +54,41 @@ export default defineComponent({
     disabled: {
       type: Boolean,
       default: false,
-    }
+    },
   },
-  emits: ['change'],
+  emits: ["change"],
   data() {
     return {
-      currentPage: 0
-    }
+      currentPage: 0,
+    };
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.pagination.total / this.pagination.max)
-    }
+      return Math.ceil(this.pagination.total / this.pagination.max);
+    },
+  },
+  watch: {
+    "pagination.offset": {
+      handler(newVal) {
+        if (this.pagination.offset !== newVal) {
+          this.currentPage = this.pageNumberForOffset(newVal);
+        }
+      },
+    },
+  },
+  mounted() {
+    this.currentPage = this.pageNumberForOffset(this.pagination.offset);
   },
   methods: {
     changePage(page: number) {
-      this.$emit('change', this.pageOffset(page))
+      this.$emit("change", this.pageOffset(page));
     },
     pageOffset(page: number) {
-      return (page - 1) * this.pagination.max
+      return (page - 1) * this.pagination.max;
     },
     pageNumberForOffset(offset: number) {
-      return 1 + (offset / this.pagination.max)
-    }
+      return 1 + offset / this.pagination.max;
+    },
   },
-  mounted() {
-    this.currentPage = this.pageNumberForOffset(this.pagination.offset)
-  }
-})
+});
 </script>

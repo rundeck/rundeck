@@ -10,7 +10,7 @@ import org.rundeck.util.container.SeleniumBase
 class CommandSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
+        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
     }
 
     def setup() {
@@ -27,6 +27,7 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
             commandPage.runButton.click()
             commandPage.waitForElementAttributeToChange commandPage.runningExecutionStateButton, 'data-execstate', 'RUNNING'
@@ -45,6 +46,7 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
             commandPage.commandTextField.sendKeys "echo running test && sleep 45"
             commandPage.runButton.click()
             commandPage.runningButtonLink().click()
@@ -64,7 +66,8 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href
@@ -86,7 +89,8 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href + "#output"
@@ -108,7 +112,8 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href + "#output"
@@ -132,7 +137,8 @@ class CommandSpec extends SeleniumBase {
             commandPage.filterNodeButton.click()
             commandPage.waitForElementToBeClickable commandPage.commandTextField
             commandPage.commandTextField.click()
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name + "'"
+            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
             commandPage.runButton.click()
             def href = commandPage.runningButtonLink().getAttribute("href")
             commandPage.driver.get href

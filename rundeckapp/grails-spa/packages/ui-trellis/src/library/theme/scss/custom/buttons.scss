@@ -12,14 +12,14 @@
 // }
 @import "../runstrap/variables";
 
-.arrow-button{
+.arrow-button {
   color: #66615b;
-  &:hover{
+  &:hover {
     color: #484541;
   }
 }
 
-.buttons .btn + .btn{
+.buttons .btn + .btn {
   margin-left: 1em;
 }
 // .dropdown-toggle{

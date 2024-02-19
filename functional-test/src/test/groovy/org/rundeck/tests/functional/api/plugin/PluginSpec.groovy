@@ -18,12 +18,13 @@ class PluginSpec extends BaseContainer {
         expect:
             def result = plugin.find { it.iconUrl || it.providerMetadata }
             result == null
+        cleanup:
+            client.apiVersion = client.finalApiVersion
     }
 
     def "Returns v40 field" () {
         given:
             def client = clientProvider.client
-            client.apiVersion = 40
             def plugin = client.get("/plugin/list", List<Map>)
         expect:
             def result = plugin.find { it.iconUrl || it.providerMetadata }

@@ -27,6 +27,7 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 
@@ -57,7 +58,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
 
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
-        provider.userService = Mock(UserService){
+        provider.userDataProvider = Mock(GormUserDataProvider){
             findOrCreateUser(_) >>  new User(login: 'auser').save()
         }
         service = new ApiService()
@@ -433,11 +434,12 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
 
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
-        def mockedUserService =  Mock(UserService) {
+        service.userService = Mock(UserService) {
             findOrCreateUser(tokenUser) >> new User(login: tokenUser).save()
         }
-        service.userService = mockedUserService
-        provider.userService = mockedUserService
+        provider.userDataProvider = Mock(GormUserDataProvider) {
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser).save()
+        }
         service.tokenDataProvider = provider
 
         when:
@@ -529,7 +531,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         result.expiration != null
         service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         service.userService.findOrCreateUser(tokenUser) >> user
-        provider.userService.findOrCreateUser(tokenUser) >> user
+        provider.userDataProvider.findOrCreateUser(tokenUser) >> user
 
 
         where:

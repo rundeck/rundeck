@@ -2,7 +2,7 @@ package org.rundeck.tests.functional.selenium
 
 import org.rundeck.tests.functional.selenium.pages.EditNodesFilePage
 import org.rundeck.tests.functional.selenium.pages.EditNodesPage
-import org.rundeck.tests.functional.selenium.pages.ProjectListPage
+import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
@@ -16,7 +16,7 @@ class AceEditorSpec extends SeleniumBase {
     private static def jsonFileIndex = 2
 
     def setupSpec() {
-        setupProject(projectName, "/projects-import/resourcesTest.zip")
+        setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
     }
 
     def "Edit json file resource model with indented text"(){
@@ -34,15 +34,16 @@ class AceEditorSpec extends SeleniumBase {
             editNodesFilePage.setIndex(jsonFileIndex)
 
         when:
-            loginPage.go()
-            loginPage.login(TEST_USER, TEST_PASS)
-            page(ProjectListPage)
-            editNodesPage.go()
-            editNodesFilePage.go()
-            editNodesFilePage.waitForAceToRender()
-            def linesInAceGutter = editNodesFilePage.aceGutterElement().getText()
-            List<String> linesAsList = Arrays.stream(linesInAceGutter.split("\\n"))
-                    .collect(Collectors.toList())
+
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        page(HomePage)
+        editNodesPage.go()
+        editNodesFilePage.go()
+        editNodesFilePage.waitForAceToRender()
+        def linesInAceGutter = editNodesFilePage.aceGutterElement().getText()
+        List<String> linesAsList = Arrays.stream(linesInAceGutter.split("\\n"))
+                .collect(Collectors.toList());
 
         then:
             linesAsList.size() > 1

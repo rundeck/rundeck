@@ -1,0 +1,30 @@
+<joblist>
+  <job>
+    <id>1574a71c-56b8-47ed-8a5e-a52e362cf572</id>
+    <loglevel>INFO</loglevel>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>uname -a</exec>
+      </command>
+    </sequence>
+    <description></description>
+    <name>uname</name>
+    <context>
+      <project>monkey</project>
+      <options>
+        <option name='node' required='true' />
+      </options>
+    </context>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>true</keepgoing>
+      <excludePrecedence>true</excludePrecedence>
+      <rankOrder>ascending</rankOrder>
+    </dispatch>
+    <uuid>1574a71c-56b8-47ed-8a5e-a52e362cf572</uuid>
+    <nodefilters>
+      <filter>${option.node}</filter>
+    </nodefilters>
+    <group>utility</group>
+  </job>
+</joblist>

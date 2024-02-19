@@ -1,64 +1,69 @@
 <template>
-  <div >
-    <ui-socket section="resources-editor" location="top" :event-bus="eventBus" />
-    <resources-editor v-model="updatedData" :event-bus="eventBus" v-if="updatedData"/>
-    <json-embed :output-data="updatedData" field-name="resourcesJsonData"/>
+  <div>
+    <ui-socket
+      section="resources-editor"
+      location="top"
+      :event-bus="eventBus"
+    />
+    <resources-editor
+      v-if="updatedData"
+      v-model="updatedData"
+      :event-bus="eventBus"
+    />
+    <json-embed :output-data="updatedData" field-name="resourcesJsonData" />
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
-import * as _ from 'lodash'
+import { defineComponent } from "vue";
+import * as _ from "lodash";
 
-import ResourcesEditor from '../../../components/job/resources/ResourcesEditor.vue'
-import UiSocket from '../../../../library/components/utils/UiSocket.vue'
-import JsonEmbed from './JsonEmbed.vue'
+import ResourcesEditor from "../../../components/job/resources/ResourcesEditor.vue";
+import UiSocket from "../../../../library/components/utils/UiSocket.vue";
+import JsonEmbed from "./JsonEmbed.vue";
 
-import {
-  getRundeckContext,
-} from "../../../../library"
+import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
-  name: 'ResourcesEditorSection',
-  props:['eventBus'],
+  name: "ResourcesEditorSection",
   components: {
     ResourcesEditor,
     JsonEmbed,
-    UiSocket
+    UiSocket,
   },
-  data () {
+  props: ["eventBus"],
+  data() {
     return {
       resourcesData: {},
-      updatedData:null,
-      watching:false
-    }
+      updatedData: null,
+      watching: false,
+    };
   },
   computed: {
     rootStore() {
-      return getRundeckContext().rootStore
-    }
+      return getRundeckContext().rootStore;
+    },
   },
-  watch:{
+  watch: {
     updatedData: {
       handler() {
         if (this.watching) {
           if (!_.isEqual(this.resourcesData, this.updatedData)) {
-            window.jobWasEdited()
+            window.jobWasEdited();
           }
         }
       },
       deep: true,
+    },
+  },
+  async mounted() {
+    if (window._rundeck && window._rundeck.data) {
+      this.resourcesData = window._rundeck.data.resourcesData;
+      this.updatedData = Object.assign({}, this.resourcesData);
+      this.watching = true;
     }
   },
-  async mounted () {
-    if(window._rundeck && window._rundeck.data){
-        this.resourcesData = window._rundeck.data.resourcesData
-        this.updatedData = Object.assign({}, this.resourcesData)
-        this.watching = true
-    }
-  }
-})
+});
 </script>
 
-<style>
-</style>
+<style></style>

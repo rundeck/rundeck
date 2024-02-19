@@ -1,32 +1,28 @@
 <template>
-    <span
-        :class="descriptionCss"
-        v-if="showDescription"
-        style="margin-left: 5px"
-    >
-      {{ shortDescription }}
-    </span>
-    <details
-        class="more-info details-reset"
-        :class="extendedCss"
-        v-if="showDescription && showExtended && extraDescription"
-    >
-      <summary>
-        {{ $t('more') }}
-        <span class="more-indicator-verbiage more-info-icon">
-          <i class="glyphicon glyphicon-chevron-right" />
-        </span>
-        <span class="less-indicator-verbiage more-info-icon">
-          <i class="glyphicon glyphicon-chevron-down" />
-        </span>
-      </summary>
+  <span v-if="showDescription" :class="descriptionCss" style="margin-left: 5px">
+    {{ shortDescription }}
+  </span>
+  <details
+    v-if="showDescription && showExtended && extraDescription"
+    class="more-info details-reset"
+    :class="extendedCss"
+  >
+    <summary>
+      {{ $t("more") }}
+      <span class="more-indicator-verbiage more-info-icon">
+        <i class="glyphicon glyphicon-chevron-right" />
+      </span>
+      <span class="less-indicator-verbiage more-info-icon">
+        <i class="glyphicon glyphicon-chevron-down" />
+      </span>
+    </summary>
 
-      {{ extraDescription }}
-    </details>
+    {{ extraDescription }}
+  </details>
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "PluginDetails",
@@ -70,13 +66,10 @@ export default defineComponent({
       if (desc && desc.indexOf("\n") > 0) {
         return desc.substring(desc.indexOf("\n") + 1);
       }
-      return '';
+      return "";
     },
   },
-})
+});
 </script>
 
-
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

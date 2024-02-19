@@ -4,15 +4,14 @@
   </div>
 </template>
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import WebhooksView from "./views/WebhooksView.vue";
 
 export default defineComponent({
   name: "WebhooksApplication",
-  components: {WebhooksView},
+  components: { WebhooksView },
   computed: {},
-  methods: {}
-})
+  methods: {},
+});
 </script>
-<style lang="scss">
-</style>
+<style lang="scss"></style>

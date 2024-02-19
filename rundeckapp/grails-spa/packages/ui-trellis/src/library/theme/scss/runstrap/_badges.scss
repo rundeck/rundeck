@@ -1,4 +1,3 @@
-
 // *************************************
 //
 //   Badges
@@ -10,9 +9,9 @@
 // -------------------------------------
 //   1. Badge Required
 // -------------------------------------
-.badge--required{
-  &:after{
-    content: 'Required';
+.badge--required {
+  &:after {
+    content: "Required";
     display: inline;
     font-size: var(--text-xs);
     background-color: var(--danger-color);
@@ -28,7 +27,6 @@
 //
 // Badges (-Legacy Bootstrap 3)
 // --------------------------------------------------
-
 
 // Base class
 .badge {

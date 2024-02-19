@@ -52,7 +52,6 @@
   @extend .input-sm;
 }
 
-
 // Display as table-cell
 // -------------------------
 .input-group-addon,
@@ -74,7 +73,7 @@
 
 // Text input groups
 // -------------------------
-.tags-list-follows-focus{
+.tags-list-follows-focus {
   background-color: var(--background-color);
 }
 
@@ -176,47 +175,46 @@
   }
 }
 
-select.input-sm{
+select.input-sm {
   height: 40px;
 }
 
-.subtitle-head-item.input-group.multiple-control-input-group{
-  .input-group-addon.input-group-addon-title{
+.subtitle-head-item.input-group.multiple-control-input-group {
+  .input-group-addon.input-group-addon-title {
     background-color: var(--background-color-lvl3);
     color: var(--font-color);
-    border-top:1px solid  var(--background-color-accent-lvl3);
-    border-bottom:1px solid  var(--background-color-accent-lvl3);
-    border-left:1px solid  var(--background-color-accent-lvl3);
+    border-top: 1px solid var(--background-color-accent-lvl3);
+    border-bottom: 1px solid var(--background-color-accent-lvl3);
+    border-left: 1px solid var(--background-color-accent-lvl3);
   }
-  .input-btn-toggle{
+  .input-btn-toggle {
     position: relative;
-    .btn.dropdown-toggle.btn-default{
+    .btn.dropdown-toggle.btn-default {
       padding: 18px var(--spacing-4);
       height: 41px;
       border-radius: 0 !important;
     }
-    .btn{
+    .btn {
       width: 100%;
     }
   }
-  .input-group-btn{
-
-    border-top:1px solid  var(--background-color-accent-lvl3);
-    border-bottom:1px solid  var(--background-color-accent-lvl3);
-    border-left:1px solid  var(--background-color-accent-lvl3);
-    &:last-child{
+  .input-group-btn {
+    border-top: 1px solid var(--background-color-accent-lvl3);
+    border-bottom: 1px solid var(--background-color-accent-lvl3);
+    border-left: 1px solid var(--background-color-accent-lvl3);
+    &:last-child {
       border: 0;
-      .btn-cta{
+      .btn-cta {
         height: 43px;
         border: 1px solid var(--cta-color);
       }
     }
-    .btn:not(:last-child){
+    .btn:not(:last-child) {
       border-radius: 0 !important;
       border: 0 !important;
     }
   }
-  .btn.btn-default.dropdown-toggle{
+  .btn.btn-default.dropdown-toggle {
     padding: 0;
     border: 0;
     display: flex;
@@ -224,14 +222,14 @@ select.input-sm{
     justify-content: center;
   }
   input:-webkit-autofill,
-  input:-webkit-autofill:hover, 
-  input:-webkit-autofill:focus, 
-  input:-webkit-autofill:active{
-      -webkit-box-shadow: 0 0 0 30px var(--background-color-lvl3) inset !important;
-      -webkit-text-fill-color: var(--font-color) !important;
-      caret-color: var(--font-color) !important;
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--background-color-lvl3) inset !important;
+    -webkit-text-fill-color: var(--font-color) !important;
+    caret-color: var(--font-color) !important;
   }
-  .form-control{
+  .form-control {
     background-color: var(--background-color-lvl3);
     border-top: 1px solid var(--background-color-accent-lvl3);
     border-left: 1px solid var(--background-color-accent-lvl3);
@@ -241,17 +239,17 @@ select.input-sm{
 }
 .subtitle-head-item {
   .search {
-    margin:0 5px;
+    margin: 0 5px;
     ::placeholder {
       color: var(--font-color);
     }
     span {
-      position:absolute;
-      padding:9px 10px 10px 10px;
+      position: absolute;
+      padding: 9px 10px 10px 10px;
     }
     input {
-      padding-left:30px; 
-      background-color:var(--background-color-lvl2);
+      padding-left: 30px;
+      background-color: var(--background-color-lvl2);
     }
     .input-md {
       border: 1.5px solid var(--default-states-color);

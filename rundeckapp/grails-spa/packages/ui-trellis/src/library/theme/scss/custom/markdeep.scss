@@ -27,8 +27,9 @@
   THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-.md code, pre {
-  font-family: Menlo, 'Lucida Console', monospace;
+.md code,
+pre {
+  font-family: Menlo, "Lucida Console", monospace;
   font-size: 13.100000007873037px;
   line-height: 140%;
 }
@@ -50,16 +51,18 @@
 }
 
 .md .image {
-  display: inline-block
+  display: inline-block;
 }
 
-.md div.imagecaption, .md div.tablecaption, .md div.listingcaption {
+.md div.imagecaption,
+.md div.tablecaption,
+.md div.listingcaption {
   margin: 0.2em 0 10px 0;
   font-style: italic;
 }
 
 .md div.imagecaption {
-  margin-bottom: 0px
+  margin-bottom: 0px;
 }
 
 .md img {
@@ -80,7 +83,7 @@
 
 .md blockquote.fancyquote::before {
   content: "“";
-  color: #DDD;
+  color: #ddd;
   font-family: Times New Roman;
   font-size: 45px;
   line-height: 0;
@@ -97,7 +100,7 @@
 .md span.fancyquote::after {
   content: "”";
   font-style: normal;
-  color: #DDD;
+  color: #ddd;
   font-family: Times New Roman;
   font-size: 45px;
   line-height: 0;
@@ -118,7 +121,7 @@
 
 .md svg.diagram {
   display: block;
-  font-family: Menlo, 'Lucida Console', monospace;
+  font-family: Menlo, "Lucida Console", monospace;
   font-size: 13.100000007873037px;
   text-align: center;
   stroke-linecap: round;
@@ -128,7 +131,7 @@
 }
 
 .md svg.diagram .opendot {
-  fill: #FFF
+  fill: #fff;
 }
 
 .md svg.diagram text {
@@ -159,10 +162,10 @@
   // .table-bordered();
   // .table-condensed();
   // .table-hover();
-  th{
+  th {
     text-transform: capitalize;
     background: #f9f9f9;
-    font-weight:bold;
+    font-weight: bold;
   }
 }
 
@@ -178,7 +181,7 @@
 }
 
 .md .today {
-  background: #ECF8FA;
+  background: #ecf8fa;
 }
 
 .md div.tablecaption {
@@ -189,24 +192,24 @@
   th {
     padding: 8px 15px 8px 15px;
   }
-
 }
 
 .md pre.tilde {
-  border-top: 1px solid #CCC;
-  border-bottom: 1px solid #CCC;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
   padding: 5px 0 5px 20px;
   margin-bottom: 30px;
-  background: #FCFCFC;
+  background: #fcfcfc;
 }
 
-.md a:link, .md a:visited {
-  color: #38A;
+.md a:link,
+.md a:visited {
+  color: #38a;
   text-decoration: none;
 }
 
 .md a:hover {
-  text-decoration: underline
+  text-decoration: underline;
 }
 
 .md dt {
@@ -245,7 +248,7 @@
   float: right;
   font-size: 12px;
   line-height: 15px;
-  border-left: 1px solid #CCC;
+  border-left: 1px solid #ccc;
   padding-left: 15px;
   margin: 15px 0px 15px 25px;
 }
@@ -269,113 +272,163 @@
 }
 
 .md {
-
   .hljs {
     display: block;
     overflow-x: auto;
     padding: 0.5em;
     background: #fff;
     color: #000;
-    -webkit-text-size-adjust: none
+    -webkit-text-size-adjust: none;
   }
 
   .hljs-comment {
-    color: #006a00
+    color: #006a00;
   }
 
   .hljs-keyword {
-    color: #02E
+    color: #02e;
   }
 
-  .hljs-literal, .nginx .hljs-title {
-    color: #aa0d91
+  .hljs-literal,
+  .nginx .hljs-title {
+    color: #aa0d91;
   }
 
-  .method, .hljs-list .hljs-title, .hljs-tag .hljs-title, .setting .hljs-value, .hljs-winutils, .tex .hljs-command, .http .hljs-title, .hljs-request, .hljs-status, .hljs-name {
-    color: #008
+  .method,
+  .hljs-list .hljs-title,
+  .hljs-tag .hljs-title,
+  .setting .hljs-value,
+  .hljs-winutils,
+  .tex .hljs-command,
+  .http .hljs-title,
+  .hljs-request,
+  .hljs-status,
+  .hljs-name {
+    color: #008;
   }
 
-  .hljs-envvar, .tex .hljs-special {
-    color: #660
+  .hljs-envvar,
+  .tex .hljs-special {
+    color: #660;
   }
 
   .hljs-string {
-    color: #c41a16
+    color: #c41a16;
   }
 
-  .hljs-tag .hljs-value, .hljs-cdata, .hljs-filter .hljs-argument, .hljs-attr_selector, .apache .hljs-cbracket, .hljs-date, .hljs-regexp {
-    color: #080
+  .hljs-tag .hljs-value,
+  .hljs-cdata,
+  .hljs-filter .hljs-argument,
+  .hljs-attr_selector,
+  .apache .hljs-cbracket,
+  .hljs-date,
+  .hljs-regexp {
+    color: #080;
   }
 
-  .hljs-sub .hljs-identifier, .hljs-pi, .hljs-tag, .hljs-tag .hljs-keyword, .hljs-decorator, .ini .hljs-title, .hljs-shebang, .hljs-prompt, .hljs-hexcolor, .hljs-rule .hljs-value, .hljs-symbol, .hljs-symbol .hljs-string, .hljs-number, .css .hljs-function, .hljs-function .hljs-title, .coffeescript .hljs-attribute {
-    color: #A0C
+  .hljs-sub .hljs-identifier,
+  .hljs-pi,
+  .hljs-tag,
+  .hljs-tag .hljs-keyword,
+  .hljs-decorator,
+  .ini .hljs-title,
+  .hljs-shebang,
+  .hljs-prompt,
+  .hljs-hexcolor,
+  .hljs-rule .hljs-value,
+  .hljs-symbol,
+  .hljs-symbol .hljs-string,
+  .hljs-number,
+  .css .hljs-function,
+  .hljs-function .hljs-title,
+  .coffeescript .hljs-attribute {
+    color: #a0c;
   }
 
   .hljs-function .hljs-title {
     font-weight: bold;
-    color: #000
+    color: #000;
   }
 
-  .hljs-class .hljs-title, .smalltalk .hljs-class, .hljs-type, .hljs-typename, .hljs-tag .hljs-attribute, .hljs-doctype, .hljs-class .hljs-id, .hljs-built_in, .setting, .hljs-params, .clojure .hljs-attribute {
-    color: #5c2699
+  .hljs-class .hljs-title,
+  .smalltalk .hljs-class,
+  .hljs-type,
+  .hljs-typename,
+  .hljs-tag .hljs-attribute,
+  .hljs-doctype,
+  .hljs-class .hljs-id,
+  .hljs-built_in,
+  .setting,
+  .hljs-params,
+  .clojure .hljs-attribute {
+    color: #5c2699;
   }
 
   .hljs-variable {
-    color: #3f6e74
+    color: #3f6e74;
   }
 
-  .css .hljs-tag, .hljs-rule .hljs-property, .hljs-pseudo, .hljs-subst {
-    color: #000
+  .css .hljs-tag,
+  .hljs-rule .hljs-property,
+  .hljs-pseudo,
+  .hljs-subst {
+    color: #000;
   }
 
-  .css .hljs-class, .css .hljs-id {
-    color: #9b703f
+  .css .hljs-class,
+  .css .hljs-id {
+    color: #9b703f;
   }
 
   .hljs-value .hljs-important {
     color: #ff7700;
-    font-weight: bold
+    font-weight: bold;
   }
 
   .hljs-rule .hljs-keyword {
-    color: #c5af75
+    color: #c5af75;
   }
 
-  .hljs-annotation, .apache .hljs-sqbracket, .nginx .hljs-built_in {
-    color: #9b859d
+  .hljs-annotation,
+  .apache .hljs-sqbracket,
+  .nginx .hljs-built_in {
+    color: #9b859d;
   }
 
-  .hljs-preprocessor, .hljs-preprocessor *, .hljs-pragma {
-    color: #643820
+  .hljs-preprocessor,
+  .hljs-preprocessor *,
+  .hljs-pragma {
+    color: #643820;
   }
 
   .tex .hljs-formula {
     background-color: #eee;
-    font-style: italic
+    font-style: italic;
   }
 
-  .diff .hljs-header, .hljs-chunk {
+  .diff .hljs-header,
+  .hljs-chunk {
     color: #808080;
-    font-weight: bold
+    font-weight: bold;
   }
 
   .diff .hljs-change {
-    background-color: #bccff9
+    background-color: #bccff9;
   }
 
   .hljs-addition {
-    background-color: #baeeba
+    background-color: #baeeba;
   }
 
   .hljs-deletion {
-    background-color: #ffc8bd
+    background-color: #ffc8bd;
   }
 
   .hljs-comment .hljs-doctag {
-    font-weight: bold
+    font-weight: bold;
   }
 
   .method .hljs-id {
-    color: #000
+    color: #000;
   }
 }
