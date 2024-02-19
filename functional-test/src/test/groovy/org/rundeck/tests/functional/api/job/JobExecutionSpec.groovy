@@ -1311,8 +1311,7 @@ class JobExecutionSpec extends BaseContainer {
                     "  </job>\n" +
                     "</joblist>"
 
-        def testXml = xmlJob
-        def created = JobUtils.createJob(projectName, testXml, client)
+        def created = JobUtils.createJob(projectName, xmlJob, client)
         assert created.successful
         CreateJobResponse jobCreatedResponse = mapper.readValue(
                 created.body().string(),
@@ -1461,8 +1460,7 @@ class JobExecutionSpec extends BaseContainer {
                     "   </job>\n" +
                     "</joblist>"
 
-        def testXml = xmlJob
-        def created = JobUtils.createJob(projectName, testXml, client)
+        def created = JobUtils.createJob(projectName, xmlJob, client)
         assert created.successful
 
         when: "TEST: job/id/run should succeed"

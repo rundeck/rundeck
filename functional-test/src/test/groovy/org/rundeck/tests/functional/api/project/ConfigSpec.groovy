@@ -804,7 +804,7 @@ class ConfigSpec extends BaseContainer{
         sources[0].index > 0
         sources[0].resources != null
         !sources[0].resources.writable
-        sources[0].resources?.href?.contains("/source/1/resources")
+        sources[0].resources.href.contains("/source/1/resources")
 
         cleanup:
         deleteProject(projectName)
