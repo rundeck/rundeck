@@ -203,7 +203,7 @@ const messages = {
   "add.node.source": "Add a new Node Source",
   "nodes.title": "Nodes",
   "project.edit.ResourceModelSource.explanation":
-    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)",
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)",
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",
