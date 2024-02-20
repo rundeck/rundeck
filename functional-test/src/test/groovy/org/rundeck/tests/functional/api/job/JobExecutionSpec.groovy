@@ -382,7 +382,7 @@ class JobExecutionSpec extends BaseContainer {
         assert enabledJobsResponse.successful
 
         // Necessary since the api needs to breathe after enable execs
-        Thread.sleep(WaitingTime.LOW.milliSeconds)
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds)
 
         def jobExecResponseFor1AfterEnable = JobUtils.executeJob(job1Id, client)
         assert jobExecResponseFor1AfterEnable.successful
@@ -399,6 +399,9 @@ class JobExecutionSpec extends BaseContainer {
         then:
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
         parsedExecutionsResponseForExecution2AfterEnable.executions.size() == 2
+
+        cleanup:
+        deleteProject(projectName)
     }
 
     def "test-job-flip-scheduleEnabled-bulk"(){
@@ -450,7 +453,7 @@ class JobExecutionSpec extends BaseContainer {
         then:
         job2Detail?.executionEnabled
 
-        Thread.sleep(WaitingTime.LOW.milliSeconds) // As the original test says
+        Thread.sleep(WaitingTime.MODERATE.milliSeconds) // As the original test says
 
         when: "TEST: bulk job schedule disable"
         Object idList = [
@@ -477,6 +480,9 @@ class JobExecutionSpec extends BaseContainer {
         then:
         job1DetailAfterEnable?.scheduleEnabled
         job2DetailAfterEnable?.scheduleEnabled
+
+        cleanup:
+        deleteProject(projectName)
 
     }
 
