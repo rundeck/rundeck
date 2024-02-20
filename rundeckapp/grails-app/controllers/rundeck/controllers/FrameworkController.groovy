@@ -39,6 +39,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.annotation.Put
 import io.swagger.v3.oas.annotations.ExternalDocumentation
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
@@ -1729,6 +1730,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
 
+    @Hidden
     @Get(uri='/project/{project}/configurable')
     @Operation(
             method = 'GET',
@@ -1815,6 +1817,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Hidden
     @Post(uri='/project/{project}/configurable')
     @Operation(
             method = 'POST',
