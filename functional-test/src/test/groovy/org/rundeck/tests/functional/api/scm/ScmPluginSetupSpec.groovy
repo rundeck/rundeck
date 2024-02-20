@@ -189,7 +189,7 @@ class ScmPluginSetupSpec extends BaseContainer {
         }
     }
 
-    def "list plugins on new empty project with no scm plugin setup"(){
+    def "list plugins on new empty project with no scm plugin setup must have oss plugins available"(){
         given:
         String projectName = "${PROJECT_NAME}-P8"
         setupProject(projectName)
@@ -200,13 +200,16 @@ class ScmPluginSetupSpec extends BaseContainer {
 
         then:
         verifyAll {
-            scmPlugins.plugins.size() == 1
-            scmPlugins.plugins.first().configured == false
-            scmPlugins.plugins.first().enabled == false
+            scmPlugins.plugins.size() > 0
             scmPlugins.integration == integration
-            scmPlugins.plugins.first().type == scmClient.pluginName
-            scmPlugins.plugins.first().title == expectedTitle
-            scmPlugins.plugins.first().description == expectedDescription
+
+            ScmPluginsListResponse.ScmPlugin ossPlugin = scmPlugins.plugins.find {it.type == scmClient.pluginName }
+
+            ossPlugin != null
+            ossPlugin.configured == false
+            ossPlugin.enabled == false
+            ossPlugin.title == expectedTitle
+            ossPlugin.description == expectedDescription
         }
 
         where:
