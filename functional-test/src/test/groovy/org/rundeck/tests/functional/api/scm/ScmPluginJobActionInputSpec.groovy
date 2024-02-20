@@ -9,7 +9,7 @@ import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.container.BaseContainer
 
 @APITest
-class ScmPluginJobActionInput extends BaseContainer {
+class ScmPluginJobActionInputSpec extends BaseContainer {
 
     static final String PROJECT_NAME = "ScmPluginJobActionsInput-project"
     final String EXPORT_INTEGRATION = "export"
