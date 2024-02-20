@@ -25,7 +25,7 @@ package org.rundeck.plugins.jsch.net;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
-import org.rundeck.plugins.jsch.util.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import junit.framework.TestCase;
