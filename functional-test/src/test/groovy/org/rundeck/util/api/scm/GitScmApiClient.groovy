@@ -5,6 +5,7 @@ import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
 import org.rundeck.util.api.RundeckResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
+import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginInputFieldsResponse
 import org.rundeck.util.api.scm.httpbody.ScmPluginsListResponse
 import org.rundeck.util.api.scm.httpbody.ScmProjectConfigResponse
@@ -81,6 +82,19 @@ class GitScmApiClient {
 
         return new RundeckResponse(resp, ScmProjectConfigResponse)
     }
+
+    RundeckResponse<SetupIntegrationResponse> callPerformJobAction(String actionId, ScmActionPerformRequest requestBody, String jobId ) {
+        Response resp = client.doPost("/job/${jobId}/scm/${integration}/action/${actionId}", requestBody)
+
+        return new RundeckResponse(resp, SetupIntegrationResponse)
+    }
+
+    RundeckResponse<ScmJobStatusResponse> callGetJobStatus(String jobId) {
+        Response resp = client.doGet("/job/${jobId}/scm/${integration}/status")
+
+        return new RundeckResponse(resp, ScmJobStatusResponse)
+    }
+
 
     String getPluginName() {
         return pluginName
