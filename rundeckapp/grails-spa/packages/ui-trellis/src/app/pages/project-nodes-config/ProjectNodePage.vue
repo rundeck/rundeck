@@ -2,7 +2,9 @@
   <div class="content">
     <div id="layoutBody">
       <div class="title">
-        <span class="text-h3"> <i class="fas fa-sitemap"></i> Edit Nodes </span>
+        <span class="text-h3">
+          <i class="fas fa-sitemap"></i> {{ $t("edit.nodes.header") }}
+        </span>
       </div>
       <div class="container-fluid">
         <div class="row row-space-bottom">
@@ -13,7 +15,7 @@
                   <page-confirm
                     :event-bus="rundeckContext.eventBus"
                     class="pull-right"
-                    message="${enc(attr:message(code:'page.unsaved.changes'))}"
+                    :message="$t('page.unsaved.changes')"
                     :display="true"
                     style="display: inline-block"
                   >
@@ -85,7 +87,9 @@
                     </tab>
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-hdd"></i>Sources</div>
+                        <div>
+                          <i class="fas fa-hdd"></i>{{ $t("nodes.title") }}
+                        </div>
                       </template>
                       <project-node-sources-config
                         :help="
@@ -122,7 +126,14 @@
                     </tab>
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-puzzle-piece"></i>Enhancers</div>
+                        <div>
+                          <i class="fas fa-puzzle-piece"></i
+                          >{{
+                            $t(
+                              "framework.service.NodeEnhancer.label.short.plural",
+                            )
+                          }}
+                        </div>
                       </template>
                       <project-plugin-config
                         config-prefix="nodes.plugin"
@@ -190,16 +201,10 @@ export default {
     ProjectPluginConfig,
     PageConfirm,
   },
-  props: {
-    sourceConfigHelpMessage: {
-      type: String,
-      default: "",
-    },
-  },
   data() {
     return {
       rundeckContext: getRundeckContext() as RundeckContext,
-      activeTabKey: 0,
+      activeTabKey: 1,
     };
   },
   methods: {

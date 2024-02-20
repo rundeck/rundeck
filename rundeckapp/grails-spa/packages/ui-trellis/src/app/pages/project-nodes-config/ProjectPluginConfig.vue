@@ -318,30 +318,6 @@ export default defineComponent({
     Expandable,
     UiSocket,
   },
-  props: {
-    editMode: {
-      type: Boolean,
-      default: false,
-    },
-    modeToggle: {
-      type: Boolean,
-      default: true,
-    },
-    showEmpty: {
-      type: Boolean,
-      default: true,
-    },
-    serviceName: String,
-    title: {
-      required: false,
-      type: String,
-    },
-    configPrefix: String,
-    additionalProps: { required: false, type: Object },
-    help: { required: false, type: String },
-    editButtonText: { required: false, type: String },
-    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
-  },
   emits: [
     "saved",
     "reset",
@@ -369,72 +345,30 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
-<<<<<<< HEAD
-  mounted() {
-    this.rundeckContext = getRundeckContext();
-    this.notifyPluginConfigs();
-    if (
-      window._rundeck &&
-      window._rundeck.rdBase &&
-      window._rundeck.projectName
-    ) {
-      this.rdBase = window._rundeck.rdBase;
-      this.project = window._rundeck.projectName;
-
-      this.loadProjectPluginConfig(
-        window._rundeck.projectName,
-        this.configPrefix,
-        this.serviceName,
-      )
-        .then((pluginConfigs) => {
-          this.configOrig = pluginConfigs;
-          //copy
-          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
-            this.createConfigEntry(val, index),
-          );
-          this.loaded = true;
-          this.notifyPluginConfigs();
-        })
-        .catch((error) => console.error(error));
-
-      pluginService
-        .getPluginProvidersForService(this.serviceName)
-        .then((data) => {
-          if (data.service) {
-            this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
-=======
   props: {
     editMode: {
       type: Boolean,
-      default: false
+      default: false,
     },
     modeToggle: {
       type: Boolean,
-      default: true
+      default: true,
     },
     showEmpty: {
       type: Boolean,
-      default: true
+      default: true,
     },
     serviceName: String,
     addButtonText: String,
     title: {
       required: false,
-      type: String
+      type: String,
     },
     configPrefix: String,
     additionalProps: { required: false, type: Object },
     help: { required: false, type: String },
     editButtonText: { required: false, type: String },
-    eventBus: { type: Object as PropType<typeof EventBus>, "required": false }
->>>>>>> d97bd772ca (add fixes and localization)
+    eventBus: { type: Object as PropType<typeof EventBus>, required: false },
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -680,6 +614,46 @@ export default defineComponent({
         };
       }
     },
+  },
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    this.notifyPluginConfigs();
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.rdBase = window._rundeck.rdBase;
+      this.project = window._rundeck.projectName;
+
+      this.loadProjectPluginConfig(
+        window._rundeck.projectName,
+        this.configPrefix,
+        this.serviceName,
+      )
+        .then((pluginConfigs) => {
+          this.configOrig = pluginConfigs;
+          //copy
+          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
+            this.createConfigEntry(val, index),
+          );
+          this.loaded = true;
+          this.notifyPluginConfigs();
+        })
+        .catch((error) => console.error(error));
+
+      pluginService
+        .getPluginProvidersForService(this.serviceName)
+        .then((data) => {
+          if (data.service) {
+            this.pluginProviders = data.descriptions;
+            this.pluginLabels = data.labels;
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
 });
 </script>

@@ -41,11 +41,37 @@ import {
 import { Notification } from "uiv";
 import { defineComponent, onMounted, ref } from "vue";
 import { PropType } from "vue/dist/vue";
+
+interface Prop {
+  type: string;
+  defaultValue: any;
+  title: string;
+  required: boolean;
+  options: any;
+  allowed: string;
+  name: string;
+  desc: string;
+  staticTextDefaultValue: string;
+}
+
+interface NodeServiceConfigurableItemValues {
+  delay: string;
+  enabled: string;
+  firstLoadSynch: string;
+}
+interface HealthCheckConfigurableItemValues {
+  onstartup: string;
+  enabled: string;
+  period: string;
+  refreshHealthCheckCache: string;
+}
 interface ConfigurableItem {
-  name?: string;
-  properties?: [{}];
-  propertiesMapping?: any;
-  values?: any;
+  name: string;
+  properties: [Prop];
+  propertiesMapping:
+    | NodeServiceConfigurableItemValues
+    | HealthCheckConfigurableItemValues;
+  values: NodeServiceConfigurableItemValues | HealthCheckConfigurableItemValues;
 }
 
 export default defineComponent({
@@ -107,6 +133,7 @@ export default defineComponent({
         this.cacheConfig.config = this.massagedConfig;
         this.isConfigSet = true;
       } catch (err) {
+        this.notifyError("Error loading config: " + err.message);
         console.error(err);
       }
     },

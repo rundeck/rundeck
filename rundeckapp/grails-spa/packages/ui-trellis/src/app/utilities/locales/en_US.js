@@ -201,8 +201,7 @@ const messages = {
   "edit.node.enhancers": "Edit Node Enhancers",
   "add.node.enhancer": "Add a new Node Enhancer",
   "add.node.source": "Add a new Node Source",
-  "project.edit.ResourceModelSource.explanation":
-    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)",
+  "nodes.title": "Nodes",
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",
@@ -248,6 +247,7 @@ const messages = {
   "node.metadata.status": "Status",
   nodes: "Nodes",
   "notification.event.onfailure": "On Failure",
+  "edit.nodes.header": "Edit Nodes",
   "notification.event.onsuccess": "On Success",
   "notification.event.onstart": "On Start",
   "notification.event.onavgduration": "Average Duration Exceeded",
@@ -619,24 +619,11 @@ const messages = {
     "You can see this message again by clicking the",
   "version.number": "version number",
   "in.the.page.footer": "in the page footer.",
-<<<<<<< HEAD
-  "no.authorized.access.to.projects":
-    "You have no authorized access to projects.",
-  "no.authorized.access.to.projects.contact.your.administrator.user.roles.0":
-    "Contact your administrator. (User roles: {0})",
-  "page.home.loading.projects": "Loading Projects",
-  "app.firstRun.md":
-    "Thank you for being a {0} subscriber.\n\n" +
-    "  \n\n\n" +
-    "* [{0} Support Portal &raquo;](http://support.rundeck.com)\n\n" +
-    "* [{0} Documentation &raquo;]({1})",
-=======
   "no.authorized.access.to.projects": "",
   "no.authorized.access.to.projects.contact.your.administrator.user.roles.0":
     "",
   "page.home.loading.projects": "Loading Projects",
   "app.firstRun.md": "",
->>>>>>> 3472a20537 (Add fixes)
   "page.home.section.project.title": "{0} Project",
   "page.home.section.project.title.plural": "{0} Projects",
   "page.home.duration.in.the.last.day": "In the last day",
@@ -644,21 +631,6 @@ const messages = {
   user: "User",
   "user.plural": "Users",
   "page.home.project.executions.0.failed.parenthetical": "({0} Failed)",
-<<<<<<< HEAD
-  "page.home.search.projects.input.placeholder":
-    "Project search: name, label or /regex/",
-  "page.home.search.project.title": "{n} Project found | {n} Projects found",
-  "button.Action": "Action",
-  "edit.configuration": "Edit Configuration",
-  "page.home.new.project.button.label": "New Project",
-  Execution: "{n} Executions | {n} Execution | {n} Executions",
-  in: "in",
-  "Project.plural": "Projects",
-  "home.user": "{n} Users | {n} User | {n} Users",
-  "home.table.projects": "Projects",
-  "home.table.activity": "Activity",
-  "home.table.actions": "Actions",
-=======
   "page.home.search.projects.input.placeholder": "",
   "page.home.search.project.title": "{0} Project found",
   "page.home.search.project.title.plural": "{0} Projects found",
@@ -669,7 +641,6 @@ const messages = {
   "Execution.plural": "Executions",
   in: "in",
   "Project.plural": "Projects",
->>>>>>> 3472a20537 (Add fixes)
 };
 
 export default messages;
