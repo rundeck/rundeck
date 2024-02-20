@@ -12,6 +12,7 @@
   </div>
 </template>
 <script lang="ts">
+import { cloneDeep } from "lodash";
 import * as _ from "lodash";
 import OptionsEditor from "../../../components/job/options/OptionsEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
@@ -33,7 +34,7 @@ export default defineComponent({
   methods: {
     changed(data) {
       if (!_.isEqual(data, this.updatedData.options)) {
-        this.updatedData.options = data;
+        this.updatedData.options = cloneDeep(data);
         //nb: hook to indicate job was editted, defined in jobedit.js
         //@ts-ignore
         if (
