@@ -1,0 +1,7 @@
+^text/x-rundeck-log-v2.0^
+^2014-03-06T18:45:32Z|stepbegin||{node=dignan|step=1|stepctx=1|user=admin}|^
+^2014-03-06T18:45:32Z|nodebegin||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:45:32Z|||{node=dignan|step=1|stepctx=1|user=greg}|Darwin dignan 13.1.0 Darwin Kernel Version 13.1.0: Thu Jan 16 19:40:37 PST 2014; root:xnu-2422.90.20~2/RELEASE_X86_64 x86_64^
+^2014-03-06T18:45:33Z|nodeend||{node=dignan|step=1|stepctx=1|user=greg}|^
+^2014-03-06T18:45:33Z|stepend||{node=dignan|step=1|stepctx=1|user=admin}|^
+^END^

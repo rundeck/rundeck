@@ -1,0 +1,19 @@
+<joblist>
+  <job>
+    <defaultTab>summary</defaultTab>
+    <description>Sleeps for a time</description>
+    <executionEnabled>true</executionEnabled>
+    <id>d5b2c2dd-cf59-43ab-9c04-b99cef2bfe3a</id>
+    <loglevel>INFO</loglevel>
+    <name>Sleep</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <script><![CDATA[sleep 10]]></script>
+        <scriptargs />
+      </command>
+    </sequence>
+    <uuid>d5b2c2dd-cf59-43ab-9c04-b99cef2bfe3a</uuid>
+  </job>
+</joblist>

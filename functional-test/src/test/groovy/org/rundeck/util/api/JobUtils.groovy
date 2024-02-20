@@ -124,4 +124,19 @@ class JobUtils {
         }
         return executionStatus
     }
+
+    /**
+     * Generates a temporary file containing the provided job definition and returns its path.
+     *
+     * @param jobDefinition The job definition content to be written to the temporary file.
+     * @param format The format of the job definition content.
+     * @return The path of the generated temporary file.
+     */
+    static def generateFileToImport(String jobDefinition, String format) {
+        def tempFile = File.createTempFile("temp", ".${format}")
+        tempFile.text = jobDefinition
+        tempFile.deleteOnExit()
+        tempFile.path
+    }
+
 }

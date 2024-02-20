@@ -16,7 +16,7 @@ import spock.lang.Stepwise
 class JobsSpec extends SeleniumBase {
 
     def setupSpec() {
-        setupProject(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}.zip")
+        setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
     }
 
     def setup() {
