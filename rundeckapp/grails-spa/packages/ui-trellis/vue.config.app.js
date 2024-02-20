@@ -1,5 +1,6 @@
 const Path = require("path");
 const webpack = require("webpack");
+const { VueLoaderPlugin } = require("vue-loader");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
 
@@ -73,8 +74,8 @@ module.exports = {
     extract:
       process.env.VUE_APP_CSS_EXTRACT === "true"
         ? {
-            filename: "/css/[name].css",
-            chunkFilename: "/css/[name].css",
+            filename: "./css/[name].css",
+            chunkFilename: "./css/[name].css",
           }
         : false,
   },
@@ -126,6 +127,7 @@ module.exports = {
         filename: "[file].map",
         include: [/\.css$/],
       }),
+      new VueLoaderPlugin(),
     ],
   },
   transpileDependencies: ["uiv"],
