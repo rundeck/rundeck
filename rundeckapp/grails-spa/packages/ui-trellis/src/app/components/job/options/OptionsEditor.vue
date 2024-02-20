@@ -99,7 +99,7 @@
 </template>
 <script lang="ts">
 import { getRundeckContext } from "@/library";
-import { cloneDeep } from "lodash";
+import { cloneDeep, clone } from "lodash";
 import {
   JobOption,
   JobOptionsData,
@@ -133,6 +133,7 @@ interface ChangeEvent {
 
 export default defineComponent({
   name: "OptionsEditor",
+  emits: ["changed"],
   components: {
     OptionItem,
     UndoRedo,
@@ -288,10 +289,11 @@ export default defineComponent({
     changeEvent(event: ChangeEvent) {
       this.localEB.emit("change", event);
       eventBus.emit("job-edit:edited", true);
+      this.$emit("changed", this.intOptions);
     },
   },
   async mounted() {
-    this.intOptions = this.optionsData.options;
+    this.intOptions = clone(this.optionsData.options);
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
     this.features = this.optionsData.features;
     pluginService.getPluginProvidersForService("OptionValues").then((data) => {
