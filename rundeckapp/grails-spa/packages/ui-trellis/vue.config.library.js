@@ -4,6 +4,7 @@ const fse = require("fs-extra");
 const Path = require("path");
 const walk = require("walk");
 const webpack = require("webpack");
+const { VueLoaderPlugin } = require("vue-loader");
 
 const nodeExternals = require("webpack-node-externals");
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
@@ -46,6 +47,7 @@ module.exports = {
   css: {
     extract: false,
   },
+  plugins: [new VueLoaderPlugin()],
   /** Don't emit index html files */
   chainWebpack: (config) => {
     config.entryPoints.store.forEach((_, entry) => {

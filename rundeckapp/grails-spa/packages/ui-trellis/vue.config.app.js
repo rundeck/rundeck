@@ -1,5 +1,6 @@
 const Path = require("path");
 const webpack = require("webpack");
+const { VueLoaderPlugin } = require("vue-loader");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
 
@@ -131,6 +132,7 @@ module.exports = {
         filename: "[file].map",
         include: [/\.css$/],
       }),
+      new VueLoaderPlugin(),
     ],
   },
   transpileDependencies: ["uiv"],
