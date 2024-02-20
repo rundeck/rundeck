@@ -26,7 +26,7 @@ package org.rundeck.plugins.jsch.net;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.rundeck.plugins.jsch.util.SSHAgentProcess;
+import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
