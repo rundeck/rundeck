@@ -34,4 +34,3 @@ services:
       - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
     ports:
       - "3000:3000"
-      - "222:22"
