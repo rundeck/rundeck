@@ -74,16 +74,144 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    void setupProject(String name, String projectImportLocation) {
+    /**
+     * Build a url query string from a map of parameters
+     * @param params
+     * @return
+     */
+    static String buildUrlParams(Map params){
+        return params.collect{
+            "${it.key}=${it.value}"
+        }.join("&")
+    }
+    /**
+     * Setup a project with a project archive file resource path
+     * @param name
+     * @param archiveFileResourcePath
+     */
+    void setupProject(String name, String archiveFileResourcePath) {
+        setupProject(
+            name,
+            archiveFileResourcePath,
+            [
+                importConfig: true,
+                importACL: true,
+                importNodesSources: true,
+                importScm: true
+            ]
+        )
+    }
+    /**
+     * Setup a project with a project archive file resource path
+     * @param name
+     * @param archiveFileResourcePath
+     * @param params URL parameters for the import request
+     */
+    void setupProject(String name, String archiveFileResourcePath, Map params) {
+        setupProjectArchiveFile(name,new File(getClass().getResource(archiveFileResourcePath).getPath()), params)
+    }
+
+    /**
+     * Setup a project with a project archive directory resource path
+     * @param name
+     * @param projectArchiveDirectoryResourcePath
+     */
+    void setupProjectArchiveDirectoryResource(String name, String projectArchiveDirectoryResourcePath) {
+        setupProjectArchiveDirectory(
+            name,
+            new File(getClass().getResource(projectArchiveDirectoryResourcePath).getPath())
+        )
+    }
+    /**
+     * Setup a project with a project archive directory
+     * @param name
+     * @param projectArchiveDirectory
+     */
+    void setupProjectArchiveDirectory(String name, File projectArchiveDirectory) {
+        setupProjectArchiveDirectory(
+            name,
+            projectArchiveDirectory,
+            [
+                importConfig      : true,
+                importACL         : true,
+                importNodesSources: true
+            ]
+        )
+    }
+    /**
+     * Setup a project with a project archive directory
+     * @param name
+     * @param projectArchiveDirectory
+     * @param params URL parameters for the import request
+     */
+    void setupProjectArchiveDirectory(String name, File projectArchiveDirectory, Map params) {
+        File tempFile = createArchiveJarFile(name, projectArchiveDirectory)
+        setupProjectArchiveFile(name, tempFile, params)
+        tempFile.delete()
+    }
+
+    /**
+     * Create a temp file containing a rundeck project archive (jar) from the contents of a directory
+     * @param name project name
+     * @param projectArchiveDirectory directory containing the project files
+     * @return
+     */
+    File createArchiveJarFile(String name, File projectArchiveDirectory) {
+        if(!projectArchiveDirectory.isDirectory()){
+            throw new IllegalArgumentException("Must be a directory")
+        }
+        //create a project archive from the contents of the directory
+        def tempFile = File.createTempFile("import-temp-${name}", ".zip")
+        tempFile.deleteOnExit()
+        //create Manifest
+        def manifest = new Manifest()
+        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
+        manifest.mainAttributes.putValue("Rundeck-Archive-Project-Name", name)
+        manifest.mainAttributes.putValue("Rundeck-Archive-Format-Version", "1.0")
+        manifest.mainAttributes.putValue("Rundeck-Application-Version", "5.0.0")
+        manifest.mainAttributes.putValue(
+            "Rundeck-Archive-Export-Date",
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
+        )
+
+        tempFile.withOutputStream { os ->
+            def jos = new JarOutputStream(os, manifest)
+
+            jos.withCloseable { jarOutputStream ->
+
+                projectArchiveDirectory.eachFileRecurse { file ->
+                    def entry = new JarEntry(projectArchiveDirectory.toPath().relativize(file.toPath()).toString())
+                    jarOutputStream.putNextEntry(entry)
+                    if (file.isFile()) {
+                        file.withInputStream { is ->
+                            jarOutputStream << is
+                        }
+                    }
+                }
+            }
+        }
+        tempFile
+    }
+
+    /**
+     * Import a project with a project archive file
+     * @param name
+     * @param projectArchive the project archive file
+     * @param params URL parameters for the import request
+     */
+    void setupProjectArchiveFile(String name, File projectArchive, Map params) {
+        if(!projectArchive.isFile()){
+            throw new IllegalArgumentException("Must be a file")
+        }
         def getProject = client.doGet("/project/${name}")
         if (getProject.code() == 404) {
             def post = client.doPost("/projects", [name: name])
             if (!post.successful) {
                 throw new RuntimeException("Failed to create project: ${post.body().string()}")
             }
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
         }else if(getProject.code() == 200){
-            client.doPut("/project/${name}/import?importConfig=true&importACL=true&importNodesSources=true", new File(getClass().getResource(projectImportLocation).getPath()))
+            client.doPut("/project/${name}/import?${buildUrlParams(params)}", projectArchive)
         }
     }
 
@@ -146,6 +274,13 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         return client.post(path, body, clazz)
     }
 
+    /**
+     * Executes a job identified by jobId and waits until the job execution is completed.
+     *
+     * @param jobId The identifier of the job to run.
+     * @param body Additional parameters for the job execution. Default is null.
+     * @return A Map containing the final execution details.
+     */
     Map runJobAndWait(String jobId, Object body = null) {
         def path = "/job/${jobId}/run"
         def response = client.post(path, body, Map)
@@ -166,30 +301,6 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         }
     }
 
-    Integer runJob(String jobId, Object body = null) {
-        def path = "/job/${jobId}/run"
-        def response = client.post(path, body, Map)
-        response.id as Integer
-    }
-
-    Map obtainExecution(int executionId) {
-        def finalStatus = [
-                'aborted',
-                'failed',
-                'succeeded',
-                'timedout',
-                'other'
-        ]
-        while(true) {
-            def exec = client.get("/execution/${executionId}/output", Map)
-            if (finalStatus.contains(exec.execState)) {
-                return exec
-            } else {
-                sleep 10000
-            }
-        }
-    }
-
     void deleteProject(String projectName) {
         def response = client.doDelete("/project/${projectName}")
         if (!response.successful) {
@@ -201,23 +312,55 @@ abstract class BaseContainer extends Specification implements ClientProvider {
         startEnvironment()
     }
 
-    def updateFile(String fileName, String projectName = null, String jobName = null, String groupName = null, String description = null, String args = null, String args2 = null, String uuid = null) {
+    /**
+     * Updates the job file to import with the provided file name and optional arguments.
+     *
+     * @param fileName The name of the file to import into test-files resources dir.
+     * @param args     Optional arguments as a Map. If not provided, default values will be used.
+     *                 Available keys:
+     *                 - "project-name": Name of the project (default: PROJECT_NAME)
+     *                 - "job-name": Name of the job (default: "job-test")
+     *                 - "job-group-name": Name of the job group (default: "group-test")
+     *                 - "job-description-name": Name of the job description (default: "description-test")
+     *                 - "args": Arguments (default: "echo hello there")
+     *                 - "2-args": Secondary arguments (default: "echo hello there 2")
+     *                 - "uuid": UUID for the job (default: generated UUID)
+     * @return The path of the updated temporary XML file.
+    */
+    def updateJobFileToImport(String fileName, Map args = [:]) {
+        if (args.isEmpty()) {
+            args = [
+                    "project-name": PROJECT_NAME,
+                    "job-name": "job-test",
+                    "job-group-name": "group-test",
+                    "job-description-name": "description-test",
+                    "args": "echo hello there",
+                    "2-args": "echo hello there 2",
+                    "uuid": UUID.randomUUID().toString()
+            ]
+        }
         def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
         def xmlProjectContent = new File(pathXmlFile).text
-        def xmlProject = xmlProjectContent
-                .replaceAll('xml-uuid', uuid?:UUID.randomUUID().toString())
-                .replaceAll('xml-project-name', projectName?:PROJECT_NAME)
-                .replaceAll('xml-args', args?:"echo hello there")
-                .replaceAll('xml-2-args', args2?:"echo hello there 2")
-                .replaceAll('xml-job-name', jobName?:'job-test')
-                .replaceAll('xml-job-group-name', groupName?:'group-test')
-                .replaceAll('xml-job-description-name', description?:'description-test')
+        args.each { k, v ->
+            xmlProjectContent = xmlProjectContent.replaceAll("xml-${k as String}", v as String)
+        }
         def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlProject
+        tempFile.text = xmlProjectContent
         tempFile.deleteOnExit()
         tempFile.path
     }
 
+    /**
+     * Imports a job file into a specified project.
+     * This method posts the XML job file to the server for the specified or default project name.
+     *
+     * @param projectName The name of the project into which the job file is to be imported.
+     *                    If null, a default project name (PROJECT_NAME) is used.
+     * @param pathXmlFile The file path of the XML job file to be imported.
+     * @return A Map representation of the JSON response body if the import is successful.
+     *         The method checks for a successful response and a 200 HTTP status code.
+     * @throws IllegalArgumentException if the pathXmlFile parameter is not provided.
+     */
     def jobImportFile(String projectName = null, String pathXmlFile) {
         def responseImport = client.doPost("/project/${projectName?:PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
         responseImport.successful
