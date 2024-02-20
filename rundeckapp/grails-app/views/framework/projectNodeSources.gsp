@@ -58,9 +58,9 @@
 
 <body>
 <div class="project-plugin-config-vue">
-<project-node-sources>
+<project-node-page>
 
-</project-node-sources>
+</project-node-page>
 </div>
 </body>
 
