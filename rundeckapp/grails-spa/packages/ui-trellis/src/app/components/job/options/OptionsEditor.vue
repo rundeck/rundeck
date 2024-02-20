@@ -304,7 +304,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.intOptions = clone(this.optionsData.options);
+    this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
     this.features = this.optionsData.features;
