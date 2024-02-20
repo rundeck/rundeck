@@ -23,60 +23,57 @@
         </div>
       </div>
       <div class="clear"></div>
-      <ul class="options">
-        <li
-          v-for="(option, i) in intOptions"
-          :key="i"
-          class="edit-option-item"
-          :class="{ alternate: i % 2 === 1 }"
-        >
-          <option-edit
-            v-if="editIndex === i"
-            :ui-features="{ next: false }"
-            :error="error"
-            :new-option="false"
-            :model-value="createOption"
-            :file-upload-plugin-type="fileUploadPluginType"
-            :features="features"
-            :option-values-plugins="providers"
-            @update:modelValue="updateOption(i, $event)"
-            @cancel="doCancel"
-          />
-          <option-item
-            v-else
-            :editable="!createOption"
-            :opt-index="i"
-            :can-move-down="i < intOptions.length - 1"
-            :can-move-up="i > 0"
-            :option="option"
-            @moveUp="doMoveUp(i)"
-            @moveDown="doMoveDown(i)"
-            @edit="doEdit(i)"
-            @delete="doRemove(i)"
-            @duplicate="doDuplicate(i)"
-          />
-        </li>
-        <li v-if="createMode">
-          <option-edit
-            :ui-features="{ next: false }"
-            :error="error"
-            :new-option="true"
-            :model-value="createOption"
-            :file-upload-plugin-type="fileUploadPluginType"
-            :features="features"
-            :option-values-plugins="providers"
-            @update:modelValue="saveNewOption"
-            @cancel="doCancel"
-          />
-        </li>
-      </ul>
-      <div
-        id="xoptionDropFinal"
-        class="dragdropfinal droppableitem"
-        :data-abs-index="intOptions.length || 1"
-        data-is-final="true"
-        style="display: none"
-      ></div>
+      <draggable
+        v-model="intOptions"
+        @update="dragUpdated"
+        item-key="name"
+        handle=".dragHandle"
+      >
+        <template #item="{ element, index }">
+          <div class="edit-option-item" :class="{ alternate: index % 2 === 1 }">
+            <option-edit
+              v-if="editIndex === index"
+              :ui-features="{ next: false }"
+              :error="error"
+              :new-option="false"
+              :model-value="createOption"
+              :file-upload-plugin-type="fileUploadPluginType"
+              :features="features"
+              :option-values-plugins="providers"
+              @update:modelValue="updateOption(index, $event)"
+              @cancel="doCancel"
+            />
+            <option-item
+              v-else
+              :editable="!createOption"
+              :opt-index="index"
+              :can-move-down="index < intOptions.length - 1"
+              :can-move-up="index > 0"
+              :option="element"
+              @moveUp="doMoveUp(index)"
+              @moveDown="doMoveDown(index)"
+              @edit="doEdit(index)"
+              @delete="doRemove(index)"
+              @duplicate="doDuplicate(index)"
+            />
+          </div>
+        </template>
+        <template #footer>
+          <template v-if="createMode">
+            <option-edit
+              :ui-features="{ next: false }"
+              :error="error"
+              :new-option="true"
+              :model-value="createOption"
+              :file-upload-plugin-type="fileUploadPluginType"
+              :features="features"
+              :option-values-plugins="providers"
+              @update:modelValue="saveNewOption"
+              @cancel="doCancel"
+            />
+          </template>
+        </template>
+      </draggable>
 
       <div class="empty note" v-if="intOptions.length < 1 && !createMode">
         {{ $t("no.options.message") }}
@@ -111,6 +108,7 @@ import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
 import mitt, { Emitter, EventType } from "mitt";
+import draggable from "vuedraggable";
 
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
@@ -138,6 +136,7 @@ export default defineComponent({
     OptionItem,
     UndoRedo,
     OptionEdit,
+    draggable,
   },
   props: {
     optionsData: {
@@ -212,6 +211,15 @@ export default defineComponent({
           undo: Operation.Move,
         });
       }
+    },
+    dragUpdated(change) {
+      this.updateIndexes();
+      this.changeEvent({
+        index: change.oldIndex,
+        dest: change.newIndex,
+        operation: Operation.Move,
+        undo: Operation.Move,
+      });
     },
     updateOption(i: number, data: any) {
       let value = cloneDeep(data);
@@ -333,5 +341,7 @@ export default defineComponent({
   &.alternate {
     background-color: var(--background-color-accent-lvl2);
   }
+
+  padding: 10px 4px;
 }
 </style>
