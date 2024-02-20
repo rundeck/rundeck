@@ -92,9 +92,7 @@
                         </div>
                       </template>
                       <project-node-sources-config
-                        :help="
-                          $t('project.edit.ResourceModelSource.explanation')
-                        "
+                        :help="editNodesHelpMessage"
                         :edit-mode="true"
                         :add-button-text="$t('add.node.source')"
                         :mode-toggle="false"
@@ -205,6 +203,9 @@ export default {
     return {
       rundeckContext: getRundeckContext() as RundeckContext,
       activeTabKey: 1,
+      editNodesHelpMessage: this.$t(
+        "project.edit.ResourceModelSource.explanation",
+      ),
     };
   },
   methods: {
