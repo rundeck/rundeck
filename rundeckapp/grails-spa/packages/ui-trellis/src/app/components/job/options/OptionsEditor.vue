@@ -286,7 +286,13 @@ export default defineComponent({
     doRedo(change: ChangeEvent) {
       this.operation(change.operation, change);
     },
+    updateIndexes() {
+      this.intOptions.forEach((opt: JobOption, i) => {
+        opt.sortIndex = i + 1;
+      });
+    },
     changeEvent(event: ChangeEvent) {
+      this.updateIndexes();
       this.localEB.emit("change", event);
       eventBus.emit("job-edit:edited", true);
       this.$emit("changed", this.intOptions);
@@ -294,6 +300,7 @@ export default defineComponent({
   },
   async mounted() {
     this.intOptions = clone(this.optionsData.options);
+    this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
     this.features = this.optionsData.features;
     pluginService.getPluginProvidersForService("OptionValues").then((data) => {

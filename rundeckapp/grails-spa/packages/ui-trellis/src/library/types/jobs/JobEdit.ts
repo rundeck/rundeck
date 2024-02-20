@@ -24,6 +24,7 @@ export interface JobOption {
   isDate?: boolean;
   dateFormat?: string;
   defaultStoragePath?: string;
+  sortIndex?: number;
 }
 
 export interface JobOptionEdit extends JobOption {
