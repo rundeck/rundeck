@@ -10,7 +10,7 @@ import ProjectNodeSourcesHelp from "./ProjectNodeSourcesHelp.vue";
 import WriteableProjectNodeSources from "./WriteableProjectNodeSources.vue";
 import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 import ProjectConfigurableForm from "./ProjectConfigurableForm.vue";
-import ProjectNodeSources from "./ProjectNodeSources.vue";
+import ProjectNodePage from "./ProjectNodePage.vue";
 import { getRundeckContext } from "../../../library";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
 
@@ -26,6 +26,12 @@ for (let i = 0; i < els.length; i++) {
 
   const app = createApp({
     name: "ProjectNodeApp",
+
+    data() {
+      return {
+        EventBus: context.eventBus,
+      };
+    },
     components: {
       ProjectPluginConfig,
       ProjectNodeSourcesConfig,
@@ -33,7 +39,7 @@ for (let i = 0; i < els.length; i++) {
       ProjectNodeSourcesHelp,
       PageConfirm,
       ProjectConfigurableForm,
-      ProjectNodeSources,
+      ProjectNodePage,
     },
   });
   app.use(VueCookies);
