@@ -25,6 +25,7 @@ class ScmPluginActionsSpec extends BaseContainer {
 
     def "project scm status must be export needed when having a new job"(){
         given:
+        String integration = 'export'
         String projectName = "${PROJECT_NAME}-P1"
         setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
@@ -44,14 +45,13 @@ class ScmPluginActionsSpec extends BaseContainer {
             retrievedStatus.actions.size() == 1
             retrievedStatus.actions.first() == 'project-commit'
         }
-
-        where:
-        integration = 'export'
     }
 
     def "retrieve all input fields on scm action for project with new job"(){
         given:
         String projectName = "${PROJECT_NAME}-P2"
+        String integration = 'export'
+        String actionId = 'project-commit'
         setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
         String jobUuid = getJobUuid(projectName, 'dummy-job')
@@ -121,10 +121,6 @@ class ScmPluginActionsSpec extends BaseContainer {
                     renamed: false
             ]
         }
-
-        where:
-        integration = 'export'
-        actionId = 'project-commit'
     }
 
     def "perform project scm action with success"(){
