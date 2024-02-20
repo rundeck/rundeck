@@ -270,6 +270,7 @@ export default defineComponent({
       } else if (op === Operation.Move) {
         this.operationMove(data.index, data.dest);
       }
+      this.updateIndexes();
     },
     doCancel() {
       this.createMode = false;
@@ -282,9 +283,11 @@ export default defineComponent({
         dest: change.index >= 0 ? change.index : change.dest,
         value: change.orig || change.value,
       });
+      this.wasChanged();
     },
     doRedo(change: ChangeEvent) {
       this.operation(change.operation, change);
+      this.wasChanged();
     },
     updateIndexes() {
       this.intOptions.forEach((opt: JobOption, i) => {
@@ -292,8 +295,10 @@ export default defineComponent({
       });
     },
     changeEvent(event: ChangeEvent) {
-      this.updateIndexes();
       this.localEB.emit("change", event);
+      this.wasChanged();
+    },
+    wasChanged() {
       eventBus.emit("job-edit:edited", true);
       this.$emit("changed", this.intOptions);
     },
