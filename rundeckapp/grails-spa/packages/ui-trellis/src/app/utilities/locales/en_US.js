@@ -793,6 +793,7 @@ const messages = {
   "option.list.header.restrictions.title": "Restrictions",
   "util.undoredo.undo": "Undo",
   "util.undoredo.redo": "Redo",
+  "drag.to.reorder": "Drag to reorder",
 };
 
 export default messages;
