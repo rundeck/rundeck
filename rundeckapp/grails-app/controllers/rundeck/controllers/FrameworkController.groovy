@@ -1729,6 +1729,52 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
 
+    @Get(uri='/project/{project}/configurable')
+    @Operation(
+            method = 'GET',
+            summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
+            description = 'Get Project Configurable configs and properties.',
+            tags = ['project', 'configuration'],
+            responses = [
+                    @ApiResponse(
+                            responseCode = '200',
+                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+                            content = @Content(
+                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                                    examples = @ExampleObject('''
+{
+                        "project": "projectName",
+                        "projectConfigurable": [
+                           "name": "beanName",
+                           "properties": {
+                                [
+                                  "name": "property name",
+                                  "type": "property type",
+                                  "description": "property description",
+                                  "required": "true/false",
+                                  "default": "default value",
+                                  "values": "list of values"
+                               ]
+                           },
+                           propertiesMapping: {
+                                "enabled": "project.healthcheck.enabled",
+                                "onstartup": "project.healthcheck.onstartup",
+                                "delay": "project.healthcheck.delay"
+                           },
+                           values: {
+                                "enabled": "true",
+                                "onstartup": "true",
+                                "delay": "0"
+                           },
+                        ]
+}''')
+                            )
+                    ),
+                    @ApiResponse(responseCode = '400', description = 'Bad request'),
+                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
+            ],
+            operationId = 'GetProjectConfigurable'
+    )
     def getProjectConfigurable() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -1769,6 +1815,66 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
+    @Post(uri='/project/{project}/configurable')
+    @Operation(
+            method = 'POST',
+            summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
+            description = 'Create or update configs and properties.',
+            tags = ['project', 'configuration'],
+            requestBody = @RequestBody(
+                    required = true,
+                    description = '''Update Config Request.
+List of config values, each value contains:
+
+* `extraConfig` Required
+  * Represents either a new config to be created, or an existing config to be updated.
+  * Accepts: An object of projectConfigurable bean names and their respective properties.
+''',
+                    content = @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            array = @ArraySchema(schema = @Schema(type = 'object')),
+                            examples = @ExampleObject('''[
+  {
+  "extraConfig": {
+      "nodeService": {
+            "enabled": "true",
+            "onstartup": "true",
+            "delay": "0"
+      },
+      "rundeckproHealthChecker": {
+          "enabled": "true",
+          "onstartup": "true",
+          "delay": "0"
+      }
+  }
+  }
+]''')
+                    )
+            ),
+            responses = [
+                    @ApiResponse(
+                            responseCode = '200',
+                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+                            content = @Content(
+                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                                    examples = @ExampleObject('''
+{
+                        "result": {
+                            "success": true,
+                            "restart": false
+                        },
+                        "errors": [
+                          "error message",
+                          "error message"
+                        ]
+}''')
+                            )
+                    ),
+                    @ApiResponse(responseCode = '400', description = 'Bad request'),
+                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
+            ],
+            operationId = 'SaveProjectConfigurable'
+    )
     def saveProjectConfigurable(){
         def project = params.project
         def category = params.category
