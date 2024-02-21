@@ -6,8 +6,8 @@
   "scripts": {
     "test": "npx jest --no-cache",
     "test:unit": "npx jest",
-    "dev:test:unit": "npx jest",
-    "ci:test:unit": "npx jest",
+    "dev:test:unit": "npm install && npm run test:unit",
+    "ci:test:unit": "npm ci && npm run test:unit",
     "dev:app:build": "npm install && npm run build:app",
     "ci:app:build": "npm ci && npm run build:app",
     "dev:library:build": "npm install && npm run build:library --prefer-offline --no-audit",
