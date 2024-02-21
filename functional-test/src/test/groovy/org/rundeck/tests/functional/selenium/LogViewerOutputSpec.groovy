@@ -39,7 +39,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         def firstLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 1')]"))
         def lastLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 50')]"))
 
-        then: "The user view must be the last log output."
+        then: "The user view must follow up to the last log output."
         !firstLogLine.isDisplayed() // First line is not reachable or visible by user
         lastLogLine.isDisplayed() // And the last line does
 
