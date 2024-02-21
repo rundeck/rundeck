@@ -765,6 +765,9 @@ class BaseGitPlugin {
         logger.debug(ScmAuthMessages.CHECKING.getMessage())
         def userStorageTree = ctx.getStorageTree()
         def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
+        if(!scmAuthPath){
+            return true
+        }
         def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
         if( expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath) ){
             logger.debug(ScmAuthMessages.HAS_ACCESS.getMessage())

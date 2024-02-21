@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.rundeck.plugins.jsch.util;
+package com.dtolabs.rundeck.core.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
