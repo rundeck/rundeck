@@ -195,6 +195,9 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
             authorizeProjectJobAll(_, _, ['update'], _) >> true
         }
         service.configurationService=Mock(ConfigurationService)
+        service.fileUploadService=Mock(FileUploadService){
+            _*getPluginType()>>'afileuploadplugin'
+        }
         when: "get plugins with dynamic props"
 
         Map params = [id: job.id, project: project]
@@ -208,5 +211,6 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         model.scheduledExecution.workflow != null
         model.notificationPluginsDynamicProperties !=null
         model.notificationPluginsDynamicProperties.size() == 3
+        model.fileUploadPluginType == 'afileuploadplugin'
     }
 }
