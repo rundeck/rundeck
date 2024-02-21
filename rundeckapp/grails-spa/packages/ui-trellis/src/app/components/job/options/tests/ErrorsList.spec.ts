@@ -1,5 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import ErrorsList from "../options/ErrorsList.vue";
+import ErrorsList from "../ErrorsList.vue";
 
 // Helper function to mount the component
 const mountErrorsList = async (options: {

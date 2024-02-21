@@ -1,11 +1,11 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import { JobOption } from "../../../../library/types/jobs/JobEdit";
+import { JobOption } from "../../../../../library/types/jobs/JobEdit";
 import { Btn, Popover } from "uiv";
 
-import OptionView from "../options/OptionView.vue";
+import OptionView from "../OptionView.vue";
 
 const mountOptionView = async (options: {
-  option: JobOption;
+  option: any;
   editable: boolean;
 }): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionView, {
@@ -34,16 +34,16 @@ const mountOptionView = async (options: {
 
 describe("OptionView", () => {
   it("text option shows option name", async () => {
-    let option = { name: "optionName", optionType: "text" } as JobOption;
+    let option = { name: "optionName", optionType: "text" };
+    debugger;
     const wrapper = await mountOptionView({ option, editable: true });
-    // Wait for the next Vue tick to allow for asynchronous rendering
-    await wrapper.vm.$nextTick();
 
     let detail = wrapper.find(".optdetail");
+    expect(detail).not.toBeNull();
     expect(detail).toBeTruthy();
     expect(detail.text()).toContain("optionName");
     //has no file icon
-    expect(wrapper.find(".glyphicon-file")).toBeFalsy();
+    expect(wrapper.find(".glyphicon-file").exists()).toBeFalsy();
   });
   it("file option shows file icon", async () => {
     let option = { name: "optionName", optionType: "file" } as JobOption;
@@ -52,9 +52,10 @@ describe("OptionView", () => {
     await wrapper.vm.$nextTick();
 
     let detail = wrapper.find(".optdetail");
+    expect(detail).not.toBeNull();
     expect(detail).toBeTruthy();
     expect(detail.text()).toContain("optionName");
     //has a file icon
-    expect(wrapper.find(".glyphicon-file")).toBeTruthy();
+    expect(wrapper.find(".glyphicon-file").exists()).toBeTruthy();
   });
 });
