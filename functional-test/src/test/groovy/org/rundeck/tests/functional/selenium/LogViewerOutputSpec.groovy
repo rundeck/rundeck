@@ -1,7 +1,6 @@
 package org.rundeck.tests.functional.selenium
 
 import org.openqa.selenium.By
-import org.openqa.selenium.WebElement
 import org.rundeck.tests.functional.selenium.pages.*
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
