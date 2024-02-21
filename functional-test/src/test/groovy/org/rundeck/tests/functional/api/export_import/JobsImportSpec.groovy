@@ -18,10 +18,10 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in jobs.xml format (multipart request)"() {
         when:
-            def path = generatePathXml()
+            def xmlJobPath = generatePathXml()
             def multipartBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                    .addFormDataPart("xmlBatch", new File(xmlJobPath).name, RequestBody.create(new File(xmlJobPath), MultipartBody.FORM))
                     .build()
             def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import", multipartBody)
         then:
@@ -39,9 +39,9 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in jobs.xml format (urlencode)"() {
         when:
-            def path = generatePathXml()
+            def xmlJobPath = generatePathXml()
             FormBody formBody = new FormBody.Builder()
-                    .add("xmlBatch", new File(path).text)
+                    .add("xmlBatch", new File(xmlJobPath).text)
                     .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import", formBody)
         then:
@@ -62,8 +62,8 @@ class JobsImportSpec extends BaseContainer {
             Headers headers = new Headers.Builder()
                 .add("Accept", "application/json")
                 .build()
-            def path = generatePathYaml()
-            def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", new File(path).text, "application/yaml", headers)
+            def yamlJobPath = generatePathYaml()
+            def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?fileformat=yaml", new File(yamlJobPath).text, "application/yaml", headers)
         then:
             verifyAll {
                 responseImport.code() == 200
@@ -79,8 +79,8 @@ class JobsImportSpec extends BaseContainer {
             Headers headers = new Headers.Builder()
                     .add("Accept", "application/json")
                     .build()
-            def path = generatePathXml()
-            def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?fileformat=xml", new File(path).text, "application/xml", headers)
+            def xmlJobPath = generatePathXml()
+            def responseImport = client.doPost("/project/${PROJECT_NAME}/jobs/import?fileformat=xml", new File(xmlJobPath).text, "application/xml", headers)
         then:
             verifyAll {
                 responseImport.code() == 200
@@ -93,9 +93,9 @@ class JobsImportSpec extends BaseContainer {
 
     def "/jobs/import with invalid format"() {
         when:
-            def path = generatePathXml()
+            def xmlJobPath = generatePathXml()
             FormBody formBody = new FormBody.Builder()
-                    .add("xmlBatch", new File(path).text)
+                    .add("xmlBatch", new File(xmlJobPath).text)
                     .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=DNEformat", formBody)
         then:
@@ -304,11 +304,11 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in json format (multipart file)"() {
         setup:
-            def path = generatePathJson()
+            def xmlJobPath = generatePathJson()
         when:
             def multipartBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                .addFormDataPart("xmlBatch", new File(xmlJobPath).name, RequestBody.create(new File(xmlJobPath), MultipartBody.FORM))
                 .build()
             def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?format=json", multipartBody)
             def result = client.jsonValue(responseImport.body(), Map)
@@ -322,9 +322,9 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in json format (urlencode)"() {
         setup:
-            def path = generatePathJson()
+            def jsonJobPath = generatePathJson()
             FormBody formBody = new FormBody.Builder()
-                .add("xmlBatch", new File(path).text)
+                .add("xmlBatch", new File(jsonJobPath).text)
                 .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=json", formBody)
         when:
@@ -339,10 +339,10 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in yaml format (multipart file)"() {
         when:
-            def path = generatePathYaml()
+            def yamlJobPath = generatePathYaml()
             def multipartBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("xmlBatch", new File(path).name, RequestBody.create(new File(path), MultipartBody.FORM))
+                .addFormDataPart("xmlBatch", new File(yamlJobPath).name, RequestBody.create(new File(yamlJobPath), MultipartBody.FORM))
                 .build()
             def responseImport = client.doPostWithMultipart("/project/${PROJECT_NAME}/jobs/import?format=yaml", multipartBody)
             def result = client.jsonValue(responseImport.body(), Map)
@@ -356,9 +356,9 @@ class JobsImportSpec extends BaseContainer {
 
     def "import RunDeck Jobs in yaml format (urlencode)"() {
         when:
-            def path = generatePathYaml()
+            def yamlJobPath = generatePathYaml()
             FormBody formBody = new FormBody.Builder()
-                .add("xmlBatch", new File(path).text)
+                .add("xmlBatch", new File(yamlJobPath).text)
                 .build()
             def responseImport = client.doPostWithFormData("/project/${PROJECT_NAME}/jobs/import?format=yaml", formBody)
             def result = client.jsonValue(responseImport.body(), Map)
@@ -370,6 +370,11 @@ class JobsImportSpec extends BaseContainer {
             }
     }
 
+    /**
+     * Generates a JSON file containing job information and saves it to a temporary location.
+     *
+     * @return The path to the generated JSON file.
+     */
     def generatePathJson() {
         def job = """
                                 [
@@ -398,6 +403,11 @@ class JobsImportSpec extends BaseContainer {
         JobUtils.generateFileToImport(job, "json")
     }
 
+    /**
+     * Generates an XML file containing job information and saves it to a temporary location.
+     *
+     * @return The path to the generated XML file.
+     */
     def generatePathXml() {
         def xml = """
                 <joblist>
@@ -424,6 +434,11 @@ class JobsImportSpec extends BaseContainer {
         JobUtils.generateFileToImport(xml, "xml")
     }
 
+    /**
+     * Generates a YAML file containing job information and saves it to a temporary location.
+     *
+     * @return The path to the generated YAML file.
+     */
     def generatePathYaml() {
         def yaml = """
                 -
