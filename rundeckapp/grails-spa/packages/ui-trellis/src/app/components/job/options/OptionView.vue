@@ -8,6 +8,7 @@
         <i class="glyphicon glyphicon-file"></i>
       </template>
       <span
+        class="optdetail_name"
         :class="{ required: option.required }"
         :title="
           (option.description || '') +
@@ -15,7 +16,7 @@
         "
         >{{ option.name }}</span
       >
-      <span class="">
+      <span class="optdetail_default_value">
         <span
           :title="displayDefaultValue"
           :class="{ truncatedtext: displayDefaultValue.length > 20 }"
