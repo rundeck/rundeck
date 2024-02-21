@@ -24,7 +24,7 @@
           {{ displayDefaultValueTruncated }}
         </span>
         {{ option.multivalued ? "(+)" : "" }}
-        <template v-if="option.secureInput && option.defaultStoragePath">
+        <template v-if="option.secure && option.defaultStoragePath">
           <i class="glyphicon glyphicon-lock"></i>
         </template>
       </span>
@@ -107,9 +107,11 @@ export default defineComponent({
       return this.option.valuesList ? this.option.valuesList.split(",") : [];
     },
     displayDefaultValue() {
-      return this.option.secureInput && this.option.defaultValue
-        ? "****"
-        : this.option.defaultValue || "";
+      return this.option.secure
+        ? ""
+        : this.option.value
+          ? this.option.value
+          : "";
     },
     displayDefaultValueTruncated() {
       let val = this.displayDefaultValue;
