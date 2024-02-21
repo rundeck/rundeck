@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium
 
 import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
 import org.rundeck.tests.functional.selenium.pages.*
 import org.rundeck.tests.functional.selenium.pages.home.HomePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
@@ -10,46 +11,38 @@ import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.setup.NavLinkTypes
 
 @SeleniumCoreTest
-class LogViewerOutput extends SeleniumBase{
+class LogViewerOutputSpec extends SeleniumBase{
 
     def setupSpec(){
-        setupProject("AutoFollowTest")
+        setupProjectArchiveDirectoryResource("test-long-job-output", "/projects-import/long-job-output-project")
     }
 
     def "auto scroll on log viewer page show last input"() {
 
-        setup:
+        given:
+        def projectName = "test-long-job-output"
         def loginPage = page LoginPage
         def sideBar = page SideBarPage
-        def jobListPage = page JobsListPage
-        def jobCreatePage = page JobCreatePage
         def projectHomePage = page HomePage
         def jobShowPage = page JobShowPage
 
-        when:
+        when: "We run the job to have multiple lines in log output"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.validatePage()
-        projectHomePage.goProjectHome("AutoFollowTest")
+        projectHomePage.goProjectHome(projectName)
         sideBar.goTo(NavLinkTypes.JOBS)
-        jobListPage.getCreateJobLink().click()
-        jobCreatePage.getJobNameField().sendKeys("loop job")
-        jobCreatePage.getTab(JobTab.WORKFLOW).click()
-        jobCreatePage.getStepByType(StepName.COMMAND, StepType.NODE).click()
-        jobCreatePage.waitForStepToBeShown(By.name("pluginConfig.adhocRemoteString"))
-        jobCreatePage.el(By.name("pluginConfig.adhocRemoteString")).sendKeys("for i in {1..60}; do echo NUMBER \$i; sleep 0.2; done")
-        jobCreatePage.getSaveStepButton().click()
-        jobCreatePage.waitForSavedStep(0)
-        jobCreatePage.getCreateButton().click()
+        jobShowPage.goToJob("f44481c4-159d-4176-869b-e4a9bd898fe5")
         jobShowPage.getRunJobBtn().click()
         jobShowPage.getLogOutputBtn().click()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),3,5)
-        def firstLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
-        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'NUMBER ')]"),35,40)
-        def finalLocation = jobShowPage.el(By.xpath("//span[contains(text(),'NUMBER 1')]")).getLocation()
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),3,5)
+        jobShowPage.waitForLogOutput(By.xpath("//span[contains(text(),'log output ')]"),49,40)
+        def firstLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 1')]"))
+        def lastLogLine = jobShowPage.el(By.xpath("//span[contains(text(),'log output 50')]"))
 
-        then:
-        firstLocation != finalLocation
+        then: "The user view must be the last log output."
+        !firstLogLine.isDisplayed() // First line is not reachable or visible by user
+        lastLogLine.isDisplayed() // And the last line does
 
     }
 
