@@ -29,7 +29,7 @@
         </template>
       </span>
       <span class="opt-desc">
-        {{ option.description ? option.description.substring(0, 100) : "" }}
+        {{ truncatedDescription }}
       </span>
     </span>
     <template v-if="optionValuesArray.length > 0">
@@ -120,6 +120,11 @@ export default defineComponent({
       } else {
         return val;
       }
+    },
+    truncatedDescription() {
+      return this.option.description
+        ? this.option.description.substring(0, 100)
+        : "";
     },
   },
 });
