@@ -208,7 +208,7 @@ class JobsImportSpec extends BaseContainer {
             """
         def path = JobUtils.generateFileToImport(job, "xml")
         when:
-        def result = jobImportFile(PROJECT_NAME, path)
+        def result = JobUtils.jobImportFile(PROJECT_NAME, path, client)
         then:
         verifyAll {
             result.succeeded[0].id == "28a1fc62-92a1-4a45-bbc3-02a8b0f46af8"
