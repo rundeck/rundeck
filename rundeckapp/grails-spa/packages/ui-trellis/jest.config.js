@@ -23,4 +23,5 @@ module.exports = {
   testEnvironment: "@happy-dom/jest-environment",
   transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
   clearMocks: true,
+  reporters: ["default", "jest-junit"],
 };
