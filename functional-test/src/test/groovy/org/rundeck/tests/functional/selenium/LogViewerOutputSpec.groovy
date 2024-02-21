@@ -12,14 +12,15 @@ import org.rundeck.util.setup.NavLinkTypes
 @SeleniumCoreTest
 class LogViewerOutputSpec extends SeleniumBase{
 
+    private static final def longOutPutProjectName = "test-long-job-output"
+
     def setupSpec(){
-        setupProjectArchiveDirectoryResource("test-long-job-output", "/projects-import/long-job-output-project")
+        setupProjectArchiveDirectoryResource(longOutPutProjectName, "/projects-import/long-job-output-project")
     }
 
     def "auto scroll on log viewer page show last input"() {
 
         given:
-        def projectName = "test-long-job-output"
         def loginPage = page LoginPage
         def sideBar = page SideBarPage
         def projectHomePage = page HomePage
@@ -29,7 +30,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.validatePage()
-        projectHomePage.goProjectHome(projectName)
+        projectHomePage.goProjectHome(longOutPutProjectName)
         sideBar.goTo(NavLinkTypes.JOBS)
         jobShowPage.goToJob("f44481c4-159d-4176-869b-e4a9bd898fe5")
         jobShowPage.getRunJobBtn().click()
@@ -59,7 +60,7 @@ class LogViewerOutputSpec extends SeleniumBase{
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
         projectHomePage.validatePage()
-        projectHomePage.goProjectHome("AutoFollowTest")
+        projectHomePage.goProjectHome(longOutPutProjectName)
         sideBar.goTo(NavLinkTypes.JOBS)
         jobListPage.getCreateJobLink().click()
         jobCreatePage.getJobNameField().sendKeys("loop job")
