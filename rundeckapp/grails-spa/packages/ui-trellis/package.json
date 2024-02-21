@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest --no-cache",
     "test:unit": "jest --silent",
+    "dev:test:watch": "npm install && jest --silent --watch",
     "dev:test:unit": "npm install && npm run test:unit",
     "ci:test:unit": "npm ci && npm run test:unit",
     "dev:app:build": "npm install && npm run build:app",
