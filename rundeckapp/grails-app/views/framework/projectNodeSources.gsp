@@ -25,6 +25,9 @@
 <html>
 
 <head>
+
+  <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
+
   <g:set var="rkey" value="${g.rkey()}" />
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="layout" content="base" />
@@ -39,6 +42,7 @@
 
   <asset:javascript src="util/tab-router.js"/>
   <g:javascript>
+
     jQuery(function () {
       setupTabRouter('#node_config_tabs', 'node_');
     })
@@ -57,11 +61,14 @@
 </head>
 
 <body>
-<div class="project-plugin-config-vue">
-<project-node-page>
-
-</project-node-page>
-</div>
+<g:if test="${legacyUi}">
+  <tmpl:legacyProjectNodeSources/>
+</g:if>
+<g:else>
+  <div class="project-plugin-config-vue">
+    <project-node-page></project-node-page>
+  </div>
+</g:else>
 </body>
 
 </html>
