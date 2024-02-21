@@ -32,18 +32,18 @@
         {{ truncatedDescription }}
       </span>
     </span>
-    <template v-if="optionValuesArray.length > 0">
+    <template v-if="option.values && option.values.length > 0">
       <popover trigger="hover" placement="bottom">
         <span class="valuesSet" data-role="trigger">
           <span class="valueslist">
-            {{ $tc("option.values.c", optionValuesArray.length) }}
+            {{ $tc("option.values.c", option.values.length) }}
           </span>
         </span>
         <template #popover>
           <div class="info note">
             {{ $t("option.view.allowedValues.label") }}
           </div>
-          <span v-for="(val, i) in optionValuesArray">
+          <span v-for="(val, i) in option.values">
             {{ 0 != i ? ", " : "" }}
             <span class="valueItem">{{ val }}</span>
           </span>
@@ -103,9 +103,6 @@ export default defineComponent({
     },
   },
   computed: {
-    optionValuesArray() {
-      return this.option.valuesList ? this.option.valuesList.split(",") : [];
-    },
     displayDefaultValue() {
       return this.option.secure
         ? ""
