@@ -794,6 +794,15 @@ const messages = {
   "util.undoredo.undo": "Undo",
   "util.undoredo.redo": "Redo",
   "drag.to.reorder": "Drag to reorder",
+  "option.view.required.title": " (Required)",
+  "option.view.allowedValues.label": "Allowed Values",
+  "option.view.valuesUrl.title": "Values loaded from Remote URL: {0}",
+  "option.view.valuesUrl.placeholder": "URL",
+  "option.view.enforced.title": "Input must be one of the allowed values",
+  "option.view.enforced.placeholder": "Strict",
+  "option.view.regex.info.note": "Values must match the regular expression:",
+  "option.view.notenforced.title": "No restrictions on input value",
+  "option.view.notenforced.placeholder": "None",
 };
 
 export default messages;

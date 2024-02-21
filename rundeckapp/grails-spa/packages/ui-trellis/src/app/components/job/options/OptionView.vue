@@ -10,7 +10,8 @@
       <span
         :class="{ required: option.required }"
         :title="
-          (option.description || '') + (option?.required ? ' (Required)' : '')
+          (option.description || '') +
+          (option?.required ? $t('option.view.required.title') : '')
         "
         >{{ option.name }}</span
       >
@@ -38,7 +39,9 @@
           </span>
         </span>
         <template #popover>
-          <div class="info note">Allowed Values</div>
+          <div class="info note">
+            {{ $t("option.view.allowedValues.label") }}
+          </div>
           <span v-for="(val, i) in optionValuesArray">
             {{ 0 != i ? ", " : "" }}
             <span class="valueItem">{{ val }}</span>
@@ -50,16 +53,16 @@
       <span class="valuesSet">
         <span
           class="valuesUrl"
-          :title="`Values loaded from Remote URL: ${option.valuesUrl}`"
-          >URL</span
+          :title="$t('option.view.valuesUrl.title', [option.valuesUrl])"
+          >{{ $t("option.view.valuesUrl.placeholder") }}</span
         >
       </span>
     </template>
 
     <template v-if="option.enforced">
       <span class="enforceSet">
-        <span class="enforced" title="Input must be one of the allowed values"
-          >Strict</span
+        <span class="enforced" :title="$t('option.view.enforced.title')">
+          >{{ $t("option.view.enforced.placeholder") }}</span
         >
       </span>
     </template>
@@ -67,14 +70,16 @@
       <span class="enforceSet">
         <popover>
           <span class="regex" data-role="trigger">{{ option.regex }}</span>
-          <div class="info note">Values must match the regular expression:</div>
+          <div class="info note">{{ $t("option.view.regex.info.note") }}</div>
           <code>{{ option.regex }}</code>
         </popover>
       </span>
     </template>
     <template v-else>
       <span class="enforceSet">
-        <span class="any" title="No restrictions on input value">None</span>
+        <span class="any" :title="$t('option.view.notenforced.title')">{{
+          $t("option.view.notenforced.placeholder")
+        }}</span>
       </span>
     </template>
   </span>
