@@ -78,10 +78,6 @@ export default defineComponent({
       type: Object as () => PropType<JobOption>,
       required: true,
     },
-    optIndex: {
-      type: Number,
-      required: true,
-    },
     editable: {
       type: Boolean,
       default: false,

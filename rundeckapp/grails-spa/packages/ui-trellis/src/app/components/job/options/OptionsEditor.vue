@@ -46,7 +46,6 @@
             <option-item
               v-else
               :editable="!createOption"
-              :opt-index="index"
               :can-move-down="index < intOptions.length - 1"
               :can-move-up="index > 0"
               :option="element"
