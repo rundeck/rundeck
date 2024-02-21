@@ -5,7 +5,7 @@
         size="xs"
         type="plain"
         class="dragHandle"
-        :title="$t('drag.to.reorder')"
+        :title="$t('option.view.action.drag.title')"
         :disabled="!canMoveUp && !canMoveDown"
       >
         <i class="glyphicon glyphicon-resize-vertical"></i>
@@ -16,7 +16,7 @@
           size="xs"
           :disabled="!canMoveUp"
           @click="$emit('moveUp', option)"
-          :title="$t('move.up')"
+          :title="$t('option.view.action.moveUp.title')"
         >
           <i class="glyphicon glyphicon-arrow-up"></i>
         </btn>
@@ -25,7 +25,7 @@
           size="xs"
           :disabled="!canMoveDown"
           @click="$emit('moveDown', option)"
-          :title="$t('move.down')"
+          :title="$t('option.view.action.moveDown.title')"
         >
           <i class="glyphicon glyphicon-arrow-down"></i>
         </btn>
@@ -39,7 +39,7 @@
         <btn
           size="xs"
           @click="$emit('edit', option)"
-          :title="$t('edit.this.option')"
+          :title="$t('option.view.action.edit.title')"
         >
           <i class="glyphicon glyphicon-edit"></i>
           {{ $t("edit") }}
@@ -47,7 +47,7 @@
         <btn
           size="xs"
           @click="$emit('duplicate', option)"
-          :title="$t('duplicate.this.option')"
+          :title="$t('option.view.action.duplicate.title')"
         >
           <i class="glyphicon glyphicon-duplicate"></i>
           {{ $t("duplicate") }}
@@ -55,7 +55,7 @@
         <btn
           size="xs"
           type="danger"
-          :title="$t('delete.this.option')"
+          :title="$t('option.view.action.delete.title')"
           @click="$emit('delete', option)"
         >
           <i class="glyphicon glyphicon-remove"></i>
