@@ -793,7 +793,6 @@ const messages = {
   "option.list.header.restrictions.title": "Restrictions",
   "util.undoredo.undo": "Undo",
   "util.undoredo.redo": "Redo",
-  "drag.to.reorder": "Drag to reorder",
   "option.view.required.title": " (Required)",
   "option.view.allowedValues.label": "Allowed Values",
   "option.view.valuesUrl.title": "Values loaded from Remote URL: {0}",
@@ -803,6 +802,12 @@ const messages = {
   "option.view.regex.info.note": "Values must match the regular expression:",
   "option.view.notenforced.title": "No restrictions on input value",
   "option.view.notenforced.placeholder": "None",
+  "option.view.action.delete.title": "Delete this Option",
+  "option.view.action.edit.title": "Edit this Option",
+  "option.view.action.duplicate.title": "Duplicate this Option",
+  "option.view.action.moveUp.title": "Move Up",
+  "option.view.action.moveDown.title": "Move Down",
+  "option.view.action.drag.title": "Drag to reorder",
 };
 
 export default messages;
