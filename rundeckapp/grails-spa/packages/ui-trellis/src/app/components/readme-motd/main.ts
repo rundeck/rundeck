@@ -31,7 +31,12 @@ rundeckContext.rootStore.ui.addItems([
           EditProjectFile,
         },
         inject: ["addUiMessages"],
-        props: ["itemData"],
+        props: {
+          itemData: {
+            type: Object,
+            required: true,
+          },
+        },
 
         data() {
           return {
@@ -45,9 +50,10 @@ rundeckContext.rootStore.ui.addItems([
           this.addUiMessages([i18nMessages[locale]]);
           this.filename = this.itemData.filename;
           // code to handle displayConfig
+
           if (typeof this.itemData.displayConfig === "string") {
             this.displayConfig = this.itemData.displayConfig
-              .replace(/^\[|\]$/g, "")
+              .replace(/^\[|]$/g, "")
               .split(", ");
           }
 
