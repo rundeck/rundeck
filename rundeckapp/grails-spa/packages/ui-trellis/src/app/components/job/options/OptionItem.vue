@@ -66,7 +66,7 @@
 </template>
 <script lang="ts">
 import { JobOption } from "@/library/types/jobs/JobEdit";
-import OptionView from "../OptionView.vue";
+import OptionView from "./OptionView.vue";
 import { defineComponent, PropType } from "vue";
 
 export default defineComponent({

@@ -102,7 +102,7 @@ import {
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
-import OptionItem from "./list/OptionItem.vue";
+import OptionItem from "./OptionItem.vue";
 import pluginService from "@/library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
