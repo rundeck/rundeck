@@ -399,7 +399,6 @@ class JobExecutionSpec extends BaseContainer {
         then:
         parsedExecutionsResponseForExecution1AfterEnable.executions.size() == 2
         parsedExecutionsResponseForExecution2AfterEnable.executions.size() == 2
-
     }
 
     def "test-job-flip-scheduleEnabled-bulk"(){
