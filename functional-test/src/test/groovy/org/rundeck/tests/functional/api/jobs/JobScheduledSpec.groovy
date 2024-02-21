@@ -68,7 +68,7 @@ class JobScheduledSpec extends BaseContainer {
                 .replaceAll('P_NS', String.format('%02d', ns))
 
             def path = JobUtils.generateFileToImport(xml, 'xml')
-            def jobId = jobImportFile(path).succeeded[0].id
+            def jobId = JobUtils.jobImportFile(PROJECT_NAME,path,client).succeeded[0].id
         when:
             def response = doGet("/job/${jobId}/executions?status=succeeded")
             def count = jsonValue(response.body()).executions.size()
@@ -114,7 +114,7 @@ class JobScheduledSpec extends BaseContainer {
                 </joblist>
             """
             def path = JobUtils.generateFileToImport(xml, 'xml')
-            def jobId = jobImportFile(path).succeeded[0].id
+            def jobId = JobUtils.jobImportFile(PROJECT_NAME,path,client).succeeded[0].id
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
             def execId = jsonValue(jobRun.body()).id
@@ -156,7 +156,7 @@ class JobScheduledSpec extends BaseContainer {
                     </joblist>
                 """
             def path = JobUtils.generateFileToImport(xml, 'xml')
-            def jobId = jobImportFile(path).succeeded[0].id
+            def jobId = JobUtils.jobImportFile(PROJECT_NAME,path,client).succeeded[0].id
         when:
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt2 a")
             def execId = jsonValue(jobRun.body()).id

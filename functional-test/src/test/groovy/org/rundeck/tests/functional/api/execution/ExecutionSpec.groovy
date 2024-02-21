@@ -181,8 +181,8 @@ class ExecutionSpec extends BaseContainer {
         setup:
             def newProject = "test-job-id-success"
             setupProject(newProject)
-            def pathFile = updateJobFileToImport("api-test-execution-state.xml", ["project-name": newProject])
-            def responseImport = jobImportFile(newProject, pathFile) as Map
+            def pathFile = JobUtils.updateJobFileToImport("api-test-execution-state.xml",PROJECT_NAME, ["project-name": newProject])
+            def responseImport = JobUtils.jobImportFile(newProject, pathFile, client) as Map
         when:
             def jobId = responseImport.succeeded[2].id
             def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-opt1 foobar")
@@ -225,13 +225,13 @@ class ExecutionSpec extends BaseContainer {
             adhoc2.execution.id != null
             def execId2 = adhoc2.execution.id as Integer
         when:"import jobs 1"
-            def pathFile1 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "test exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API", "uuid": "api-v5-test-exec-query", "args":"echo hello there"])
+            def pathFile1 = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME,["project-name": newProject, "job-name": "test exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API", "uuid": "api-v5-test-exec-query", "args":"echo hello there"])
         then:
-            def jobId1 = jobImportFile(newProject, pathFile1).succeeded[0].id
+            def jobId1 = JobUtils.jobImportFile(newProject, pathFile1,client).succeeded[0].id
         when:"import jobs 2"
-            def pathFile2 = updateJobFileToImport("job-template-common.xml", ["project-name": newProject, "job-name": "second test for exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API2", "uuid": "api-v5-test-exec-query2", "args":"echo hello there"])
+            def pathFile2 = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME,["project-name": newProject, "job-name": "second test for exec query", "job-group-name": "api-test/execquery", "job-description-name": "A job to test the executions query API2", "uuid": "api-v5-test-exec-query2", "args":"echo hello there"])
         then:
-            def jobId2 = jobImportFile(newProject, pathFile2).succeeded[0].id
+            def jobId2 = JobUtils.jobImportFile(newProject, pathFile2,client).succeeded[0].id
         when:"run job 1 and 2"
             def jobRun1 = JobUtils.executeJobWithArgs(jobId1, client, "-opt2 a")
             int execId3 = jsonValue(jobRun1.body()).id as Integer

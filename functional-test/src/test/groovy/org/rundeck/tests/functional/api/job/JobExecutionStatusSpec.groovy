@@ -16,8 +16,8 @@ class JobExecutionStatusSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateJobFileToImport("api-test-execution-state-2.xml")
-        jobId = jobImportFile(pathFile).succeeded[0].id
+        def pathFile = JobUtils.updateJobFileToImport("api-test-execution-state-2.xml", PROJECT_NAME)
+        jobId = JobUtils.jobImportFile(PROJECT_NAME,pathFile,client).succeeded[0].id
     }
 
     def "job/id/run should succeed"() {

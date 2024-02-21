@@ -1,17 +1,16 @@
 package org.rundeck.tests.functional.api.scm
 
-import org.rundeck.tests.functional.api.ResponseModels.Job
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.scm.httpbody.IntegrationStatusResponse
 import org.rundeck.util.api.scm.httpbody.ScmActionInputFieldsResponse
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.api.scm.httpbody.GitExportSetupRequest
 import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.api.storage.KeyStorageApiClient
 import org.rundeck.util.container.BaseContainer
+import org.rundeck.util.api.JobUtils
 
 @APITest
 class ScmPluginActionsSpec extends BaseContainer {
@@ -52,9 +51,9 @@ class ScmPluginActionsSpec extends BaseContainer {
         String projectName = "${PROJECT_NAME}-P2"
         String integration = 'export'
         String actionId = 'project-commit'
-        setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
+        setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
-        String jobUuid = getJobUuid(projectName, 'dummy-job')
+        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
 
         expect:
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(projectName).withRepo(remoteRepo)).response?.success
@@ -110,11 +109,11 @@ class ScmPluginActionsSpec extends BaseContainer {
             actionFields.exportItems.size() == 1
             actionFields.exportItems.first().toMap() == [
                     deleted: false,
-                    itemId: "dummy-job-${jobUuid}.xml",
+                    itemId: "api-test/cli job-${jobUuid}.xml",
                     job: [
-                            groupPath: null,
+                            groupPath: 'api-test',
                             jobId: "${jobUuid}",
-                            jobName: "dummy-job"
+                            jobName: "cli job"
                     ],
                     status: "CREATE_NEEDED",
                     originalId: null,
@@ -126,9 +125,9 @@ class ScmPluginActionsSpec extends BaseContainer {
     def "perform project scm action with success"(){
         given:
         String projectName = "${PROJECT_NAME}-autopush-${useAutoPush}"
-        setupProject(projectName, BASE_EXPORT_PROJECT_LOCATION)
+        setupProject(projectName)
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(integration).forProject(projectName)
-        String jobUuid = getJobUuid(projectName, 'dummy-job')
+        def jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
         String keyStoragePath = 'keys/scm.password'
 
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
@@ -158,13 +157,5 @@ class ScmPluginActionsSpec extends BaseContainer {
         integration | actionId          | useAutoPush | expectedFinalSynchState | expectedFinalScmActions
         'export'    | 'project-commit'  | false       | 'EXPORT_NEEDED'         | ['project-push']
         'export'    | 'project-commit'  | true        | 'CLEAN'                 | null
-    }
-
-
-    String getJobUuid(String projectName, String jobName){
-        def jobsResponse = client.doGetAcceptAll("/project/${projectName}/jobs")
-        assert jobsResponse.successful
-        List<Job> jobsInProject = new ObjectMapper().readValue(jobsResponse.body().string(), ArrayList<Job>.class)
-        return jobsInProject.find { it.name == jobName }.id
     }
 }
