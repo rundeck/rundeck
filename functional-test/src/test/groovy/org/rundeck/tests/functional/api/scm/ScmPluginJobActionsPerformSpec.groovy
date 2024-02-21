@@ -14,17 +14,12 @@ class ScmPluginJobActionsPerformSpec extends BaseContainer{
     static final String PROJECT_NAME = "ScmPluginJobActionsPerform-project"
     final String EXPORT_INTEGRATION= "export"
     final String DUMMY_JOB_ID = "383d0599-3ea3-4fa6-ac3a-75a53d6bfdf3"
-    final String JOB_XML_LOCATION = "/Users/jesus/rundeckpro/rundeck/functional-test/src/test/resources/projects-import/scm/dummy-job-scm-action-perform.xml"
-
-    def setupSpec() {
-        startEnvironment()
-        setupProject(PROJECT_NAME)
-    }
+    final String JOB_XML_NAME = "job-template-common.xml"
 
     def "test_job_action_perform"(){
         given:
         setupProject(PROJECT_NAME)
-        jobImportFile(PROJECT_NAME,JOB_XML_LOCATION)
+        jobImportFile(PROJECT_NAME, updateFile(JOB_XML_NAME,null,null,null,null,null,null,DUMMY_JOB_ID))
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(EXPORT_INTEGRATION).forProject(PROJECT_NAME)
         scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest(PROJECT_NAME))
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
