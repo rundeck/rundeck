@@ -96,7 +96,8 @@ abstract class BaseContainer extends Specification implements ClientProvider {
             [
                 importConfig: true,
                 importACL: true,
-                importNodesSources: true
+                importNodesSources: true,
+                importScm: true
             ]
         )
     }
@@ -310,61 +311,4 @@ abstract class BaseContainer extends Specification implements ClientProvider {
     def setupSpec() {
         startEnvironment()
     }
-
-    /**
-     * Updates the job file to import with the provided file name and optional arguments.
-     *
-     * @param fileName The name of the file to import into test-files resources dir.
-     * @param args     Optional arguments as a Map. If not provided, default values will be used.
-     *                 Available keys:
-     *                 - "project-name": Name of the project (default: PROJECT_NAME)
-     *                 - "job-name": Name of the job (default: "job-test")
-     *                 - "job-group-name": Name of the job group (default: "group-test")
-     *                 - "job-description-name": Name of the job description (default: "description-test")
-     *                 - "args": Arguments (default: "echo hello there")
-     *                 - "2-args": Secondary arguments (default: "echo hello there 2")
-     *                 - "uuid": UUID for the job (default: generated UUID)
-     * @return The path of the updated temporary XML file.
-    */
-    def updateJobFileToImport(String fileName, Map args = [:]) {
-        if (args.isEmpty()) {
-            args = [
-                    "project-name": PROJECT_NAME,
-                    "job-name": "job-test",
-                    "job-group-name": "group-test",
-                    "job-description-name": "description-test",
-                    "args": "echo hello there",
-                    "2-args": "echo hello there 2",
-                    "uuid": UUID.randomUUID().toString()
-            ]
-        }
-        def pathXmlFile = getClass().getResource("/test-files/${fileName}").getPath()
-        def xmlProjectContent = new File(pathXmlFile).text
-        args.each { k, v ->
-            xmlProjectContent = xmlProjectContent.replaceAll("xml-${k as String}", v as String)
-        }
-        def tempFile = File.createTempFile("temp", ".xml")
-        tempFile.text = xmlProjectContent
-        tempFile.deleteOnExit()
-        tempFile.path
-    }
-
-    /**
-     * Imports a job file into a specified project.
-     * This method posts the XML job file to the server for the specified or default project name.
-     *
-     * @param projectName The name of the project into which the job file is to be imported.
-     *                    If null, a default project name (PROJECT_NAME) is used.
-     * @param pathXmlFile The file path of the XML job file to be imported.
-     * @return A Map representation of the JSON response body if the import is successful.
-     *         The method checks for a successful response and a 200 HTTP status code.
-     * @throws IllegalArgumentException if the pathXmlFile parameter is not provided.
-     */
-    def jobImportFile(String projectName = null, String pathXmlFile) {
-        def responseImport = client.doPost("/project/${projectName?:PROJECT_NAME}/jobs/import", new File(pathXmlFile), "application/xml")
-        responseImport.successful
-        responseImport.code() == 200
-        client.jsonValue(responseImport.body(), Map)
-    }
-
 }

@@ -29,12 +29,12 @@ class JobExecutionSpec extends BaseContainer {
     def setupSpec() {
         startEnvironment()
         setupProject()
-        def pathFile = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo testing /job/ID/executions result", "uuid": UUID.randomUUID().toString()])
-        jobId = jobImportFile(pathFile).succeeded[0].id
-        def pathFile2 = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions 2", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "/bin/false this should fail", "uuid": UUID.randomUUID().toString()])
-        jobId2 = jobImportFile(pathFile2).succeeded[0].id
-        def pathFile3 = updateJobFileToImport("job-template-common.xml", ["job-name": "test job", "job-group-name": "test/api/executions 3", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo this job will be killed...", "2-args": "sleep 240", "uuid": UUID.randomUUID().toString()])
-        jobId3 = jobImportFile(pathFile3).succeeded[0].id
+        def pathFile = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME, ["job-name": "test job", "job-group-name": "test/api/executions", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo testing /job/ID/executions result", "uuid": UUID.randomUUID().toString()])
+        jobId = JobUtils.jobImportFile(PROJECT_NAME,pathFile,client).succeeded[0].id
+        def pathFile2 = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME, ["job-name": "test job", "job-group-name": "test/api/executions 2", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "/bin/false this should fail", "uuid": UUID.randomUUID().toString()])
+        jobId2 = JobUtils.jobImportFile(PROJECT_NAME,pathFile2,client).succeeded[0].id
+        def pathFile3 = JobUtils.updateJobFileToImport("job-template-common.xml", PROJECT_NAME, ["job-name": "test job", "job-group-name": "test/api/executions 3", "job-description-name": "Test the /job/ID/executions API endpoint", "args": "echo this job will be killed...", "2-args": "sleep 240", "uuid": UUID.randomUUID().toString()])
+        jobId3 = JobUtils.jobImportFile(PROJECT_NAME,pathFile3,client).succeeded[0].id
     }
 
     def "job/jobId/executions should succeed with 0 results"() {
