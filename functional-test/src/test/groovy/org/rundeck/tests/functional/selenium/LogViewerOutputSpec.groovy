@@ -41,7 +41,7 @@ class LogViewerOutputSpec extends SeleniumBase{
 
         then: "The user view must follow up to the last log output."
         !firstLogLine.isDisplayed() // First line is not reachable or visible by user
-        lastLogLine.isDisplayed() // And the last line does
+        lastLogLine.isDisplayed() // And the last line is
 
     }
 
