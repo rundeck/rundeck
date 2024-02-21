@@ -113,7 +113,7 @@ export default defineComponent({
     displayDefaultValueTruncated() {
       let val = this.displayDefaultValue;
       if (val.length > 20) {
-        val = val.substring(0, 20) + "...";
+        return val.substring(0, 20) + "...";
       } else {
         return val;
       }
