@@ -39,7 +39,7 @@
         <btn
           size="xs"
           @click="$emit('edit', option)"
-          title="$t('edit.this.option')"
+          :title="$t('edit.this.option')"
         >
           <i class="glyphicon glyphicon-edit"></i>
           {{ $t("edit") }}
@@ -47,7 +47,7 @@
         <btn
           size="xs"
           @click="$emit('duplicate', option)"
-          title="$t('duplicate.this.option')"
+          :title="$t('duplicate.this.option')"
         >
           <i class="glyphicon glyphicon-duplicate"></i>
           {{ $t("duplicate") }}
