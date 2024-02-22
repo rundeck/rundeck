@@ -33,6 +33,21 @@
         {{ action.title }}
       </a>
     </li>
+    <li v-if="importSynchState !== 'UNKNOWN'">
+      <a :href="scmDiffHref('import')">
+        <job-scm-status-badge
+            :notext="true"
+            icon="glyphicon-eye-open"
+            :exportStatus="importSynchState"
+        />
+        <template v-if="importSynchState === 'CLEAN'">
+          {{ $t("scm.action.diff.clean.button.label") }}
+        </template>
+        <template v-else>
+          {{ $t("scm.action.diff.button.label") }}
+        </template>
+      </a>
+    </li>
   </template>
 </template>
 

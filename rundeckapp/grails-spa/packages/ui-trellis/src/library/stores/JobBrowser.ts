@@ -93,10 +93,10 @@ export class JobBrowserStore extends JobBrowserStoreItem {
     }
   }
 
-  async loadJobMeta(job: JobBrowseItem) {
-    job.meta = await getJobMeta(
+  loadJobMeta(jobUuid: string) {
+    return getJobMeta(
       this.jobPageStore.getProject(),
-      job.id!,
+      jobUuid,
       this.meta,
     );
   }
