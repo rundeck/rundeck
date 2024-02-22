@@ -3,6 +3,7 @@ package org.rundeck.tests.functional.selenium.tests.appadmin
 import org.rundeck.tests.functional.selenium.pages.appadmin.KeyStoragePage
 import org.rundeck.tests.functional.selenium.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.api.WaitingTime
 import org.rundeck.util.container.SeleniumBase
 import spock.lang.Stepwise
 
@@ -21,6 +22,8 @@ class KeyStorageSpec extends SeleniumBase {
         then:
             keyStoragePage.waitForModal 1
             keyStoragePage.addPasswordType 'root', 'git', 'git.pass'
+            sleep WaitingTime.MODERATE.milliSeconds
+            keyStoragePage.waitForModal 0
             keyStoragePage.checkKeyExists 'git.pass', 'git'
     }
 
