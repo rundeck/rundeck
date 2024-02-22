@@ -1144,7 +1144,6 @@ import {
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
 
-const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "OptionEdit",
   components: {
