@@ -9,6 +9,15 @@ import java.util.concurrent.TimeUnit
 
 class JobUtils {
 
+    static final String DUPE_OPTION_SKIP = "skip"
+
+    static final String DUPE_OPTION_UPDATE = "update"
+
+    static final String DUPE_OPTION_DEFAULT = "create"
+
+    static final String CONTENT_TYPE_DEFAULT = "application/xml"
+
+
     static def executeJobWithArgs = (String jobId, RdClient client, String args) -> {
         return client.doPostWithoutBody("/job/${jobId}/run?argString=${args}")
     }
@@ -189,10 +198,10 @@ class JobUtils {
      *         The method checks for a successful response and a 200 HTTP status code.
      * @throws IllegalArgumentException if the pathXmlFile parameter is not provided.
      */
-    static def jobImportFile = (String projectName, String filePath, RdClient client) -> {
+    static def jobImportFile = (String projectName, String filePath, RdClient client, String dupeOption = DUPE_OPTION_DEFAULT,String contentType = CONTENT_TYPE_DEFAULT) -> {
         URL resourceUrl = getClass().getResource(filePath)
         def pathXmlFile = resourceUrl ? resourceUrl.getPath() : filePath
-        def responseImport = client.doPost("/project/${projectName}/jobs/import", new File(pathXmlFile), "application/xml")
+        def responseImport = client.doPost("/project/${projectName}/jobs/import?dupeOption=${dupeOption}", new File(pathXmlFile), contentType)
         responseImport.successful
         responseImport.code() == 200
 
