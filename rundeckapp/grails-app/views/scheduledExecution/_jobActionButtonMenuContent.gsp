@@ -197,8 +197,10 @@
     </li>
 </g:if>
 
-<div class="vue-ui-socket dropdown-menu ${dropdownClass?:''}" id="scmActionsButtons" style="width: 100%; margin-top: 0;">
-    <ui-socket section="job-head" location="job-action-button" socket-data="${enc(attr: [ jobUuid: scheduledExecution.uuid ].encodeAsJSON())}"></ui-socket>
+<div class="scm-section">
+    <div class="vue-ui-socket dropdown-menu ${dropdownClass?:''}" id="scmActionsButtons" style="width: 100%; margin-top: 0;">
+        <ui-socket section="job-head" location="job-action-button" socket-data="${enc(attr: [ jobUuid: scheduledExecution.uuid ].encodeAsJSON())}"></ui-socket>
+    </div>
 </div>
 
 <g:if test="${renderedActions<1}">

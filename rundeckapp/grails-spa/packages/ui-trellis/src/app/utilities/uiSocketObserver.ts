@@ -13,10 +13,9 @@ export const observer = new MutationObserver(function (mutations_list) {
         return;
       }
       const added_elem = added_node as Element;
-      let uiSockets:  HTMLCollectionOf<Element> | Element[] = added_elem.getElementsByClassName('vue-ui-socket')
-      uiSockets = (uiSockets?.length > 0)? uiSockets : [ added_elem ]
+      let uiSockets = added_elem.getElementsByClassName("vue-ui-socket");
 
-        if( added_elem.className && uiSockets?.length > 0) {
+      if (added_elem.className && uiSockets?.length > 0) {
         const i18n = initI18n();
         const rootStore = getRundeckContext().rootStore;
         const eventBus = getRundeckContext().eventBus;

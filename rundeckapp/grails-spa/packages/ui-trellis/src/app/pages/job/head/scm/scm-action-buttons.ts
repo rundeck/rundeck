@@ -36,8 +36,10 @@ rootStore.ui.addItems([
 ]);
 
 window.addEventListener('DOMContentLoaded', () => {
-    let elem = document.getElementById("job_group_tree")
-    if (elem) {
-        observer.observe(elem, { subtree: true, childList: true })
+    let jobActionsButtons = document.querySelectorAll('[id^="action-menu-jobrow_"]');
+    for (let elem of jobActionsButtons) {
+      if (elem) {
+        observer.observe(elem, { subtree: true, childList: true });
+      }
     }
 })
