@@ -23,7 +23,7 @@ class ScmPluginJobDiffSpec extends BaseContainer {
         remoteRepo.setupRepo()
     }
 
-    def "test_job_action_perform"() {
+    def "test_check_diff_after_actions"() {
         given:
         // Initial setup of the project and action parameters
         setupProject(PROJECT_NAME)
