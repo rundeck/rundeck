@@ -62,5 +62,5 @@ export const OptionPrototype = {
   regex: null,
   description: "",
   name: "",
-  defaultValue: "",
-};
+  value: "",
+} as JobOptionEdit;
